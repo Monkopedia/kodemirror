@@ -1,13 +1,13 @@
 package com.monkopedia.kodemirror.state
 
-import {findClusterBreak} from "./char"
-
 /// Count the column position at the given offset into the string,
 /// taking extending characters and tab size into account.
-export function countColumn(string: string, tabSize: number, to = string.length): number {
-    let n = 0
-    for (let i = 0; i < to;) {
-        if (string.charCodeAt(i) == 9) {
+fun countColumn(string: String, tabSize: Int, to: Int = string.length): Int {
+    var n = 0
+    var i = 0
+
+    while (i < to) {
+        if (string[i].code == 9) {
             n += tabSize - (n % tabSize)
             i++
         } else {
@@ -23,12 +23,14 @@ export function countColumn(string: string, tabSize: number, to = string.length)
 /// default, the string length is returned when it is too short to
 /// reach the column. Pass `strict` true to make it return -1 in that
 /// situation.
-export function findColumn(string: string, col: number, tabSize: number, strict?: boolean): number {
-    for (let i = 0, n = 0;;) {
+fun findColumn(string: String, col: Int, tabSize: Int, strict: Boolean = false): Int {
+    var i = 0
+    var n = 0
+    while (true) {
         if (n >= col) return i
         if (i == string.length) break
-        n += string.charCodeAt(i) == 9 ? tabSize - (n % tabSize) : 1
+        n += if (string[i].code == 9) tabSize-(n % tabSize)  else 1
         i = findClusterBreak(string, i)
     }
-    return strict === true ? -1 : string.length
+    return if (strict == true ) -1 else string.length
 }

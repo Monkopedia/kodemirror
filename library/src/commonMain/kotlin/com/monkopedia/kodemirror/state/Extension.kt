@@ -1,33 +1,33 @@
 package com.monkopedia.kodemirror.state
 
-import {EditorState} from "./state"
-import {Transaction, TransactionSpec} from "./transaction"
-import {Facet} from "./facet"
+//import {EditorState} from "./state"
+//import {Transaction, TransactionSpec} from "./transaction"
+//import {Facet} from "./facet"
 
-export const languageData = Facet.define<(state: EditorState, pos: number, side: -1 | 0 | 1) => readonly {[name: string]: any}[]>()
+enum class Side(val sign: Int) {
+    NEG(-1),
+    ZERO(0),
+    POS(1);
+
+    operator fun minus(other: Side): Side {
+        val value = sign - other.sign
+        return enumValues<Side>().find { it.sign == value }!!
+    }
+
+    companion object {
+        val Int.asSide: Side
+            get() = when {
+                this < 0 -> NEG
+                this > 0 -> POS
+                else -> ZERO
+            }
+    }
+}
+typealias LanguageDataType = (state: EditorState, pos: Int, side: Side) -> List<Map<String, Any>>
 
 /// Subtype of [`Command`](#view.Command) that doesn't require access
 /// to the actual editor view. Mostly useful to define commands that
 /// can be run and tested outside of a browser environment.
-export type StateCommand = (target: {state: EditorState, dispatch: (transaction: Transaction) => void}) => boolean
-
-export const allowMultipleSelections = Facet.define<boolean, boolean>({
-    combine: values => values.some(v => v),
-    static: true
-})
-
-export const lineSeparator = Facet.define<string, string | undefined>({
-    combine: values => values.length ? values[0] : undefined,
-    static: true
-})
-
-export const changeFilter = Facet.define<(tr: Transaction) => boolean | readonly number[]>()
-
-export const transactionFilter = Facet.define<(tr: Transaction) => TransactionSpec | readonly TransactionSpec[]>()
-
-export const transactionExtender =
-Facet.define<(tr: Transaction) => Pick<TransactionSpec, "effects" | "annotations"> | null>()
-
-export const readOnly = Facet.define<boolean, boolean>({
-    combine: values => values.length ? values[0] : false
-})
+fun interface StateCommand {
+    fun target(state: EditorState, dispatch: (Transaction) -> Unit): Boolean
+}
