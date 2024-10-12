@@ -34,7 +34,7 @@ internal fun hasWordChar(str: String): Boolean {
 fun makeCategorizer(wordChars: String): (String) -> CharCategory {
     return { str: String ->
         when {
-            str.all { it.isWhitespace() } -> CharCategory.Word
+            str.all { it.isWhitespace() } -> CharCategory.Space
             hasWordChar(str) -> CharCategory.Word
             wordChars.any { it in str } -> CharCategory.Word
             else -> CharCategory.Other

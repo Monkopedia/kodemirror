@@ -1,5 +1,8 @@
 package com.monkopedia.kodemirror.state
 
+private val Char.ucode: Int
+    inline get() = code.toUShort().toInt()
+
 // Compressed representation of the Grapheme_Cluster_Break=Extend
 // information from
 // http://www.unicode.org/Public/13.0.0/ucd/auxiliary/GraphemeBreakProperty.txt.
@@ -52,16 +55,16 @@ internal fun nextClusterBreak(str: String, pos: Int, includeExtending: Boolean):
     // If pos is in the middle of a surrogate pair, move to its start
     if (pos != 0 && surrogateLow(str[pos]) && surrogateHigh(str[pos - 1])) pos--
     var prev = codePointAt(str, pos)
-    pos += codePointSize(prev.code)
+    pos += codePointSize(prev)
     while (pos < str.length) {
         val next = codePointAt(str, pos)
-        if (prev == ZWJ || next == ZWJ || includeExtending && isExtendingChar(next.code)) {
-            pos += codePointSize(next.code)
+        if (prev == ZWJ.ucode || next == ZWJ.ucode || includeExtending && isExtendingChar(next)) {
+            pos += codePointSize(next)
             prev = next
-        } else if (isRegionalIndicator(next.code)) {
+        } else if (isRegionalIndicator(next)) {
             var countBefore = 0
             var i = pos-2
-            while (i >= 0 && isRegionalIndicator(codePointAt(str, i).code)) {
+            while (i >= 0 && isRegionalIndicator(codePointAt(str, i))) {
                 countBefore++
                 i -= 2
             }
@@ -85,22 +88,22 @@ internal fun prevClusterBreak(str: String, pos: Int, includeExtending: Boolean):
 }
 
 internal fun surrogateLow(ch: Char): Boolean {
-    return ch.code in 0xDC00..0xdfff
+    return ch.ucode in 0xDC00..0xdfff
 }
 
 internal fun surrogateHigh(ch: Char): Boolean {
-    return ch.code in 0xD800..0xdbff
+    return ch.ucode in 0xD800..0xdbff
 }
 
 /// Find the code point at the given position in a string (like the
 /// [`codePointAt`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/codePointAt)
 /// string method).
-public fun codePointAt(str: String, pos: Int): Char {
+public fun codePointAt(str: String, pos: Int): Int {
     val code0 = str[pos]
-    if (!surrogateHigh(code0) || pos + 1 == str.length) return code0
+    if (!surrogateHigh(code0) || pos + 1 == str.length) return code0.ucode
     val code1 = str[pos + 1]
-    if (!surrogateLow(code1)) return code0
-    return (((code0.code - 0xd800) shl 10)+(code1.code-0xdc00)+0x10000).toChar()
+    if (!surrogateLow(code1)) return code0.ucode
+    return (((code0.ucode - 0xd800) shl 10)+(code1.ucode-0xdc00)+0x10000)
 }
 
 /// Given a Unicode codepoint, return the JavaScript string that
