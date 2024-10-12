@@ -30,7 +30,7 @@ data class ChangeSection(
     }
 
     fun plus(len: Int = 0, ins: Int? = null): ChangeSection {
-        return ChangeSection(this.len + len, this.ins?.plus(ins ?: -1) ?: ins)
+        return ChangeSection(this.len + len, ins?.let { it + (this.ins ?: -1) } ?: this.ins)
     }
 }
 
@@ -402,7 +402,7 @@ class ChangeSet private constructor(
             var total: ChangeSet? = null
 
             fun flush(force: Boolean = false) {
-                if (!force && sections.isNotEmpty()) return
+                if (!force && sections.isEmpty()) return
                 if (pos < length) addSection(sections, length - pos, null)
                 val set = ChangeSet(sections, inserted)
                 total = total?.let { it.compose(set.map(it)) } ?: set
@@ -441,7 +441,6 @@ class ChangeSet private constructor(
                         pos = to
                     }
                 }
-                println("Process $spec ${ChangeSet(sections.toList(), inserted.toList()).desc}")
             }
 
             process(changes)
@@ -499,12 +498,12 @@ internal fun addSection(
     ins: Int?,
     forceJoin: Boolean = false
 ) {
-    if (len == 0 && ins == null) return
+    if (len == 0 && (ins == null || ins == 0)) return
     val last = sections.size - 1
-    if (last >= 0 && ins == null && ins == sections[last].ins) {
+    if (last >= 0 && (ins == null || ins == 0) && ins == sections[last].ins) {
         sections[last] = sections[last].plus(len = len)
     } else if (last >= 0 && len == 0 && sections[last].len == 0) {
-        sections[last] = sections[last].plus(ins = ins)
+        sections[last] = sections[last].plus(ins = ins ?: -1)
     } else if (forceJoin) {
         sections[last] = sections[last].plus(len = len, ins = ins)
     } else sections.add(ChangeSection(len, ins))
@@ -547,7 +546,7 @@ internal fun iterChanges(
                 endA += len
                 endB += ins!!
                 if (ins != 0 && inserted.isNotEmpty()) {
-                    text = text.append(inserted[(i - 2) shr 1])
+                    text = text.append(inserted[i - 1])
                 }
                 if (individual || i == desc.sections.size || desc.sections[i].ins == null) break
                 len = desc.sections[i].len
@@ -583,7 +582,7 @@ internal fun mapSet(
     while (true) {
         if (a.done && b.len != 0 || b.done && a.len != 0) {
             throw Error("Mismatched change set lengths")
-        } else if (a.ins == null && b.ins == null) {
+        } else if (a.ins == null && b.ins == null && !a.done && !b.done) {
             // Move across ranges skipped by both sets.
             val len = min(a.len, b.len)
             addSection(sections, len, null)
@@ -660,7 +659,7 @@ internal fun composeSets(setA: ChangeDesc, setB: ChangeDesc, mkSet: Boolean? = n
             if (insert != null) addInsert(insert, sections, b.text)
             b.next()
         } else if (a.done || b.done) {
-            throw Error("Mismatched change set lengths ($setA) ($setB)")
+            throw Error("Mismatched change set lengths ($setA) ($setB) ${a.done} ${b.done}")
         } else {
             val len = min(a.len2, b.len)
             val sectionLen = sections.size
