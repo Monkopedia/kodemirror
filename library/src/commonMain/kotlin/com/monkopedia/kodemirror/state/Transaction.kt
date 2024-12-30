@@ -68,7 +68,7 @@ class StateEffectType<Value> internal constructor(
     // `StateEffect.is` mysteriously stops working when these properly
     // have type `Value`.
     /// @internal
-    val map: ((value: Value, mapping: ChangeDesc) -> Value)? = null
+    val map: ((value: Value, mapping: ChangeDesc) -> Value?)
 ) {
 
     /// Create a [state effect](#state.StateEffect) instance of this
@@ -118,18 +118,13 @@ class StateEffect<Value> internal constructor(
         }
 
         fun <T> define(): StateEffectType<T?> {
-            return StateEffectType({ _, _ -> null })
+            return StateEffectType { v, _ -> v }
         }
 
         /// Map an array of effects through a change set.
         fun mapEffects(effects: List<StateEffect<*>>, mapping: ChangeDesc): List<StateEffect<*>> {
             if (effects.isEmpty()) return effects
-            return buildList {
-                for (effect in effects) {
-                    val mapped = effect.map(mapping)
-                    if (mapped != null) add(mapped)
-                }
-            }
+            return effects.mapNotNull { it.map(mapping) }
         }
 
         /// This effect can be used to reconfigure the root extensions of
@@ -241,7 +236,7 @@ data class TransactionSpec(
 /// [`EditorState.update`](#state.EditorState.update), or immediately
 /// dispatch one by calling
 /// [`EditorView.dispatch`](#view.EditorView.dispatch).
-class Transaction private constructor(
+data class Transaction private constructor(
     /// The state from which the transaction starts.
     val startState: EditorState,
     /// The document changes made by this transaction.
@@ -340,7 +335,7 @@ class Transaction private constructor(
 
     companion object {
         /// @internal
-        fun create(
+        internal fun create(
             startState: EditorState,
             changes: ChangeSet,
             selection: EditorSelection?,
@@ -470,8 +465,7 @@ internal fun resolveTransactionInner(
     return ResolvedSpecData(
         changes = when (val changes = spec.changes) {
             is ChangeSet -> changes
-            null -> ChangeSet.empty(0)
-            else -> ChangeSet.of(changes, docSize, state.facet(lineSeparator))
+            else -> ChangeSet.of(changes ?: ChangeSpec.empty, docSize, state.facet(lineSeparator))
         },
         selection = when (sel) {
             is Selection.Data -> EditorSelection.single(sel.anchor, sel.head ?: sel.anchor)
@@ -494,14 +488,14 @@ fun resolveTransaction(
     var useFilter =
         if (specs.getOrNull(0)?.filter == false) false
         else filter
-    for (i in specs.indices) {
-        if (!specs[i].filter) useFilter = false
-        val seq = specs[i].sequential
+    for (spec in specs.drop(1)) {
+        if (!spec.filter) useFilter = false
+        val seq = spec.sequential
         s = mergeTransaction(
             s,
             resolveTransactionInner(
                 state,
-                specs[i],
+                spec,
                 if (seq) s.changes.newLength else state.doc.length
             ),
             seq
@@ -572,14 +566,15 @@ internal fun extendTransaction(tr: Transaction): Transaction {
     val state = tr.startState
     val extenders = state.facet(transactionExtender)
     var spec: ResolvedSpec = tr
-    extenders.forEach { extender ->
+    extenders.reversed().forEach { extender ->
         val extension = extender(tr)
-        if (extension != null && extension.isNotEmpty())
+        if (extension != null && extension.isNotEmpty()) {
             spec = mergeTransaction(
                 spec,
                 resolveTransactionInner(state, extension, tr.changes.newLength),
                 true
             )
+        }
     }
     return if (spec == tr) tr else Transaction.create(
         state,

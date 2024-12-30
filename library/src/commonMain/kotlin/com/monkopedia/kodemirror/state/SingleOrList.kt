@@ -1,5 +1,6 @@
 package com.monkopedia.kodemirror.state
 
+import com.monkopedia.kodemirror.state.SingleOrList.Companion.coerceList
 import kotlin.jvm.JvmInline
 
 @Suppress("UNCHECKED_CAST")
@@ -17,6 +18,8 @@ value class SingleOrList<T> private constructor(private val item: Any?) {
     inline fun forEach(action: (T) -> Unit) {
         itemOrNull?.let(action) ?: listOrNull?.forEach(action)
     }
+
+    override fun toString(): String = singleOrNull?.toString() ?: listOrNull?.toString() ?: "null"
 
     companion object {
         fun <T> SingleOrList(item: T): SingleOrList<T> {
@@ -37,9 +40,8 @@ value class SingleOrList<T> private constructor(private val item: Any?) {
         inline val <T> List<T>.list: SingleOrList<T> get() = SingleOrList(this)
         inline val <T> T.single: SingleOrList<T> get() = SingleOrList(this)
 
-        operator fun <T> SingleOrList<out T>.plus(other: T): SingleOrList<out T> {
-            return (list + other).list
-        }
+        operator fun <T> SingleOrList<out T>.plus(other: T): SingleOrList<out T> =
+            (list + other).list
 
         operator fun <T> SingleOrList<out T>.plus(other: SingleOrList<out T>): SingleOrList<out T> {
             if (listOrNull?.size == 0) return other
@@ -48,6 +50,18 @@ value class SingleOrList<T> private constructor(private val item: Any?) {
         }
 
         inline fun <T> SingleOrList<T>?.orEmpty(): SingleOrList<out T> = this ?: empty
+
+        @Suppress("UNCHECKED_CAST")
+        fun <T> Any?.coerceList(): List<T> = (this as? Either.Left<Any?>)?.a?.coerceList()
+            ?: (this as? Either.Right<Any?>)?.b?.coerceList()
+            ?: this as? List<T>
+            ?: (this as SingleOrList<T>).list
+
+        @Suppress("UNCHECKED_CAST")
+        fun <T> Any?.coerceSingle(): T = (this as? Either.Left<Any?>)?.a?.coerceSingle()
+            ?: (this as? Either.Right<Any?>)?.b?.coerceSingle()
+            ?: (this as? SingleOrList<T>)?.singleOrNull
+            ?: this as T
 
         val empty = SingleOrList<Nothing>(emptyList())
     }
