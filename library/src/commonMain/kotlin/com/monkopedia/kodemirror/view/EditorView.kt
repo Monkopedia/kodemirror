@@ -1,5 +1,6 @@
 package com.monkopedia.kodemirror.view
 
+import com.monkopedia.kodemirror.state.EditorState
 import {EditorState, Transaction, TransactionSpec, Extension, Prec, ChangeDesc,
 EditorSelection, SelectionRange, StateEffect, Facet, Line, EditorStateConfig} from "@codemirror/state"
 import {StyleModule, StyleSpec} from "style-mod"
@@ -87,7 +88,8 @@ export const enum UpdateState {
 /// transactions for editing actions.
 export class EditorView {
     /// The current editor state.
-    get state() { return this.viewState.state }
+    val state: EditorState
+        get() { return this.viewState.state }
 
     /// To be able to display large documents without consuming too much
     /// memory or overloading the browser, CodeMirror only draws the
@@ -150,7 +152,7 @@ export class EditorView {
     inputState!: InputState
 
     /// @internal
-    public viewState: ViewState
+    internal val viewState: ViewState
     /// @internal
     public docView: DocView
 

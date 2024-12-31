@@ -44,7 +44,7 @@ interface RangeValue {
 }
 
 // / A range associates a value with a range of positions.
-data class Range<T : RangeValue> private constructor(
+data class Range<out T : RangeValue> private constructor(
     // / The range's start position.
     val from: Int,
     // / Its end position.
