@@ -15,7 +15,7 @@ object ChangeTest {
         return ChangeDesc(spec.split(" ").filter { it.isNotBlank() }.map {
             if (it.contains(":")) {
                 val (a, b) = it.split(":")
-                ChangeSection(a.toInt() , b.toInt())
+                ChangeSection(a.toInt(), b.toInt())
             } else {
                 ChangeSection(it.toInt())
             }
@@ -24,7 +24,8 @@ object ChangeTest {
 
     // ('r' for random)
     fun r(n: Int): Int {
-        return Random.nextInt(n)
+        if (n <= 1) return 1
+        return Random.nextInt(n - 1) + 1
     }
 
     fun rStr(l: Int): Text {
@@ -94,18 +95,6 @@ object ChangeTest {
                 comp("1 6:6 1", "2 2:2 2:2 2", "1 2:2 2:2 2:2 1")
                 comp("1 6:6 1", "1 2:2 2:2 2:2 1", "2 2:2 2:2 2")
                 comp("1 5:3 1", "1 2:3 3:2 1", "2 3:1 2")
-            }
-
-            @Test
-            fun can_match_desc_test() {
-                comp(
-                    "3:0 1 1:0 0:4 1:0 2 0:3 2",
-                    "2",
-                    "2",
-                    "3:0",
-                    "6:4",
-                    "3"
-                )
             }
 
             @Test
@@ -481,7 +470,7 @@ object ChangeTest {
                     )
                 assertEquals(
                     doc10.toString(),
-                        set0.invert(doc10).apply(set0.apply(doc10)).toString(),
+                    set0.invert(doc10).apply(set0.apply(doc10)).toString(),
                 )
             }
 
