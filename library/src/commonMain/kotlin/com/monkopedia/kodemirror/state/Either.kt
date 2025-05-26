@@ -1,16 +1,24 @@
 package com.monkopedia.kodemirror.state
 
-sealed class Either<A, B> {
+sealed class Either<out A, out B> {
     open val a: A? get() = null
     open val b: B? get() = null
 
-    class Left<A>(override val a: A) : Either<A, Nothing>()
-    class Right<B>(override val b: B) : Either<Nothing, B>()
+    class Left<A>(override val a: A) : Either<A, Nothing>() {
+        override fun toString(): String {
+            return a.toString()
+        }
+    }
+    class Right<B>(override val b: B) : Either<Nothing, B>() {
+        override fun toString(): String {
+            return b.toString()
+        }
+    }
 
     companion object {
-        inline val <reified A> A.asLeft: Left<A>
+        inline val <reified A> A.asLeft: Either<A, Nothing>
             get() = Left(this)
-        inline val <reified A> A.asRight: Right<A>
+        inline val <reified A> A.asRight: Either<Nothing, A>
             get() = Right(this)
     }
 }

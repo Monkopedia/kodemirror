@@ -3,74 +3,79 @@ package com.monkopedia.kodemirror.state
 import com.monkopedia.kodemirror.state.Either.Companion.asLeft
 import com.monkopedia.kodemirror.state.Either.Companion.asRight
 import com.monkopedia.kodemirror.state.SingleOrList.Companion.SingleOrList
+import com.monkopedia.kodemirror.state.SingleOrList.Companion.coerceList
+import com.monkopedia.kodemirror.state.SingleOrList.Companion.coerceSingle
 import com.monkopedia.kodemirror.state.SingleOrList.Companion.list
 import com.monkopedia.kodemirror.state.SingleOrList.Companion.single
 import kotlin.jvm.JvmName
 import kotlinx.atomicfu.atomic
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.serializer
 
-//import {Transaction, StateEffect, StateEffectType} from "./transaction"
-//import {EditorState} from "./state"
+// import {Transaction, StateEffect, StateEffectType} from "./transaction"
+// import {EditorState} from "./state"
 
 private val nextID = atomic(0)
 
 data class FacetConfig<Input, Output>(
-    /// How to combine the input values into a single output value. When
-    /// not given, the array of input values becomes the output. This
-    /// fun will immediately be called on creating the facet, with
-    /// an empty array, to compute the facet's default value when no
-    /// inputs are present.
+    // / How to combine the input values into a single output value. When
+    // / not given, the array of input values becomes the output. This
+    // / fun will immediately be called on creating the facet, with
+    // / an empty array, to compute the facet's default value when no
+    // / inputs are present.
     val combine: ((value: List<Input>) -> Output)? = null,
 
-    /// How to compare output values to determine whether the value of
-    /// the facet changed. Defaults to comparing by `===` or, if no
-    /// `combine` fun was given, comparing each element of the
-    /// array with `===`.
+    // / How to compare output values to determine whether the value of
+    // / the facet changed. Defaults to comparing by `===` or, if no
+    // / `combine` fun was given, comparing each element of the
+    // / array with `===`.
     val compare: ((a: Output, b: Output) -> Boolean)? = null,
 
-    /// How to compare input values to avoid recomputing the output
-    /// value when no inputs changed. Defaults to comparing with `===`.
+    // / How to compare input values to avoid recomputing the output
+    // / value when no inputs changed. Defaults to comparing with `===`.
     val compareInput: ((a: Input, b: Input) -> Boolean)? = null,
 
-    /// Forbids dynamic inputs to this facet.
+    // / Forbids dynamic inputs to this facet.
     val static: Boolean = false,
 
-    /// If given, these extension(s) (or the result of calling the given
-    /// fun with the facet) will be added to any state where this
-    /// facet is provided. (Note that, while a facet's default value can
-    /// be read from a state even if the facet wasn't present in the
-    /// state at all, these extensions won't be added in that
-    /// situation.)
-    val enables: Either<Extension, ((self: Facet<Input, Output>) -> Extension)>? = null,
+    // / If given, these extension(s) (or the result of calling the given
+    // / fun with the facet) will be added to any state where this
+    // / facet is provided. (Note that, while a facet's default value can
+    // / be read from a state even if the facet wasn't present in the
+    // / state at all, these extensions won't be added in that
+    // / situation.)
+    val enables: Either<Extension, ((self: Facet<Input, Output>) -> Extension)>? = null
 )
 
-/// A facet is a labeled value that is associated with an editor
-/// state. It takes inputs from any Int of extensions, and combines
-/// those into a single output value.
-///
-/// Examples of uses of facets are the [tab
-/// size](#state.EditorState^tabSize), [editor
-/// attributes](#view.EditorView^editorAttributes), and [update
-/// listeners](#view.EditorView^updateListener).
-///
-/// Note that `Facet` instances can be used anywhere where
-/// [`FacetReader`](#state.FacetReader) is expected.
+// / A facet is a labeled value that is associated with an editor
+// / state. It takes inputs from any Int of extensions, and combines
+// / those into a single output value.
+// /
+// / Examples of uses of facets are the [tab
+// / size](#state.EditorState^tabSize), [editor
+// / attributes](#view.EditorView^editorAttributes), and [update
+// / listeners](#view.EditorView^updateListener).
+// /
+// / Note that `Facet` instances can be used anywhere where
+// / [`FacetReader`](#state.FacetReader) is expected.
 class Facet<Input, Output> private constructor(
-    /// @internal
+    // / @internal
     internal val combine: (values: List<Input>) -> Output,
-    /// @internal
+    // / @internal
     internal val compareInput: (a: Input, b: Input) -> Boolean,
-    /// @internal
+    // / @internal
     internal val compare: (a: Output, b: Output) -> Boolean,
     private val isStatic: Boolean,
     val enables: Either<Extension, ((self: Facet<Input, Output>) -> Extension)>?
-) : FacetReader<Output>, Extension {
-    /// @internal
+) : FacetReader<Output>,
+    Extension {
+    // / @internal
     override val id = nextID.getAndIncrement()
 
-    /// @internal
+    // / @internal
     override val default: Output = combine(emptyList())
 
-    /// @internal
+    // / @internal
     internal val extension: Extension? = enables?.fold(
         { this },
         { this(this@Facet) }
@@ -78,25 +83,24 @@ class Facet<Input, Output> private constructor(
     override val tag: Output
         get() = error("Unsupported")
 
-    /// Returns a facet reader for this facet, which can be used to
-    /// [read](#state.EditorState.facet) it but not to define values for it.
+    // / Returns a facet reader for this facet, which can be used to
+    // / [read](#state.EditorState.facet) it but not to define values for it.
     val reader: FacetReader<Output>
         get() {
             return this
         }
 
-    /// Returns an extension that adds the given value to this facet.
-    fun of(value: Input): Extension {
-        return FacetProvider(emptyList(), this, Provider.Static, Either.Right(value))
-    }
+    // / Returns an extension that adds the given value to this facet.
+    fun of(value: Input): Extension =
+        FacetProvider(emptyList(), this, Provider.Static, Either.Right(value))
 
-    /// Create an extension that computes a value for the facet from a
-    /// state. You must take care to declare the parts of the state that
-    /// this value depends on, since your fun is only called again
-    /// for a new state when one of those parts changed.
-    ///
-    /// In cases where your value depends only on a single field, you'll
-    /// want to use the [`from`](#state.Facet.from) method instead.
+    // / Create an extension that computes a value for the facet from a
+    // / state. You must take care to declare the parts of the state that
+    // / this value depends on, since your fun is only called again
+    // / for a new state when one of those parts changed.
+    // /
+    // / In cases where your value depends only on a single field, you'll
+    // / want to use the [`from`](#state.Facet.from) method instead.
     fun compute(deps: List<Slot<*>>, get: (state: EditorState) -> Input): Extension {
         if (this.isStatic) throw Error("Can't compute a static facet")
         return FacetProvider(
@@ -107,8 +111,8 @@ class Facet<Input, Output> private constructor(
         )
     }
 
-    /// Create an extension that computes zero or more values for this
-    /// facet from a state.
+    // / Create an extension that computes zero or more values for this
+    // / facet from a state.
     fun computeN(deps: List<Slot<*>>, get: (state: EditorState) -> List<Input>): Extension {
         if (this.isStatic) throw Error("Can't compute a static facet")
         return FacetProvider<Input>(
@@ -119,49 +123,48 @@ class Facet<Input, Output> private constructor(
         )
     }
 
-    /// Shorthand method for registering a facet source with a state
-    /// field as input. If the field's type corresponds to this facet's
-    /// input type, the getter fun can be omitted. If given, it
-    /// will be used to retrieve the input from the field value.
+    // / Shorthand method for registering a facet source with a state
+    // / field as input. If the field's type corresponds to this facet's
+    // / input type, the getter fun can be omitted. If given, it
+    // / will be used to retrieve the input from the field value.
     fun <T : Input> from(field: StateField<T>, get: ((value: T) -> Input)? = null): Extension {
         val getter = get ?: { x: T -> x }
         return this.compute(listOf(field)) { state -> getter(state.field(field)) }
     }
 
     companion object {
-        /// Define a new facet.
+        // / Define a new facet.
         @JvmName("defineConfig")
-        fun <Input> define(config: FacetConfig<Input, List<Input>> = FacetConfig()): Facet<Input, List<Input>> {
-            return Facet(
-                config.combine ?: { a -> a },
-                config.compareInput ?: { a, b -> a == b },
-                config.compare ?: config.combine?.let { ::sameArray } ?: { a, b -> a == b },
-                !config.static,
-                config.enables
-            )
-        }
+        fun <Input> define(
+            config: FacetConfig<Input, List<Input>> = FacetConfig()
+        ): Facet<Input, List<Input>> = Facet(
+            config.combine ?: { a -> a },
+            config.compareInput ?: { a, b -> a == b },
+            config.compare ?: config.combine?.let { ::sameArray } ?: { a, b -> a == b },
+            config.static,
+            config.enables
+        )
 
-        /// Define a new facet.
+        // / Define a new facet.
         @JvmName("defineConfigOutput")
-        fun <Input, Output> define(config: FacetConfig<Input, Output> = FacetConfig()): Facet<Input, Output> {
-            return Facet(
-                config.combine ?: { a: List<Input> -> a as Output },
-                config.compareInput ?: { a: Input, b: Input -> a == b },
-                config.compare ?: { a, b -> a == b },
-                !config.static,
-                config.enables
-            )
-        }
+        fun <Input, Output> define(
+            config: FacetConfig<Input, Output> = FacetConfig()
+        ): Facet<Input, Output> = Facet(
+            config.combine ?: { a: List<Input> -> a as Output },
+            config.compareInput ?: { a: Input, b: Input -> a == b },
+            config.compare ?: { a, b -> a == b },
+            config.static,
+            config.enables
+        )
 
         fun <Input> define(
             combine: ((value: List<Input>) -> List<Input>)? = null,
             compare: ((a: List<Input>, b: List<Input>) -> Boolean)? = null,
             compareInput: ((a: Input, b: Input) -> Boolean)? = null,
             static: Boolean = false,
-            enables: Either<Extension, ((self: Facet<Input, List<Input>>) -> Extension)>? = null,
-        ): Facet<Input, List<Input>> {
-            return define(FacetConfig(combine, compare, compareInput, static, enables))
-        }
+            enables: Either<Extension, ((self: Facet<Input, List<Input>>) -> Extension)>? = null
+        ): Facet<Input, List<Input>> =
+            define(FacetConfig(combine, compare, compareInput, static, enables))
 
         @JvmName("defineOutput")
         fun <Input, Output> define(
@@ -169,33 +172,30 @@ class Facet<Input, Output> private constructor(
             compare: ((a: Output, b: Output) -> Boolean)? = null,
             compareInput: ((a: Input, b: Input) -> Boolean)? = null,
             static: Boolean = false,
-            enables: Either<Extension, ((self: Facet<Input, Output>) -> Extension)>? = null,
-        ): Facet<Input, Output> {
-            return define(FacetConfig(combine, compare, compareInput, static, enables))
-        }
+            enables: Either<Extension, ((self: Facet<Input, Output>) -> Extension)>? = null
+        ): Facet<Input, Output> =
+            define(FacetConfig(combine, compare, compareInput, static, enables))
     }
 }
 
-/// A facet reader can be used to fetch the value of a facet, through
-/// [`EditorState.facet`](#state.EditorState.facet) or as a dependency
-/// in [`Facet.compute`](#state.Facet.compute), but not to define new
-/// values for the facet.
+// / A facet reader can be used to fetch the value of a facet, through
+// / [`EditorState.facet`](#state.EditorState.facet) or as a dependency
+// / in [`Facet.compute`](#state.Facet.compute), but not to define new
+// / values for the facet.
 interface FacetReader<Output> : IdSlot<Output> {
-    /// @internal
+    // / @internal
     override val id: Int
 
-    /// @internal
+    // / @internal
     val default: Output
 
-    /// Dummy tag that makes sure TypeScript doesn't consider all object
-    /// types as conforming to this type. Not actually present on the
-    /// object.
+    // / Dummy tag that makes sure TypeScript doesn't consider all object
+    // / types as conforming to this type. Not actually present on the
+    // / object.
     val tag: Output
 }
 
-internal fun <T> sameArray(a: List<T>, b: List<T>): Boolean {
-    return a == b
-}
+internal fun <T> sameArray(a: List<T>, b: List<T>): Boolean = a == b
 
 sealed interface Slot<T> {
     data object Doc : Slot<Nothing>
@@ -233,7 +233,7 @@ class FacetProvider<Input>(
                 Slot.Doc -> depDoc = true
                 Slot.Selection -> depSel = true
                 is IdSlot<*> -> {
-                    addresses[dep.id]?.takeIf { (it and 1) == 0 }?.let {
+                    addresses.getOrElse(dep.id) { 1 }.takeIf { (it and 1) == 0 }?.let {
                         depAddrs.add(it)
                     }
                 }
@@ -255,7 +255,7 @@ class FacetProvider<Input>(
 
                     val stateValue = state.values[idx]
 
-                    if (compare(multi, newVal, stateValue, compare)) {
+                    if (!compare(multi, newVal, stateValue, compare)) {
                         state.values[idx] = newVal
                         return SlotStatusChanged
                     }
@@ -264,18 +264,19 @@ class FacetProvider<Input>(
             }
 
             override fun reconfigure(state: EditorState, oldState: EditorState): SlotStatus {
-                var newVal: SingleOrList<Input>? = null
+                val newVal: SingleOrList<Input>?
                 val oldAddr = oldState.config.address[id]
                 if (oldAddr != null) {
                     val oldVal = getAddr(oldState, oldAddr)
-                    val hasChanges = this@FacetProvider.dependencies.all({ dep ->
+                    val hasChanges = this@FacetProvider.dependencies.all { dep ->
                         when (dep) {
-                            is Facet<*, *> -> oldState.facet(dep) === state.facet(dep)
-                            is StateField -> oldState.field(dep, false) == state.field(dep, false)
+                            is Facet<*, *> -> (oldState.facet(dep) === state.facet(dep))
+                            is StateField -> (oldState.field(dep, false) == state.field(dep, false))
                             else -> true
                         }
-                    })
-                    if (hasChanges || compare(multi, getter(state), oldVal, compare)) {
+                    }
+                    newVal = getter(state)
+                    if (hasChanges || compare(multi, newVal, oldVal, compare)) {
                         state.values[idx] = oldVal
                         return SlotStatusUnresolved
                     }
@@ -294,9 +295,11 @@ class FacetProvider<Input>(
         newVal: SingleOrList<Input>,
         stateValue: Any?,
         compare: (a: Input, b: Input) -> Boolean
-    ) =
-        if (multi) !compareArray(newVal.listOrNull!!, stateValue as List<Input>, compare)
-        else !compare(newVal.itemOrNull!!, stateValue as Input)
+    ) = if (multi) {
+        compareArray(newVal.coerceList(), stateValue.coerceList(), compare)
+    } else {
+        compare(newVal.coerceSingle(), stateValue.coerceSingle())
+    }
 }
 
 internal fun <T> compareArray(a: List<T>, b: List<T>, compare: (a: T, b: T) -> Boolean): Boolean {
@@ -306,14 +309,14 @@ internal fun <T> compareArray(a: List<T>, b: List<T>, compare: (a: T, b: T) -> B
     }
 }
 
-internal fun ensureAll(state: EditorState, addrs: List<Int>): Boolean {
-    return addrs.any { addr -> (ensureAddr(state, addr) and SlotStatusChanged) != 0 }
+internal fun ensureAll(state: EditorState, addrs: List<Int>): Boolean = addrs.any { addr ->
+    (ensureAddr(state, addr) and SlotStatusChanged) != 0
 }
 
 internal fun <Input, Output> dynamicFacetSlot(
     addresses: Map<Int, Int>,
     facet: Facet<Input, Output>,
-    providers: List<FacetProvider<Input>>
+    providers: List<FacetProvider<*>>
 ): DynamicSlot {
     val providerAddrs = providers.map { p -> addresses[p.id]!! }
     val providerTypes = providers.map { p -> p.type }
@@ -321,12 +324,14 @@ internal fun <Input, Output> dynamicFacetSlot(
     val idx = addresses[facet.id]!! shr 1
 
     fun get(state: EditorState): Output {
-        @Suppress("UNCHECKED_CAST")
         val values = buildList {
             for (i in providerAddrs.indices) {
                 val value = getAddr(state, providerAddrs[i])
-                if (providerTypes[i] == Provider.Multi) addAll(value as List<Input>)
-                else add(value as Input)
+                if (providerTypes[i] == Provider.Multi) {
+                    addAll(value.coerceList<Input>())
+                } else {
+                    add(value.coerceSingle<Input>())
+                }
             }
         }
         return facet.combine(values)
@@ -343,7 +348,7 @@ internal fun <Input, Output> dynamicFacetSlot(
             if (!ensureAll(state, dynamic)) return 0
             val value = get(state)
             @Suppress("UNCHECKED_CAST")
-            if (facet.compare(value, state.values[idx] as Output)) return 0
+            if (facet.compare(value, state.values[idx] as Output)) return SlotStatusUnresolved
             state.values[idx] = value
             return SlotStatusChanged
         }
@@ -354,12 +359,12 @@ internal fun <Input, Output> dynamicFacetSlot(
             val oldValue = oldState.facet(facet)
             if (oldProviders != null && !depChanged && sameArray(providers, oldProviders)) {
                 state.values[idx] = oldValue
-                return 0
+                return SlotStatusUnresolved
             }
             val value = get(state)
             if (facet.compare(value, oldValue)) {
                 state.values[idx] = oldValue
-                return 0
+                return SlotStatusUnresolved
             }
             state.values[idx] = value
             return SlotStatusChanged
@@ -367,36 +372,31 @@ internal fun <Input, Output> dynamicFacetSlot(
     }
 }
 
-internal data class StateFieldSpec<Value>(
-    /// Creates the initial value for the field when a state is created.
+data class StateFieldSpec<Value>(
+    // / Creates the initial value for the field when a state is created.
     val create: (state: EditorState) -> Value,
 
-    /// Compute a new value from the field's previous value and a
-    /// [transaction](#state.Transaction).
+    // / Compute a new value from the field's previous value and a
+    // / [transaction](#state.Transaction).
     val update: (value: Value, transaction: Transaction) -> Value,
 
-    /// Compare two values of the field, returning `true` when they are
-    /// the same. This is used to avoid recomputing facets that depend
-    /// on the field when its value did not change. Defaults to using
-    /// `===`.
+    // / Compare two values of the field, returning `true` when they are
+    // / the same. This is used to avoid recomputing facets that depend
+    // / on the field when its value did not change. Defaults to using
+    // / `===`.
     val compare: ((a: Value, b: Value) -> Boolean)? = null,
 
-    /// Provide extensions based on this field. The given fun will
-    /// be called once with the initialized field. It will usually want
-    /// to call some facet's [`from`](#state.Facet.from) method to
-    /// create facet inputs from this field, but can also return other
-    /// extensions that should be enabled when the field is present in a
-    /// configuration.
-    val provide: ((field: StateField<Value>) -> Extension)? = null
-
-    /// A fun used to serialize this field's content to JSON. Only
-    /// necessary when this field is included in the argument to
-    /// [`EditorState.toJSON`](#state.EditorState.toJSON).
-//    fun toJSON(value: Value, state: EditorState): any? = null
-
-    /// A fun that deserializes the JSON representation of this
-    /// field's content.
-//    fun fromJSON(json: Any, state: EditorState): Value? = null
+    // / Provide extensions based on this field. The given fun will
+    // / be called once with the initialized field. It will usually want
+    // / to call some facet's [`from`](#state.Facet.from) method to
+    // / create facet inputs from this field, but can also return other
+    // / extensions that should be enabled when the field is present in a
+    // / configuration.
+    val provide: ((field: StateField<Value>) -> Extension)? = null,
+    // / A serializer used to serialize this field's content to JSON. Only
+    // / necessary when this field is included in the argument to
+    // / [`EditorState.toJSON`](#state.EditorState.toJSON).
+    val serializer: KSerializer<Value>? = null
 )
 
 data class InitFieldType(
@@ -408,38 +408,36 @@ internal val initField = Facet.define<InitFieldType>(static = true)
 
 typealias StateGetter<Value> = (state: EditorState) -> Value
 
-/// Fields can store additional information in an editor state, and
-/// keep it in sync with the rest of the state.
+// / Fields can store additional information in an editor state, and
+// / keep it in sync with the rest of the state.
 class StateField<Value> private constructor(
-    /// @internal
+    // / @internal
     override val id: Int = nextID.getAndIncrement(),
     private val createF: (state: EditorState) -> Value,
     private val updateF: (value: Value, tr: Transaction) -> Value,
     private val compareF: (a: Value, b: Value) -> Boolean,
-    /// @internal
+    // / @internal
     internal val spec: StateFieldSpec<Value>
-) : IdSlot<Value>, Extension {
-    /// @internal
+) : IdSlot<Value>,
+    Extension {
+    // / @internal
     public var provides: Extension? = null
 
-    fun init(create: (state: EditorState) -> Value): Extension {
-        return ExtensionSet(
-            listOf(this, initField.of(InitFieldType(field = this, create = create)))
-        )
-    }
+    fun init(create: (state: EditorState) -> Value): Extension =
+        listOf(this, initField.of(InitFieldType(field = this, create = create))).extension
 
-    private fun create(state: EditorState): Value {
+    private fun createImpl(state: EditorState): Value {
         val init = state.facet(initField).find { it.field == this }
         @Suppress("UNCHECKED_CAST")
         return ((init?.create as? (state: EditorState) -> Value) ?: this.createF)(state)
     }
 
-    /// @internal
+    // / @internal
     fun slot(addresses: Map<Int, Int>): DynamicSlot {
         val idx = addresses[this.id]!! shr 1
         return object : DynamicSlot {
             override fun create(state: EditorState): SlotStatus {
-                state.values[idx] = this.create(state)
+                state.values[idx] = createImpl(state)
                 return SlotStatusChanged
             }
 
@@ -456,15 +454,15 @@ class StateField<Value> private constructor(
                     state.values[idx] = oldState.field(this@StateField)
                     return 0
                 }
-                state.values[idx] = this.create(state)
+                state.values[idx] = createImpl(state)
                 return SlotStatusChanged
             }
         }
     }
 
-    /// State field instances can be used as
-    /// [`Extension`](#state.Extension) values to enable the field in a
-    /// given state.
+    // / State field instances can be used as
+    // / [`Extension`](#state.Extension) values to enable the field in a
+    // / given state.
     val extension: Extension
         get() {
             return this
@@ -472,8 +470,8 @@ class StateField<Value> private constructor(
 
     companion object {
 
-        /// Define a state field.
-        internal fun <Value> define(config: StateFieldSpec<Value>): StateField<Value> {
+        // / Define a state field.
+        fun <Value> define(config: StateFieldSpec<Value>): StateField<Value> {
             val field = StateField<Value>(
                 createF = config.create,
                 updateF = config.update,
@@ -483,23 +481,70 @@ class StateField<Value> private constructor(
             config.provide?.let { field.provides = it(field) }
             return field
         }
+
+        fun <Value> define(
+            // / Creates the initial value for the field when a state is created.
+            create: (state: EditorState) -> Value,
+
+            // / Compute a new value from the field's previous value and a
+            // / [transaction](#state.Transaction).
+            update: (value: Value, transaction: Transaction) -> Value,
+
+            // / Compare two values of the field, returning `true` when they are
+            // / the same. This is used to avoid recomputing facets that depend
+            // / on the field when its value did not change. Defaults to using
+            // / `===`.
+            compare: ((a: Value, b: Value) -> Boolean)? = null,
+
+            // / Provide extensions based on this field. The given fun will
+            // / be called once with the initialized field. It will usually want
+            // / to call some facet's [`from`](#state.Facet.from) method to
+            // / create facet inputs from this field, but can also return other
+            // / extensions that should be enabled when the field is present in a
+            // / configuration.
+            provide: ((field: StateField<Value>) -> Extension)? = null
+        ): StateField<Value> = define(StateFieldSpec(create, update, compare, provide))
+
+        inline fun <reified Value> defineSerializable(
+            // / Creates the initial value for the field when a state is created.
+            noinline create: (state: EditorState) -> Value,
+
+            // / Compute a new value from the field's previous value and a
+            // / [transaction](#state.Transaction).
+            noinline update: (value: Value, transaction: Transaction) -> Value,
+
+            // / Compare two values of the field, returning `true` when they are
+            // / the same. This is used to avoid recomputing facets that depend
+            // / on the field when its value did not change. Defaults to using
+            // / `===`.
+            noinline compare: ((a: Value, b: Value) -> Boolean)? = null,
+
+            // / Provide extensions based on this field. The given fun will
+            // / be called once with the initialized field. It will usually want
+            // / to call some facet's [`from`](#state.Facet.from) method to
+            // / create facet inputs from this field, but can also return other
+            // / extensions that should be enabled when the field is present in a
+            // / configuration.
+            noinline provide: ((field: StateField<Value>) -> Extension)? = null
+        ): StateField<Value> =
+            define(StateFieldSpec(create, update, compare, provide, serializer<Value>()))
     }
 }
 
-/// Extension values can be
-/// [provided](#state.EditorStateConfig.extensions) when creating a
-/// state to attach various kinds of configuration and behavior
-/// information. They can either be built-in extension-providing
-/// objects, such as [state fields](#state.StateField) or [facet
-/// providers](#state.Facet.of), or objects with an extension in its
-/// `extension` property. Extensions can be nested in arrays
-/// arbitrarily deep—they will be flattened when processed.
+// / Extension values can be
+// / [provided](#state.EditorStateConfig.extensions) when creating a
+// / state to attach various kinds of configuration and behavior
+// / information. They can either be built-in extension-providing
+// / objects, such as [state fields](#state.StateField) or [facet
+// / providers](#state.Facet.of), or objects with an extension in its
+// / `extension` property. Extensions can be nested in arrays
+// / arbitrarily deep—they will be flattened when processed.
 interface Extension
-data class ExtensionSet(val extensions: List<Extension>) : Extension
+data class ExtensionSet internal constructor(val extensions: List<Extension>) : Extension
 
 val List<Extension>.extension: Extension
-    get() = ExtensionSet(this)
-//export type Extension = { extension: Extension } | readonly Extension[]
+    get() = ExtensionSet(this.flatMap { (it as? ExtensionSet)?.extensions ?: listOf(it) })
+// export type Extension = { extension: Extension } | readonly Extension[]
 
 internal object Prec_ {
     val lowest = 4
@@ -512,78 +557,68 @@ internal object Prec_ {
 internal fun prec(value: Int): (Extension) -> Extension =
     { ext: Extension -> PrecExtension(ext, value) as Extension }
 
-/// By default extensions are registered in the order they are found
-/// in the flattened form of nested array that was provided.
-/// Individual extension values can be assigned a precedence to
-/// override this. Extensions that do not have a precedence set get
-/// the precedence of the nearest parent with a precedence, or
-/// [`default`](#state.Prec.default) if there is no such parent. The
-/// final ordering of extensions is determined by first sorting by
-/// precedence and then by order within each precedence.
+// / By default extensions are registered in the order they are found
+// / in the flattened form of nested array that was provided.
+// / Individual extension values can be assigned a precedence to
+// / override this. Extensions that do not have a precedence set get
+// / the precedence of the nearest parent with a precedence, or
+// / [`default`](#state.Prec.default) if there is no such parent. The
+// / final ordering of extensions is determined by first sorting by
+// / precedence and then by order within each precedence.
 object Prec {
-    /// The highest precedence level, for extensions that should end up
-    /// near the start of the precedence ordering.
+    // / The highest precedence level, for extensions that should end up
+    // / near the start of the precedence ordering.
     val highest = prec(Prec_.highest)
 
-    /// A higher-than-default precedence, for extensions that should
-    /// come before those with default precedence.
+    // / A higher-than-default precedence, for extensions that should
+    // / come before those with default precedence.
     val high = prec(Prec_.high)
 
-    /// The default precedence, which is also used for extensions
-    /// without an explicit precedence.
+    // / The default precedence, which is also used for extensions
+    // / without an explicit precedence.
     val default = prec(Prec_.default)
 
-    /// A lower-than-default precedence.
+    // / A lower-than-default precedence.
     val low = prec(Prec_.low)
 
-    /// The lowest precedence level. Meant for things that should end up
-    /// near the end of the extension order.
+    // / The lowest precedence level. Meant for things that should end up
+    // / near the end of the extension order.
     val lowest = prec(Prec_.lowest)
 }
 
 class PrecExtension constructor(val inner: Extension, val prec: Int) : Extension
 
-
-/// Extension compartments can be used to make a configuration
-/// dynamic. By [wrapping](#state.Compartment.of) part of your
-/// configuration in a compartment, you can later
-/// [replace](#state.Compartment.reconfigure) that part through a
-/// transaction.
+// / Extension compartments can be used to make a configuration
+// / dynamic. By [wrapping](#state.Compartment.of) part of your
+// / configuration in a compartment, you can later
+// / [replace](#state.Compartment.reconfigure) that part through a
+// / transaction.
 class Compartment {
-    /// Create an instance of this compartment to add to your [state
-    /// configuration](#state.EditorStateConfig.extensions).
-    fun of(ext: Extension): Extension {
-        return CompartmentInstance(this, ext)
-    }
+    // / Create an instance of this compartment to add to your [state
+    // / configuration](#state.EditorStateConfig.extensions).
+    fun of(ext: Extension): Extension = CompartmentInstance(this, ext)
 
-    /// Create an [effect](#state.TransactionSpec.effects) that
-    /// reconfigures this compartment.
-    fun reconfigure(content: Extension): StateEffect<*> {
-        return Compartment.reconfigure.of(CompartmentType(compartment = this, extension = content))
-    }
+    // / Create an [effect](#state.TransactionSpec.effects) that
+    // / reconfigures this compartment.
+    fun reconfigure(content: Extension): StateEffect<*> =
+        Compartment.reconfigure.of(CompartmentType(compartment = this, extension = content))
 
-    /// Get the current content of the compartment in the state, or
-    /// `undefined` if it isn't present.
-    fun get(state: EditorState): Extension? {
-        return state.config.compartments.get(this)
-    }
+    // / Get the current content of the compartment in the state, or
+    // / `undefined` if it isn't present.
+    fun get(state: EditorState): Extension? = state.config.compartments.get(this)
 
-    data class CompartmentType(
-        val compartment: Compartment,
-        val extension: Extension
-    )
+    data class CompartmentType(val compartment: Compartment, val extension: Extension)
 
     companion object {
-        /// This is initialized in state.ts to avoid a cyclic dependency
-        /// @internal
+        // / This is initialized in state.ts to avoid a cyclic dependency
+        // / @internal
         val reconfigure = StateEffect.define<CompartmentType>()
 //        Compartment.reconfigure = StateEffect.define<{ compartment: Compartment, extension: Extension }>()
     }
 }
 
 class CompartmentInstance constructor(val compartment: Compartment, val inner: Extension) :
-    Extension {
-}
+    Extension
 
 interface DynamicSlot {
     fun create(state: EditorState): SlotStatus
@@ -650,7 +685,7 @@ class Configuration constructor(
                     if (sameArray(oldProviders, providers)) {
                         staticValues.add(oldState!!.facet(facet)!!)
                     } else {
-                        val value = facet.combine(providers.map { p -> p.value })
+                        val value = facet.combine(providers.map { p -> p.value.b })
                         val element = oldState?.takeIf {
                             facet.compare(value, it.facet(facet))
                         }?.facet(facet) ?: value
@@ -671,7 +706,7 @@ class Configuration constructor(
                         dynamicFacetSlot(
                             a,
                             facet,
-                            providers.filterIsInstance<FacetProvider<Any?>>()
+                            providers
                         )
                     }
                 }
@@ -688,10 +723,10 @@ internal fun flatten(
     compartments: Map<Compartment, Extension>,
     newCompartments: MutableMap<Compartment, Extension>
 ): List<Either<out FacetProvider<*>, out StateField<*>>> {
-    val result = mutableListOf<MutableList<Either<out FacetProvider<*>, out StateField<*>>>>()
+    val result = List(5) { mutableListOf<Either<out FacetProvider<*>, out StateField<*>>>() }
     val seen = mutableMapOf<Extension, Int>()
     fun inner(ext: Extension, prec: Int) {
-        val known = seen.get(ext)
+        val known = seen[ext]
         if (known != null) {
             if (known <= prec) return
             val found = result[known].indexOfFirst { it.a == ext }
@@ -705,8 +740,9 @@ internal fun flatten(
             }
 
             is CompartmentInstance -> {
-                if (newCompartments.containsKey(ext.compartment))
+                if (newCompartments.containsKey(ext.compartment)) {
                     throw IllegalArgumentException("Duplicate use of compartment in extensions")
+                }
                 val content = compartments.get(ext.compartment) ?: ext.inner
                 newCompartments.set(ext.compartment, content)
                 inner(content, prec)
@@ -728,7 +764,9 @@ internal fun flatten(
 
             is Facet<*, *> -> {
                 val content = ext.extension
-                    ?: throw Error("Unrecognized extension value in extension set (${ext}). This sometimes happens because multiple instances of @codemirror/state are loaded, breaking instanceof checks.")
+                    ?: throw Error(
+                        "Unrecognized extension value in extension set ($ext). This sometimes happens because multiple instances of @codemirror/state are loaded, breaking instanceof checks."
+                    )
                 inner(content, prec)
             }
         }
@@ -744,7 +782,6 @@ val SlotStatusChanged = 1
 val SlotStatusComputed = 2
 val SlotStatusComputing = 4
 
-
 fun ensureAddr(state: EditorState, addr: Int): SlotStatus {
     if ((addr and 1) != 0) return SlotStatusComputed
     val idx = addr shr 1
@@ -758,6 +795,10 @@ fun ensureAddr(state: EditorState, addr: Int): SlotStatus {
     }
 }
 
-fun getAddr(state: EditorState, addr: Int): Any? {
-    return if ((addr and 1) != 0) state.config.staticValues[addr shr 1] else state.values[addr shr 1]
+fun getAddr(state: EditorState, addr: Int): Any? = if ((addr and 1) !=
+    0
+) {
+    state.config.staticValues[addr shr 1]
+} else {
+    state.values[addr shr 1]
 }
