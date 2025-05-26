@@ -175,6 +175,12 @@ class Facet<Input, Output> private constructor(
             enables: Either<Extension, ((self: Facet<Input, Output>) -> Extension)>? = null
         ): Facet<Input, Output> =
             define(FacetConfig(combine, compare, compareInput, static, enables))
+
+        inline fun <reified A, B> Facet<Either<A, B>, *>.ofLeft(value: A): Extension =
+            of(value.asLeft)
+
+        inline fun <A, reified B> Facet<Either<A, B>, *>.ofRight(value: B): Extension =
+            of(value.asRight)
     }
 }
 
