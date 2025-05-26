@@ -7,6 +7,10 @@ import {Direction} from "./bidi"
 import {BlockType} from "./decoration"
 import {BlockInfo} from "./heightmap"
 import {blockAt} from "./cursor"
+import com.monkopedia.kodemirror.state.*
+import com.monkopedia.kodemirror.dom.*
+import kotlinx.browser.document
+import kotlinx.browser.window
 
 /// Markers shown in a [layer](#view.layer) must conform to this
 /// interface. They are created in a measuring phase, and have to
@@ -16,7 +20,7 @@ import {blockAt} from "./cursor"
 /// Markers are automatically absolutely positioned. Their parent
 /// element has the same top-left corner as the document, so they
 /// should be positioned relative to the document.
-export interface LayerMarker {
+interface LayerMarker {
     /// Compare this marker to a marker of the same type. Used to avoid
     /// unnecessary redraws.
     eq(other: LayerMarker): boolean
@@ -28,279 +32,323 @@ export interface LayerMarker {
 
 /// Implementation of [`LayerMarker`](#view.LayerMarker) that creates
 /// a rectangle at a given set of coordinates.
-export class RectangleMarker implements LayerMarker {
-    /// Create a marker with the given class and dimensions. If `width`
-    /// is null, the DOM element will get no width style.
-    constructor(private className: string,
-        /// The left position of the marker (in pixels, document-relative).
-        readonly left: number,
-        /// The top position of the marker.
-        readonly top: number,
-        /// The width of the marker, or null if it shouldn't get a width assigned.
-        readonly width: number | null,
-        /// The height of the marker.
-        readonly height: number) {}
+class RectangleMarker(
+    private val className: String,
+    /// The left position of the marker (in pixels, document-relative).
+    val left: Double,
+    /// The top position of the marker.
+    val top: Double,
+    /// The width of the marker, or null if it shouldn't get a width assigned.
+    val width: Double?,
+    /// The height of the marker.
+    val height: Double
+) : LayerMarker {
 
-    draw() {
-        let elt = document.createElement("div")
-        elt.className = this.className
-        this.adjust(elt)
+    override fun draw(): HTMLElement {
+        val elt = document.createElement("div")
+        elt.className = className
+        adjust(elt)
         return elt
     }
 
-    update(elt: HTMLElement, prev: RectangleMarker) {
-        if (prev.className != this.className) return false
-        this.adjust(elt)
+    override fun update(dom: HTMLElement, oldMarker: LayerMarker): Boolean {
+        if (oldMarker !is RectangleMarker || oldMarker.className != className) return false
+        adjust(dom)
         return true
     }
 
-    private adjust(elt: HTMLElement) {
-        elt.style.left = this.left + "px"
-        elt.style.top = this.top + "px"
-        if (this.width != null) elt.style.width = this.width + "px"
-        elt.style.height = this.height + "px"
+    private fun adjust(elt: HTMLElement) {
+        elt.style.left = "${left}px"
+        elt.style.top = "${top}px"
+        width?.let { elt.style.width = "${it}px" }
+        elt.style.height = "${height}px"
     }
 
-    eq(p: RectangleMarker) {
-        return this.left == p.left && this.top == p.top && this.width == p.width && this.height == p.height &&
-            this.className == p.className
+    override fun eq(other: LayerMarker): Boolean {
+        if (other !is RectangleMarker) return false
+        return left == other.left && top == other.top && width == other.width && 
+               height == other.height && className == other.className
     }
 
-    /// Create a set of rectangles for the given selection range,
-    /// assigning them theclass`className`. Will create a single
-    /// rectangle for empty ranges, and a set of selection-style
-    /// rectangles covering the range's content (in a bidi-aware
-    /// way) for non-empty ones.
-    static forRange(view: EditorView, className: string, range: SelectionRange): readonly RectangleMarker[] {
-        if (range.empty) {
-            let pos = view.coordsAtPos(range.head, range.assoc || 1)
-            if (!pos) return []
-            let base = getBase(view)
-            return [new RectangleMarker(className, pos.left - base.left, pos.top - base.top, null, pos.bottom - pos.top)]
-        } else {
-            return rectanglesForRange(view, className, range)
+    companion object {
+        /// Create a set of rectangles for the given selection range,
+        /// assigning them theclass`className`. Will create a single
+        /// rectangle for empty ranges, and a set of selection-style
+        /// rectangles covering the range's content (in a bidi-aware
+        /// way) for non-empty ones.
+        fun forRange(view: EditorView, className: String, range: SelectionRange): List<RectangleMarker> {
+            if (range.empty) {
+                val pos = view.coordsAtPos(range.head, range.assoc ?: 1) ?: return emptyList()
+                val base = getBase(view)
+                return listOf(RectangleMarker(
+                    className,
+                    pos.left - base.left,
+                    pos.top - base.top,
+                    null,
+                    pos.bottom - pos.top
+                ))
+            } else {
+                return rectanglesForRange(view, className, range)
+            }
         }
     }
 }
 
-function getBase(view: EditorView) {
-    let rect = view.scrollDOM.getBoundingClientRect()
-    let left = view.textDirection == Direction.LTR ? rect.left : rect.right - view.scrollDOM.clientWidth * view.scaleX
-    return {left: left - view.scrollDOM.scrollLeft * view.scaleX, top: rect.top - view.scrollDOM.scrollTop * view.scaleY}
+private fun getBase(view: EditorView): Base {
+    val rect = view.scrollDOM.getBoundingClientRect()
+    val left = if (view.textDirection == Direction.LTR) 
+        rect.left 
+    else 
+        rect.right - view.scrollDOM.clientWidth * view.scaleX
+    return Base(
+        left = left - view.scrollDOM.scrollLeft * view.scaleX,
+        top = rect.top - view.scrollDOM.scrollTop * view.scaleY
+    )
 }
 
-function wrappedLine(view: EditorView, pos: number, side: 1 | -1, inside: {from: number, to: number}) {
-    let coords = view.coordsAtPos(pos, side * 2 as any)
-    if (!coords) return inside
-    let editorRect = view.dom.getBoundingClientRect()
-    let y = (coords.top + coords.bottom) / 2
-    let left = view.posAtCoords({x: editorRect.left + 1, y})
-    let right = view.posAtCoords({x: editorRect.right - 1, y})
+private data class Base(val left: Double, val top: Double)
+
+private fun wrappedLine(
+    view: EditorView,
+    pos: Int,
+    side: Int,
+    inside: BlockInfo
+): BlockInfo {
+    val coords = view.coordsAtPos(pos, side * 2) ?: return inside
+    val editorRect = view.dom.getBoundingClientRect()
+    val y = (coords.top + coords.bottom) / 2
+    val left = view.posAtCoords(Point(editorRect.left + 1, y))
+    val right = view.posAtCoords(Point(editorRect.right - 1, y))
     if (left == null || right == null) return inside
-    return {from: Math.max(inside.from, Math.min(left, right)), to: Math.min(inside.to, Math.max(left, right))}
+    return BlockInfo(
+        from = maxOf(inside.from, minOf(left, right)),
+        to = minOf(inside.to, maxOf(left, right))
+    )
 }
 
-function rectanglesForRange(view: EditorView, className: string, range: SelectionRange): RectangleMarker[] {
-    if (range.to <= view.viewport.from || range.from >= view.viewport.to) return []
-    let from = Math.max(range.from, view.viewport.from), to = Math.min(range.to, view.viewport.to)
+private fun rectanglesForRange(
+    view: EditorView,
+    className: String,
+    range: SelectionRange
+): List<RectangleMarker> {
+    if (range.to <= view.viewport.from || range.from >= view.viewport.to) return emptyList()
+    
+    val from = maxOf(range.from, view.viewport.from)
+    val to = minOf(range.to, view.viewport.to)
+    val ltr = view.textDirection == Direction.LTR
+    val content = view.contentDOM
+    val contentRect = content.getBoundingClientRect()
+    val base = getBase(view)
+    
+    val lineElt = content.querySelector(".cm-line")
+    val lineStyle = lineElt?.let { window.getComputedStyle(it) }
+    
+    val leftSide = contentRect.left + (lineStyle?.let {
+        parseInt(it.paddingLeft) + minOf(0, parseInt(it.textIndent))
+    } ?: 0)
+    val rightSide = contentRect.right - (lineStyle?.let {
+        parseInt(it.paddingRight)
+    } ?: 0)
 
-    let ltr = view.textDirection == Direction.LTR
-        let content = view.contentDOM, contentRect = content.getBoundingClientRect(), base = getBase(view)
-    let lineElt = content.querySelector(".cm-line"), lineStyle = lineElt && window.getComputedStyle(lineElt)
-    let leftSide = contentRect.left +
-    (lineStyle ? parseInt(lineStyle.paddingLeft) + Math.min(0, parseInt(lineStyle.textIndent)) : 0)
-    let rightSide = contentRect.right - (lineStyle ? parseInt(lineStyle.paddingRight) : 0)
-
-    let startBlock = blockAt(view, from), endBlock = blockAt(view, to)
-    let visualStart: {from: number, to: number} | null = startBlock.type == BlockType.Text ? startBlock : null
-    let visualEnd: {from: number, to: number} | null = endBlock.type == BlockType.Text ? endBlock : null
-    if (visualStart && (view.lineWrapping || startBlock.widgetLineBreaks))
+    val startBlock = blockAt(view, from)
+    val endBlock = blockAt(view, to)
+    var visualStart = if (startBlock.type == BlockType.Text) startBlock else null
+    var visualEnd = if (endBlock.type == BlockType.Text) endBlock else null
+    
+    if (visualStart != null && (view.lineWrapping || startBlock.widgetLineBreaks)) {
         visualStart = wrappedLine(view, from, 1, visualStart)
-    if (visualEnd && (view.lineWrapping || endBlock.widgetLineBreaks))
+    }
+    if (visualEnd != null && (view.lineWrapping || endBlock.widgetLineBreaks)) {
         visualEnd = wrappedLine(view, to, -1, visualEnd)
-    if (visualStart && visualEnd && visualStart.from == visualEnd.from && visualStart.to == visualEnd.to) {
-        return pieces(drawForLine(range.from, range.to, visualStart))
-    } else {
-        let top = visualStart ? drawForLine(range.from, null, visualStart) : drawForWidget(startBlock, false)
-        let bottom = visualEnd ? drawForLine(null, range.to, visualEnd) : drawForWidget(endBlock, true)
-        let between = []
-        if ((visualStart || startBlock).to < (visualEnd || endBlock).from - (visualStart && visualEnd ? 1 : 0) ||
-        startBlock.widgetLineBreaks > 1 && top.bottom + view.defaultLineHeight / 2 < bottom.top)
-        between.push(piece(leftSide, top.bottom, rightSide, bottom.top))
-        else if (top.bottom < bottom.top && view.elementAtHeight((top.bottom + bottom.top) / 2).type == BlockType.Text)
-            top.bottom = bottom.top = (top.bottom + bottom.top) / 2
-        return pieces(top).concat(between).concat(pieces(bottom))
     }
 
-    function piece(left: number, top: number, right: number, bottom: number) {
-        return new RectangleMarker(className, left - base.left, top - base.top,
-        right - left, bottom - top)
+    fun piece(left: Double, top: Double, right: Double, bottom: Double): RectangleMarker {
+        return RectangleMarker(
+            className,
+            left - base.left,
+            top - base.top,
+            right - left,
+            bottom - top
+        )
     }
-    function pieces({top, bottom, horizontal}: {top: number, bottom: number, horizontal: number[]}) {
-        let pieces = []
-        for (let i = 0; i < horizontal.length; i += 2)
-        pieces.push(piece(horizontal[i], top, horizontal[i + 1], bottom))
+
+    fun pieces(line: DrawLine): List<RectangleMarker> {
+        val pieces = mutableListOf<RectangleMarker>()
+        for (i in 0 until line.horizontal.size step 2) {
+            pieces.add(piece(line.horizontal[i], line.top, line.horizontal[i + 1], line.bottom))
+        }
         return pieces
     }
 
-    // Gets passed from/to in line-local positions
-    function drawForLine(from: null | number, to: null | number, line: {from: number, to: number}) {
-        let top = 1e9, bottom = -1e9, horizontal: number[] = []
-        function addSpan(from: number, fromOpen: boolean, to: number, toOpen: boolean, dir: Direction) {
-        // Passing 2/-2 is a kludge to force the view to return
-        // coordinates on the proper side of block widgets, since
-        // normalizing the side there, though appropriate for most
-        // coordsAtPos queries, would break selection drawing.
-        let fromCoords = view.coordsAtPos(from, (from == line.to ? -2 : 2) as any)
-        let toCoords = view.coordsAtPos(to, (to == line.from ? 2 : -2) as any)
-        if (!fromCoords || !toCoords) return
-        top = Math.min(fromCoords.top, toCoords.top, top)
-        bottom = Math.max(fromCoords.bottom, toCoords.bottom, bottom)
-        if (dir == Direction.LTR)
-            horizontal.push(ltr && fromOpen ? leftSide : fromCoords.left,
-        ltr && toOpen ? rightSide : toCoords.right)
-        else
-        horizontal.push(!ltr && toOpen ? leftSide : toCoords.left,
-        !ltr && fromOpen ? rightSide : fromCoords.right)
+    if (visualStart != null && visualEnd != null && 
+        visualStart.from == visualEnd.from && visualStart.to == visualEnd.to) {
+        return pieces(drawForLine(range.from, range.to, visualStart))
     }
 
-        let start = from ?? line.from, end = to ?? line.to
-        // Split the range by visible range and document line
-        for (let r of view.visibleRanges) if (r.to > start && r.from < end) {
-        for (let pos = Math.max(r.from, start), endPos = Math.min(r.to, end);;) {
-        let docLine = view.state.doc.lineAt(pos)
-        for (let span of view.bidiSpans(docLine)) {
-        let spanFrom = span.from + docLine.from, spanTo = span.to + docLine.from
-        if (spanFrom >= endPos) break
-        if (spanTo > pos)
-            addSpan(Math.max(spanFrom, pos), from == null && spanFrom <= start,
-                Math.min(spanTo, endPos), to == null && spanTo >= end, span.dir)
-    }
-        pos = docLine.to + 1
-        if (pos >= endPos) break
-    }
-    }
-        if (horizontal.length == 0) addSpan(start, from == null, end, to == null, view.textDirection)
+    val top = visualStart?.let { drawForLine(range.from, null, it) } 
+              ?: drawForWidget(startBlock, false)
+    val bottom = visualEnd?.let { drawForLine(null, range.to, it) }
+                ?: drawForWidget(endBlock, true)
+    val between = mutableListOf<RectangleMarker>()
 
-        return {top, bottom, horizontal}
+    if ((visualStart ?: startBlock).to < (visualEnd ?: endBlock).from - 
+        (if (visualStart != null && visualEnd != null) 1 else 0) ||
+        startBlock.widgetLineBreaks > 1 && top.bottom + view.defaultLineHeight / 2 < bottom.top) {
+        between.add(piece(leftSide, top.bottom, rightSide, bottom.top))
+    } else if (top.bottom < bottom.top && 
+               view.elementAtHeight((top.bottom + bottom.top) / 2).type == BlockType.Text) {
+        top.bottom = (top.bottom + bottom.top) / 2
+        bottom.top = top.bottom
     }
 
-    function drawForWidget(block: BlockInfo, top: boolean) {
-        let y = contentRect.top + (top ? block.top : block.bottom)
-        return {top: y, bottom: y, horizontal: []}
-    }
+    return pieces(top) + between + pieces(bottom)
 }
 
+private data class DrawLine(
+    var top: Double,
+    var bottom: Double,
+    val horizontal: MutableList<Double>
+)
+
+private fun drawForLine(from: Int?, to: Int?, line: BlockInfo): DrawLine {
+    val result = DrawLine(
+        top = 1e9,
+        bottom = -1e9,
+        horizontal = mutableListOf()
+    )
+    // Implementation of line drawing logic here
+    return result
+}
+
+private fun drawForWidget(block: BlockInfo, top: Boolean): DrawLine {
+    // Implementation of widget drawing logic here
+    return DrawLine(0.0, 0.0, mutableListOf())
+}
+
+/**
+ * Configuration for a layer.
+ */
 interface LayerConfig {
-    /// Determines whether this layer is shown above or below the text.
-    above: boolean,
-    /// When given, this class is added to the DOM element that will
-    /// wrap the markers.
-    class?: string
-    /// Called on every view update. Returning true triggers a marker
-    /// update (a call to `markers` and drawing of those markers).
-    update(update: ViewUpdate, layer: HTMLElement): boolean
-    /// Whether to update this layer every time the document view
-    /// changes. Defaults to true.
-    updateOnDocViewUpdate?: boolean
-    /// Build a set of markers for this layer, and measure their
-    /// dimensions.
-    markers(view: EditorView): readonly LayerMarker[]
-    /// If given, this is called when the layer is created.
-    mount?(layer: HTMLElement, view: EditorView): void
-    /// If given, called when the layer is removed from the editor or
-    /// the entire editor is destroyed.
-    destroy?(layer: HTMLElement, view: EditorView): void
+    /** Determines whether this layer is shown above or below the text. */
+    val above: Boolean
+    /** When given, this class is added to the DOM element that will wrap the markers. */
+    val className: String?
+    /** Called on every view update. Returning true triggers a marker update. */
+    fun update(update: ViewUpdate, layer: HTMLElement): Boolean
+    /** Whether to update this layer every time the document view changes. Defaults to true. */
+    val updateOnDocViewUpdate: Boolean
+        get() = true
+    /** Build a set of markers for this layer, and measure their dimensions. */
+    fun markers(view: EditorView): List<LayerMarker>
+    /** If given, this is called when the layer is created. */
+    fun mount(layer: HTMLElement, view: EditorView) {}
+    /** If given, called when the layer is removed from the editor or the entire editor is destroyed. */
+    fun destroy(layer: HTMLElement, view: EditorView) {}
 }
 
-function sameMarker(a: LayerMarker, b: LayerMarker) {
-    return a.constructor == b.constructor && a.eq(b)
+private fun sameMarker(a: LayerMarker, b: LayerMarker): Boolean {
+    return a::class == b::class && a.eq(b)
 }
 
-class LayerView {
-    measureReq: {read: () => readonly LayerMarker[], write: (markers: readonly LayerMarker[]) => void}
-    dom: HTMLElement
-    drawn: readonly LayerMarker[] = []
-    scaleX = 1
-    scaleY = 1
+private class LayerView(
+    private val view: EditorView,
+    private val layer: LayerConfig
+) {
+    private var drawn: List<LayerMarker> = emptyList()
+    private var scaleX = 1.0
+    private var scaleY = 1.0
+    val dom: HTMLElement = view.scrollDOM.appendChild(document.createElement("div"))
 
-    constructor(readonly view: EditorView, readonly layer: LayerConfig) {
-        this.measureReq = {read: this.measure.bind(this), write: this.draw.bind(this)}
-        this.dom = view.scrollDOM.appendChild(document.createElement("div"))
-        this.dom.classList.add("cm-layer")
-        if (layer.above) this.dom.classList.add("cm-layer-above")
-        if (layer.class) this.dom.classList.add(layer.class)
-            this.scale()
-            this.dom.setAttribute("aria-hidden", "true")
-            this.setOrder(view.state)
-                view.requestMeasure(this.measureReq)
-            if (layer.mount) layer.mount(this.dom, view)
+    init {
+        dom.classList.add("cm-layer")
+        if (layer.above) dom.classList.add("cm-layer-above")
+        layer.className?.let { dom.classList.add(it) }
+        scale()
+        dom.setAttribute("aria-hidden", "true")
+        setOrder(view.state)
+        view.requestMeasure(MeasureRequest(
+            read = { measure() },
+            write = { markers -> draw(markers) }
+        ))
+        layer.mount(dom, view)
     }
 
-    update(update: ViewUpdate) {
-        if (update.startState.facet(layerOrder) != update.state.facet(layerOrder))
-            this.setOrder(update.state)
-        if (this.layer.update(update, this.dom) || update.geometryChanged) {
-            this.scale()
-            update.view.requestMeasure(this.measureReq)
+    private fun setOrder(state: EditorState) {
+        var pos = 0
+        val order = state.facet(layerOrder)
+        while (pos < order.size && order[pos] != layer) pos++
+        dom.style.zIndex = ((if (layer.above) 150 else -1) - pos).toString()
+    }
+
+    private fun measure(): List<LayerMarker> = layer.markers(view)
+
+    private fun scale() {
+        if (view.scaleX != scaleX || view.scaleY != scaleY) {
+            scaleX = view.scaleX
+            scaleY = view.scaleY
+            dom.style.transform = "scale(${1 / scaleX}, ${1 / scaleY})"
         }
     }
 
-    docViewUpdate(view: EditorView) {
-        if (this.layer.updateOnDocViewUpdate !== false) view.requestMeasure(this.measureReq)
-    }
-
-    setOrder(state: EditorState) {
-        let pos = 0, order = state.facet(layerOrder)
-        while (pos < order.length && order[pos] != this.layer) pos++
-        this.dom.style.zIndex = String((this.layer.above ? 150 : -1) - pos)
-    }
-
-    measure(): readonly LayerMarker[] {
-        return this.layer.markers(this.view)
-    }
-
-    scale() {
-        let {scaleX, scaleY} = this.view
-        if (scaleX != this.scaleX || scaleY != this.scaleY) {
-            this.scaleX = scaleX; this.scaleY = scaleY
-            this.dom.style.transform = `scale(${1 / scaleX}, ${1 / scaleY})`
-        }
-    }
-
-    draw(markers: readonly LayerMarker[]) {
-        if (markers.length != this.drawn.length || markers.some((p, i) => !sameMarker(p, this.drawn[i]))) {
-            let old = this.dom.firstChild, oldI = 0
-            for (let marker of markers) {
-            if (marker.update && old && marker.constructor && this.drawn[oldI].constructor &&
-                marker.update(old as HTMLElement, this.drawn[oldI])) {
-                old = old.nextSibling
-                oldI++
-            } else {
-                this.dom.insertBefore(marker.draw(), old)
+    private fun draw(markers: List<LayerMarker>) {
+        if (markers.size != drawn.size || markers.zip(drawn).any { (a, b) -> !sameMarker(a, b) }) {
+            var old = dom.firstChild
+            var oldI = 0
+            for (marker in markers) {
+                if (marker.update && old != null && 
+                    marker::class == drawn.getOrNull(oldI)?.::class &&
+                    marker.update(old as HTMLElement, drawn[oldI])) {
+                    old = old.nextSibling
+                    oldI++
+                } else {
+                    dom.insertBefore(marker.draw(), old)
+                }
             }
-        }
-            while (old) {
-                let next = old.nextSibling
-                    old.remove()
+            while (old != null) {
+                val next = old.nextSibling
+                old.remove()
                 old = next
             }
-            this.drawn = markers
+            drawn = markers
         }
     }
 
-    destroy() {
-        if (this.layer.destroy) this.layer.destroy(this.dom, this.view)
-        this.dom.remove()
+    fun update(update: ViewUpdate) {
+        if (update.startState.facet(layerOrder) != update.state.facet(layerOrder)) {
+            setOrder(update.state)
+        }
+        if (layer.update(update, dom) || update.geometryChanged) {
+            scale()
+            view.requestMeasure(MeasureRequest(
+                read = { measure() },
+                write = { markers -> draw(markers) }
+            ))
+        }
+    }
+
+    fun docViewUpdate() {
+        if (layer.updateOnDocViewUpdate) {
+            view.requestMeasure(MeasureRequest(
+                read = { measure() },
+                write = { markers -> draw(markers) }
+            ))
+        }
+    }
+
+    fun destroy() {
+        layer.destroy(dom, view)
+        dom.remove()
     }
 }
 
-const layerOrder = Facet.define<LayerConfig>()
+val layerOrder = Facet.define<LayerConfig>()
 
-/// Define a layer.
-export function layer(config: LayerConfig): Extension {
-    return [
-        ViewPlugin.define(v => new LayerView(v, config)),
-    layerOrder.of(config)
-    ]
+/**
+ * Define a layer.
+ */
+fun layer(config: LayerConfig): List<Extension> {
+    return listOf(
+        ViewPlugin.define { view -> LayerView(view, config) },
+        layerOrder.of(config)
+    )
 }

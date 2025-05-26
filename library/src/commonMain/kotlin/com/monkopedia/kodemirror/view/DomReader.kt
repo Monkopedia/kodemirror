@@ -1,113 +1,181 @@
 package com.monkopedia.kodemirror.view
 
-import {ContentView} from "./contentview"
-import {domIndex, maxOffset, isBlockElement} from "./dom"
-import {EditorState} from "@codemirror/state"
+import com.monkopedia.kodemirror.state.*
+import com.monkopedia.kodemirror.dom.*
+import org.w3c.dom.*
 
-export const LineBreakPlaceholder = "\uffff"
+/**
+ * Placeholder character used for line breaks in the text.
+ */
+const val LineBreakPlaceholder = '\uffff'
 
-export class DOMReader {
-    text: string = ""
-    lineSeparator: string | undefined
+/**
+ * Represents a point in the DOM.
+ */
+data class DOMPoint(
+    val node: Node,
+    val offset: Int
+) {
+    var pos: Int = -1
+}
 
-    constructor(private points: DOMPoint[], state: EditorState) {
-        this.lineSeparator = state.facet(EditorState.lineSeparator)
-    }
+/**
+ * Reads content from the DOM, handling text nodes, line breaks, and content views.
+ */
+class DOMReader(
+    private val points: List<DOMPoint>,
+    state: EditorState
+) {
+    private var text: String = ""
+    private val lineSeparator: String? = state.facet(EditorState.lineSeparator)
 
-    append(text: string) {
+    /**
+     * Append text to the accumulated content.
+     */
+    fun append(text: String) {
         this.text += text
     }
 
-    lineBreak() {
-        this.text += LineBreakPlaceholder
+    /**
+     * Add a line break to the accumulated content.
+     */
+    fun lineBreak() {
+        text += LineBreakPlaceholder
     }
 
-    readRange(start: Node | null, end: Node | null) {
-        if (!start) return this
-        let parent = start.parentNode!
-        for (let cur = start;;) {
-            this.findPointBefore(parent, cur)
-            let oldLen = this.text.length
-            this.readNode(cur)
-            let next: Node | null = cur.nextSibling
+    /**
+     * Read a range of DOM nodes.
+     */
+    fun readRange(start: Node?, end: Node?): DOMReader {
+        if (start == null) return this
+        val parent = start.parentNode!!
+
+        var cur: Node = start
+        while (true) {
+            findPointBefore(parent, cur)
+            val oldLen = text.length
+            readNode(cur)
+            val next = cur.nextSibling
             if (next == end) break
-            let view = ContentView.get(cur), nextView = ContentView.get(next!)
-            if (view && nextView ? view.breakAfter :
-            (view ? view.breakAfter : isBlockElement(cur)) ||
-            (isBlockElement(next!) && (cur.nodeName != "BR" || (cur as any).cmIgnore) && this.text.length > oldLen))
-            this.lineBreak()
-            cur = next!
+
+            val view = ContentView.get(cur)
+            val nextView = if (next != null) ContentView.get(next) else null
+
+            if (view != null && nextView != null) {
+                if (view.breakAfter) lineBreak()
+            } else if (view?.breakAfter == true || 
+                      (isBlockElement(cur) && (cur.nodeName != "BR" || (cur as Element).hasAttribute("cmIgnore"))) && 
+                      text.length > oldLen) {
+                lineBreak()
+            }
+
+            if (next == null) break
+            cur = next
         }
-        this.findPointBefore(parent, end)
+        findPointBefore(parent, end)
         return this
     }
 
-    readTextNode(node: Text) {
-        let text = node.nodeValue!
-        for (let point of this.points)
-        if (point.node == node)
-            point.pos = this.text.length + Math.min(point.offset, text.length)
+    /**
+     * Read a text node.
+     */
+    private fun readTextNode(node: Text) {
+        val text = node.nodeValue!!
+        
+        // Update point positions for this text node
+        points.filter { it.node == node }
+            .forEach { it.pos = this.text.length + minOf(it.offset, text.length) }
 
-        for (let off = 0, re = this.lineSeparator ? null : /\r\n?|\n/g;;) {
-            let nextBreak = -1, breakSize = 1, m
-            if (this.lineSeparator) {
-                nextBreak = text.indexOf(this.lineSeparator, off)
-                breakSize = this.lineSeparator.length
-            } else if (m = re!.exec(text)) {
-            nextBreak = m.index
-            breakSize = m[0].length
-        }
-            this.append(text.slice(off, nextBreak < 0 ? text.length : nextBreak))
+        var off = 0
+        while (true) {
+            val nextBreak = if (lineSeparator != null) {
+                text.indexOf(lineSeparator, off)
+            } else {
+                text.indexOfAny(charArrayOf('\r', '\n'), off)
+            }
+            val breakSize = if (lineSeparator != null) {
+                lineSeparator.length
+            } else if (nextBreak >= 0 && text[nextBreak] == '\r' && nextBreak + 1 < text.length && text[nextBreak + 1] == '\n') {
+                2
+            } else {
+                1
+            }
+
+            append(text.substring(off, if (nextBreak < 0) text.length else nextBreak))
             if (nextBreak < 0) break
-            this.lineBreak()
-            if (breakSize > 1) for (let point of this.points)
-            if (point.node == node && point.pos > this.text.length) point.pos -= breakSize - 1
+            lineBreak()
+            if (breakSize > 1) {
+                points.filter { it.node == node && it.pos > this.text.length }
+                    .forEach { it.pos -= breakSize - 1 }
+            }
             off = nextBreak + breakSize
         }
     }
 
-    readNode(node: Node) {
-        if ((node as any).cmIgnore) return
-        let view = ContentView.get(node)
-        let fromView = view && view.overrideDOMText
-            if (fromView != null) {
-                this.findPointInside(node, fromView.length)
-                for (let i = fromView.iter(); !i.next().done;) {
-                    if (i.lineBreak) this.lineBreak()
-                    else this.append(i.value)
-                }
-            } else if (node.nodeType == 3) {
-                this.readTextNode(node as Text)
-            } else if (node.nodeName == "BR") {
-                if (node.nextSibling) this.lineBreak()
-            } else if (node.nodeType == 1) {
-                this.readRange(node.firstChild, null)
+    /**
+     * Read a single DOM node.
+     */
+    private fun readNode(node: Node) {
+        if ((node as? Element)?.hasAttribute("cmIgnore") == true) return
+        
+        val view = ContentView.get(node)
+        val fromView = view?.overrideDOMText
+        
+        if (fromView != null) {
+            findPointInside(node, fromView.length)
+            for (i in fromView.iter()) {
+                if (i.lineBreak) lineBreak()
+                else append(i.value)
             }
+        } else when (node.nodeType) {
+            Node.TEXT_NODE -> readTextNode(node as Text)
+            Node.ELEMENT_NODE -> {
+                if (node.nodeName == "BR") {
+                    if (node.nextSibling != null) lineBreak()
+                } else {
+                    readRange(node.firstChild, null)
+                }
+            }
+        }
     }
 
-    findPointBefore(node: Node, next: Node | null) {
-        for (let point of this.points)
-        if (point.node == node && node.childNodes[point.offset] == next)
-            point.pos = this.text.length
+    /**
+     * Find points before a node.
+     */
+    private fun findPointBefore(node: Node, next: Node?) {
+        points.filter { it.node == node && node.childNodes[it.offset] == next }
+            .forEach { it.pos = text.length }
     }
 
-    findPointInside(node: Node, length: number) {
-        for (let point of this.points)
-        if (node.nodeType == 3 ? point.node == node : node.contains(point.node))
-        point.pos = this.text.length + (isAtEnd(node, point.node, point.offset) ? length : 0)
+    /**
+     * Find points inside a node.
+     */
+    private fun findPointInside(node: Node, length: Int) {
+        points.filter { 
+            if (node.nodeType == Node.TEXT_NODE) {
+                it.node == node
+            } else {
+                node.contains(it.node)
+            }
+        }.forEach { 
+            it.pos = text.length + if (isAtEnd(node, it.node, it.offset)) length else 0 
+        }
     }
-}
 
-function isAtEnd(parent: Node, node: Node | null, offset: number) {
-    for (;;) {
-        if (!node || offset < maxOffset(node)) return false
-        if (node == parent) return true
-        offset = domIndex(node) + 1
-        node = node.parentNode
+    companion object {
+        /**
+         * Check if a point is at the end of a node.
+         */
+        private fun isAtEnd(parent: Node, node: Node?, offset: Int): Boolean {
+            var current = node
+            var currentOffset = offset
+            
+            while (true) {
+                if (current == null || currentOffset < maxOffset(current)) return false
+                if (current == parent) return true
+                currentOffset = domIndex(current) + 1
+                current = current.parentNode
+            }
+        }
     }
-}
-
-export class DOMPoint {
-    pos: number = -1
-    constructor(readonly node: Node, readonly offset: number) {}
 }

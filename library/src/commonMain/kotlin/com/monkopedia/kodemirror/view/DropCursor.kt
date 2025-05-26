@@ -1,100 +1,135 @@
 package com.monkopedia.kodemirror.view
 
-import {StateField, StateEffect, Extension} from "@codemirror/state"
-import {EditorView} from "./editorview"
-import {ViewPlugin, MeasureRequest, ViewUpdate} from "./extension"
+import com.monkopedia.kodemirror.state.*
+import com.monkopedia.kodemirror.extension.*
+import com.monkopedia.kodemirror.dom.*
+import kotlinx.browser.document
 
-const setDropCursorPos = StateEffect.define<number | null>({
-    map(pos, mapping) { return pos == null ? null : mapping.mapPos(pos) }
-})
+/**
+ * State effect to set the drop cursor position.
+ */
+private val setDropCursorPos = StateEffect.define<Int?> { pos, mapping ->
+    pos?.let { mapping.mapPos(it) }
+}
 
-const dropCursorPos = StateField.define<number | null>({
-    create() { return null },
-    update(pos, tr) {
-        if (pos != null) pos = tr.changes.mapPos(pos)
-        return tr.effects.reduce((pos, e) => e.is(setDropCursorPos) ? e.value : pos, pos)
+/**
+ * State field to track the drop cursor position.
+ */
+private val dropCursorPos = StateField.define<Int?>(
+    create = { null },
+    update = { pos, tr ->
+        pos?.let { tr.changes.mapPos(it) }?.let { mappedPos ->
+            tr.effects.fold(mappedPos) { p, e ->
+                if (e.isEffect(setDropCursorPos)) e.value as Int? else p
+            }
+        }
     }
-})
+)
 
-const drawDropCursor = ViewPlugin.fromClass(class {
-    cursor: HTMLElement | null = null
-    measureReq: MeasureRequest<{left: number, top: number, height: number} | null>
-
-    constructor(readonly view: EditorView) {
-        this.measureReq = {read: this.readPos.bind(this), write: this.drawCursor.bind(this)}
+/**
+ * Plugin to draw and manage the drop cursor.
+ */
+private val drawDropCursor = ViewPlugin.fromClass(
+    create = { view ->
+        DropCursorView(view)
     }
+)
 
-    update(update: ViewUpdate) {
-        let cursorPos = update.state.field(dropCursorPos)
+/**
+ * View class that handles the drop cursor rendering and events.
+ */
+private class DropCursorView(private val view: EditorView) {
+    private var cursor: Element? = null
+    private val measureReq = MeasureRequest(
+        read = { readPos() },
+        write = { pos -> drawCursor(pos) }
+    )
+
+    fun update(update: ViewUpdate) {
+        val cursorPos = update.state.field(dropCursorPos)
         if (cursorPos == null) {
-            if (this.cursor != null) {
-                this.cursor?.remove()
-                this.cursor = null
+            cursor?.let {
+                it.remove()
+                cursor = null
             }
         } else {
-            if (!this.cursor) {
-                this.cursor = this.view.scrollDOM.appendChild(document.createElement("div"))
-                this.cursor!.className = "cm-dropCursor"
+            if (cursor == null) {
+                cursor = document.createElement("div").also {
+                    it.className = "cm-dropCursor"
+                    view.scrollDOM.appendChild(it)
+                }
             }
-            if (update.startState.field(dropCursorPos) != cursorPos || update.docChanged || update.geometryChanged)
-                this.view.requestMeasure(this.measureReq)
+            if (update.startState.field(dropCursorPos) != cursorPos || 
+                update.docChanged || 
+                update.geometryChanged) {
+                view.requestMeasure(measureReq)
+            }
         }
     }
 
-    readPos(): {left: number, top: number, height: number} | null {
-        let {view} = this
-        let pos = view.state.field(dropCursorPos)
-        let rect = pos != null && view.coordsAtPos(pos)
-        if (!rect) return null
-        let outer = view.scrollDOM.getBoundingClientRect()
-        return {
-            left: rect.left - outer.left + view.scrollDOM.scrollLeft * view.scaleX,
-            top: rect.top - outer.top + view.scrollDOM.scrollTop * view.scaleY,
-            height: rect.bottom - rect.top
-        }
+    private fun readPos(): CursorPos? {
+        val pos = view.state.field(dropCursorPos) ?: return null
+        val rect = view.coordsAtPos(pos) ?: return null
+        val outer = view.scrollDOM.getBoundingClientRect()
+        
+        return CursorPos(
+            left = rect.left - outer.left + view.scrollDOM.scrollLeft * view.scaleX,
+            top = rect.top - outer.top + view.scrollDOM.scrollTop * view.scaleY,
+            height = rect.bottom - rect.top
+        )
     }
 
-    drawCursor(pos: {left: number, top: number, height: number} | null) {
-        if (this.cursor) {
-            let {scaleX, scaleY} = this.view
-            if (pos) {
-                this.cursor.style.left = pos.left / scaleX + "px"
-                this.cursor.style.top = pos.top / scaleY + "px"
-                this.cursor.style.height = pos.height / scaleY + "px"
+    private fun drawCursor(pos: CursorPos?) {
+        cursor?.let { cursor ->
+            if (pos != null) {
+                cursor.style.left = "${pos.left / view.scaleX}px"
+                cursor.style.top = "${pos.top / view.scaleY}px"
+                cursor.style.height = "${pos.height / view.scaleY}px"
             } else {
-                this.cursor.style.left = "-100000px"
+                cursor.style.left = "-100000px"
             }
         }
     }
 
-    destroy() {
-        if (this.cursor) this.cursor.remove()
+    fun destroy() {
+        cursor?.remove()
     }
 
-    setDropPos(pos: number | null) {
-        if (this.view.state.field(dropCursorPos) != pos)
-            this.view.dispatch({effects: setDropCursorPos.of(pos)})
-    }
-}, {
-    eventObservers: {
-        dragover(event) {
-            this.setDropPos(this.view.posAtCoords({x: event.clientX, y: event.clientY}))
-        },
-        dragleave(event) {
-            if (event.target == this.view.contentDOM || !this.view.contentDOM.contains(event.relatedTarget as HTMLElement))
-                this.setDropPos(null)
-        },
-        dragend() {
-            this.setDropPos(null)
-        },
-        drop() {
-            this.setDropPos(null)
+    fun setDropPos(pos: Int?) {
+        if (view.state.field(dropCursorPos) != pos) {
+            view.dispatch(effects = setDropCursorPos.of(pos))
         }
     }
-})
 
-/// Draws a cursor at the current drop position when something is
-/// dragged over the editor.
-export function dropCursor(): Extension {
-    return [dropCursorPos, drawDropCursor]
+    val eventHandlers = mapOf(
+        "dragover" to { event: DragEvent ->
+            setDropPos(view.posAtCoords(event.clientX, event.clientY))
+        },
+        "dragleave" to { event: DragEvent ->
+            if (event.target == view.contentDOM || 
+                !view.contentDOM.contains(event.relatedTarget as? Element)) {
+                setDropPos(null)
+            }
+        },
+        "dragend" to { _: DragEvent ->
+            setDropPos(null)
+        },
+        "drop" to { _: DragEvent ->
+            setDropPos(null)
+        }
+    )
+}
+
+private data class CursorPos(
+    val left: Double,
+    val top: Double,
+    val height: Double
+)
+
+/**
+ * Creates an extension that draws a cursor at the current drop position when something is
+ * dragged over the editor.
+ */
+fun dropCursor(): Extension {
+    return listOf(dropCursorPos, drawDropCursor)
 }

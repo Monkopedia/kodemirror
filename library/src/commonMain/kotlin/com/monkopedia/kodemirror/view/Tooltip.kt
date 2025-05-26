@@ -1,77 +1,188 @@
 package com.monkopedia.kodemirror.view
 
-import {EditorState, Transaction, StateEffect, StateEffectType,
-Facet, StateField, Extension, MapMode, FacetReader} from "@codemirror/state"
-import {EditorView} from "./editorview"
-import {ViewPlugin, ViewUpdate, logException, getScrollMargins} from "./extension"
-import {Direction} from "./bidi"
-import {WidgetView} from "./inlineview"
-import {Rect} from "./dom"
-import browser from "./browser"
+import com.monkopedia.kodemirror.state.*
+import com.monkopedia.kodemirror.dom.*
+import kotlinx.browser.window
 
-type Measured = {
-    visible: Rect,
-    parent: DOMRect,
-    pos: (Rect | null)[],
-    size: DOMRect[],
-    space: Rect,
-    scaleX: number, scaleY: number,
-    makeAbsolute: boolean
+// Constants
+private const val OUTSIDE = "-10000px"
+private const val ARROW_SIZE = 7
+private const val ARROW_OFFSET = 14
+private const val HOVER_TIME = 300
+private const val HOVER_MAX_DIST = 6
+private const val TOOLTIP_MARGIN = 4
+
+data class Measured(
+    val visible: Rect,
+    val parent: DOMRect,
+    val pos: List<Rect?>,
+    val size: List<DOMRect>,
+    val space: Rect,
+    val scaleX: Double,
+    val scaleY: Double,
+    val makeAbsolute: Boolean
+)
+
+/**
+ * Describes a tooltip. Values of this type, when provided through
+ * the [showTooltip] facet, control the individual tooltips on the editor.
+ */
+interface Tooltip {
+    /** The document position at which to show the tooltip. */
+    val pos: Int
+    
+    /** The end of the range annotated by this tooltip, if different from [pos]. */
+    val end: Int?
+    
+    /** Creates the tooltip's DOM representation */
+    fun create(view: EditorView): TooltipView
+    
+    /** Whether the tooltip should be shown above or below the target position. */
+    val above: Boolean
+    
+    /** Whether the [above] option should be honored when there isn't enough space. */
+    val strictSide: Boolean
+    
+    /** When true, shows a triangle connecting the tooltip element to position [pos]. */
+    val arrow: Boolean
+    
+    /** Controls if tooltips are hidden when position is outside visible editor content. */
+    val clip: Boolean
 }
 
-const Outside = "-10000px"
+/**
+ * Describes the way a tooltip is displayed.
+ */
+interface TooltipView {
+    /** The DOM element to position over the editor. */
+    val dom: HTMLElement
+    
+    /** Adjust the position of the tooltip relative to its anchor position. */
+    val offset: Offset?
+    
+    /** Custom method for finding screen position */
+    fun getCoords(pos: Int): Rect?
+    
+    /** Controls tooltip overlap behavior */
+    val overlap: Boolean
+    
+    /** Called after tooltip is added to DOM */
+    fun mount(view: EditorView) {}
+    
+    /** Update DOM for state changes */
+    fun update(update: ViewUpdate) {}
+    
+    /** Called when tooltip is removed */
+    fun destroy() {}
+    
+    /** Called when tooltip is positioned */
+    fun positioned(space: Rect) {}
+    
+    /** Controls size restriction behavior */
+    val resize: Boolean
+}
 
-const enum Arrow { Size = 7, Offset = 14 }
+data class Offset(
+    val x: Int = 0,
+    val y: Int = 0
+)
 
-class TooltipViewManager {
-    private input: readonly (Tooltip | null)[]
-    tooltips: readonly Tooltip[]
-    tooltipViews: readonly TooltipView[]
+// Facets
+val showTooltip = Facet.define<Tooltip?> {
+    enables = listOf(tooltipPlugin, baseTheme)
+}
 
-    constructor(
-        view: EditorView,
-        private readonly facet: FacetReader<readonly (Tooltip | null)[]>,
-    private readonly createTooltipView: (tooltip: Tooltip, after: TooltipView | null) => TooltipView,
-    private readonly removeTooltipView: (tooltipView: TooltipView) => void
-    ) {
-        this.input = view.state.facet(facet)
-        this.tooltips = this.input.filter(t => t) as Tooltip[]
-        let prev: TooltipView | null = null
-        this.tooltipViews = this.tooltips.map(t => prev = createTooltipView(t, prev))
+val showHoverTooltip = Facet.define<List<Tooltip>, List<Tooltip>> { inputs ->
+    inputs.flatten()
+}
+
+// Base theme definition
+val baseTheme = EditorView.baseTheme(
+    ".cm-tooltip" to {
+        zIndex = 500
+        boxSizing = "border-box"
+    },
+    "&light .cm-tooltip" to {
+        border = "1px solid #bbb"
+        backgroundColor = "#f5f5f5"
+    },
+    "&light .cm-tooltip-section:not(:first-child)" to {
+        borderTop = "1px solid #bbb"
+    },
+    "&dark .cm-tooltip" to {
+        backgroundColor = "#333338"
+        color = "white"
+    },
+    ".cm-tooltip-arrow" to {
+        height = "${ARROW_SIZE}px"
+        width = "${ARROW_SIZE * 2}px"
+        position = "absolute"
+        zIndex = -1
+        overflow = "hidden"
+    },
+    // ... Add remaining theme definitions
+)
+
+// ... More code to follow in subsequent edits
+
+class TooltipViewManager(
+    private val view: EditorView,
+    private val facet: FacetReader<List<Tooltip?>>,
+    private val createTooltipView: (tooltip: Tooltip, after: TooltipView?) -> TooltipView,
+    private val removeTooltipView: (tooltipView: TooltipView) -> Unit
+) {
+    private var input: List<Tooltip?> = view.state.facet(facet)
+    var tooltips: List<Tooltip> = input.filterNotNull()
+    var tooltipViews: List<TooltipView>
+
+    init {
+        var prev: TooltipView? = null
+        tooltipViews = tooltips.map { t -> 
+            createTooltipView(t, prev).also { prev = it }
+        }
     }
 
-    update(update: ViewUpdate, above?: boolean[]) {
-        let input = update.state.facet(this.facet)
-        let tooltips = input.filter(x => x) as Tooltip[]
+    fun update(update: ViewUpdate, above: MutableList<Boolean>? = null): Boolean {
+        val input = update.state.facet(facet)
+        val tooltips = input.filterNotNull()
         if (input === this.input) {
-            for (let t of this.tooltipViews) if (t.update) t.update(update)
+            tooltipViews.forEach { t -> t.update(update) }
             return false
         }
 
-        let tooltipViews: TooltipView[] = [], newAbove: boolean[] | null = above ? [] : null
-        for (let i = 0; i < tooltips.length; i++) {
-            let tip = tooltips[i], known = -1
-            if (!tip) continue
-            for (let i = 0; i < this.tooltips.length; i++) {
-            let other = this.tooltips[i]
-            if (other && other.create == tip.create) known = i
-        }
+        val tooltipViews = mutableListOf<TooltipView>()
+        val newAbove = if (above != null) mutableListOf<Boolean>() else null
+
+        for (i in tooltips.indices) {
+            val tip = tooltips[i]
+            var known = -1
+            for (j in this.tooltips.indices) {
+                val other = this.tooltips[j]
+                if (other.create == tip.create) known = j
+            }
             if (known < 0) {
-                tooltipViews[i] = this.createTooltipView(tip, i ? tooltipViews[i - 1] : null)
-                if (newAbove) newAbove[i] = !!tip.above
+                tooltipViews[i] = createTooltipView(tip, if (i > 0) tooltipViews[i - 1] else null)
+                newAbove?.add(tip.above)
             } else {
-                let tooltipView = tooltipViews[i] = this.tooltipViews[known]
-                if (newAbove) newAbove[i] = above![known]
-                if (tooltipView.update) tooltipView.update(update)
+                val tooltipView = this.tooltipViews[known]
+                tooltipViews[i] = tooltipView
+                newAbove?.let { it[i] = above[known] }
+                tooltipView.update(update)
             }
         }
-        for (let t of this.tooltipViews) if (tooltipViews.indexOf(t) < 0) {
-            this.removeTooltipView(t)
-            t.destroy?.()
+
+        this.tooltipViews.forEach { t ->
+            if (t !in tooltipViews) {
+                removeTooltipView(t)
+                t.destroy()
+            }
         }
-        if (above) {
-            newAbove!.forEach((val, i) => above[i] = val)
-            above.length = newAbove!.length
+
+        newAbove?.let { new ->
+            new.forEachIndexed { i, value -> above[i] = value }
+            if (above.size > new.size) {
+                above.subList(new.size, above.size).clear()
+            }
         }
 
         this.input = input
@@ -81,776 +192,715 @@ class TooltipViewManager {
     }
 }
 
-/// Creates an extension that configures tooltip behavior.
-export function tooltips(config: {
-    /// By default, tooltips use `"fixed"`
-    /// [positioning](https://developer.mozilla.org/en-US/docs/Web/CSS/position),
-    /// which has the advantage that tooltips don't get cut off by
-    /// scrollable parent elements. However, CSS rules like `contain:
-    /// layout` can break fixed positioning in child nodes, which can be
-    /// worked about by using `"absolute"` here.
-    ///
-    /// On iOS, which at the time of writing still doesn't properly
-    /// support fixed positioning, the library always uses absolute
-    /// positioning.
-    ///
-    /// If the tooltip parent element sits in a transformed element, the
-    /// library also falls back to absolute positioning.
-    position?: "fixed" | "absolute",
-    /// The element to put the tooltips into. By default, they are put
-    /// in the editor (`cm-editor`) element, and that is usually what
-    /// you want. But in some layouts that can lead to positioning
-    /// issues, and you need to use a different parent to work around
-    /// those.
-    parent?: HTMLElement
-    /// By default, when figuring out whether there is room for a
-    /// tooltip at a given position, the extension considers the entire
-    /// space between 0,0 and `innerWidth`,`innerHeight` to be available
-    /// for showing tooltips. You can provide a function here that
-    /// returns an alternative rectangle.
-    tooltipSpace?: (view: EditorView) => Rect
-} = {}): Extension {
-    return tooltipConfig.of(config)
+// Helper function to set left style
+private fun setLeftStyle(element: HTMLElement, value: Double) {
+    val current = element.style.left.removeSuffix("px").toDoubleOrNull()
+    if (current == null || abs(value - current) > 1) {
+        element.style.left = "${value}px"
+    }
 }
 
-type TooltipConfig = {
-    position: "fixed" | "absolute",
-    parent: HTMLElement | null,
-    tooltipSpace: (view: EditorView) => Rect
-}
+class TooltipPlugin(private val view: EditorView) : ViewPlugin {
+    private val manager: TooltipViewManager
+    private val above = mutableListOf<Boolean>()
+    private var measureReq: MeasureRequest
+    private var inView = true
+    private var position: String
+    private var madeAbsolute = false
+    private var parent: HTMLElement? = null
+    private lateinit var container: HTMLElement
+    private var classes: String
+    private var intersectionObserver: IntersectionObserver? = null
+    private var resizeObserver: ResizeObserver? = null
+    private var lastTransaction = 0L
+    private var measureTimeout = -1
 
-function windowSpace(view: EditorView) {
-    let {win} = view
-    return {top: 0, left: 0, bottom: win.innerHeight, right: win.innerWidth}
-}
-
-const tooltipConfig = Facet.define<Partial<TooltipConfig>, TooltipConfig>({
-    combine: values => ({
-        position: browser.ios ? "absolute" : values.find(conf => conf.position)?.position || "fixed",
-        parent: values.find(conf => conf.parent)?.parent || null,
-        tooltipSpace: values.find(conf => conf.tooltipSpace)?.tooltipSpace || windowSpace,
-    })
-})
-
-const knownHeight = new WeakMap<TooltipView, number>()
-
-const tooltipPlugin = ViewPlugin.fromClass(class {
-    manager: TooltipViewManager
-    above: boolean[] = []
-    measureReq: {read: () => Measured, write: (m: Measured) => void, key: any}
-    inView = true
-    position: "fixed" | "absolute"
-    madeAbsolute = false
-    parent: HTMLElement | null
-    container!: HTMLElement
-    classes: string
-    intersectionObserver: IntersectionObserver | null
-    resizeObserver: ResizeObserver | null
-    lastTransaction = 0
-    measureTimeout = -1
-
-    constructor(readonly view: EditorView) {
-        let config = view.state.facet(tooltipConfig)
-        this.position = config.position
-        this.parent = config.parent
-        this.classes = view.themeClasses
-        this.createContainer()
-        this.measureReq = {read: this.readMeasure.bind(this), write: this.writeMeasure.bind(this), key: this}
-        this.resizeObserver = typeof ResizeObserver == "function" ? new ResizeObserver(() => this.measureSoon()) : null
-        this.manager = new TooltipViewManager(view, showTooltip, (t, p) => this.createTooltip(t, p), t => {
-            if (this.resizeObserver) this.resizeObserver.unobserve(t.dom)
-            t.dom.remove()
-        })
-        this.above = this.manager.tooltips.map(t => !!t.above)
-        this.intersectionObserver = typeof IntersectionObserver == "function" ? new IntersectionObserver(entries => {
-            if (Date.now() > this.lastTransaction - 50 &&
-                entries.length > 0 && entries[entries.length - 1].intersectionRatio < 1)
-                this.measureSoon()
-        }, {threshold: [1]}) : null
-        this.observeIntersection()
-        view.win.addEventListener("resize", this.measureSoon = this.measureSoon.bind(this))
-        this.maybeMeasure()
+    init {
+        val config = view.state.facet(tooltipConfig)
+        position = config.position
+        parent = config.parent
+        classes = view.themeClasses
+        createContainer()
+        
+        measureReq = MeasureRequest(
+            read = { readMeasure() },
+            write = { writeMeasure(it) },
+            key = this
+        )
+        
+        resizeObserver = if (js("typeof ResizeObserver") != "undefined") {
+            ResizeObserver { measureSoon() }
+        } else null
+        
+        manager = TooltipViewManager(
+            view = view,
+            facet = showTooltip,
+            createTooltipView = { t, p -> createTooltip(t, p) },
+            removeTooltipView = { t ->
+                resizeObserver?.unobserve(t.dom)
+                t.dom.remove()
+            }
+        )
+        
+        above.addAll(manager.tooltips.map { it.above })
+        
+        intersectionObserver = if (js("typeof IntersectionObserver") != "undefined") {
+            IntersectionObserver({ entries ->
+                if (Date.now() > lastTransaction - 50 && 
+                    entries.isNotEmpty() && 
+                    entries.last().intersectionRatio < 1) {
+                    measureSoon()
+                }
+            }, object { val threshold = arrayOf(1) })
+        } else null
+        
+        observeIntersection()
+        view.window.addEventListener("resize", ::measureSoon)
+        maybeMeasure()
     }
 
-    createContainer() {
-        if (this.parent) {
-            this.container = document.createElement("div")
-            this.container.style.position = "relative"
-            this.container.className = this.view.themeClasses
-            this.parent.appendChild(this.container)
+    private fun createContainer() {
+        if (parent != null) {
+            container = document.createElement("div")
+            container.style.position = "relative"
+            container.className = view.themeClasses
+            parent!!.appendChild(container)
         } else {
-            this.container = this.view.dom
+            container = view.dom
         }
     }
 
-    observeIntersection() {
-        if (this.intersectionObserver) {
-            this.intersectionObserver.disconnect()
-            for (let tooltip of this.manager.tooltipViews)
-            this.intersectionObserver.observe(tooltip.dom)
+    private fun observeIntersection() {
+        intersectionObserver?.let { observer ->
+            observer.disconnect()
+            manager.tooltipViews.forEach { tooltip ->
+                observer.observe(tooltip.dom)
+            }
         }
     }
 
-    measureSoon() {
-        if (this.measureTimeout < 0) this.measureTimeout = setTimeout(() => {
-            this.measureTimeout = -1
-            this.maybeMeasure()
-        }, 50)
+    private fun measureSoon() {
+        if (measureTimeout < 0) {
+            measureTimeout = window.setTimeout({
+                measureTimeout = -1
+                maybeMeasure()
+            }, 50)
+        }
     }
 
-    update(update: ViewUpdate) {
-        if (update.transactions.length) this.lastTransaction = Date.now()
-        let updated = this.manager.update(update, this.above)
-        if (updated) this.observeIntersection()
-        let shouldMeasure = updated || update.geometryChanged
-            let newConfig = update.state.facet(tooltipConfig)
-        if (newConfig.position != this.position && !this.madeAbsolute) {
-            this.position = newConfig.position
-            for (let t of this.manager.tooltipViews) t.dom.style.position = this.position
+    fun update(update: ViewUpdate) {
+        if (update.transactions.isNotEmpty()) lastTransaction = Date.now()
+        val updated = manager.update(update, above)
+        if (updated) observeIntersection()
+        
+        var shouldMeasure = updated || update.geometryChanged
+        val newConfig = update.state.facet(tooltipConfig)
+        
+        if (newConfig.position != position && !madeAbsolute) {
+            position = newConfig.position
+            manager.tooltipViews.forEach { t -> t.dom.style.position = position }
             shouldMeasure = true
         }
-        if (newConfig.parent != this.parent) {
-            if (this.parent) this.container.remove()
-            this.parent = newConfig.parent
-            this.createContainer()
-            for (let t of this.manager.tooltipViews) this.container.appendChild(t.dom)
+        
+        if (newConfig.parent != parent) {
+            parent?.let { container.remove() }
+            parent = newConfig.parent
+            createContainer()
+            manager.tooltipViews.forEach { t -> container.appendChild(t.dom) }
             shouldMeasure = true
-        } else if (this.parent && this.view.themeClasses != this.classes) {
-            this.classes = this.container.className = this.view.themeClasses
+        } else if (parent != null && view.themeClasses != classes) {
+            classes = container.className = view.themeClasses
         }
-        if (shouldMeasure) this.maybeMeasure()
+        
+        if (shouldMeasure) maybeMeasure()
     }
 
-    createTooltip(tooltip: Tooltip, prev: TooltipView | null) {
-        let tooltipView = tooltip.create(this.view)
-        let before = prev ? prev.dom : null
+    private fun createTooltip(tooltip: Tooltip, prev: TooltipView?): TooltipView {
+        val tooltipView = tooltip.create(view)
+        val before = prev?.dom
         tooltipView.dom.classList.add("cm-tooltip")
-        if (tooltip.arrow && !tooltipView.dom.querySelector(".cm-tooltip > .cm-tooltip-arrow")) {
-            let arrow = document.createElement("div")
+        
+        if (tooltip.arrow && tooltipView.dom.querySelector(".cm-tooltip > .cm-tooltip-arrow") == null) {
+            val arrow = document.createElement("div")
             arrow.className = "cm-tooltip-arrow"
             tooltipView.dom.appendChild(arrow)
         }
-        tooltipView.dom.style.position = this.position
-        tooltipView.dom.style.top = Outside
+        
+        tooltipView.dom.style.position = position
+        tooltipView.dom.style.top = OUTSIDE
         tooltipView.dom.style.left = "0px"
-        this.container.insertBefore(tooltipView.dom, before)
-        if (tooltipView.mount) tooltipView.mount(this.view)
-        if (this.resizeObserver) this.resizeObserver.observe(tooltipView.dom)
+        container.insertBefore(tooltipView.dom, before)
+        
+        tooltipView.mount(view)
+        resizeObserver?.observe(tooltipView.dom)
         return tooltipView
     }
 
-    destroy() {
-        this.view.win.removeEventListener("resize", this.measureSoon)
-        for (let tooltipView of this.manager.tooltipViews) {
+    fun destroy() {
+        view.window.removeEventListener("resize", ::measureSoon)
+        manager.tooltipViews.forEach { tooltipView ->
             tooltipView.dom.remove()
-            tooltipView.destroy?.()
+            tooltipView.destroy()
         }
-        if (this.parent) this.container.remove()
-        this.resizeObserver?.disconnect()
-        this.intersectionObserver?.disconnect()
-        clearTimeout(this.measureTimeout)
+        parent?.let { container.remove() }
+        resizeObserver?.disconnect()
+        intersectionObserver?.disconnect()
+        window.clearTimeout(measureTimeout)
     }
 
-    readMeasure(): Measured {
-        let scaleX = 1, scaleY = 1, makeAbsolute = false
-        if (this.position == "fixed" && this.manager.tooltipViews.length) {
-            let {dom} = this.manager.tooltipViews[0]
+    private fun readMeasure(): Measured {
+        var scaleX = 1.0
+        var scaleY = 1.0
+        var makeAbsolute = false
+        
+        if (position == "fixed" && manager.tooltipViews.isNotEmpty()) {
+            val dom = manager.tooltipViews[0].dom
             if (browser.gecko) {
-                // Firefox sets the element's `offsetParent` to the
-                // transformed element when a transform interferes with fixed
-                // positioning.
-                makeAbsolute = dom.offsetParent != this.container.ownerDocument.body
-            } else if (dom.style.top == Outside && dom.style.left == "0px") {
-                // On other browsers, we have to awkwardly try and use other
-                // information to detect a transform.
-                let rect = dom.getBoundingClientRect()
-                makeAbsolute = Math.abs(rect.top + 10000) > 1 || Math.abs(rect.left) > 1
+                makeAbsolute = dom.offsetParent != container.ownerDocument.body
+            } else if (dom.style.top == OUTSIDE && dom.style.left == "0px") {
+                val rect = dom.getBoundingClientRect()
+                makeAbsolute = abs(rect.top + 10000) > 1 || abs(rect.left) > 1
             }
         }
-        if (makeAbsolute || this.position == "absolute") {
-            if (this.parent) {
-                let rect = this.parent.getBoundingClientRect()
-                if (rect.width && rect.height) {
-                    scaleX = rect.width / this.parent.offsetWidth
-                    scaleY = rect.height / this.parent.offsetHeight
+        
+        if (makeAbsolute || position == "absolute") {
+            parent?.let { parent ->
+                val rect = parent.getBoundingClientRect()
+                if (rect.width > 0 && rect.height > 0) {
+                    scaleX = rect.width / parent.offsetWidth
+                    scaleY = rect.height / parent.offsetHeight
                 }
-            } else {
-                ;({scaleX, scaleY} = this.view.viewState)
+            } ?: run {
+                val viewState = view.viewState
+                scaleX = viewState.scaleX
+                scaleY = viewState.scaleY
             }
         }
-        let visible = this.view.scrollDOM.getBoundingClientRect(), margins = getScrollMargins(this.view)
-        return {
-            visible: {
-            left: visible.left + margins.left, top: visible.top + margins.top,
-            right: visible.right - margins.right, bottom: visible.bottom - margins.bottom
-        },
-            parent: this.parent ? this.container.getBoundingClientRect() : this.view.dom.getBoundingClientRect(),
-            pos: this.manager.tooltips.map((t, i) => {
-            let tv = this.manager.tooltipViews[i]
-            return tv.getCoords ? tv.getCoords(t.pos) : this.view.coordsAtPos(t.pos)
-        }),
-            size: this.manager.tooltipViews.map(({dom}) => dom.getBoundingClientRect()),
-            space: this.view.state.facet(tooltipConfig).tooltipSpace(this.view),
-            scaleX, scaleY, makeAbsolute
-        }
+        
+        val visible = view.scrollDOM.getBoundingClientRect()
+        val margins = getScrollMargins(view)
+        
+        return Measured(
+            visible = Rect(
+                left = visible.left + margins.left,
+                top = visible.top + margins.top,
+                right = visible.right - margins.right,
+                bottom = visible.bottom - margins.bottom
+            ),
+            parent = if (parent != null) container.getBoundingClientRect() else view.dom.getBoundingClientRect(),
+            pos = manager.tooltips.mapIndexed { i, t ->
+                val tv = manager.tooltipViews[i]
+                tv.getCoords(t.pos) ?: view.coordsAtPos(t.pos)
+            },
+            size = manager.tooltipViews.map { it.dom.getBoundingClientRect() },
+            space = view.state.facet(tooltipConfig).tooltipSpace(view),
+            scaleX = scaleX,
+            scaleY = scaleY,
+            makeAbsolute = makeAbsolute
+        )
     }
 
-    writeMeasure(measured: Measured) {
+    private fun writeMeasure(measured: Measured) {
         if (measured.makeAbsolute) {
-            this.madeAbsolute = true
-            this.position = "absolute"
-            for (let t of this.manager.tooltipViews) t.dom.style.position = "absolute"
+            madeAbsolute = true
+            position = "absolute"
+            manager.tooltipViews.forEach { t -> t.dom.style.position = "absolute" }
         }
 
-        let {visible, space, scaleX, scaleY} = measured
-        let others = []
-        for (let i = 0; i < this.manager.tooltips.length; i++) {
-            let tooltip = this.manager.tooltips[i], tView = this.manager.tooltipViews[i], {dom} = tView
-            let pos = measured.pos[i], size = measured.size[i]
-            // Hide tooltips that are outside of the editor.
-            if (!pos || tooltip.clip !== false && (
-                    pos.bottom <= Math.max(visible.top, space.top) ||
-                        pos.top >= Math.min(visible.bottom, space.bottom) ||
-                        pos.right < Math.max(visible.left, space.left) - .1 ||
-                        pos.left > Math.min(visible.right, space.right) + .1)) {
-                dom.style.top = Outside
+        val (visible, space, scaleX, scaleY) = measured
+        val others = mutableListOf<Rect>()
+
+        for (i in manager.tooltips.indices) {
+            val tooltip = manager.tooltips[i]
+            val tView = manager.tooltipViews[i]
+            val dom = tView.dom
+            val pos = measured.pos[i]
+            val size = measured.size[i]
+
+            // Hide tooltips that are outside of the editor
+            if (pos == null || tooltip.clip != false && (
+                pos.bottom <= maxOf(visible.top, space.top) ||
+                pos.top >= minOf(visible.bottom, space.bottom) ||
+                pos.right < maxOf(visible.left, space.left) - 0.1 ||
+                pos.left > minOf(visible.right, space.right) + 0.1
+            )) {
+                dom.style.top = OUTSIDE
                 continue
             }
-            let arrow: HTMLElement | null = tooltip.arrow ? tView.dom.querySelector(".cm-tooltip-arrow") : null
-            let arrowHeight = arrow ? Arrow.Size : 0
-            let width = size.right - size.left, height = knownHeight.get(tView) ?? size.bottom - size.top
-            let offset = tView.offset || noOffset, ltr = this.view.textDirection == Direction.LTR
-            let left = size.width > space.right - space.left
-            ? (ltr ? space.left : space.right - size.width)
-            : ltr ? Math.max(space.left, Math.min(pos.left - (arrow ? Arrow.Offset : 0) + offset.x, space.right - width))
-            : Math.min(Math.max(space.left, pos.left - width + (arrow ? Arrow.Offset : 0) - offset.x), space.right - width)
-            let above = this.above[i]
-            if (!tooltip.strictSide && (above
-            ? pos.top - height - arrowHeight - offset.y < space.top
-            : pos.bottom + height + arrowHeight + offset.y > space.bottom) &&
-            above == (space.bottom - pos.bottom > pos.top - space.top))
-            above = this.above[i] = !above
-            let spaceVert = (above ? pos.top - space.top : space.bottom - pos.bottom) - arrowHeight
-            if (spaceVert < height && tView.resize !== false) {
-                if (spaceVert < this.view.defaultLineHeight) { dom.style.top = Outside; continue }
-                knownHeight.set(tView, height)
-                dom.style.height = (height = spaceVert) / scaleY + "px"
-            } else if (dom.style.height) {
+
+            val arrow = if (tooltip.arrow) tView.dom.querySelector(".cm-tooltip-arrow") as HTMLElement? else null
+            val arrowHeight = if (arrow != null) ARROW_SIZE else 0
+            val width = size.right - size.left
+            val height = knownHeight[tView] ?: (size.bottom - size.top)
+            val offset = tView.offset ?: Offset()
+            val ltr = view.textDirection == Direction.LTR
+
+            val left = if (size.width > space.right - space.left) {
+                if (ltr) space.left else space.right - size.width
+            } else {
+                if (ltr) {
+                    maxOf(space.left, minOf(pos.left - (if (arrow != null) ARROW_OFFSET else 0) + offset.x, space.right - width))
+                } else {
+                    minOf(maxOf(space.left, pos.left - width + (if (arrow != null) ARROW_OFFSET else 0) - offset.x), space.right - width)
+                }
+            }
+
+            var above = this.above[i]
+            if (!tooltip.strictSide && (
+                if (above) {
+                    pos.top - height - arrowHeight - offset.y < space.top
+                } else {
+                    pos.bottom + height + arrowHeight + offset.y > space.bottom
+                }
+            ) && above == (space.bottom - pos.bottom > pos.top - space.top)) {
+                above = !above
+                this.above[i] = above
+            }
+
+            val spaceVert = (if (above) pos.top - space.top else space.bottom - pos.bottom) - arrowHeight
+            if (spaceVert < height && tView.resize != false) {
+                if (spaceVert < view.defaultLineHeight) {
+                    dom.style.top = OUTSIDE
+                    continue
+                }
+                knownHeight[tView] = height
+                dom.style.height = "${height / scaleY}px"
+            } else if (dom.style.height.isNotEmpty()) {
                 dom.style.height = ""
             }
-            let top = above ? pos.top - height - arrowHeight - offset.y : pos.bottom + arrowHeight + offset.y
-            let right = left + width
-            if (tView.overlap !== true) for (let r of others)
-            if (r.left < right && r.right > left && r.top < top + height && r.bottom > top)
-                top = above ? r.top - height - 2 - arrowHeight : r.bottom + arrowHeight + 2
-            if (this.position == "absolute") {
-                dom.style.top = (top - measured.parent.top) / scaleY + "px"
+
+            var top = if (above) {
+                pos.top - height - arrowHeight - offset.y
+            } else {
+                pos.bottom + arrowHeight + offset.y
+            }
+
+            val right = left + width
+            if (tView.overlap != true) {
+                for (r in others) {
+                    if (r.left < right && r.right > left && r.top < top + height && r.bottom > top) {
+                        top = if (above) {
+                            r.top - height - 2 - arrowHeight
+                        } else {
+                            r.bottom + arrowHeight + 2
+                        }
+                    }
+                }
+            }
+
+            if (position == "absolute") {
+                dom.style.top = "${(top - measured.parent.top) / scaleY}px"
                 setLeftStyle(dom, (left - measured.parent.left) / scaleX)
             } else {
-                dom.style.top = top / scaleY + "px"
+                dom.style.top = "${top / scaleY}px"
                 setLeftStyle(dom, left / scaleX)
             }
-            if (arrow) {
-                let arrowLeft = pos.left + (ltr ? offset.x : -offset.x) - (left + Arrow.Offset - Arrow.Size)
-                arrow.style.left = arrowLeft / scaleX + "px"
+
+            arrow?.let {
+                val arrowLeft = pos.left + (if (ltr) offset.x else -offset.x) - (left + ARROW_OFFSET - ARROW_SIZE)
+                it.style.left = "${arrowLeft / scaleX}px"
             }
 
-            if (tView.overlap !== true)
-                others.push({left, top, right, bottom: top + height})
+            if (tView.overlap != true) {
+                others.add(Rect(left, top, right, top + height))
+            }
+
             dom.classList.toggle("cm-tooltip-above", above)
             dom.classList.toggle("cm-tooltip-below", !above)
-            if (tView.positioned) tView.positioned(measured.space)
+            tView.positioned(measured.space)
         }
     }
 
-    maybeMeasure() {
-        if (this.manager.tooltips.length) {
-            if (this.view.inView) this.view.requestMeasure(this.measureReq)
-            if (this.inView != this.view.inView) {
-                this.inView = this.view.inView
-                if (!this.inView) for (let tv of this.manager.tooltipViews) tv.dom.style.top = Outside
+    private fun maybeMeasure() {
+        if (manager.tooltips.isNotEmpty()) {
+            if (view.inView) view.requestMeasure(measureReq)
+            if (inView != view.inView) {
+                inView = view.inView
+                if (!inView) {
+                    manager.tooltipViews.forEach { tv ->
+                        tv.dom.style.top = OUTSIDE
+                    }
+                }
             }
         }
     }
-}, {
-    eventObservers: {
-        scroll() { this.maybeMeasure() }
-    }
-})
 
-function setLeftStyle(elt: HTMLElement, value: number) {
-    let current = parseInt(elt.style.left, 10)
-    if (isNaN(current) || Math.abs(value - current) > 1) elt.style.left = value + "px"
+    companion object {
+        val eventObservers = mapOf(
+            "scroll" to { plugin: TooltipPlugin -> plugin.maybeMeasure() }
+        )
+    }
 }
 
-const baseTheme = EditorView.baseTheme({
-    ".cm-tooltip": {
-        zIndex: 500,
-        boxSizing: "border-box"
-    },
-    "&light .cm-tooltip": {
-        border: "1px solid #bbb",
-        backgroundColor: "#f5f5f5"
-    },
-    "&light .cm-tooltip-section:not(:first-child)": {
-        borderTop: "1px solid #bbb",
-    },
-    "&dark .cm-tooltip": {
-        backgroundColor: "#333338",
-        color: "white"
-    },
-    ".cm-tooltip-arrow": {
-        height: `${Arrow.Size}px`,
-        width: `${Arrow.Size * 2}px`,
-        position: "absolute",
-        zIndex: -1,
-        overflow: "hidden",
-        "&:before, &:after": {
-        content: "''",
-        position: "absolute",
-        width: 0,
-        height: 0,
-        borderLeft: `${Arrow.Size}px solid transparent`,
-        borderRight: `${Arrow.Size}px solid transparent`,
-    },
-        ".cm-tooltip-above &": {
-        bottom: `-${Arrow.Size}px`,
-        "&:before": {
-            borderTop: `${Arrow.Size}px solid #bbb`,
-    },
-        "&:after": {
-        borderTop: `${Arrow.Size}px solid #f5f5f5`,
-        bottom: "1px"
+// WeakMap for storing known heights
+private val knownHeight = WeakMap<TooltipView, Double>()
+
+class HoverTooltipHost(private val view: EditorView) : TooltipView {
+    override val dom = document.createElement("div").apply {
+        classList.add("cm-tooltip-hover")
     }
-    },
-        ".cm-tooltip-below &": {
-        top: `-${Arrow.Size}px`,
-        "&:before": {
-            borderBottom: `${Arrow.Size}px solid #bbb`,
-    },
-        "&:after": {
-        borderBottom: `${Arrow.Size}px solid #f5f5f5`,
-        top: "1px"
-    }
-    },
-    },
-    "&dark .cm-tooltip .cm-tooltip-arrow": {
-        "&:before": {
-        borderTopColor: "#333338",
-        borderBottomColor: "#333338"
-    },
-        "&:after": {
-        borderTopColor: "transparent",
-        borderBottomColor: "transparent"
-    }
-    }
-})
+    private var mounted = false
+    private val manager: TooltipViewManager
 
-/// Describes a tooltip. Values of this type, when provided through
-/// the [`showTooltip`](#view.showTooltip) facet, control the
-/// individual tooltips on the editor.
-export interface Tooltip {
-    /// The document position at which to show the tooltip.
-    pos: number
-    /// The end of the range annotated by this tooltip, if different
-    /// from `pos`.
-    end?: number
-    /// A constructor function that creates the tooltip's [DOM
-    /// representation](#view.TooltipView).
-    create(view: EditorView): TooltipView
-    /// Whether the tooltip should be shown above or below the target
-    /// position. Not guaranteed to be respected for hover tooltips
-    /// since all hover tooltips for the same range are always
-    /// positioned together. Defaults to false.
-    above?: boolean
-    /// Whether the `above` option should be honored when there isn't
-    /// enough space on that side to show the tooltip inside the
-    /// viewport. Defaults to false.
-    strictSide?: boolean,
-    /// When set to true, show a triangle connecting the tooltip element
-    /// to position `pos`.
-    arrow?: boolean
-    /// By default, tooltips are hidden when their position is outside
-    /// of the visible editor content. Set this to false to turn that
-    /// off.
-    clip?: boolean
-}
-
-/// Describes the way a tooltip is displayed.
-export interface TooltipView {
-    /// The DOM element to position over the editor.
-    dom: HTMLElement
-    /// Adjust the position of the tooltip relative to its anchor
-    /// position. A positive `x` value will move the tooltip
-    /// horizontally along with the text direction (so right in
-    /// left-to-right context, left in right-to-left). A positive `y`
-    /// will move the tooltip up when it is above its anchor, and down
-    /// otherwise.
-    offset?: {x: number, y: number}
-    /// By default, a tooltip's screen position will be based on the
-    /// text position of its `pos` property. This method can be provided
-    /// to make the tooltip view itself responsible for finding its
-    /// screen position.
-    getCoords?: (pos: number) => Rect
-    /// By default, tooltips are moved when they overlap with other
-    /// tooltips. Set this to `true` to disable that behavior for this
-    /// tooltip.
-    overlap?: boolean
-    /// Called after the tooltip is added to the DOM for the first time.
-    mount?(view: EditorView): void
-    /// Update the DOM element for a change in the view's state.
-    update?(update: ViewUpdate): void
-    /// Called when the tooltip is removed from the editor or the editor
-    /// is destroyed.
-    destroy?(): void
-    /// Called when the tooltip has been (re)positioned. The argument is
-    /// the [space](#view.tooltips^config.tooltipSpace) available to the
-    /// tooltip.
-    positioned?(space: Rect): void,
-    /// By default, the library will restrict the size of tooltips so
-    /// that they don't stick out of the available space. Set this to
-    /// false to disable that.
-    resize?: boolean
-}
-
-const noOffset = {x: 0, y: 0}
-
-/// Facet to which an extension can add a value to show a tooltip.
-export const showTooltip = Facet.define<Tooltip | null>({
-    enables: [tooltipPlugin, baseTheme]
-})
-
-const showHoverTooltip = Facet.define<readonly Tooltip[], readonly Tooltip[]>({
-    combine: inputs => inputs.reduce((a, i) => a.concat(i), [])
-})
-
-class HoverTooltipHost implements TooltipView {
-    private readonly manager: TooltipViewManager
-    dom: HTMLElement
-    mounted: boolean = false
-
-    // Needs to be static so that host tooltip instances always match
-    static create(view: EditorView) {
-        return new HoverTooltipHost(view)
+    init {
+        manager = TooltipViewManager(
+            view = view,
+            facet = showHoverTooltip,
+            createTooltipView = { t, p -> createHostedView(t, p) },
+            removeTooltipView = { t -> t.dom.remove() }
+        )
     }
 
-    private constructor(readonly view: EditorView) {
-        this.dom = document.createElement("div")
-        this.dom.classList.add("cm-tooltip-hover")
-        this.manager = new TooltipViewManager(view, showHoverTooltip, (t, p) => this.createHostedView(t, p), t => t.dom.remove())
-    }
-
-    createHostedView(tooltip: Tooltip, prev: TooltipView | null) {
-        let hostedView = tooltip.create(this.view)
+    private fun createHostedView(tooltip: Tooltip, prev: TooltipView?): TooltipView {
+        val hostedView = tooltip.create(view)
         hostedView.dom.classList.add("cm-tooltip-section")
-        this.dom.insertBefore(hostedView.dom, prev ? prev.dom.nextSibling : this.dom.firstChild)
-        if (this.mounted && hostedView.mount)
-            hostedView.mount(this.view)
+        dom.insertBefore(hostedView.dom, prev?.dom?.nextSibling ?: dom.firstChild)
+        if (mounted) hostedView.mount(view)
         return hostedView
     }
 
-    mount(view: EditorView) {
-        for (let hostedView of this.manager.tooltipViews) {
-        if (hostedView.mount) hostedView.mount(view)
-    }
-        this.mounted = true
+    override fun mount(view: EditorView) {
+        manager.tooltipViews.forEach { it.mount(view) }
+        mounted = true
     }
 
-    positioned(space: Rect) {
-        for (let hostedView of this.manager.tooltipViews) {
-        if (hostedView.positioned) hostedView.positioned(space)
-    }
+    override fun positioned(space: Rect) {
+        manager.tooltipViews.forEach { it.positioned(space) }
     }
 
-    update(update: ViewUpdate) {
-        this.manager.update(update)
+    override fun update(update: ViewUpdate) {
+        manager.update(update)
     }
 
-    destroy() {
-        for (let t of this.manager.tooltipViews) t.destroy?.()
+    override fun destroy() {
+        manager.tooltipViews.forEach { it.destroy() }
     }
 
-    passProp<Key extends keyof TooltipView>(name: Key): TooltipView[Key] | undefined {
-        let value: TooltipView[Key] | undefined = undefined
-        for (let view of this.manager.tooltipViews) {
-        let given = view[name]
-        if (given !== undefined) {
-            if (value === undefined) value = given
-            else if (value !== given) return undefined
+    private fun <K : Any> passProp(name: K): K? {
+        var value: K? = null
+        for (view in manager.tooltipViews) {
+            val given = view[name]
+            if (given != null) {
+                if (value == null) value = given
+                else if (value != given) return null
+            }
         }
-    }
         return value
     }
 
-    get offset() { return this.passProp("offset") }
-
-    get getCoords() { return this.passProp("getCoords") }
-
-    get overlap() { return this.passProp("overlap") }
-
-    get resize() { return this.passProp("resize") }
+    override val offset get() = passProp(TooltipView::offset)
+    override fun getCoords(pos: Int) = passProp(TooltipView::getCoords)?.invoke(pos)
+    override val overlap get() = passProp(TooltipView::overlap) ?: false
+    override val resize get() = passProp(TooltipView::resize) ?: true
 }
 
-const showHoverTooltipHost = showTooltip.compute([showHoverTooltip], state => {
-    let tooltips = state.facet(showHoverTooltip)
-    if (tooltips.length === 0) return null
+// Compute the hover tooltip host
+val showHoverTooltipHost = showTooltip.compute(listOf(showHoverTooltip)) { state ->
+    val tooltips = state.facet(showHoverTooltip)
+    if (tooltips.isEmpty()) null
+    else Tooltip(
+        pos = tooltips.minOf { it.pos },
+        end = tooltips.maxOf { it.end ?: it.pos },
+        create = { HoverTooltipHost(it) },
+        above = tooltips[0].above,
+        arrow = tooltips.any { it.arrow }
+    )
+}
 
-    return {
-        pos: Math.min(...tooltips.map(t => t.pos)),
-        end: Math.max(...tooltips.map(t => t.end ?? t.pos)),
-        create: HoverTooltipHost.create,
-        above: tooltips[0].above,
-        arrow: tooltips.some(t => t.arrow),
+// Helper functions for tooltip positioning
+private fun isInTooltip(tooltip: HTMLElement, event: MouseEvent): Boolean {
+    val rect = tooltip.getBoundingClientRect()
+    var top = rect.top
+    var bottom = rect.bottom
+    
+    tooltip.querySelector(".cm-tooltip-arrow")?.let { arrow ->
+        val arrowRect = (arrow as HTMLElement).getBoundingClientRect()
+        top = minOf(arrowRect.top, top)
+        bottom = maxOf(arrowRect.bottom, bottom)
     }
-})
+    
+    return event.clientX >= rect.left - TOOLTIP_MARGIN &&
+           event.clientX <= rect.right + TOOLTIP_MARGIN &&
+           event.clientY >= top - TOOLTIP_MARGIN &&
+           event.clientY <= bottom + TOOLTIP_MARGIN
+}
 
-const enum Hover { Time = 300, MaxDist = 6 }
+private fun isOverRange(
+    view: EditorView,
+    from: Int,
+    to: Int,
+    x: Double,
+    y: Double,
+    margin: Int
+): Boolean {
+    val rect = view.scrollDOM.getBoundingClientRect()
+    val docBottom = view.documentTop + view.documentPadding.top + view.contentHeight
+    
+    if (rect.left > x || rect.right < x || rect.top > y || minOf(rect.bottom, docBottom) < y) {
+        return false
+    }
+    
+    val pos = view.posAtCoords(x, y, false)
+    return pos in from..to
+}
 
-/// The type of function that can be used as a [hover tooltip
-/// source](#view.hoverTooltip^source).
-export type HoverTooltipSource = (view: EditorView, pos: number, side: -1 | 1) => Tooltip | readonly Tooltip[] | null | Promise<Tooltip | readonly Tooltip[] | null>
+// Tooltip configuration
+data class TooltipConfig(
+    val position: String = "fixed",
+    val parent: HTMLElement? = null,
+    val tooltipSpace: (EditorView) -> Rect = { view ->
+        Rect(0.0, 0.0, view.window.innerWidth.toDouble(), view.window.innerHeight.toDouble())
+    }
+)
 
-class HoverPlugin {
-    lastMove: {x: number, y: number, target: HTMLElement, time: number}
-    hoverTimeout = -1
-    restartTimeout = -1
-    pending: {pos: number} | null = null
+val tooltipConfig = Facet.define<TooltipConfig, TooltipConfig> { values ->
+    TooltipConfig(
+        position = if (browser.ios) "absolute" else values.firstOrNull()?.position ?: "fixed",
+        parent = values.firstOrNull()?.parent,
+        tooltipSpace = values.firstOrNull()?.tooltipSpace ?: { view ->
+            Rect(0.0, 0.0, view.window.innerWidth.toDouble(), view.window.innerHeight.toDouble())
+        }
+    )
+}
 
-    constructor(readonly view: EditorView,
-                readonly source: HoverTooltipSource,
-                readonly field: StateField<readonly Tooltip[]>,
-    readonly setHover: StateEffectType<readonly Tooltip[]>,
-    readonly hoverTime: number) {
-        this.lastMove = {x: 0, y: 0, target: view.dom, time: 0}
-        this.checkHover = this.checkHover.bind(this)
-        view.dom.addEventListener("mouseleave", this.mouseleave = this.mouseleave.bind(this))
-        view.dom.addEventListener("mousemove", this.mousemove = this.mousemove.bind(this))
+// Hover tooltip source type
+typealias HoverTooltipSource = (view: EditorView, pos: Int, side: Int) -> Tooltip?
+
+class HoverPlugin(
+    private val view: EditorView,
+    private val source: HoverTooltipSource,
+    private val field: StateField<List<Tooltip>>,
+    private val setHover: StateEffectType<List<Tooltip>>,
+    private val hoverTime: Int
+) {
+    private var lastMove = MousePosition(0.0, 0.0, view.dom, 0L)
+    private var hoverTimeout = -1
+    private var restartTimeout = -1
+    private var pending: PendingHover? = null
+
+    init {
+        view.dom.addEventListener("mouseleave", ::mouseleave)
+        view.dom.addEventListener("mousemove", ::mousemove)
     }
 
-    update() {
-        if (this.pending) {
-            this.pending = null
-            clearTimeout(this.restartTimeout)
-            this.restartTimeout = setTimeout(() => this.startHover(), 20)
+    fun update() {
+        pending?.let {
+            pending = null
+            clearTimeout(restartTimeout)
+            restartTimeout = setTimeout({ startHover() }, 20)
         }
     }
 
-    get active() {
-        return this.view.state.field(this.field)
-    }
+    val active: List<Tooltip>
+        get() = view.state.field(field)
 
-    checkHover() {
-        this.hoverTimeout = -1
-        if (this.active.length) return
-        let hovered = Date.now() - this.lastMove.time
-        if (hovered < this.hoverTime)
-            this.hoverTimeout = setTimeout(this.checkHover, this.hoverTime - hovered)
-        else
-            this.startHover()
-    }
-
-    startHover() {
-        clearTimeout(this.restartTimeout)
-        let {view, lastMove} = this
-        let desc = view.docView.nearest(lastMove.target)
-        if (!desc) return
-        let pos: number, side: -1 | 1 = 1
-        if (desc instanceof WidgetView) {
-            pos = desc.posAtStart
+    private fun checkHover() {
+        hoverTimeout = -1
+        if (active.isNotEmpty()) return
+        
+        val hovered = Date.now() - lastMove.time
+        if (hovered < hoverTime) {
+            hoverTimeout = setTimeout({ checkHover() }, hoverTime - hovered)
         } else {
-            pos = view.posAtCoords(lastMove)!
-            if (pos == null) return
-            let posCoords = view.coordsAtPos(pos)
-            if (!posCoords ||
-                lastMove.y < posCoords.top || lastMove.y > posCoords.bottom ||
-                lastMove.x < posCoords.left - view.defaultCharacterWidth ||
-                lastMove.x > posCoords.right + view.defaultCharacterWidth) return
-            let bidi = view.bidiSpans(view.state.doc.lineAt(pos)).find(s => s.from <= pos! && s.to >= pos!)
-            let rtl = bidi && bidi.dir == Direction.RTL ? -1 : 1
-            side = (lastMove.x < posCoords.left ? -rtl : rtl) as -1 | 1
+            startHover()
         }
-        let open = this.source(view, pos, side)
+    }
 
-        if ((open as any)?.then) {
-            let pending = this.pending = {pos}
-            ;(open as Promise<Tooltip | null>).then(result => {
+    private fun startHover() {
+        clearTimeout(restartTimeout)
+        val desc = view.docView.nearest(lastMove.target)
+        if (desc == null) return
+
+        val (pos, side) = when {
+            desc is WidgetView -> desc.posAtStart to 1
+            else -> {
+                val pos = view.posAtCoords(lastMove.x, lastMove.y) ?: return
+                val posCoords = view.coordsAtPos(pos) ?: return
+                
+                if (lastMove.y < posCoords.top || lastMove.y > posCoords.bottom ||
+                    lastMove.x < posCoords.left - view.defaultCharacterWidth ||
+                    lastMove.x > posCoords.right + view.defaultCharacterWidth) {
+                    return
+                }
+                
+                val bidi = view.bidiSpans(view.state.doc.lineAt(pos))
+                    .find { it.from <= pos && it.to >= pos }
+                val rtl = if (bidi?.dir == Direction.RTL) -1 else 1
+                pos to (if (lastMove.x < posCoords.left) -rtl else rtl)
+            }
+        }
+
+        val open = source(view, pos, side)
+        
+        if (open is Promise<*>) {
+            val pending = PendingHover(pos).also { this.pending = it }
+            open.then({ result ->
                 if (this.pending == pending) {
                     this.pending = null
-                    if (result && !(Array.isArray(result) && !result.length))
-                        view.dispatch({effects: this.setHover.of(Array.isArray(result) ? result : [result])})
+                    if (result != null && (result !is List<*> || result.isNotEmpty())) {
+                        view.dispatch(effects = setHover.of(result.asList()))
+                    }
                 }
-            }, e => logException(view.state, e, "hover tooltip"))
-        } else if (open && !(Array.isArray(open) && !open.length)) {
-            view.dispatch({effects: this.setHover.of(Array.isArray(open) ? open : [open])})
+            }, { e -> logException(view.state, e, "hover tooltip") })
+        } else if (open != null && (open !is List<*> || open.isNotEmpty())) {
+            view.dispatch(effects = setHover.of(open.asList()))
         }
     }
 
-    get tooltip() {
-        let plugin = this.view.plugin(tooltipPlugin)
-        let index = plugin ? plugin.manager.tooltips.findIndex(t => t.create == HoverTooltipHost.create) : -1
-        return index > -1 ? plugin!.manager.tooltipViews[index] : null
-    }
+    val tooltip: TooltipView?
+        get() {
+            val plugin = view.plugin(tooltipPlugin)
+            val index = plugin?.manager?.tooltips?.indexOfFirst { it.create == HoverTooltipHost::create } ?: -1
+            return if (index > -1) plugin?.manager?.tooltipViews?.get(index) else null
+        }
 
-    mousemove(event: MouseEvent) {
-        this.lastMove = {x: event.clientX, y: event.clientY, target: event.target as HTMLElement, time: Date.now()}
-        if (this.hoverTimeout < 0) this.hoverTimeout = setTimeout(this.checkHover, this.hoverTime)
-        let {active, tooltip} = this
-        if (active.length && tooltip && !isInTooltip(tooltip.dom, event) || this.pending) {
-            let {pos} = active[0] || this.pending!, end = active[0]?.end ?? pos
-            if ((pos == end ? this.view.posAtCoords(this.lastMove) != pos
-            : !isOverRange(this.view, pos, end, event.clientX, event.clientY, Hover.MaxDist))) {
-                this.view.dispatch({effects: this.setHover.of([])})
-                this.pending = null
+    private fun mousemove(event: MouseEvent) {
+        lastMove = MousePosition(
+            x = event.clientX,
+            y = event.clientY,
+            target = event.target as HTMLElement,
+            time = Date.now()
+        )
+        
+        if (hoverTimeout < 0) {
+            hoverTimeout = setTimeout({ checkHover() }, hoverTime)
+        }
+        
+        val activeTooltips = active
+        val currentTooltip = tooltip
+        
+        if ((activeTooltips.isNotEmpty() && currentTooltip != null && 
+             !isInTooltip(currentTooltip.dom, event)) || pending != null) {
+            val pos = (activeTooltips.firstOrNull() ?: pending)?.pos ?: return
+            val end = activeTooltips.firstOrNull()?.end ?: pos
+            
+            if (pos == end) {
+                if (view.posAtCoords(lastMove.x, lastMove.y) != pos) {
+                    view.dispatch(effects = setHover.of(emptyList()))
+                    pending = null
+                }
+            } else if (!isOverRange(view, pos, end, event.clientX, event.clientY, HOVER_MAX_DIST)) {
+                view.dispatch(effects = setHover.of(emptyList()))
+                pending = null
             }
         }
     }
 
-    mouseleave(event: MouseEvent) {
-        clearTimeout(this.hoverTimeout)
-        this.hoverTimeout = -1
-        let {active} = this
-        if (active.length) {
-            let {tooltip} = this
-            let inTooltip = tooltip && tooltip.dom.contains(event.relatedTarget as HTMLElement)
-            if (!inTooltip)
-                this.view.dispatch({effects: this.setHover.of([])})
-            else
-                this.watchTooltipLeave(tooltip!.dom)
+    private fun mouseleave(event: MouseEvent) {
+        clearTimeout(hoverTimeout)
+        hoverTimeout = -1
+        
+        if (active.isNotEmpty()) {
+            val currentTooltip = tooltip
+            val inTooltip = currentTooltip?.dom?.contains(event.relatedTarget as? HTMLElement)
+            
+            if (!inTooltip) {
+                view.dispatch(effects = setHover.of(emptyList()))
+            } else {
+                watchTooltipLeave(currentTooltip!!.dom)
+            }
         }
     }
 
-    watchTooltipLeave(tooltip: HTMLElement) {
-        let watch = (event: MouseEvent) => {
+    private fun watchTooltipLeave(tooltip: HTMLElement) {
+        val watch = { event: MouseEvent ->
             tooltip.removeEventListener("mouseleave", watch)
-            if (this.active.length && !this.view.dom.contains(event.relatedTarget as HTMLElement))
-                this.view.dispatch({effects: this.setHover.of([])})
+            if (active.isNotEmpty() && !view.dom.contains(event.relatedTarget as? HTMLElement)) {
+                view.dispatch(effects = setHover.of(emptyList()))
+            }
         }
         tooltip.addEventListener("mouseleave", watch)
     }
 
-    destroy() {
-        clearTimeout(this.hoverTimeout)
-        this.view.dom.removeEventListener("mouseleave", this.mouseleave)
-        this.view.dom.removeEventListener("mousemove", this.mousemove)
+    fun destroy() {
+        clearTimeout(hoverTimeout)
+        view.dom.removeEventListener("mouseleave", ::mouseleave)
+        view.dom.removeEventListener("mousemove", ::mousemove)
     }
+
+    private data class MousePosition(
+        val x: Double,
+        val y: Double,
+        val target: HTMLElement,
+        val time: Long
+    )
+
+    private data class PendingHover(val pos: Int)
 }
 
-const tooltipMargin = 4
-
-function isInTooltip(tooltip: HTMLElement, event: MouseEvent) {
-    let {left, right, top, bottom} = tooltip.getBoundingClientRect(), arrow
-    if (arrow = tooltip.querySelector(".cm-tooltip-arrow")) {
-        let arrowRect = arrow.getBoundingClientRect()
-        top = Math.min(arrowRect.top, top)
-        bottom = Math.max(arrowRect.bottom, bottom)
-    }
-    return event.clientX >= left - tooltipMargin && event.clientX <= right + tooltipMargin &&
-        event.clientY >= top - tooltipMargin && event.clientY <= bottom + tooltipMargin
+/**
+ * Creates a tooltip extension with the given configuration.
+ */
+fun tooltips(config: TooltipConfig = TooltipConfig()): Extension {
+    return tooltipConfig.of(config)
 }
 
-function isOverRange(view: EditorView, from: number, to: number, x: number, y: number, margin: number) {
-    let rect = view.scrollDOM.getBoundingClientRect()
-    let docBottom = view.documentTop + view.documentPadding.top + view.contentHeight
-    if (rect.left > x || rect.right < x || rect.top > y || Math.min(rect.bottom, docBottom) < y) return false
-    let pos = view.posAtCoords({x, y}, false)
-    return pos >= from && pos <= to
-}
-
-/// Set up a hover tooltip, which shows up when the pointer hovers
-/// over ranges of text. The callback is called when the mouse hovers
-/// over the document text. It should, if there is a tooltip
-/// associated with position `pos`, return the tooltip description
-/// (either directly or in a promise). The `side` argument indicates
-/// on which side of the position the pointer is—it will be -1 if the
-/// pointer is before the position, 1 if after the position.
-///
-/// Note that all hover tooltips are hosted within a single tooltip
-/// container element. This allows multiple tooltips over the same
-/// range to be "merged" together without overlapping.
-///
-/// The return value is a valid [editor extension](#state.Extension)
-/// but also provides an `active` property holding a state field that
-/// can be used to read the currently active tooltips produced by this
-/// extension.
-export function hoverTooltip(
-source: HoverTooltipSource,
-options: {
-    /// Controls whether a transaction hides the tooltip. The default
-    /// is to not hide.
-    hideOn?: (tr: Transaction, tooltip: Tooltip) => boolean,
-    /// When enabled (this defaults to false), close the tooltip
-    /// whenever the document changes or the selection is set.
-    hideOnChange?: boolean | "touch",
-    /// Hover time after which the tooltip should appear, in
-    /// milliseconds. Defaults to 300ms.
-    hoverTime?: number
-} = {}
-): Extension & {active: StateField<readonly Tooltip[]>} {
-    let setHover = StateEffect.define<readonly Tooltip[]>()
-    let hoverState = StateField.define<readonly Tooltip[]>({
-        create() { return [] },
-
-        update(value, tr) {
-            if (value.length) {
-                if (options.hideOnChange && (tr.docChanged || tr.selection)) value = []
-                else if (options.hideOn) value = value.filter(v => !options.hideOn!(tr, v))
-                if (tr.docChanged) {
-                    let mapped = []
-                    for (let tooltip of value) {
-                        let newPos = tr.changes.mapPos(tooltip.pos, -1, MapMode.TrackDel)
+/**
+ * Sets up a hover tooltip that shows up when the pointer hovers over ranges of text.
+ */
+fun hoverTooltip(
+    source: HoverTooltipSource,
+    options: HoverTooltipOptions = HoverTooltipOptions()
+): Extension {
+    val setHover = StateEffect.define<List<Tooltip>>()
+    val hoverState = StateField.define<List<Tooltip>> {
+        create { emptyList() }
+        update { value, tr ->
+            if (value.isNotEmpty()) {
+                when {
+                    options.hideOnChange && (tr.docChanged || tr.selection) -> emptyList()
+                    options.hideOn != null -> value.filterNot { options.hideOn.invoke(tr, it) }
+                    tr.docChanged -> value.mapNotNull { tooltip ->
+                        val newPos = tr.changes.mapPos(tooltip.pos, -1, MapMode.TrackDel)
                         if (newPos != null) {
-                            let copy: Tooltip = Object.assign(Object.create(null), tooltip)
-                            copy.pos = newPos
-                            if (copy.end != null) copy.end = tr.changes.mapPos(copy.end)
-                            mapped.push(copy)
-                        }
+                            tooltip.copy(
+                                pos = newPos,
+                                end = tooltip.end?.let { tr.changes.mapPos(it) }
+                            )
+                        } else null
                     }
-                    value = mapped
+                    else -> value
                 }
-            }
-            for (let effect of tr.effects) {
-            if (effect.is(setHover)) value = effect.value
-            if (effect.is(closeHoverTooltipEffect)) value = []
+            } else emptyList()
         }
-            return value
-        },
-
-        provide: f => showHoverTooltip.from(f)
-    })
-
-    return {
-        active: hoverState,
-        extension: [
-        hoverState,
-        ViewPlugin.define(view => new HoverPlugin(view, source, hoverState, setHover, options.hoverTime || Hover.Time)),
-        showHoverTooltipHost
-        ]
+        provide { showHoverTooltip.from(it) }
     }
+
+    return Extension(
+        hoverState,
+        ViewPlugin.define { view ->
+            HoverPlugin(
+                view = view,
+                source = source,
+                field = hoverState,
+                setHover = setHover,
+                hoverTime = options.hoverTime ?: HOVER_TIME
+            )
+        },
+        showHoverTooltipHost
+    )
 }
 
-/// Get the active tooltip view for a given tooltip, if available.
-export function getTooltip(view: EditorView, tooltip: Tooltip): TooltipView | null {
-    let plugin = view.plugin(tooltipPlugin)
-    if (!plugin) return null
-    let found = plugin.manager.tooltips.indexOf(tooltip)
-    return found < 0 ? null : plugin.manager.tooltipViews[found]
+data class HoverTooltipOptions(
+    val hideOn: ((Transaction, Tooltip) -> Boolean)? = null,
+    val hideOnChange: Boolean = false,
+    val hoverTime: Int? = null
+)
+
+// Utility functions
+fun getTooltip(view: EditorView, tooltip: Tooltip): TooltipView? {
+    val plugin = view.plugin(tooltipPlugin)
+    val found = plugin?.manager?.tooltips?.indexOf(tooltip) ?: -1
+    return if (found >= 0) plugin?.manager?.tooltipViews?.get(found) else null
 }
 
-/// Returns true if any hover tooltips are currently active.
-export function hasHoverTooltips(state: EditorState) {
-    return state.facet(showHoverTooltip).some(x => x)
+fun hasHoverTooltips(state: EditorState): Boolean {
+    return state.facet(showHoverTooltip).isNotEmpty()
 }
 
-const closeHoverTooltipEffect = StateEffect.define<null>()
+val closeHoverTooltipEffect = StateEffect.define<Unit>()
+val closeHoverTooltips = closeHoverTooltipEffect.of(Unit)
 
-/// Transaction effect that closes all hover tooltips.
-export const closeHoverTooltips = closeHoverTooltipEffect.of(null)
-
-/// Tell the tooltip extension to recompute the position of the active
-/// tooltips. This can be useful when something happens (such as a
-/// re-positioning or CSS change affecting the editor) that could
-/// invalidate the existing tooltip positions.
-export function repositionTooltips(view: EditorView) {
-    let plugin = view.plugin(tooltipPlugin)
-    if (plugin) plugin.maybeMeasure()
+fun repositionTooltips(view: EditorView) {
+    view.plugin(tooltipPlugin)?.maybeMeasure()
 }

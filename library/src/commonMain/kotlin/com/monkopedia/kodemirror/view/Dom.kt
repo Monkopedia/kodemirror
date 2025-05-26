@@ -1,112 +1,148 @@
 package com.monkopedia.kodemirror.view
 
-export function getSelection(root: DocumentOrShadowRoot): Selection | null {
-    let target
-        // Browsers differ on whether shadow roots have a getSelection
-        // method. If it exists, use that, otherwise, call it on the
-        // document.
-        if ((root as any).nodeType == 11) { // Shadow root
-            target =
-                (root as any).getSelection ? root as Document : (root as ShadowRoot).ownerDocument
-        } else {
-            target = root as Document
+import com.monkopedia.kodemirror.state.*
+import com.monkopedia.kodemirror.dom.*
+import org.w3c.dom.*
+import kotlinx.browser.document
+import kotlinx.browser.window
+
+/**
+ * Get the selection from a document or shadow root.
+ */
+fun getSelection(root: Node): Selection? {
+    val target = when {
+        root.nodeType == 11 -> { // Shadow root
+            if ((root as? ShadowRoot)?.getSelection != null) root else root.ownerDocument
         }
-    return target.getSelection()
+        else -> root as? Document
+    }
+    return target?.getSelection()
 }
 
-export function contains(dom: Node, node: Node | null) {
-    return node ? dom == node || dom.contains(node.nodeType != 1 ? node.parentNode : node) : false
+/**
+ * Check if a DOM node contains another node.
+ */
+fun contains(dom: Node, node: Node?): Boolean {
+    return node?.let { n ->
+        dom == n || dom.contains(if (n.nodeType != 1) n.parentNode else n)
+    } ?: false
 }
 
-export function hasSelection(dom: HTMLElement, selection: SelectionRange): boolean {
-    if (!selection.anchorNode) return false
-    try {
-        // Firefox will raise 'permission denied' errors when accessing
-        // properties of `sel.anchorNode` when it's in a generated CSS
-        // element.
-        return contains(dom, selection.anchorNode)
-    } catch (_) {
-        return false
+/**
+ * Check if a DOM element has a selection.
+ */
+fun hasSelection(dom: HTMLElement, selection: Selection): Boolean {
+    if (selection.anchorNode == null) return false
+    return try {
+        contains(dom, selection.anchorNode)
+    } catch (_: Throwable) {
+        false
     }
 }
 
-export function clientRectsFor(dom: Node) {
-    if (dom.nodeType == 3)
-        return textRange(dom as Text, 0, dom.nodeValue!. length).getClientRects()
-    else if (dom.nodeType == 1)
-        return (dom as HTMLElement).getClientRects()
-    else
-        return [] as any as DOMRectList
-}
-
-// Scans forward and backward through DOM positions equivalent to the
-// given one to see if the two are in the same place (i.e. after a
-// text node vs at the end of that text node)
-export function isEquivalentPosition(node: Node, off: number, targetNode: Node | null, targetOff: number): boolean {
-    return targetNode ? (scanFor(node, off, targetNode, targetOff, -1) ||
-    scanFor(node, off, targetNode, targetOff, 1)) : false
-}
-
-export function domIndex(node: Node): number {
-    for (var index = 0;; index++) {
-        node = node.previousSibling!
-        if (!node) return index
+/**
+ * Get client rects for a node.
+ */
+fun clientRectsFor(dom: Node): DOMRectList {
+    return when (dom.nodeType) {
+        3 -> textRange(dom as Text, 0, dom.nodeValue?.length ?: 0).getClientRects()
+        1 -> (dom as HTMLElement).getClientRects()
+        else -> emptyList<DOMRect>() as DOMRectList
     }
 }
 
-export function isBlockElement(node: Node): boolean {
-    return node.nodeType == 1 && /^(DIV|P|LI|UL|OL|BLOCKQUOTE|DD|DT|H\d|SECTION|PRE)$/.test(node.nodeName)
+/**
+ * Check if two DOM positions are equivalent.
+ */
+fun isEquivalentPosition(node: Node, off: Int, targetNode: Node?, targetOff: Int): Boolean {
+    return targetNode?.let { target ->
+        scanFor(node, off, target, targetOff, -1) || scanFor(node, off, target, targetOff, 1)
+    } ?: false
 }
 
-function scanFor(node: Node, off: number, targetNode: Node, targetOff: number, dir: -1 | 1): boolean {
-    for (;;) {
-        if (node == targetNode && off == targetOff) return true
-        if (off == (dir < 0 ? 0 : maxOffset(node))) {
-            if (node.nodeName == "DIV") return false
-            let parent = node . parentNode
-                if (!parent || parent.nodeType != 1) return false
-            off = domIndex(node) + (dir < 0 ? 0 : 1)
-            node = parent
-        } else if (node.nodeType == 1) {
-            node = node.childNodes[off + (dir < 0 ?-1 : 0)]
-            if (node.nodeType == 1 && (node as HTMLElement).contentEditable == "false") return false
-            off = dir < 0 ? maxOffset(node) : 0
+/**
+ * Get the index of a node among its siblings.
+ */
+fun domIndex(node: Node): Int {
+    var index = 0
+    var current = node.previousSibling
+    while (current != null) {
+        index++
+        current = current.previousSibling
+    }
+    return index
+}
+
+/**
+ * Check if a node is a block element.
+ */
+fun isBlockElement(node: Node): Boolean {
+    return node.nodeType == 1 && Regex("^(DIV|P|LI|UL|OL|BLOCKQUOTE|DD|DT|H\\d|SECTION|PRE)$").matches(node.nodeName)
+}
+
+/**
+ * Scan for equivalent positions.
+ */
+private fun scanFor(node: Node, off: Int, targetNode: Node, targetOff: Int, dir: Int): Boolean {
+    var currentNode = node
+    var currentOff = off
+    
+    while (true) {
+        if (currentNode == targetNode && currentOff == targetOff) return true
+        
+        if (currentOff == (if (dir < 0) 0 else maxOffset(currentNode))) {
+            if (currentNode.nodeName == "DIV") return false
+            val parent = currentNode.parentNode ?: return false
+            if (parent.nodeType != 1) return false
+            currentOff = domIndex(currentNode) + (if (dir < 0) 0 else 1)
+            currentNode = parent
+        } else if (currentNode.nodeType == 1) {
+            currentNode = currentNode.childNodes[currentOff + (if (dir < 0) -1 else 0)] ?: return false
+            if (currentNode.nodeType == 1 && (currentNode as HTMLElement).contentEditable == "false") return false
+            currentOff = if (dir < 0) maxOffset(currentNode) else 0
         } else {
             return false
         }
     }
 }
 
-export function maxOffset(node: Node): number {
-    return node.nodeType == 3 ? node.nodeValue!.length : node.childNodes.length
+/**
+ * Get the maximum offset for a node.
+ */
+fun maxOffset(node: Node): Int {
+    return when (node.nodeType) {
+        3 -> node.nodeValue?.length ?: 0
+        else -> node.childNodes.length
+    }
 }
 
+/**
+ * Basic rectangle type.
+ */
 data class Rect(
-    val left: Int? = 0,
-    val top: Int? = 0,
-    val right: Int? = 0,
-    val bottom: Int? = 0
+    val left: Double = 0.0,
+    val right: Double = 0.0,
+    val top: Double = 0.0,
+    val bottom: Double = 0.0
 )
-/// Basic rectangle type.
-//export interface Rect {
-//    readonly left: number
-//    readonly right: number
-//    readonly top: number
-//    readonly bottom: number
-//}
 
-export function flattenRect(rect: Rect, left: boolean) {
-    let x = left ? rect . left : rect . right
-        return { left: x, right: x, top: rect.top, bottom: rect.bottom }
+/**
+ * Flatten a rectangle to a vertical line on one of its sides.
+ */
+fun flattenRect(rect: Rect, left: Boolean): Rect {
+    val x = if (left) rect.left else rect.right
+    return rect.copy(left = x, right = x)
 }
 
-function windowRect(win: Window): Rect {
-    let vp = win . visualViewport
-        if (vp) return { left: 0, right: vp.width,
-                         top: 0, bottom: vp.height
-        }
-    return { left: 0, right: win.innerWidth,
-             top: 0, bottom: win.innerHeight
+/**
+ * Get the window's viewport rectangle.
+ */
+fun windowRect(win: Window): Rect {
+    val vp = win.visualViewport
+    return if (vp != null) {
+        Rect(left = 0.0, right = vp.width, top = 0.0, bottom = vp.height)
+    } else {
+        Rect(left = 0.0, right = win.innerWidth.toDouble(), top = 0.0, bottom = win.innerHeight.toDouble())
     }
 }
 
@@ -217,141 +253,156 @@ xMargin: number, yMargin: number, ltr: boolean) {
     }
 }
 
-export function scrollableParents(dom: HTMLElement) {
-    let doc = dom . ownerDocument, x: HTMLElement | undefined, y: HTMLElement | undefined
-    for (let cur = dom.parentNode as HTMLElement | null; cur;) {
-        if (cur == doc.body || (x && y)) {
+/**
+ * Find scrollable parent elements.
+ */
+fun scrollableParents(dom: HTMLElement): ScrollableParents {
+    val doc = dom.ownerDocument
+    var x: HTMLElement? = null
+    var y: HTMLElement? = null
+    
+    var cur: Node? = dom.parentNode
+    while (cur != null) {
+        if (cur == doc.body || (x != null && y != null)) {
             break
         } else if (cur.nodeType == 1) {
-            if (!y && cur.scrollHeight > cur.clientHeight) y = cur
-            if (!x && cur.scrollWidth > cur.clientWidth) x = cur
-            cur = cur.assignedSlot || cur.parentNode as HTMLElement | null
+            val element = cur as HTMLElement
+            if (y == null && element.scrollHeight > element.clientHeight) y = element
+            if (x == null && element.scrollWidth > element.clientWidth) x = element
+            cur = element.assignedSlot ?: element.parentNode
         } else if (cur.nodeType == 11) {
-            cur = (cur as any).host
+            cur = (cur as ShadowRoot).host
         } else {
             break
         }
     }
-    return { x, y }
+    return ScrollableParents(x, y)
 }
 
-export interface SelectionRange {
-    focusNode: Node | null, focusOffset: number,
-    anchorNode: Node | null, anchorOffset: number
+/**
+ * Represents scrollable parent elements.
+ */
+data class ScrollableParents(
+    val x: HTMLElement?,
+    val y: HTMLElement?
+)
+
+/**
+ * Represents a selection range.
+ */
+interface SelectionRange {
+    val focusNode: Node?
+    val focusOffset: Int
+    val anchorNode: Node?
+    val anchorOffset: Int
 }
 
-export class DOMSelectionState implements SelectionRange {
-    anchorNode: Node | null = null
-    anchorOffset: number = 0
-    focusNode: Node | null = null
-    focusOffset: number = 0
+/**
+ * Maintains selection state.
+ */
+class DOMSelectionState : SelectionRange {
+    override var anchorNode: Node? = null
+    override var anchorOffset: Int = 0
+    override var focusNode: Node? = null
+    override var focusOffset: Int = 0
 
-    eq(domSel: SelectionRange): boolean {
-        return this.anchorNode == domSel.anchorNode && this.anchorOffset == domSel.anchorOffset &&
-            this.focusNode == domSel.focusNode && this.focusOffset == domSel.focusOffset
+    /**
+     * Check if this selection state equals another.
+     */
+    fun eq(domSel: SelectionRange): Boolean {
+        return anchorNode == domSel.anchorNode && 
+               anchorOffset == domSel.anchorOffset &&
+               focusNode == domSel.focusNode && 
+               focusOffset == domSel.focusOffset
     }
 
-    setRange(range: SelectionRange) {
-        let { anchorNode, focusNode } = range
-        // Clip offsets to node size to avoid crashes when Safari reports bogus offsets (#1152)
-        this.set(anchorNode, Math.min(range.anchorOffset, anchorNode ? maxOffset (anchorNode) : 0),
-        focusNode, Math.min(range.focusOffset, focusNode ? maxOffset(focusNode) : 0))
+    /**
+     * Set the selection range.
+     */
+    fun setRange(range: SelectionRange) {
+        val anchorNode = range.anchorNode
+        val focusNode = range.focusNode
+        // Clip offsets to node size to avoid crashes when Safari reports bogus offsets
+        set(
+            anchorNode = anchorNode,
+            anchorOffset = minOf(range.anchorOffset, if (anchorNode != null) maxOffset(anchorNode) else 0),
+            focusNode = focusNode,
+            focusOffset = minOf(range.focusOffset, if (focusNode != null) maxOffset(focusNode) else 0)
+        )
     }
 
-    set(anchorNode: Node | null, anchorOffset: number, focusNode: Node | null, focusOffset: number) {
-        this.anchorNode = anchorNode; this.anchorOffset = anchorOffset
-        this.focusNode = focusNode; this.focusOffset = focusOffset
+    /**
+     * Set the selection state.
+     */
+    fun set(anchorNode: Node?, anchorOffset: Int, focusNode: Node?, focusOffset: Int) {
+        this.anchorNode = anchorNode
+        this.anchorOffset = anchorOffset
+        this.focusNode = focusNode
+        this.focusOffset = focusOffset
     }
 }
 
-let preventScrollSupported: null | false | { preventScroll: boolean } = null
-// Feature-detects support for .focus({preventScroll: true}), and uses
-// a fallback kludge when not supported.
-export function focusPreventScroll(dom: HTMLElement) {
-    if ((dom as any).setActive) return (dom as any).setActive() // in IE
-    if (preventScrollSupported) return dom.focus(preventScrollSupported)
+private var preventScrollSupported: Boolean? = null
 
-    let stack =[]
-    for (let cur: Node | null = dom; cur; cur = cur.parentNode) {
-        stack.push(cur, (cur as any).scrollTop, (cur as any).scrollLeft)
-        if (cur == cur.ownerDocument) break
-    }
-    dom.focus(preventScrollSupported == null ? {
-        get preventScroll () {
-            preventScrollSupported = { preventScroll: true }
-            return true
+/**
+ * Get the root node (document or shadow root).
+ */
+fun getRoot(node: Node?): Node? {
+    var current = node
+    while (current != null) {
+        if (current.nodeType == 9 || (current.nodeType == 11 && (current as ShadowRoot).host != null)) {
+            return current
         }
-    } : undefined)
-    if (!preventScrollSupported) {
-        preventScrollSupported = false
-        for (let i = 0; i < stack.length;) {
-            let elt = stack [i++] as HTMLElement, top = stack[i++] as number, left = stack[i++] as number
-            if (elt.scrollTop != top) elt.scrollTop = top
-            if (elt.scrollLeft != left) elt.scrollLeft = left
-        }
-    }
-}
-
-let scratchRange: Range | null
-
-export function textRange(node: Text, from: number, to = from) {
-    let range = scratchRange ||(scratchRange = document.createRange())
-    range.setEnd(node, to)
-    range.setStart(node, from)
-    return range
-}
-
-export function dispatchKey(elt: HTMLElement, name: string, code: number, mods?: KeyboardEvent): boolean {
-    let options : KeyboardEventInit = { key: name, code: name, keyCode: code, which: code, cancelable: true }
-    if (mods)
-        ({ altKey: options.altKey, ctrlKey: options.ctrlKey, shiftKey: options.shiftKey, metaKey: options.metaKey } =
-            mods)
-    let down = new KeyboardEvent("keydown", options)
-    ;(down as any).synthetic = true
-    elt.dispatchEvent(down)
-    let up = new KeyboardEvent("keyup", options)
-    ;(up as any).synthetic = true
-    elt.dispatchEvent(up)
-    return down.defaultPrevented || up.defaultPrevented
-}
-
-export function getRoot(node: Node | null | undefined): DocumentOrShadowRoot | null {
-    while (node) {
-        if (node && (node.nodeType == 9 || node.nodeType == 11 && (node as ShadowRoot).host))
-            return node as unknown as DocumentOrShadowRoot
-        node = (node as HTMLElement).assignedSlot || node.parentNode
+        current = (current as? Element)?.assignedSlot ?: current.parentNode
     }
     return null
 }
 
-export function clearAttributes(node: HTMLElement) {
-    while (node.attributes.length) node.removeAttributeNode(node.attributes[0])
+/**
+ * Clear all attributes from an element.
+ */
+fun clearAttributes(node: HTMLElement) {
+    while (node.attributes.length > 0) {
+        node.removeAttributeNode(node.attributes[0])
+    }
 }
 
-export function atElementStart(doc: HTMLElement, selection: SelectionRange) {
-    let node = selection . focusNode, offset = selection.focusOffset
-    if (!node || selection.anchorNode != node || selection.anchorOffset != offset) return false
-    // Safari can report bogus offsets (#1152)
-    offset = Math.min(offset, maxOffset(node))
-    for (;;) {
-        if (offset) {
+/**
+ * Check if selection is at the start of an element.
+ */
+fun atElementStart(doc: HTMLElement, selection: SelectionRange): Boolean {
+    var node = selection.focusNode
+    var offset = selection.focusOffset
+    
+    if (node == null || selection.anchorNode != node || selection.anchorOffset != offset) return false
+    
+    // Safari can report bogus offsets
+    offset = minOf(offset, maxOffset(node))
+    
+    while (true) {
+        if (offset > 0) {
             if (node.nodeType != 1) return false
-            let prev : Node = node . childNodes [offset - 1]
-            if ((prev as HTMLElement).contentEditable == "false") offset--
-            else {
-                node = prev; offset = maxOffset(node)
+            val prev = node.childNodes[offset - 1]
+            if ((prev as? HTMLElement)?.contentEditable == "false") {
+                offset--
+            } else {
+                node = prev
+                offset = maxOffset(node)
             }
         } else if (node == doc) {
             return true
         } else {
             offset = domIndex(node)
-            node = node.parentNode!
+            node = node.parentNode ?: return false
         }
     }
 }
 
-export function isScrolledToBottom(elt: HTMLElement) {
-    return elt.scrollTop > Math.max(1, elt.scrollHeight - elt.clientHeight - 4)
+/**
+ * Check if an element is scrolled to the bottom.
+ */
+fun isScrolledToBottom(elt: HTMLElement): Boolean {
+    return elt.scrollTop > maxOf(1, elt.scrollHeight - elt.clientHeight - 4)
 }
 
 export function textNodeBefore(startNode: Node, startOffset: number): { node: Text, offset: number } | null {
@@ -385,5 +436,100 @@ export function textNodeAfter(startNode: Node, startOffset: number): { node: Tex
     } else {
         return null
     }
+    }
+}
+
+private var scratchRange: Range? = null
+
+/**
+ * Create a text range.
+ */
+fun textRange(node: Text, from: Int, to: Int = from): Range {
+    val range = scratchRange ?: document.createRange().also { scratchRange = it }
+    range.setEnd(node, to)
+    range.setStart(node, from)
+    return range
+}
+
+/**
+ * Dispatch keyboard events.
+ */
+fun dispatchKey(elt: HTMLElement, name: String, code: Int, mods: KeyboardEvent? = null): Boolean {
+    val options = KeyboardEventInit().apply {
+        key = name
+        this.code = name
+        keyCode = code
+        which = code
+        cancelable = true
+        
+        mods?.let {
+            altKey = it.altKey
+            ctrlKey = it.ctrlKey
+            shiftKey = it.shiftKey
+            metaKey = it.metaKey
+        }
+    }
+    
+    val down = KeyboardEvent("keydown", options).apply {
+        asDynamic().synthetic = true
+    }
+    elt.dispatchEvent(down)
+    
+    val up = KeyboardEvent("keyup", options).apply {
+        asDynamic().synthetic = true
+    }
+    elt.dispatchEvent(up)
+    
+    return down.defaultPrevented || up.defaultPrevented
+}
+
+/**
+ * Focus an element while preventing scroll.
+ */
+fun focusPreventScroll(dom: HTMLElement) {
+    // Try using setActive for IE
+    (dom.asDynamic().setActive as? Function0<Unit>)?.let { 
+        it()
+        return
+    }
+    
+    if (preventScrollSupported != null) {
+        dom.focus(object : FocusOptions {
+            override var preventScroll: Boolean = preventScrollSupported == true
+        })
+        return
+    }
+    
+    // Store scroll positions
+    val stack = mutableListOf<Any>()
+    var cur: Node? = dom
+    while (cur != null) {
+        stack.add(cur)
+        stack.add((cur as? HTMLElement)?.scrollTop ?: 0)
+        stack.add((cur as? HTMLElement)?.scrollLeft ?: 0)
+        if (cur == cur.ownerDocument) break
+        cur = cur.parentNode
+    }
+    
+    // Try to focus with preventScroll
+    dom.focus(object : FocusOptions {
+        override var preventScroll: Boolean
+            get() {
+                preventScrollSupported = true
+                return true
+            }
+    })
+    
+    // If preventScroll is not supported, restore scroll positions
+    if (preventScrollSupported != true) {
+        preventScrollSupported = false
+        var i = 0
+        while (i < stack.size) {
+            val elt = stack[i++] as? HTMLElement ?: continue
+            val top = stack[i++] as Int
+            val left = stack[i++] as Int
+            if (elt.scrollTop != top) elt.scrollTop = top
+            if (elt.scrollLeft != left) elt.scrollLeft = left
+        }
     }
 }

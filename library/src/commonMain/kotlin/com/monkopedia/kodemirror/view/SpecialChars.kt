@@ -1,187 +1,235 @@
 package com.monkopedia.kodemirror.view
 
-import {Decoration, DecorationSet, WidgetType} from "./decoration"
-import {ViewPlugin, ViewUpdate} from "./extension"
-import {EditorView} from "./editorview"
-import {MatchDecorator} from "./matchdecorator"
-import {combineConfig, Facet, Extension, countColumn, codePointAt} from "@codemirror/state"
+import com.monkopedia.kodemirror.state.*
+import com.monkopedia.kodemirror.dom.*
+import kotlin.js.RegExp
+import kotlin.math.abs
 
+/**
+ * Configuration for special character handling.
+ */
 interface SpecialCharConfig {
-    /// An optional function that renders the placeholder elements.
-    ///
-    /// The `description` argument will be text that clarifies what the
-    /// character is, which should be provided to screen readers (for
-    /// example with the
-    /// [`aria-label`](https://www.w3.org/TR/wai-aria/#aria-label)
-    /// attribute) and optionally shown to the user in other ways (such
-    /// as the
-    /// [`title`](https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/title)
-    /// attribute).
-    ///
-    /// The given placeholder string is a suggestion for how to display
-    /// the character visually.
-    render?: ((code: number, description: string | null, placeholder: string) => HTMLElement) | null
-    /// Regular expression that matches the special characters to
-    /// highlight. Must have its 'g'/global flag set.
-    specialChars?: RegExp
-    /// Regular expression that can be used to add characters to the
-    /// default set of characters to highlight.
-    addSpecialChars?: RegExp | null
+    /**
+     * An optional function that renders the placeholder elements.
+     *
+     * The `description` argument will be text that clarifies what the
+     * character is, which should be provided to screen readers (for
+     * example with the `aria-label` attribute) and optionally shown
+     * to the user in other ways (such as the `title` attribute).
+     *
+     * The given placeholder string is a suggestion for how to display
+     * the character visually.
+     */
+    val render: ((code: Int, description: String?, placeholder: String) -> HTMLElement)? 
+        get() = null
+
+    /**
+     * Regular expression that matches the special characters to highlight.
+     * Must have its 'g'/global flag set.
+     */
+    val specialChars: Regex
+        get() = Specials
+
+    /**
+     * Regular expression that can be used to add characters to the
+     * default set of characters to highlight.
+     */
+    val addSpecialChars: Regex?
+        get() = null
 }
 
-const UnicodeRegexpSupport = /x/.unicode != null ? "gu" : "g"
-const Specials = new RegExp("[\u0000-\u0008\u000a-\u001f\u007f-\u009f\u00ad\u061c\u200b\u200e\u200f\u2028\u2029\u202d\u202e\u2066\u2067\u2069\ufeff\ufff9-\ufffc]", UnicodeRegexpSupport)
+private val UnicodeRegexpSupport = if ("/x/".toRegex().hasUnicodeSupport()) "gu" else "g"
 
-const Names: {[key: number]: string} = {
-    0: "null",
-    7: "bell",
-    8: "backspace",
-    10: "newline",
-    11: "vertical tab",
-    13: "carriage return",
-    27: "escape",
-    8203: "zero width space",
-    8204: "zero width non-joiner",
-    8205: "zero width joiner",
-    8206: "left-to-right mark",
-    8207: "right-to-left mark",
-    8232: "line separator",
-    8237: "left-to-right override",
-    8238: "right-to-left override",
-    8294: "left-to-right isolate",
-    8295: "right-to-left isolate",
-    8297: "pop directional isolate",
-    8233: "paragraph separator",
-    65279: "zero width no-break space",
-    65532: "object replacement"
-}
+private val Specials = Regex(
+    "[\u0000-\u0008\u000a-\u001f\u007f-\u009f\u00ad\u061c\u200b\u200e\u200f\u2028\u2029\u202d\u202e\u2066\u2067\u2069\ufeff\ufff9-\ufffc]",
+    setOf(RegexOption.UNICODE)
+)
 
-let _supportsTabSize: null | boolean = null
-function supportsTabSize() {
-    if (_supportsTabSize == null && typeof document != "undefined" && document.body) {
-        let styles = document.body.style as any
-            _supportsTabSize = (styles.tabSize ?? styles.MozTabSize) != null
+private val Names = mapOf(
+    0 to "null",
+    7 to "bell",
+    8 to "backspace",
+    10 to "newline",
+    11 to "vertical tab",
+    13 to "carriage return",
+    27 to "escape",
+    8203 to "zero width space",
+    8204 to "zero width non-joiner",
+    8205 to "zero width joiner",
+    8206 to "left-to-right mark",
+    8207 to "right-to-left mark",
+    8232 to "line separator",
+    8237 to "left-to-right override",
+    8238 to "right-to-left override",
+    8294 to "left-to-right isolate",
+    8295 to "right-to-left isolate",
+    8297 to "pop directional isolate",
+    8233 to "paragraph separator",
+    65279 to "zero width no-break space",
+    65532 to "object replacement"
+)
+
+private var _supportsTabSize: Boolean? = null
+private fun supportsTabSize(): Boolean {
+    if (_supportsTabSize == null && js("typeof document") != "undefined" && js("document.body") != null) {
+        val styles = js("document.body.style")
+        _supportsTabSize = (styles.tabSize ?: styles.MozTabSize) != null
     }
-    return _supportsTabSize || false
+    return _supportsTabSize ?: false
 }
 
-const specialCharConfig = Facet.define<SpecialCharConfig, Required<SpecialCharConfig> & {replaceTabs?: boolean}>({
-    combine(configs) {
-        let config: Required<SpecialCharConfig> & {replaceTabs?: boolean} = combineConfig(configs, {
-            render: null,
-            specialChars: Specials,
-            addSpecialChars: null
-    })
-
-        if (config.replaceTabs = !supportsTabSize())
-            config.specialChars = new RegExp("\t|" + config.specialChars.source, UnicodeRegexpSupport)
-
-        if (config.addSpecialChars)
-            config.specialChars = new RegExp(config.specialChars.source + "|" + config.addSpecialChars.source, UnicodeRegexpSupport)
-
-        return config
-    }
-})
-
-/// Returns an extension that installs highlighting of special
-/// characters.
-export function highlightSpecialChars(
-/// Configuration options.
-config: SpecialCharConfig = {}
-): Extension {
-    return [specialCharConfig.of(config), specialCharPlugin()]
-}
-
-let _plugin: Extension | null = null
-function specialCharPlugin() {
-    return _plugin || (_plugin = ViewPlugin.fromClass(class {
-        decorations: DecorationSet = Decoration.none
-        decorationCache: {[char: number]: Decoration} = Object.create(null)
-        decorator: MatchDecorator
-
-        constructor(public view: EditorView) {
-            this.decorator = this.makeDecorator(view.state.facet(specialCharConfig))
-            this.decorations = this.decorator.createDeco(view)
-        }
-
-        makeDecorator(conf: Required<SpecialCharConfig> & {replaceTabs?: boolean}) {
-        return new MatchDecorator({
-            regexp: conf.specialChars,
-            decoration: (m, view, pos) => {
-            let {doc} = view.state
-            let code = codePointAt(m[0], 0)
-            if (code == 9) {
-                let line = doc.lineAt(pos)
-                let size = view.state.tabSize, col = countColumn(line.text, size, pos - line.from)
-                return Decoration.replace({
-                    widget: new TabWidget((size - (col % size)) * this.view.defaultCharacterWidth / this.view.scaleX)
-                })
-            }
-            return this.decorationCache[code] ||
-                (this.decorationCache[code] = Decoration.replace({widget: new SpecialCharWidget(conf, code)}))
-        },
-            boundary: conf.replaceTabs ? undefined : /[^]/
+private val specialCharConfig = Facet.define<SpecialCharConfig, Required<SpecialCharConfig>> {
+    combine { configs ->
+        val config = combineConfig(configs, object : Required<SpecialCharConfig> {
+            override var render: ((Int, String?, String) -> HTMLElement)? = null
+            override var specialChars: Regex = Specials
+            override var addSpecialChars: Regex? = null
+            var replaceTabs = !supportsTabSize()
         })
-    }
 
-        update(update: ViewUpdate) {
-            let conf = update.state.facet(specialCharConfig)
-            if (update.startState.facet(specialCharConfig) != conf) {
-                this.decorator = this.makeDecorator(conf)
-                this.decorations = this.decorator.createDeco(update.view)
-            } else {
-                this.decorations = this.decorator.updateDeco(update, this.decorations)
-            }
+        if (config.replaceTabs) {
+            config.specialChars = Regex("\t|${config.specialChars.pattern}", setOf(RegexOption.UNICODE))
         }
-    }, {
-        decorations: v => v.decorations
-    }))
+
+        if (config.addSpecialChars != null) {
+            config.specialChars = Regex(
+                "${config.specialChars.pattern}|${config.addSpecialChars.pattern}",
+                setOf(RegexOption.UNICODE)
+            )
+        }
+
+        config
+    }
 }
 
-const DefaultPlaceholder = "\u2022"
-
-// Assigns placeholder characters from the Control Pictures block to
-// ASCII control characters
-function placeholder(code: number): string {
-    if (code >= 32) return DefaultPlaceholder
-    if (code == 10) return "\u2424"
-    return String.fromCharCode(9216 + code)
+/**
+ * Returns an extension that installs highlighting of special characters.
+ */
+fun highlightSpecialChars(config: SpecialCharConfig = object : SpecialCharConfig {}): Extension {
+    return listOf(specialCharConfig.of(config), specialCharPlugin())
 }
 
-class SpecialCharWidget extends WidgetType {
-    constructor(readonly options: Required<SpecialCharConfig>,
-        readonly code: number) { super() }
+private var _plugin: Extension? = null
+private fun specialCharPlugin(): Extension {
+    return _plugin ?: run {
+        _plugin = ViewPlugin.fromClass(
+            create = { view -> SpecialCharPluginView(view) },
+            decorations = { v -> v.decorations }
+        )
+        _plugin!!
+    }
+}
 
-    eq(other: SpecialCharWidget) { return other.code == this.code }
+// Helper interfaces
+private interface Required<T> {
+    var render: ((Int, String?, String) -> HTMLElement)?
+    var specialChars: Regex
+    var addSpecialChars: Regex?
+}
 
-    toDOM(view: EditorView) {
-        let ph = placeholder(this.code)
-        let desc = view.state.phrase("Control character") + " " + (Names[this.code] || "0x" + this.code.toString(16))
-        let custom = this.options.render && this.options.render(this.code, desc, ph)
-        if (custom) return custom
-        let span = document.createElement("span")
-        span.textContent = ph
-        span.title = desc
-        span.setAttribute("aria-label", desc)
-        span.className = "cm-specialChar"
-        return span
+private const val DefaultPlaceholder = "\u2022"
+
+// Assigns placeholder characters from the Control Pictures block to ASCII control characters
+private fun placeholder(code: Int): String {
+    return when {
+        code >= 32 -> DefaultPlaceholder
+        code == 10 -> "\u2424"
+        else -> (9216 + code).toChar().toString()
+    }
+}
+
+private class SpecialCharWidget(
+    private val options: Required<SpecialCharConfig>,
+    private val code: Int
+) : WidgetType() {
+
+    override fun eq(other: WidgetType): Boolean {
+        return other is SpecialCharWidget && other.code == code
     }
 
-    ignoreEvent(): boolean { return false }
-}
+    override fun toDOM(view: EditorView): HTMLElement {
+        val ph = placeholder(code)
+        val desc = view.state.phrase("Control character") + " " + (Names[code] ?: "0x${code.toString(16)}")
+        val custom = options.render?.invoke(code, desc, ph)
+        if (custom != null) return custom
 
-class TabWidget extends WidgetType {
-    constructor(readonly width: number) { super() }
-
-    eq(other: TabWidget) { return other.width == this.width }
-
-    toDOM() {
-        let span = document.createElement("span")
-        span.textContent = "\t"
-        span.className = "cm-tab"
-        span.style.width = this.width + "px"
-        return span
+        return document.createElement("span").apply {
+            textContent = ph
+            title = desc
+            setAttribute("aria-label", desc)
+            className = "cm-specialChar"
+        }
     }
 
-    ignoreEvent(): boolean { return false }
+    override fun ignoreEvent(): Boolean = false
+}
+
+private class TabWidget(private val width: Double) : WidgetType() {
+    override fun eq(other: WidgetType): Boolean {
+        return other is TabWidget && other.width == width
+    }
+
+    override fun toDOM(): HTMLElement {
+        return document.createElement("span").apply {
+            textContent = "\t"
+            className = "cm-tab"
+            style.width = "${width}px"
+        }
+    }
+
+    override fun ignoreEvent(): Boolean = false
+}
+
+private class SpecialCharPluginView(private val view: EditorView) {
+    var decorations: DecorationSet = Decoration.none
+    private val decorationCache = mutableMapOf<Int, Decoration>()
+    private var decorator: MatchDecorator
+
+    init {
+        decorator = makeDecorator(view.state.facet(specialCharConfig))
+        decorations = decorator.createDeco(view)
+    }
+
+    private fun makeDecorator(conf: Required<SpecialCharConfig>): MatchDecorator {
+        return MatchDecorator(
+            regexp = conf.specialChars,
+            decoration = { m, view, pos ->
+                val code = codePointAt(m[0], 0)
+                if (code == 9) {
+                    val line = view.state.doc.lineAt(pos)
+                    val size = view.state.tabSize
+                    val col = countColumn(line.text, size, pos - line.from)
+                    Decoration.replace(
+                        spec = DecorationSpec(
+                            widget = TabWidget((size - (col % size)) * view.defaultCharacterWidth / view.scaleX)
+                        )
+                    )
+                } else {
+                    decorationCache.getOrPut(code) {
+                        Decoration.replace(
+                            spec = DecorationSpec(
+                                widget = SpecialCharWidget(conf, code)
+                            )
+                        )
+                    }
+                }
+            },
+            boundary = if (conf.replaceTabs) null else Regex("[^]")
+        )
+    }
+
+    fun update(update: ViewUpdate) {
+        val conf = update.state.facet(specialCharConfig)
+        if (update.startState.facet(specialCharConfig) != conf) {
+            decorator = makeDecorator(conf)
+            decorations = decorator.createDeco(update.view)
+        } else {
+            decorations = decorator.updateDeco(update, decorations)
+        }
+    }
+}
+
+private fun Regex.hasUnicodeSupport(): Boolean {
+    val jsRegex = RegExp("/x/")
+    return jsRegex.asDynamic().unicode != null
 }

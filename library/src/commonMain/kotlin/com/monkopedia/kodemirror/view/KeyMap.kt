@@ -1,242 +1,261 @@
 package com.monkopedia.kodemirror.view
 
-import {EditorView} from "./editorview"
-import {Command} from "./extension"
-import {modifierCodes} from "./input"
-import {base, shift, keyName} from "w3c-keyname"
-import {Facet, Prec, EditorState, codePointSize, codePointAt} from "@codemirror/state"
+import com.monkopedia.kodemirror.state.*
+import androidx.compose.ui.input.key.KeyEvent
 
-import browser from "./browser"
+/**
+ * Key bindings associate key names with command-style functions.
+ *
+ * Key names may be strings like `"Shift-Ctrl-Enter"`—a key identifier
+ * prefixed with zero or more modifiers. Key identifiers are based on the strings
+ * that can appear in KeyEvent.key. Use lowercase letters to refer to letter keys
+ * (or uppercase letters if you want shift to be held). You may use `"Space"`
+ * as an alias for the `" "` name.
+ *
+ * Modifiers can be given in any order. `Shift-` (or `s-`), `Alt-` (or `a-`),
+ * `Ctrl-` (or `c-` or `Control-`) and `Cmd-` (or `m-` or `Meta-`) are recognized.
+ *
+ * You can use `Mod-` as a shorthand for `Cmd-` on Mac and `Ctrl-` on other platforms.
+ */
+data class KeyBinding(
+    /** The key name to use for this binding. */
+    val key: String? = null,
+    /** Key to use specifically on macOS. */
+    val mac: String? = null,
+    /** Key to use specifically on Windows. */
+    val win: String? = null,
+    /** Key to use specifically on Linux. */
+    val linux: String? = null,
+    /** The command to execute when this binding is triggered. */
+    val run: Command? = null,
+    /** When given, this defines a second binding using Shift- prefix. */
+    val shift: Command? = null,
+    /** When present, called for every key that is not a multi-stroke prefix. */
+    val any: ((view: EditorView, event: KeyEvent) -> Boolean)? = null,
+    /** The scope for this binding (default is "editor"). */
+    val scope: String? = null,
+    /** Whether to always prevent default handling. */
+    val preventDefault: Boolean = false,
+    /** Whether to stop event propagation. */
+    val stopPropagation: Boolean = false
+)
 
-/// Key bindings associate key names with
-/// [command](#view.Command)-style functions.
-///
-/// Key names may be strings like `"Shift-Ctrl-Enter"`—a key identifier
-/// prefixed with zero or more modifiers. Key identifiers are based on
-/// the strings that can appear in
-/// [`KeyEvent.key`](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key).
-/// Use lowercase letters to refer to letter keys (or uppercase letters
-/// if you want shift to be held). You may use `"Space"` as an alias
-/// for the `" "` name.
-///
-/// Modifiers can be given in any order. `Shift-` (or `s-`), `Alt-` (or
-/// `a-`), `Ctrl-` (or `c-` or `Control-`) and `Cmd-` (or `m-` or
-/// `Meta-`) are recognized.
-///
-/// When a key binding contains multiple key names separated by
-/// spaces, it represents a multi-stroke binding, which will fire when
-/// the user presses the given keys after each other.
-///
-/// You can use `Mod-` as a shorthand for `Cmd-` on Mac and `Ctrl-` on
-/// other platforms. So `Mod-b` is `Ctrl-b` on Linux but `Cmd-b` on
-/// macOS.
-export interface KeyBinding {
-    /// The key name to use for this binding. If the platform-specific
-    /// property (`mac`, `win`, or `linux`) for the current platform is
-    /// used as well in the binding, that one takes precedence. If `key`
-    /// isn't defined and the platform-specific binding isn't either,
-    /// a binding is ignored.
-    key?: string,
-    /// Key to use specifically on macOS.
-    mac?: string,
-    /// Key to use specifically on Windows.
-    win?: string,
-    /// Key to use specifically on Linux.
-    linux?: string,
-    /// The command to execute when this binding is triggered. When the
-    /// command function returns `false`, further bindings will be tried
-    /// for the key.
-    run?: Command,
-    /// When given, this defines a second binding, using the (possibly
-    /// platform-specific) key name prefixed with `Shift-` to activate
-    /// this command.
-    shift?: Command
-    /// When this property is present, the function is called for every
-    /// key that is not a multi-stroke prefix.
-    any?: (view: EditorView, event: KeyboardEvent) => boolean
-    /// By default, key bindings apply when focus is on the editor
-    /// content (the `"editor"` scope). Some extensions, mostly those
-    /// that define their own panels, might want to allow you to
-    /// register bindings local to that panel. Such bindings should use
-    /// a custom scope name. You may also assign multiple scope names to
-    /// a binding, separating them by spaces.
-    scope?: string
-    /// When set to true (the default is false), this will always
-    /// prevent the further handling for the bound key, even if the
-    /// command(s) return false. This can be useful for cases where the
-    /// native behavior of the key is annoying or irrelevant but the
-    /// command doesn't always apply (such as, Mod-u for undo selection,
-    /// which would cause the browser to view source instead when no
-    /// selection can be undone).
-    preventDefault?: boolean
-    /// When set to true, `stopPropagation` will be called on keyboard
-    /// events that have their `preventDefault` called in response to
-    /// this key binding (see also
-    /// [`preventDefault`](#view.KeyBinding.preventDefault)).
-    stopPropagation?: boolean
+private val currentPlatform = when {
+    browser.mac -> "mac"
+    browser.windows -> "win"
+    browser.linux -> "linux"
+    else -> "key"
 }
 
-type PlatformName = "mac" | "win" | "linux" | "key"
-
-const currentPlatform: PlatformName = browser.mac ? "mac" : browser.windows ? "win" : browser.linux ? "linux" : "key"
-
-function normalizeKeyName(name: string, platform: PlatformName): string {
-    const parts = name.split(/-(?!$)/)
-    let result = parts[parts.length - 1]
+private fun normalizeKeyName(name: String, platform: String): String {
+    val parts = name.split("-(?!$)".toRegex())
+    var result = parts.last()
     if (result == "Space") result = " "
-    let alt, ctrl, shift, meta
-    for (let i = 0; i < parts.length - 1; ++i) {
-        const mod = parts[i]
-        if (/^(cmd|meta|m)$/i.test(mod)) meta = true
-        else if (/^a(lt)?$/i.test(mod)) alt = true
-        else if (/^(c|ctrl|control)$/i.test(mod)) ctrl = true
-        else if (/^s(hift)?$/i.test(mod)) shift = true
-        else if (/^mod$/i.test(mod)) { if (platform == "mac") meta = true; else ctrl = true }
-        else throw new Error("Unrecognized modifier name: " + mod)
+    var alt = false
+    var ctrl = false
+    var shift = false
+    var meta = false
+    
+    for (i in 0 until parts.size - 1) {
+        val mod = parts[i]
+        when {
+            mod.matches("^(cmd|meta|m)$".toRegex(RegexOption.IGNORE_CASE)) -> meta = true
+            mod.matches("^a(lt)?$".toRegex(RegexOption.IGNORE_CASE)) -> alt = true
+            mod.matches("^(c|ctrl|control)$".toRegex(RegexOption.IGNORE_CASE)) -> ctrl = true
+            mod.matches("^s(hift)?$".toRegex(RegexOption.IGNORE_CASE)) -> shift = true
+            mod.matches("^mod$".toRegex(RegexOption.IGNORE_CASE)) -> {
+                if (platform == "mac") meta = true else ctrl = true
+            }
+            else -> throw IllegalArgumentException("Unrecognized modifier name: $mod")
+        }
     }
-    if (alt) result = "Alt-" + result
-    if (ctrl) result = "Ctrl-" + result
-    if (meta) result = "Meta-" + result
-    if (shift) result = "Shift-" + result
+    if (alt) result = "Alt-$result"
+    if (ctrl) result = "Ctrl-$result"
+    if (meta) result = "Meta-$result"
+    if (shift) result = "Shift-$result"
     return result
 }
 
-function modifiers(name: string, event: KeyboardEvent, shift: boolean) {
-    if (event.altKey) name = "Alt-" + name
-    if (event.ctrlKey) name = "Ctrl-" + name
-    if (event.metaKey) name = "Meta-" + name
-    if (shift !== false && event.shiftKey) name = "Shift-" + name
-    return name
+private fun modifiers(name: String, event: KeyEvent, shift: Boolean): String {
+    var result = name
+    if (event.altKey) result = "Alt-$result"
+    if (event.ctrlKey) result = "Ctrl-$result"
+    if (event.metaKey) result = "Meta-$result"
+    if (shift && event.shiftKey) result = "Shift-$result"
+    return result
 }
 
-type Binding = {
-    preventDefault: boolean,
-    stopPropagation: boolean,
-    run: ((view: EditorView) => boolean)[]
-}
+private data class Binding(
+    val preventDefault: Boolean,
+    val stopPropagation: Boolean,
+    val run: List<(view: EditorView) -> Boolean>
+)
 
-// In each scope, the `_any` property is used for bindings that apply
-// to all keys.
-type Keymap = {[scope: string]: {[key: string]: Binding}}
+// In each scope, the `_any` property is used for bindings that apply to all keys
+private typealias Keymap = Map<String, Map<String, Binding>>
 
-const handleKeyEvents = Prec.default(EditorView.domEventHandlers({
-    keydown(event, view) {
-        return runHandlers(getKeymap(view.state), event, view, "editor")
+private val handleKeyEvents = Prec.default(EditorView.domEventHandlers(mapOf(
+    "keydown" to { event: KeyEvent, view: EditorView ->
+        runHandlers(getKeymap(view.state), event, view, "editor")
     }
-}))
+)))
 
-/// Facet used for registering keymaps.
-///
-/// You can add multiple keymaps to an editor. Their priorities
-/// determine their precedence (the ones specified early or with high
-/// priority get checked first). When a handler has returned `true`
-/// for a given key, no further handlers are called.
-export const keymap = Facet.define<readonly KeyBinding[]>({enables: handleKeyEvents})
+/**
+ * Facet used for registering keymaps.
+ *
+ * You can add multiple keymaps to an editor. Their priorities
+ * determine their precedence (the ones specified early or with high
+ * priority get checked first). When a handler has returned `true`
+ * for a given key, no further handlers are called.
+ */
+val keymap = Facet.define<List<KeyBinding>> { enables = handleKeyEvents }
 
-const Keymaps = new WeakMap<readonly (readonly KeyBinding[])[], Keymap>()
+private val Keymaps = WeakMap<List<List<KeyBinding>>, Keymap>()
 
-// This is hidden behind an indirection, rather than directly computed
-// by the facet, to keep internal types out of the facet's type.
-function getKeymap(state: EditorState) {
-    let bindings = state.facet(keymap)
-    let map = Keymaps.get(bindings)
-    if (!map) Keymaps.set(bindings, map = buildKeymap(bindings.reduce((a, b) => a.concat(b), [])))
-    return map
+private fun getKeymap(state: EditorState): Keymap {
+    val bindings = state.facet(keymap)
+    return Keymaps.get(bindings) ?: buildKeymap(bindings.flatten()).also { Keymaps.set(bindings, it) }
 }
 
-/// Run the key handlers registered for a given scope. The event
-/// object should be a `"keydown"` event. Returns true if any of the
-/// handlers handled it.
-export function runScopeHandlers(view: EditorView, event: KeyboardEvent, scope: string) {
+/**
+ * Run the key handlers registered for a given scope. The event
+ * object should be a "keydown" event. Returns true if any of the
+ * handlers handled it.
+ */
+fun runScopeHandlers(view: EditorView, event: KeyEvent, scope: String): Boolean {
     return runHandlers(getKeymap(view.state), event, view, scope)
 }
 
-let storedPrefix: {view: EditorView, prefix: string, scope: string} | null = null
+private var storedPrefix: PrefixState? = null
 
-const PrefixTimeout = 4000
+private data class PrefixState(
+    val view: EditorView,
+    val prefix: String,
+    val scope: String
+)
 
-function buildKeymap(bindings: readonly KeyBinding[], platform = currentPlatform) {
-    let bound: Keymap = Object.create(null)
-    let isPrefix: {[prefix: string]: boolean} = Object.create(null)
+private const val PrefixTimeout = 4000L
 
-    let checkPrefix = (name: string, is: boolean) => {
-        let current = isPrefix[name]
-        if (current == null)
-            isPrefix[name] = is
-        else if (current != is)
-            throw new Error("Key binding " + name + " is used both as a regular binding and as a multi-stroke prefix")
-    }
+private fun buildKeymap(bindings: List<KeyBinding>, platform: String = currentPlatform): Keymap {
+    val bound = mutableMapOf<String, MutableMap<String, Binding>>()
+    val isPrefix = mutableMapOf<String, Boolean>()
 
-    let add = (scope: string, key: string, command: Command | undefined,
-    preventDefault?: boolean, stopPropagation?: boolean) => {
-        let scopeObj = bound[scope] || (bound[scope] = Object.create(null))
-        let parts = key.split(/ (?!$)/).map(k => normalizeKeyName(k, platform))
-        for (let i = 1; i < parts.length; i++) {
-        let prefix = parts.slice(0, i).join(" ")
-        checkPrefix(prefix, true)
-        if (!scopeObj[prefix]) scopeObj[prefix] = {
-            preventDefault: true,
-            stopPropagation: false,
-            run: [(view: EditorView) => {
-            let ourObj = storedPrefix = {view, prefix, scope}
-            setTimeout(() => { if (storedPrefix == ourObj) storedPrefix = null }, PrefixTimeout)
-            return true
-        }]
+    fun checkPrefix(name: String, is_: Boolean) {
+        val current = isPrefix[name]
+        if (current == null) {
+            isPrefix[name] = is_
+        } else if (current != is_) {
+            throw IllegalArgumentException("Key binding $name is used both as a regular binding and as a multi-stroke prefix")
         }
     }
-        let full = parts.join(" ")
+
+    fun add(
+        scope: String,
+        key: String,
+        command: Command?,
+        preventDefault: Boolean = false,
+        stopPropagation: Boolean = false
+    ) {
+        val scopeObj = bound.getOrPut(scope) { mutableMapOf() }
+        val parts = key.split(" (?!$)".toRegex()).map { normalizeKeyName(it, platform) }
+        
+        for (i in 1 until parts.size) {
+            val prefix = parts.subList(0, i).joinToString(" ")
+            checkPrefix(prefix, true)
+            if (!scopeObj.containsKey(prefix)) {
+                scopeObj[prefix] = Binding(
+                    preventDefault = true,
+                    stopPropagation = false,
+                    run = listOf { view ->
+                        val ourObj = PrefixState(view, prefix, scope).also { storedPrefix = it }
+                        view.scheduleCallback({
+                            if (storedPrefix == ourObj) storedPrefix = null
+                        }, PrefixTimeout)
+                        true
+                    }
+                )
+            }
+        }
+
+        val full = parts.joinToString(" ")
         checkPrefix(full, false)
-        let binding = scopeObj[full] || (scopeObj[full] = {
-            preventDefault: false,
-            stopPropagation: false,
-            run: scopeObj._any?.run?.slice() || []
-        })
-        if (command) binding.run.push(command)
+        val binding = scopeObj.getOrPut(full) {
+            Binding(
+                preventDefault = false,
+                stopPropagation = false,
+                run = scopeObj["_any"]?.run?.toList() ?: emptyList()
+            )
+        }
+        if (command != null) binding.run += command
         if (preventDefault) binding.preventDefault = true
         if (stopPropagation) binding.stopPropagation = true
     }
 
-    for (let b of bindings) {
-        let scopes = b.scope ? b.scope.split(" ") : ["editor"]
-        if (b.any) for (let scope of scopes) {
-        let scopeObj = bound[scope] || (bound[scope] = Object.create(null))
-        if (!scopeObj._any) scopeObj._any = {preventDefault: false, stopPropagation: false, run: []}
-        let {any} = b
-        for (let key in scopeObj) scopeObj[key].run.push(view => any(view, currentKeyEvent!))
-    }
-        let name = b[platform] || b.key
-        if (!name) continue
-        for (let scope of scopes) {
-        add(scope, name, b.run, b.preventDefault, b.stopPropagation)
-        if (b.shift) add(scope, "Shift-" + name, b.shift, b.preventDefault, b.stopPropagation)
-    }
+    for (b in bindings) {
+        val scopes = b.scope?.split(" ") ?: listOf("editor")
+        if (b.any != null) {
+            for (scope in scopes) {
+                val scopeObj = bound.getOrPut(scope) { mutableMapOf() }
+                if (!scopeObj.containsKey("_any")) {
+                    scopeObj["_any"] = Binding(preventDefault = false, stopPropagation = false, run = emptyList())
+                }
+                val any = b.any
+                for (key in scopeObj.keys) {
+                    scopeObj[key]!!.run += { view -> any(view, currentKeyEvent!!) }
+                }
+            }
+        }
+        val name = b.run { when (platform) {
+            "mac" -> mac
+            "win" -> win
+            "linux" -> linux
+            else -> key
+        }} ?: continue
+        
+        for (scope in scopes) {
+            add(scope, name, b.run, b.preventDefault, b.stopPropagation)
+            if (b.shift != null) {
+                add(scope, "Shift-$name", b.shift, b.preventDefault, b.stopPropagation)
+            }
+        }
     }
     return bound
 }
 
-let currentKeyEvent: KeyboardEvent | null = null
+private var currentKeyEvent: KeyEvent? = null
 
-function runHandlers(map: Keymap, event: KeyboardEvent, view: EditorView, scope: string): boolean {
+private fun runHandlers(map: Keymap, event: KeyEvent, view: EditorView, scope: String): Boolean {
     currentKeyEvent = event
-    let name = keyName(event)
-    let charCode = codePointAt(name, 0), isChar = codePointSize(charCode) == name.length && name != " "
-    let prefix = "", handled = false, prevented = false, stopPropagation = false
-    if (storedPrefix && storedPrefix.view == view && storedPrefix.scope == scope) {
-        prefix = storedPrefix.prefix + " "
-        if (modifierCodes.indexOf(event.keyCode) < 0) {
-            prevented = true
-            storedPrefix = null
+    val name = keyName(event)
+    val charCode = codePointAt(name, 0)
+    val isChar = codePointSize(charCode) == name.length && name != " "
+    
+    var prefix = ""
+    var handled = false
+    var prevented = false
+    var stopPropagation = false
+    
+    storedPrefix?.let { stored ->
+        if (stored.view == view && stored.scope == scope) {
+            prefix = "${stored.prefix} "
+            if (event.keyCode !in modifierCodes) {
+                prevented = true
+                storedPrefix = null
+            }
         }
     }
 
-    let ran: Set<(view: EditorView, event: KeyboardEvent) => boolean> = new Set
-    let runFor = (binding: Binding | undefined) => {
-        if (binding) {
-            for (let cmd of binding.run) if (!ran.has(cmd)) {
-                ran.add(cmd)
-                if (cmd(view)) {
-                    if (binding.stopPropagation) stopPropagation = true
-                    return true
+    val ran = mutableSetOf<(EditorView) -> Boolean>()
+    fun runFor(binding: Binding?) {
+        if (binding != null) {
+            for (cmd in binding.run) {
+                if (!ran.contains(cmd)) {
+                    ran.add(cmd)
+                    if (cmd(view)) {
+                        if (binding.stopPropagation) stopPropagation = true
+                        handled = true
+                        return
+                    }
                 }
             }
             if (binding.preventDefault) {
@@ -244,28 +263,28 @@ function runHandlers(map: Keymap, event: KeyboardEvent, view: EditorView, scope:
                 prevented = true
             }
         }
-        return false
     }
 
-    let scopeObj = map[scope], baseName, shiftName
-    if (scopeObj) {
+    val scopeObj = map[scope]
+    if (scopeObj != null) {
+        val baseName: String?
+        val shiftName: String?
         if (runFor(scopeObj[prefix + modifiers(name, event, !isChar)])) {
             handled = true
         } else if (isChar && (event.altKey || event.metaKey || event.ctrlKey) &&
-            // Ctrl-Alt may be used for AltGr on Windows
             !(browser.windows && event.ctrlKey && event.altKey) &&
-            (baseName = base[event.keyCode]) && baseName != name) {
-            if (runFor(scopeObj[prefix + modifiers(baseName, event, true)])) {
+            base[event.keyCode].also { baseName = it } != null && baseName != name) {
+            if (runFor(scopeObj[prefix + modifiers(baseName!!, event, true)])) {
                 handled = true
-            } else if (event.shiftKey && (shiftName = shift[event.keyCode]) != name && shiftName != baseName &&
-                runFor(scopeObj[prefix + modifiers(shiftName, event, false)])) {
+            } else if (event.shiftKey && shift[event.keyCode].also { shiftName = it } != name && shiftName != baseName &&
+                runFor(scopeObj[prefix + modifiers(shiftName!!, event, false)])) {
                 handled = true
             }
         } else if (isChar && event.shiftKey &&
             runFor(scopeObj[prefix + modifiers(name, event, true)])) {
             handled = true
         }
-        if (!handled && runFor(scopeObj._any)) handled = true
+        if (!handled && runFor(scopeObj["_any"])) handled = true
     }
 
     if (prevented) handled = true
@@ -273,3 +292,6 @@ function runHandlers(map: Keymap, event: KeyboardEvent, view: EditorView, scope:
     currentKeyEvent = null
     return handled
 }
+
+// Key codes for modifier keys
+val modifierCodes = listOf(16, 17, 18, 20, 91, 92, 224, 225)

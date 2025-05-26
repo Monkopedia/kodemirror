@@ -1,171 +1,199 @@
 package com.monkopedia.kodemirror.view
 
-import {Text, ChangeSet, RangeSet, SpanIterator} from "@codemirror/state"
-import {DecorationSet, PointDecoration, Decoration, BlockType, addRange, WidgetType} from "./decoration"
-import {ChangedRange} from "./extension"
+import com.monkopedia.kodemirror.state.Text
+import com.monkopedia.kodemirror.state.ChangeSet
+import com.monkopedia.kodemirror.state.RangeSet
+import com.monkopedia.kodemirror.state.SpanIterator
+import com.monkopedia.kodemirror.decoration.DecorationSet
+import com.monkopedia.kodemirror.decoration.PointDecoration
+import com.monkopedia.kodemirror.decoration.Decoration
+import com.monkopedia.kodemirror.decoration.BlockType
+import com.monkopedia.kodemirror.decoration.WidgetType
 
-const wrappingWhiteSpace = ["pre-wrap", "normal", "pre-line", "break-spaces"]
+private val wrappingWhiteSpace = listOf("pre-wrap", "normal", "pre-line", "break-spaces")
 
 // Used to track, during updateHeight, if any actual heights changed
-export let heightChangeFlag = false
+var heightChangeFlag = false
 
-export function clearHeightChangeFlag() { heightChangeFlag = false }
+fun clearHeightChangeFlag() { 
+    heightChangeFlag = false 
+}
 
-export class HeightOracle {
-    doc: Text = Text.empty
-    heightSamples: {[key: number]: boolean} = {}
-    lineHeight: number = 14 // The height of an entire line (line-height)
-    charWidth: number = 7
-    textHeight: number = 14 // The height of the actual font (font-size)
-    lineLength: number = 30
+class HeightOracle(var lineWrapping: Boolean) {
+    var doc: Text = Text.empty
+    val heightSamples = mutableMapOf<Int, Boolean>()
+    var lineHeight: Double = 14.0 // The height of an entire line (line-height)
+    var charWidth: Double = 7.0
+    var textHeight: Double = 14.0 // The height of the actual font (font-size)
+    var lineLength: Int = 30
 
-    constructor(public lineWrapping: boolean) {}
-
-    heightForGap(from: number, to: number): number {
-        let lines = this.doc.lineAt(to).number - this.doc.lineAt(from).number + 1
-        if (this.lineWrapping)
-            lines += Math.max(0, Math.ceil(((to - from) - (lines * this.lineLength * 0.5)) / this.lineLength))
-        return this.lineHeight * lines
+    fun heightForGap(from: Int, to: Int): Double {
+        var lines = doc.lineAt(to).number - doc.lineAt(from).number + 1
+        if (lineWrapping) {
+            lines += maxOf(0.0, kotlin.math.ceil(((to - from) - (lines * lineLength * 0.5)) / lineLength.toDouble())).toInt()
+        }
+        return lineHeight * lines
     }
 
-    heightForLine(length: number): number {
-        if (!this.lineWrapping) return this.lineHeight
-        let lines = 1 + Math.max(0, Math.ceil((length - this.lineLength) / (this.lineLength - 5)))
-        return lines * this.lineHeight
+    fun heightForLine(length: Int): Double {
+        if (!lineWrapping) return lineHeight
+        val lines = 1 + maxOf(0.0, kotlin.math.ceil((length - lineLength) / (lineLength - 5.0))).toInt()
+        return lines * lineHeight
     }
 
-    setDoc(doc: Text): this { this.doc = doc; return this }
-
-    mustRefreshForWrapping(whiteSpace: string): boolean {
-        return (wrappingWhiteSpace.indexOf(whiteSpace) > -1) != this.lineWrapping
+    fun setDoc(newDoc: Text): HeightOracle {
+        doc = newDoc
+        return this
     }
 
-    mustRefreshForHeights(lineHeights: number[]): boolean {
-        let newHeight = false
-        for (let i = 0; i < lineHeights.length; i++) {
-            let h = lineHeights[i]
+    fun mustRefreshForWrapping(whiteSpace: String): Boolean {
+        return wrappingWhiteSpace.contains(whiteSpace) != lineWrapping
+    }
+
+    fun mustRefreshForHeights(lineHeights: List<Double>): Boolean {
+        var newHeight = false
+        var i = 0
+        while (i < lineHeights.size) {
+            val h = lineHeights[i]
             if (h < 0) {
                 i++
-            } else if (!this.heightSamples[Math.floor(h * 10)]) { // Round to .1 pixels
+            } else if (!heightSamples.containsKey(kotlin.math.floor(h * 10).toInt())) { // Round to .1 pixels
                 newHeight = true
-                this.heightSamples[Math.floor(h * 10)] = true
+                heightSamples[kotlin.math.floor(h * 10).toInt()] = true
             }
+            i++
         }
         return newHeight
     }
 
-    refresh(whiteSpace: string, lineHeight: number, charWidth: number, textHeight: number,
-    lineLength: number, knownHeights: number[]): boolean {
-        let lineWrapping = wrappingWhiteSpace.indexOf(whiteSpace) > -1
-        let changed = Math.round(lineHeight) != Math.round(this.lineHeight) || this.lineWrapping != lineWrapping
+    fun refresh(
+        whiteSpace: String,
+        lineHeight: Double,
+        charWidth: Double,
+        textHeight: Double,
+        lineLength: Int,
+        knownHeights: List<Double>
+    ): Boolean {
+        val lineWrapping = wrappingWhiteSpace.contains(whiteSpace)
+        val changed = kotlin.math.round(lineHeight) != kotlin.math.round(this.lineHeight) || this.lineWrapping != lineWrapping
         this.lineWrapping = lineWrapping
         this.lineHeight = lineHeight
         this.charWidth = charWidth
         this.textHeight = textHeight
         this.lineLength = lineLength
         if (changed) {
-            this.heightSamples = {}
-            for (let i = 0; i < knownHeights.length; i++) {
-                let h = knownHeights[i]
+            heightSamples.clear()
+            var i = 0
+            while (i < knownHeights.size) {
+                val h = knownHeights[i]
                 if (h < 0) i++
-                else this.heightSamples[Math.floor(h * 10)] = true
+                else heightSamples[kotlin.math.floor(h * 10).toInt()] = true
+                i++
             }
         }
         return changed
     }
 }
 
-// This object is used by `updateHeight` to make DOM measurements
-// arrive at the right nides. The `heights` array is a sequence of
-// block heights, starting from position `from`.
-export class MeasuredHeights {
-    public index = 0
-    constructor(readonly from: number, readonly heights: number[]) {}
-    get more() { return this.index < this.heights.length }
+// This object is used by updateHeight to make DOM measurements
+// arrive at the right nodes. The heights array is a sequence of
+// block heights, starting from position from.
+class MeasuredHeights(val from: Int, val heights: List<Double>) {
+    var index = 0
+    val more: Boolean get() = index < heights.size
 }
 
-/// Record used to represent information about a block-level element
-/// in the editor view.
-export class BlockInfo {
-    /// @internal
-    constructor(
-        /// The start of the element in the document.
-        readonly from: number,
-        /// The length of the element.
-        readonly length: number,
-        /// The top position of the element (relative to the top of the
-        /// document).
-        readonly top: number,
-        /// Its height.
-        readonly height: number,
-        /// @internal Weird packed field that holds an array of children
-        /// for composite blocks, a decoration for block widgets, and a
-        /// number indicating the amount of widget-create line breaks for
-        /// text blocks.
-        readonly _content: readonly BlockInfo[] | PointDecoration | number
-    ) {}
-
-    /// The type of element this is. When querying lines, this may be
-    /// an array of all the blocks that make up the line.
-    get type(): BlockType | readonly BlockInfo[] {
-        return typeof this._content == "number" ? BlockType.Text :
-        Array.isArray(this._content) ? this._content : (this._content as PointDecoration).type
+// Record used to represent information about a block-level element
+// in the editor view.
+class BlockInfo(
+    // The start of the element in the document.
+    val from: Int,
+    // The length of the element.
+    val length: Int,
+    // The top position of the element (relative to the top of the document).
+    val top: Double,
+    // Its height.
+    val height: Double,
+    // Internal: Weird packed field that holds an array of children
+    // for composite blocks, a decoration for block widgets, and a
+    // number indicating the amount of widget-create line breaks for
+    // text blocks.
+    private val content: Any
+) {
+    // The type of element this is. When querying lines, this may be
+    // an array of all the blocks that make up the line.
+    val type: Any get() = when(content) {
+        is Int -> BlockType.Text
+        is List<*> -> content
+        is PointDecoration -> content.type
+        else -> throw IllegalStateException("Invalid content type")
     }
 
-    /// The end of the element as a document position.
-    get to() { return this.from + this.length }
-    /// The bottom position of the element.
-    get bottom() { return this.top + this.height }
+    // The end of the element as a document position.
+    val to: Int get() = from + length
+    // The bottom position of the element.
+    val bottom: Double get() = top + height
 
-    /// If this is a widget block, this will return the widget
-    /// associated with it.
-    get widget(): WidgetType | null {
-        return this._content instanceof PointDecoration ? this._content.widget : null
-    }
+    // If this is a widget block, this will return the widget associated with it.
+    val widget: WidgetType? get() = 
+        if (content is PointDecoration) content.widget else null
 
-    /// If this is a textblock, this holds the number of line breaks
-    /// that appear in widgets inside the block.
-    get widgetLineBreaks(): number {
-        return typeof this._content == "number" ? this._content : 0
-    }
+    // If this is a textblock, this holds the number of line breaks
+    // that appear in widgets inside the block.
+    val widgetLineBreaks: Int get() = 
+        if (content is Int) content else 0
 
-    /// @internal
-    join(other: BlockInfo) {
-        let content = (Array.isArray(this._content) ? this._content : [this])
-        .concat(Array.isArray(other._content) ? other._content : [other])
-        return new BlockInfo(this.from, this.length + other.length,
-        this.top, this.height + other.height, content)
+    // Internal
+    fun join(other: BlockInfo): BlockInfo {
+        val newContent = when {
+            content is List<*> -> (content as List<BlockInfo>) + 
+                if (other.content is List<*>) other.content as List<BlockInfo> 
+                else listOf(other)
+            else -> listOf(this) + 
+                if (other.content is List<*>) other.content as List<BlockInfo>
+                else listOf(other)
+        }
+        return BlockInfo(from, length + other.length, top, height + other.height, newContent)
     }
 }
 
-export enum QueryType { ByPos, ByHeight, ByPosNoHeight }
+enum class QueryType {
+    ByPos, ByHeight, ByPosNoHeight
+}
 
-const enum Flag { Break = 1, Outdated = 2, SingleLine = 4 }
+private object Flag {
+    const val Break = 1
+    const val Outdated = 2
+    const val SingleLine = 4
+}
 
-const Epsilon = 1e-3
+private const val Epsilon = 1e-3
 
-export abstract class HeightMap {
-    constructor(
-        public length: number, // The number of characters covered
-        public height: number, // Height of this part of the document
-        public flags: number = Flag.Outdated
-    ) {}
+abstract class HeightMap(
+    var length: Int, // The number of characters covered
+    var height: Double, // Height of this part of the document
+    var flags: Int = Flag.Outdated
+) {
+    var size: Int = 1
 
-    size!: number
+    var outdated: Boolean
+        get() = (flags and Flag.Outdated) > 0
+        set(value) { flags = (if (value) Flag.Outdated else 0) or (flags and Flag.Outdated.inv()) }
 
-    get outdated() { return (this.flags & Flag.Outdated) > 0 }
-    set outdated(value) { this.flags = (value ? Flag.Outdated : 0) | (this.flags & ~Flag.Outdated) }
+    abstract fun blockAt(height: Double, oracle: HeightOracle, top: Double, offset: Int): BlockInfo
+    abstract fun lineAt(value: Int, type: QueryType, oracle: HeightOracle, top: Double, offset: Int): BlockInfo
+    abstract fun forEachLine(from: Int, to: Int, oracle: HeightOracle, top: Double, offset: Int, f: (BlockInfo) -> Unit)
 
-    abstract blockAt(height: number, oracle: HeightOracle, top: number, offset: number): BlockInfo
-    abstract lineAt(value: number, type: QueryType, oracle: HeightOracle, top: number, offset: number): BlockInfo
-    abstract forEachLine(from: number, to: number, oracle: HeightOracle, top: number, offset: number, f: (line: BlockInfo) => void): void
+    abstract fun updateHeight(oracle: HeightOracle, offset: Int = 0, force: Boolean = false, measured: MeasuredHeights? = null): HeightMap
+    abstract fun asString(): String
 
-    abstract updateHeight(oracle: HeightOracle, offset?: number, force?: boolean, measured?: MeasuredHeights): HeightMap
-    abstract toString(): void
+    override fun toString(): String {
+        return asString()
+    }
 
-    setHeight(height: number) {
+    fun setHeight(height: Double) {
         if (this.height != height) {
-            if (Math.abs(this.height - height) > Epsilon) heightChangeFlag = true
+            if (kotlin.math.abs(this.height - height) > Epsilon) heightChangeFlag = true
             this.height = height
         }
     }
@@ -173,532 +201,654 @@ export abstract class HeightMap {
     // Base case is to replace a leaf node, which simply builds a tree
     // from the new nodes and returns that (HeightMapBranch and
     // HeightMapGap override this to actually use from/to)
-    replace(_from: number, _to: number, nodes: (HeightMap | null)[]): HeightMap {
-        return HeightMap.of(nodes)
+    open fun replace(from: Int, to: Int, nodes: List<HeightMap?>): HeightMap {
+        return Companion.of(nodes)
     }
 
     // Again, these are base cases, and are overridden for branch and gap nodes.
-    decomposeLeft(_to: number, result: (HeightMap | null)[]) { result.push(this) }
-    decomposeRight(_from: number, result: (HeightMap | null)[]) { result.push(this) }
+    open fun decomposeLeft(to: Int, result: MutableList<HeightMap?>) { result.add(this) }
+    open fun decomposeRight(from: Int, result: MutableList<HeightMap?>) { result.add(this) }
 
-    applyChanges(decorations: readonly DecorationSet[], oldDoc: Text, oracle: HeightOracle,
-    changes: readonly ChangedRange[]): HeightMap {
-        let me: HeightMap = this, doc = oracle.doc
-        for (let i = changes.length - 1; i >= 0; i--) {
-            let {fromA, toA, fromB, toB} = changes[i]
-            let start = me.lineAt(fromA, QueryType.ByPosNoHeight, oracle.setDoc(oldDoc), 0, 0)
-            let end = start.to >= toA ? start : me.lineAt(toA, QueryType.ByPosNoHeight, oracle, 0, 0)
-            toB += end.to - toA; toA = end.to
-            while (i > 0 && start.from <= changes[i - 1].toA) {
-                fromA = changes[i - 1].fromA
-                fromB = changes[i - 1].fromB
-                i--
-                if (fromA < start.from) start = me.lineAt(fromA, QueryType.ByPosNoHeight, oracle, 0, 0)
+    fun applyChanges(
+        decorations: List<DecorationSet>,
+        oldDoc: Text,
+        oracle: HeightOracle,
+        changes: List<ChangedRange>
+    ): HeightMap {
+        var me: HeightMap = this
+        val doc = oracle.doc
+        for (i in changes.indices.reversed()) {
+            val change = changes[i]
+            val start = me.lineAt(change.fromA, QueryType.ByPosNoHeight, oracle.setDoc(oldDoc), 0.0, 0)
+            val end = if (start.to >= change.toA) start else me.lineAt(change.toA, QueryType.ByPosNoHeight, oracle, 0.0, 0)
+            var toB = change.toB + (end.to - change.toA)
+            var toA = end.to
+            var fromA = change.fromA
+            var fromB = change.fromB
+            var j = i
+            while (j > 0 && start.from <= changes[j - 1].toA) {
+                fromA = changes[j - 1].fromA
+                fromB = changes[j - 1].fromB
+                j--
+                if (fromA < start.from) {
+                    val newStart = me.lineAt(fromA, QueryType.ByPosNoHeight, oracle, 0.0, 0)
+                    fromB += newStart.from - fromA
+                    fromA = newStart.from
+                }
             }
-            fromB += start.from - fromA; fromA = start.from
-            let nodes = NodeBuilder.build(oracle.setDoc(doc), decorations, fromB, toB)
+            val nodes = NodeBuilder.build(oracle.setDoc(doc), decorations, fromB, toB)
             me = replace(me, me.replace(fromA, toA, nodes))
         }
         return me.updateHeight(oracle, 0)
     }
 
-    static empty(): HeightMap { return new HeightMapText(0, 0) }
+    companion object {
+        fun empty(): HeightMap = HeightMapText(0, 0.0)
 
-    // nodes uses null values to indicate the position of line breaks.
-    // There are never line breaks at the start or end of the array, or
-    // two line breaks next to each other, and the array isn't allowed
-    // to be empty (same restrictions as return value from the builder).
-    static of(nodes: (HeightMap | null)[]): HeightMap {
-        if (nodes.length == 1) return nodes[0] as HeightMap
+        // nodes uses null values to indicate the position of line breaks.
+        // There are never line breaks at the start or end of the array, or
+        // two line breaks next to each other, and the array isn't allowed
+        // to be empty (same restrictions as return value from the builder).
+        fun of(nodes: List<HeightMap?>): HeightMap {
+            if (nodes.size == 1) return nodes[0] ?: throw IllegalStateException("Empty node")
 
-        let i = 0, j = nodes.length, before = 0, after = 0
-        for (;;) {
-            if (i == j) {
-                if (before > after * 2) {
-                    let split = nodes[i - 1] as HeightMapBranch
-                    if (split.break) nodes.splice(--i, 1, split.left, null, split.right)
-                    else nodes.splice(--i, 1, split.left, split.right)
-                    j += 1 + split.break
-                    before -= split.size
-                } else if (after > before * 2) {
-                    let split = nodes[j] as HeightMapBranch
-                    if (split.break) nodes.splice(j, 1, split.left, null, split.right)
-                    else nodes.splice(j, 1, split.left, split.right)
-                    j += 2 + split.break
-                    after -= split.size
+            var i = 0
+            var j = nodes.size
+            var before = 0
+            var after = 0
+            while (true) {
+                if (i == j) {
+                    if (before > after * 2) {
+                        val split = nodes[i - 1] as HeightMapBranch
+                        if (split.break > 0) {
+                            nodes.toMutableList().apply {
+                                removeAt(i - 1)
+                                add(i - 1, split.left)
+                                add(i, null)
+                                add(i + 1, split.right)
+                            }
+                            j += 1 + split.break
+                            before -= split.size
+                        } else {
+                            nodes.toMutableList().apply {
+                                removeAt(i - 1)
+                                add(i - 1, split.left)
+                                add(i, split.right)
+                            }
+                            j += 2
+                            before -= split.size
+                        }
+                    } else if (after > before * 2) {
+                        val split = nodes[j] as HeightMapBranch
+                        if (split.break > 0) {
+                            nodes.toMutableList().apply {
+                                removeAt(j)
+                                add(j, split.left)
+                                add(j + 1, null)
+                                add(j + 2, split.right)
+                            }
+                            j += 2 + split.break
+                            after -= split.size
+                        } else {
+                            nodes.toMutableList().apply {
+                                removeAt(j)
+                                add(j, split.left)
+                                add(j + 1, split.right)
+                            }
+                            j += 2
+                            after -= split.size
+                        }
+                    } else {
+                        break
+                    }
+                } else if (before < after) {
+                    val next = nodes[i++]
+                    if (next != null) before += next.size
                 } else {
-                    break
+                    val next = nodes[--j]
+                    if (next != null) after += next.size
                 }
-            } else if (before < after) {
-                let next = nodes[i++]
-                if (next) before += next.size
-            } else {
-                let next = nodes[--j]
-                if (next) after += next.size
+            }
+
+            var brk = 0
+            if (nodes[i - 1] == null) {
+                brk = 1
+                i--
+            } else if (nodes[i] == null) {
+                brk = 1
+                j++
+            }
+            return HeightMapBranch(of(nodes.subList(0, i)), brk, of(nodes.subList(j, nodes.size)))
+        }
+    }
+}
+
+private fun replace(old: HeightMap, new: HeightMap): HeightMap {
+    if (old === new) return old
+    if (old::class != new::class) heightChangeFlag = true
+    return new
+}
+
+open class HeightMapBlock(
+    length: Int,
+    height: Double,
+    val deco: PointDecoration?
+) : HeightMap(length, height) {
+
+    override fun blockAt(height: Double, oracle: HeightOracle, top: Double, offset: Int): BlockInfo {
+        return BlockInfo(offset, length, top, this.height, deco ?: 0)
+    }
+
+    override fun lineAt(value: Int, type: QueryType, oracle: HeightOracle, top: Double, offset: Int): BlockInfo {
+        return blockAt(0.0, oracle, top, offset)
+    }
+
+    override fun forEachLine(from: Int, to: Int, oracle: HeightOracle, top: Double, offset: Int, f: (BlockInfo) -> Unit) {
+        if (from <= offset + length && to >= offset) f(blockAt(0.0, oracle, top, offset))
+    }
+
+    override fun updateHeight(oracle: HeightOracle, offset: Int, force: Boolean, measured: MeasuredHeights?): HeightMap {
+        if (measured != null && measured.from <= offset && measured.more)
+            setHeight(measured.heights[measured.index++])
+        outdated = false
+        return this
+    }
+
+    override fun asString(): String = "block($length)"
+}
+
+class HeightMapText(
+    length: Int,
+    height: Double
+) : HeightMapBlock(length, height, null) {
+    var collapsed: Int = 0 // Amount of collapsed content in the line
+    var widgetHeight: Double = 0.0 // Maximum inline widget height
+    var breaks: Int = 0 // Number of widget-introduced line breaks on the line
+
+    override fun blockAt(height: Double, oracle: HeightOracle, top: Double, offset: Int): BlockInfo {
+        return BlockInfo(offset, length, top, this.height, breaks)
+    }
+
+    override fun replace(from: Int, to: Int, nodes: List<HeightMap?>): HeightMap {
+        val node = nodes[0]
+        if (nodes.size == 1 && (node is HeightMapText || 
+            (node is HeightMapGap && (node.flags and Flag.SingleLine) != 0)) &&
+            kotlin.math.abs(length - (node?.length ?: 0)) < 10) {
+            val newNode = when (node) {
+                is HeightMapGap -> HeightMapText(node.length, this.height)
+                is HeightMapText -> {
+                    node.height = this.height
+                    node
+                }
+                else -> throw IllegalStateException("Invalid node type")
+            }
+            if (!outdated) newNode.outdated = false
+            return newNode
+        } else {
+            return HeightMap.of(nodes)
+        }
+    }
+
+    override fun updateHeight(oracle: HeightOracle, offset: Int, force: Boolean, measured: MeasuredHeights?): HeightMap {
+        if (measured != null && measured.from <= offset && measured.more)
+            setHeight(measured.heights[measured.index++])
+        else if (force || outdated)
+            setHeight(kotlin.math.max(widgetHeight, oracle.heightForLine(length - collapsed)) +
+                breaks * oracle.lineHeight)
+        outdated = false
+        return this
+    }
+
+    override fun asString(): String {
+        return "line($length${if (collapsed != 0) "-$collapsed" else ""}${if (widgetHeight != 0.0) ":$widgetHeight" else ""})"
+    }
+}
+
+class HeightMapGap(length: Int) : HeightMap(length, 0.0) {
+    private data class HeightMetrics(
+        val firstLine: Int,
+        val lastLine: Int,
+        val perLine: Double,
+        val perChar: Double
+    )
+
+    private fun heightMetrics(oracle: HeightOracle, offset: Int): HeightMetrics {
+        val firstLine = oracle.doc.lineAt(offset).number
+        val lastLine = oracle.doc.lineAt(offset + length).number
+        val lines = lastLine - firstLine + 1
+        var perLine: Double
+        var perChar = 0.0
+        if (oracle.lineWrapping) {
+            val totalPerLine = kotlin.math.min(height, oracle.lineHeight * lines)
+            perLine = totalPerLine / lines
+            if (length > lines + 1)
+                perChar = (height - totalPerLine) / (length - lines - 1)
+        } else {
+            perLine = height / lines
+        }
+        return HeightMetrics(firstLine, lastLine, perLine, perChar)
+    }
+
+    override fun blockAt(height: Double, oracle: HeightOracle, top: Double, offset: Int): BlockInfo {
+        val metrics = heightMetrics(oracle, offset)
+        return if (oracle.lineWrapping) {
+            val guess = offset + if (height < oracle.lineHeight) 0 else
+                kotlin.math.round(kotlin.math.max(0.0, kotlin.math.min(1.0, (height - top) / this.height)) * length)
+            val line = oracle.doc.lineAt(guess.toInt())
+            val lineHeight = metrics.perLine + line.length * metrics.perChar
+            val lineTop = kotlin.math.max(top, height - lineHeight / 2)
+            BlockInfo(line.from, line.length, lineTop, lineHeight, 0)
+        } else {
+            val line = kotlin.math.max(0, kotlin.math.min(metrics.lastLine - metrics.firstLine,
+                kotlin.math.floor((height - top) / metrics.perLine).toInt()))
+            val lineInfo = oracle.doc.line(metrics.firstLine + line)
+            BlockInfo(lineInfo.from, lineInfo.length, top + metrics.perLine * line, metrics.perLine, 0)
+        }
+    }
+
+    override fun lineAt(value: Int, type: QueryType, oracle: HeightOracle, top: Double, offset: Int): BlockInfo {
+        return when (type) {
+            QueryType.ByHeight -> blockAt(value.toDouble(), oracle, top, offset)
+            QueryType.ByPosNoHeight -> {
+                val line = oracle.doc.lineAt(value)
+                BlockInfo(line.from, line.to - line.from, 0.0, 0.0, 0)
+            }
+            else -> {
+                val metrics = heightMetrics(oracle, offset)
+                val line = oracle.doc.lineAt(value)
+                val lineHeight = metrics.perLine + line.length * metrics.perChar
+                val linesAbove = line.number - metrics.firstLine
+                val lineTop = top + metrics.perLine * linesAbove + metrics.perChar * (line.from - offset - linesAbove)
+                BlockInfo(line.from, line.length,
+                    kotlin.math.max(top, kotlin.math.min(lineTop, top + height - lineHeight)),
+                    lineHeight, 0)
             }
         }
-
-        let brk = 0
-        if (nodes[i - 1] == null) { brk = 1; i-- }
-        else if (nodes[i] == null) { brk = 1; j++ }
-        return new HeightMapBranch(HeightMap.of(nodes.slice(0, i)), brk, HeightMap.of(nodes.slice(j)))
-    }
-}
-
-function replace(old: HeightMap, val: HeightMap) {
-    if (old == val) return old
-        if (old.constructor != val.constructor) heightChangeFlag = true
-        return val
-}
-
-HeightMap.prototype.size = 1
-
-class HeightMapBlock extends HeightMap {
-    constructor(length: number, height: number, readonly deco: PointDecoration | null) { super(length, height) }
-
-    blockAt(_height: number, _oracle: HeightOracle, top: number, offset: number) {
-        return new BlockInfo(offset, this.length, top, this.height, this.deco || 0)
     }
 
-    lineAt(_value: number, _type: QueryType, oracle: HeightOracle, top: number, offset: number) {
-        return this.blockAt(0, oracle, top, offset)
-    }
-
-    forEachLine(from: number, to: number, oracle: HeightOracle, top: number, offset: number, f: (line: BlockInfo) => void) {
-        if (from <= offset + this.length && to >= offset) f(this.blockAt(0, oracle, top, offset))
-    }
-
-    updateHeight(oracle: HeightOracle, offset: number = 0, _force: boolean = false, measured?: MeasuredHeights) {
-        if (measured && measured.from <= offset && measured.more)
-            this.setHeight(measured.heights[measured.index++])
-        this.outdated = false
-        return this
-    }
-
-    toString() { return `block(${this.length})` }
-}
-
-class HeightMapText extends HeightMapBlock {
-    public collapsed = 0 // Amount of collapsed content in the line
-    public widgetHeight = 0 // Maximum inline widget height
-    public breaks = 0 // Number of widget-introduced line breaks on the line
-
-    constructor(length: number, height: number) { super(length, height, null) }
-
-    blockAt(_height: number, _oracle: HeightOracle, top: number, offset: number) {
-        return new BlockInfo(offset, this.length, top, this.height, this.breaks)
-    }
-
-    replace(_from: number, _to: number, nodes: (HeightMap | null)[]): HeightMap {
-        let node = nodes[0]
-        if (nodes.length == 1 && (node instanceof HeightMapText || node instanceof HeightMapGap && (node.flags & Flag.SingleLine)) &&
-        Math.abs(this.length - node.length) < 10) {
-        if (node instanceof HeightMapGap) node = new HeightMapText(node.length, this.height)
-        else node.height = this.height
-        if (!this.outdated) node.outdated = false
-        return node
-    } else {
-        return HeightMap.of(nodes)
-    }
-    }
-
-    updateHeight(oracle: HeightOracle, offset: number = 0, force: boolean = false, measured?: MeasuredHeights) {
-        if (measured && measured.from <= offset && measured.more)
-            this.setHeight(measured.heights[measured.index++])
-        else if (force || this.outdated)
-            this.setHeight(Math.max(this.widgetHeight, oracle.heightForLine(this.length - this.collapsed)) +
-                this.breaks * oracle.lineHeight)
-        this.outdated = false
-        return this
-    }
-
-    toString() {
-        return `line(${this.length}${this.collapsed ? -this.collapsed : ""}${this.widgetHeight ? ":" + this.widgetHeight : ""})`
-    }
-}
-
-class HeightMapGap extends HeightMap {
-    constructor(length: number) { super(length, 0) }
-
-    private heightMetrics(oracle: HeightOracle, offset: number): {
-            firstLine: number, lastLine: number, perLine: number, perChar: number
-    } {
-        let firstLine = oracle.doc.lineAt(offset).number, lastLine = oracle.doc.lineAt(offset + this.length).number
-        let lines = lastLine - firstLine + 1
-        let perLine, perChar = 0
-        if (oracle.lineWrapping) {
-            let totalPerLine = Math.min(this.height, oracle.lineHeight * lines)
-            perLine = totalPerLine / lines
-            if (this.length > lines + 1)
-                perChar = (this.height - totalPerLine) / (this.length - lines - 1)
-        } else {
-            perLine = this.height / lines
-        }
-        return {firstLine, lastLine, perLine, perChar}
-    }
-
-    blockAt(height: number, oracle: HeightOracle, top: number, offset: number) {
-        let {firstLine, lastLine, perLine, perChar} = this.heightMetrics(oracle, offset)
-        if (oracle.lineWrapping) {
-            let guess = offset + (height < oracle.lineHeight ? 0
-            : Math.round(Math.max(0, Math.min(1, (height - top) / this.height)) * this.length))
-            let line = oracle.doc.lineAt(guess), lineHeight = perLine + line.length * perChar
-            let lineTop = Math.max(top, height - lineHeight / 2)
-            return new BlockInfo(line.from, line.length, lineTop, lineHeight, 0)
-        } else {
-            let line = Math.max(0, Math.min(lastLine - firstLine, Math.floor((height - top) / perLine)))
-            let {from, length} = oracle.doc.line(firstLine + line)
-            return new BlockInfo(from, length, top + perLine * line, perLine, 0)
+    override fun forEachLine(from: Int, to: Int, oracle: HeightOracle, top: Double, offset: Int, f: (BlockInfo) -> Unit) {
+        val fromPos = kotlin.math.max(from, offset)
+        val toPos = kotlin.math.min(to, offset + length)
+        val metrics = heightMetrics(oracle, offset)
+        var pos = fromPos
+        var lineTop = top
+        while (pos <= toPos) {
+            val line = oracle.doc.lineAt(pos)
+            if (pos == fromPos) {
+                val linesAbove = line.number - metrics.firstLine
+                lineTop += metrics.perLine * linesAbove + metrics.perChar * (fromPos - offset - linesAbove)
+            }
+            val lineHeight = metrics.perLine + metrics.perChar * line.length
+            f(BlockInfo(line.from, line.length, lineTop, lineHeight, 0))
+            lineTop += lineHeight
+            pos = line.to + 1
         }
     }
 
-    lineAt(value: number, type: QueryType, oracle: HeightOracle, top: number, offset: number) {
-        if (type == QueryType.ByHeight) return this.blockAt(value, oracle, top, offset)
-        if (type == QueryType.ByPosNoHeight) {
-            let {from, to} = oracle.doc.lineAt(value)
-            return new BlockInfo(from, to - from, 0, 0, 0)
-        }
-        let {firstLine, perLine, perChar} = this.heightMetrics(oracle, offset)
-        let line = oracle.doc.lineAt(value), lineHeight = perLine + line.length * perChar
-        let linesAbove = line.number - firstLine
-        let lineTop = top + perLine * linesAbove + perChar * (line.from - offset - linesAbove)
-        return new BlockInfo(line.from, line.length, Math.max(top, Math.min(lineTop, top + this.height - lineHeight)),
-        lineHeight, 0)
-    }
-
-    forEachLine(from: number, to: number, oracle: HeightOracle, top: number, offset: number, f: (line: BlockInfo) => void) {
-        from = Math.max(from, offset); to = Math.min(to, offset + this.length)
-        let {firstLine, perLine, perChar} = this.heightMetrics(oracle, offset)
-        for (let pos = from, lineTop = top; pos <= to;) {
-        let line = oracle.doc.lineAt(pos)
-        if (pos == from) {
-            let linesAbove = line.number - firstLine
-            lineTop += perLine * linesAbove + perChar * (from - offset - linesAbove)
-        }
-        let lineHeight = perLine + perChar * line.length
-        f(new BlockInfo(line.from, line.length, lineTop, lineHeight, 0))
-        lineTop += lineHeight
-        pos = line.to + 1
-    }
-    }
-
-    replace(from: number, to: number, nodes: (HeightMap | null)[]): HeightMap {
-        let after = this.length - to
+    override fun replace(from: Int, to: Int, nodes: List<HeightMap?>): HeightMap {
+        val after = length - to
+        val mutableNodes = nodes.toMutableList()
         if (after > 0) {
-            let last = nodes[nodes.length - 1]
-            if (last instanceof HeightMapGap) nodes[nodes.length - 1] = new HeightMapGap(last.length + after)
-            else nodes.push(null, new HeightMapGap(after - 1))
+            val last = nodes.lastOrNull()
+            if (last is HeightMapGap) {
+                mutableNodes[mutableNodes.lastIndex] = HeightMapGap(last.length + after)
+            } else {
+                mutableNodes.add(null)
+                mutableNodes.add(HeightMapGap(after - 1))
+            }
         }
         if (from > 0) {
-            let first = nodes[0]
-            if (first instanceof HeightMapGap) nodes[0] = new HeightMapGap(from + first.length)
-            else nodes.unshift(new HeightMapGap(from - 1), null)
+            val first = nodes.firstOrNull()
+            if (first is HeightMapGap) {
+                mutableNodes[0] = HeightMapGap(from + first.length)
+            } else {
+                mutableNodes.add(0, null)
+                mutableNodes.add(0, HeightMapGap(from - 1))
+            }
         }
-        return HeightMap.of(nodes)
+        return HeightMap.of(mutableNodes)
     }
 
-    decomposeLeft(to: number, result: (HeightMap | null)[]) {
-        result.push(new HeightMapGap(to - 1), null)
+    override fun decomposeLeft(to: Int, result: MutableList<HeightMap?>) {
+        result.add(HeightMapGap(to - 1))
+        result.add(null)
     }
 
-    decomposeRight(from: number, result: (HeightMap | null)[]) {
-        result.push(null, new HeightMapGap(this.length - from - 1))
+    override fun decomposeRight(from: Int, result: MutableList<HeightMap?>) {
+        result.add(null)
+        result.add(HeightMapGap(length - from - 1))
     }
 
-    updateHeight(oracle: HeightOracle, offset: number = 0, force: boolean = false, measured?: MeasuredHeights): HeightMap {
-        let end = offset + this.length
-        if (measured && measured.from <= offset + this.length && measured.more) {
-            // Fill in part of this gap with measured lines. We know there
-            // can't be widgets or collapsed ranges in those lines, because
-            // they would already have been added to the heightmap (gaps
-            // only contain plain text).
-            let nodes = [], pos = Math.max(offset, measured.from), singleHeight = -1
-            if (measured.from > offset) nodes.push(new HeightMapGap(measured.from - offset - 1).updateHeight(oracle, offset))
+    override fun updateHeight(oracle: HeightOracle, offset: Int, force: Boolean, measured: MeasuredHeights?): HeightMap {
+        val end = offset + length
+        if (measured != null && measured.from <= end && measured.more) {
+            // Fill in part of this gap with measured lines
+            val nodes = mutableListOf<HeightMap?>()
+            var pos = kotlin.math.max(offset, measured.from)
+            var singleHeight = -1.0
+            if (measured.from > offset) {
+                nodes.add(HeightMapGap(measured.from - offset - 1).updateHeight(oracle, offset))
+            }
             while (pos <= end && measured.more) {
-                let len = oracle.doc.lineAt(pos).length
-                if (nodes.length) nodes.push(null)
-                let height = measured.heights[measured.index++]
-                if (singleHeight == -1) singleHeight = height
-                else if (Math.abs(height - singleHeight) >= Epsilon) singleHeight = -2
-                let line = new HeightMapText(len, height)
+                val len = oracle.doc.lineAt(pos).length
+                if (nodes.isNotEmpty()) nodes.add(null)
+                val height = measured.heights[measured.index++]
+                if (singleHeight == -1.0) singleHeight = height
+                else if (kotlin.math.abs(height - singleHeight) >= Epsilon) singleHeight = -2.0
+                val line = HeightMapText(len, height)
                 line.outdated = false
-                nodes.push(line)
+                nodes.add(line)
                 pos += len + 1
             }
-            if (pos <= end) nodes.push(null, new HeightMapGap(end - pos).updateHeight(oracle, pos))
-            let result = HeightMap.of(nodes)
-            if (singleHeight < 0 || Math.abs(result.height - this.height) >= Epsilon ||
-                Math.abs(singleHeight - this.heightMetrics(oracle, offset).perLine) >= Epsilon)
+            if (pos <= end) {
+                nodes.add(null)
+                nodes.add(HeightMapGap(end - pos).updateHeight(oracle, pos))
+            }
+            val result = HeightMap.of(nodes)
+            if (singleHeight < 0 || kotlin.math.abs(result.height - height) >= Epsilon ||
+                kotlin.math.abs(singleHeight - heightMetrics(oracle, offset).perLine) >= Epsilon)
                 heightChangeFlag = true
             return replace(this, result)
-        } else if (force || this.outdated) {
-            this.setHeight(oracle.heightForGap(offset, offset + this.length))
-            this.outdated = false
+        } else if (force || outdated) {
+            setHeight(oracle.heightForGap(offset, offset + length))
+            outdated = false
         }
         return this
     }
 
-    toString() { return `gap(${this.length})` }
+    override fun asString(): String = "gap($length)"
 }
 
-class HeightMapBranch extends HeightMap {
-    size: number
+class HeightMapBranch(
+    val left: HeightMap,
+    brk: Int,
+    val right: HeightMap
+) : HeightMap(left.length + brk + right.length, left.height + right.height,
+    brk or (if (left.outdated || right.outdated) Flag.Outdated else 0)) {
 
-    constructor(public left: HeightMap, brk: number, public right: HeightMap) {
-        super(left.length + brk + right.length, left.height + right.height, brk | (left.outdated || right.outdated ? Flag.Outdated : 0))
-        this.size = left.size + right.size
+    init {
+        size = left.size + right.size
     }
 
-    get break() { return this.flags & Flag.Break }
+    val break: Int get() = flags and Flag.Break
 
-    blockAt(height: number, oracle: HeightOracle, top: number, offset: number) {
-        let mid = top + this.left.height
-        return height < mid ? this.left.blockAt(height, oracle, top, offset)
-        : this.right.blockAt(height, oracle, mid, offset + this.left.length + this.break)
+    override fun blockAt(height: Double, oracle: HeightOracle, top: Double, offset: Int): BlockInfo {
+        val mid = top + left.height
+        return if (height < mid)
+            left.blockAt(height, oracle, top, offset)
+        else
+            right.blockAt(height, oracle, mid, offset + left.length + break)
     }
 
-    lineAt(value: number, type: QueryType, oracle: HeightOracle, top: number, offset: number) {
-        let rightTop = top + this.left.height, rightOffset = offset + this.left.length + this.break
-        let left = type == QueryType.ByHeight ? value < rightTop : value < rightOffset
-            let base = left ? this.left.lineAt(value, type, oracle, top, offset)
-        : this.right.lineAt(value, type, oracle, rightTop, rightOffset)
-        if (this.break || (left ? base.to < rightOffset : base.from > rightOffset)) return base
-        let subQuery = type == QueryType.ByPosNoHeight ? QueryType.ByPosNoHeight : QueryType.ByPos
-            if (left)
-                return base.join(this.right.lineAt(rightOffset, subQuery, oracle, rightTop, rightOffset))
-            else
-                return this.left.lineAt(rightOffset, subQuery, oracle, top, offset).join(base)
+    override fun lineAt(value: Int, type: QueryType, oracle: HeightOracle, top: Double, offset: Int): BlockInfo {
+        val rightTop = top + left.height
+        val rightOffset = offset + left.length + break
+        val isLeft = if (type == QueryType.ByHeight) value < rightTop else value < rightOffset
+        val base = if (isLeft)
+            left.lineAt(value, type, oracle, top, offset)
+        else
+            right.lineAt(value, type, oracle, rightTop, rightOffset)
+        if (break != 0 || (if (isLeft) base.to < rightOffset else base.from > rightOffset)) return base
+        val subQuery = if (type == QueryType.ByPosNoHeight) QueryType.ByPosNoHeight else QueryType.ByPos
+        return if (isLeft)
+            base.join(right.lineAt(rightOffset, subQuery, oracle, rightTop, rightOffset))
+        else
+            left.lineAt(rightOffset, subQuery, oracle, top, offset).join(base)
     }
 
-    forEachLine(from: number, to: number, oracle: HeightOracle, top: number, offset: number, f: (line: BlockInfo) => void) {
-        let rightTop = top + this.left.height, rightOffset = offset + this.left.length + this.break
-        if (this.break) {
-            if (from < rightOffset) this.left.forEachLine(from, to, oracle, top, offset, f)
-            if (to >= rightOffset) this.right.forEachLine(from, to, oracle, rightTop, rightOffset, f)
+    override fun forEachLine(from: Int, to: Int, oracle: HeightOracle, top: Double, offset: Int, f: (BlockInfo) -> Unit) {
+        val rightTop = top + left.height
+        val rightOffset = offset + left.length + break
+        if (break != 0) {
+            if (from < rightOffset) left.forEachLine(from, to, oracle, top, offset, f)
+            if (to >= rightOffset) right.forEachLine(from, to, oracle, rightTop, rightOffset, f)
         } else {
-            let mid = this.lineAt(rightOffset, QueryType.ByPos, oracle, top, offset)
-            if (from < mid.from) this.left.forEachLine(from, mid.from - 1, oracle, top, offset, f)
+            val mid = lineAt(rightOffset, QueryType.ByPos, oracle, top, offset)
+            if (from < mid.from) left.forEachLine(from, mid.from - 1, oracle, top, offset, f)
             if (mid.to >= from && mid.from <= to) f(mid)
-            if (to > mid.to) this.right.forEachLine(mid.to + 1, to, oracle, rightTop, rightOffset, f)
+            if (to > mid.to) right.forEachLine(mid.to + 1, to, oracle, rightTop, rightOffset, f)
         }
     }
 
-    replace(from: number, to: number, nodes: (HeightMap | null)[]): HeightMap {
-        let rightStart = this.left.length + this.break
-        if (to < rightStart)
-            return this.balanced(this.left.replace(from, to, nodes), this.right)
-        if (from > this.left.length)
-            return this.balanced(this.left, this.right.replace(from - rightStart, to - rightStart, nodes))
-
-        let result: (HeightMap | null)[] = []
-        if (from > 0) this.decomposeLeft(from, result)
-        let left = result.length
-            for (let node of nodes) result.push(node)
-        if (from > 0) mergeGaps(result, left - 1)
-        if (to < this.length) {
-            let right = result.length
-                this.decomposeRight(to, result)
-            mergeGaps(result, right)
+    override fun replace(from: Int, to: Int, nodes: List<HeightMap?>): HeightMap {
+        val rightStart = left.length + break
+        return when {
+            to < rightStart -> balanced(left.replace(from, to, nodes), right)
+            from > left.length -> balanced(left, right.replace(from - rightStart, to - rightStart, nodes))
+            else -> {
+                val result = mutableListOf<HeightMap?>()
+                if (from > 0) decomposeLeft(from, result)
+                val leftSize = result.size
+                result.addAll(nodes)
+                if (from > 0) mergeGaps(result, leftSize - 1)
+                if (to < length) {
+                    val rightSize = result.size
+                    decomposeRight(to, result)
+                    mergeGaps(result, rightSize)
+                }
+                HeightMap.of(result)
+            }
         }
-        return HeightMap.of(result)
     }
 
-    decomposeLeft(to: number, result: (HeightMap | null)[]) {
-        let left = this.left.length
-        if (to <= left) return this.left.decomposeLeft(to, result)
-        result.push(this.left)
-        if (this.break) {
-            left++
-            if (to >= left) result.push(null)
+    override fun decomposeLeft(to: Int, result: MutableList<HeightMap?>) {
+        val leftLen = left.length
+        if (to <= leftLen) return left.decomposeLeft(to, result)
+        result.add(left)
+        if (break != 0) {
+            if (to >= leftLen + 1) result.add(null)
         }
-        if (to > left) this.right.decomposeLeft(to - left, result)
+        if (to > leftLen) right.decomposeLeft(to - leftLen - break, result)
     }
 
-    decomposeRight(from: number, result: (HeightMap | null)[]) {
-        let left = this.left.length, right = left + this.break
-        if (from >= right) return this.right.decomposeRight(from - right, result)
-        if (from < left) this.left.decomposeRight(from, result)
-        if (this.break && from < right) result.push(null)
-        result.push(this.right)
+    override fun decomposeRight(from: Int, result: MutableList<HeightMap?>) {
+        val leftLen = left.length
+        val rightStart = leftLen + break
+        if (from >= rightStart) return right.decomposeRight(from - rightStart, result)
+        if (from < leftLen) left.decomposeRight(from, result)
+        if (break != 0 && from < rightStart) result.add(null)
+        result.add(right)
     }
 
-    balanced(left: HeightMap, right: HeightMap): HeightMap {
-        if (left.size > 2 * right.size || right.size > 2 * left.size)
-            return HeightMap.of(this.break ? [left, null, right] : [left, right])
-        this.left = replace(this.left, left)
-        this.right = replace(this.right, right)
-        this.setHeight(left.height + right.height)
-        this.outdated = left.outdated || right.outdated
-        this.size = left.size + right.size
-        this.length = left.length + this.break + right.length
-        return this
+    fun balanced(left: HeightMap, right: HeightMap): HeightMap {
+        return if (left.size > 2 * right.size || right.size > 2 * left.size)
+            HeightMap.of(if (break != 0) listOf(left, null, right) else listOf(left, right))
+        else {
+            this.left = replace(this.left, left)
+            this.right = replace(this.right, right)
+            setHeight(left.height + right.height)
+            outdated = left.outdated || right.outdated
+            size = left.size + right.size
+            length = left.length + break + right.length
+            this
+        }
     }
 
-    updateHeight(oracle: HeightOracle, offset: number = 0, force: boolean = false, measured?: MeasuredHeights): HeightMap {
-        let {left, right} = this, rightStart = offset + left.length + this.break, rebalance: any = null
-        if (measured && measured.from <= offset + left.length && measured.more)
-            rebalance = left = left.updateHeight(oracle, offset, force, measured)
+    override fun updateHeight(oracle: HeightOracle, offset: Int, force: Boolean, measured: MeasuredHeights?): HeightMap {
+        val rightStart = offset + left.length + break
+        var rebalance: HeightMap? = null
+        var newLeft = left
+        var newRight = right
+        
+        if (measured != null && measured.from <= offset + left.length && measured.more)
+            rebalance = left.also { newLeft = it.updateHeight(oracle, offset, force, measured) }
         else
             left.updateHeight(oracle, offset, force)
-        if (measured && measured.from <= rightStart + right.length && measured.more)
-            rebalance = right = right.updateHeight(oracle, rightStart, force, measured)
+            
+        if (measured != null && measured.from <= rightStart + right.length && measured.more)
+            rebalance = right.also { newRight = it.updateHeight(oracle, rightStart, force, measured) }
         else
             right.updateHeight(oracle, rightStart, force)
-        if (rebalance) return this.balanced(left, right)
-        this.height = this.left.height + this.right.height
-        this.outdated = false
-        return this
+            
+        return if (rebalance != null) balanced(newLeft, newRight)
+        else {
+            height = left.height + right.height
+            outdated = false
+            this
+        }
     }
 
-    toString() { return this.left + (this.break ? " " : "-") + this.right }
+    override fun asString(): String = "$left${if (break != 0) " " else "-"}$right"
 }
 
-function mergeGaps(nodes: (HeightMap | null)[], around: number) {
-    let before, after
-    if (nodes[around] == null &&
-        (before = nodes[around - 1]) instanceof HeightMapGap &&
-        (after = nodes[around + 1]) instanceof HeightMapGap)
-        nodes.splice(around - 1, 3, new HeightMapGap(before.length + 1 + after.length))
+private fun mergeGaps(nodes: MutableList<HeightMap?>, around: Int) {
+    val before = nodes.getOrNull(around - 1)
+    val after = nodes.getOrNull(around + 1)
+    if (nodes[around] == null && before is HeightMapGap && after is HeightMapGap) {
+        nodes.subList(around - 1, around + 2).clear()
+        nodes.add(around - 1, HeightMapGap(before.length + 1 + after.length))
+    }
 }
 
-const relevantWidgetHeight = 5
+private const val relevantWidgetHeight = 5.0
 
-class NodeBuilder implements SpanIterator<Decoration> {
-    nodes: (HeightMap | null)[] = []
-    writtenTo: number
-    lineStart = -1
-    lineEnd = -1
-    covering: HeightMapBlock | null = null
+class NodeBuilder(
+    var pos: Int,
+    val oracle: HeightOracle
+) : SpanIterator<Decoration> {
+    val nodes = mutableListOf<HeightMap?>()
+    var writtenTo: Int = pos
+    var lineStart: Int = -1
+    var lineEnd: Int = -1
+    var covering: HeightMapBlock? = null
 
-    constructor(public pos: number, public oracle: HeightOracle) {
-        this.writtenTo = pos
-    }
+    val isCovered: Boolean get() =
+        covering != null && nodes.lastOrNull() === covering
 
-    get isCovered() {
-        return this.covering && this.nodes[this.nodes.length - 1] == this.covering
-    }
-
-    span(_from: number, to: number) {
-        if (this.lineStart > -1) {
-            let end = Math.min(to, this.lineEnd), last = this.nodes[this.nodes.length - 1]
-            if (last instanceof HeightMapText)
-                last.length += end - this.pos
-            else if (end > this.pos || !this.isCovered)
-                this.nodes.push(new HeightMapText(end - this.pos, -1))
-            this.writtenTo = end
+    override fun span(from: Int, to: Int) {
+        if (lineStart > -1) {
+            val end = kotlin.math.min(to, lineEnd)
+            val last = nodes.lastOrNull()
+            if (last is HeightMapText)
+                last.length += end - pos
+            else if (end > pos || !isCovered)
+                nodes.add(HeightMapText(end - pos, -1.0))
+            writtenTo = end
             if (to > end) {
-                this.nodes.push(null)
-                this.writtenTo++
-                this.lineStart = -1
+                nodes.add(null)
+                writtenTo++
+                lineStart = -1
             }
         }
-        this.pos = to
+        pos = to
     }
 
-    point(from: number, to: number, deco: PointDecoration) {
+    override fun point(from: Int, to: Int, deco: PointDecoration) {
         if (from < to || deco.heightRelevant) {
-            let height = deco.widget ? deco.widget.estimatedHeight : 0
-            let breaks = deco.widget ? deco.widget.lineBreaks : 0
-            if (height < 0) height = this.oracle.lineHeight
-            let len = to - from
-            if (deco.block) {
-                this.addBlock(new HeightMapBlock(len, height, deco))
-            } else if (len || breaks || height >= relevantWidgetHeight) {
-                this.addLineDeco(height, breaks, len)
+            val height = deco.widget?.estimatedHeight ?: 0.0
+            val breaks = deco.widget?.lineBreaks ?: 0
+            val finalHeight = if (height < 0) oracle.lineHeight else height
+            val len = to - from
+            when {
+                deco.block -> addBlock(HeightMapBlock(len, finalHeight, deco))
+                len > 0 || breaks > 0 || finalHeight >= relevantWidgetHeight -> addLineDeco(finalHeight, breaks, len)
             }
         } else if (to > from) {
-            this.span(from, to)
+            span(from, to)
         }
-        if (this.lineEnd > -1 && this.lineEnd < this.pos)
-            this.lineEnd = this.oracle.doc.lineAt(this.pos).to
+        if (lineEnd > -1 && lineEnd < pos)
+            lineEnd = oracle.doc.lineAt(pos).to
     }
 
-    enterLine() {
-        if (this.lineStart > -1) return
-        let {from, to} = this.oracle.doc.lineAt(this.pos)
-        this.lineStart = from; this.lineEnd = to
-        if (this.writtenTo < from) {
-            if (this.writtenTo < from - 1 || this.nodes[this.nodes.length - 1] == null)
-                this.nodes.push(this.blankContent(this.writtenTo, from - 1))
-            this.nodes.push(null)
+    fun enterLine() {
+        if (lineStart > -1) return
+        val line = oracle.doc.lineAt(pos)
+        lineStart = line.from
+        lineEnd = line.to
+        if (writtenTo < line.from) {
+            if (writtenTo < line.from - 1 || nodes.lastOrNull() == null)
+                nodes.add(blankContent(writtenTo, line.from - 1))
+            nodes.add(null)
         }
-        if (this.pos > from)
-            this.nodes.push(new HeightMapText(this.pos - from, -1))
-        this.writtenTo = this.pos
+        if (pos > line.from)
+            nodes.add(HeightMapText(pos - line.from, -1.0))
+        writtenTo = pos
     }
 
-    blankContent(from: number, to: number) {
-        let gap = new HeightMapGap(to - from)
-        if (this.oracle.doc.lineAt(from).to == to) gap.flags |= Flag.SingleLine
+    fun blankContent(from: Int, to: Int): HeightMap {
+        val gap = HeightMapGap(to - from)
+        if (oracle.doc.lineAt(from).to == to) gap.flags = gap.flags or Flag.SingleLine
         return gap
     }
 
-    ensureLine() {
-        this.enterLine()
-        let last = this.nodes.length ? this.nodes[this.nodes.length - 1] : null
-        if (last instanceof HeightMapText) return last
-        let line = new HeightMapText(0, -1)
-        this.nodes.push(line)
-        return line
+    fun ensureLine(): HeightMapText {
+        enterLine()
+        val last = nodes.lastOrNull()
+        return if (last is HeightMapText) last
+        else HeightMapText(0, -1.0).also { nodes.add(it) }
     }
 
-    addBlock(block: HeightMapBlock) {
-        this.enterLine()
-        let deco = block.deco
-            if (deco && deco.startSide > 0 && !this.isCovered) this.ensureLine()
-        this.nodes.push(block)
-        this.writtenTo = this.pos = this.pos + block.length
-        if (deco && deco.endSide > 0) this.covering = block
+    fun addBlock(block: HeightMapBlock) {
+        enterLine()
+        val deco = block.deco
+        if (deco != null && deco.startSide > 0 && !isCovered) ensureLine()
+        nodes.add(block)
+        writtenTo = pos + block.length
+        pos = writtenTo
+        if (deco != null && deco.endSide > 0) covering = block
     }
 
-    addLineDeco(height: number, breaks: number, length: number) {
-        let line = this.ensureLine()
+    fun addLineDeco(height: Double, breaks: Int, length: Int) {
+        val line = ensureLine()
         line.length += length
         line.collapsed += length
-        line.widgetHeight = Math.max(line.widgetHeight, height)
+        line.widgetHeight = kotlin.math.max(line.widgetHeight, height)
         line.breaks += breaks
-        this.writtenTo = this.pos = this.pos + length
+        writtenTo = pos + length
+        pos = writtenTo
     }
 
-    finish(from: number) {
-        let last = this.nodes.length == 0 ? null : this.nodes[this.nodes.length - 1]
-        if (this.lineStart > -1 && !(last instanceof HeightMapText) && !this.isCovered)
-            this.nodes.push(new HeightMapText(0, -1))
-        else if (this.writtenTo < this.pos || last == null)
-        this.nodes.push(this.blankContent(this.writtenTo, this.pos))
-        let pos = from
-            for (let node of this.nodes) {
-        if (node instanceof HeightMapText) node.updateHeight(this.oracle, pos)
-        pos += node ? node.length : 1
-    }
-        return this.nodes
+    fun finish(from: Int): List<HeightMap?> {
+        val last = nodes.lastOrNull()
+        if (lineStart > -1 && last !is HeightMapText && !isCovered)
+            nodes.add(HeightMapText(0, -1.0))
+        else if (writtenTo < pos || last == null)
+            nodes.add(blankContent(writtenTo, pos))
+        var pos = from
+        for (node in nodes) {
+            if (node is HeightMapText) node.updateHeight(oracle, pos)
+            pos += node?.length ?: 1
+        }
+        return nodes
     }
 
-    // Always called with a region that on both sides either stretches
-    // to a line break or the end of the document.
-    // The returned array uses null to indicate line breaks, but never
-    // starts or ends in a line break, or has multiple line breaks next
-    // to each other.
-    static build(oracle: HeightOracle, decorations: readonly DecorationSet[],
-    from: number, to: number): (HeightMap | null)[] {
-        let builder = new NodeBuilder(from, oracle)
-        RangeSet.spans(decorations, from, to, builder, 0)
-        return builder.finish(from)
+    companion object {
+        // Always called with a region that on both sides either stretches
+        // to a line break or the end of the document.
+        // The returned array uses null to indicate line breaks, but never
+        // starts or ends in a line break, or has multiple line breaks next
+        // to each other.
+        fun build(
+            oracle: HeightOracle,
+            decorations: List<DecorationSet>,
+            from: Int,
+            to: Int
+        ): List<HeightMap?> {
+            val builder = NodeBuilder(from, oracle)
+            RangeSet.spans(decorations, from, to, builder, 0)
+            return builder.finish(from)
+        }
     }
 }
 
-export function heightRelevantDecoChanges(a: readonly DecorationSet[], b: readonly DecorationSet[], diff: ChangeSet) {
-    let comp = new DecorationComparator
+fun heightRelevantDecoChanges(
+    a: List<DecorationSet>,
+    b: List<DecorationSet>,
+    diff: ChangeSet
+): List<Int> {
+    val comp = DecorationComparator()
     RangeSet.compare(a, b, diff, comp, 0)
     return comp.changes
 }
 
 class DecorationComparator {
-    changes: number[] = []
+    val changes = mutableListOf<Int>()
 
-    compareRange() {}
+    fun compareRange() {}
 
-    comparePoint(from: number, to: number, a: Decoration | null, b: Decoration | null) {
-        if (from < to || a && a.heightRelevant || b && b.heightRelevant) addRange(from, to, this.changes, 5)
+    fun comparePoint(from: Int, to: Int, a: Decoration?, b: Decoration?) {
+        if (from < to || (a?.heightRelevant == true) || (b?.heightRelevant == true)) {
+            addRange(from, to, changes, 5)
+        }
     }
 }

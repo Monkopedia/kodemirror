@@ -1,57 +1,86 @@
 package com.monkopedia.kodemirror.view
 
-import {Extension} from "@codemirror/state"
+import com.monkopedia.kodemirror.state.Extension
+import com.monkopedia.kodemirror.decoration.Decoration
+import com.monkopedia.kodemirror.decoration.WidgetType
+import com.monkopedia.kodemirror.dom.clientRectsFor
+import com.monkopedia.kodemirror.dom.flattenRect
+import com.monkopedia.kodemirror.dom.Rect
 import {ViewPlugin} from "./extension"
-import {Decoration, DecorationSet, WidgetType} from "./decoration"
+import {Decoration, DecorationSet} from "./decoration"
 import {EditorView} from "./editorview"
-import {clientRectsFor, flattenRect} from "./dom"
 
-class Placeholder extends WidgetType {
-    constructor(readonly content: string | HTMLElement | ((view: EditorView) => HTMLElement)) { super() }
+class Placeholder(
+    private val content: Any // String | HTMLElement | ((view: EditorView) -> HTMLElement)
+) : WidgetType() {
 
-    toDOM(view: EditorView) {
-        let wrap = document.createElement("span")
+    override fun toDOM(view: EditorView): HTMLElement {
+        val wrap = document.createElement("span")
         wrap.className = "cm-placeholder"
         wrap.style.pointerEvents = "none"
-        wrap.appendChild(
-            typeof this.content == "string" ? document.createTextNode(this.content) :
-        typeof this.content == "function" ? this.content(view) :
-        this.content.cloneNode(true))
-        if (typeof this.content == "string")
-        wrap.setAttribute("aria-label", "placeholder " + this.content)
-        else
-        wrap.setAttribute("aria-hidden", "true")
+        
+        val element = when (content) {
+            is String -> document.createTextNode(content)
+            is HTMLElement -> content.cloneNode(true)
+            is Function<*> -> (content as (EditorView) -> HTMLElement)(view)
+            else -> throw IllegalArgumentException("Invalid content type")
+        }
+        
+        wrap.appendChild(element)
+        
+        if (content is String) {
+            wrap.setAttribute("aria-label", "placeholder $content")
+        } else {
+            wrap.setAttribute("aria-hidden", "true")
+        }
+        
         return wrap
     }
 
-    coordsAt(dom: HTMLElement) {
-        let rects = dom.firstChild ? clientRectsFor(dom.firstChild) : []
-        if (!rects.length) return null
-        let style = window.getComputedStyle(dom.parentNode as HTMLElement)
-        let rect = flattenRect(rects[0], style.direction != "rtl")
-        let lineHeight = parseInt(style.lineHeight)
-        if (rect.bottom - rect.top > lineHeight * 1.5)
-            return {left: rect.left, right: rect.right, top: rect.top, bottom: rect.top + lineHeight}
-        return rect
+    override fun coordsAt(dom: HTMLElement): Rect? {
+        val rects = dom.firstChild?.let { clientRectsFor(it) } ?: emptyList()
+        if (rects.isEmpty()) return null
+        
+        val style = window.getComputedStyle(dom.parentNode as HTMLElement)
+        val rect = flattenRect(rects[0], style.direction != "rtl")
+        val lineHeight = style.lineHeight.toIntOrNull() ?: return rect
+        
+        return if (rect.bottom - rect.top > lineHeight * 1.5) {
+            Rect(
+                left = rect.left,
+                right = rect.right,
+                top = rect.top,
+                bottom = rect.top + lineHeight
+            )
+        } else rect
     }
 
-    ignoreEvent() { return false }
+    override fun ignoreEvent(): Boolean = false
 }
 
 /// Extension that enables a placeholder—a piece of example content
 /// to show when the editor is empty.
-export function placeholder(content: string | HTMLElement | ((view: EditorView) => HTMLElement)): Extension {
-    return ViewPlugin.fromClass(class {
-        placeholder: DecorationSet
+fun placeholder(content: Any): Extension {
+    return ViewPlugin.fromClass(
+        { view ->
+            object : PluginValue {
+                val placeholder = if (content != null) {
+                    Decoration.set(listOf(
+                        Decoration.widget(
+                            mapOf(
+                                "widget" to Placeholder(content),
+                                "side" to 1
+                            )
+                        ).range(0)
+                    ))
+                } else {
+                    Decoration.none
+                }
 
-        constructor(readonly view: EditorView) {
-            this.placeholder = content
-            ? Decoration.set([Decoration.widget({widget: new Placeholder(content), side: 1}).range(0)])
-            : Decoration.none
-        }
-
-        update!: () => void // Kludge to convince TypeScript that this is a plugin value
-
-        get decorations() { return this.view.state.doc.length ? Decoration.none : this.placeholder }
-    }, {decorations: v => v.decorations})
+                val decorations: DecorationSet
+                    get() = if (view.state.doc.length == 0) placeholder else Decoration.none
+            }
+        },
+        mapOf("decorations" to { v -> v.decorations })
+    )
 }

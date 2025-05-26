@@ -6,6 +6,10 @@ import androidx.compose.ui.input.key.KeyEvent
 import com.monkopedia.kodemirror.state.Text
 import com.monkopedia.kodemirror.util.check
 import kotlin.math.max
+import com.monkopedia.kodemirror.state.*
+import com.monkopedia.kodemirror.dom.*
+import kotlinx.browser.document
+import kotlinx.browser.window
 
 //import {Text as DocText} from "@codemirror/state"
 //import {ContentView, DOMPos, ViewFlag, mergeChildrenInto, noChildren} from "./contentview"
@@ -17,6 +21,9 @@ import kotlin.math.max
 
 const val MaxJoinLen = 256
 
+/**
+ * Text view that displays a piece of the document content.
+ */
 class TextView(var text: String) : ContentView() {
     override val children = mutableListOf<ContentView>()
     override val dom: HTMLText? = null
@@ -27,60 +34,45 @@ class TextView(var text: String) : ContentView() {
         }
         set(value) {}
 
-//    fun createDOM(textDOM: Node? = null) {
-//        this.setDOM(textDOM || document.createTextNode(this.text))
-//    }
-
     override fun sync(view: EditorView, track: Track?) {
-//        if (this.dom == null) this.createDOM()
-//        if (this.dom!.nodeValue != this.text) {
-//            if (track && track.node == this.dom) track.written = true
-//            this.dom!.nodeValue = this.text
-//        }
+        if (this.dom == null) {
+            setDOM(document.createTextNode(this.text))
+        }
+        if ((this.dom as? Text)?.nodeValue != this.text) {
+            if (track?.node == this.dom) track.written = true
+            (this.dom as? Text)?.nodeValue = this.text
+        }
     }
-
-//    fun reuseDOM(dom: Node) {
-//        if (dom.nodeType == 3) this.createDOM(dom)
-//    }
 
     fun merge(from: Int, to: Int, source: ContentView?): Boolean {
         if (this.flags check ViewFlag.Composition.mask) return false
         if (source != null && source !is TextView) return false
         if (source != null && (this.length - (to - from) + source.length > MaxJoinLen ||
-                (source.flags check ViewFlag.Composition.mask))
-        ) {
+                (source.flags check ViewFlag.Composition.mask))) {
             return false
         }
-        this.text = this.text.slice(0 until from) + ((source as TextView?)?.text ?: "") +
-            this.text.slice(to until this.text.length)
+        this.text = this.text.substring(0, from) + ((source as? TextView)?.text ?: "") +
+            this.text.substring(to)
         this.markDirty()
         return true
     }
 
     override fun split(from: Int): TextView {
-        val result = TextView(this.text.slice(from until this.text.length))
-        this.text = this.text.slice(0 until from)
+        val result = TextView(this.text.substring(from))
+        this.text = this.text.substring(0, from)
         this.markDirty()
         result.flags = result.flags or (this.flags and ViewFlag.Composition.mask)
         return result
     }
 
-    //    fun localPosFromDOM(node: Modifier.Node, offset: Int): Int
-//    {
-//        return node == this.dom ? offset : offset ? this.text.length : 0
-//    }
-//
-//    fun domAtPos(pos: Int): DOMPos { return DOMPos (this.dom!, pos) }
-//
-//    fun domBoundsAround(_from: Int, _to: Int, offset: Int) {
-//        return { from: offset, to: offset+this.length, startDOM: this.dom, endDOM: this.dom!.nextSibling }
-//    }
-//
     override fun coordsAt(pos: Int, side: Int): Rect? {
-        return textCoords(this.dom!!, pos, side)
+        return textCoords(this.dom as? Text, pos, side)
     }
 }
 
+/**
+ * A view for a piece of text marked with a specific decoration.
+ */
 class MarkView(
     val mark: MarkDecoration,
     public override val children: MutableList<ContentView> = mutableListOf(),
@@ -92,32 +84,23 @@ class MarkView(
         for (ch in children) ch.setParent(this)
     }
 
-//    fun setAttrs(dom: HTMLElement) {
-//        clearAttributes(dom)
-//        if (this.mark.class) dom . className = this.mark.class
-//        if(
-//            this.
-//            mark.
-//            attrs
-//        ) for (let name in this.mark.attrs) dom.setAttribute(name, this.mark.attrs[name])
-//        return dom
-//    }
-
     override fun canReuseDOM(other: ContentView): Boolean {
         return super.canReuseDOM(other) && !((this.flags or other.flags) check ViewFlag.Composition.mask)
     }
 
-//    fun reuseDOM(node: Modifier.Node) {
-//        if (node.nodeName == this.mark.tagName.toUpperCase()) {
-//            this.setDOM(node)
-//            this.flags | = ViewFlag.AttrsDirty | ViewFlag.NodeDirty
-//        }
-//    }
-
     override fun sync(view: EditorView, track: Track?) {
-//        if (!this.dom) this.setDOM(this.setAttrs(document.createElement(this.mark.tagName)))
-//        else if (this.flags & ViewFlag.AttrsDirty) this.setAttrs(this.dom)
+        if (this.dom == null) {
+            setDOM(document.createElement(this.mark.tagName).also { setAttrs(it) })
+        } else if (this.flags check ViewFlag.AttrsDirty) {
+            setAttrs(this.dom as HTMLElement)
+        }
         super.sync(view, track)
+    }
+
+    private fun setAttrs(dom: HTMLElement) {
+        clearAttributes(dom)
+        this.mark.class?.let { dom.className = it }
+        this.mark.attrs?.forEach { (name, value) -> dom.setAttribute(name, value) }
     }
 
     override fun merge(
@@ -160,7 +143,7 @@ class MarkView(
             }
             this.markDirty()
         }
-        return MarkView(this.mark, result, length)
+        return MarkView(this.mark, result.toMutableList(), length)
     }
 
     override fun domAtPos(pos: Int): DOMPos {
@@ -172,32 +155,29 @@ class MarkView(
     }
 }
 
-fun textCoords(text: Text, pos: Int, side: Int): Rect? {
+fun textCoords(text: Text?, pos: Int, side: Int): Rect? {
+    if (text == null) return null
     var pos = pos
-    val length = text.nodeValue!!.length
+    val length = text.nodeValue?.length ?: 0
     if (pos > length) pos = length
     var from = pos
     var to = pos
-    val flatten = 0
+    var flatten = 0
     if (pos == 0 && side < 0 || pos == length && side >= 0) {
-//        if (!(browser.chrome || browser.gecko)) { // These browsers reliably return valid rectangles for empty ranges
-//            if (pos) {
-//                from--; flatten = 1
-//            } // FIXME this is wrong in RTL text
-//            else if (to < length) {
-//                to++; flatten = -1
-//            }
-//        }
+        if (pos > 0) {
+            from--
+            flatten = 1
+        } else if (to < length) {
+            to++
+            flatten = -1
+        }
     } else {
-        if (side < 0) from--; else if (to < length) to++
+        if (side < 0) from-- else if (to < length) to++
     }
     val rects = textRange(text, from, to).getClientRects()
     if (rects.isEmpty()) return null
-    val rect = rects[if (if (flatten != 0) flatten < 0 else side >= 0) 0 else rects.length - 1]
-//    if (browser.safari && !flatten && rect.width == 0) {
-//        rect = Array.prototype.find.call(rects, r => r . width) ?: rect
-//    }
-    return if (flatten != 0) flattenRect(rect!!, flatten < 0) else rect
+    val rect = rects[if (flatten != 0) if (flatten < 0) 0 else rects.size - 1 else if (side >= 0) 0 else rects.size - 1]
+    return if (flatten != 0) flattenRect(rect, flatten < 0) else rect
 }
 
 // Also used for collapsed ranges that don't have a placeholder widget!
@@ -215,12 +195,12 @@ class WidgetView(var widget: WidgetType, override var length: Int, val side: Int
     }
 
     override fun sync(view: EditorView, track: Track?) {
-//        if (!this.dom || !this.widget.updateDOM(this.dom, view)) {
-//            if (this.dom && this.prevWidget) this.prevWidget.destroy(this.dom)
-//            this.prevWidget = null
-//            this.setDOM(this.widget.toDOM(view))
-//            if (!this.widget.editable) this.dom!.contentEditable = "false"
-//        }
+        if (this.dom == null || !this.widget.updateDOM(this.dom as HTMLElement, view)) {
+            if (this.dom != null && this.prevWidget != null) this.prevWidget?.destroy(this.dom as HTMLElement)
+            this.prevWidget = null
+            this.setDOM(this.widget.toDOM(view))
+            if (!this.widget.editable) (this.dom as? HTMLElement)?.contentEditable = "false"
+        }
     }
 
     fun getSide(): Int {
@@ -247,11 +227,11 @@ class WidgetView(var widget: WidgetType, override var length: Int, val side: Int
         if (other is WidgetView && other.side == this.side &&
             this.widget::class == other.widget::class
         ) {
-//            if (!this.widget.compare(other.widget)) this.markDirty(true)
-//            if (this.dom && this.prevWidget == null) this.prevWidget = this.widget
-//            this.widget = other.widget
-//            this.length = other.length
-//            return true
+            if (!this.widget.compare(other.widget)) this.markDirty(true)
+            if (this.dom != null && this.prevWidget == null) this.prevWidget = this.widget
+            this.widget = other.widget
+            this.length = other.length
+            return true
         }
         return false
     }
@@ -276,9 +256,10 @@ class WidgetView(var widget: WidgetType, override var length: Int, val side: Int
         }
 
     override fun domAtPos(pos: Int): DOMPos {
-        return (this.length ? pos == 0 : this.side > 0)
-        ? DOMPos.before(this.dom!)
-        : DOMPos.after(this.dom!, pos == this.length)
+        return if (this.length == 0 || pos == 0 && this.side > 0)
+            DOMPos.before(this.dom!!)
+        else
+            DOMPos.after(this.dom!!, pos == this.length)
     }
 
     fun domBoundsAround(): Rect? {
@@ -315,7 +296,7 @@ class WidgetView(var widget: WidgetType, override var length: Int, val side: Int
 
     override fun destroy() {
         super.destroy()
-        if (this.dom != null) this.widget.destroy(this.dom)
+        if (this.dom != null) this.widget.destroy(this.dom as HTMLElement)
     }
 
     companion object {
@@ -352,10 +333,10 @@ class WidgetBufferView(val side: Int) : ContentView() {
 
     override fun sync(view: EditorView, track: Track?) {
         if (this.dom == null) {
-//            val dom = document . createElement ("img")
-//            dom.className = "cm-widgetBuffer"
-//            dom.setAttribute("aria-hidden", "true")
-//            this.setDOM(dom)
+            val dom = document.createElement("img")
+            dom.className = "cm-widgetBuffer"
+            dom.setAttribute("aria-hidden", "true")
+            this.setDOM(dom)
         }
     }
 

@@ -7,29 +7,42 @@ import {ViewPlugin, ViewUpdate} from "./extension"
 import {BlockType, WidgetType} from "./decoration"
 import {BlockInfo} from "./heightmap"
 import {Direction} from "./bidi"
+import com.monkopedia.kodemirror.state.*
+import com.monkopedia.kodemirror.extension.*
+import com.monkopedia.kodemirror.decoration.*
+import com.monkopedia.kodemirror.dom.*
+import kotlinx.browser.document
+import kotlinx.browser.window
 
 /// A gutter marker represents a bit of information attached to a line
 /// in a specific gutter. Your own custom markers have to extend this
 /// class.
-export abstract class GutterMarker extends RangeValue {
-    /// @internal
-    compare(other: GutterMarker) {
-        return this == other || this.constructor == other.constructor && this.eq(other)
-    }
-
+abstract class GutterMarker : RangeValue() {
     /// Compare this marker to another marker of the same type.
-    eq(other: GutterMarker): boolean { return false }
+    open fun eq(other: GutterMarker): Boolean = false
 
     /// Render the DOM node for this marker, if any.
-    toDOM?(view: EditorView): Node
+    open fun toDOM(view: EditorView): Node? = null
 
     /// This property can be used to add CSS classes to the gutter
     /// element that contains this marker.
-    elementClass!: string
+    open val elementClass: String = ""
 
     /// Called if the marker has a `toDOM` method and its representation
     /// was removed from a gutter.
-    destroy(dom: Node) {}
+    open fun destroy(dom: Node) {}
+
+    /// @internal
+    fun compare(other: GutterMarker): Boolean {
+        return this == other || this::class == other::class && this.eq(other)
+    }
+
+    init {
+        mapMode = MapMode.TrackBefore
+        startSide = -1
+        endSide = -1
+        point = true
+    }
 }
 
 GutterMarker.prototype.elementClass = ""
@@ -50,58 +63,66 @@ export const gutterLineClass = Facet.define<RangeSet<GutterMarker>>()
 export const gutterWidgetClass =
 Facet.define<(view: EditorView, widget: WidgetType, block: BlockInfo) => GutterMarker | null>()
 
-type Handlers = {[event: string]: (view: EditorView, line: BlockInfo, event: Event) => boolean}
+type alias Handlers = Map<String, (view: EditorView, line: BlockInfo, event: Event) -> Boolean>
 
 interface GutterConfig {
     /// An extra CSS class to be added to the wrapper (`cm-gutter`)
     /// element.
-    class?: string
+    val className: String?
+        get() = null
     /// Controls whether empty gutter elements should be rendered.
     /// Defaults to false.
-    renderEmptyElements?: boolean
+    val renderEmptyElements: Boolean
+        get() = false
     /// Retrieve a set of markers to use in this gutter.
-    markers?: (view: EditorView) => (RangeSet<GutterMarker> | readonly RangeSet<GutterMarker>[])
+    val markers: (view: EditorView) -> List<RangeSet<GutterMarker>>
+        get() = { emptyList() }
     /// Can be used to optionally add a single marker to every line.
-    lineMarker?: (view: EditorView, line: BlockInfo, otherMarkers: readonly GutterMarker[]) => GutterMarker | null
+    val lineMarker: (view: EditorView, line: BlockInfo, otherMarkers: List<GutterMarker>) -> GutterMarker?
+        get() = { _, _, _ -> null }
     /// Associate markers with block widgets in the document.
-    widgetMarker?: (view: EditorView, widget: WidgetType, block: BlockInfo) => GutterMarker | null
+    val widgetMarker: (view: EditorView, widget: WidgetType, block: BlockInfo) -> GutterMarker?
+        get() = { _, _, _ -> null }
     /// If line or widget markers depend on additional state, and should
     /// be updated when that changes, pass a predicate here that checks
     /// whether a given view update might change the line markers.
-    lineMarkerChange?: null | ((update: ViewUpdate) => boolean)
+    val lineMarkerChange: ((update: ViewUpdate) -> Boolean)?
+        get() = null
     /// Add a hidden spacer element that gives the gutter its base
     /// width.
-    initialSpacer?: null | ((view: EditorView) => GutterMarker)
+    val initialSpacer: ((view: EditorView) -> GutterMarker)?
+        get() = null
     /// Update the spacer element when the view is updated.
-    updateSpacer?: null | ((spacer: GutterMarker, update: ViewUpdate) => GutterMarker)
+    val updateSpacer: ((spacer: GutterMarker, update: ViewUpdate) -> GutterMarker)?
+        get() = null
     /// Supply event handlers for DOM events on this gutter.
-    domEventHandlers?: Handlers,
+    val domEventHandlers: Handlers
+        get() = emptyMap()
 }
 
-const defaults = {
-    class: "",
-    renderEmptyElements: false,
-    elementStyle: "",
-    markers: () => RangeSet.empty,
-    lineMarker: () => null,
-    widgetMarker: () => null,
-    lineMarkerChange: null,
-    initialSpacer: null,
-    updateSpacer: null,
-    domEventHandlers: {}
+private val defaults = object : GutterConfig {
+    override val className = ""
+    override val renderEmptyElements = false
+    override val markers = { _: EditorView -> listOf(RangeSet.empty) }
+    override val lineMarker = { _: EditorView, _: BlockInfo, _: List<GutterMarker> -> null }
+    override val widgetMarker = { _: EditorView, _: WidgetType, _: BlockInfo -> null }
+    override val lineMarkerChange: ((ViewUpdate) -> Boolean)? = null
+    override val initialSpacer: ((EditorView) -> GutterMarker)? = null
+    override val updateSpacer: ((GutterMarker, ViewUpdate) -> GutterMarker)? = null
+    override val domEventHandlers = emptyMap<String, (EditorView, BlockInfo, Event) -> Boolean>()
 }
 
-const activeGutters = Facet.define<Required<GutterConfig>>()
+const activeGutters = Facet.define<GutterConfig>()
 
 /// Define an editor gutter. The order in which the gutters appear is
 /// determined by their extension priority.
-export function gutter(config: GutterConfig): Extension {
-    return [gutters(), activeGutters.of({...defaults, ...config})]
+export fun gutter(config: GutterConfig): Extension {
+    return listOf(gutters(), activeGutters.of(config))
 }
 
-const unfixGutters = Facet.define<boolean, boolean>({
-    combine: values => values.some(x => x)
-})
+const unfixGutters = Facet.define<Boolean, Boolean> { values ->
+    values.any { it }
+}
 
 /// The gutter-drawing plugin is automatically enabled when you add a
 /// gutter, but you can use this function to explicitly configure it.
@@ -111,406 +132,346 @@ const unfixGutters = Facet.define<boolean, boolean>({
 /// horizontally (except on Internet Explorer, which doesn't support
 /// CSS [`position:
 /// sticky`](https://developer.mozilla.org/en-US/docs/Web/CSS/position#sticky)).
-export function gutters(config?: {fixed?: boolean}): Extension {
-    let result: Extension[] = [
-        gutterView,
-    ]
-    if (config && config.fixed === false) result.push(unfixGutters.of(true))
+export fun gutters(config: GutterConfig? = null): Extension {
+    val result = mutableListOf<Extension>(gutterView)
+    if (config?.fixed == false) result.add(unfixGutters.of(true))
     return result
 }
 
-const gutterView = ViewPlugin.fromClass(class {
-    gutters: SingleGutterView[]
-    dom: HTMLElement
-    fixed: boolean
-    prevViewport: {from: number, to: number}
-
-    constructor(readonly view: EditorView) {
-        this.prevViewport = view.viewport
-        this.dom = document.createElement("div")
-        this.dom.className = "cm-gutters"
-        this.dom.setAttribute("aria-hidden", "true")
-        this.dom.style.minHeight = (this.view.contentHeight / this.view.scaleY) + "px"
-        this.gutters = view.state.facet(activeGutters).map(conf => new SingleGutterView(view, conf))
-        for (let gutter of this.gutters) this.dom.appendChild(gutter.dom)
-        this.fixed = !view.state.facet(unfixGutters)
-        if (this.fixed) {
-            // FIXME IE11 fallback, which doesn't support position: sticky,
-            // by using position: relative + event handlers that realign the
-            // gutter (or just force fixed=false on IE11?)
-            this.dom.style.position = "sticky"
+private val gutterView = ViewPlugin.fromClass(
+    create = { view ->
+        GutterView(view)
+    },
+    provide = { plugin ->
+        EditorView.scrollMargins.of { view ->
+            val value = view.plugin(plugin)
+            if (value == null || value.gutters.isEmpty() || !value.fixed) return@of null
+            if (view.textDirection == Direction.LTR)
+                mapOf("left" to value.dom.offsetWidth * view.scaleX)
+            else
+                mapOf("right" to value.dom.offsetWidth * view.scaleX)
         }
-        this.syncGutters(false)
-        view.scrollDOM.insertBefore(this.dom, view.contentDOM)
     }
+)
 
-    update(update: ViewUpdate) {
-        if (this.updateGutters(update)) {
-            // Detach during sync when the viewport changed significantly
-            // (such as during scrolling), since for large updates that is
-            // faster.
-            let vpA = this.prevViewport, vpB = update.view.viewport
-            let vpOverlap = Math.min(vpA.to, vpB.to) - Math.max(vpA.from, vpB.from)
-            this.syncGutters(vpOverlap < (vpB.to - vpB.from) * 0.8)
-        }
-        if (update.geometryChanged) {
-            this.dom.style.minHeight = (this.view.contentHeight / this.view.scaleY) + "px"
-        }
-        if (this.view.state.facet(unfixGutters) != !this.fixed) {
-            this.fixed = !this.fixed
-            this.dom.style.position = this.fixed ? "sticky" : ""
-        }
-        this.prevViewport = update.view.viewport
-    }
+private fun asArray(val_: Any): List<Any> = if (val_ is List<*>) val_ as List<Any> else listOf(val_)
 
-    syncGutters(detach: boolean) {
-        let after = this.dom.nextSibling
-        if (detach) this.dom.remove()
-        let lineClasses = RangeSet.iter(this.view.state.facet(gutterLineClass), this.view.viewport.from)
-        let classSet: GutterMarker[] = []
-        let contexts = this.gutters.map(gutter => new UpdateContext(gutter, this.view.viewport, -this.view.documentPadding.top))
-        for (let line of this.view.viewportLineBlocks) {
-            if (classSet.length) classSet = []
-            if (Array.isArray(line.type)) {
-                let first = true
-                for (let b of line.type) {
-                    if (b.type == BlockType.Text && first) {
-                        advanceCursor(lineClasses, classSet, b.from)
-                        for (let cx of contexts) cx.line(this.view, b, classSet)
-                        first = false
-                    } else if (b.widget) {
-                        for (let cx of contexts) cx.widget(this.view, b)
-                    }
-                }
-            } else if (line.type == BlockType.Text) {
-                advanceCursor(lineClasses, classSet, line.from)
-                for (let cx of contexts) cx.line(this.view, line, classSet)
-            } else if (line.widget) {
-                for (let cx of contexts) cx.widget(this.view, line)
-            }
-        }
-        for (let cx of contexts) cx.finish()
-        if (detach) this.view.scrollDOM.insertBefore(this.dom, after)
-    }
-
-    updateGutters(update: ViewUpdate) {
-        let prev = update.startState.facet(activeGutters), cur = update.state.facet(activeGutters)
-        let change = update.docChanged || update.heightChanged || update.viewportChanged ||
-        !RangeSet.eq(update.startState.facet(gutterLineClass), update.state.facet(gutterLineClass),
-            update.view.viewport.from, update.view.viewport.to)
-        if (prev == cur) {
-            for (let gutter of this.gutters) if (gutter.update(update)) change = true
-        } else {
-            change = true
-            let gutters = []
-            for (let conf of cur) {
-                let known = prev.indexOf(conf)
-                if (known < 0) {
-                    gutters.push(new SingleGutterView(this.view, conf))
-                } else {
-                    this.gutters[known].update(update)
-                    gutters.push(this.gutters[known])
-                }
-            }
-            for (let g of this.gutters) {
-                g.dom.remove()
-                if (gutters.indexOf(g) < 0) g.destroy()
-            }
-            for (let g of gutters) this.dom.appendChild(g.dom)
-            this.gutters = gutters
-        }
-        return change
-    }
-
-    destroy() {
-        for (let view of this.gutters) view.destroy()
-        this.dom.remove()
-    }
-}, {
-    provide: plugin => EditorView.scrollMargins.of(view => {
-        let value = view.plugin(plugin)
-        if (!value || value.gutters.length == 0 || !value.fixed) return null
-        return view.textDirection == Direction.LTR
-        ? {left: value.dom.offsetWidth * view.scaleX}
-        : {right: value.dom.offsetWidth * view.scaleX}
-    })
-})
-
-function asArray<T>(val: T | readonly T[]) { return (Array.isArray(val) ? val : [val]) as readonly T[] }
-
-function advanceCursor(cursor: RangeCursor<GutterMarker>, collect: GutterMarker[], pos: number) {
-    while (cursor.value && cursor.from <= pos) {
-        if (cursor.from == pos) collect.push(cursor.value)
+private fun advanceCursor(cursor: RangeCursor<GutterMarker>, collect: MutableList<GutterMarker>, pos: Int) {
+    while (cursor.value != null && cursor.from <= pos) {
+        if (cursor.from == pos) collect.add(cursor.value!!)
         cursor.next()
     }
 }
 
-class UpdateContext {
-    cursor: RangeCursor<GutterMarker>
-    i = 0
+private class UpdateContext(
+    val gutter: SingleGutterView,
+    viewport: Viewport,
+    var height: Int
+) {
+    var cursor: RangeCursor<GutterMarker> = RangeSet.iter(gutter.markers, viewport.from)
+    var i = 0
 
-    constructor(readonly gutter: SingleGutterView, viewport: {from: number, to: number}, public height: number) {
-        this.cursor = RangeSet.iter(gutter.markers, viewport.from)
-    }
-
-    addElement(view: EditorView, block: BlockInfo, markers: readonly GutterMarker[]) {
-        let {gutter} = this, above = (block.top - this.height) / view.scaleY, height = block.height / view.scaleY
-        if (this.i == gutter.elements.length) {
-            let newElt = new GutterElement(view, height, above, markers)
-            gutter.elements.push(newElt)
+    fun addElement(view: EditorView, block: BlockInfo, markers: List<GutterMarker>) {
+        val above = (block.top - height) / view.scaleY
+        val height = block.height / view.scaleY
+        if (i == gutter.elements.size) {
+            val newElt = GutterElement(view, height, above, markers)
+            gutter.elements.add(newElt)
             gutter.dom.appendChild(newElt.dom)
         } else {
-            gutter.elements[this.i].update(view, height, above, markers)
+            gutter.elements[i].update(view, height, above, markers)
         }
         this.height = block.bottom
-        this.i++
+        i++
     }
 
-    line(view: EditorView, line: BlockInfo, extraMarkers: readonly GutterMarker[]) {
-        let localMarkers: GutterMarker[] = []
-        advanceCursor(this.cursor, localMarkers, line.from)
-        if (extraMarkers.length) localMarkers = localMarkers.concat(extraMarkers)
-        let forLine = this.gutter.config.lineMarker(view, line, localMarkers)
-        if (forLine) localMarkers.unshift(forLine)
+    fun line(view: EditorView, line: BlockInfo, extraMarkers: List<GutterMarker>) {
+        val localMarkers = mutableListOf<GutterMarker>()
+        advanceCursor(cursor, localMarkers, line.from)
+        if (extraMarkers.isNotEmpty()) localMarkers.addAll(extraMarkers)
+        val forLine = gutter.config.lineMarker(view, line, localMarkers)
+        if (forLine != null) localMarkers.add(0, forLine)
 
-        let gutter = this.gutter
-        if (localMarkers.length == 0 && !gutter.config.renderEmptyElements) return
-        this.addElement(view, line, localMarkers)
+        if (localMarkers.isEmpty() && !gutter.config.renderEmptyElements) return
+        addElement(view, line, localMarkers)
     }
 
-    widget(view: EditorView, block: BlockInfo) {
-        let marker = this.gutter.config.widgetMarker(view, block.widget!, block), markers = marker ? [marker] : null
-        for (let cls of view.state.facet(gutterWidgetClass)) {
-            let marker = cls(view, block.widget!, block)
-            if (marker) (markers || (markers = [])).push(marker)
+    fun widget(view: EditorView, block: BlockInfo) {
+        val marker = gutter.config.widgetMarker(view, block.widget!!, block)
+        val markers = if (marker != null) mutableListOf(marker) else null
+        for (cls in view.state.facet(gutterWidgetClass)) {
+            val marker = cls(view, block.widget!!, block)
+            if (marker != null) (markers ?: mutableListOf()).add(marker)
         }
-        if (markers) this.addElement(view, block, markers)
+        if (markers != null) addElement(view, block, markers)
     }
 
-    finish() {
-        let gutter = this.gutter
-        while (gutter.elements.length > this.i) {
-            let last = gutter.elements.pop()!
+    fun finish() {
+        while (gutter.elements.size > i) {
+            val last = gutter.elements.removeLast()
             gutter.dom.removeChild(last.dom)
             last.destroy()
         }
     }
 }
 
-class SingleGutterView {
-    dom: HTMLElement
-    elements: GutterElement[] = []
-    markers: readonly RangeSet<GutterMarker>[]
-    spacer: GutterElement | null = null
-
-    constructor(public view: EditorView, public config: Required<GutterConfig>) {
-        this.dom = document.createElement("div")
-        this.dom.className = "cm-gutter" + (this.config.class ? " " + this.config.class : "")
-        for (let prop in config.domEventHandlers) {
-            this.dom.addEventListener(prop, (event: Event) => {
-            let target = event.target as HTMLElement, y
-            if (target != this.dom && this.dom.contains(target)) {
-                while (target.parentNode != this.dom) target = target.parentNode as HTMLElement
-                let rect = target.getBoundingClientRect()
-                y = (rect.top + rect.bottom) / 2
-            } else {
-                y = (event as MouseEvent).clientY
+private class SingleGutterView(
+    val view: EditorView,
+    val config: Required<GutterConfig>
+) {
+    val dom = document.createElement("div").apply {
+        className = "cm-gutter" + (config.className?.let { " $it" } ?: "")
+        for ((prop, handler) in config.domEventHandlers) {
+            addEventListener(prop) { event ->
+                var target = event.target as HTMLElement
+                val y = if (target != dom && dom.contains(target)) {
+                    while (target.parentNode != dom) target = target.parentNode as HTMLElement
+                    val rect = target.getBoundingClientRect()
+                    (rect.top + rect.bottom) / 2
+                } else {
+                    (event as MouseEvent).clientY
+                }
+                val line = view.lineBlockAtHeight(y - view.documentTop)
+                if (handler(view, line, event)) event.preventDefault()
             }
-            let line = view.lineBlockAtHeight(y - view.documentTop)
-            if (config.domEventHandlers[prop](view, line, event)) event.preventDefault()
-        })
-        }
-        this.markers = asArray(config.markers(view))
-        if (config.initialSpacer) {
-            this.spacer = new GutterElement(view, 0, 0, [config.initialSpacer(view)])
-            this.dom.appendChild(this.spacer.dom)
-            this.spacer.dom.style.cssText += "visibility: hidden; pointer-events: none"
         }
     }
 
-    update(update: ViewUpdate) {
-        let prevMarkers = this.markers
-        this.markers = asArray(this.config.markers(update.view))
-        if (this.spacer && this.config.updateSpacer) {
-            let updated = this.config.updateSpacer(this.spacer.markers[0], update)
-            if (updated != this.spacer.markers[0]) this.spacer.update(update.view, 0, 0, [updated])
+    val elements = mutableListOf<GutterElement>()
+    var markers = asArray(config.markers(view)).map { it as RangeSet<GutterMarker> }
+    var spacer: GutterElement? = null
+
+    init {
+        config.initialSpacer?.let { initialSpacer ->
+            spacer = GutterElement(view, 0, 0, listOf(initialSpacer(view))).apply {
+                dom.style.cssText += "visibility: hidden; pointer-events: none"
+                this@SingleGutterView.dom.appendChild(dom)
+            }
         }
-        let vp = update.view.viewport
-            return !RangeSet.eq(this.markers, prevMarkers, vp.from, vp.to) ||
-                (this.config.lineMarkerChange ? this.config.lineMarkerChange(update) : false)
     }
 
-    destroy() {
-        for (let elt of this.elements) elt.destroy()
+    fun update(update: ViewUpdate): Boolean {
+        val prevMarkers = markers
+        markers = asArray(config.markers(update.view)).map { it as RangeSet<GutterMarker> }
+        if (spacer != null && config.updateSpacer != null) {
+            val updated = config.updateSpacer!!(spacer!!.markers[0], update)
+            if (updated != spacer!!.markers[0]) spacer!!.update(update.view, 0, 0, listOf(updated))
+        }
+        val vp = update.view.viewport
+        return !RangeSet.eq(markers, prevMarkers, vp.from, vp.to) ||
+            (config.lineMarkerChange?.invoke(update) ?: false)
+    }
+
+    fun destroy() {
+        elements.forEach { it.destroy() }
     }
 }
 
-class GutterElement {
-    dom: HTMLElement
-    height: number = -1
-    above: number = 0
-    markers: readonly GutterMarker[] = []
+private class GutterElement(
+    view: EditorView,
+    height: Int,
+    above: Int,
+    markers: List<GutterMarker>
+) {
+    val dom = document.createElement("div").apply {
+        className = "cm-gutterElement"
+    }
+    var height = -1
+    var above = 0
+    var markers = emptyList<GutterMarker>()
 
-    constructor(view: EditorView, height: number, above: number, markers: readonly GutterMarker[]) {
-        this.dom = document.createElement("div")
-        this.dom.className = "cm-gutterElement"
-        this.update(view, height, above, markers)
+    init {
+        update(view, height, above, markers)
     }
 
-    update(view: EditorView, height: number, above: number, markers: readonly GutterMarker[]) {
+    fun update(view: EditorView, height: Int, above: Int, markers: List<GutterMarker>) {
         if (this.height != height) {
             this.height = height
-            this.dom.style.height = height + "px"
+            dom.style.height = "${height}px"
         }
-        if (this.above != above)
-            this.dom.style.marginTop = (this.above = above) ? above + "px" : ""
-        if (!sameMarkers(this.markers, markers)) this.setMarkers(view, markers)
+        if (this.above != above) {
+            this.above = above
+            dom.style.marginTop = if (above > 0) "${above}px" else ""
+        }
+        if (!sameMarkers(this.markers, markers)) setMarkers(view, markers)
     }
 
-    setMarkers(view: EditorView, markers: readonly GutterMarker[]) {
-        let cls = "cm-gutterElement", domPos = this.dom.firstChild
-        for (let iNew = 0, iOld = 0;;) {
-            let skipTo = iOld, marker = iNew < markers.length ? markers[iNew++] : null, matched = false
-            if (marker) {
-                let c = marker.elementClass
-                    if (c) cls += " " + c
-                for (let i = iOld; i < this.markers.length; i++)
-                if (this.markers[i].compare(marker)) { skipTo = i; matched = true; break }
+    private fun setMarkers(view: EditorView, markers: List<GutterMarker>) {
+        var cls = "cm-gutterElement"
+        var domPos = dom.firstChild
+        var iNew = 0
+        var iOld = 0
+
+        while (true) {
+            val skipTo = iOld
+            val marker = if (iNew < markers.size) markers[iNew++] else null
+            var matched = false
+
+            if (marker != null) {
+                val c = marker.elementClass
+                if (c.isNotEmpty()) cls += " $c"
+                for (i in iOld until this.markers.size) {
+                    if (this.markers[i].compare(marker)) {
+                        skipTo = i
+                        matched = true
+                        break
+                    }
+                }
             } else {
-                skipTo = this.markers.length
+                skipTo = this.markers.size
             }
+
             while (iOld < skipTo) {
-                let next = this.markers[iOld++]
-                if (next.toDOM) {
-                    next.destroy(domPos!)
-                    let after = domPos!.nextSibling
-                        domPos!.remove()
+                val next = this.markers[iOld++]
+                if (next.toDOM != null) {
+                    next.destroy(domPos!!)
+                    val after = domPos.nextSibling
+                    domPos.remove()
                     domPos = after
                 }
             }
-            if (!marker) break
-            if (marker.toDOM) {
-                if (matched) domPos = domPos!.nextSibling
-                else this.dom.insertBefore(marker.toDOM(view), domPos)
+
+            if (marker == null) break
+
+            if (marker.toDOM != null) {
+                if (matched) {
+                    domPos = domPos?.nextSibling
+                } else {
+                    dom.insertBefore(marker.toDOM(view)!!, domPos)
+                }
             }
+
             if (matched) iOld++
         }
-        this.dom.className = cls
+
+        dom.className = cls
         this.markers = markers
     }
 
-    destroy() {
-        this.setMarkers(null as any, []) // First argument not used unless creating markers
+    fun destroy() {
+        setMarkers(null as EditorView, emptyList()) // First argument not used unless creating markers
     }
 }
 
-function sameMarkers(a: readonly GutterMarker[], b: readonly GutterMarker[]): boolean {
-    if (a.length != b.length) return false
-    for (let i = 0; i < a.length; i++) if (!a[i].compare(b[i])) return false
+private fun sameMarkers(a: List<GutterMarker>, b: List<GutterMarker>): Boolean {
+    if (a.size != b.size) return false
+    for (i in a.indices) {
+        if (!a[i].compare(b[i])) return false
+    }
     return true
 }
 
+/** Facet used to provide markers to the line number gutter. */
+val lineNumberMarkers = Facet.define<RangeSet<GutterMarker>>()
+
+/** Facet used to create markers in the line number gutter next to widgets. */
+val lineNumberWidgetMarker = Facet.define<(view: EditorView, widget: WidgetType, block: BlockInfo) -> GutterMarker?>()
+
 interface LineNumberConfig {
-    /// How to display line numbers. Defaults to simply converting them
-    /// to string.
-    formatNumber?: (lineNo: number, state: EditorState) => string
-    /// Supply event handlers for DOM events on this gutter.
-    domEventHandlers?: Handlers
+    /** How to display line numbers. Defaults to simply converting them to string. */
+    val formatNumber: (lineNo: Int, state: EditorState) -> String
+        get() = { lineNo, _ -> lineNo.toString() }
+
+    /** Supply event handlers for DOM events on this gutter. */
+    val domEventHandlers: Handlers
+        get() = emptyMap()
 }
 
-/// Facet used to provide markers to the line number gutter.
-export const lineNumberMarkers = Facet.define<RangeSet<GutterMarker>>()
-
-/// Facet used to create markers in the line number gutter next to widgets.
-export const lineNumberWidgetMarker = Facet.define<(view: EditorView, widget: WidgetType, block: BlockInfo) => GutterMarker | null>()
-
-const lineNumberConfig = Facet.define<LineNumberConfig, Required<LineNumberConfig>>({
-    combine(values) {
-        return combineConfig<Required<LineNumberConfig>>(values, {formatNumber: String, domEventHandlers: {}}, {
-            domEventHandlers(a: Handlers, b: Handlers) {
-                let result: Handlers = Object.assign({}, a)
-                for (let event in b) {
-                let exists = result[event], add = b[event]
-                result[event] = exists ? (view, line, event) => exists(view, line, event) || add(view, line, event) : add
+private val lineNumberConfig = Facet.define<LineNumberConfig, LineNumberConfig> { values ->
+    object : LineNumberConfig {
+        override val formatNumber = values.lastOrNull()?.formatNumber ?: { lineNo, _ -> lineNo.toString() }
+        override val domEventHandlers = values.fold(emptyMap<String, (EditorView, BlockInfo, Event) -> Boolean>()) { acc, config ->
+            val result = acc.toMutableMap()
+            for ((event, add) in config.domEventHandlers) {
+                val exists = result[event]
+                result[event] = if (exists != null) {
+                    { view, line, event -> exists(view, line, event) || add(view, line, event) }
+                } else {
+                    add
+                }
             }
-                return result
-            }
-        })
+            result
+        }
     }
-})
-
-class NumberMarker extends GutterMarker {
-    constructor(readonly number: string) { super() }
-
-    eq(other: NumberMarker) { return this.number == other.number }
-
-    toDOM() { return document.createTextNode(this.number) }
 }
 
-function formatNumber(view: EditorView, number: number) {
+private class NumberMarker(val number: String) : GutterMarker() {
+    override fun eq(other: GutterMarker): Boolean = other is NumberMarker && other.number == number
+    override fun toDOM(view: EditorView): Node = document.createTextNode(number)
+}
+
+private fun formatNumber(view: EditorView, number: Int): String {
     return view.state.facet(lineNumberConfig).formatNumber(number, view.state)
 }
 
-const lineNumberGutter = activeGutters.compute([lineNumberConfig], state => ({
-    class: "cm-lineNumbers",
-    renderEmptyElements: false,
-    markers(view: EditorView) { return view.state.facet(lineNumberMarkers) },
-    lineMarker(view, line, others) {
-        if (others.some(m => m.toDOM)) return null
-        return new NumberMarker(formatNumber(view, view.state.doc.lineAt(line.from).number))
-    },
-    widgetMarker: (view, widget, block) => {
-        for (let m of view.state.facet(lineNumberWidgetMarker)) {
-        let result = m(view, widget, block)
-        if (result) return result
+private val lineNumberGutter = activeGutters.compute(listOf(lineNumberConfig)) { state ->
+    object : GutterConfig {
+        override val className = "cm-lineNumbers"
+        override val renderEmptyElements = false
+        override val markers = { view: EditorView -> listOf(view.state.facet(lineNumberMarkers)) }
+        override val lineMarker = { view: EditorView, line: BlockInfo, others: List<GutterMarker> ->
+            if (others.any { it.toDOM != null }) null
+            else NumberMarker(formatNumber(view, view.state.doc.lineAt(line.from).number))
+        }
+        override val widgetMarker = { view: EditorView, widget: WidgetType, block: BlockInfo ->
+            for (m in view.state.facet(lineNumberWidgetMarker)) {
+                val result = m(view, widget, block)
+                if (result != null) return@widgetMarker result
+            }
+            null
+        }
+        override val lineMarkerChange = { update: ViewUpdate ->
+            update.startState.facet(lineNumberConfig) != update.state.facet(lineNumberConfig)
+        }
+        override val initialSpacer = { view: EditorView ->
+            NumberMarker(formatNumber(view, maxLineNumber(view.state.doc.lines)))
+        }
+        override val updateSpacer = { spacer: GutterMarker, update: ViewUpdate ->
+            val max = formatNumber(update.view, maxLineNumber(update.view.state.doc.lines))
+            if (max == (spacer as NumberMarker).number) spacer else NumberMarker(max)
+        }
+        override val domEventHandlers = state.facet(lineNumberConfig).domEventHandlers
     }
-        return null
-    },
-    lineMarkerChange: update => update.startState.facet(lineNumberConfig) != update.state.facet(lineNumberConfig),
-    initialSpacer(view: EditorView) {
-        return new NumberMarker(formatNumber(view, maxLineNumber(view.state.doc.lines)))
-    },
-    updateSpacer(spacer: GutterMarker, update: ViewUpdate) {
-        let max = formatNumber(update.view, maxLineNumber(update.view.state.doc.lines))
-        return max == (spacer as NumberMarker).number ? spacer : new NumberMarker(max)
-    },
-    domEventHandlers: state.facet(lineNumberConfig).domEventHandlers
-}))
+}
 
-/// Create a line number gutter extension.
-export function lineNumbers(config: LineNumberConfig = {}): Extension {
-    return [
+/**
+ * Create a line number gutter extension.
+ */
+fun lineNumbers(config: LineNumberConfig = object : LineNumberConfig {}): Extension {
+    return listOf(
         lineNumberConfig.of(config),
         gutters(),
         lineNumberGutter
-    ]
+    )
 }
 
-function maxLineNumber(lines: number) {
-    let last = 9
+private fun maxLineNumber(lines: Int): Int {
+    var last = 9
     while (last < lines) last = last * 10 + 9
     return last
 }
 
-const activeLineGutterMarker = new class extends GutterMarker {
-    elementClass = "cm-activeLineGutter"
+private val activeLineGutterMarker = object : GutterMarker() {
+    override val elementClass = "cm-activeLineGutter"
 }
 
-const activeLineGutterHighlighter = gutterLineClass.compute(["selection"], state => {
-    let marks = [], last = -1
-    for (let range of state.selection.ranges) {
-        let linePos = state.doc.lineAt(range.head).from
+private val activeLineGutterHighlighter = gutterLineClass.compute(listOf("selection")) { state ->
+    val marks = mutableListOf<Range<GutterMarker>>()
+    var last = -1
+    for (range in state.selection.ranges) {
+        val linePos = state.doc.lineAt(range.head).from
         if (linePos > last) {
             last = linePos
-            marks.push(activeLineGutterMarker.range(linePos))
+            marks.add(activeLineGutterMarker.range(linePos))
         }
     }
-    return RangeSet.of(marks)
-})
+    RangeSet.of(marks)
+}
 
-/// Returns an extension that adds a `cm-activeLineGutter` class to
-/// all gutter elements on the [active
-/// line](#view.highlightActiveLine).
-export function highlightActiveLineGutter() {
+/**
+ * Returns an extension that adds a `cm-activeLineGutter` class to
+ * all gutter elements on the [active line](#view.highlightActiveLine).
+ */
+fun highlightActiveLineGutter(): Extension {
     return activeLineGutterHighlighter
 }
