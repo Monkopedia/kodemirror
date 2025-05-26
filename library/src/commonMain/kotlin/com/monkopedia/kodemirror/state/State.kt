@@ -16,24 +16,22 @@ import com.monkopedia.kodemirror.state.SingleOrList.Companion.singleOrList
 
 /// Options passed when [creating](#state.EditorState^create) an
 /// editor state.
-interface EditorStateConfig {
+data class EditorStateConfig(
     /// The initial document. Defaults to an empty document. Can be
     /// provided either as a plain string (which will be split into
     /// lines according to the value of the [`lineSeparator`
     /// facet](#state.EditorState^lineSeparator)), or an instance of
     /// the [`Text`](#state.Text) class (which is what the state will use
     /// to represent the document).
-    val doc: Text?
-        get() = null
+    val doc: Text? = null,
 
     /// The starting selection. Defaults to a cursor at the very start
     /// of the document.
-    val selection: Selection? get() = null
+    val selection: Selection? = null,
 
     /// [Extension(s)](#state.Extension) to associate with this state.
-    val extensions: Extension?
-        get() = null
-}
+    val extensions: Extension? = null
+)
 
 /// The editor state class is a persistent (immutable) data structure.
 /// To update a state, you [create](#state.EditorState.update) a
@@ -323,7 +321,7 @@ class EditorState private constructor(
     ///  - Space (contains only whitespace)
     ///  - Other (anything else)
     fun charCategorizer(at: Int): (str: String) -> CharCategory {
-        return makeCategorizer(this.languageDataAt<String>("wordChars", at).joinToString())
+        return makeCategorizer(this.languageDataAt<String>("wordChars", at).joinToString(""))
     }
 
     /// Find the word at the given position, meaning the range
@@ -375,11 +373,13 @@ class EditorState private constructor(
 //                extensions: config.extensions ? fieldInit.concat([config.extensions]) : fieldInit
 //            })
 //        }
+        fun create(doc: Text? = null, selection: Selection? = null, extensions: Extension? = null) =
+            create(EditorStateConfig(doc, selection, extensions))
 
         /// Create a new state. You'll usually only need this when
         /// initializing an editor—updated states are created by applying
         /// transactions.
-        fun create(config: EditorStateConfig = object : EditorStateConfig {}): EditorState {
+        fun create(config: EditorStateConfig): EditorState {
             val configuration = Configuration.resolve(
                 config.extensions ?: ExtensionSet(emptyList()),
                 mutableMapOf()
@@ -395,7 +395,8 @@ class EditorState private constructor(
             checkSelection(selection, doc.length)
             if (!configuration.staticFacet(allowMultipleSelections)) selection =
                 selection.asSingle()
-            return EditorState(configuration,
+            return EditorState(
+                configuration,
                 doc,
                 selection,
                 configuration.dynamicSlots.map { null }.toMutableList(),
