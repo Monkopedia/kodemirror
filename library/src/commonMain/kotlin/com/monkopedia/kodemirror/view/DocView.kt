@@ -1,20 +1,20 @@
 package com.monkopedia.kodemirror.view
 
-import {ChangeSet, RangeSet, findClusterBreak, SelectionRange} from "@codemirror/state"
-import {ContentView, ChildCursor, ViewFlag, DOMPos, replaceRange} from "./contentview"
-import {BlockView, LineView, BlockWidgetView, BlockGapWidget} from "./blockview"
-import {TextView, MarkView} from "./inlineview"
-import {ContentBuilder} from "./buildview"
-import browser from "./browser"
-import {Decoration, DecorationSet, addRange, MarkDecoration} from "./decoration"
-import {getAttrs} from "./attributes"
-import {clientRectsFor, isEquivalentPosition, Rect, scrollRectIntoView,
-getSelection, hasSelection, textRange, DOMSelectionState,
-textNodeBefore, textNodeAfter} from "./dom"
-import {ViewUpdate, decorations as decorationsFacet, outerDecorations, ChangedRange, editable,
-ScrollTarget, scrollHandler, getScrollMargins, logException, setEditContextFormatting} from "./extension"
-import {EditorView} from "./editorview"
-import {Direction} from "./bidi"
+//import {ChangeSet, RangeSet, findClusterBreak, SelectionRange} from "@codemirror/state"
+//import {ContentView, ChildCursor, ViewFlag, DOMPos, replaceRange} from "./contentview"
+//import {BlockView, LineView, BlockWidgetView, BlockGapWidget} from "./blockview"
+//import {TextView, MarkView} from "./inlineview"
+//import {ContentBuilder} from "./buildview"
+//import browser from "./browser"
+//import {Decoration, DecorationSet, addRange, MarkDecoration} from "./decoration"
+//import {getAttrs} from "./attributes"
+//import {clientRectsFor, isEquivalentPosition, Rect, scrollRectIntoView,
+//getSelection, hasSelection, textRange, DOMSelectionState,
+//textNodeBefore, textNodeAfter} from "./dom"
+//import {ViewUpdate, decorations as decorationsFacet, outerDecorations, ChangedRange, editable,
+//ScrollTarget, scrollHandler, getScrollMargins, logException, setEditContextFormatting} from "./extension"
+//import {EditorView} from "./editorview"
+//import {Direction} from "./bidi"
 
 type Composition = {
     range: ChangedRange,
@@ -23,7 +23,7 @@ type Composition = {
     line: HTMLElement
 }
 
-export class DocView extends ContentView {
+class DocView(val view: EditorView) : ContentView() {
     children!: BlockView[]
 
     decorations: readonly DecorationSet[] = []
@@ -59,7 +59,7 @@ export class DocView extends ContentView {
 
     get length() { return this.view.state.doc.length }
 
-    constructor(readonly view: EditorView) {
+    constructor {
         super()
         this.setDOM(view.contentDOM)
         this.children = [new LineView]

@@ -30,26 +30,27 @@ export function panels(config?: PanelConfig): Extension {
 }
 
 /// Object that describes an active panel.
-export interface Panel {
+interface Panel {
     /// The element representing this panel. The library will add the
     /// `"cm-panel"` DOM class to this.
-    dom: HTMLElement,
+    val dom: HTMLElement
     /// Optionally called after the panel has been added to the editor.
-    mount?(): void
+    fun mount() = {}
     /// Update the DOM for a given view update.
-    update?(update: ViewUpdate): void
+    fun update(update: ViewUpdate) = {}
     /// Called when the panel is removed from the editor or the editor
     /// is destroyed.
-    destroy?(): void
+    fun destroy() = {}
     /// Whether the panel should be at the top or bottom of the editor.
     /// Defaults to false.
-    top?: boolean
+    val top: Boolean
+        get() = false
 }
 
 /// Get the active panel created by the given constructor, if any.
 /// This can be useful when you need access to your panels' DOM
 /// structure.
-export function getPanel(view: EditorView, panel: PanelConstructor) {
+fun getPanel(view: EditorView, panel: PanelConstructor) {
     let plugin = view.plugin(panelPlugin)
     let index = plugin ? plugin.specs.indexOf(panel) : -1
     return index > -1 ? plugin!.panels[index] : null

@@ -1,77 +1,96 @@
 package com.monkopedia.kodemirror.view
 
-import {Extension, EditorSelection, EditorState, countColumn, findColumn} from "@codemirror/state"
-import {EditorView} from "./editorview"
-import {MouseSelectionStyle} from "./input"
-import {ViewPlugin} from "./extension"
+import com.monkopedia.kodemirror.state.EditorSelection
+import com.monkopedia.kodemirror.state.EditorState
+import com.monkopedia.kodemirror.state.Range
+import com.monkopedia.kodemirror.state.SelectionRange
+import com.monkopedia.kodemirror.state.countColumn
+import com.monkopedia.kodemirror.state.findColumn
+import kotlin.math.max
+import kotlin.math.min
+//import {Extension, EditorSelection, EditorState, countColumn, findColumn} from "@codemirror/state"
+//import {EditorView} from "./editorview"
+//import {MouseSelectionStyle} from "./input"
+//import {ViewPlugin} from "./extension"
 
-type Pos = {line: number, col: number, off: number}
+data class Pos (val line: Int,val  col: Int, val off: Int)
 
 // Don't compute precise column positions for line offsets above this
 // (since it could get expensive). Assume offset==column for them.
-const MaxOff = 2000
+const val MaxOff = 2000
 
-function rectangleFor(state: EditorState, a: Pos, b: Pos) {
-    let startLine = Math.min(a.line, b.line), endLine = Math.max(a.line, b.line)
-    let ranges = []
+fun rectangleFor(state: EditorState, a: Pos, b: Pos): List<SelectionRange> {
+    val startLine = min(a.line, b.line)
+    val endLine = max(a.line, b.line)
+    val ranges = mutableListOf<SelectionRange>()
     if (a.off > MaxOff || b.off > MaxOff || a.col < 0 || b.col < 0) {
-        let startOff = Math.min(a.off, b.off), endOff = Math.max(a.off, b.off)
-        for (let i = startLine; i <= endLine; i++) {
-            let line = state.doc.line(i)
+        val startOff = min(a.off, b.off)
+        val endOff = max(a.off, b.off)
+        for (i in startLine..endLine) {
+            val line = state.doc.line(i)
             if (line.length <= endOff)
-                ranges.push(EditorSelection.range(line.from + startOff, line.to + endOff))
+                ranges.add(EditorSelection.range(line.from + startOff, line.to + endOff))
         }
     } else {
-        let startCol = Math.min(a.col, b.col), endCol = Math.max(a.col, b.col)
-        for (let i = startLine; i <= endLine; i++) {
-            let line = state.doc.line(i)
-            let start = findColumn(line.text, startCol, state.tabSize, true)
+        val startCol = min(a.col, b.col)
+        val endCol = max(a.col, b.col)
+        for (i in startLine..endLine) {
+            val line = state.doc.line(i)
+            val start = findColumn(line.text, startCol, state.tabSize, true)
             if (start < 0) {
-                ranges.push(EditorSelection.cursor(line.to))
+                ranges.add(EditorSelection.cursor(line.to))
             } else {
-                let end = findColumn(line.text, endCol, state.tabSize)
-                ranges.push(EditorSelection.range(line.from + start, line.from + end))
+                val end = findColumn(line.text, endCol, state.tabSize)
+                ranges.add(EditorSelection.range(line.from + start, line.from + end))
             }
         }
     }
     return ranges
 }
 
-function absoluteColumn(view: EditorView, x: number) {
-    let ref = view.coordsAtPos(view.viewport.from)
-    return ref ? Math.round(Math.abs((ref.left - x) / view.defaultCharacterWidth)) : -1
+fun absoluteColumn(view: EditorView, x: Int) : Int {
+    val ref = view.coordsAtPos(view.viewport.from) ?: return -1
+    return Math.abs((ref.left - x) / view.defaultCharacterWidth).roundToInt()
 }
 
-function getPos(view: EditorView, event: MouseEvent) {
-    let offset = view.posAtCoords({x: event.clientX, y: event.clientY}, false)
-    let line = view.state.doc.lineAt(offset), off = offset - line.from
-    let col = off > MaxOff ? -1
-    : off == line.length ? absoluteColumn(view, event.clientX)
-    : countColumn(line.text, view.state.tabSize, offset - line.from)
-    return {line: line.number, col, off}
+fun getPos(view: EditorView, event: MouseEvent): Pos {
+    val offset = view.posAtCoords({x: event.clientX, y: event.clientY}, false)
+    val line = view.state.doc.lineAt(offset)
+    val off = offset - line.from
+    val col = when {
+        off > MaxOff -> -1
+        off == line.length -> absoluteColumn(view, event.clientX)
+        else -> countColumn(line.text, view.state.tabSize, offset - line.from)
+    }
+    return Pos(line= line.number, col, off)
 }
 
-function rectangleSelectionStyle(view: EditorView, event: MouseEvent) {
-    let start = getPos(view, event)!, startSel = view.state.selection
-    if (!start) return null
-    return {
-        update(update) {
+fun rectangleSelectionStyle(view: EditorView, event: MouseEvent): MouseSelectionStyle? {
+    var start = getPos(view, event) ?: return null
+    var startSel = view.state.selection
+    return object : MouseSelectionStyle {
+        override fun update(update: ViewUpdate): Boolean? {
             if (update.docChanged) {
-                let newStart = update.changes.mapPos(update.startState.doc.line(start.line).from)
-                let newLine = update.state.doc.lineAt(newStart)
+                val newStart = update.changes.mapPos(update.startState.doc.line(start.line).from)
+                val newLine = update.state.doc.lineAt(newStart)
                 start = {line: newLine.number, col: start.col, off: Math.min(start.off, newLine.length)}
                 startSel = startSel.map(update.changes)
             }
-        },
-        get(event, _extend, multiple) {
-            let cur = getPos(view, event)
-            if (!cur) return startSel
-            let ranges = rectangleFor(view.state, start, cur)
-            if (!ranges.length) return startSel
-            if (multiple) return EditorSelection.create(ranges.concat(startSel.ranges))
-            else return EditorSelection.create(ranges)
+            return null
         }
-    } as MouseSelectionStyle
+
+        override fun get(
+            curEvent: MouseEvent,
+            extend: Boolean,
+            multiple: Boolean
+        ): EditorSelection {
+            val cur = getPos(view, curEvent) ?: return startSel
+            val ranges = rectangleFor(view.state, start, cur)
+            if (ranges.isEmpty()) return startSel
+            return if (multiple) EditorSelection.create(ranges + startSel.ranges)
+            else EditorSelection.create(ranges)
+        }
+    }
 }
 
 /// Create an extension that enables rectangular selections. By

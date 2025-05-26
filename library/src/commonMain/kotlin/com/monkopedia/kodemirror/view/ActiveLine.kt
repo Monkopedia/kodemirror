@@ -1,40 +1,47 @@
 package com.monkopedia.kodemirror.view
 
-import {Extension} from "@codemirror/state"
-import {EditorView} from "./editorview"
-import {ViewPlugin, ViewUpdate} from "./extension"
-import {Decoration, DecorationSet} from "./decoration"
+import com.monkopedia.kodemirror.state.Extension
+import com.monkopedia.kodemirror.state.Range
+import com.monkopedia.kodemirror.state.RangeValue.Companion.range
+import com.monkopedia.kodemirror.state.SingleOrList.Companion.list
 
-/// Mark lines that have a cursor on them with the `"cm-activeLine"`
-/// DOM class.
-export function highlightActiveLine(): Extension {
-    return activeLineHighlighter
-}
+// import {Extension} from "@codemirror/state"
+// import {EditorView} from "./editorview"
+// import {ViewPlugin, ViewUpdate} from "./extension"
+// import {Decoration, DecorationSet} from "./decoration"
 
-const lineDeco = Decoration.line({class: "cm-activeLine"})
+// / Mark lines that have a cursor on them with the `"cm-activeLine"`
+// / DOM class.
+fun highlightActiveLine(): Extension = activeLineHighlighter.extension
 
-const activeLineHighlighter = ViewPlugin.fromClass(class {
-    decorations: DecorationSet
+val lineDeco = Decoration.line(LineDecorationSpec(cls = "cm-activeLine"))
 
-    constructor(view: EditorView) {
-        this.decorations = this.getDeco(view)
+private class ActiveLineHightlighterPlugin(view: EditorView) : PluginValue {
+    var decorations: DecorationSet = this.getDeco(view)
+
+    override fun update(update: ViewUpdate) {
+        if (update.docChanged || update.selectionSet) {
+            this.decorations = this.getDeco(update.view)
+        }
     }
 
-    update(update: ViewUpdate) {
-        if (update.docChanged || update.selectionSet) this.decorations = this.getDeco(update.view)
-    }
-
-    getDeco(view: EditorView) {
-        let lastLineStart = -1, deco = []
-        for (let r of view.state.selection.ranges) {
-            let line = view.lineBlockAt(r.head)
+    fun getDeco(view: EditorView): DecorationSet {
+        var lastLineStart = -1
+        var deco = mutableListOf<Range<Decoration<*>>>()
+        for (r in view.state.selection.ranges) {
+            val line = view.lineBlockAt(r.head)
             if (line.from > lastLineStart) {
-                deco.push(lineDeco.range(line.from))
+                deco.add(lineDeco.range(line.from))
                 lastLineStart = line.from
             }
         }
-        return Decoration.set(deco)
+        return Decoration.set(deco.list)
     }
-}, {
-    decorations: v => v.decorations
-})
+}
+
+val activeLineHighlighter: ViewPlugin<*> = ViewPlugin.fromClass(
+    ::ActiveLineHightlighterPlugin,
+    PluginSpec(
+        decorations = { v -> v.decorations }
+    )
+)

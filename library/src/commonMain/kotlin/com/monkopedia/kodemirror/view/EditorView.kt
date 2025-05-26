@@ -1,68 +1,93 @@
 package com.monkopedia.kodemirror.view
 
+import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.EditorState
-import {EditorState, Transaction, TransactionSpec, Extension, Prec, ChangeDesc,
-EditorSelection, SelectionRange, StateEffect, Facet, Line, EditorStateConfig} from "@codemirror/state"
-import {StyleModule, StyleSpec} from "style-mod"
+import com.monkopedia.kodemirror.state.EditorStateConfig
+import com.monkopedia.kodemirror.state.Extension
+import com.monkopedia.kodemirror.state.Line
+import com.monkopedia.kodemirror.state.Selection
+import com.monkopedia.kodemirror.state.StateEffect
+import com.monkopedia.kodemirror.state.Text
+import com.monkopedia.kodemirror.state.Transactable
+import com.monkopedia.kodemirror.state.Transaction
+import com.monkopedia.kodemirror.state.TransactionSpec
 
-import {DocView} from "./docview"
-import {ContentView} from "./contentview"
-import {InputState, focusChangeTransaction, isFocusChange} from "./input"
-import {Rect, focusPreventScroll, flattenRect, getRoot, ScrollStrategy,
-isScrolledToBottom, dispatchKey} from "./dom"
-import {posAtCoords, moveByChar, moveToLineBoundary, byGroup, moveVertically, skipAtoms} from "./cursor"
-import {BlockInfo} from "./heightmap"
-import {ViewState} from "./viewstate"
-import {ViewUpdate, styleModule,
-contentAttributes, editorAttributes, AttrSource,
-clickAddsSelectionRange, dragMovesSelection, mouseSelectionStyle,
-exceptionSink, updateListener, logException,
-viewPlugin, ViewPlugin, PluginValue, PluginInstance, decorations, outerDecorations, atomicRanges,
-scrollMargins, MeasureRequest, editable, inputHandler, focusChangeEffect, perLineTextDirection,
-scrollIntoView, UpdateFlag, ScrollTarget, bidiIsolatedRanges, getIsolatedRanges, scrollHandler,
-clipboardInputFilter, clipboardOutputFilter} from "./extension"
-import {theme, darkTheme, buildTheme, baseThemeID, baseLightID, baseDarkID, lightDarkIDs, baseTheme} from "./theme"
-import {DOMObserver} from "./domobserver"
-import {Attrs, updateAttrs, combineAttrs} from "./attributes"
-import browser from "./browser"
-import {computeOrder, trivialOrder, BidiSpan, Direction, Isolate, isolatesEq} from "./bidi"
-import {applyDOMChange, DOMChange} from "./domchange"
+//import {EditorState, Transaction, TransactionSpec, Extension, Prec, ChangeDesc,
+//EditorSelection, SelectionRange, StateEffect, Facet, Line, EditorStateConfig} from "@codemirror/state"
+//import {StyleModule, StyleSpec} from "style-mod"
+//
+//import {DocView} from "./docview"
+//import {ContentView} from "./contentview"
+//import {InputState, focusChangeTransaction, isFocusChange} from "./input"
+//import {Rect, focusPreventScroll, flattenRect, getRoot, ScrollStrategy,
+//isScrolledToBottom, dispatchKey} from "./dom"
+//import {posAtCoords, moveByChar, moveToLineBoundary, byGroup, moveVertically, skipAtoms} from "./cursor"
+//import {BlockInfo} from "./heightmap"
+//import {ViewState} from "./viewstate"
+//import {ViewUpdate, styleModule,
+//contentAttributes, editorAttributes, AttrSource,
+//clickAddsSelectionRange, dragMovesSelection, mouseSelectionStyle,
+//exceptionSink, updateListener, logException,
+//viewPlugin, ViewPlugin, PluginValue, PluginInstance, decorations, outerDecorations, atomicRanges,
+//scrollMargins, MeasureRequest, editable, inputHandler, focusChangeEffect, perLineTextDirection,
+//scrollIntoView, UpdateFlag, ScrollTarget, bidiIsolatedRanges, getIsolatedRanges, scrollHandler,
+//clipboardInputFilter, clipboardOutputFilter} from "./extension"
+//import {theme, darkTheme, buildTheme, baseThemeID, baseLightID, baseDarkID, lightDarkIDs, baseTheme} from "./theme"
+//import {DOMObserver} from "./domobserver"
+//import {Attrs, updateAttrs, combineAttrs} from "./attributes"
+//import browser from "./browser"
+//import {computeOrder, trivialOrder, BidiSpan, Direction, Isolate, isolatesEq} from "./bidi"
+//import {applyDOMChange, DOMChange} from "./domchange"
 
 /// The type of object given to the [`EditorView`](#view.EditorView)
 /// constructor.
-export interface EditorViewConfig extends EditorStateConfig {
+data class EditorViewConfig(
     /// The view's initial state. If not given, a new state is created
     /// by passing this configuration object to
     /// [`EditorState.create`](#state.EditorState^create), using its
     /// `doc`, `selection`, and `extensions` field (if provided).
-    state?: EditorState,
+    val state: EditorState?,
     /// When given, the editor is immediately appended to the given
     /// element on creation. (Otherwise, you'll have to place the view's
     /// [`dom`](#view.EditorView.dom) element in the document yourself.)
-    parent?: Element | DocumentFragment
+    val parent: DocumentFragment?
     /// If the view is going to be mounted in a shadow root or document
     /// other than the one held by the global variable `document` (the
     /// default), you should pass it here. If you provide `parent`, but
     /// not this option, the editor will automatically look up a root
     /// from the parent.
-    root?: Document | ShadowRoot,
+    val root: Document?,
     /// Pass an effect created with
     /// [`EditorView.scrollIntoView`](#view.EditorView^scrollIntoView) or
     /// [`EditorView.scrollSnapshot`](#view.EditorView.scrollSnapshot)
     /// here to set an initial scroll position.
-    scrollTo?: StateEffect<any>,
+    val scrollTo: StateEffect<Any>?,
     /// Override the way transactions are
     /// [dispatched](#view.EditorView.dispatch) for this editor view.
     /// Your implementation, if provided, should probably call the
     /// view's [`update` method](#view.EditorView.update).
-    dispatchTransactions?: (trs: readonly Transaction[], view: EditorView) => void
+    val dispatchTransactions: ((trs: List<Transaction>, view: EditorView) -> Unit)?,
     /// **Deprecated** single-transaction version of
     /// `dispatchTransactions`. Will force transactions to be dispatched
     /// one at a time when used.
-    dispatch?: (tr: Transaction, view: EditorView) => void
-}
+    val dispatch: ((tr: Transaction, view: EditorView) -> Unit)?,
+    // / The initial document. Defaults to an empty document. Can be
+    // / provided either as a plain string (which will be split into
+    // / lines according to the value of the [`lineSeparator`
+    // / facet](#state.EditorState^lineSeparator)), or an instance of
+    // / the [`Text`](#state.Text) class (which is what the state will use
+    // / to represent the document).
+    override val doc: Text?,
 
-export const enum UpdateState {
+    // / The starting selection. Defaults to a cursor at the very start
+    // / of the document.
+    override val selection: Selection?,
+
+    // / [Extension(s)](#state.Extension) to associate with this state.
+    override val extensions: Extension?
+) : EditorStateConfig
+
+enum class UpdateState {
     Idle, // Not updating
     Measuring, // In the layout-reading phase of a layout check
     Updating // Updating/drawing, either directly via the `update` method, or as a result of a layout check
@@ -86,17 +111,22 @@ export const enum UpdateState {
 /// the editable DOM surface, and possibly other elements such as the
 /// line number gutter. It handles events and dispatches state
 /// transactions for editing actions.
-export class EditorView {
+class EditorView {
     /// The current editor state.
     val state: EditorState
-        get() { return this.viewState.state }
+        get() {
+            return this.viewState.state
+        }
 
     /// To be able to display large documents without consuming too much
     /// memory or overloading the browser, CodeMirror only draws the
     /// code that is visible (plus a margin around it) to the DOM. This
     /// property tells you the extent of the current drawn viewport, in
     /// document positions.
-    get viewport(): {from: number, to: number} { return this.viewState.viewport }
+    val viewport: Pair<Int, Int>
+        get() {
+            return this.viewState.viewport
+        }
 
     /// When there are, for example, large collapsed ranges in the
     /// viewport, its size can be a lot bigger than the actual visible
@@ -104,39 +134,55 @@ export class EditorView {
     /// content in the viewport, it is preferable to only do so for
     /// these ranges, which are the subset of the viewport that is
     /// actually drawn.
-    get visibleRanges(): readonly {from: number, to: number}[] { return this.viewState.visibleRanges }
+    val visibleRanges: List<Pair<Int, Int>>
+        get() {
+            return this.viewState.visibleRanges
+        }
 
     /// Returns false when the editor is entirely scrolled out of view
     /// or otherwise hidden.
-    get inView() { return this.viewState.inView }
+    val inView: Boolean
+        get() {
+            return this.viewState.inView
+        }
 
     /// Indicates whether the user is currently composing text via
     /// [IME](https://en.wikipedia.org/wiki/Input_method), and at least
     /// one change has been made in the current composition.
-    get composing() { return this.inputState.composing > 0 }
+    val composing: Boolean
+        get() {
+            return this.inputState.composing > 0
+        }
 
     /// Indicates whether the user is currently in composing state. Note
     /// that on some platforms, like Android, this will be the case a
     /// lot, since just putting the cursor on a word starts a
     /// composition there.
-    get compositionStarted() { return this.inputState.composing >= 0 }
+    val compositionStarted: Boolean
+        get() {
+            return this.inputState.composing >= 0
+        }
 
-    private dispatchTransactions: (trs: readonly Transaction[], view: EditorView) => void
+    private var dispatchTransactions: ((trs: List<Transaction>, view: EditorView) -> Unit)? = null
 
-    private _root: DocumentOrShadowRoot
+    private var _root: DocumentOrShadowRoot
 
     /// The document or shadow root that the view lives in.
-    get root() { return this._root }
+    val root: DocumentOrShadowRoot
+    { return this._root }
 
     /// @internal
-    get win() { return this.dom.ownerDocument.defaultView || window }
+    val win: Window
+        get() {
+            return this.dom.ownerDocument.defaultView || window
+        }
 
     /// The DOM element that wraps the entire editor view.
-    readonly dom: HTMLElement
+    val dom: HTMLElement
 
     /// The DOM element that can be styled to scroll. (Note that it may
     /// not have been, so you can't assume this is scrollable.)
-    readonly scrollDOM: HTMLElement
+    val scrollDOM: HTMLElement
 
     /// The editable DOM element holding the editor content. You should
     /// not, usually, interact with this content directly though the
@@ -144,82 +190,84 @@ export class EditorView {
     /// you make. Instead, [dispatch](#view.EditorView.dispatch)
     /// [transactions](#state.Transaction) to modify content, and
     /// [decorations](#view.Decoration) to style it.
-    readonly contentDOM: HTMLElement
+    val contentDOM: HTMLElement
 
-    private announceDOM: HTMLElement
+    private val announceDOM: HTMLElement
 
     /// @internal
-    inputState!: InputState
+    internal lateinit var inputState: InputState
 
     /// @internal
     internal val viewState: ViewState
-    /// @internal
-    public docView: DocView
-
-    private plugins: PluginInstance[] = []
-    private pluginMap: Map<ViewPlugin<any>, PluginInstance | null> = new Map
-    private editorAttrs: Attrs = {}
-    private contentAttrs: Attrs = {}
-    private styleModules!: readonly StyleModule[]
-    private bidiCache: CachedOrder[] = []
-
-    private destroyed = false;
 
     /// @internal
-    updateState: UpdateState = UpdateState.Updating
+    internal var docView: DocView
+
+    private var plugins: List<PluginInstance> = emptyList()
+    private var pluginMap: Map<ViewPlugin<*>, PluginInstance?> = emptyMap()
+    private var editorAttrs: Attrs = emptyMap()
+    private var contentAttrs: Attrs = emptyMap()
+    private lateinit var styleModules: Array<StyleModule>
+    private var bidiCache: List<CachedOrder> = emptyList()
+
+    private var destroyed = false;
 
     /// @internal
-    observer: DOMObserver
+    internal var updateState: UpdateState = UpdateState.Updating
 
     /// @internal
-    measureScheduled: number = -1
+    internal var observer: DOMObserver
+
     /// @internal
-    measureRequests: MeasureRequest<any>[] = []
+    internal var measureScheduled: Int = -1
+
+    /// @internal
+    internal var measureRequests: List<MeasureRequest<Any>> = emptyList()
 
     /// Construct a new view. You'll want to either provide a `parent`
     /// option, or put `view.dom` into your document after creating a
     /// view, so that the user can see the editor.
     constructor(config: EditorViewConfig = {}) {
-        this.contentDOM = document.createElement("div")
-
-        this.scrollDOM = document.createElement("div")
-        this.scrollDOM.tabIndex = -1
-        this.scrollDOM.className = "cm-scroller"
-        this.scrollDOM.appendChild(this.contentDOM)
-
-        this.announceDOM = document.createElement("div")
-        this.announceDOM.className = "cm-announced"
-        this.announceDOM.setAttribute("aria-live", "polite")
-
-        this.dom = document.createElement("div")
-        this.dom.appendChild(this.announceDOM)
-        this.dom.appendChild(this.scrollDOM)
-
-        if (config.parent) config.parent.appendChild(this.dom)
-
-        let {dispatch} = config
-        this.dispatchTransactions = config.dispatchTransactions ||
-            (dispatch && ((trs: readonly Transaction[]) => trs.forEach(tr => dispatch!(tr, this)))) ||
-        ((trs: readonly Transaction[]) => this.update(trs))
-        this.dispatch = this.dispatch.bind(this)
-        this._root = (config.root || getRoot(config.parent) || document) as DocumentOrShadowRoot
-
-        this.viewState = new ViewState(config.state || EditorState.create(config))
-        if (config.scrollTo && config.scrollTo.is(scrollIntoView))
-            this.viewState.scrollTarget = config.scrollTo.value.clip(this.viewState.state)
-        this.plugins = this.state.facet(viewPlugin).map(spec => new PluginInstance(spec))
-        for (let plugin of this.plugins) plugin.update(this)
-        this.observer = new DOMObserver(this)
-        this.inputState = new InputState(this)
-        this.inputState.ensureHandlers(this.plugins)
-        this.docView = new DocView(this)
-
-        this.mountStyles()
-        this.updateAttrs()
-        this.updateState = UpdateState.Idle
-
-        this.requestMeasure()
-        if (document.fonts?.ready) document.fonts.ready.then(() => this.requestMeasure())
+//        this.contentDOM = document.createElement("div")
+//
+//        this.scrollDOM = document.createElement("div")
+//        this.scrollDOM.tabIndex = -1
+//        this.scrollDOM.className = "cm-scroller"
+//        this.scrollDOM.appendChild(this.contentDOM)
+//
+//        this.announceDOM = document.createElement("div")
+//        this.announceDOM.className = "cm-announced"
+//        this.announceDOM.setAttribute("aria-live", "polite")
+//
+//        this.dom = document.createElement("div")
+//        this.dom.appendChild(this.announceDOM)
+//        this.dom.appendChild(this.scrollDOM)
+//
+//        if (config.parent) config.parent.appendChild(this.dom)
+//
+//        let {dispatch} = config
+//        this.dispatchTransactions = config.dispatchTransactions ||
+//            (dispatch && ((trs: readonly Transaction[]) => trs.forEach(tr => dispatch!(tr, this)))) ||
+//        ((trs: readonly Transaction[]) => this.update(trs))
+//        this.dispatch = this.dispatch.bind(this)
+//        this._root = (config.root || getRoot(config.parent) || document) as DocumentOrShadowRoot
+//
+//        this.viewState = new ViewState(config.state || EditorState.create(config))
+//        if (config.scrollTo && config.scrollTo.is(scrollIntoView))
+//            this.viewState.scrollTarget = config.scrollTo.value.clip(this.viewState.state)
+//        this.plugins = this.state.facet(viewPlugin).map(spec => new PluginInstance(spec))
+//        for (let plugin of this.plugins) plugin.update(this)
+//        this.observer = new DOMObserver(this)
+//        this.inputState = new InputState(this)
+//        this.inputState.ensureHandlers(this.plugins)
+//        this.docView = new DocView(this)
+//
+//        this.mountStyles()
+//        this.updateAttrs()
+//        this.updateState = UpdateState.Idle
+//
+//        this.requestMeasure()
+//        if (document.fonts?.ready) document.fonts.ready.then(() => this.requestMeasure())
     }
 
     /// All regular editor state updates should go through this. It
@@ -233,14 +281,16 @@ export class EditorView {
     /// Note that when multiple `TransactionSpec` arguments are
     /// provided, these define a single transaction (the specs will be
     /// merged), not a sequence of transactions.
-    dispatch(tr: Transaction): void
-    dispatch(trs: readonly Transaction[]): void
-    dispatch(...specs: TransactionSpec[]): void
-    dispatch(...input: (Transaction | readonly Transaction[] | TransactionSpec)[]) {
-        let trs = input.length == 1 && input[0] instanceof Transaction ? input as readonly Transaction[]
-        : input.length == 1 && Array.isArray(input[0]) ? input[0] as readonly Transaction[]
-        : [this.state.update(...input as TransactionSpec[])]
-        this.dispatchTransactions(trs, this)
+//    fun dispatch(tr: Transaction): Unit
+//    fun dispatch(vararg trs: Transaction): Unit
+//    fun dispatch(vararg specs: TransactionSpec): Unit
+    fun dispatch(vararg input: Transactable) {
+//        let trs = input.length == 1 && input[0] instanceof Transaction ? input as readonly Transaction[]
+//        : input.length == 1 && Array.isArray(input[0]) ? input[0] as readonly Transaction[]
+//        : [this.state.update(...input as TransactionSpec[])]
+        val specs = input.filterIsInstance<TransactionSpec>()
+        val trs = input.filterIsInstance<Transaction>() + this.state.update(*specs.toTypedArray())
+        this.dispatchTransactions?.invoke(trs, this)
     }
 
     /// Update the view for the given array of transactions. This will
@@ -249,98 +299,114 @@ export class EditorView {
     /// change. You should usually call
     /// [`dispatch`](#view.EditorView.dispatch) instead, which uses this
     /// as a primitive.
-    update(transactions: readonly Transaction[]) {
-        if (this.updateState != UpdateState.Idle)
-            throw new Error("Calls to EditorView.update are not allowed while an update is in progress")
-
-        let redrawn = false, attrsChanged = false, update: ViewUpdate
-        let state = this.state
-        for (let tr of transactions) {
-            if (tr.startState != state)
-                throw new RangeError("Trying to update state with a transaction that doesn't start from the previous state.")
-            state = tr.state
-        }
-        if (this.destroyed) {
-            this.viewState.state = state
-            return
-        }
-
-        let focus = this.hasFocus, focusFlag = 0, dispatchFocus: Transaction | null = null
-        if (transactions.some(tr => tr.annotation(isFocusChange))) {
-            this.inputState.notifiedFocused = focus
-            // If a focus-change transaction is being dispatched, set this update flag.
-            focusFlag = UpdateFlag.Focus
-        } else if (focus != this.inputState.notifiedFocused) {
-            this.inputState.notifiedFocused = focus
-            // Schedule a separate focus transaction if necessary, otherwise
-            // add a flag to this update
-            dispatchFocus = focusChangeTransaction(state, focus)
-            if (!dispatchFocus) focusFlag = UpdateFlag.Focus
-        }
-
-        // If there was a pending DOM change, eagerly read it and try to
-        // apply it after the given transactions.
-        let pendingKey = this.observer.delayedAndroidKey, domChange: DOMChange | null = null
-        if (pendingKey) {
-            this.observer.clearDelayedAndroidKey()
-            domChange = this.observer.readChange()
-            // Only try to apply DOM changes if the transactions didn't
-            // change the doc or selection.
-            if (domChange && !this.state.doc.eq(state.doc) || !this.state.selection.eq(state.selection))
-                domChange = null
-        } else {
-            this.observer.clear()
-        }
-
-        // When the phrases change, redraw the editor
-        if (state.facet(EditorState.phrases) != this.state.facet(EditorState.phrases))
-            return this.setState(state)
-
-        update = ViewUpdate.create(this, state, transactions)
-        update.flags |= focusFlag
-
-        let scrollTarget = this.viewState.scrollTarget
-        try {
-            this.updateState = UpdateState.Updating
-            for (let tr of transactions) {
-                if (scrollTarget) scrollTarget = scrollTarget.map(tr.changes)
-                if (tr.scrollIntoView) {
-                    let {main} = tr.state.selection
-                    scrollTarget = new ScrollTarget(
-                        main.empty ? main : EditorSelection.cursor(main.head, main.head > main.anchor ? -1 : 1))
-                }
-                for (let e of tr.effects)
-                if (e.is(scrollIntoView)) scrollTarget = e.value.clip(this.state)
-            }
-            this.viewState.update(update, scrollTarget)
-            this.bidiCache = CachedOrder.update(this.bidiCache, update.changes)
-            if (!update.empty) {
-                this.updatePlugins(update)
-                this.inputState.update(update)
-            }
-            redrawn = this.docView.update(update)
-            if (this.state.facet(styleModule) != this.styleModules) this.mountStyles()
-            attrsChanged = this.updateAttrs()
-            this.showAnnouncements(transactions)
-            this.docView.updateSelection(redrawn, transactions.some(tr => tr.isUserEvent("select.pointer")))
-        } finally { this.updateState = UpdateState.Idle }
-        if (update.startState.facet(theme) != update.state.facet(theme))
-            this.viewState.mustMeasureContent = true
-        if (redrawn || attrsChanged || scrollTarget || this.viewState.mustEnforceCursorAssoc || this.viewState.mustMeasureContent)
-            this.requestMeasure()
-        if (redrawn) this.docViewUpdate()
-        if (!update.empty) for (let listener of this.state.facet(updateListener)) {
-            try { listener(update) }
-            catch (e) { logException(this.state, e, "update listener") }
-        }
-
-        if (dispatchFocus || domChange) Promise.resolve().then(() => {
-            if (dispatchFocus && this.state == dispatchFocus.startState) this.dispatch(dispatchFocus)
-            if (domChange) {
-                if (!applyDOMChange(this, domChange) && pendingKey!.force)
-                dispatchKey(this.contentDOM, pendingKey!.key, pendingKey!.keyCode)
-            }
-        })
+    fun update(vararg transactions: Transaction) {
+//        if (this.updateState != UpdateState.Idle) {
+//            throw Error("Calls to EditorView.update are not allowed while an update is in progress")
+//        }
+//
+//        var redrawn = false
+//        var attrsChanged = false
+//        var date: ViewUpdate
+//        var state = this.state
+//        for (tr in transactions) {
+//            if (tr.startState != state) {
+//                throw IndexOutOfBoundsException("Trying to update state with a transaction that doesn't start from the previous state.")
+//            }
+//            state = tr.state
+//        }
+//        if (this.destroyed) {
+//            this.viewState.state = state
+//            return
+//        }
+//
+//        var focus = this.hasFocus
+//        var focusFlag = 0
+//        var dispatchFocus: Transaction? = null
+//        if (transactions.any { tr -> tr.annotation(isFocusChange) == true }) {
+//            this.inputState.notifiedFocused = focus
+//            // If a focus-change transaction is being dispatched, set this update flag.
+//            focusFlag = UpdateFlag.Focus.value
+//        } else if (focus != this.inputState.notifiedFocused) {
+//            this.inputState.notifiedFocused = focus
+//            // Schedule a separate focus transaction if necessary, otherwise
+//            // add a flag to this update
+//            dispatchFocus = focusChangeTransaction(state, focus)
+//            if (dispatchFocus == null) {
+//                focusFlag = UpdateFlag.Focus.value
+//            }
+//        }
+//
+//        // If there was a pending DOM change, eagerly read it and try to
+//        // apply it after the given transactions.
+//        domChange: DOMChange | null = null
+//        if (pendingKey) {
+//            this.observer.clearDelayedAndroidKey()
+//            domChange = this.observer.readChange()
+//            // Only try to apply DOM changes if the transactions didn't
+//            // change the doc or selection.
+//            if (domChange && !this.state.doc.eq(state.doc) || !this.state.selection.eq(state.selection))
+//                domChange = null
+//        } else {
+//            this.observer.clear()
+//        }
+//
+//        // When the phrases change, redraw the editor
+//        if (state.facet(EditorState.phrases) != this.state.facet(EditorState.phrases))
+//            return this.setState(state)
+//
+//        update = ViewUpdate.create(this, state, transactions)
+//        update.flags | = focusFlag
+//
+//        let scrollTarget = this.viewState.scrollTarget
+//        try {
+//            this.updateState = UpdateState.Updating
+//            for (let tr of transactions) {
+//                if (scrollTarget) scrollTarget = scrollTarget.map(tr.changes)
+//                if (tr.scrollIntoView) {
+//                    let { main } = tr.state.selection
+//                    scrollTarget = new ScrollTarget (
+//                        main.empty ? main : EditorSelection.cursor(main.head, main.head > main.anchor ?-1 : 1))
+//                }
+//                for (let e of tr . effects)
+//                if (e.is(scrollIntoView)) scrollTarget = e.value.clip(this.state)
+//            }
+//            this.viewState.update(update, scrollTarget)
+//            this.bidiCache = CachedOrder.update(this.bidiCache, update.changes)
+//            if (!update.empty) {
+//                this.updatePlugins(update)
+//                this.inputState.update(update)
+//            }
+//            redrawn = this.docView.update(update)
+//            if (this.state.facet(styleModule) != this.styleModules) this.mountStyles()
+//            attrsChanged = this.updateAttrs()
+//            this.showAnnouncements(transactions)
+//            this.docView.updateSelection(
+//                redrawn,
+//                transactions.some(tr => tr . isUserEvent ("select.pointer")
+//            ))
+//        } finally {
+//            this.updateState = UpdateState.Idle
+//        }
+//        if (update.startState.facet(theme) != update.state.facet(theme))
+//            this.viewState.mustMeasureContent = true
+//        if (redrawn || attrsChanged || scrollTarget || this.viewState.mustEnforceCursorAssoc || this.viewState.mustMeasureContent)
+//            this.requestMeasure()
+//        if (redrawn) this.docViewUpdate()
+//        if (!update.empty) for (let listener of this.state.facet(updateListener)) {
+//            try {
+//                listener(update)
+//            } catch (e) {
+//                logException(this.state, e, "update listener")
+//            }
+//        }
+//
+//        if (dispatchFocus || domChange) Promise.resolve().then(() => {
+//            if (dispatchFocus && this.state == dispatchFocus.startState) this.dispatch(dispatchFocus)
+//            if (domChange) {
+//                if (!applyDOMChange(this, domChange) && pendingKey !. force)
+//                dispatchKey(this.contentDOM, pendingKey!. key, pendingKey!. keyCode)
+//            }
+//        })
     }
 
     /// Reset the view to the given state. (This will cause the entire
@@ -348,220 +414,237 @@ export class EditorView {
     /// so you should probably only use it when the new state isn't
     /// derived from the old state. Otherwise, use
     /// [`dispatch`](#view.EditorView.dispatch) instead.)
-    setState(newState: EditorState) {
-        if (this.updateState != UpdateState.Idle)
-            throw new Error("Calls to EditorView.setState are not allowed while an update is in progress")
-        if (this.destroyed) {
-            this.viewState.state = newState
-            return
-        }
-        this.updateState = UpdateState.Updating
-        let hadFocus = this.hasFocus
-        try {
-            for (let plugin of this.plugins) plugin.destroy(this)
-            this.viewState = new ViewState(newState)
-            this.plugins = newState.facet(viewPlugin).map(spec => new PluginInstance(spec))
-            this.pluginMap.clear()
-            for (let plugin of this.plugins) plugin.update(this)
-            this.docView.destroy()
-            this.docView = new DocView(this)
-            this.inputState.ensureHandlers(this.plugins)
-            this.mountStyles()
-            this.updateAttrs()
-            this.bidiCache = []
-        } finally { this.updateState = UpdateState.Idle }
-        if (hadFocus) this.focus()
-        this.requestMeasure()
+    fun setState(newState: EditorState) {
+//        if (this.updateState != UpdateState.Idle)
+//            throw new Error ("Calls to EditorView.setState are not allowed while an update is in progress")
+//        if (this.destroyed) {
+//            this.viewState.state = newState
+//            return
+//        }
+//        this.updateState = UpdateState.Updating
+//        let hadFocus = this.hasFocus
+//        try {
+//            for (let plugin of this.plugins) plugin.destroy(this)
+//            this.viewState = new ViewState (newState)
+//            this.plugins = newState.facet(viewPlugin).map(spec => new PluginInstance(spec))
+//            this.pluginMap.clear()
+//            for (let plugin of this.plugins) plugin.update(this)
+//            this.docView.destroy()
+//            this.docView = new DocView (this)
+//            this.inputState.ensureHandlers(this.plugins)
+//            this.mountStyles()
+//            this.updateAttrs()
+//            this.bidiCache = []
+//        } finally {
+//            this.updateState = UpdateState.Idle
+//        }
+//        if (hadFocus) this.focus()
+//        this.requestMeasure()
     }
 
-    private updatePlugins(update: ViewUpdate) {
-        let prevSpecs = update.startState.facet(viewPlugin), specs = update.state.facet(viewPlugin)
-        if (prevSpecs != specs) {
-            let newPlugins = []
-            for (let spec of specs) {
-                let found = prevSpecs.indexOf(spec)
-                if (found < 0) {
-                    newPlugins.push(new PluginInstance(spec))
-                } else {
-                    let plugin = this.plugins[found]
-                    plugin.mustUpdate = update
-                    newPlugins.push(plugin)
-                }
-            }
-            for (let plugin of this.plugins) if (plugin.mustUpdate != update) plugin.destroy(this)
-            this.plugins = newPlugins
-            this.pluginMap.clear()
-        } else {
-            for (let p of this.plugins) p.mustUpdate = update
-        }
-        for (let i = 0; i < this.plugins.length; i++) this.plugins[i].update(this)
-        if (prevSpecs != specs) this.inputState.ensureHandlers(this.plugins)
+    private fun updatePlugins(update: ViewUpdate) {
+//        specs = update.state.facet(viewPlugin)
+//        if (prevSpecs != specs) {
+//            let newPlugins =[]
+//            for (let spec of specs) {
+//                let found = prevSpecs . indexOf (spec)
+//                if (found < 0) {
+//                    newPlugins.push(new PluginInstance (spec))
+//                } else {
+//                    let plugin = this.plugins[found]
+//                    plugin.mustUpdate = update
+//                    newPlugins.push(plugin)
+//                }
+//            }
+//            for (let plugin of this.plugins) if (plugin.mustUpdate != update) plugin.destroy(this)
+//            this.plugins = newPlugins
+//            this.pluginMap.clear()
+//        } else {
+//            for (let p of this.plugins) p.mustUpdate = update
+//        }
+//        for (let i = 0; i < this.plugins.length; i++) this.plugins[i].update(this)
+//        if (prevSpecs != specs) this.inputState.ensureHandlers(this.plugins)
     }
 
-    private docViewUpdate() {
-        for (let plugin of this.plugins) {
-            let val = plugin.value
-            if (val && val.docViewUpdate) {
-            try { val.docViewUpdate(this) }
-            catch(e) { logException(this.state, e, "doc view update listener") }
-        }
-        }
+    private fun docViewUpdate() {
+//        for (let plugin of this.plugins) {
+//        let
+//        val = plugin.value
+//        if (
+//        val &&
+//        val .docViewUpdate) {
+//        try {
+//            val .docViewUpdate(this)
+//        } catch (e) {
+//            logException(this.state, e, "doc view update listener")
+//        }
+//    }
+//    }
     }
 
     /// @internal
-    measure(flush = true) {
-        if (this.destroyed) return
-        if (this.measureScheduled > -1) this.win.cancelAnimationFrame(this.measureScheduled)
-        if (this.observer.delayedAndroidKey) {
-            this.measureScheduled = -1
-            this.requestMeasure()
-            return
-        }
-        this.measureScheduled = 0 // Prevent requestMeasure calls from scheduling another animation frame
-
-        if (flush) this.observer.forceFlush()
-
-        let updated: ViewUpdate | null = null
-        let sDOM = this.scrollDOM, scrollTop = sDOM.scrollTop * this.scaleY
-        let {scrollAnchorPos, scrollAnchorHeight} = this.viewState
-        if (Math.abs(scrollTop - this.viewState.scrollTop) > 1) scrollAnchorHeight = -1
-        this.viewState.scrollAnchorHeight = -1
-
-        try {
-            for (let i = 0;; i++) {
-                if (scrollAnchorHeight < 0) {
-                    if (isScrolledToBottom(sDOM)) {
-                        scrollAnchorPos = -1
-                        scrollAnchorHeight = this.viewState.heightMap.height
-                    } else {
-                        let block = this.viewState.scrollAnchorAt(scrollTop)
-                        scrollAnchorPos = block.from
-                        scrollAnchorHeight = block.top
-                    }
-                }
-                this.updateState = UpdateState.Measuring
-                let changed = this.viewState.measure(this)
-                if (!changed && !this.measureRequests.length && this.viewState.scrollTarget == null) break
-                if (i > 5) {
-                    console.warn(this.measureRequests.length
-                        ? "Measure loop restarted more than 5 times"
-                    : "Viewport failed to stabilize")
-                    break
-                }
-                let measuring: MeasureRequest<any>[] = []
-                // Only run measure requests in this cycle when the viewport didn't change
-                if (!(changed & UpdateFlag.Viewport))
-                [this.measureRequests, measuring] = [measuring, this.measureRequests]
-                let measured = measuring.map(m => {
-                try { return m.read(this) }
-                catch(e) { logException(this.state, e); return BadMeasure }
-            })
-                let update = ViewUpdate.create(this, this.state, []), redrawn = false
-                update.flags |= changed
-                if (!updated) updated = update
-                else updated.flags |= changed
-                this.updateState = UpdateState.Updating
-                if (!update.empty) {
-                    this.updatePlugins(update)
-                    this.inputState.update(update)
-                    this.updateAttrs()
-                    redrawn = this.docView.update(update)
-                    if (redrawn) this.docViewUpdate()
-                }
-                for (let i = 0; i < measuring.length; i++) if (measured[i] != BadMeasure) {
-                try {
-                    let m = measuring[i]
-                    if (m.write) m.write(measured[i], this)
-                } catch(e) { logException(this.state, e) }
-            }
-                if (redrawn) this.docView.updateSelection(true)
-                if (!update.viewportChanged && this.measureRequests.length == 0) {
-                    if (this.viewState.editorHeight) {
-                        if (this.viewState.scrollTarget) {
-                            this.docView.scrollIntoView(this.viewState.scrollTarget)
-                            this.viewState.scrollTarget = null
-                            scrollAnchorHeight = -1
-                            continue
-                        } else {
-                            let newAnchorHeight = scrollAnchorPos < 0 ? this.viewState.heightMap.height :
-                            this.viewState.lineBlockAt(scrollAnchorPos).top
-                            let diff = newAnchorHeight - scrollAnchorHeight
-                            if (diff > 1 || diff < -1) {
-                                scrollTop = scrollTop + diff
-                                sDOM.scrollTop = scrollTop / this.scaleY
-                                scrollAnchorHeight = -1
-                                continue
-                            }
-                        }
-                    }
-                    break
-                }
-            }
-        } finally {
-            this.updateState = UpdateState.Idle
-            this.measureScheduled = -1
-        }
-
-        if (updated && !updated.empty)
-            for (let listener of this.state.facet(updateListener)) listener(updated)
+    internal fun measure(flush: Boolean = true) {
+//        if (this.destroyed) return
+//        if (this.measureScheduled > -1) this.win.cancelAnimationFrame(this.measureScheduled)
+//        if (this.observer.delayedAndroidKey) {
+//            this.measureScheduled = -1
+//            this.requestMeasure()
+//            return
+//        }
+//        this.measureScheduled =
+//            0 // Prevent requestMeasure calls from scheduling another animation frame
+//
+//        if (flush) this.observer.forceFlush()
+//
+//        let updated : ViewUpdate | null = null
+//        scrollTop = sDOM.scrollTop * this.scaleY
+//        scrollAnchorHeight } = this.viewState
+//        if (Math.abs(scrollTop - this.viewState.scrollTop) > 1) scrollAnchorHeight = -1
+//        this.viewState.scrollAnchorHeight = -1
+//
+//        try {
+//            for (let i = 0;; i++) {
+//                if (scrollAnchorHeight < 0) {
+//                    if (isScrolledToBottom(sDOM)) {
+//                        scrollAnchorPos = -1
+//                        scrollAnchorHeight = this.viewState.heightMap.height
+//                    } else {
+//                        let block = this.viewState.scrollAnchorAt(scrollTop)
+//                        scrollAnchorPos = block.from
+//                        scrollAnchorHeight = block.top
+//                    }
+//                }
+//                this.updateState = UpdateState.Measuring
+//                let changed = this.viewState.measure(this)
+//                if (!changed && !this.measureRequests.length && this.viewState.scrollTarget == null) break
+//                if (i > 5) {
+//                    console.warn(
+//                        this.measureRequests.length
+//                        ? "Measure loop restarted more than 5 times"
+//                    : "Viewport failed to stabilize")
+//                    break
+//                }
+//                let measuring : MeasureRequest < any >[] = []
+//                // Only run measure requests in this cycle when the viewport didn't change
+//                if (!(changed & UpdateFlag.Viewport))
+//                [this.measureRequests, measuring] = [measuring, this.measureRequests]
+//                let measured = measuring . map (m => {
+//                try {
+//                    return m.read(this)
+//                } catch (e) {
+//                    logException(this.state, e); return BadMeasure
+//                }
+//            })
+//                redrawn = false
+//                update.flags | = changed
+//                if (!updated) updated = update
+//                else updated.flags | = changed
+//                this.updateState = UpdateState.Updating
+//                if (!update.empty) {
+//                    this.updatePlugins(update)
+//                    this.inputState.update(update)
+//                    this.updateAttrs()
+//                    redrawn = this.docView.update(update)
+//                    if (redrawn) this.docViewUpdate()
+//                }
+//                for (let i = 0; i < measuring.length; i++) if (measured[i] != BadMeasure) {
+//                try {
+//                    let m = measuring [i]
+//                    if (m.write) m.write(measured[i], this)
+//                } catch (e) {
+//                    logException(this.state, e)
+//                }
+//            }
+//                if (redrawn) this.docView.updateSelection(true)
+//                if (!update.viewportChanged && this.measureRequests.length == 0) {
+//                    if (this.viewState.editorHeight) {
+//                        if (this.viewState.scrollTarget) {
+//                            this.docView.scrollIntoView(this.viewState.scrollTarget)
+//                            this.viewState.scrollTarget = null
+//                            scrollAnchorHeight = -1
+//                            continue
+//                        } else {
+//                            let newAnchorHeight = scrollAnchorPos < 0 ? this.viewState.heightMap.height :
+//                            this.viewState.lineBlockAt(scrollAnchorPos).top
+//                            let diff = newAnchorHeight -scrollAnchorHeight
+//                            if (diff > 1 || diff < -1) {
+//                                scrollTop = scrollTop + diff
+//                                sDOM.scrollTop = scrollTop / this.scaleY
+//                                scrollAnchorHeight = -1
+//                                continue
+//                            }
+//                        }
+//                    }
+//                    break
+//                }
+//            }
+//        } finally {
+//            this.updateState = UpdateState.Idle
+//            this.measureScheduled = -1
+//        }
+//
+//        if (updated && !updated.empty)
+//            for (let listener of this.state.facet(updateListener)) listener(updated)
     }
 
     /// Get the CSS classes for the currently active editor themes.
-    get themeClasses() {
+    val themeClasses: String get() {
         return baseThemeID + " " +
-            (this.state.facet(darkTheme) ? baseDarkID : baseLightID) + " " +
-        this.state.facet(theme)
+            (this.state.facet(darkTheme) ? baseDarkID : baseLightID)+" "+ this.state.facet(theme)
     }
 
-    private updateAttrs() {
-        let editorAttrs = attrsFromFacet(this, editorAttributes, {
-            class: "cm-editor" + (this.hasFocus ? " cm-focused " : " ") + this.themeClasses
-        })
-        let contentAttrs: Attrs = {
-            spellcheck: "false",
-            autocorrect: "off",
-            autocapitalize: "off",
-            writingsuggestions: "false",
-            translate: "no",
-            contenteditable: !this.state.facet(editable) ? "false" : "true",
-            class: "cm-content",
-            style: `${browser.tabSize}: ${this.state.tabSize}`,
-            role: "textbox",
-            "aria-multiline": "true"
-        }
-        if (this.state.readOnly) contentAttrs["aria-readonly"] = "true"
-        attrsFromFacet(this, contentAttributes, contentAttrs)
-
-        let changed = this.observer.ignore(() => {
-            let changedContent = updateAttrs(this.contentDOM, this.contentAttrs, contentAttrs)
-            let changedEditor = updateAttrs(this.dom, this.editorAttrs, editorAttrs)
-            return changedContent || changedEditor
-        })
-        this.editorAttrs = editorAttrs
-        this.contentAttrs = contentAttrs
-        return changed
+    private fun updateAttrs(): Boolean {
+//    {
+//        {
+//        class : "cm-editor"+(this.hasFocus ? " cm-focused " : " ")+this.themeClasses
+//    })
+//        let contentAttrs : Attrs = {
+//            spellcheck: "false",
+//            autocorrect: "off",
+//            autocapitalize: "off",
+//            writingsuggestions: "false",
+//            translate: "no",
+//            contenteditable:!this.state.facet(editable) ? "false" : "true",
+//            class : "cm-content",
+//            style: `${browser.tabSize}: ${this.state.tabSize}`,
+//            role: "textbox",
+//            "aria-multiline": "true"
+//        }
+//        if (this.state.readOnly) contentAttrs["aria-readonly"] = "true"
+//        attrsFromFacet(this, contentAttributes, contentAttrs)
+//
+//        let changed = this.observer.ignore(() => {
+//        contentAttrs)
+//        editorAttrs)
+//        return changedContent || changedEditor
+//    })
+//        this.editorAttrs = editorAttrs
+//        this.contentAttrs = contentAttrs
+//        return changed
     }
 
-    private showAnnouncements(trs: readonly Transaction[]) {
-        let first = true
-        for (let tr of trs) for (let effect of tr.effects) if (effect.is(EditorView.announce)) {
-            if (first) this.announceDOM.textContent = ""
-            first = false
-            let div = this.announceDOM.appendChild(document.createElement("div"))
-            div.textContent = effect.value
-        }
+    private fun showAnnouncements(vararg trs: Transaction) {
+//        let first = true
+//        for (let tr of trs) for (let effect of tr.effects) if (effect. is (EditorView.announce)) {
+//        if (first) this.announceDOM.textContent = ""
+//        first = false
+//        let div = this.announceDOM.appendChild(document.createElement("div"))
+//        div.textContent = effect.value
     }
 
-    private mountStyles() {
-        this.styleModules = this.state.facet(styleModule)
-        let nonce = this.state.facet(EditorView.cspNonce)
-        StyleModule.mount(this.root, this.styleModules.concat(baseTheme).reverse(), nonce ? {nonce} : undefined)
+    private fun mountStyles() {
+//        this.styleModules = this.state.facet(styleModule)
+//        let nonce = this.state.facet(EditorView.cspNonce)
+//        StyleModule.mount(
+//            this.root,
+//            this.styleModules.concat(baseTheme).reverse(),
+//            nonce ? { nonce } : undefined)
     }
 
-    private readMeasured() {
-        if (this.updateState == UpdateState.Updating)
-            throw new Error("Reading the editor layout isn't allowed during an update")
-        if (this.updateState == UpdateState.Idle && this.measureScheduled > -1) this.measure(false)
+    private fun readMeasured() {
+//        if (this.updateState == UpdateState.Updating)
+//            throw new Error ("Reading the editor layout isn't allowed during an update")
+//        if (this.updateState == UpdateState.Idle && this.measureScheduled > -1) this.measure(false)
     }
 
     /// Schedule a layout measurement, optionally providing callbacks to
@@ -570,56 +653,58 @@ export class EditorView {
     /// example, an event handler, because it'll make sure measuring and
     /// drawing done by other components is synchronized, avoiding
     /// unnecessary DOM layout computations.
-    requestMeasure<T>(request?: MeasureRequest<T>) {
-        if (this.measureScheduled < 0)
-            this.measureScheduled = this.win.requestAnimationFrame(() => this.measure())
-        if (request) {
-            if (this.measureRequests.indexOf(request) > -1) return
-            if (request.key != null) for (let i = 0; i < this.measureRequests.length; i++) {
-                if (this.measureRequests[i].key === request.key) {
-                    this.measureRequests[i] = request
-                    return
-                }
-            }
-            this.measureRequests.push(request)
-        }
+    fun <T>requestMeasure(request: MeasureRequest<T>? = null) {
+//        if (this.measureScheduled < 0)
+//            this.measureScheduled = this.win.requestAnimationFrame(() => this.measure())
+//        if (request) {
+//            if (this.measureRequests.indexOf(request) > -1) return
+//            if (request.key != null) for (let i = 0; i < this.measureRequests.length; i++) {
+//                if (this.measureRequests[i].key === request.key) {
+//                    this.measureRequests[i] = request
+//                    return
+//                }
+//            }
+//            this.measureRequests.push(request)
+//        }
     }
 
     /// Get the value of a specific plugin, if present. Note that
     /// plugins that crash can be dropped from a view, so even when you
     /// know you registered a given plugin, it is recommended to check
     /// the return value of this method.
-    plugin<T extends PluginValue>(plugin: ViewPlugin<T>): T | null {
-        let known = this.pluginMap.get(plugin)
-        if (known === undefined || known && known.spec != plugin)
-            this.pluginMap.set(plugin, known = this.plugins.find(p => p.spec == plugin) || null)
-        return known && known.update(this).value as T
+    fun <T : PluginValue> plugin(plugin: ViewPlugin<T>): T ? {
+//        let known = this.pluginMap.get(plugin)
+//        if (known === undefined || known && known.spec != plugin)
+//            this.pluginMap.set(plugin, known = this.plugins.find(p => p . spec == plugin) || null)
+//        return known && known.update(this).value as T
     }
 
     /// The top position of the document, in screen coordinates. This
     /// may be negative when the editor is scrolled down. Points
     /// directly to the top of the first line, not above the padding.
-    get documentTop() {
-        return this.contentDOM.getBoundingClientRect().top + this.viewState.paddingTop
+    val documentTop: Rect get() {
+//        return this.contentDOM.getBoundingClientRect().top + this.viewState.paddingTop
     }
 
     /// Reports the padding above and below the document.
-    get documentPadding() {
-        return {top: this.viewState.paddingTop, bottom: this.viewState.paddingBottom}
+    val documentPadding: Rect get() {
+//        return { top: this.viewState.paddingTop, bottom: this.viewState.paddingBottom }
     }
 
     /// If the editor is transformed with CSS, this provides the scale
     /// along the X axis. Otherwise, it will just be 1. Note that
     /// transforms other than translation and scaling are not supported.
-    get scaleX() { return this.viewState.scaleX }
+    val scaleX: Float
+        get() { return this.viewState.scaleX }
 
     /// Provide the CSS transformed scale along the Y axis.
-    get scaleY() { return this.viewState.scaleY }
+    val scaleY: Float
+    get() { return this.viewState.scaleY }
 
     /// Find the text line or block widget at the given vertical
     /// position (which is interpreted as relative to the [top of the
     /// document](#view.EditorView.documentTop)).
-    elementAtHeight(height: number) {
+    fun elementAtHeight(height: Int) {
         this.readMeasured()
         return this.viewState.elementAtHeight(height)
     }
@@ -628,7 +713,7 @@ export class EditorView {
     /// [`lineBlockAt`](#view.EditorView.lineBlockAt) at the given
     /// height, again interpreted relative to the [top of the
     /// document](#view.EditorView.documentTop).
-    lineBlockAtHeight(height: number): BlockInfo {
+    fun lineBlockAtHeight(height: Int): BlockInfo {
         this.readMeasured()
         return this.viewState.lineBlockAtHeight(height)
     }
@@ -637,7 +722,8 @@ export class EditorView {
     /// blocks](#view.EditorView.lineBlockAt) in the viewport. Positions
     /// are relative to the [top of the
     /// document](#view.EditorView.documentTop);
-    get viewportLineBlocks() {
+    val viewportLineBlocks: List<BlockInfo>
+        get() {
         return this.viewState.viewportLines
     }
 
@@ -647,12 +733,12 @@ export class EditorView {
     /// start/end of the document. It will usually just hold a line of
     /// text, but may be broken into multiple textblocks by block
     /// widgets.
-    lineBlockAt(pos: number): BlockInfo {
+    fun lineBlockAt(pos: Int): BlockInfo {
         return this.viewState.lineBlockAt(pos)
     }
 
     /// The editor's total content height.
-    get contentHeight() {
+    val contentHeight: Int get() {
         return this.viewState.contentHeight
     }
 
@@ -670,25 +756,33 @@ export class EditorView {
     /// be called with the first cluster as argument, and should return
     /// a predicate that determines, for each subsequent cluster,
     /// whether it should also be moved over.
-    moveByChar(start: SelectionRange, forward: boolean, by?: (initial: string) => (next: string) => boolean) {
-        return skipAtoms(this, start, moveByChar(this, start, forward, by))
+    fun moveByChar(start: SelectionRange, forward: Boolean, by: ((initial: String) -> (next: String) -> Boolean)? = null) {
+//        return skipAtoms(this, start, moveByChar(this, start, forward, by))
     }
 
     /// Move a cursor position across the next group of either
     /// [letters](#state.EditorState.charCategorizer) or non-letter
     /// non-whitespace characters.
-    moveByGroup(start: SelectionRange, forward: boolean) {
-        return skipAtoms(this, start, moveByChar(this, start, forward, initial => byGroup(this, start.head, initial)))
+    fun moveByGroup(start: SelectionRange, forward: Boolean) {
+//        return skipAtoms(
+//            this,
+//            start,
+//            moveByChar(this, start, forward, initial => byGroup (this,
+//            start.head,
+//            initial
+//        )))
     }
 
     /// Get the cursor position visually at the start or end of a line.
     /// Note that this may differ from the _logical_ position at its
     /// start or end (which is simply at `line.from`/`line.to`) if text
     /// at the start or end goes against the line's base text direction.
-    visualLineSide(line: Line, end: boolean) {
-        let order = this.bidiSpans(line), dir = this.textDirectionAt(line.from)
-        let span = order[end ? order.length - 1 : 0]
-        return EditorSelection.cursor(span.side(end, dir) + line.from, span.forward(!end, dir) ? 1 : -1)
+    fun visualLineSide(line: Line, end: Boolean): SelectionRange {
+        dir = this.textDirectionAt(line.from)
+        let span = order [end ? order.length-1 : 0]
+        return EditorSelection.cursor(
+            span.side(end, dir) + line.from,
+            span.forward(!end, dir) ? 1 :-1)
     }
 
     /// Move to the next line boundary in the given direction. If
@@ -696,7 +790,7 @@ export class EditorView {
     /// further wrap point on the current line, the wrap point will be
     /// returned. Otherwise this function will return the start or end
     /// of the line.
-    moveToLineBoundary(start: SelectionRange, forward: boolean, includeWrap = true) {
+    fun moveToLineBoundary(start: SelectionRange, forward: Boolean, includeWrap: Boolean = true) {
         return moveToLineBoundary(this, start, forward, includeWrap)
     }
 
@@ -711,7 +805,7 @@ export class EditorView {
     /// the cursor's own horizontal position is used. The returned
     /// cursor will have its goal column set to whichever column was
     /// used.
-    moveVertically(start: SelectionRange, forward: boolean, distance?: number) {
+    fun moveVertically(start: SelectionRange, forward: boolean, distance?: number) {
         return skipAtoms(this, start, moveVertically(this, start, forward, distance))
     }
 
@@ -723,14 +817,17 @@ export class EditorView {
     /// `visibleRanges`, the resulting DOM position isn't necessarily
     /// meaningful (it may just point before or after a placeholder
     /// element).
-    domAtPos(pos: number): {node: Node, offset: number} {
+    domAtPos(pos: number):
+    { node: Node, offset: number }
+    {
         return this.docView.domAtPos(pos)
     }
 
     /// Find the document position at the given DOM node. Can be useful
     /// for associating positions with DOM events. Will raise an error
     /// when `node` isn't part of the editor content.
-    posAtDOM(node: Node, offset: number = 0) {
+    posAtDOM(node: Node, offset: number = 0)
+    {
         return this.docView.posFromDOM(node, offset)
     }
 
@@ -739,9 +836,13 @@ export class EditorView {
     /// this will return null, unless `false` is passed as second
     /// argument, in which case it'll return an estimated position that
     /// would be near the coordinates if it were rendered.
-    posAtCoords(coords: {x: number, y: number}, precise: false): number
-    posAtCoords(coords: {x: number, y: number}): number | null
-    posAtCoords(coords: {x: number, y: number}, precise = true): number | null {
+    posAtCoords(coords:
+    { x: number, y: number }, precise: false): number
+    posAtCoords(coords:
+    { x: number, y: number }): number | null
+    posAtCoords(coords:
+    { x: number, y: number }, precise = true): number | null
+    {
         this.readMeasured()
         return posAtCoords(this, coords, precise)
     }
@@ -751,12 +852,13 @@ export class EditorView {
     /// element before (-1) or after (1) the position (if no element is
     /// available on the given side, the method will transparently use
     /// another strategy to get reasonable coordinates).
-    coordsAtPos(pos: number, side: -1 | 1 = 1): Rect | null {
+    coordsAtPos(pos: number, side: -1 | 1 = 1): Rect | null
+    {
         this.readMeasured()
-        let rect = this.docView.coordsAt(pos, side)
+        side)
         if (!rect || rect.left == rect.right) return rect
-        let line = this.state.doc.lineAt(pos), order = this.bidiSpans(line)
-        let span = order[BidiSpan.find(order, pos - line.from, -1, side)]
+        order = this.bidiSpans(line)
+        side)]
         return flattenRect(rect, (span.dir == Direction.LTR) == (side > 0))
     }
 
@@ -765,7 +867,8 @@ export class EditorView {
     /// rendered (i.e. not replaced, not a line break), this will return
     /// null. For space characters that are a line wrap point, this will
     /// return the position before the line break.
-    coordsForChar(pos: number): Rect | null {
+    coordsForChar(pos: number): Rect | null
+    {
         this.readMeasured()
         return this.docView.coordsForChar(pos)
     }
@@ -773,16 +876,19 @@ export class EditorView {
     /// The default width of a character in the editor. May not
     /// accurately reflect the width of all characters (given variable
     /// width fonts or styling of invididual ranges).
-    get defaultCharacterWidth() { return this.viewState.heightOracle.charWidth }
+    get defaultCharacterWidth()
+    { return this.viewState.heightOracle.charWidth }
 
     /// The default height of a line in the editor. May not be accurate
     /// for all lines.
-    get defaultLineHeight() { return this.viewState.heightOracle.lineHeight }
+    get defaultLineHeight()
+    { return this.viewState.heightOracle.lineHeight }
 
     /// The text direction
     /// ([`direction`](https://developer.mozilla.org/en-US/docs/Web/CSS/direction)
     /// CSS property) of the editor's content element.
-    get textDirection(): Direction { return this.viewState.defaultTextDirection }
+    get textDirection(): Direction
+    { return this.viewState.defaultTextDirection }
 
     /// Find the text direction of the block at the given position, as
     /// assigned by CSS. If
@@ -791,7 +897,8 @@ export class EditorView {
     /// this will always return the same as
     /// [`textDirection`](#view.EditorView.textDirection). Note that
     /// this may trigger a DOM layout.
-    textDirectionAt(pos: number) {
+    textDirectionAt(pos: number)
+    {
         let perLine = this.state.facet(perLineTextDirection)
         if (!perLine || pos < this.viewport.from || pos > this.viewport.to) return this.textDirection
         this.readMeasured()
@@ -802,7 +909,8 @@ export class EditorView {
     /// (as determined by the
     /// [`white-space`](https://developer.mozilla.org/en-US/docs/Web/CSS/white-space)
     /// CSS property of its content element).
-    get lineWrapping(): boolean { return this.viewState.heightOracle.lineWrapping }
+    get lineWrapping(): boolean
+    { return this.viewState.heightOracle.lineWrapping }
 
     /// Returns the bidirectional text structure of the given line
     /// (which should be in the current document) as an array of span
@@ -810,22 +918,25 @@ export class EditorView {
     /// direction](#view.EditorView.textDirection)—if that is
     /// left-to-right, the leftmost spans come first, otherwise the
     /// rightmost spans come first.
-    bidiSpans(line: Line) {
+    bidiSpans(line: Line)
+    {
         if (line.length > MaxBidiLine) return trivialOrder(line.length)
-        let dir = this.textDirectionAt(line.from), isolates: readonly Isolate[] | undefined
+        isolates: readonly Isolate[] | undefined
         for (let entry of this.bidiCache) {
-            if (entry.from == line.from && entry.dir == dir &&
-                (entry.fresh || isolatesEq(entry.isolates, isolates = getIsolatedRanges(this, line))))
-                return entry.order
-        }
+        if (entry.from == line.from && entry.dir == dir &&
+            (entry.fresh || isolatesEq(entry.isolates, isolates = getIsolatedRanges(this, line)))
+        )
+            return entry.order
+    }
         if (!isolates) isolates = getIsolatedRanges(this, line)
-        let order = computeOrder(line.text, dir, isolates)
-        this.bidiCache.push(new CachedOrder(line.from, line.to, dir, isolates, true, order))
+        isolates)
+        this.bidiCache.push(new CachedOrder (line.from, line.to, dir, isolates, true, order))
         return order
     }
 
     /// Check whether the editor has focus.
-    get hasFocus(): boolean {
+    get hasFocus(): boolean
+    {
         // Safari return false for hasFocus when the context menu is open
         // or closing, which leads us to ignore selection changes from the
         // context menu because it looks like the editor isn't focused.
@@ -835,7 +946,8 @@ export class EditorView {
     }
 
     /// Put focus on the editor.
-    focus() {
+    focus()
+    {
         this.observer.ignore(() => {
             focusPreventScroll(this.contentDOM)
             this.docView.updateSelection()
@@ -844,10 +956,11 @@ export class EditorView {
 
     /// Update the [root](##view.EditorViewConfig.root) in which the editor lives. This is only
     /// necessary when moving the editor's existing DOM to a new window or shadow root.
-    setRoot(root: Document | ShadowRoot) {
+    setRoot(root: Document | ShadowRoot)
+    {
         if (this._root != root) {
             this._root = root
-            this.observer.setWindow((root.nodeType == 9 ? root as Document : root.ownerDocument!).defaultView || window)
+            this.observer.setWindow((root.nodeType == 9 ? root as Document : root . ownerDocument !).defaultView || window)
             this.mountStyles()
         }
     }
@@ -856,7 +969,8 @@ export class EditorView {
     /// document, unregistering event handlers, and notifying
     /// plugins. The view instance can no longer be used after
     /// calling this.
-    destroy() {
+    destroy()
+    {
         if (this.root.activeElement == this.contentDOM) this.contentDOM.blur()
         for (let plugin of this.plugins) plugin.destroy(this)
         this.plugins = []
@@ -871,27 +985,30 @@ export class EditorView {
     /// Returns an effect that can be
     /// [added](#state.TransactionSpec.effects) to a transaction to
     /// cause it to scroll the given position or range into view.
-    static scrollIntoView(pos: number | SelectionRange, options: {
+    static scrollIntoView(pos: number | SelectionRange, options:
+    {
         /// By default (`"nearest"`) the position will be vertically
         /// scrolled only the minimal amount required to move the given
         /// position into view. You can set this to `"start"` to move it
         /// to the top of the view, `"end"` to move it to the bottom, or
         /// `"center"` to move it to the center.
-        y?: ScrollStrategy,
+        y ?: ScrollStrategy,
         /// Effect similar to
         /// [`y`](#view.EditorView^scrollIntoView^options.y), but for the
         /// horizontal scroll position.
-        x?: ScrollStrategy,
+        x ?: ScrollStrategy,
         /// Extra vertical distance to add when moving something into
         /// view. Not used with the `"center"` strategy. Defaults to 5.
         /// Must be less than the height of the editor.
-        yMargin?: number,
+        yMargin ?: number,
         /// Extra horizontal distance to add. Not used with the `"center"`
         /// strategy. Defaults to 5. Must be less than the width of the
         /// editor.
-        xMargin?: number,
-    } = {}): StateEffect<unknown> {
-        return scrollIntoView.of(new ScrollTarget(typeof pos == "number" ? EditorSelection.cursor(pos) : pos,
+        xMargin ?: number,
+    } =
+    {}): StateEffect<unknown>
+    {
+        return scrollIntoView.of(new ScrollTarget (typeof pos == "number" ? EditorSelection.cursor(pos) : pos,
         options.y, options.x, options.yMargin, options.xMargin))
     }
 
@@ -905,11 +1022,14 @@ export class EditorView {
     /// it was created for. Failing to do so is not an error, but may
     /// not scroll to the expected position. You can
     /// [map](#state.StateEffect.map) the effect to account for changes.
-    scrollSnapshot() {
-        let {scrollTop, scrollLeft} = this.scrollDOM
+    scrollSnapshot()
+    {
+        scrollLeft } = this.scrollDOM
         let ref = this.viewState.scrollAnchorAt(scrollTop)
-        return scrollIntoView.of(new ScrollTarget(EditorSelection.cursor(ref.from), "start", "start",
-            ref.top - scrollTop, scrollLeft, true))
+        return scrollIntoView.of(
+            new ScrollTarget (EditorSelection.cursor(ref.from), "start", "start",
+            ref.top - scrollTop, scrollLeft, true
+        ))
     }
 
     /// Enable or disable tab-focus mode, which disables key bindings
@@ -921,13 +1041,14 @@ export class EditorView {
     /// enables (true) or disables it (false). Given a number, it
     /// temporarily enables the mode until that number of milliseconds
     /// have passed or another non-Tab key is pressed.
-    setTabFocusMode(to?: boolean | number) {
+    setTabFocusMode(to?: boolean | number)
+    {
         if (to == null)
-            this.inputState.tabFocusMode = this.inputState.tabFocusMode < 0 ? 0 : -1
+            this.inputState.tabFocusMode = this.inputState.tabFocusMode < 0 ? 0 :-1
         else if (typeof to == "boolean")
-        this.inputState.tabFocusMode = to ? 0 : -1
+        this.inputState.tabFocusMode = to ? 0 :-1
         else if (this.inputState.tabFocusMode != 0)
-            this.inputState.tabFocusMode = Date.now() + to
+        this.inputState.tabFocusMode = Date.now() + to
     }
 
     /// Facet to add a [style
@@ -947,8 +1068,9 @@ export class EditorView {
     /// for `scroll` handlers, which will be called any time the
     /// editor's [scroll element](#view.EditorView.scrollDOM) or one of
     /// its parent nodes is scrolled.
-    static domEventHandlers(handlers: DOMEventHandlers<any>): Extension {
-        return ViewPlugin.define(() => ({}), {eventHandlers: handlers})
+    static domEventHandlers(handlers: DOMEventHandlers<any>): Extension
+    {
+        return ViewPlugin.define(() =>({}), { eventHandlers: handlers })
     }
 
     /// Create an extension that registers DOM event observers. Contrary
@@ -957,8 +1079,9 @@ export class EditorView {
     /// handler returning true. They also don't prevent other handlers
     /// and observers from running when they return true, and should not
     /// call `preventDefault`.
-    static domEventObservers(observers: DOMEventHandlers<any>): Extension {
-        return ViewPlugin.define(() => ({}), {eventObservers: observers})
+    static domEventObservers(observers: DOMEventHandlers<any>): Extension
+    {
+        return ViewPlugin.define(() =>({}), { eventObservers: observers })
     }
 
     /// An input handler can override the way changes to the editable
@@ -1043,7 +1166,7 @@ export class EditorView {
     /// decorations that cover line breaks.
     ///
     /// If you want decorated ranges to behave like atomic units for
-    /// cursor motion and deletion purposes, also provide the range set
+    /// cursor motion and dealso provide the range set
     /// containing the decorations to
     /// [`EditorView.atomicRanges`](#view.EditorView^atomicRanges).
     static decorations = decorations
@@ -1100,9 +1223,12 @@ export class EditorView {
     /// which will cause the `&dark` rules from [base
     /// themes](#view.EditorView^baseTheme) to be used (as opposed to
     /// `&light` when a light theme is active).
-    static theme(spec: {[selector: string]: StyleSpec}, options?: {dark?: boolean}): Extension {
-        let prefix = StyleModule.newName()
-        let result = [theme.of(prefix), styleModule.of(buildTheme(`.${prefix}`, spec))]
+    static theme(spec:
+    { [selector: string]: StyleSpec }, options?:
+    { dark ?: boolean }): Extension
+    {
+        let prefix = StyleModule . newName ()
+        spec))]
         if (options && options.dark) result.push(darkTheme.of(true))
         return result
     }
@@ -1118,14 +1244,17 @@ export class EditorView {
     /// place of the editor wrapper element when directly targeting
     /// that. You can also use `&dark` or `&light` instead to only
     /// target editors with a dark or light theme.
-    static baseTheme(spec: {[selector: string]: StyleSpec}): Extension {
+    static baseTheme(spec:
+    { [selector: string]: StyleSpec }): Extension
+    {
         return Prec.lowest(styleModule.of(buildTheme("." + baseThemeID, spec, lightDarkIDs)))
     }
 
     /// Provides a Content Security Policy nonce to use when creating
     /// the style sheets for the editor. Holds the empty string when no
     /// nonce has been provided.
-    static cspNonce = Facet.define<string, string>({combine: values => values.length ? values[0] : ""})
+    static cspNonce = Facet.define<string, string>(
+    { combine: values => values.length ? values[0] : "" })
 
     /// Facet that provides additional DOM attributes for the editor's
     /// editable DOM element.
@@ -1137,7 +1266,8 @@ export class EditorView {
 
     /// An extension that enables line wrapping in the editor (by
     /// setting CSS `white-space` to `pre-wrap` in the content).
-    static lineWrapping = EditorView.contentAttributes.of({"class": "cm-lineWrapping"})
+    static lineWrapping = EditorView.contentAttributes.of(
+    { "class": "cm-lineWrapping" })
 
     /// State effect used to include screen reader announcements in a
     /// transaction. These will be added to the DOM in a visually hidden
@@ -1149,9 +1279,10 @@ export class EditorView {
 
     /// Retrieve an editor view instance from the view's DOM
     /// representation.
-    static findFromDOM(dom: HTMLElement): EditorView | null {
-        let content = dom.querySelector(".cm-content")
-        let cView = content && ContentView.get(content) || ContentView.get(dom)
+    static findFromDOM(dom: HTMLElement): EditorView | null
+    {
+        let content = dom . querySelector (".cm-content")
+        let cView = content && ContentView . get (content) || ContentView.get(dom)
         return (cView?.rootView as DocView)?.view || null
     }
 }
@@ -1168,7 +1299,8 @@ export interface DOMEventMap extends HTMLElementEventMap {
 /// is inferred to `any`, and should be explicitly set if you want type
 /// checking.
 export type DOMEventHandlers<This> = {
-    [event in keyof DOMEventMap]?: (this: This, event: DOMEventMap[event], view: EditorView) => boolean | void
+    [event in keyof DOMEventMap]
+        ?: (this: This, event: DOMEventMap[event], view: EditorView) => boolean | void
 }
 
 // Maximum line length for which we compute accurate bidi info
@@ -1184,24 +1316,28 @@ class CachedOrder {
         readonly isolates: readonly Isolate[],
     readonly fresh: boolean,
     readonly order: readonly BidiSpan[]
-    ) {}
+    )
+    {}
 
-    static update(cache: CachedOrder[], changes: ChangeDesc) {
-        if (changes.empty && !cache.some(c => c.fresh)) return cache
-        let result = [], lastDir = cache.length ? cache[cache.length - 1].dir : Direction.LTR
-        for (let i = Math.max(0, cache.length - 10); i < cache.length; i++) {
-            let entry = cache[i]
-            if (entry.dir == lastDir && !changes.touchesRange(entry.from, entry.to))
-                result.push(new CachedOrder(changes.mapPos(entry.from, 1), changes.mapPos(entry.to, -1),
-                    entry.dir, entry.isolates, false, entry.order))
-        }
+    static update(cache: CachedOrder[], changes: ChangeDesc)
+    {
+        if (changes.empty && !cache.some(c => c . fresh)) return cache
+        lastDir = cache.length ? cache[cache.length-1].dir : Direction.LTR
+        for (cache.length - 10); i < cache.length; i++) {
+        let entry = cache [i]
+        if (entry.dir == lastDir && !changes.touchesRange(entry.from, entry.to))
+            result.push(
+                new CachedOrder (changes.mapPos(entry.from, 1), changes.mapPos(entry.to, -1),
+                entry.dir, entry.isolates, false, entry.order
+            ))
+    }
         return result
     }
 }
 
 function attrsFromFacet(view: EditorView, facet: Facet<AttrSource>, base: Attrs) {
-    for (let sources = view.state.facet(facet), i = sources.length - 1; i >= 0; i--) {
-        let source = sources[i], value = typeof source == "function" ? source(view) : source
+    for (i = sources.length-1; i >= 0; i--) {
+        value = typeof source == "function" ? source(view) : source
         if (value) combineAttrs(value, base)
     }
     return base

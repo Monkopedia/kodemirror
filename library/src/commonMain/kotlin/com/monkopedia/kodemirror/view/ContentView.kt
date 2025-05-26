@@ -1,302 +1,408 @@
 package com.monkopedia.kodemirror.view
 
-import {Text} from "@codemirror/state"
-import {Rect, maxOffset, domIndex} from "./dom"
-import {EditorView} from "./editorview"
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.KeyEvent
+import com.monkopedia.kodemirror.state.Text
+import com.monkopedia.kodemirror.util.check
+
+//import {Text} from "@codemirror/state"
+//import {Rect, maxOffset, domIndex} from "./dom"
+//import {EditorView} from "./editorview"
 
 // Track mutated / outdated status of a view node's DOM
-export const enum ViewFlag {
+enum class ViewFlag(val mask: Int) {
     // At least one child is dirty
-    ChildDirty = 1,
+    ChildDirty(1),
+
     // The node itself isn't in sync with its child list
-    NodeDirty = 2,
+    NodeDirty(2),
+
     // The node's DOM attributes might have changed
-    AttrsDirty = 4,
+    AttrsDirty(4),
+
     // Mask for all of the dirty flags
-    Dirty = 7,
+    Dirty(7),
+
     // Set temporarily during a doc view update on the nodes around the
     // composition
-    Composition = 8,
+    Composition(8),
 }
 
-export class DOMPos {
-    constructor(readonly node: Node, readonly offset: number, readonly precise = true) {}
+data class DOMPos(
+    val node: Node, val offset: Int, val precise: Boolean = true
+) {
 
-    static before(dom: Node, precise?: boolean) { return new DOMPos(dom.parentNode!, domIndex(dom), precise) }
-    static after(dom: Node, precise?: boolean) { return new DOMPos(dom.parentNode!, domIndex(dom) + 1, precise) }
+    companion object {
+        fun before(dom: Node, precise: Boolean = true): DOMPos {
+            return DOMPos(dom, domIndex(dom), precise)
+        }
+
+        fun after(dom: Node, precise: Boolean = true): DOMPos {
+            return DOMPos(dom, domIndex(dom) + 1, precise)
+        }
+    }
 }
 
-export const noChildren: ContentView[] = []
+val noChildren = emptyList<ContentView>()
 
-export abstract class ContentView {
-    parent: ContentView | null = null
-    dom: Node | null = null
-    flags: number = ViewFlag.NodeDirty
-    abstract length: number
-    abstract children: ContentView[]
-    breakAfter!: number
+abstract class ContentView {
+    var parent: ContentView? = null
+    var dom: HTMLElement? = null
+    var flags: Int = ViewFlag.NodeDirty.mask
+    abstract var length: Int
+    abstract val children: MutableList<ContentView>
+    open var breakAfter: Int = 0
 
-    get overrideDOMText(): Text | null { return null }
+    open val overrideDOMText: Text?
+        get() {
+            return null
+        }
 
-    get posAtStart(): number {
-        return this.parent ? this.parent.posBefore(this) : 0
-    }
+    val posAtStart: Int
+        get() {
+            return this.parent?.posBefore(this) ?: 0
+        }
 
-    get posAtEnd(): number {
-        return this.posAtStart + this.length
-    }
+    val posAtEnd: Int
+        get() {
+            return this.posAtStart + this.length
+        }
 
-    posBefore(view: ContentView): number {
-        let pos = this.posAtStart
-        for (let child of this.children) {
+    fun posBefore(view: ContentView): Int {
+        var pos = this.posAtStart
+        for (child in this.children) {
             if (child == view) return pos
             pos += child.length + child.breakAfter
         }
-        throw new RangeError("Invalid child in posBefore")
+        throw IllegalArgumentException("Invalid child in posBefore")
     }
 
-    posAfter(view: ContentView): number {
+    fun posAfter(view: ContentView): Int {
         return this.posBefore(view) + view.length
     }
 
     // Will return a rectangle directly before (when side < 0), after
     // (side > 0) or directly on (when the browser supports it) the
     // given position.
-    abstract coordsAt(_pos: number, _side: number): Rect | null
+    abstract fun coordsAt(_pos: Int, _side: Int): Rect?
 
-    sync(view: EditorView, track?: {node: Node, written: boolean}) {
-        if (this.flags & ViewFlag.NodeDirty) {
-            let parent = this.dom as HTMLElement
-            let prev: Node | null = null, next
-            for (let child of this.children) {
-            if (child.flags & ViewFlag.Dirty) {
-            if (!child.dom && (next = prev ? prev.nextSibling : parent.firstChild)) {
-            let contentView = ContentView.get(next)
-            if (!contentView || !contentView.parent && contentView.canReuseDOM(child))
-                child.reuseDOM(next)
-        }
-            child.sync(view, track)
-            child.flags &= ~ViewFlag.Dirty
-        }
-            next = prev ? prev.nextSibling : parent.firstChild
-            if (track && !track.written && track.node == parent && next != child.dom) track.written = true
-            if (child.dom!.parentNode == parent) {
-            while (next && next != child.dom) next = rm(next)
-        } else {
-            parent.insertBefore(child.dom!, next)
-        }
-            prev = child.dom!
-        }
-            next = prev ? prev.nextSibling : parent.firstChild
-            if (next && track && track.node == parent) track.written = true
-            while (next) next = rm(next)
-        } else if (this.flags & ViewFlag.ChildDirty) {
-            for (let child of this.children) if (child.flags & ViewFlag.Dirty) {
-            child.sync(view, track)
-            child.flags &= ~ViewFlag.Dirty
-        }
-        }
+    data class Track(
+        val node: Node,
+        var written: Boolean
+    )
+
+    open fun sync(view: EditorView, track: Track? = null) {
+//        if (this.flags check ViewFlag.NodeDirty.mask) {
+//            val parent = this.dom as Node
+//            var prev: Node? = null
+//            var next: Node?
+//            for (child in this.children) {
+//                if (child.flags check ViewFlag.Dirty.mask) {
+//                    next = prev?.nextSibling ?: parent.firstChild
+//                    if (child.dom != null && next != null) {
+//                        val contentView = ContentView.get(next)
+//                        if (!contentView || !contentView.parent && contentView.canReuseDOM(child)) {
+//                            child.reuseDOM(next)
+//                        }
+//                    }
+//                    child.sync(view, track)
+//                    child.flags & = ~ViewFlag.Dirty
+//                }
+//                next = prev?.nextSibling ?: parent.firstChild
+//                if (track != null && !track.written && track.node == parent && next != child.dom) {
+//                    track.written = true
+//                }
+//                if (child.dom!!.parentNode == parent) {
+//                    while (next && next != child.dom) next = rm(next)
+//                } else {
+//                    parent.insertBefore(child.dom!, next)
+//                }
+//                prev = child.dom!
+//            }
+//            next = prev ? prev.nextSibling : parent.firstChild
+//            if (next && track && track.node == parent) track.written = true
+//            while (next) next = rm(next)
+//        } else if (this.flags & ViewFlag.ChildDirty) {
+//            for (let child of this.children) if (child.flags & ViewFlag.Dirty) {
+//            child.sync(view, track)
+//            child.flags & = ~ViewFlag.Dirty
+//        }
+//        }
     }
 
-    reuseDOM(_dom: Node) {}
+    fun reuseDOM(_dom: Node) {}
 
-    abstract domAtPos(pos: number): DOMPos
+    abstract fun domAtPos(pos: Int): DOMPos
 
-    localPosFromDOM(node: Node, offset: number): number {
-        let after: Node | null
-        if (node == this.dom) {
-            after = this.dom.childNodes[offset]
-        } else {
-            let bias = maxOffset(node) == 0 ? 0 : offset == 0 ? -1 : 1
-            for (;;) {
-                let parent = node.parentNode!
-                if (parent == this.dom) break
-                if (bias == 0 && parent.firstChild != parent.lastChild) {
-                    if (node == parent.firstChild) bias = -1
-                    else bias = 1
-                }
-                node = parent
-            }
-            if (bias < 0) after = node
-            else after = node.nextSibling
-        }
-        if (after == this.dom!.firstChild) return 0
-        while (after && !ContentView.get(after)) after = after.nextSibling
-        if (!after) return this.length
-
-        for (let i = 0, pos = 0;; i++) {
-            let child = this.children[i]
-            if (child.dom == after) return pos
-            pos += child.length + child.breakAfter
-        }
+    fun localPosFromDOM(node: Node, offset: Int): Int {
+//        let after : Node | null
+//        if (node == this.dom) {
+//            after = this.dom.childNodes[offset]
+//        } else {
+//            let bias = maxOffset (node) == 0 ? 0 : offset == 0 ?-1 : 1
+//            for (;;) {
+//                let parent = node . parentNode !
+//                if (parent == this.dom) break
+//                if (bias == 0 && parent.firstChild != parent.lastChild) {
+//                    if (node == parent.firstChild) bias = -1
+//                    else bias = 1
+//                }
+//                node = parent
+//            }
+//            if (bias < 0) after = node
+//            else after = node.nextSibling
+//        }
+//        if (after == this.dom !. firstChild) return 0
+//        while (after && !ContentView.get(after)) after = after.nextSibling
+//        if (!after) return this.length
+//
+//        for (let i = 0, pos = 0;; i++) {
+//        let child = this.children[i]
+//        if (child.dom == after) return pos
+//        pos += child.length + child.breakAfter
+//    }
     }
 
-    domBoundsAround(from: number, to: number, offset = 0): {
-        startDOM: Node | null,
-        endDOM: Node | null,
-        from: number,
-        to: number
-    } | null {
-        let fromI = -1, fromStart = -1, toI = -1, toEnd = -1
-        for (let i = 0, pos = offset, prevEnd = offset; i < this.children.length; i++) {
-            let child = this.children[i], end = pos + child.length
-            if (pos < from && end > to) return child.domBoundsAround(from, to, pos)
-            if (end >= from && fromI == -1) {
-                fromI = i
-                fromStart = pos
-            }
-            if (pos > to && child.dom!.parentNode == this.dom) {
-            toI = i
-            toEnd = prevEnd
-            break
-        }
-            prevEnd = end
-            pos = end + child.breakAfter
-        }
+    data class DOMContext(
+        val startDOM: Node?,
+        val endDOM: Node?,
+        val from: Int,
+        val to: Int
+    )
 
-        return {from: fromStart, to: toEnd < 0 ? offset + this.length : toEnd,
-            startDOM: (fromI ? this.children[fromI - 1].dom!.nextSibling : null) || this.dom!.firstChild,
-            endDOM: toI < this.children.length && toI >= 0 ? this.children[toI].dom : null}
+    fun domBoundsAround(from: Int, to: Int, offset: Int = 0): DOMContext? {
+//        let fromI = - 1, fromStart = -1, toI = -1, toEnd = -1
+//        for (let i = 0, pos = offset, prevEnd = offset; i < this.children.length; i++) {
+//        let child = this.children[i], end = pos+child.length
+//        if (pos < from && end > to) return child.domBoundsAround(from, to, pos)
+//        if (end >= from && fromI == -1) {
+//            fromI = i
+//            fromStart = pos
+//        }
+//        if (pos > to && child.dom !. parentNode == this.dom) {
+//        toI = i
+//        toEnd = prevEnd
+//        break
+//    }
+//        prevEnd = end
+//        pos = end + child.breakAfter
+//    }
+//
+//        return {
+//            from: fromStart, to: toEnd < 0 ? offset+this.length : toEnd,
+//            startDOM: (fromI ? this.children[fromI-1].dom!.nextSibling : null) || this.dom!.firstChild,
+//            endDOM: toI < this.children.length && toI >= 0 ? this.children[toI].dom : null
+//        }
     }
 
-    markDirty(andParent: boolean = false) {
-        this.flags |= ViewFlag.NodeDirty
+    fun markDirty(andParent: Boolean = false) {
+        this.flags = this.flags or ViewFlag.NodeDirty.mask
         this.markParentsDirty(andParent)
     }
 
-    markParentsDirty(childList: boolean) {
-        for (let parent = this.parent; parent; parent = parent.parent) {
-            if (childList) parent.flags |= ViewFlag.NodeDirty
-            if (parent.flags & ViewFlag.ChildDirty) return
-            parent.flags |= ViewFlag.ChildDirty
+    fun markParentsDirty(startChild: Boolean) {
+        var parent = this.parent
+        var childList = startChild
+        while (parent != null) {
+            if (childList) parent.flags = parent.flags or ViewFlag.NodeDirty.mask
+            if (parent.flags check ViewFlag.ChildDirty.mask) return
+            parent.flags = parent.flags or ViewFlag.ChildDirty.mask
             childList = false
+            parent = parent.parent
         }
     }
 
-    setParent(parent: ContentView) {
+    fun setParent(parent: ContentView) {
         if (this.parent != parent) {
             this.parent = parent
-            if (this.flags & ViewFlag.Dirty) this.markParentsDirty(true)
+            if (this.flags check ViewFlag.Dirty.mask) this.markParentsDirty(true)
         }
     }
 
-    setDOM(dom: Node) {
+    fun setDOM(dom: Node) {
         if (this.dom == dom) return
-        if (this.dom) (this.dom as any).cmView = null
+        // TODO: Lookup
+//        if (this.dom) (this.dom as any).cmView = null
         this.dom = dom
-        ;(dom as any).cmView = this
+//        ;(dom as any).cmView = this
     }
 
-    get rootView(): ContentView {
-        for (let v: ContentView = this;;) {
-            let parent = v.parent
-                if (!parent) return v
-            v = parent
+    val rootView: ContentView
+        get() {
+            var v: ContentView = this
+            while (true) {
+                val parent = v.parent
+                if (parent == null) return v
+                v = parent
+            }
         }
-    }
 
-    replaceChildren(from: number, to: number, children: ContentView[] = noChildren) {
+    fun replaceChildren(from: Int, to: Int, children: List<ContentView> = noChildren) {
         this.markDirty()
-        for (let i = from; i < to; i++) {
-            let child = this.children[i]
+        for (i in from until to) {
+            val child = this.children[from]
             if (child.parent == this && children.indexOf(child) < 0) child.destroy()
+            this.children.remove(child)
         }
-        if (children.length < 250) this.children.splice(from, to - from, ...children)
-        else this.children = ([] as ContentView[]).concat(this.children.slice(0, from), children, this.children.slice(to))
-        for (let i = 0; i < children.length; i++) children[i].setParent(this)
+        this.children.addAll(children)
+        children.forEach { it.setParent(this) }
+//        if (children.size < 250) {
+//            this.children
+//            this.children.splice(from, to - from, ... children
+//        }
+//        else this.children =
+//            ([] as ContentView[]).concat(this.children.slice(0, from), children, this.children.slice(to))
+//        for (let i = 0; i < children.length; i++) children[i].setParent(this)
     }
 
-    ignoreMutation(_rec: MutationRecord): boolean { return false }
-    ignoreEvent(_event: Event): boolean { return false }
-
-    childCursor(pos: number = this.length) {
-        return new ChildCursor(this.children, pos, this.children.length)
-    }
-
-    childPos(pos: number, bias: number = 1): {i: number, off: number} {
-        return this.childCursor().findPos(pos, bias)
-    }
-
-    toString() {
-        let name = this.constructor.name.replace("View", "")
-        return name + (this.children.length ? "(" + this.children.join() + ")" :
-        this.length ? "[" + (name == "Text" ? (this as any).text : this.length) + "]" : "") +
-        (this.breakAfter ? "#" : "")
-    }
-
-    static get(node: Node): ContentView | null { return (node as any).cmView }
-
-    get isEditable() { return true }
-
-    get isWidget() { return false }
-
-    get isHidden() { return false }
-
-    merge(from: number, to: number, source: ContentView | null, hasStart: boolean, openStart: number, openEnd: number): boolean {
+    open fun ignoreMutation(_rec: MutationRecord): Boolean {
         return false
     }
 
-    become(other: ContentView): boolean { return false }
-
-    canReuseDOM(other: ContentView) {
-        return other.constructor == this.constructor && !((this.flags | other.flags) & ViewFlag.Composition)
+    open fun ignoreEvent(_event: KeyEvent): Boolean {
+        return false
     }
 
-    abstract split(at: number): ContentView
+    fun childCursor(pos: Int = this.length): ChildCursor {
+        return ChildCursor(this.children, pos, this.children.size)
+    }
+
+    fun childPos(pos: Int, bias: Int = 1): ChildCursor {
+        return this.childCursor().findPos(pos, bias)
+    }
+
+    override fun toString(): String {
+        val name = this::class.simpleName.toString().replace("View", "")
+        return name + (
+            when {
+                this.children.isNotEmpty() -> "(" + this.children.joinToString() + ")"
+                this.length != 0 -> "[${this.length}]"
+//                "[" + (if (name == "Text") (this as Any).text else this.length) + "]"
+                else -> ""
+            }) +
+            (if (this.breakAfter != 0) "#" else "")
+    }
+
+    open val isEditable: Boolean
+        get() {
+            return true
+        }
+
+    open val isWidget: Boolean
+    get() { return false }
+
+    open val isHidden: Boolean
+        get() {
+            return false
+        }
+
+    open fun merge(
+        from: Int,
+        to: Int,
+        source: ContentView?,
+        hasStart: Boolean,
+        openStart: Int,
+        openEnd: Int
+    ): Boolean {
+        return false
+    }
+
+    open fun become(other: ContentView): Boolean {
+        return false
+    }
+
+    open fun canReuseDOM(other: ContentView): Boolean {
+        return this::class == other::class &&
+            !((this.flags or other.flags) check ViewFlag.Composition.mask)
+    }
+
+    abstract fun split(at: Int): ContentView
 
     // When this is a zero-length view with a side, this should return a
     // number <= 0 to indicate it is before its position, or a
     // number > 0 when after its position.
-    getSide() { return 0 }
+    open fun getSide(): Int {
+        return 0
+    }
 
-    destroy() {
-        for (let child of this.children) if (child.parent == this) child.destroy()
+    open fun destroy() {
+        for (child in this.children) {
+            if (child.parent == this) child.destroy()
+        }
         this.parent = null
+    }
+
+    companion object {
+        fun get(node: Node): ContentView? {
+//            return (node as any).cmView
+        }
     }
 }
 
-ContentView.prototype.breakAfter = 0
-
 // Remove a DOM node and return its next sibling.
-function rm(dom: Node): Node | null {
-    let next = dom.nextSibling
-        dom.parentNode!.removeChild(dom)
-    return next
+fun rm(dom: Node): Node? {
+//    let next = dom . nextSibling
+//        dom.parentNode!.removeChild(dom)
+//    return next
 }
 
-export class ChildCursor {
-    off: number = 0
+data class ChildCursor(
+    val children: List<ContentView>,
+    var pos: Int,
+    var i: Int,
+    var off: Int = 0
+) {
 
-    constructor(public children: readonly ContentView[], public pos: number, public i: number) {}
-
-    findPos(pos: number, bias: number = 1): this {
-        for (;;) {
+    fun findPos(pos: Int, bias: Int = 1): ChildCursor = apply {
+        while (true) {
             if (pos > this.pos || pos == this.pos &&
-                (bias > 0 || this.i == 0 || this.children[this.i - 1].breakAfter)) {
+                (bias > 0 || this.i == 0 || this.children[this.i - 1].breakAfter != 0)
+            ) {
                 this.off = pos - this.pos
                 return this
             }
-            let next = this.children[--this.i]
+            val next = this.children[--this.i]
             this.pos -= next.length + next.breakAfter
         }
     }
 }
 
-export function replaceRange(parent: ContentView, fromI: number, fromOff: number, toI: number, toOff: number,
-insert: ContentView[], breakAtStart: number, openStart: number, openEnd: number) {
-    let {children} = parent
-    let before = children.length ? children[fromI] : null
-    let last = insert.length ? insert[insert.length - 1] : null
-    let breakAtEnd = last ? last.breakAfter : breakAtStart
-        // Change within a single child
-        if (fromI == toI && before && !breakAtStart && !breakAtEnd && insert.length < 2 &&
-            before.merge(fromOff, toOff, insert.length ? last : null, fromOff == 0, openStart, openEnd))
-    return
+fun replaceRange(
+    parent: ContentView,
+    fromI: Int,
+    fromOff: Int,
+    toI: Int,
+    toOff: Int,
+    insert: MutableList<ContentView>,
+    breakAtStart: Int,
+    openStart: Int,
+    openEnd: Int
+) {
+    val children = parent.children
+    val before = children.getOrNull(fromI)
+    val last = insert.lastOrNull()
+    var openStart = openStart
+    var openEnd = openEnd
+    var toI = toI
+    var fromI = fromI
+    var breakAtStart = breakAtStart
+    val breakAtEnd = last?.breakAfter ?: breakAtStart
+    var toOff = toOff
+    // Change within a single child
+    if (fromI == toI &&
+        before != null &&
+        breakAtStart == 0 &&
+        breakAtEnd == 0 &&
+        insert.size < 2 &&
+        before.merge(fromOff, toOff, last, fromOff == 0, openStart, openEnd)
+    ) {
+        return
+    }
 
-    if (toI < children.length) {
-        let after = children[toI]
+    if (toI < children.size) {
+        var after = children[toI]
         // Make sure the end of the child after the update is preserved in `after`
-        if (after && (toOff < after.length || after.breakAfter && last?.breakAfter)) {
+        if ((toOff < after.length || after.breakAfter != 0 && (last?.breakAfter ?: 0) != 0)) {
             // If we're splitting a child, separate part of it to avoid that
             // being mangled when updating the child before the update.
             if (fromI == toI) {
@@ -305,18 +411,20 @@ insert: ContentView[], breakAtStart: number, openStart: number, openEnd: number)
             }
             // If the element after the replacement should be merged with
             // the last replacing element, update `content`
-            if (!breakAtEnd && last && after.merge(0, toOff, last, true, 0, openEnd)) {
-                insert[insert.length - 1] = after
+            if (breakAtEnd == 0 && last != null && after.merge(0, toOff, last, true, 0, openEnd)) {
+                insert[insert.size - 1] = after
             } else {
                 // Remove the start of the after element, if necessary, and
                 // add it to `content`.
-                if (toOff || after.children.length && !after.children[0].length) after.merge(0, toOff, null, false, 0, openEnd)
-                insert.push(after)
+                if (toOff != 0 || after.children.isNotEmpty() && after.children[0].length != 0) {
+                    after.merge(0, toOff, null, false, 0, openEnd)
+                }
+                insert.add(after)
             }
-        } else if (after?.breakAfter) {
+        } else if (after.breakAfter != 0) {
             // The element at `toI` is entirely covered by this range.
             // Preserve its line break, if any.
-            if (last) last.breakAfter = 1
+            if (last != null) last.breakAfter = 1
             else breakAtStart = 1
         }
         // Since we've handled the next element from the current elements
@@ -324,12 +432,15 @@ insert: ContentView[], breakAtStart: number, openStart: number, openEnd: number)
         toI++
     }
 
-    if (before) {
+    if (before != null) {
         before.breakAfter = breakAtStart
         if (fromOff > 0) {
-            if (!breakAtStart && insert.length && before.merge(fromOff, before.length, insert[0], false, openStart, 0)) {
-                before.breakAfter = insert.shift()!.breakAfter
-            } else if (fromOff < before.length || before.children.length && before.children[before.children.length - 1].length == 0) {
+            if (breakAtStart == 0 &&
+                insert.isNotEmpty() &&
+                before.merge(fromOff, before.length, insert[0], false, openStart, 0)
+            ) {
+                before.breakAfter = insert.removeFirst().breakAfter
+            } else if (fromOff < before.length || before.children.isNotEmpty() && before.children.last().length == 0) {
                 before.merge(fromOff, before.length, null, false, openStart, 0)
             }
             fromI++
@@ -337,33 +448,38 @@ insert: ContentView[], breakAtStart: number, openStart: number, openEnd: number)
     }
 
     // Try to merge widgets on the boundaries of the replacement
-    while (fromI < toI && insert.length) {
-        if (children[toI - 1].become(insert[insert.length - 1])) {
+    while (fromI < toI && insert.isNotEmpty()) {
+        if (children[toI - 1].become(insert.last())) {
             toI--
-            insert.pop()
-            openEnd = insert.length ? 0 : openStart
+            insert.removeLast()
+            openEnd = if (insert.isNotEmpty()) 0 else openStart
         } else if (children[fromI].become(insert[0])) {
             fromI++
-            insert.shift()
-            openStart = insert.length ? 0 : openEnd
+            insert.removeFirst()
+            openStart = if (insert.isNotEmpty()) 0 else openEnd
         } else {
             break
         }
     }
-    if (!insert.length && fromI && toI < children.length && !children[fromI - 1].breakAfter &&
-        children[toI].merge(0, 0, children[fromI - 1], false, openStart, openEnd))
+    if (insert.isEmpty() &&
+        fromI != 0 &&
+        toI < children.size &&
+        children[fromI - 1].breakAfter == 0 &&
+        children[toI].merge(0, 0, children[fromI - 1], false, openStart, openEnd) ) {
         fromI--
+    }
 
-    if (fromI < toI || insert.length) parent.replaceChildren(fromI, toI, insert)
+    if (fromI < toI || insert.isNotEmpty()) {
+        parent.replaceChildren(fromI, toI, insert)
+    }
 }
 
-export function mergeChildrenInto(parent: ContentView, from: number, to: number,
-insert: ContentView[], openStart: number, openEnd: number) {
-    let cur = parent.childCursor()
-    let {i: toI, off: toOff} = cur.findPos(to, 1)
-    let {i: fromI, off: fromOff} = cur.findPos(from, -1)
-    let dLen = from - to
-    for (let view of insert) dLen += view.length
+fun mergeChildrenInto(parent: ContentView, from: Int, to: Int, insert: MutableList<ContentView>, openStart: Int, openEnd: Int) {
+    val cur = parent . childCursor ()
+    val (_, _, toI, toOff ) = cur.findPos(to, 1)
+    val (_, _,  fromI,  fromOff ) = cur.findPos(from, -1)
+    var dLen = from -to
+    for (view in insert) dLen += view.length
     parent.length += dLen
 
     replaceRange(parent, fromI, fromOff, toI, toOff, insert, 0, openStart, openEnd)

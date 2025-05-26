@@ -169,7 +169,7 @@ abstract class WidgetType {
     // / Can be used to configure which kinds of events inside the widget
     // / should be ignored by the editor. The default is to ignore all
     // / events.
-    fun ignoreEvent(event: Interaction): Boolean = true
+    open fun ignoreEvent(event: Interaction): Boolean = true
 
     // / Override the way screen coordinates for positions at/in the
     // / widget are found. `pos` will be the offset into the widget, and

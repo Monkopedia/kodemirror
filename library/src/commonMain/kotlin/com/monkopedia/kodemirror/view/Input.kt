@@ -1,125 +1,151 @@
 package com.monkopedia.kodemirror.view
 
-import {EditorSelection, EditorState, SelectionRange, RangeSet, Annotation, Text, Facet} from "@codemirror/state"
-import {EditorView} from "./editorview"
-import {ContentView} from "./contentview"
-import {LineView} from "./blockview"
-import {ViewUpdate, PluginValue, clickAddsSelectionRange, dragMovesSelection as dragBehavior, atomicRanges,
-logException, mouseSelectionStyle, PluginInstance, focusChangeEffect, getScrollMargins,
-clipboardInputFilter, clipboardOutputFilter} from "./extension"
-import browser from "./browser"
-import {groupAt, skipAtomicRanges} from "./cursor"
-import {getSelection, focusPreventScroll, Rect, dispatchKey, scrollableParents} from "./dom"
-import {applyDOMChangeInner} from "./domchange"
+import androidx.compose.ui.input.key.KeyEvent
+import com.monkopedia.kodemirror.state.EditorSelection
+import com.monkopedia.kodemirror.state.EditorState
+import com.monkopedia.kodemirror.state.SingleOrList.Companion.list
+import com.monkopedia.kodemirror.state.StateEffect
+import com.monkopedia.kodemirror.state.Transaction
+import kotlinx.datetime.Clock
 
-export class InputState {
-    lastKeyCode: number = 0
-    lastKeyTime: number = 0
-    lastTouchTime = 0
-    lastFocusTime = 0
-    lastScrollTop = 0
-    lastScrollLeft = 0
+//import {EditorSelection, EditorState, SelectionRange, RangeSet, Annotation, Text, Facet} from "@codemirror/state"
+//import {EditorView} from "./editorview"
+//import {ContentView} from "./contentview"
+//import {LineView} from "./blockview"
+//import {ViewUpdate, PluginValue, clickAddsSelectionRange, dragMovesSelection as dragBehavior, atomicRanges,
+//logException, mouseSelectionStyle, PluginInstance, focusChangeEffect, getScrollMargins,
+//clipboardInputFilter, clipboardOutputFilter} from "./extension"
+//import browser from "./browser"
+//import {groupAt, skipAtomicRanges} from "./cursor"
+//import {getSelection, focusPreventScroll, Rect, dispatchKey, scrollableParents} from "./dom"
+//import {applyDOMChangeInner} from "./domchange"
+
+class InputState(val view: EditorView) {
+    var lastKeyCode: Int = 0
+    var lastKeyTime: Int = 0
+    var lastTouchTime = 0
+    var lastFocusTime = 0
+    var lastScrollTop = 0
+    var lastScrollLeft = 0
 
     // On iOS, some keys need to have their default behavior happen
     // (after which we retroactively handle them and reset the DOM) to
     // avoid messing up the virtual keyboard state.
-    pendingIOSKey: undefined | {key: string, keyCode: number} | KeyboardEvent = undefined
+    // TODO: iOS Handling
+//    var pendingIOSKey: undefined | {key: String, keyCode: Int} | KeyboardEvent = undefined
 
     /// When enabled (>-1), tab presses are not given to key handlers,
     /// leaving the browser's default behavior. If >0, the mode expires
     /// at that timestamp, and any other keypress clears it.
     /// Esc enables temporary tab focus mode for two seconds when not
     /// otherwise handled.
-    tabFocusMode: number = -1
+    var tabFocusMode: Int = -1
 
-    lastSelectionOrigin: string | null = null
-    lastSelectionTime: number = 0
-    lastContextMenu: number = 0
-    scrollHandlers: ((event: Event) => boolean | void)[] = []
+    var lastSelectionOrigin: String? = null
+    var lastSelectionTime: Long = 0L
+    var lastContextMenu: Int = 0
+    var scrollHandlers = mutableListOf<((event: KeyEvent) -> Boolean?)>()
 
-    handlers: {[event: string]: {
-        observers: readonly HandlerFunction[],
-        handlers: readonly HandlerFunction[]
-    }} = Object.create(null)
+    data class Handlers(
+        val observers: List<HandlerFunction>,
+        val handlers: List<HandlerFunction>
+    )
 
-    // -1 means not in a composition. Otherwise, this counts the number
+    var handlers = mutableMapOf<String, Handlers>()
+
+    // -1 means not in a composition. Otherwise, this counts the Int
     // of changes made during the composition. The count is used to
     // avoid treating the start state of the composition, before any
     // changes have been made, as part of the composition.
-    composing = -1
+    var composing = -1
+
     // Tracks whether the next change should be marked as starting the
     // composition (null means no composition, true means next is the
     // first, false means first has already been marked for this
     // composition)
-    compositionFirstChange: boolean | null = null
+    var compositionFirstChange: Boolean? = null
+
     // End time of the previous composition
-    compositionEndedAt = 0
+    var compositionEndedAt = 0
+
     // Used in a kludge to detect when an Enter keypress should be
     // considered part of the composition on Safari, which fires events
     // in the wrong order
-    compositionPendingKey = false
+    var compositionPendingKey = false
+
     // Used to categorize changes as part of a composition, even when
     // the mutation events fire shortly after the compositionend event
-    compositionPendingChange = false
+    var compositionPendingChange = false
 
-    mouseSelection: MouseSelection | null = null
+    var mouseSelection: MouseSelection? = null
+
     // When a drag from the editor is active, this points at the range
     // being dragged.
-    draggedContent: SelectionRange | null = null
+    var draggedContent: SelectionRange? = null
 
-    notifiedFocused: boolean
+    var notifiedFocused: Boolean = view.hasFocus
 
-    setSelectionOrigin(origin: string) {
+    fun setSelectionOrigin(origin: String) {
         this.lastSelectionOrigin = origin
-        this.lastSelectionTime = Date.now()
+        this.lastSelectionTime = Clock.System.now().toEpochMilliseconds()
     }
+    // TODO: Handle event binding
+//    this.handleEvent = this.handleEvent.bind(this)
 
-    constructor(readonly view: EditorView) {
-        this.handleEvent = this.handleEvent.bind(this)
-        this.notifiedFocused = view.hasFocus
+    init {
         // On Safari adding an input event handler somehow prevents an
         // issue where the composition vanishes when you press enter.
-        if (browser.safari) view.contentDOM.addEventListener("input", () => null)
-        if (browser.gecko) firefoxCopyCutHack(view.contentDOM.ownerDocument)
+        // TODO: Check if browser handling needed?
+//        if (browser.safari) view.contentDOM.addEventListener("input", () => null)
+//        if (browser.gecko) firefoxCopyCutHack(view.contentDOM.ownerDocument)
     }
 
-    handleEvent(event: Event) {
+    fun handleEvent(event: KeyEvent) {
         if (!eventBelongsToEditor(this.view, event) || this.ignoreDuringComposition(event)) return
         if (event.type == "keydown" && this.keydown(event as KeyboardEvent)) return
         this.runHandlers(event.type, event)
     }
 
-    runHandlers(type: string, event: Event) {
-        let handlers = this.handlers[type]
-        if (handlers) {
-            for (let observer of handlers.observers) observer(this.view, event)
-            for (let handler of handlers.handlers) {
-                if (event.defaultPrevented) break
-                if (handler(this.view, event)) { event.preventDefault(); break }
+    fun runHandlers(type: String, event: KeyEvent) {
+        val handlers = this.handlers[type] ?: return
+        for (observer in handlers.observers) observer(this.view, event)
+        for (handler in handlers.handlers) {
+//            if (event.defaultPrevented) break
+            if (handler(this.view, event) == true) {
+//                event.preventDefault();
+                return
             }
         }
     }
 
-    ensureHandlers(plugins: readonly PluginInstance[]) {
-        let handlers = computeHandlers(plugins), prev = this.handlers, dom = this.view.contentDOM
-        for (let type in handlers) if (type != "scroll") {
-            let passive = !handlers[type].handlers.length
-            let exists: (typeof prev)["type"] | null = prev[type]
-            if (exists && passive != !exists.handlers.length) {
-                dom.removeEventListener(type, this.handleEvent)
-                exists = null
+    fun ensureHandlers(plugins: List<PluginInstance>) {
+        val handlers = computeHandlers(plugins)
+        val prev = this.handlers
+        val dom = this.view.contentDOM
+        for (type in handlers) {
+            if (type != "scroll") {
+                val passive = handlers[type].handlers.isEmpty()
+//                val exists :(typeof prev)["type"] ? = prev[type]
+                var exists = prev[type]
+                if (exists != null && passive != exists.handlers.isEmpty()) {
+//                    dom.removeEventListener(type, this.handleEvent)
+                    exists = null
+                }
+//                if (exists == null) dom.addEventListener(type, this.handleEvent, { passive })
             }
-            if (!exists) dom.addEventListener(type, this.handleEvent, {passive})
         }
-        for (let type in prev) if (type != "scroll" && !handlers[type])
-        dom.removeEventListener(type, this.handleEvent)
+        for (type in prev.keys) {
+            if (type != "scroll" && handlers[type] == null) {
+//                dom.removeEventListener(type, this.handleEvent)
+            }
+        }
         this.handlers = handlers
     }
 
-    keydown(event: KeyboardEvent) {
+    fun keydown(event: KeyEvent) {
         // Must always run, even if a custom handler handled the event
         this.lastKeyCode = event.keyCode
-        this.lastKeyTime = Date.now()
+        this.lastKeyTime = Clock.System.now().toEpochMilliseconds()
 
         if (event.keyCode == 9 && this.tabFocusMode > -1 && (!this.tabFocusMode || Date.now() <= this.tabFocusMode))
             return true
@@ -132,7 +158,8 @@ export class InputState {
         // seen, hold off on handling DOM events for a bit, and then
         // dispatch it.
         if (browser.android && browser.chrome && !(event as any).synthetic &&
-            (event.keyCode == 13 || event.keyCode == 8)) {
+            (event.keyCode == 13 || event.keyCode == 8)
+        ) {
             this.view.observer.delayAndroidKey(event.key, event.keyCode)
             return true
         }
@@ -143,8 +170,10 @@ export class InputState {
         // the state they produce.
         let pending
             if (browser.ios && !(event as any).synthetic && !event.altKey && !event.metaKey &&
-                ((pending = PendingKeys.find(key => key.keyCode == event.keyCode)) && !event.ctrlKey ||
-                EmacsyPendingKeys.indexOf(event.key) > -1 && event.ctrlKey && !event.shiftKey)) {
+                ((pending =
+                    PendingKeys.find(key => key . keyCode == event . keyCode)) && !event.ctrlKey ||
+                EmacsyPendingKeys.indexOf(event.key) > -1 && event.ctrlKey && !event.shiftKey
+            )) {
             this.pendingIOSKey = pending || event
             setTimeout(() => this.flushIOSKey(), 250)
             return true
@@ -153,16 +182,23 @@ export class InputState {
         return false
     }
 
-    flushIOSKey(change?: {from: number, to: number, insert: Text}) {
+    flushIOSKey(change?:
+    { from: Int, to: Int, insert: Text })
+    {
         let key = this.pendingIOSKey
         if (!key) return false
         // This looks like an autocorrection before Enter
         if (key.key == "Enter" && change && change.from < change.to && /^\S+$/.test(change.insert.toString())) return false
         this.pendingIOSKey = undefined
-        return dispatchKey(this.view.contentDOM, key.key, key.keyCode, key instanceof KeyboardEvent ? key : undefined)
+        return dispatchKey(
+            this.view.contentDOM,
+            key.key,
+            key.keyCode,
+            key instanceof KeyboardEvent ? key : undefined)
     }
 
-    ignoreDuringComposition(event: Event): boolean {
+    ignoreDuringComposition(event: Event): Boolean
+    {
         if (!/^key/.test(event.type)) return false
         if (this.composing > 0) return true
         // See https://www.stum.de/2016/06/24/handling-ime-events-in-javascript/.
@@ -178,28 +214,32 @@ export class InputState {
         return false
     }
 
-    startMouseSelection(mouseSelection: MouseSelection) {
+    startMouseSelection(mouseSelection: MouseSelection)
+    {
         if (this.mouseSelection) this.mouseSelection.destroy()
         this.mouseSelection = mouseSelection
     }
 
-    update(update: ViewUpdate) {
+    update(update: ViewUpdate)
+    {
         this.view.observer.update(update)
         if (this.mouseSelection) this.mouseSelection.update(update)
-        if (this.draggedContent && update.docChanged) this.draggedContent = this.draggedContent.map(update.changes)
+        if (this.draggedContent && update.docChanged) this.draggedContent =
+            this.draggedContent.map(update.changes)
         if (update.transactions.length) this.lastKeyCode = this.lastSelectionTime = 0
     }
 
-    destroy() {
+    destroy()
+    {
         if (this.mouseSelection) this.mouseSelection.destroy()
     }
 }
 
-type HandlerFunction = (view: EditorView, event: Event) => boolean | void
+typealias HandlerFunction = (view: EditorView, event: KeyEvent) -> Boolean?
 
-function bindHandler(
-plugin: PluginValue,
-handler: (this: PluginValue, event: Event, view: EditorView) => boolean | void
+fun bindHandler(
+    plugin: PluginValue,
+    handler: (value: PluginValue, event: KeyEvent, view: EditorView) -> Boolean?
 ): HandlerFunction {
     return (view, event) => {
         try {
@@ -211,21 +251,23 @@ handler: (this: PluginValue, event: Event, view: EditorView) => boolean | void
 }
 
 function computeHandlers(plugins: readonly PluginInstance[]) {
-    let result: {[event: string]: {
+    let result : {
+        [event: String]: {
         observers: HandlerFunction[],
         handlers: HandlerFunction[]
-    }} = Object.create(null)
-    function record(type: string) {
-        return result[type] || (result[type] = {observers: [], handlers: []})
+    }
+    } = Object.create(null)
+    function record (type: String) {
+        return result[type] || (result[type] = { observers: [], handlers: [] })
     }
     for (let plugin of plugins) {
-        let spec = plugin.spec
+        let spec = plugin . spec
             if (spec && spec.domEventHandlers) for (let type in spec.domEventHandlers) {
-        let f = spec.domEventHandlers[type]
+        let f = spec . domEventHandlers [type]
         if (f) record(type).handlers.push(bindHandler(plugin.value!, f))
     }
         if (spec && spec.domEventObservers) for (let type in spec.domEventObservers) {
-        let f = spec.domEventObservers[type]
+        let f = spec . domEventObservers [type]
         if (f) record(type).observers.push(bindHandler(plugin.value!, f))
     }
     }
@@ -235,10 +277,10 @@ function computeHandlers(plugins: readonly PluginInstance[]) {
 }
 
 const PendingKeys = [
-{key: "Backspace", keyCode: 8, inputType: "deleteContentBackward"},
-{key: "Enter", keyCode: 13, inputType: "insertParagraph"},
-{key: "Enter", keyCode: 13, inputType: "insertLineBreak"},
-{key: "Delete", keyCode: 46, inputType: "deleteContentForward"}
+{ key: "Backspace", keyCode: 8, inputType: "deleteContentBackward" },
+{ key: "Enter", keyCode: 13, inputType: "insertParagraph" },
+{ key: "Enter", keyCode: 13, inputType: "insertLineBreak" },
+{ key: "Delete", keyCode: 46, inputType: "deleteContentForward" }
 ]
 
 const EmacsyPendingKeys = "dthko"
@@ -251,7 +293,7 @@ const dragScrollMargin = 6
 /// Interface that objects registered with
 /// [`EditorView.mouseSelectionStyle`](#view.EditorView^mouseSelectionStyle)
 /// must conform to.
-export interface MouseSelectionStyle {
+interface MouseSelectionStyle {
     /// Return a new selection for the mouse gesture that starts with
     /// the event that was originally given to the constructor, and ends
     /// with the event passed here. In case of a plain click, those may
@@ -261,7 +303,7 @@ export interface MouseSelectionStyle {
     /// When `extend` is true, that means the new selection should, if
     /// possible, extend the start selection. If `multiple` is true, the
     /// new selection should be added to the original selection.
-    get: (curEvent: MouseEvent, extend: boolean, multiple: boolean) => EditorSelection
+    fun get(curEvent: MouseEvent, extend: Boolean, multiple: Boolean) : EditorSelection
     /// Called when the view is updated while the gesture is in
     /// progress. When the document changes, it may be necessary to map
     /// some data (like the original selection or start position)
@@ -272,12 +314,12 @@ export interface MouseSelectionStyle {
     /// update could change its result. Be wary of infinite loops when
     /// using this (where `get` returns a new selection, which will
     /// trigger `update`, which schedules another `get` in response).
-    update: (update: ViewUpdate) => boolean | void
+    fun update(update: ViewUpdate) : Boolean?
 }
 
-export type MakeSelectionStyle = (view: EditorView, event: MouseEvent) => MouseSelectionStyle | null
+export type MakeSelectionStyle = (view: EditorView, event: MouseEvent) => MouseSelectionStyle ?
 
-function dragScrollSpeed(dist: number) {
+function dragScrollSpeed(dist: Int) {
     return Math.max(0, dist) * 0.7 + 8
 }
 
@@ -286,47 +328,57 @@ function dist(a: MouseEvent, b: MouseEvent) {
 }
 
 class MouseSelection {
-    dragging: null | boolean
-    extend: boolean
-    multiple: boolean
+    dragging: null | Boolean
+    extend: Boolean
+    multiple: Boolean
     lastEvent: MouseEvent
-    scrollParents: {x?: HTMLElement, y?: HTMLElement}
-    scrollSpeed = {x: 0, y: 0}
+    scrollParents:
+    { x ?: HTMLElement, y ?: HTMLElement }
+    scrollSpeed =
+    { x: 0, y: 0 }
     scrolling = -1
     atoms: readonly RangeSet<any>[]
 
-    constructor(private view: EditorView,
-                private startEvent: MouseEvent,
-                private style: MouseSelectionStyle,
-                private mustSelect: boolean) {
+    constructor(
+        private view: EditorView,
+        private startEvent: MouseEvent,
+        private style: MouseSelectionStyle,
+        private mustSelect: Boolean
+    ) {
         this.lastEvent = startEvent
         this.scrollParents = scrollableParents(view.contentDOM)
-        this.atoms = view.state.facet(atomicRanges).map(f => f(view))
-        let doc = view.contentDOM.ownerDocument!
+        this.atoms = view.state.facet(atomicRanges).map(f => f (view))
+        let doc = view . contentDOM . ownerDocument !
         doc.addEventListener("mousemove", this.move = this.move.bind(this))
         doc.addEventListener("mouseup", this.up = this.up.bind(this))
 
         this.extend = startEvent.shiftKey
-        this.multiple = view.state.facet(EditorState.allowMultipleSelections) && addsSelectionRange(view, startEvent)
-        this.dragging = isInPrimarySelection(view, startEvent) && getClickType(startEvent) == 1 ? null : false
+        this.multiple = view.state.facet(EditorState.allowMultipleSelections) && addsSelectionRange(
+            view,
+            startEvent
+        )
+        this.dragging =
+            isInPrimarySelection(view, startEvent) && getClickType(startEvent) == 1 ? null : false
     }
 
-    start(event: MouseEvent) {
+    start(event: MouseEvent)
+    {
         // When clicking outside of the selection, immediately apply the
         // effect of starting the selection
         if (this.dragging === false) this.select(event)
     }
 
-    move(event: MouseEvent) {
+    move(event: MouseEvent)
+    {
         if (event.buttons == 0) return this.destroy()
         if (this.dragging || this.dragging == null && dist(this.startEvent, event) < 10) return
         this.select(this.lastEvent = event)
 
         let sx = 0, sy = 0
         let left = 0, top = 0, right = this.view.win.innerWidth, bottom = this.view.win.innerHeight
-        if (this.scrollParents.x) ({left, right} = this.scrollParents.x.getBoundingClientRect())
-        if (this.scrollParents.y) ({top, bottom} = this.scrollParents.y.getBoundingClientRect())
-        let margins = getScrollMargins(this.view)
+        if (this.scrollParents.x) ({ left, right } = this.scrollParents.x.getBoundingClientRect())
+        if (this.scrollParents.y) ({ top, bottom } = this.scrollParents.y.getBoundingClientRect())
+        let margins = getScrollMargins (this.view)
 
         if (event.clientX - margins.left <= left + dragScrollMargin)
             sx = -dragScrollSpeed(left - event.clientX)
@@ -339,13 +391,15 @@ class MouseSelection {
         this.setScrollSpeed(sx, sy)
     }
 
-    up(event: MouseEvent) {
+    up(event: MouseEvent)
+    {
         if (this.dragging == null) this.select(this.lastEvent)
         if (!this.dragging) event.preventDefault()
         this.destroy()
     }
 
-    destroy() {
+    destroy()
+    {
         this.setScrollSpeed(0, 0)
         let doc = this.view.contentDOM.ownerDocument!
         doc.removeEventListener("mousemove", this.move)
@@ -353,8 +407,9 @@ class MouseSelection {
         this.view.inputState.mouseSelection = this.view.inputState.draggedContent = null
     }
 
-    setScrollSpeed(sx: number, sy: number) {
-        this.scrollSpeed = {x: sx, y: sy}
+    setScrollSpeed(sx: Int, sy: Int)
+    {
+        this.scrollSpeed = { x: sx, y: sy }
         if (sx || sy) {
             if (this.scrolling < 0) this.scrolling = setInterval(() => this.scroll(), 50)
         } else if (this.scrolling > -1) {
@@ -363,8 +418,9 @@ class MouseSelection {
         }
     }
 
-    scroll() {
-        let {x, y} = this.scrollSpeed
+    scroll()
+    {
+        let { x, y } = this.scrollSpeed
         if (x && this.scrollParents.x) {
             this.scrollParents.x.scrollLeft += x
             x = 0
@@ -377,29 +433,33 @@ class MouseSelection {
         if (this.dragging === false) this.select(this.lastEvent)
     }
 
-    skipAtoms(sel: EditorSelection) {
+    skipAtoms(sel: EditorSelection)
+    {
         let ranges = null
         for (let i = 0; i < sel.ranges.length; i++) {
-            let range = sel.ranges[i], updated = null
-            if (range.empty) {
-                let pos = skipAtomicRanges(this.atoms, range.from, 0)
-                if (pos != range.from) updated = EditorSelection.cursor(pos, -1)
-            } else {
-                let from = skipAtomicRanges(this.atoms, range.from, -1)
-                let to = skipAtomicRanges(this.atoms, range.to, 1)
-                if (from != range.from || to != range.to)
-                    updated = EditorSelection.range(range.from == range.anchor ? from : to, range.from == range.head ? from : to)
-            }
-            if (updated) {
-                if (!ranges) ranges = sel.ranges.slice()
-                ranges[i] = updated
-            }
+        let range = sel . ranges [i], updated = null
+        if (range.empty) {
+            let pos = skipAtomicRanges (this.atoms, range.from, 0)
+            if (pos != range.from) updated = EditorSelection.cursor(pos, -1)
+        } else {
+            let from = skipAtomicRanges (this.atoms, range.from, -1)
+            let to = skipAtomicRanges (this.atoms, range.to, 1)
+            if (from != range.from || to != range.to)
+                updated =
+                    EditorSelection.range(range.from == range.anchor ? from : to, range.from == range.head ? from : to)
         }
+        if (updated) {
+            if (!ranges) ranges = sel.ranges.slice()
+            ranges[i] = updated
+        }
+    }
         return ranges ? EditorSelection.create(ranges, sel.mainIndex) : sel
     }
 
-    select(event: MouseEvent) {
-        let {view} = this, selection = this.skipAtoms(this.style.get(event, this.extend, this.multiple))
+    select(event: MouseEvent)
+    {
+        let { view } =
+            this, selection = this.skipAtoms(this.style.get(event, this.extend, this.multiple))
         if (this.mustSelect || !selection.eq(view.state.selection, this.dragging === false))
             this.view.dispatch({
                 selection,
@@ -408,51 +468,56 @@ class MouseSelection {
         this.mustSelect = false
     }
 
-    update(update: ViewUpdate) {
-        if (update.transactions.some(tr => tr.isUserEvent("input.type")))
+    update(update: ViewUpdate)
+    {
+        if (update.transactions.some(tr => tr . isUserEvent ("input.type")))
         this.destroy()
         else if (this.style.update(update))
-            setTimeout(() => this.select(this.lastEvent), 20)
+        setTimeout(() => this.select(this.lastEvent), 20)
     }
 }
 
 function addsSelectionRange(view: EditorView, event: MouseEvent) {
-    let facet = view.state.facet(clickAddsSelectionRange)
+    let facet = view . state . facet (clickAddsSelectionRange)
     return facet.length ? facet[0](event) : browser.mac ? event.metaKey : event.ctrlKey
 }
 
 function dragMovesSelection(view: EditorView, event: MouseEvent) {
-    let facet = view.state.facet(dragBehavior)
-    return facet.length ? facet[0](event) : browser.mac ? !event.altKey : !event.ctrlKey
+    let facet = view . state . facet (dragBehavior)
+    return facet.length ? facet[0](event) : browser.mac ?!event.altKey :!event.ctrlKey
 }
 
 function isInPrimarySelection(view: EditorView, event: MouseEvent) {
-    let {main} = view.state.selection
+    let { main } = view.state.selection
     if (main.empty) return false
     // On boundary clicks, check whether the coordinates are inside the
     // selection's client rectangles
-    let sel = getSelection(view.root)
+    let sel = getSelection (view.root)
     if (!sel || sel.rangeCount == 0) return true
-    let rects = sel.getRangeAt(0).getClientRects()
+    let rects = sel . getRangeAt (0).getClientRects()
     for (let i = 0; i < rects.length; i++) {
-        let rect = rects[i]
+        let rect = rects [i]
         if (rect.left <= event.clientX && rect.right >= event.clientX &&
-            rect.top <= event.clientY && rect.bottom >= event.clientY) return true
+            rect.top <= event.clientY && rect.bottom >= event.clientY
+        ) return true
     }
     return false
 }
 
-function eventBelongsToEditor(view: EditorView, event: Event): boolean {
+function eventBelongsToEditor(view: EditorView, event: Event): Boolean {
     if (!event.bubbles) return true
     if (event.defaultPrevented) return false
-    for (let node: Node | null = event.target as Node, cView; node != view.contentDOM; node = node.parentNode)
-    if (!node || node.nodeType == 11 || ((cView = ContentView.get(node)) && cView.ignoreEvent(event)))
+    for (let node: Node ? = event.target as Node, cView; node != view.contentDOM; node =
+        node.parentNode)
+    if (!node || node.nodeType == 11 || ((cView =
+            ContentView.get(node)) && cView.ignoreEvent(event))
+    )
         return false
     return true
 }
 
-const handlers: {[key: string]: (view: EditorView, event: any) => boolean} = Object.create(null)
-const observers: {[key: string]: (view: EditorView, event: any) => undefined} = Object.create(null)
+const handlers: { [key: String]: (view: EditorView, event: any) => Boolean } = Object.create(null)
+const observers: { [key: String]: (view: EditorView, event: any) => undefined } = Object.create(null)
 
 // This is very crude, but unfortunately both these browsers _pretend_
 // that they have a clipboard API—all the objects and methods are
@@ -461,9 +526,9 @@ const brokenClipboardAPI = (browser.ie && browser.ie_version < 15) ||
 (browser.ios && browser.webkit_version < 604)
 
 function capturePaste(view: EditorView) {
-    let parent = view.dom.parentNode
+    let parent = view . dom . parentNode
         if (!parent) return
-    let target = parent.appendChild(document.createElement("textarea"))
+    let target = parent . appendChild (document.createElement("textarea"))
     target.style.cssText = "position: fixed; left: -10000px; top: 10px"
     target.focus()
     setTimeout(() => {
@@ -473,31 +538,35 @@ function capturePaste(view: EditorView) {
     }, 50)
 }
 
-function textFilter(state: EditorState, facet: Facet<(value: string, state: EditorState) => string>, text: string) {
-    for (let filter of state.facet(facet)) text = filter(text, state)
+function textFilter(state: EditorState, facet: Facet<(value : String, state: EditorState) => String>, text: String) {
+    for (let filter of state . facet (facet)) text = filter(text, state)
     return text
 }
 
-function doPaste(view: EditorView, input: string) {
+function doPaste(view: EditorView, input: String) {
     input = textFilter(view.state, clipboardInputFilter, input)
-    let {state} = view, changes, i = 1, text = state.toText(input)
-    let byLine = text.lines == state.selection.ranges.length
-        let linewise = lastLinewiseCopy != null && state.selection.ranges.every(r => r.empty) && lastLinewiseCopy == text.toString()
+    let { state } = view, changes, i = 1, text = state.toText(input)
+    let byLine = text . lines == state . selection . ranges . length
+        let linewise = lastLinewiseCopy != null && state.selection.ranges.every(r => r . empty) && lastLinewiseCopy == text.toString()
     if (linewise) {
-        let lastLine = -1
+        let lastLine = - 1
         changes = state.changeByRange(range => {
-            let line = state.doc.lineAt(range.from)
-            if (line.from == lastLine) return {range}
+            let line = state . doc . lineAt (range.from)
+            if (line.from == lastLine) return { range }
             lastLine = line.from
-            let insert = state.toText((byLine ? text.line(i++).text : input) + state.lineBreak)
-            return {changes: {from: line.from, insert},
-                range: EditorSelection.cursor(range.from + insert.length)}
+            let insert = state . toText ((byLine ? text.line(i++).text : input)+state.lineBreak)
+            return {
+                changes: { from: line.from, insert },
+                range: EditorSelection.cursor(range.from+insert.length)
+            }
         })
     } else if (byLine) {
         changes = state.changeByRange(range => {
-            let line = text.line(i++)
-            return {changes: {from: range.from, to: range.to, insert: line.text},
-                range: EditorSelection.cursor(range.from + line.length)}
+            let line = text . line (i++)
+            return {
+                changes: { from: range.from, to: range.to, insert: line.text },
+                range: EditorSelection.cursor(range.from+line.length)
+            }
         })
     } else {
         changes = state.replaceSelection(text)
@@ -515,7 +584,8 @@ observers.scroll = view => {
 
 handlers.keydown = (view, event: KeyboardEvent) => {
     view.inputState.setSelectionOrigin("select")
-    if (event.keyCode == 27 && view.inputState.tabFocusMode != 0) view.inputState.tabFocusMode = Date.now() + 2000
+    if (event.keyCode == 27 && view.inputState.tabFocusMode != 0) view.inputState.tabFocusMode =
+        Date.now() + 2000
     return false
 }
 
@@ -531,21 +601,21 @@ observers.touchmove = view => {
 handlers.mousedown = (view, event: MouseEvent) => {
     view.observer.flush()
     if (view.inputState.lastTouchTime > Date.now() - 2000) return false // Ignore touch interaction
-    let style: MouseSelectionStyle | null = null
-    for (let makeStyle of view.state.facet(mouseSelectionStyle)) {
+    let style : MouseSelectionStyle ? = null
+    for (let makeStyle of view . state . facet (mouseSelectionStyle)) {
         style = makeStyle(view, event)
         if (style) break
     }
     if (!style && event.button == 0) style = basicMouseSelection(view, event)
     if (style) {
         let mustFocus = !view.hasFocus
-        view.inputState.startMouseSelection(new MouseSelection(view, event, style, mustFocus))
+        view.inputState.startMouseSelection(new MouseSelection (view, event, style, mustFocus))
         if (mustFocus) view.observer.ignore(() => {
             focusPreventScroll(view.contentDOM)
-            let active = view.root.activeElement
+            let active = view . root . activeElement
                 if (active && !active.contains(view.contentDOM)) (active as HTMLElement).blur()
         })
-        let mouseSel = view.inputState.mouseSelection
+        let mouseSel = view . inputState . mouseSelection
             if (mouseSel) {
                 mouseSel.start(event)
                 return mouseSel.dragging === false
@@ -554,62 +624,64 @@ handlers.mousedown = (view, event: MouseEvent) => {
     return false
 }
 
-function rangeForClick(view: EditorView, pos: number, bias: -1 | 1, type: number): SelectionRange {
+function rangeForClick(view: EditorView, pos: Int, bias: -1 | 1, type: Int): SelectionRange {
     if (type == 1) { // Single click
         return EditorSelection.cursor(pos, bias)
     } else if (type == 2) { // Double click
         return groupAt(view.state, pos, bias)
     } else { // Triple click
-        let visual = LineView.find(view.docView, pos), line = view.state.doc.lineAt(visual ? visual.posAtEnd : pos)
-        let from = visual ? visual.posAtStart : line.from, to = visual ? visual.posAtEnd : line.to
+        let visual = LineView . find (view.docView, pos), line = view.state.doc.lineAt(visual ? visual.posAtEnd : pos)
+        let from = visual ? visual . posAtStart : line . from, to = visual ? visual.posAtEnd : line.to
         if (to < view.state.doc.length && to == line.to) to++
         return EditorSelection.range(from, to)
     }
 }
 
-let inside = (x: number, y: number, rect: Rect) => y >= rect.top && y <= rect.bottom && x >= rect.left && x <= rect.right
+let inside = (x: Int, y: Int, rect: Rect) => y >= rect.top && y <= rect.bottom && x >= rect.left && x <= rect.right
 
 // Try to determine, for the given coordinates, associated with the
 // given position, whether they are related to the element before or
 // the element after the position.
-function findPositionSide(view: EditorView, pos: number, x: number, y: number) {
-    let line = LineView.find(view.docView, pos)
+function findPositionSide(view: EditorView, pos: Int, x: Int, y: Int) {
+    let line = LineView . find (view.docView, pos)
     if (!line) return 1
-    let off = pos - line.posAtStart
+    let off = pos -line.posAtStart
     // Line boundaries point into the line
     if (off == 0) return 1
     if (off == line.length) return -1
 
     // Positions on top of an element point at that element
-    let before = line.coordsAt(off, -1)
+    let before = line . coordsAt (off, -1)
     if (before && inside(x, y, before)) return -1
-    let after = line.coordsAt(off, 1)
+    let after = line . coordsAt (off, 1)
     if (after && inside(x, y, after)) return 1
     // This is probably a line wrap point. Pick before if the point is
     // above its bottom.
-    return before && before.bottom >= y ? -1 : 1
+    return before && before.bottom >= y ?-1 : 1
 }
 
-function queryPos(view: EditorView, event: MouseEvent): {pos: number, bias: 1 | -1} {
-    let pos = view.posAtCoords({x: event.clientX, y: event.clientY}, false)
-    return {pos, bias: findPositionSide(view, pos, event.clientX, event.clientY)}
+function queryPos(view: EditorView, event: MouseEvent): { pos: Int, bias: 1 |-1 }
+{
+    let pos = view . posAtCoords ({ x: event.clientX, y: event.clientY }, false)
+    return { pos, bias: findPositionSide(view, pos, event.clientX, event.clientY) }
 }
 
 const BadMouseDetail = browser.ie && browser.ie_version <= 11
-let lastMouseDown: MouseEvent | null = null, lastMouseDownCount = 0, lastMouseDownTime = 0
+let lastMouseDown: MouseEvent ? = null, lastMouseDownCount = 0, lastMouseDownTime = 0
 
 function getClickType(event: MouseEvent) {
     if (!BadMouseDetail) return event.detail
     let last = lastMouseDown, lastTime = lastMouseDownTime
     lastMouseDown = event
     lastMouseDownTime = Date.now()
-    return lastMouseDownCount = !last || (lastTime > Date.now() - 400 && Math.abs(last.clientX - event.clientX) < 2 &&
-        Math.abs(last.clientY - event.clientY) < 2) ? (lastMouseDownCount + 1) % 3 : 1
+    return lastMouseDownCount =
+        !last || (lastTime > Date.now() - 400 && Math.abs(last.clientX - event.clientX) < 2 &&
+            Math.abs(last.clientY - event.clientY) < 2) ? (lastMouseDownCount+1) % 3 : 1
 }
 
 function basicMouseSelection(view: EditorView, event: MouseEvent) {
-    let start = queryPos(view, event), type = getClickType(event)
-    let startSel = view.state.selection
+    let start = queryPos (view, event), type = getClickType(event)
+    let startSel = view . state . selection
         return {
             update(update) {
                 if (update.docChanged) {
@@ -618,16 +690,19 @@ function basicMouseSelection(view: EditorView, event: MouseEvent) {
                 }
             },
             get(event, extend, multiple) {
-                let cur = queryPos(view, event), removed
-                let range = rangeForClick(view, cur.pos, cur.bias, type)
+                let cur = queryPos (view, event), removed
+                let range = rangeForClick (view, cur.pos, cur.bias, type)
                 if (start.pos != cur.pos && !extend) {
-                    let startRange = rangeForClick(view, start.pos, start.bias, type)
-                    let from = Math.min(startRange.from, range.from), to = Math.max(startRange.to, range.to)
-                    range = from < range.from ? EditorSelection.range(from, to) : EditorSelection.range(to, from)
+                    let startRange = rangeForClick (view, start.pos, start.bias, type)
+                    let from = Math . min (startRange.from, range.from), to = Math.max(startRange.to, range.to)
+                    range =
+                        from < range.from ? EditorSelection.range(from, to) : EditorSelection.range(to, from)
                 }
                 if (extend)
                     return startSel.replaceRange(startSel.main.extend(range.from, range.to))
-                else if (multiple && type == 1 && startSel.ranges.length > 1 && (removed = removeRangeAround(startSel, cur.pos)))
+                else if (multiple && type == 1 && startSel.ranges.length > 1 && (removed =
+                        removeRangeAround(startSel, cur.pos))
+                )
                     return removed
                 else if (multiple)
                     return startSel.addRange(range)
@@ -637,32 +712,37 @@ function basicMouseSelection(view: EditorView, event: MouseEvent) {
         } as MouseSelectionStyle
 }
 
-function removeRangeAround(sel: EditorSelection, pos: number) {
+function removeRangeAround(sel: EditorSelection, pos: Int) {
     for (let i = 0; i < sel.ranges.length; i++) {
-        let {from, to} = sel.ranges[i]
+        let { from, to } = sel.ranges[i]
         if (from <= pos && to >= pos)
-            return EditorSelection.create(sel.ranges.slice(0, i).concat(sel.ranges.slice(i + 1)),
-                sel.mainIndex == i ? 0 : sel.mainIndex - (sel.mainIndex > i ? 1 : 0))
+            return EditorSelection.create(
+                sel.ranges.slice(0, i).concat(sel.ranges.slice(i + 1)),
+                sel.mainIndex == i ? 0 : sel.mainIndex-(sel.mainIndex > i ? 1 : 0))
     }
     return null
 }
 
 handlers.dragstart = (view, event: DragEvent) => {
-    let {selection: {main: range}} = view.state
+    let { selection: { main: range } } = view.state
     if ((event.target as HTMLElement).draggable) {
-        let cView = view.docView.nearest(event.target as HTMLElement)
+        let cView = view . docView . nearest (event.target as HTMLElement)
         if (cView && cView.isWidget) {
-            let from = cView.posAtStart, to = from + cView.length
+            let from = cView . posAtStart, to = from+cView.length
             if (from >= range.to || to <= range.from) range = EditorSelection.range(from, to)
         }
     }
-    let {inputState} = view
+    let { inputState } = view
     if (inputState.mouseSelection) inputState.mouseSelection.dragging = true
     inputState.draggedContent = range
 
     if (event.dataTransfer) {
-        event.dataTransfer.setData("Text", textFilter(view.state, clipboardOutputFilter,
-            view.state.sliceDoc(range.from, range.to)))
+        event.dataTransfer.setData(
+            "Text", textFilter(
+                view.state, clipboardOutputFilter,
+                view.state.sliceDoc(range.from, range.to)
+            )
+        )
         event.dataTransfer.effectAllowed = "copyMove"
     }
     return false
@@ -673,21 +753,21 @@ handlers.dragend = view => {
     return false
 }
 
-function dropText(view: EditorView, event: DragEvent, text: string, direct: boolean) {
+function dropText(view: EditorView, event: DragEvent, text: String, direct: Boolean) {
     text = textFilter(view.state, clipboardInputFilter, text)
     if (!text) return
-    let dropPos = view.posAtCoords({x: event.clientX, y: event.clientY}, false)
+    let dropPos = view . posAtCoords ({ x: event.clientX, y: event.clientY }, false)
 
-    let {draggedContent} = view.inputState
-    let del = direct && draggedContent && dragMovesSelection(view, event)
-    ? {from: draggedContent.from, to: draggedContent.to} : null
-    let ins = {from: dropPos, insert: text}
-    let changes = view.state.changes(del ? [del, ins] : ins)
+    let { draggedContent } = view.inputState
+    let del = direct && draggedContent && dragMovesSelection (view, event)
+    ? { from: draggedContent.from, to: draggedContent.to } : null
+    let ins = { from: dropPos, insert: text }
+    let changes = view . state . changes (del ? [del, ins] : ins)
 
     view.focus()
     view.dispatch({
         changes,
-        selection: {anchor: changes.mapPos(dropPos, -1), head: changes.mapPos(dropPos, 1)},
+        selection: { anchor: changes.mapPos(dropPos, -1), head: changes.mapPos(dropPos, 1) },
         userEvent: del ? "move.drop" : "input.drop"
     })
     view.inputState.draggedContent = null
@@ -697,25 +777,30 @@ handlers.drop = (view, event: DragEvent) => {
     if (!event.dataTransfer) return false
     if (view.state.readOnly) return true
 
-    let files = event.dataTransfer.files
+    let files = event . dataTransfer . files
         if (files && files.length) { // For a file drop, read the file's text.
-            let text = Array(files.length), read = 0
-            let finishFile = () => {
+            let text = Array (files.length), read = 0
+            let finishFile =() => {
                 if (++read == files.length)
-                    dropText(view, event, text.filter(s => s != null).join(view.state.lineBreak), false)
+                    dropText(
+                        view,
+                        event,
+                        text.filter(s => s !=
+                        null
+                    ).join(view.state.lineBreak), false)
             }
             for (let i = 0; i < files.length; i++) {
                 let reader = new FileReader
                 reader.onerror = finishFile
                 reader.onload = () => {
-                if (!/[\x00-\x08\x0e-\x1f]{2}/.test(reader.result as string)) text[i] = reader.result
+                if (!/[\x00-\x08\x0e-\x1f]{ 2 } / . test (reader.result as String)) text[i] = reader.result
                 finishFile()
             }
                 reader.readAsText(files[i])
             }
             return true
         } else {
-            let text = event.dataTransfer.getData("Text")
+            let text = event . dataTransfer . getData ("Text")
             if (text) {
                 dropText(view, event, text, true)
                 return true
@@ -737,12 +822,12 @@ handlers.paste = (view: EditorView, event: ClipboardEvent) => {
     }
 }
 
-function captureCopy(view: EditorView, text: string) {
+function captureCopy(view: EditorView, text: String) {
     // The extra wrapper is somehow necessary on IE/Edge to prevent the
     // content from being mangled when it is put onto the clipboard
-    let parent = view.dom.parentNode
+    let parent = view . dom . parentNode
         if (!parent) return
-    let target = parent.appendChild(document.createElement("textarea"))
+    let target = parent . appendChild (document.createElement("textarea"))
     target.style.cssText = "position: fixed; left: -10000px; top: 10px"
     target.value = text
     target.focus()
@@ -755,32 +840,34 @@ function captureCopy(view: EditorView, text: string) {
 }
 
 function copiedRange(state: EditorState) {
-    let content = [], ranges: {from: number, to: number}[] = [], linewise = false
-    for (let range of state.selection.ranges) if (!range.empty) {
+    let content =[], ranges: { from: Int, to: Int }[] = [], linewise = false
+    for (let range of state . selection . ranges) if (!range.empty) {
         content.push(state.sliceDoc(range.from, range.to))
         ranges.push(range)
     }
     if (!content.length) {
         // Nothing selected, do a line-wise copy
-        let upto = -1
-        for (let {from} of state.selection.ranges) {
-            let line = state.doc.lineAt(from)
+        let upto = - 1
+        for (let {
+            from
+        } of state.selection.ranges) {
+            let line = state . doc . lineAt (from)
             if (line.number > upto) {
                 content.push(line.text)
-                ranges.push({from: line.from, to: Math.min(state.doc.length, line.to + 1)})
+                ranges.push({ from: line.from, to: Math.min(state.doc.length, line.to+1) })
             }
             upto = line.number
         }
         linewise = true
     }
 
-    return {text: textFilter(state, clipboardOutputFilter, content.join(state.lineBreak)), ranges, linewise}
+    return { text: textFilter(state, clipboardOutputFilter, content.join(state.lineBreak)), ranges, linewise }
 }
 
-let lastLinewiseCopy: string | null = null
+let lastLinewiseCopy: String ? = null
 
 handlers.copy = handlers.cut = (view, event: ClipboardEvent) => {
-    let {text, ranges, linewise} = copiedRange(view.state)
+    let { text, ranges, linewise } = copiedRange(view.state)
     if (!text && !linewise) return false
     lastLinewiseCopy = linewise ? text : null
 
@@ -801,22 +888,25 @@ handlers.copy = handlers.cut = (view, event: ClipboardEvent) => {
     }
 }
 
-export const isFocusChange = Annotation.define<boolean>()
+val isFocusChange = Annotation.define<Boolean>()
 
-export function focusChangeTransaction(state: EditorState, focus: boolean) {
-    let effects = []
-    for (let getEffect of state.facet(focusChangeEffect)) {
-        let effect = getEffect(state, focus)
-        if (effect) effects.push(effect)
+fun focusChangeTransaction(state: EditorState, focus: Boolean): Transaction? {
+    val effects = mutableListOf<StateEffect<*>>()
+    for (getEffect in state.facet(focusChangeEffect)) {
+        val effect = getEffect(state, focus) ?: continue
+        effects.add(effect)
     }
-    return effects ? state.update({effects, annotations: isFocusChange.of(true)}) : null
+    return if (effects.isNotEmpty()) state.update(
+        effects = effects.list,
+        annotations = isFocusChange.of(true)
+    ) else null
 }
 
 function updateForFocusChange(view: EditorView) {
     setTimeout(() => {
-        let focus = view.hasFocus
+        let focus = view . hasFocus
             if (focus != view.inputState.notifiedFocused) {
-                let tr = focusChangeTransaction(view.state, focus)
+                let tr = focusChangeTransaction (view.state, focus)
                 if (tr) view.dispatch(tr)
                 else view.update([])
             }
@@ -861,7 +951,7 @@ observers.compositionend = view => {
         view.observer.flushSoon()
     } else if (view.inputState.compositionPendingChange) {
         // If we found pending records, schedule a flush.
-        Promise.resolve().then(() => view.observer.flush())
+        Promise.resolve().then(() => view . observer . flush ())
     } else {
         // Otherwise, make sure that, if no changes come in soon, the
         // composition view is cleared.
@@ -880,11 +970,11 @@ handlers.beforeinput = (view, event: InputEvent) => {
     // In EditContext mode, we must handle insertReplacementText events
     // directly, to make spell checking corrections work
     if (event.inputType == "insertReplacementText" && view.observer.editContext) {
-        let text = event.dataTransfer?.getData("text/plain"), ranges = event.getTargetRanges()
+        let text = event . dataTransfer ?. getData ("text/plain"), ranges = event.getTargetRanges()
         if (text && ranges.length) {
-            let r = ranges[0]
-            let from = view.posAtDOM(r.startContainer, r.startOffset), to = view.posAtDOM(r.endContainer, r.endOffset)
-            applyDOMChangeInner(view, {from, to, insert: view.state.toText(text)}, null)
+            let r = ranges [0]
+            let from = view . posAtDOM (r.startContainer, r.startOffset), to = view.posAtDOM(r.endContainer, r.endOffset)
+            applyDOMChangeInner(view, { from, to, insert: view.state.toText(text) }, null)
             return true
         }
     }
@@ -897,10 +987,12 @@ handlers.beforeinput = (view, event: InputEvent) => {
     // (preventDefault on beforeinput, though supported in the spec,
     // seems to do nothing at all on Chrome).
     let pending
-        if (browser.chrome && browser.android && (pending = PendingKeys.find(key => key.inputType == event.inputType))) {
+        if (browser.chrome && browser.android && (pending =
+                PendingKeys.find(key => key . inputType == event . inputType)
+        )) {
         view.observer.delayAndroidKey(pending.key, pending.keyCode)
         if (pending.key == "Backspace" || pending.key == "Delete") {
-            let startViewHeight = window.visualViewport?.height || 0
+            let startViewHeight = window . visualViewport ?. height || 0
             setTimeout(() => {
                 // Backspacing near uneditable nodes on Chrome Android sometimes
                 // closes the virtual keyboard. This tries to crudely detect
@@ -920,7 +1012,7 @@ handlers.beforeinput = (view, event: InputEvent) => {
     }
     // Safari will occasionally forget to fire compositionend at the end of a dead-key composition
     if (browser.safari && event.inputType == "insertText" && view.inputState.composing >= 0) {
-        setTimeout(() => observers.compositionend(view, event), 20)
+        setTimeout(() => observers . compositionend (view, event), 20)
     }
 
     return false

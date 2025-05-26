@@ -1,81 +1,117 @@
 package com.monkopedia.kodemirror.view
 
-import {SpanIterator, RangeSet, Text, TextIterator} from "@codemirror/state"
-import {DecorationSet, Decoration, PointDecoration, LineDecoration, MarkDecoration, WidgetType} from "./decoration"
-import {ContentView} from "./contentview"
-import {BlockView, LineView, BlockWidgetView} from "./blockview"
-import {WidgetView, TextView, MarkView, WidgetBufferView} from "./inlineview"
+import com.monkopedia.kodemirror.state.RangeSet
+import com.monkopedia.kodemirror.state.SpanIterator
+import com.monkopedia.kodemirror.state.Text
+import com.monkopedia.kodemirror.state.TextIterator
+import kotlin.math.max
+import kotlin.math.min
 
-const enum T { Chunk = 512 }
+// import {SpanIterator, RangeSet, Text, TextIterator} from "@codemirror/state"
+// import {DecorationSet, Decoration, PointDecoration, LineDecoration, MarkDecoration, WidgetType} from "./decoration"
+// import {ContentView} from "./contentview"
+// import {BlockView, LineView, BlockWidgetView} from "./blockview"
+// import {WidgetView, TextView, MarkView, WidgetBufferView} from "./inlineview"
 
-const enum Buf { No = 0, Yes = 1, IfCursor = 2 }
+const val Chunk = 512
 
-export class ContentBuilder implements SpanIterator<Decoration> {
-    content: BlockView[] = []
-    curLine: LineView | null = null
-    breakAtStart = 0
-    pendingBuffer = Buf.No
-    bufferMarks: readonly MarkDecoration[] = []
+object Buf {
+    const val No = 0
+    const val Yes = 1
+    const val IfCursor = 2
+}
+
+interface BuiltView {
+    val content: List<BlockView>
+    val breakAtStart: Int
+    val openStart: Int
+    val openEnd: Int
+}
+
+class ContentBuilder(
+    private val doc: Text,
+    public var pos: Int,
+    public val end: Int,
+    val disallowBlockEffectsFor: List<Boolean>
+) : SpanIterator<Decoration<*>>,
+    BuiltView {
+    override val content = mutableListOf<BlockView>()
+    var curLine: LineView? = null
+    override var breakAtStart = 0
+    var pendingBuffer = Buf.No
+    var bufferMarks = mutableListOf<MarkDecoration>()
+
     // Set to false directly after a widget that covers the position after it
-    atCursorPos = true
-    openStart = -1
-    openEnd = -1
-    cursor: TextIterator
-    text: string = ""
-    skip: number
-    textOff: number = 0
+    var atCursorPos = true
+    override var openStart = -1
+    override var openEnd = -1
+    val cursor: TextIterator<*> = doc.iter()
+    var text: String = ""
+    var skip: Int = pos
+    var textOff: Int = 0
 
-    constructor(private doc: Text, public pos: number, public end: number, readonly disallowBlockEffectsFor: boolean[]) {
-        this.cursor = doc.iter()
-        this.skip = pos
-    }
-
-    posCovered() {
-        if (this.content.length == 0)
-            return !this.breakAtStart && this.doc.lineAt(this.pos).from != this.pos
-        let last = this.content[this.content.length - 1]
-        return !(last.breakAfter || last instanceof BlockWidgetView && last.deco.endSide < 0)
-    }
-
-    getLine() {
-        if (!this.curLine) {
-            this.content.push(this.curLine = new LineView)
-            this.atCursorPos = true
+    fun posCovered(): Boolean {
+        if (this.content.size == 0) {
+            return this.breakAtStart == 0 && this.doc.lineAt(this.pos).from != this.pos
         }
-        return this.curLine
+        val last = this.content[this.content.size - 1]
+        return !(last.breakAfter == 0 || last is BlockWidgetView && last.deco.endSide < 0)
     }
 
-    flushBuffer(active = this.bufferMarks) {
-        if (this.pendingBuffer) {
-            this.curLine!.append(wrapMarks(new WidgetBufferView(-1), active), active.length)
+    fun getLine(): LineView = this.curLine ?: LineView().also {
+        this.curLine = it
+        this.content.add(it)
+        this.atCursorPos = true
+    }
+
+    fun flushBuffer(active: List<MarkDecoration> = this.bufferMarks) {
+        if (this.pendingBuffer == Buf.No) {
+            this.curLine!!.append(wrapMarks(WidgetBufferView(-1), active), active.size)
             this.pendingBuffer = Buf.No
         }
     }
 
-    addBlockWidget(view: BlockWidgetView) {
+    fun addBlockWidget(view: BlockWidgetView) {
         this.flushBuffer()
         this.curLine = null
-        this.content.push(view)
+        this.content.add(view)
     }
 
-    finish(openEnd: number) {
-        if (this.pendingBuffer && openEnd <= this.bufferMarks.length) this.flushBuffer()
-        else this.pendingBuffer = Buf.No
+    fun finish(openEnd: Int) {
+        if (this.pendingBuffer == Buf.No && openEnd <= this.bufferMarks.size) {
+            this.flushBuffer()
+        } else {
+            this.pendingBuffer = Buf.No
+        }
         if (!this.posCovered() &&
-            !(openEnd && this.content.length && this.content[this.content.length - 1] instanceof BlockWidgetView))
+            !(
+                openEnd != 0 &&
+                    this.content.size != 0 &&
+                    this.content[this.content.size - 1] is BlockWidgetView
+                )
+        ) {
             this.getLine()
+        }
     }
 
-    buildText(length: number, active: readonly MarkDecoration[], openStart: number) {
+    fun buildText(length: Int, active: List<MarkDecoration>, openStart: Int) {
+        var length = length
+        var openStart = openStart
         while (length > 0) {
             if (this.textOff == this.text.length) {
-                let {value, lineBreak, done} = this.cursor.next(this.skip)
+                val nextCursor = this.cursor.next(this.skip)
+                val value = nextCursor.value
+                val lineBreak = nextCursor.lineBreak
+                val done = nextCursor.done
                 this.skip = 0
-                if (done) throw new Error("Ran out of text content when drawing inline views")
+                if (done) throw Error("Ran out of text content when drawing inline views")
                 if (lineBreak) {
                     if (!this.posCovered()) this.getLine()
-                    if (this.content.length) this.content[this.content.length - 1].breakAfter = 1
-                    else this.breakAtStart = 1
+                    if (this.content.size != 0) {
+                        this.content[this.content.size - 1].breakAfter = 1
+                    } else {
+                        this.breakAtStart = 1
+                    }
                     this.flushBuffer()
                     this.curLine = null
                     this.atCursorPos = true
@@ -86,9 +122,15 @@ export class ContentBuilder implements SpanIterator<Decoration> {
                     this.textOff = 0
                 }
             }
-            let take = Math.min(this.text.length - this.textOff, length, T.Chunk)
-            this.flushBuffer(active.slice(active.length - openStart))
-            this.getLine().append(wrapMarks(new TextView(this.text.slice(this.textOff, this.textOff + take)), active), openStart)
+            val take = min(min(this.text.length - this.textOff, length), Chunk)
+            this.flushBuffer(active.slice(active.size - openStart until active.size))
+            this.getLine().append(
+                wrapMarks(
+                    TextView(this.text.slice(this.textOff until this.textOff + take)),
+                    active
+                ),
+                openStart
+            )
             this.atCursorPos = true
             this.textOff += take
             length -= take
@@ -96,46 +138,91 @@ export class ContentBuilder implements SpanIterator<Decoration> {
         }
     }
 
-    span(from: number, to: number, active: MarkDecoration[], openStart: number) {
-        this.buildText(to - from, active, openStart)
+    override fun span(from: Int, to: Int, active: List<Decoration<*>>, openStart: Int) {
+        this.buildText(to - from, active.filterIsInstance<MarkDecoration>(), openStart)
         this.pos = to
         if (this.openStart < 0) this.openStart = openStart
     }
 
-    point(from: number, to: number, deco: Decoration, active: MarkDecoration[], openStart: number, index: number) {
-        if (this.disallowBlockEffectsFor[index] && deco instanceof PointDecoration) {
-            if (deco.block)
-                throw new RangeError("Block decorations may not be specified via plugins")
-            if (to > this.doc.lineAt(this.pos).to)
-                throw new RangeError("Decorations that replace line breaks may not be specified via plugins")
+    override fun point(
+        from: Int,
+        to: Int,
+        deco: Decoration<*>,
+        active: List<Decoration<*>>,
+        openStart: Int,
+        index: Int
+    ) {
+        var openStart = openStart
+        if (this.disallowBlockEffectsFor[index] && deco is PointDecoration) {
+            if (deco.block) {
+                throw IllegalArgumentException("Block decorations may not be specified via plugins")
+            }
+            if (to > this.doc.lineAt(this.pos).to) {
+                throw IllegalArgumentException(
+                    "Decorations that replace line breaks may not be specified via plugins"
+                )
+            }
         }
-        let len = to - from
-        if (deco instanceof PointDecoration) {
+        val len = to - from
+        if (deco is PointDecoration) {
             if (deco.block) {
                 if (deco.startSide > 0 && !this.posCovered()) this.getLine()
-                this.addBlockWidget(new BlockWidgetView(deco.widget || NullWidget.block, len, deco))
+                this.addBlockWidget(
+                    BlockWidgetView(
+                        deco.widget ?: NullWidget.block,
+                        len,
+                        deco
+                    )
+                )
             } else {
-                let view = WidgetView.create(deco.widget || NullWidget.inline, len, len ? 0 : deco.startSide)
-                let cursorBefore = this.atCursorPos && !view.isEditable && openStart <= active.length &&
-                    (from < to || deco.startSide > 0)
-                let cursorAfter = !view.isEditable && (from < to || openStart > active.length || deco.startSide <= 0)
-                let line = this.getLine()
-                if (this.pendingBuffer == Buf.IfCursor && !cursorBefore && !view.isEditable) this.pendingBuffer = Buf.No
-                this.flushBuffer(active)
-                if (cursorBefore) {
-                    line.append(wrapMarks(new WidgetBufferView(1), active), openStart)
-                    openStart = active.length + Math.max(0, openStart - active.length)
+                val view = WidgetView.create(
+                    deco.widget ?: NullWidget.inline,
+                    len,
+                    if (len != 0) 0 else deco.startSide
+                )
+                val cursorBefore =
+                    this.atCursorPos &&
+                        !view.isEditable &&
+                        openStart <= active.size &&
+                        (from < to || deco.startSide > 0)
+                val cursorAfter =
+                    !view.isEditable &&
+                        (from < to || openStart > active.size || deco.startSide <= 0)
+                val line = this.getLine()
+                if (this.pendingBuffer == Buf.IfCursor &&
+                    !cursorBefore &&
+                    !view.isEditable
+                ) {
+                    this.pendingBuffer =
+                        Buf.No
                 }
-                line.append(wrapMarks(view, active), openStart)
+                this.flushBuffer(active.filterIsInstance<MarkDecoration>())
+                if (cursorBefore) {
+                    line.append(
+                        wrapMarks(
+                            WidgetBufferView(1),
+                            active.filterIsInstance<MarkDecoration>()
+                        ),
+                        openStart
+                    )
+                    openStart = active.size + max(0, openStart - active.size)
+                }
+                line.append(wrapMarks(view, active.filterIsInstance<MarkDecoration>()), openStart)
                 this.atCursorPos = cursorAfter
-                this.pendingBuffer = !cursorAfter ? Buf.No : from < to || openStart > active.length ? Buf.Yes : Buf.IfCursor
-                if (this.pendingBuffer) this.bufferMarks = active.slice()
+                this.pendingBuffer = when {
+                    !cursorAfter -> Buf.No
+                    from < to || openStart > active.size -> Buf.Yes
+                    else -> Buf.IfCursor
+                }
+                if (this.pendingBuffer != Buf.No) {
+                    this.bufferMarks = active.filterIsInstance<MarkDecoration>().toMutableList()
+                }
             }
         } else if (this.doc.lineAt(this.pos).from == this.pos) { // Line decoration
             this.getLine().addLineDeco(deco as LineDecoration)
         }
 
-        if (len) {
+        if (len != 0) {
             // Advance the iterator past the replaced content
             if (this.textOff + len <= this.text.length) {
                 this.textOff += len
@@ -149,27 +236,41 @@ export class ContentBuilder implements SpanIterator<Decoration> {
         if (this.openStart < 0) this.openStart = openStart
     }
 
-    static build(text: Text, from: number, to: number, decorations: readonly DecorationSet[], dynamicDecorationMap: boolean[]):
-    {content: BlockView[], breakAtStart: number, openStart: number, openEnd: number} {
-        let builder = new ContentBuilder(text, from, to, dynamicDecorationMap)
-        builder.openEnd = RangeSet.spans(decorations, from, to, builder)
-        if (builder.openStart < 0) builder.openStart = builder.openEnd
-        builder.finish(builder.openEnd)
-        return builder
+    companion object {
+        fun build(
+            text: Text,
+            from: Int,
+            to: Int,
+            decorations: List<DecorationSet>,
+            dynamicDecorationMap: List<Boolean>
+        ): BuiltView {
+            val builder = ContentBuilder(text, from, to, dynamicDecorationMap)
+            builder.openEnd = RangeSet.spans(decorations, from, to, builder)
+            if (builder.openStart < 0) builder.openStart = builder.openEnd
+            builder.finish(builder.openEnd)
+            return builder
+        }
     }
 }
 
-function wrapMarks(view: ContentView, active: readonly MarkDecoration[]) {
-    for (let mark of active) view = new MarkView(mark, [view], view.length)
+fun wrapMarks(view: ContentView, active: List<MarkDecoration>): ContentView {
+    var view = view
+    for (mark in active) view = MarkView(mark, listOf(view), view.length)
     return view
 }
 
-export class NullWidget extends WidgetType {
-    constructor(readonly tag: string) { super() }
-    eq(other: NullWidget) { return other.tag == this.tag }
-    toDOM() { return document.createElement(this.tag) }
-    updateDOM(elt: HTMLElement) { return elt.nodeName.toLowerCase() == this.tag }
-    get isHidden() { return true }
-    static inline = new NullWidget("span")
-    static block = new NullWidget("div")
+data class NullWidget(val tag: String) : WidgetType() {
+    fun eq(other: NullWidget): Boolean = other.tag == this.tag
+
+    //    fun toDOM() { return document.createElement(this.tag) }
+//    fun updateDOM(elt: HTMLElement) { return elt.nodeName.toLowerCase() == this.tag }
+    override val isHidden: Boolean
+        get() {
+            return true
+        }
+
+    companion object {
+        val inline = NullWidget("span")
+        val block = NullWidget("div")
+    }
 }

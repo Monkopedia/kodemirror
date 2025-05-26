@@ -21,24 +21,47 @@ import kotlinx.serialization.json.put
 // Compartment, DynamicSlot} from "./facet"
 // import {CharCategory, makeCategorizer} from "./charcategory"
 
-// / Options passed when [creating](#state.EditorState^create) an
-// / editor state.
-data class EditorStateConfig(
+interface EditorStateConfig {
     // / The initial document. Defaults to an empty document. Can be
     // / provided either as a plain string (which will be split into
     // / lines according to the value of the [`lineSeparator`
     // / facet](#state.EditorState^lineSeparator)), or an instance of
     // / the [`Text`](#state.Text) class (which is what the state will use
     // / to represent the document).
-    val doc: Text? = null,
+    val doc: Text?
 
     // / The starting selection. Defaults to a cursor at the very start
     // / of the document.
-    val selection: Selection? = null,
+    val selection: Selection?
 
     // / [Extension(s)](#state.Extension) to associate with this state.
-    val extensions: Extension? = null
-)
+    val extensions: Extension?
+}
+
+// / Options passed when [creating](#state.EditorState^create) an
+// / editor state.
+internal data class EditorStateConfigImpl(
+    // / The initial document. Defaults to an empty document. Can be
+    // / provided either as a plain string (which will be split into
+    // / lines according to the value of the [`lineSeparator`
+    // / facet](#state.EditorState^lineSeparator)), or an instance of
+    // / the [`Text`](#state.Text) class (which is what the state will use
+    // / to represent the document).
+    override val doc: Text? = null,
+
+    // / The starting selection. Defaults to a cursor at the very start
+    // / of the document.
+    override val selection: Selection? = null,
+
+    // / [Extension(s)](#state.Extension) to associate with this state.
+    override val extensions: Extension? = null
+) : EditorStateConfig
+
+fun EditorStateConfig(
+    doc: Text? = null,
+    selection: Selection? = null,
+    extensions: Extension? = null
+): EditorStateConfig = EditorStateConfigImpl(doc, selection, extensions)
 
 // / The editor state class is a persistent (immutable) data structure.
 // / To update a state, you [create](#state.EditorState.update) a
@@ -420,7 +443,7 @@ class EditorState private constructor(
                 for ((prop, field) in fields) {
                     if (prop in json.keys) {
                         val value = json[prop] ?: continue
-                        fieldInit.add(deserializeInit(field, value) )
+                        fieldInit.add(deserializeInit(field, value))
                     }
                 }
             }
@@ -428,7 +451,15 @@ class EditorState private constructor(
             return EditorState.create(
                 doc = json["doc"]!!.jsonPrimitive.content.asText,
                 selection = json["selection"]?.let { EditorSelection.fromJSON(it) },
-                extensions = (if (config.extensions != null) fieldInit + config.extensions else fieldInit).extension
+                extensions = (
+                    if (config.extensions !=
+                        null
+                    ) {
+                        fieldInit + config.extensions
+                    } else {
+                        fieldInit
+                    }
+                    ).extension
             )
         }
 

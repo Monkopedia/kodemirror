@@ -1,39 +1,61 @@
 package com.monkopedia.kodemirror.view
 
-import {EditorState, EditorSelection, SelectionRange, RangeSet,
-CharCategory, findColumn, findClusterBreak} from "@codemirror/state"
-import {EditorView} from "./editorview"
-import {BlockType} from "./decoration"
-import {LineView} from "./blockview"
-import {atomicRanges} from "./extension"
-import {clientRectsFor, textRange, Rect, maxOffset} from "./dom"
-import {moveVisually, movedOver, Direction} from "./bidi"
-import {BlockInfo} from "./heightmap"
-import browser from "./browser"
+import androidx.compose.ui.Modifier
+import com.monkopedia.kodemirror.state.EditorSelection
+import com.monkopedia.kodemirror.state.EditorState
+import com.monkopedia.kodemirror.state.SelectionRange
+import com.monkopedia.kodemirror.state.findClusterBreak
+import kotlin.math.max
 
-declare global {
-    interface Selection { modify(action: string, direction: string, granularity: string): void }
-    interface Document { caretPositionFromPoint(x: number, y: number): {offsetNode: Node, offset: number} }
+//import {EditorState, EditorSelection, SelectionRange, RangeSet,
+//CharCategory, findColumn, findClusterBreak} from "@codemirror/state"
+//import {EditorView} from "./editorview"
+//import {BlockType} from "./decoration"
+//import {LineView} from "./blockview"
+//import {atomicRanges} from "./extension"
+//import {clientRectsFor, textRange, Rect, maxOffset} from "./dom"
+//import {moveVisually, movedOver, Direction} from "./bidi"
+//import {BlockInfo} from "./heightmap"
+//import browser from "./browser"
+
+object Cursors {
+    interface Selection {
+        fun modify(action: String, direction: String, granularity: String)
+    }
+
+    interface Document {
+        data class Position(val offsetNode: Node, val offset: Int)
+
+        fun caretPositionFromPoint(x: Int, y: Int): Position
+    }
 }
 
-export function groupAt(state: EditorState, pos: number, bias: 1 | -1 = 1) {
-    let categorize = state.charCategorizer(pos)
-    let line = state.doc.lineAt(pos), linePos = pos - line.from
+fun groupAt(state: EditorState, pos: Int, defaultBias: Boolean = true): SelectionRange {
+    val categorize = state . charCategorizer (pos)
+    val line = state . doc . lineAt (pos)
+    val linePos = pos-line.from
     if (line.length == 0) return EditorSelection.cursor(pos)
-    if (linePos == 0) bias = 1
-    else if (linePos == line.length) bias = -1
-    let from = linePos, to = linePos
-    if (bias < 0) from = findClusterBreak(line.text, linePos, false)
-    else to = findClusterBreak(line.text, linePos)
-    let cat = categorize(line.text.slice(from, to))
+    val bias = when (linePos) {
+        0 -> true
+        line.length -> false
+        else -> defaultBias
+    }
+    var from = linePos
+    var to = linePos
+    if (!bias) {
+        from = findClusterBreak(line.text, linePos, false)
+    } else {
+        to = findClusterBreak(line.text, linePos)
+    }
+    val cat = categorize (line.text.slice(from until to))
     while (from > 0) {
-        let prev = findClusterBreak(line.text, from, false)
-        if (categorize(line.text.slice(prev, from)) != cat) break
+        val prev = findClusterBreak (line.text, from, false)
+        if (categorize(line.text.slice(prev until from)) != cat) break
         from = prev
     }
     while (to < line.length) {
-        let next = findClusterBreak(line.text, to)
-        if (categorize(line.text.slice(to, next)) != cat) break
+        val next = findClusterBreak (line.text, to)
+        if (categorize(line.text.slice(to until next)) != cat) break
         to = next
     }
     return EditorSelection.range(from + line.from, to + line.from)
@@ -43,93 +65,99 @@ export function groupAt(state: EditorState, pos: number, bias: 1 | -1 = 1) {
 // coordinates. Very inefficient and crude, but can usually be avoided
 // by calling caret(Position|Range)FromPoint instead.
 
-function getdx(x: number, rect: ClientRect): number {
-    return rect.left > x ? rect.left - x : Math.max(0, x - rect.right)
+fun getdx(x: Int, rect: ClientRect): Int {
+    return if (rect.left > x ) rect.left-x else max(0, x-rect.right)
 }
-function getdy(y: number, rect: ClientRect): number {
-    return rect.top > y ? rect.top - y : Math.max(0, y - rect.bottom)
+fun getdy(y: Int, rect: ClientRect): Int {
+    return if (rect.top > y ) rect.top-y else max(0, y-rect.bottom)
 }
-function yOverlap(a: ClientRect, b: ClientRect): boolean {
+fun  yOverlap(a: ClientRect, b: ClientRect): Boolean {
     return a.top < b.bottom - 1 && a.bottom > b.top + 1
 }
-function upTop(rect: ClientRect, top: number): ClientRect {
-    return top < rect.top ? {top, left: rect.left, right: rect.right, bottom: rect.bottom} as ClientRect : rect
+fun upTop(rect: ClientRect, top: number): ClientRect {
+    return if (top < rect.top ) { top, left: rect.left, right: rect.right, bottom: rect.bottom } else rect
 }
-function upBot(rect: ClientRect, bottom: number): ClientRect {
-    return bottom > rect.bottom ? {top: rect.top, left: rect.left, right: rect.right, bottom} as ClientRect : rect
-}
-
-function domPosAtCoords(parent: HTMLElement, x: number, y: number): {node: Node, offset: number} {
-    let closest, closestRect!: ClientRect, closestX!: number, closestY!: number, closestOverlap = false
-    let above, below, aboveRect, belowRect
-    for (let child: Node | null = parent.firstChild; child; child = child.nextSibling) {
-        let rects = clientRectsFor(child)
-        for (let i = 0; i < rects.length; i++) {
-        let rect: ClientRect = rects[i]
-        if (closestRect && yOverlap(closestRect, rect))
-            rect = upTop(upBot(rect, closestRect.bottom), closestRect.top)
-        let dx = getdx(x, rect), dy = getdy(y, rect)
-        if (dx == 0 && dy == 0)
-            return child.nodeType == 3 ? domPosInText(child as Text, x, y) : domPosAtCoords(child as HTMLElement, x, y)
-        if (!closest || closestY > dy || closestY == dy && closestX > dx) {
-            closest = child; closestRect = rect; closestX = dx; closestY = dy
-            let side = dy ? (y < rect.top ? -1 : 1) : dx ? (x < rect.left ? -1 : 1) : 0
-            closestOverlap = !side || (side > 0 ? i < rects.length - 1 : i > 0)
-        }
-        if (dx == 0) {
-            if (y > rect.bottom && (!aboveRect || aboveRect.bottom < rect.bottom)) { above = child; aboveRect = rect }
-            else if (y < rect.top && (!belowRect || belowRect.top > rect.top)) { below = child; belowRect = rect }
-        } else if (aboveRect && yOverlap(aboveRect, rect)) {
-            aboveRect = upBot(aboveRect, rect.bottom)
-        } else if (belowRect && yOverlap(belowRect, rect)) {
-            belowRect = upTop(belowRect, rect.top)
-        }
-    }
-    }
-    if (aboveRect && aboveRect.bottom >= y) { closest = above; closestRect = aboveRect }
-    else if (belowRect && belowRect.top <= y) { closest = below; closestRect = belowRect }
-
-    if (!closest) return {node: parent, offset: 0}
-    let clipX = Math.max(closestRect!.left, Math.min(closestRect!.right, x))
-    if (closest.nodeType == 3) return domPosInText(closest as Text, clipX, y)
-    if (closestOverlap && (closest as HTMLElement).contentEditable != "false")
-        return domPosAtCoords(closest as HTMLElement, clipX, y)
-    let offset = Array.prototype.indexOf.call(parent.childNodes, closest) +
-    (x >= (closestRect!.left + closestRect!.right) / 2 ? 1 : 0)
-    return {node: parent, offset}
+fun upBot(rect: ClientRect, bottom: Int): ClientRect {
+    return if (bottom > rect.bottom ) { top: rect.top, left: rect.left, right: rect.right, bottom } else rect
 }
 
-function domPosInText(node: Text, x: number, y: number): {node: Node, offset: number} {
-    let len = node.nodeValue!.length
-        let closestOffset = -1, closestDY = 1e9, generalSide = 0
-    for (let i = 0; i < len; i++) {
-        let rects = textRange(node, i, i + 1).getClientRects()
-        for (let j = 0; j < rects.length; j++) {
-        let rect = rects[j]
-        if (rect.top == rect.bottom) continue
-        if (!generalSide) generalSide = x - rect.left
-        let dy = (rect.top > y ? rect.top - y : y - rect.bottom) - 1
-        if (rect.left - 1 <= x && rect.right + 1 >= x && dy < closestDY) {
-            let right = x >= (rect.left + rect.right) / 2, after = right
-            if (browser.chrome || browser.gecko) {
-                // Check for RTL on browsers that support getting client
-                // rects for empty ranges.
-                let rectBefore = textRange(node, i).getBoundingClientRect()
-                if (rectBefore.left == rect.right) after = !right
-            }
-            if (dy <= 0) return {node, offset: i + (after ? 1 : 0)}
-            closestOffset = i + (after ? 1 : 0)
-            closestDY = dy
-        }
-    }
-    }
-    return {node, offset: closestOffset > -1 ? closestOffset : generalSide > 0 ? node.nodeValue!.length : 0}
+fun domPosAtCoords(parent: HTMLElement, x: Int, y: Int): DOMPos {
+//    let closest, closestRect!: ClientRect, closestX!: number, closestY!: number, closestOverlap = false
+//    let above, below, aboveRect, belowRect
+//    for (let child: Node | null = parent.firstChild; child; child = child.nextSibling) {
+//    let rects = clientRectsFor (child)
+//    for (let i = 0; i < rects.length; i++) {
+//    let rect : ClientRect = rects [i]
+//    if (closestRect && yOverlap(closestRect, rect))
+//        rect = upTop(upBot(rect, closestRect.bottom), closestRect.top)
+//    let dx = getdx (x, rect), dy = getdy(y, rect)
+//    if (dx == 0 && dy == 0)
+//        return child.nodeType == 3 ? domPosInText(child as Text, x, y) : domPosAtCoords(child as HTMLElement, x, y)
+//    if (!closest || closestY > dy || closestY == dy && closestX > dx) {
+//        closest = child; closestRect = rect; closestX = dx; closestY = dy
+//        let side = dy ?(y < rect.top ? - 1 : 1) : dx ? (x < rect.left ?-1 : 1) : 0
+//        closestOverlap = !side || (side > 0 ? i < rects.length-1 : i > 0)
+//    }
+//    if (dx == 0) {
+//        if (y > rect.bottom && (!aboveRect || aboveRect.bottom < rect.bottom)) {
+//            above = child; aboveRect = rect
+//        } else if (y < rect.top && (!belowRect || belowRect.top > rect.top)) {
+//            below = child; belowRect = rect
+//        }
+//    } else if (aboveRect && yOverlap(aboveRect, rect)) {
+//        aboveRect = upBot(aboveRect, rect.bottom)
+//    } else if (belowRect && yOverlap(belowRect, rect)) {
+//        belowRect = upTop(belowRect, rect.top)
+//    }
+//}
+//}
+//    if (aboveRect && aboveRect.bottom >= y) {
+//        closest = above; closestRect = aboveRect
+//    } else if (belowRect && belowRect.top <= y) {
+//        closest = below; closestRect = belowRect
+//    }
+//
+//    if (!closest) return { node: parent, offset: 0 }
+//    let clipX = Math . max (closestRect!.left, Math.min(closestRect!.right, x))
+//    if (closest.nodeType == 3) return domPosInText(closest as Text, clipX, y)
+//    if (closestOverlap && (closest as HTMLElement).contentEditable != "false")
+//        return domPosAtCoords(closest as HTMLElement, clipX, y)
+//    let offset = Array . prototype . indexOf . call (parent.childNodes, closest)+
+//    (x >= (closestRect!.left+closestRect!.right) / 2 ? 1 : 0)
+//    return { node: parent, offset }
 }
 
-export function posAtCoords(view: EditorView, coords: {x: number, y: number}, precise: boolean, bias: -1 | 1 = -1): number | null {
-    let content = view.contentDOM.getBoundingClientRect(), docTop = content.top + view.viewState.paddingTop
-    let block, {docHeight} = view.viewState
-    let {x, y} = coords, yOffset = y - docTop
+fun domPosInText(node: Text, x: Int, y: Int): DOMPos {
+//    let len = node . nodeValue !. length
+//        let closestOffset = - 1, closestDY = 1e9, generalSide = 0
+//    for (let i = 0; i < len; i++) {
+//    let rects = textRange (node, i, i+1).getClientRects()
+//    for (let j = 0; j < rects.length; j++) {
+//    let rect = rects [j]
+//    if (rect.top == rect.bottom) continue
+//    if (!generalSide) generalSide = x - rect.left
+//    let dy =(rect.top > y ? rect . top -y : y-rect.bottom)-1
+//    if (rect.left - 1 <= x && rect.right + 1 >= x && dy < closestDY) {
+//        let right = x >=(rect.left + rect.right) / 2, after = right
+//        if (browser.chrome || browser.gecko) {
+//            // Check for RTL on browsers that support getting client
+//            // rects for empty ranges.
+//            let rectBefore = textRange (node, i).getBoundingClientRect()
+//            if (rectBefore.left == rect.right) after = !right
+//        }
+//        if (dy <= 0) return { node, offset: i+(after ? 1 : 0) }
+//        closestOffset = i + (after ? 1 : 0)
+//        closestDY = dy
+//    }
+//}
+//}
+//    return { node, offset: closestOffset >-1 ? closestOffset : generalSide > 0 ? node.nodeValue!.length : 0 }
+}
+
+fun posAtCoords(view: EditorView, coords: { x: number, y: number }, precise: boolean, bias: -1 | 1 = -1): number | null {
+    let content = view . contentDOM . getBoundingClientRect (), docTop = content.top+view.viewState.paddingTop
+    let block, { docHeight } = view.viewState
+    let { x, y } = coords, yOffset = y-docTop
     if (yOffset < 0) return 0
     if (yOffset > docHeight) return view.state.doc.length
 
@@ -139,7 +167,7 @@ export function posAtCoords(view: EditorView, coords: {x: number, y: number}, pr
         if (block.type == BlockType.Text) break
         for (;;) {
             // Move the y position out of this block
-            yOffset = bias > 0 ? block.bottom + halfLine : block.top - halfLine
+            yOffset = bias > 0 ? block.bottom+halfLine : block.top-halfLine
             if (yOffset >= 0 && yOffset <= docHeight) break
             // If the document consists entirely of replaced widgets, we
             // won't find a text block, so return 0
@@ -149,7 +177,7 @@ export function posAtCoords(view: EditorView, coords: {x: number, y: number}, pr
         }
     }
     y = docTop + yOffset
-    let lineStart = block.from
+    let lineStart = block . from
         // If this is outside of the rendered viewport, we can't determine a position
         if (lineStart < view.viewport.from)
             return view.viewport.from == 0 ? 0 : precise ? null : posAtCoordsImprecise(view, content, block, x, y)
@@ -157,9 +185,9 @@ export function posAtCoords(view: EditorView, coords: {x: number, y: number}, pr
         return view.viewport.to == view.state.doc.length ? view.state.doc.length :
     precise ? null : posAtCoordsImprecise(view, content, block, x, y)
     // Prefer ShadowRootOrDocument.elementFromPoint if present, fall back to document if not
-    let doc = view.dom.ownerDocument
-        let root = (view.root as any).elementFromPoint ? view.root as Document : doc
-    let element = root.elementFromPoint(x, y)
+    let doc = view . dom . ownerDocument
+        let root =(view.root as any).elementFromPoint ? view.root as Document : doc
+    let element = root . elementFromPoint (x, y)
     if (element && !view.contentDOM.contains(element)) element = null
 
     // If the element is unexpected, clip x at the sides of the content area and try again
@@ -171,18 +199,19 @@ export function posAtCoords(view: EditorView, coords: {x: number, y: number}, pr
 
     // There's visible editor content under the point, so we can try
     // using caret(Position|Range)FromPoint as a shortcut
-    let node: Node | undefined, offset: number = -1
+    let node : Node | undefined, offset: number = -1
     if (element && view.docView.nearest(element)?.isEditable != false) {
         if (doc.caretPositionFromPoint) {
-            let pos = doc.caretPositionFromPoint(x, y)
-            if (pos) ({offsetNode: node, offset} = pos)
+            let pos = doc . caretPositionFromPoint (x, y)
+            if (pos) ({ offsetNode: node, offset } = pos)
         } else if (doc.caretRangeFromPoint) {
-            let range = doc.caretRangeFromPoint(x, y)
+            let range = doc . caretRangeFromPoint (x, y)
             if (range) {
-                ;({startContainer: node, startOffset: offset} = range)
+                ;({ startContainer: node, startOffset: offset } = range)
                 if (!view.contentDOM.contains(node) ||
                     browser.safari && isSuspiciousSafariCaretResult(node, offset, x) ||
-                    browser.chrome && isSuspiciousChromeCaretResult(node, offset, x))
+                    browser.chrome && isSuspiciousChromeCaretResult(node, offset, x)
+                )
                     node = undefined
             }
         }
@@ -194,14 +223,14 @@ export function posAtCoords(view: EditorView, coords: {x: number, y: number}, pr
 
     // No luck, do our own (potentially expensive) search
     if (!node || !view.docView.dom.contains(node)) {
-        let line = LineView.find(view.docView, lineStart)
+        let line = LineView . find (view.docView, lineStart)
         if (!line) return yOffset > block.top + block.height / 2 ? block.to : block.from
-        ;({node, offset} = domPosAtCoords(line.dom!, x, y))
+        ;({ node, offset } = domPosAtCoords(line.dom!, x, y))
     }
-    let nearest = view.docView.nearest(node)
+    let nearest = view . docView . nearest (node)
     if (!nearest) return null
     if (nearest.isWidget && nearest.dom?.nodeType == 1) {
-        let rect = (nearest.dom as HTMLElement).getBoundingClientRect()
+        let rect =(nearest.dom as HTMLElement).getBoundingClientRect()
         return coords.y < rect.top || coords.y <= rect.bottom && coords.x <= (rect.left + rect.right) / 2
         ? nearest.posAtStart : nearest.posAtEnd
     } else {
@@ -210,13 +239,13 @@ export function posAtCoords(view: EditorView, coords: {x: number, y: number}, pr
 }
 
 function posAtCoordsImprecise(view: EditorView, contentRect: Rect, block: BlockInfo, x: number, y: number) {
-    let into = Math.round((x - contentRect.left) * view.defaultCharacterWidth)
+    let into = Math . round ((x - contentRect.left) * view.defaultCharacterWidth)
     if (view.lineWrapping && block.height > view.defaultLineHeight * 1.5) {
-        let textHeight = view.viewState.heightOracle.textHeight
-            let line = Math.floor((y - block.top - (view.defaultLineHeight - textHeight) * 0.5) / textHeight)
+        let textHeight = view . viewState . heightOracle . textHeight
+            let line = Math . floor ((y - block.top - (view.defaultLineHeight - textHeight) * 0.5) / textHeight)
         into += line * view.viewState.heightOracle.lineLength
     }
-    let content = view.state.sliceDoc(block.from, block.to)
+    let content = view . state . sliceDoc (block.from, block.to)
     return block.from + findColumn(content, into, view.state.tabSize)
 }
 
@@ -226,7 +255,7 @@ function posAtCoordsImprecise(view: EditorView, contentRect: Rect, block: BlockI
 // ignored (issue #401).
 function isSuspiciousSafariCaretResult(node: Node, offset: number, x: number) {
     let len
-        if (node.nodeType != 3 || offset != (len = node.nodeValue!.length)) return false
+        if (node.nodeType != 3 || offset != (len = node.nodeValue !. length)) return false
     for (let next = node.nextSibling; next; next = next.nextSibling)
     if (next.nodeType != 1 || next.nodeName != "BR") return false
     return textRange(node as Text, len - 1, len).getBoundingClientRect().left > x
@@ -236,48 +265,50 @@ function isSuspiciousSafariCaretResult(node: Node, offset: number, x: number) {
 function isSuspiciousChromeCaretResult(node: Node, offset: number, x: number) {
     if (offset != 0) return false
     for (let cur = node;;) {
-        let parent = cur.parentNode
+        let parent = cur . parentNode
             if (!parent || parent.nodeType != 1 || parent.firstChild != cur) return false
         if ((parent as HTMLElement).classList.contains("cm-line")) break
         cur = parent
     }
-    let rect = node.nodeType == 1 ? (node as HTMLElement).getBoundingClientRect()
-    : textRange(node as Text, 0, Math.max(node.nodeValue!.length, 1)).getBoundingClientRect()
+    let rect = node . nodeType == 1 ? (node as HTMLElement).getBoundingClientRect()
+    : textRange(node as Text, 0, Math.max(node.nodeValue!. length, 1)).getBoundingClientRect()
     return x - rect.left > 5
 }
 
 export function blockAt(view: EditorView, pos: number): BlockInfo {
-    let line = view.lineBlockAt(pos)
-    if (Array.isArray(line.type)) for (let l of line.type) {
+    let line = view . lineBlockAt (pos)
+    if (Array.isArray(line.type)) for (let l of line . type) {
         if (l.to > pos || l.to == pos && (l.to == line.to || l.type == BlockType.Text)) return l
     }
     return line
 }
 
 export function moveToLineBoundary(view: EditorView, start: SelectionRange, forward: boolean, includeWrap: boolean) {
-    let line = blockAt(view, start.head)
+    let line = blockAt (view, start.head)
     let coords = !includeWrap || line.type != BlockType.Text || !(view.lineWrapping || line.widgetLineBreaks) ? null
-    : view.coordsAtPos(start.assoc < 0 && start.head > line.from ? start.head - 1 : start.head)
+    : view.coordsAtPos(start.assoc < 0 && start.head > line.from ? start . head -1 : start.head)
     if (coords) {
-        let editorRect = view.dom.getBoundingClientRect()
-        let direction = view.textDirectionAt(line.from)
-        let pos = view.posAtCoords({x: forward == (direction == Direction.LTR) ? editorRect.right - 1 : editorRect.left + 1,
-            y: (coords.top + coords.bottom) / 2})
-        if (pos != null) return EditorSelection.cursor(pos, forward ? -1 : 1)
+        let editorRect = view . dom . getBoundingClientRect ()
+        let direction = view . textDirectionAt (line.from)
+        let pos = view . posAtCoords ({
+            x: forward == (direction == Direction.LTR) ? editorRect.right-1 : editorRect.left+1,
+            y: (coords.top+coords.bottom) / 2
+        })
+        if (pos != null) return EditorSelection.cursor(pos, forward ? - 1 : 1)
     }
-    return EditorSelection.cursor(forward ? line.to : line.from, forward ? -1 : 1)
+    return EditorSelection.cursor(forward ? line . to : line . from, forward ?-1 : 1)
 }
 
 export function moveByChar(view: EditorView, start: SelectionRange, forward: boolean,
 by?: (initial: string) => (next: string) => boolean) {
-    let line = view.state.doc.lineAt(start.head), spans = view.bidiSpans(line)
-    let direction = view.textDirectionAt(line.from)
+    let line = view . state . doc . lineAt (start.head), spans = view.bidiSpans(line)
+    let direction = view . textDirectionAt (line.from)
     for (let cur = start, check: null | ((next: string) => boolean) = null;;) {
-        let next = moveVisually(line, spans, direction, cur, forward), char = movedOver
+        let next = moveVisually (line, spans, direction, cur, forward), char = movedOver
         if (!next) {
             if (line.number == (forward ? view.state.doc.lines : 1)) return cur
             char = "\n"
-            line = view.state.doc.line(line.number + (forward ? 1 : -1))
+            line = view.state.doc.line(line.number + (forward ? 1 :-1))
             spans = view.bidiSpans(line)
             next = view.visualLineSide(line, !forward)
         }
@@ -292,37 +323,38 @@ by?: (initial: string) => (next: string) => boolean) {
 }
 
 export function byGroup(view: EditorView, pos: number, start: string) {
-    let categorize = view.state.charCategorizer(pos)
-    let cat = categorize(start)
+    let categorize = view . state . charCategorizer (pos)
+    let cat = categorize (start)
     return (next: string) => {
-        let nextCat = categorize(next)
+        let nextCat = categorize (next)
         if (cat == CharCategory.Space) cat = nextCat
         return cat == nextCat
     }
 }
 
 export function moveVertically(view: EditorView, start: SelectionRange, forward: boolean, distance?: number) {
-    let startPos = start.head, dir: -1 | 1 = forward ? 1 : -1
+    let startPos = start . head, dir:-1 | 1 = forward ? 1 :-1
     if (startPos == (forward ? view.state.doc.length : 0)) return EditorSelection.cursor(startPos, start.assoc)
-    let goal = start.goalColumn, startY
-    let rect = view.contentDOM.getBoundingClientRect()
-    let startCoords = view.coordsAtPos(startPos, start.assoc || -1), docTop = view.documentTop
+    let goal = start . goalColumn, startY
+    let rect = view . contentDOM . getBoundingClientRect ()
+    let startCoords = view . coordsAtPos (startPos, start.assoc || -1), docTop = view.documentTop
     if (startCoords) {
         if (goal == null) goal = startCoords.left - rect.left
         startY = dir < 0 ? startCoords.top : startCoords.bottom
     } else {
-        let line = view.viewState.lineBlockAt(startPos)
-        if (goal == null) goal = Math.min(rect.right - rect.left, view.defaultCharacterWidth * (startPos - line.from))
-        startY = (dir < 0 ? line.top : line.bottom) + docTop
+        let line = view . viewState . lineBlockAt (startPos)
+        if (goal == null) goal =
+            Math.min(rect.right - rect.left, view.defaultCharacterWidth * (startPos - line.from))
+        startY = (dir < 0 ? line.top : line.bottom)+docTop
     }
-    let resolvedGoal = rect.left + goal
+    let resolvedGoal = rect . left +goal
     let dist = distance ?? (view.viewState.heightOracle.textHeight >> 1)
     for (let extra = 0;; extra += 10) {
-        let curY = startY + (dist + extra) * dir
-        let pos = posAtCoords(view, {x: resolvedGoal, y: curY}, false, dir)!
+        let curY = startY +(dist + extra) * dir
+        let pos = posAtCoords (view, { x: resolvedGoal, y: curY }, false, dir)!
         if (curY < rect.top || curY > rect.bottom || (dir < 0 ? pos < startPos : pos > startPos)) {
-        let charRect = view.docView.coordsForChar(pos)
-        let assoc = !charRect || curY < charRect.top ? -1 : 1
+        let charRect = view . docView . coordsForChar (pos)
+        let assoc = !charRect || curY < charRect.top ?-1 : 1
         return EditorSelection.cursor(pos, assoc, undefined, goal)
     }
     }
@@ -334,7 +366,7 @@ export function skipAtomicRanges(atoms: readonly RangeSet<any>[], pos: number, b
         for (let set of atoms) {
             set.between(pos - 1, pos + 1, (from, to, value) => {
             if (pos > from && pos < to) {
-                let side = moved || bias || (pos - from < to - pos ? -1 : 1)
+                let side = moved || bias ||(pos - from < to - pos ? - 1 : 1)
                 pos = side < 0 ? from : to
                 moved = side
             }
@@ -345,6 +377,7 @@ export function skipAtomicRanges(atoms: readonly RangeSet<any>[], pos: number, b
 }
 
 export function skipAtoms(view: EditorView, oldPos: SelectionRange, pos: SelectionRange) {
-    let newPos = skipAtomicRanges(view.state.facet(atomicRanges).map(f => f(view)), pos.from, oldPos.head > pos.from ? -1 : 1)
-    return newPos == pos.from ? pos : EditorSelection.cursor(newPos, newPos < pos.from ? 1 : -1)
+    let newPos = skipAtomicRanges (view.state.facet(atomicRanges)
+        .map(f => f (view)), pos.from, oldPos.head > pos.from ?-1 : 1)
+    return newPos == pos.from ? pos : EditorSelection.cursor(newPos, newPos < pos.from ? 1 :-1)
 }
