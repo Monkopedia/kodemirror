@@ -170,7 +170,9 @@ internal constructor(
         var pos = 0
         sections.forEach { (len, ins) ->
             val end = pos + len
-            if (ins != null && pos <= to && end >= from) return if (pos < from && end > to) null else true
+            if (ins != null && pos <= to && end >= from) {
+                return if (pos < from && end > to) null else true
+            }
             pos = end
         }
         return false
