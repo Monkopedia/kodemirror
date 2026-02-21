@@ -3,5 +3,16 @@ plugins {
 }
 
 dependencies {
-    implementation(libs.nexus.publish)
+    implementation(libs.plugins.kotlinMultiplatform.get().let {
+        "${it.pluginId}:${it.pluginId}.gradle.plugin:${it.version}"
+    })
+    implementation(libs.plugins.ktlint.get().let {
+        "${it.pluginId}:${it.pluginId}.gradle.plugin:${it.version}"
+    })
+    implementation(libs.plugins.spotless.get().let {
+        "${it.pluginId}:${it.pluginId}.gradle.plugin:${it.version}"
+    })
+    implementation(libs.plugins.atomicfu.get().let {
+        "${it.pluginId}:${it.pluginId}.gradle.plugin:${it.version}"
+    })
 }
