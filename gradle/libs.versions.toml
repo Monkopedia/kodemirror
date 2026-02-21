@@ -2,12 +2,15 @@
 kotlin = "2.1.10"
 compose-plugin = "1.7.3"
 atomicfu = "0.27.0"
-kotlinx-serialization = "1.7.3"
+kotlinx-serialization = "1.8.0"
+kotlinx-datetime = "0.6.2"
 ktlint = "12.1.2"
 spotless = "7.0.2"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 
 [plugins]
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
