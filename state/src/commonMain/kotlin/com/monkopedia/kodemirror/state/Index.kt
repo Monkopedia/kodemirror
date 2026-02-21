@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Jason Monk
+ * Copyright 2026 Jason Monk
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,36 @@
  * Originally based on CodeMirror 6 by Marijn Haverbeke, licensed under MIT.
  * See NOTICE file for details.
  */
+@file:Suppress("unused")
+
 package com.monkopedia.kodemirror.state
 
 /**
- * @codemirror/state module — immutable editor state, documents,
- * transactions, selections, and facet-based extension system.
+ * Public API surface for the state module.
+ *
+ * In Kotlin Multiplatform, explicit re-exports are not needed
+ * since all public declarations in the package are accessible.
+ * This file documents the intended public API.
  */
-internal const val MODULE = "state"
+
+// State
+internal const val STATE_MODULE = "state"
+
+// Public API:
+// - EditorStateConfig, EditorState (State.kt)
+// - Facet, FacetReader, StateField, Extension,
+//     Prec, Compartment (Facet.kt)
+// - EditorSelection, SelectionRange (Selection.kt)
+// - Transaction, TransactionSpec, Annotation,
+//     AnnotationType, StateEffect,
+//     StateEffectType (Transaction.kt)
+// - ChangeSpec, ChangeSet, ChangeDesc,
+//     MapMode (Change.kt)
+// - CharCategory (CharCategory.kt)
+// - RangeValue, Range, RangeSet, RangeCursor,
+//     RangeSetBuilder, RangeComparator,
+//     SpanIterator (RangeSet.kt)
+// - findClusterBreak, codePointAt, fromCodePoint,
+//     codePointSize (Char.kt)
+// - countColumn, findColumn (Column.kt)
+// - Line, TextIterator, Text (Text.kt)
