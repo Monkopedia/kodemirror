@@ -18,35 +18,32 @@
  */
 package com.monkopedia.kodemirror.state
 
+import kotlin.math.floor
 import kotlin.math.min
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFails
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-fun depth(node: Text): Int {
-    return 1 + (node.children?.maxOf { depth(it) } ?: 0)
-}
-
-val line = "1234567890".repeat(10)
-val lines = List(200) { line }
-val text0 = lines.joinToString("\n")
-val doc0 = Text.of(lines)
-
 class TextTest {
 
-    @Test
-    fun can_create_basic() {
-        assertEquals(
-            "one\ntwo\nthree",
-            Text.of(listOf("one", "two", "three")).toString()
-        )
+    private fun depth(node: Text): Int {
+        return when (node) {
+            is TextLeaf -> 1
+            is TextNode -> 1 + node.children.maxOf { depth(it) }
+            else -> error("Unknown Text subclass")
+        }
     }
 
+    private val line = "1234567890".repeat(10)
+    private val lines = List(200) { line }
+    private val text0 = lines.joinToString("\n")
+    private val doc0 = Text.of(lines)
+
     @Test
-    fun handles_basic_replacement() {
+    fun handlesBasicReplacement() {
         val doc = Text.of(listOf("one", "two", "three"))
         assertEquals(
             "onfoo\nbarwo\nthree",
@@ -55,34 +52,33 @@ class TextTest {
     }
 
     @Test
-    fun can_append_documents() {
+    fun canAppendDocuments() {
         assertEquals(
             "one\ntwo\nthree!\nok",
-            Text.of(listOf("one", "two", "three")).append(Text.of(listOf("!", "ok"))).toString()
+            Text.of(listOf("one", "two", "three"))
+                .append(Text.of(listOf("!", "ok"))).toString()
         )
     }
 
     @Test
-    fun preserves_length() {
+    fun preservesLength() {
         assertEquals(text0.length, doc0.length)
     }
 
     @Test
-    fun creates_a_balanced_tree_when_loading_a_document() {
+    fun createsABalancedTreeWhenLoadingADocument() {
         val doc = Text.of(List(2000) { line })
         val d = depth(doc)
-        assertEquals(2, d, "<=")
+        assertTrue(d <= 2)
     }
 
     @Test
-    fun rebalances_on_insert() {
+    fun rebalancesOnInsert() {
         var doc = doc0
         val insert = "abc".repeat(200)
-        val at = (doc.length / 2)
-        for (i in 0 until 10) {
-            doc = doc.replace(at, at, Text.of(listOf(insert)))
-        }
-        assertEquals(2, depth(doc), "<=")
+        val at = doc.length / 2
+        for (i in 0 until 10) doc = doc.replace(at, at, Text.of(listOf(insert)))
+        assertTrue(depth(doc) <= 2)
         assertEquals(
             text0.substring(0, at) + "abc".repeat(2000) + text0.substring(at),
             doc.toString()
@@ -90,7 +86,7 @@ class TextTest {
     }
 
     @Test
-    fun collapses_on_delete() {
+    fun collapsesOnDelete() {
         val doc = doc0.replace(10, text0.length - 10, Text.empty)
         assertEquals(1, depth(doc))
         assertEquals(20, doc.length)
@@ -98,41 +94,41 @@ class TextTest {
     }
 
     @Test
-    fun handles_deleting_at_start() {
+    fun handlesDeletingAtStart() {
         assertEquals(
             text0.substring(9500) + "!",
-            Text.of(lines.subList(0, lines.size - 1) + listOf("$line!"))
-                .replace(0, 9500, Text.empty)
-                .toString()
+            Text.of(lines.subList(0, lines.size - 1) + listOf(line + "!"))
+                .replace(0, 9500, Text.empty).toString()
         )
     }
 
     @Test
-    fun handles_deleting_at_end() {
+    fun handlesDeletingAtEnd() {
         assertEquals(
             "?" + text0.substring(0, 9499),
-            Text.of(listOf("?$line") + lines.subList(1, lines.size))
+            Text.of(listOf("?" + line) + lines.subList(1, lines.size))
                 .replace(9500, text0.length + 1, Text.empty).toString()
         )
     }
 
     @Test
-    fun can_handle_deleting_the_entire_document() {
+    fun canHandleDeletingTheEntireDocument() {
         assertEquals("", doc0.replace(0, doc0.length, Text.empty).toString())
     }
 
     @Test
-    fun can_insert_on_node_boundaries() {
+    fun canInsertOnNodeBoundaries() {
         val doc = doc0
-        val pos = doc.children!![0].length
+        val pos = (doc as TextNode).children[0].length
         assertEquals(
             "abc",
-            doc.replace(pos, pos, Text.of(listOf("abc"))).slice(pos, pos + 3).toString()
+            doc.replace(pos, pos, Text.of(listOf("abc")))
+                .slice(pos, pos + 3).toString()
         )
     }
 
     @Test
-    fun can_build_up_a_doc_by_repeated_appending() {
+    fun canBuildUpADocByRepeatedAppending() {
         var doc = Text.of(listOf(""))
         var text = ""
         for (i in 1 until 1000) {
@@ -144,16 +140,17 @@ class TextTest {
     }
 
     @Test
-    fun properly_maintains_content_during_editing() {
+    fun properlyMaintainsContentDuringEditing() {
+        val rng = Random(42)
         var str = text0
-        var doc = doc0
+        var doc: Text = doc0
         for (i in 0 until 200) {
-            val insPos = (Random.nextDouble() * doc.length).toInt()
-            val insChar = ('A'.code + (Random.nextDouble() * 26).toInt()).toChar()
+            val insPos = rng.nextInt(doc.length)
+            val insChar = ('A' + rng.nextInt(26)).toString()
             str = str.substring(0, insPos) + insChar + str.substring(insPos)
-            doc = doc.replace(insPos, insPos, Text.of(listOf(insChar.toString())))
-            val delFrom = (Random.nextDouble() * doc.length).toInt()
-            val delTo = min(doc.length, delFrom + (Random.nextDouble() * 20).toInt())
+            doc = doc.replace(insPos, insPos, Text.of(listOf(insChar)))
+            val delFrom = rng.nextInt(doc.length)
+            val delTo = min(doc.length, delFrom + rng.nextInt(20))
             str = str.substring(0, delFrom) + str.substring(delTo)
             doc = doc.replace(delFrom, delTo, Text.empty)
         }
@@ -161,28 +158,22 @@ class TextTest {
     }
 
     @Test
-    fun returns_the_correct_strings_for_slice() {
-        val text = mutableListOf<String>()
-        for (i in 0 until 1000) {
-            text.add("0".repeat(4 - i.toString().length) + i)
-        }
-        val doc = Text.of(text)
-        val str = text.joinToString("\n")
+    fun returnsTheCorrectStringsForSlice() {
+        val textList = mutableListOf<String>()
+        for (i in 0 until 1000) textList.add(i.toString().padStart(4, '0'))
+        val doc = Text.of(textList)
+        val str = textList.joinToString("\n")
+        val rng = Random(42)
         for (i in 0 until 400) {
-            var start = if (i == 0) 0 else (Random.nextDouble() * doc.length).toInt()
-            var end = if (i == 399) {
-                doc.length
-            } else {
-                start + (Random.nextDouble() * (doc.length - start)).toInt()
-            }
-//            start = 4150
-//            end = 4160
+            var start = if (i == 0) 0 else rng.nextInt(doc.length)
+            var end = if (i == 399) doc.length else start + rng.nextInt(doc.length - start)
+            start = 4150; end = 4160
             assertEquals(str.substring(start, end), doc.slice(start, end).toString())
         }
     }
 
     @Test
-    fun can_be_compared() {
+    fun canBeCompared() {
         val doc = doc0
         val doc2 = Text.of(lines)
         assertTrue(doc.eq(doc))
@@ -195,7 +186,7 @@ class TextTest {
     }
 
     @Test
-    fun can_be_compared_despite_different_tree_shape() {
+    fun canBeComparedDespiteDifferentTreeShape() {
         assertTrue(
             doc0.replace(100, 201, Text.of(listOf("abc")))
                 .eq(Text.of(listOf(line + "abc") + lines.subList(2, lines.size)))
@@ -203,44 +194,40 @@ class TextTest {
     }
 
     @Test
-    fun can_compare_small_documents() {
+    fun canCompareSmallDocuments() {
         assertTrue(Text.of(listOf("foo", "bar")).eq(Text.of(listOf("foo", "bar"))))
         assertFalse(Text.of(listOf("foo", "bar")).eq(Text.of(listOf("foo", "baz"))))
     }
 
     @Test
-    fun is_iterable() {
+    fun isIterable() {
         val iter = doc0.iter()
         var build = ""
         while (true) {
-            val value = iter.next()
-            val lineBreak = iter.lineBreak
-            val done = iter.done
-            if (done) {
+            iter.next()
+            if (iter.done) {
                 assertEquals(text0, build)
                 break
             }
-            if (lineBreak) {
+            if (iter.lineBreak) {
                 build += "\n"
             } else {
-                assertEquals(-1, value.indexOf("\n"))
-                build += value
+                assertEquals(-1, iter.value.indexOf("\n"))
+                build += iter.value
             }
         }
     }
 
     @Test
-    fun is_iterable_in_reverse() {
+    fun isIterableInReverse() {
         var found = ""
-        val iter = doc0.iter(dir = false)
-        while (!iter.also { it.next() }.done) {
-            found = iter.value + found
-        }
+        val iter = doc0.iter(-1)
+        while (!iter.next().done) found = iter.value + found
         assertEquals(text0, found)
     }
 
     @Test
-    fun allows_negative_skip_values_in_iteration() {
+    fun allowsNegativeSkipValuesInIteration() {
         val iter = Text.of(listOf("one", "two", "three", "four")).iter()
         assertEquals("e", iter.next(12).value)
         assertEquals("ne", iter.next(-12).value)
@@ -249,43 +236,42 @@ class TextTest {
     }
 
     @Test
-    fun is_partially_iterable() {
+    fun isPartiallyIterable() {
         var found = ""
         val iter = doc0.iterRange(500, doc0.length - 500)
-        while (!iter.also { it.next() }.done) {
-            found += iter.value
-        }
-        assertEquals(text0.substring(500, text0.length - 500).toString(), found.toString())
+        while (!iter.next().done) found += iter.value
+        assertEquals(
+            text0.substring(500, text0.length - 500),
+            found
+        )
     }
 
     @Test
-    fun is_partially_iterable_in_reverse() {
+    fun isPartiallyIterableInReverse() {
         var found = ""
         val iter = doc0.iterRange(doc0.length - 500, 500)
-        while (!iter.also { it.next() }.done) {
-            found = iter.value + found
-        }
-        assertEquals(text0.substring(500, text0.length - 500).toString(), found)
+        while (!iter.next().done) found = iter.value + found
+        assertEquals(
+            text0.substring(500, text0.length - 500),
+            found
+        )
     }
 
     @Test
-    fun can_partially_iter_over_subsections_at_the_start_and_end() {
-        assertEquals("1", doc0.iterRange(0, 1).also { it.next() }.value)
-        assertEquals("2", doc0.iterRange(1, 2).also { it.next() }.value)
-        assertEquals("0", doc0.iterRange(doc0.length - 1, doc0.length).also { it.next() }.value)
-        assertEquals("9", doc0.iterRange(doc0.length - 2, doc0.length - 1).also { it.next() }.value)
+    fun canPartiallyIterOverSubsectionsAtTheStartAndEnd() {
+        assertEquals("1", doc0.iterRange(0, 1).next().value)
+        assertEquals("2", doc0.iterRange(1, 2).next().value)
+        assertEquals("0", doc0.iterRange(doc0.length - 1, doc0.length).next().value)
+        assertEquals("9", doc0.iterRange(doc0.length - 2, doc0.length - 1).next().value)
     }
 
     @Test
-    fun can_iterate_over_lines() {
+    fun canIterateOverLines() {
         val doc = Text.of(listOf("ab", "cde", "", "", "f", "", "g"))
-
         fun get(from: Int? = null, to: Int? = null): String {
-            val result = mutableListOf<Any>()
-            val i = doc.iterLines(from, to)
-            while (!i.also { it.next() }.done) {
-                result.add(i.value)
-            }
+            val result = mutableListOf<String>()
+            val iter = doc.iterLines(from, to)
+            while (!iter.next().done) result.add(iter.value)
             return result.joinToString("\n")
         }
         assertEquals("ab\ncde\n\n\nf\n\ng", get())
@@ -297,48 +283,46 @@ class TextTest {
         assertEquals("\n\nf\n\ng", get(3))
     }
 
-//    @Test fun can_convert_to_JSON() {
-//        for (let i = 0; i < 200; i++) lines.push("line "+i)
-//        val text = Text.of(lines)
-//        assertEquals(Text.of(text.toJSON()).eq(text))
-//    }
+    @Test
+    fun canConvertToJSON() {
+        val extendedLines = lines.toMutableList()
+        for (i in 0 until 200) extendedLines.add("line $i")
+        val text = Text.of(extendedLines)
+        assertTrue(Text.of(text.toJSON()).eq(text))
+    }
 
     @Test
-    fun can_get_line_info_by_line_number() {
-        assertFails("Invalid line") {
-            doc0.line(0)
-        }
-        assertFails("Invalid line") {
-            doc0.line(doc0.lines + 1)
-        }
-        for (i in 1 until doc0.lines step 5) {
+    fun canGetLineInfoByLineNumber() {
+        assertFailsWith<IllegalArgumentException> { doc0.line(0) }
+        assertFailsWith<IllegalArgumentException> { doc0.line(doc0.lines + 1) }
+        var i = 1
+        while (i < doc0.lines) {
             val l = doc0.line(i)
             assertEquals((i - 1) * 101, l.from)
             assertEquals(i * 101 - 1, l.to)
             assertEquals(i, l.number)
             assertEquals(line, l.text)
+            i += 5
         }
     }
 
     @Test
-    fun can_get_line_info_by_position() {
-        assertFails("Invalid position") {
-            doc0.lineAt(-10)
-        }
-        assertFails("Invalid position") {
-            doc0.lineAt(doc0.length + 1)
-        }
-        for (i in 0 until doc0.length step 5) {
+    fun canGetLineInfoByPosition() {
+        assertFailsWith<IllegalArgumentException> { doc0.lineAt(-10) }
+        assertFailsWith<IllegalArgumentException> { doc0.lineAt(doc0.length + 1) }
+        var i = 0
+        while (i < doc0.length) {
             val l = doc0.lineAt(i)
             assertEquals(i - (i % 101), l.from)
             assertEquals(i - (i % 101) + 100, l.to)
-            assertEquals((i / 101.0).toInt() + 1, l.number)
+            assertEquals(i / 101 + 1, l.number)
             assertEquals(line, l.text)
+            i += 5
         }
     }
 
     @Test
-    fun can_delete_a_range_at_the_start_of_a_child_node() {
+    fun canDeleteARangeAtTheStartOfAChildNode() {
         assertEquals(
             "x" + text0.substring(100),
             doc0.replace(0, 100, Text.of(listOf("x"))).toString()
@@ -346,22 +330,22 @@ class TextTest {
     }
 
     @Test
-    fun can_retrieve_pieces_of_text() {
+    fun canRetrievePiecesOfText() {
+        val rng = Random(42)
         for (i in 0 until 500) {
-            val from = (Random.nextDouble() * (doc0.length - 1)).toInt()
-            val to =
-                if (Random.nextDouble() < .5) {
-                    from + 2
-                } else {
-                    from + (Random.nextDouble() * (doc0.length - 1 - from)).toInt() + 1
-                }
+            val from = rng.nextInt(doc0.length - 1)
+            val to = if (rng.nextDouble() < 0.5) {
+                from + 2
+            } else {
+                from + rng.nextInt(doc0.length - 1 - from) + 1
+            }
             assertEquals(text0.substring(from, to), doc0.sliceString(from, to))
             assertEquals(text0.substring(from, to), doc0.slice(from, to).toString())
         }
     }
 
     @Test
-    fun clips_out_of_range_boundaries() {
+    fun clipsOutOfRangeBoundaries() {
         assertEquals(0, doc0.slice(0, -10).length)
         assertEquals(0, Text.empty.slice(0, 10).length)
         assertEquals(0, Text.empty.slice(1000, 1100).length)
