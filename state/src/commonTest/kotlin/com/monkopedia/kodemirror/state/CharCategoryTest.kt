@@ -21,30 +21,35 @@ package com.monkopedia.kodemirror.state
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-// EditorState char categorizer
 class CharCategoryTest {
 
-    fun mk(vararg extensions: Extension): EditorState {
-        return EditorState.create(extensions = extensions.toList().extension)
+    private fun mk(vararg extensions: Extension): EditorState = EditorState.create(
+        EditorStateConfig(
+            extensions = if (extensions.isEmpty()) {
+                null
+            } else {
+                ExtensionList(extensions.toList())
+            }
+        )
+    )
+
+    @Test
+    fun categorisesIntoAlphanumeric() {
+        val st = mk()
+        assertEquals(CharCategory.Word, st.charCategorizer(0)("1"))
+        assertEquals(CharCategory.Word, st.charCategorizer(0)("a"))
     }
 
     @Test
-    fun categorises_into_alphanumeric() {
+    fun categorisesIntoWhitespace() {
         val st = mk()
-        assertEquals(st.charCategorizer(0)("1"), CharCategory.Word)
-        assertEquals(st.charCategorizer(0)("a"), CharCategory.Word)
+        assertEquals(CharCategory.Space, st.charCategorizer(0)(" "))
     }
 
     @Test
-    fun categorises_into_whitespace() {
+    fun categorisesIntoOther() {
         val st = mk()
-        assertEquals(st.charCategorizer(0)(" "), CharCategory.Space)
-    }
-
-    @Test
-    fun categorises_into_other() {
-        val st = mk()
-        assertEquals(st.charCategorizer(0)("/"), CharCategory.Other)
-        assertEquals(st.charCategorizer(0)("<"), CharCategory.Other)
+        assertEquals(CharCategory.Other, st.charCategorizer(0)("/"))
+        assertEquals(CharCategory.Other, st.charCategorizer(0)("<"))
     }
 }

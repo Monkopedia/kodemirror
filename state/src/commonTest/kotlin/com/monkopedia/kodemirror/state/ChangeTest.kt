@@ -36,7 +36,7 @@ private fun mk(spec: String): ChangeDesc {
     return ChangeDesc(sections.toIntArray())
 }
 
-private fun r(n: Int): Int = Random.nextInt(n)
+private fun r(n: Int): Int = if (n <= 0) 0 else Random.nextInt(n)
 
 private fun rStr(l: Int): String {
     val sb = StringBuilder()
@@ -75,28 +75,22 @@ class ChangeDescCompositionTest {
     }
 
     @Test
-    fun canComposeUnrelatedChanges() =
-        comp("5 0:2", "1 2:0 4", "1 2:0 2 0:2")
+    fun canComposeUnrelatedChanges() = comp("5 0:2", "1 2:0 4", "1 2:0 2 0:2")
 
     @Test
-    fun cancelsInsertionsWithDeletions() =
-        comp("2 0:2 2", "2 2:0 2", "4")
+    fun cancelsInsertionsWithDeletions() = comp("2 0:2 2", "2 2:0 2", "4")
 
     @Test
-    fun joinsAdjacentInsertions() =
-        comp("2 0:2 2", "4 0:3 2", "2 0:5 2")
+    fun joinsAdjacentInsertions() = comp("2 0:2 2", "4 0:3 2", "2 0:5 2")
 
     @Test
-    fun joinsAdjacentDeletions() =
-        comp("2 5:0", "1 1:0", "1 6:0")
+    fun joinsAdjacentDeletions() = comp("2 5:0", "1 1:0", "1 6:0")
 
     @Test
-    fun allowsADeleteToShadowMultipleOperations() =
-        comp("2 2:0 0:3", "5:0", "4:0")
+    fun allowsADeleteToShadowMultipleOperations() = comp("2 2:0 0:3", "5:0", "4:0")
 
     @Test
-    fun canHandleEmptySets() =
-        comp("", "0:8", "8:0", "", "")
+    fun canHandleEmptySets() = comp("", "0:8", "8:0", "", "")
 
     @Test
     fun canJoinMultipleReplaces() {
@@ -124,12 +118,10 @@ class ChangeDescMappingTest {
     }
 
     @Test
-    fun canMapOverAnInsertion() =
-        over("4 0:1", "0:3 4", "7 0:1")
+    fun canMapOverAnInsertion() = over("4 0:1", "0:3 4", "7 0:1")
 
     @Test
-    fun canMapOverADeletion() =
-        over("4 0:1", "2:0 2", "2 0:1")
+    fun canMapOverADeletion() = over("4 0:1", "2:0 2", "2 0:1")
 
     @Test
     fun ordersInsertions() {
@@ -144,12 +136,10 @@ class ChangeDescMappingTest {
     }
 
     @Test
-    fun canHandleChangesAfter() =
-        over("0:1 2:0 8", "6 1:0 0:5 3", "0:1 2:0 12")
+    fun canHandleChangesAfter() = over("0:1 2:0 8", "6 1:0 0:5 3", "0:1 2:0 12")
 
     @Test
-    fun joinsDeletions() =
-        over("5:0 2 3:0 2", "4 4:0 4", "6:0 2")
+    fun joinsDeletions() = over("5:0 2 3:0 2", "4 4:0 4", "6:0 2")
 
     @Test
     fun keepsInsertionsInDeletions() {
@@ -194,11 +184,15 @@ class ChangeDescMapPosTest {
         val set = mk(spec)
         for ((from, to, opt) in cases) {
             val assoc = if (opt is Int) opt else -1
-            val mode = when (opt) {
-                "D" -> MapMode.TrackDel
-                "A" -> MapMode.TrackAfter
-                "B" -> MapMode.TrackBefore
-                else -> MapMode.Simple
+            val mode = if (opt is String) {
+                when (opt) {
+                    "D" -> MapMode.TrackDel
+                    "A" -> MapMode.TrackAfter
+                    "B" -> MapMode.TrackBefore
+                    else -> MapMode.Simple
+                }
+            } else {
+                MapMode.Simple
             }
             if (mode == MapMode.Simple) {
                 assertEquals(to, set.mapPos(from, assoc))
@@ -214,75 +208,73 @@ class ChangeDescMapPosTest {
     }
 
     @Test
-    fun mapsThroughAnInsertion() =
-        map(
-            "4 0:2 4",
-            Triple(0, 0, null), Triple(4, 4, null), Triple(4, 6, 1),
-            Triple(5, 7, null), Triple(8, 10, null)
-        )
+    fun mapsThroughAnInsertion() = map(
+        "4 0:2 4",
+        Triple(0, 0, null),
+        Triple(4, 4, null),
+        Triple(4, 6, 1),
+        Triple(5, 7, null),
+        Triple(8, 10, null)
+    )
 
     @Test
-    fun mapsThroughDeletion() =
-        map(
-            "4 4:0 4",
-            Triple(0, 0, null),
-            Triple(4, 4, null), Triple(4, 4, "D"), Triple(4, 4, "B"), Triple(4, null, "A"),
-            Triple(5, 4, null), Triple(5, null, "D"), Triple(5, null, "B"), Triple(5, null, "A"),
-            Triple(7, 4, null),
-            Triple(8, 4, null), Triple(8, 4, "D"), Triple(8, null, "B"), Triple(8, 4, "A"),
-            Triple(9, 5, null), Triple(12, 8, null)
-        )
+    fun mapsThroughDeletion() = map(
+        "4 4:0 4",
+        Triple(0, 0, null),
+        Triple(4, 4, null), Triple(4, 4, "D"), Triple(4, 4, "B"), Triple(4, null, "A"),
+        Triple(5, 4, null), Triple(5, null, "D"), Triple(5, null, "B"), Triple(5, null, "A"),
+        Triple(7, 4, null),
+        Triple(8, 4, null), Triple(8, 4, "D"), Triple(8, null, "B"), Triple(8, 4, "A"),
+        Triple(9, 5, null), Triple(12, 8, null)
+    )
 
     @Test
-    fun mapsThroughMultipleInsertions() =
-        map(
-            "0:2 2 0:2 2 0:2",
-            Triple(0, 0, null), Triple(0, 2, 1), Triple(1, 3, null), Triple(2, 4, null),
-            Triple(2, 6, 1), Triple(3, 7, null), Triple(4, 8, null), Triple(4, 10, 1)
-        )
+    fun mapsThroughMultipleInsertions() = map(
+        "0:2 2 0:2 2 0:2",
+        Triple(0, 0, null), Triple(0, 2, 1), Triple(1, 3, null), Triple(2, 4, null),
+        Triple(2, 6, 1), Triple(3, 7, null), Triple(4, 8, null), Triple(4, 10, 1)
+    )
 
     @Test
-    fun mapsThroughMultipleDeletions() =
-        map(
-            "2:0 2 2:0 2 2:0",
-            Triple(0, 0, null), Triple(1, 0, null), Triple(2, 0, null), Triple(3, 1, null),
-            Triple(4, 2, null), Triple(5, 2, null), Triple(6, 2, null), Triple(7, 3, null),
-            Triple(8, 4, null), Triple(9, 4, null), Triple(10, 4, null)
-        )
+    fun mapsThroughMultipleDeletions() = map(
+        "2:0 2 2:0 2 2:0",
+        Triple(0, 0, null), Triple(1, 0, null), Triple(2, 0, null), Triple(3, 1, null),
+        Triple(4, 2, null), Triple(5, 2, null), Triple(6, 2, null), Triple(7, 3, null),
+        Triple(8, 4, null), Triple(9, 4, null), Triple(10, 4, null)
+    )
 
     @Test
-    fun mapsThroughMixedEdits() =
-        map(
-            "2 0:2 2:0 0:2 2 2:0 0:2",
-            Triple(0, 0, null), Triple(2, 2, null), Triple(2, 4, 1), Triple(3, 4, null),
-            Triple(4, 4, null), Triple(4, 6, 1), Triple(5, 7, null), Triple(6, 8, null),
-            Triple(7, 8, null), Triple(8, 8, null), Triple(8, 10, 1)
-        )
+    fun mapsThroughMixedEdits() = map(
+        "2 0:2 2:0 0:2 2 2:0 0:2",
+        Triple(0, 0, null), Triple(2, 2, null), Triple(2, 4, 1), Triple(3, 4, null),
+        Triple(4, 4, null), Triple(4, 6, 1), Triple(5, 7, null), Triple(6, 8, null),
+        Triple(7, 8, null), Triple(8, 8, null), Triple(8, 10, 1)
+    )
 
     @Test
-    fun staysOnItsOwnSideOfReplacements() =
-        map(
-            "2 2:2 2",
-            Triple(2, 2, 1), Triple(2, 2, -1), Triple(2, 2, "D"), Triple(2, 2, "B"),
-            Triple(2, null, "A"),
-            Triple(3, 2, -1), Triple(3, 4, 1), Triple(3, null, "D"), Triple(3, null, "B"),
-            Triple(3, null, "A"),
-            Triple(4, 4, 1), Triple(4, 4, -1), Triple(4, 4, "D"), Triple(4, null, "B"),
-            Triple(4, 4, "A")
-        )
+    fun staysOnItsOwnSideOfReplacements() = map(
+        "2 2:2 2",
+        Triple(2, 2, 1), Triple(2, 2, -1), Triple(2, 2, "D"), Triple(2, 2, "B"),
+        Triple(2, null, "A"),
+        Triple(3, 2, -1), Triple(3, 4, 1), Triple(3, null, "D"), Triple(3, null, "B"),
+        Triple(3, null, "A"),
+        Triple(4, 4, 1), Triple(4, 4, -1), Triple(4, 4, "D"), Triple(4, null, "B"),
+        Triple(4, 4, "A")
+    )
 
     @Test
-    fun mapsThroughInsertionsAroundReplacements() =
-        map(
-            "0:1 2:2 0:1",
-            Triple(0, 0, -1), Triple(0, 1, 1),
-            Triple(1, 1, -1), Triple(1, 3, 1),
-            Triple(2, 3, -1), Triple(2, 4, 1)
-        )
+    fun mapsThroughInsertionsAroundReplacements() = map(
+        "0:1 2:2 0:1",
+        Triple(0, 0, -1),
+        Triple(0, 1, 1),
+        Triple(1, 1, -1),
+        Triple(1, 3, 1),
+        Triple(2, 3, -1),
+        Triple(2, 4, 1)
+    )
 
     @Test
-    fun staysInBetweenReplacements() =
-        map("2:2 2:2", Triple(2, 2, -1), Triple(2, 2, 1))
+    fun staysInBetweenReplacements() = map("2:2 2:2", Triple(2, 2, -1), Triple(2, 2, 1))
 }
 
 class ChangeSetTest {

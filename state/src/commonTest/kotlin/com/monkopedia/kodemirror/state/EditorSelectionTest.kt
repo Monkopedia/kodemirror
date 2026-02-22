@@ -24,7 +24,7 @@ import kotlin.test.assertEquals
 class EditorSelectionTest {
 
     @Test
-    fun stores_ranges_with_a_primary_range() {
+    fun storesRangesWithPrimaryRange() {
         val sel = EditorSelection.create(
             listOf(
                 EditorSelection.range(0, 1),
@@ -37,11 +37,14 @@ class EditorSelectionTest {
         assertEquals(3, sel.main.to)
         assertEquals(3, sel.main.anchor)
         assertEquals(2, sel.main.head)
-        assertEquals("0/1,3/2,4/5", sel.ranges.joinToString(",") { r -> "${r.anchor}/${r.head}" })
+        assertEquals(
+            "0/1,3/2,4/5",
+            sel.ranges.joinToString(",") { "${it.anchor}/${it.head}" }
+        )
     }
 
     @Test
-    fun merges_and_sorts_ranges_when_normalizing() {
+    fun mergesAndSortsRangesWhenNormalizing() {
         val sel = EditorSelection.create(
             listOf(
                 EditorSelection.range(10, 12),
@@ -56,12 +59,12 @@ class EditorSelectionTest {
         )
         assertEquals(
             "0/6,6/7,7/8,9/13,13/14",
-            sel.ranges.joinToString(",") { r -> "${r.anchor}/${r.head}" }
+            sel.ranges.joinToString(",") { "${it.anchor}/${it.head}" }
         )
     }
 
     @Test
-    fun merges_adjacent_point_ranges_when_normalizing() {
+    fun mergesAdjacentPointRangesWhenNormalizing() {
         val sel = EditorSelection.create(
             listOf(
                 EditorSelection.range(10, 12),
@@ -71,17 +74,23 @@ class EditorSelectionTest {
                 EditorSelection.range(8, 10)
             )
         )
-        assertEquals("8/10,10/12", sel.ranges.joinToString(",") { r -> "${r.anchor}/${r.head}" })
+        assertEquals(
+            "8/10,10/12",
+            sel.ranges.joinToString(",") { "${it.anchor}/${it.head}" }
+        )
     }
 
     @Test
-    fun preserves_the_direction_of_the_last_range_when_merging_ranges() {
+    fun preservesDirectionOfLastRangeWhenMergingRanges() {
         val sel = EditorSelection.create(
             listOf(
                 EditorSelection.range(0, 2),
                 EditorSelection.range(10, 1)
             )
         )
-        assertEquals("10/0", sel.ranges.joinToString(",") { r -> "${r.anchor}/${r.head}" })
+        assertEquals(
+            "10/0",
+            sel.ranges.joinToString(",") { "${it.anchor}/${it.head}" }
+        )
     }
 }

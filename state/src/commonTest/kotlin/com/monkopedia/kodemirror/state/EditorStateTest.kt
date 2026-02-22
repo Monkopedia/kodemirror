@@ -24,7 +24,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 import kotlin.test.assertSame
-import kotlin.test.assertTrue
 
 class EditorStateTest {
 
@@ -42,7 +41,11 @@ class EditorStateTest {
             TransactionSpec(
                 changes = ChangeSpec.Multi(
                     listOf(
-                        ChangeSpec.Single(from = 2, to = 4, insert = InsertContent.StringContent("w")),
+                        ChangeSpec.Single(
+                            from = 2,
+                            to = 4,
+                            insert = InsertContent.StringContent("w")
+                        ),
                         ChangeSpec.Single(from = 5, insert = InsertContent.StringContent("!"))
                     )
                 )
@@ -198,6 +201,7 @@ class EditorStateTest {
             EditorStateConfig(extensions = field)
         ).update(TransactionSpec()).state
         val json = state.toJSON(fields)
+
         @Suppress("UNCHECKED_CAST")
         val fJson = json["f"] as Map<String, Any?>
         assertEquals(1, fJson["number"])
@@ -532,7 +536,10 @@ class EditorStateTest {
             0,
             state.update(
                 TransactionSpec(
-                    changes = ChangeSpec.Single(from = 0, insert = InsertContent.StringContent("hi"))
+                    changes = ChangeSpec.Single(
+                        from = 0,
+                        insert = InsertContent.StringContent("hi")
+                    )
                 )
             ).state.doc.length
         )
@@ -540,7 +547,10 @@ class EditorStateTest {
             2,
             state.update(
                 TransactionSpec(
-                    changes = ChangeSpec.Single(from = 0, insert = InsertContent.StringContent("hi")),
+                    changes = ChangeSpec.Single(
+                        from = 0,
+                        insert = InsertContent.StringContent("hi")
+                    ),
                     filter = false
                 )
             ).state.doc.length
@@ -586,7 +596,17 @@ class EditorStateTest {
             EditorStateConfig(
                 extensions = EditorState.transactionFilter.of { tr ->
                     listOf(
-                        TransactionSpec(),
+                        TransactionSpec(
+                            changes = ChangeSpec.Set(tr.changes),
+                            selection = if (tr.selection != null) {
+                                SelectionSpec.EditorSelectionSpec(tr.selection!!)
+                            } else {
+                                null
+                            },
+                            effects = tr.effects,
+                            annotations = tr.annotations,
+                            scrollIntoView = tr.scrollIntoView
+                        ),
                         TransactionSpec(
                             changes = ChangeSpec.Single(
                                 from = tr.changes.newLength,

@@ -18,34 +18,53 @@
  */
 package com.monkopedia.kodemirror.state
 
-// import {EditorState} from "./state"
-// import {Transaction, TransactionSpec} from "./transaction"
-// import {Facet} from "./facet"
+val languageData: Facet<
+    (EditorState, Int, Int) -> List<Map<String, Any?>>,
+    List<(EditorState, Int, Int) -> List<Map<String, Any?>>>
+    > = Facet.define()
 
-enum class Side(val sign: Int) {
-    NEG(-1),
-    ZERO(0),
-    POS(1);
+/**
+ * Subtype of Command that doesn't require access to the actual
+ * editor view.
+ */
+typealias StateCommand =
+    (target: StateCommandTarget) -> Boolean
 
-    operator fun minus(other: Side): Side {
-        val value = sign - other.sign
-        return enumValues<Side>().find { it.sign == value }!!
+data class StateCommandTarget(
+    val state: EditorState,
+    val dispatch: (Transaction) -> Unit
+)
+
+val allowMultipleSelections: Facet<Boolean, Boolean> =
+    Facet.define(
+        combine = { values -> values.any { it } },
+        static = true
+    )
+
+val lineSeparator: Facet<String, String?> = Facet.define(
+    combine = { values ->
+        values.firstOrNull()
+    },
+    static = true
+)
+
+val changeFilter: Facet<
+    (Transaction) -> Any,
+    List<(Transaction) -> Any>
+    > = Facet.define()
+
+val transactionFilter: Facet<
+    (Transaction) -> Any,
+    List<(Transaction) -> Any>
+    > = Facet.define()
+
+val transactionExtender: Facet<
+    (Transaction) -> TransactionExtenderResult?,
+    List<(Transaction) -> TransactionExtenderResult?>
+    > = Facet.define()
+
+val readOnly: Facet<Boolean, Boolean> = Facet.define(
+    combine = { values ->
+        values.firstOrNull() ?: false
     }
-
-    companion object {
-        val Int.asSide: Side
-            get() = when {
-                this < 0 -> NEG
-                this > 0 -> POS
-                else -> ZERO
-            }
-    }
-}
-typealias LanguageDataType = (state: EditorState, pos: Int, side: Side) -> List<Map<String, Any>>
-
-// / Subtype of [`Command`](#view.Command) that doesn't require access
-// / to the actual editor view. Mostly useful to define commands that
-// / can be run and tested outside of a browser environment.
-fun interface StateCommand {
-    fun target(state: EditorState, dispatch: (Transaction) -> Unit): Boolean
-}
+)

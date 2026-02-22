@@ -18,79 +18,93 @@
  */
 package com.monkopedia.kodemirror.state
 
-import kotlin.jvm.JvmName
 import kotlin.math.min
 
 val DefaultSplit = Regex("\r\n?|\n")
 
-// / Distinguishes different ways in which positions can be mapped.
+/**
+ * Distinguishes different ways in which positions can be mapped.
+ */
 enum class MapMode {
-    // / Map a position to a valid new position, even when its context
-    // / was deleted.
+    /**
+     * Map a position to a valid new position, even when its context
+     * was deleted.
+     */
     Simple,
 
-    // / Return null if deletion happens across the position.
+    /**
+     * Return null if deletion happens across the position.
+     */
     TrackDel,
 
-    // / Return null if the character _before_ the position is deleted.
+    /**
+     * Return null if the character _before_ the position is deleted.
+     */
     TrackBefore,
 
-    // / Return null if the character _after_ the position is deleted.
+    /**
+     * Return null if the character _after_ the position is deleted.
+     */
     TrackAfter
 }
 
-data class ChangeSection(val len: Int, val ins: Int? = null) {
-    override fun toString(): String = if (ins != null) "$len:$ins" else len.toString()
-
-    fun plus(len: Int = 0, ins: Int? = null): ChangeSection = ChangeSection(
-        this.len + len,
-        ins?.let {
-            it + (this.ins ?: -1)
-        } ?: this.ins
-    )
-}
-
-// / A change description is a variant of [change set](#state.ChangeSet)
-// / that doesn't store the inserted text. As such, it can't be
-// / applied, but is cheaper to store and manipulate.
-open class ChangeDesc
-// Sections are encoded as pairs of integers. The first is the
-// length in the current document, and the second is -1 for
-// unaffected sections, and the length of the replacement content
-// otherwise. So an insertion would be (0, n>0), a deletion (n>0,
-// 0), and a replacement two positive Ints.
-// / @internal
-internal constructor(
-    // / @internal
-    val sections: List<ChangeSection>
+/**
+ * A change description is a variant of [ChangeSet] that doesn't
+ * store the inserted text. As such, it can't be applied, but is
+ * cheaper to store and manipulate.
+ */
+open class ChangeDesc internal constructor(
+    internal val sections: IntArray
 ) {
-
-    // / The length of the document before the change.
+    /**
+     * The length of the document before the change.
+     */
     val length: Int
-        get() = sections.sumOf { it.len }
+        get() {
+            var result = 0
+            var i = 0
+            while (i < sections.size) {
+                result += sections[i]
+                i += 2
+            }
+            return result
+        }
 
-    // / The length of the document after the change.
+    /**
+     * The length of the document after the change.
+     */
     val newLength: Int
         get() {
-            return sections.sumOf { it.ins ?: it.len }
+            var result = 0
+            var i = 0
+            while (i < sections.size) {
+                val ins = sections[i + 1]
+                result += if (ins < 0) sections[i] else ins
+                i += 2
+            }
+            return result
         }
 
-    // / False when there are actual changes in this set.
-    val isEmpty: Boolean
-        get() {
-            return this.sections.isEmpty() ||
-                this.sections.size == 1 &&
-                this.sections[0].ins == null
-        }
+    /**
+     * False when there are actual changes in this set.
+     */
+    val empty: Boolean
+        get() = sections.isEmpty() ||
+            (sections.size == 2 && sections[1] < 0)
 
-    // / Iterate over the unchanged parts left by these changes. `posA`
-    // / provides the position of the range in the old document, `posB`
-    // / the new position in the changed document.
+    /**
+     * Iterate over the unchanged parts left by these changes.
+     * [posA] provides the position of the range in the old document,
+     * [posB] the new position in the changed document.
+     */
     fun iterGaps(f: (posA: Int, posB: Int, length: Int) -> Unit) {
+        var i = 0
         var posA = 0
         var posB = 0
-        sections.forEach { (len, ins) ->
-            if (ins == null) {
+        while (i < sections.size) {
+            val len = sections[i++]
+            val ins = sections[i++]
+            if (ins < 0) {
                 f(posA, posB, len)
                 posB += len
             } else {
@@ -100,84 +114,86 @@ internal constructor(
         }
     }
 
-    // / Iterate over the ranges changed by these changes. (See
-    // / [`ChangeSet.iterChanges`](#state.ChangeSet.iterChanges) for a
-    // / variant that also provides you with the inserted text.)
-    // / `fromA`/`toA` provides the extent of the change in the starting
-    // / document, `fromB`/`toB` the extent of the replacement in the
-    // / changed document.
-    // /
-    // / When `individual` is true, adjacent changes (which are kept
-    // / separate for [position mapping](#state.ChangeDesc.mapPos)) are
-    // / reported separately.
+    /**
+     * Iterate over the ranges changed by these changes.
+     *
+     * When [individual] is true, adjacent changes are reported
+     * separately.
+     */
     fun iterChangedRanges(
         f: (fromA: Int, toA: Int, fromB: Int, toB: Int) -> Unit,
         individual: Boolean = false
     ) {
-        iterChanges(this, { a, b, c, d, _ -> f(a, b, c, d) }, individual)
+        iterChanges(this, f, individual)
     }
 
-    // / Get a description of the inverted form of these changes.
+    /**
+     * Get a description of the inverted form of these changes.
+     */
     val invertedDesc: ChangeDesc
         get() {
-            val sections = sections.map { (len, ins) ->
-                if (ins == null) {
-                    ChangeSection(len, ins)
-                } else {
-                    ChangeSection(ins, len)
+            val result = IntArray(sections.size)
+            var i = 0
+            while (i < sections.size) {
+                result[i] = sections[i + 1].let { if (it < 0) sections[i] else it }
+                result[i + 1] = sections[i].let { len ->
+                    if (sections[i + 1] < 0) sections[i + 1] else len
                 }
+                i += 2
             }
-            return ChangeDesc(sections)
+            return ChangeDesc(result)
         }
 
-    // / Compute the combined effect of applying another set of changes
-    // / after this one. The length of the document after this set should
-    // / match the length before `other`.
-    fun composeDesc(other: ChangeDesc): ChangeDesc = if (this.isEmpty) {
+    /**
+     * Compute the combined effect of applying another set of changes
+     * after this one. The length of the document after this set should
+     * match the length before [other].
+     */
+    fun composeDesc(other: ChangeDesc): ChangeDesc = if (empty) {
         other
-    } else if (other.isEmpty) {
+    } else if (other.empty) {
         this
     } else {
         composeSets(this, other)
     }
 
-    // / Map this description, which should start with the same document
-    // / as `other`, over another set of changes, so that it can be
-    // / applied after it. When `before` is true, map as if the changes
-    // / in `other` happened before the ones in `this`.
+    /**
+     * Map this description, which should start with the same document
+     * as [other], over another set of changes, so that it can be
+     * applied after it. When [before] is true, map as if the changes
+     * in `this` happened before the ones in [other].
+     */
     open fun mapDesc(other: ChangeDesc, before: Boolean = false): ChangeDesc =
-        if (other.isEmpty) this else mapSet(this, other, before)
+        if (other.empty) this else mapSet(this, other, before)
 
-    // / Map a given position through these changes, to produce a
-    // / position pointing into the new document.
-    // /
-    // / `assoc` indicates which side the position should be associated
-    // / with. When it is negative or zero, the mapping will try to keep
-    // / the position close to the character before it (if any), and will
-    // / move it before insertions at that point or replacements across
-    // / that point. When it is positive, the position is associated with
-    // / the character after it, and will be moved forward for insertions
-    // / at or replacements across the position. Defaults to -1.
-    // /
-    // / `mode` determines whether deletions should be
-    // / [reported](#state.MapMode). It defaults to
-    // / [`MapMode.Simple`](#state.MapMode.Simple) (don't report
-    // / deletions).
-    fun mapPos(pos: Int, assoc: Side = Side.NEG, mode: MapMode = MapMode.Simple): Int? {
+    /**
+     * Map a given position through these changes, to produce a
+     * position pointing into the new document.
+     */
+    fun mapPos(pos: Int, assoc: Int = -1): Int = mapPosInner(pos, assoc, MapMode.Simple)!!
+
+    /**
+     * Map a given position through these changes. Returns null if
+     * the position was deleted according to the given [mode].
+     */
+    fun mapPos(pos: Int, assoc: Int, mode: MapMode): Int? = mapPosInner(pos, assoc, mode)
+
+    private fun mapPosInner(pos: Int, assoc: Int, mode: MapMode): Int? {
         var posA = 0
         var posB = 0
-        sections.forEach { (len, ins) ->
+        var i = 0
+        while (i < sections.size) {
+            val len = sections[i++]
+            val ins = sections[i++]
             val endA = posA + len
-            if (ins == null) {
+            if (ins < 0) {
                 if (endA > pos) return posB + (pos - posA)
                 posB += len
             } else {
-                if (mode != MapMode.Simple &&
-                    endA >= pos &&
+                if (mode != MapMode.Simple && endA >= pos &&
                     (
                         mode == MapMode.TrackDel &&
-                            posA < pos &&
-                            endA > pos ||
+                            posA < pos && endA > pos ||
                             mode == MapMode.TrackBefore &&
                             posA < pos ||
                             mode == MapMode.TrackAfter &&
@@ -186,278 +202,344 @@ internal constructor(
                 ) {
                     return null
                 }
-                if (endA > pos || endA == pos && assoc == Side.NEG && len == 0) {
-                    return if (pos == posA || assoc == Side.NEG) posB else posB + ins
+                if (endA > pos || endA == pos && assoc < 0 && len == 0) {
+                    return if (pos == posA || assoc < 0) {
+                        posB
+                    } else {
+                        posB + ins
+                    }
                 }
                 posB += ins
             }
             posA = endA
         }
-        if (pos >
-            posA
-        ) {
+        if (pos > posA) {
             throw IllegalArgumentException(
-                "Position $pos is out of range for changeset of length $posA"
+                "Position $pos is out of range for changeset " +
+                    "of length $posA"
             )
         }
         return posB
     }
 
-    // / Check whether these changes touch a given range. When one of the
-    // / changes entirely covers the range, the string `"cover"` is
-    // / returned.
-    fun touchesRange(from: Int, to: Int = from): Boolean? {
+    /**
+     * Check whether these changes touch a given range. When one of
+     * the changes entirely covers the range, the string "cover" is
+     * returned.
+     */
+    fun touchesRange(from: Int, to: Int = from): TouchesResult {
+        var i = 0
         var pos = 0
-        sections.forEach { (len, ins) ->
+        while (i < sections.size && pos <= to) {
+            val len = sections[i++]
+            val ins = sections[i++]
             val end = pos + len
-            if (ins != null && pos <= to && end >= from) {
-                return if (pos < from && end > to) null else true
+            if (ins >= 0 && pos <= to && end >= from) {
+                return if (pos < from && end > to) {
+                    TouchesResult.Cover
+                } else {
+                    TouchesResult.Yes
+                }
             }
             pos = end
         }
-        return false
+        return TouchesResult.No
     }
 
-    // / @internal
-    override fun toString(): String = sections.joinToString(" ")
-
-    // / Serialize this change desc to a JSON-representable value.
-    fun toJSON(): String {
-        return toString() // this.sections
+    override fun toString(): String {
+        val result = StringBuilder()
+        var i = 0
+        while (i < sections.size) {
+            val len = sections[i++]
+            val ins = sections[i++]
+            if (result.isNotEmpty()) result.append(' ')
+            result.append(len)
+            if (ins >= 0) result.append(':').append(ins)
+        }
+        return result.toString()
     }
+
+    /**
+     * Serialize this change desc to a JSON-representable value.
+     */
+    fun toJSON(): List<Int> = sections.toList()
 
     companion object {
-        // / Create a change desc from its JSON representation (as produced
-        // / by [`toJSON`](#state.ChangeDesc.toJSON).
-//        fun fromJSON(json: any) {
-//            if (!Array.isArray(json) || json.length % 2 || json.some(a => typeof a != "Int"))
-//            throw new IllegalArgumentException ("Invalid JSON representation of ChangeDesc")
-//            return new ChangeDesc (json as Int[])
-//        }
+        /**
+         * Create a change desc from its JSON representation.
+         */
+        fun fromJSON(json: List<Int>): ChangeDesc {
+            if (json.size % 2 != 0) {
+                throw IllegalArgumentException(
+                    "Invalid JSON representation of ChangeDesc"
+                )
+            }
+            return ChangeDesc(json.toIntArray())
+        }
 
-        // / @internal
-        @JvmName("createChangeSection")
-        internal fun create(sections: List<ChangeSection>) = ChangeDesc(sections)
-
-        // / @internal
-        internal fun create(sections: List<Pair<Int, Int>>) =
-            ChangeDesc(sections.map { ChangeSection(it.first, it.second.takeIf { it >= 0 }) })
+        internal fun create(sections: IntArray): ChangeDesc = ChangeDesc(sections)
     }
 }
 
-// / This type is used as argument to
-// / [`EditorState.changes`](#state.EditorState.changes) and in the
-// / [`changes` field](#state.TransactionSpec.changes) of transaction
-// / specs to succinctly describe document changes. It may either be a
-// / plain object describing a change (a deletion, insertion, or
-// / replacement, depending on which fields are present), a [change
-// / set](#state.ChangeSet), or an array of change specs.
+/**
+ * Result type for [ChangeDesc.touchesRange].
+ */
+enum class TouchesResult {
+    No,
+    Yes,
+    Cover;
 
+    fun toBoolean(): Boolean = this != No
+}
+
+/**
+ * This type is used as argument to [EditorState.changes] and in
+ * the `changes` field of transaction specs to succinctly describe
+ * document changes.
+ */
 sealed interface ChangeSpec {
-    companion object {
-        val empty: ChangeSpec
-            get() = ChangeSpecSet(emptyList())
-    }
+    data class Single(
+        val from: Int,
+        val to: Int? = null,
+        val insert: InsertContent? = null
+    ) : ChangeSpec
+
+    data class Multi(val specs: List<ChangeSpec>) : ChangeSpec
+
+    class Set(val changeSet: ChangeSet) : ChangeSpec
 }
 
-data class ChangeSpecData(val from: Int, val to: Int? = null, val insert: Text? = null) :
-    ChangeSpec {
-    constructor(from: Int, to: Int? = null, insert: String) : this(from, to, insert.asText)
+sealed interface InsertContent {
+    data class StringContent(val value: String) : InsertContent
+    data class TextContent(val value: Text) : InsertContent
 }
 
-class ChangeSpecSet(val content: List<ChangeSpec>) :
-    ChangeSpec,
-    List<ChangeSpec> by content {
-    constructor(vararg content: ChangeSpec) : this(content.toList())
-}
-
-val List<ChangeSpec>.asSpec: ChangeSpec
-    get() = ChangeSpecSet(this)
-
-// / A change set represents a group of modifications to a document. It
-// / stores the document length, and can only be applied to documents
-// / with exactly that length.
+/**
+ * A change set represents a group of modifications to a document.
+ * It stores the document length, and can only be applied to
+ * documents with exactly that length.
+ */
 class ChangeSet private constructor(
-
-    sections: List<ChangeSection>,
-// / @internal
+    sections: IntArray,
     internal val inserted: List<Text>
-) : ChangeDesc(sections),
-    ChangeSpec {
+) : ChangeDesc(sections) {
 
-    // / Apply the changes to a document, returning the modified
-    // / document.
+    /**
+     * Apply the changes to a document, returning the modified
+     * document.
+     */
     fun apply(doc: Text): Text {
-        var ret = doc
-        if (this.length !=
-            ret.length
-        ) {
+        if (length != doc.length) {
             throw IllegalArgumentException(
-                "Applying change set to a document with the wrong length"
+                "Applying change set to a document with the " +
+                    "wrong length"
             )
         }
+        var result = doc
         iterChanges(
             this,
-            { fromA, toA, fromB, _toB, text ->
-                ret = ret.replace(fromB, fromB + (toA - fromA), text)
+            { fromA, toA, fromB, _, text ->
+                result = result.replace(
+                    fromB, fromB + (toA - fromA), text
+                )
             },
             false
         )
-        return ret
+        return result
     }
 
-    override fun mapDesc(other: ChangeDesc, before: Boolean): ChangeDesc = mapSet(
-        this,
-        other,
-        before,
-        true
-    )
+    override fun mapDesc(other: ChangeDesc, before: Boolean): ChangeDesc = if (other.empty) {
+        this
+    } else {
+        mapSet(this, other, before, mkSet = true)
+    }
 
-    // / Given the document as it existed _before_ the changes, return a
-    // / change set that represents the inverse of this set, which could
-    // / be used to go from the document created by the changes back to
-    // / the document as it existed before the changes.
+    /**
+     * Given the document as it existed _before_ the changes, return
+     * a change set that represents the inverse of this set, which
+     * could be used to go from the document created by the changes
+     * back to the document as it existed before the changes.
+     */
     fun invert(doc: Text): ChangeSet {
-        val inserted = mutableListOf<Text>()
+        val newSections = sections.copyOf()
+        val newInserted = mutableListOf<Text>()
         var pos = 0
-        val sections = sections.map { (len, ins) ->
-            if (ins != null) {
-                inserted.add(if (len > 0) doc.slice(pos, pos + len) else Text.empty)
-                ChangeSection(ins, len)
-            } else {
-                inserted.add(Text.empty)
-                ChangeSection(len, ins)
-            }.also {
-                pos += len
+        var i = 0
+        while (i < newSections.size) {
+            val len = newSections[i]
+            val ins = newSections[i + 1]
+            if (ins >= 0) {
+                newSections[i] = ins
+                newSections[i + 1] = len
+                val index = i shr 1
+                while (newInserted.size < index) {
+                    newInserted.add(Text.empty)
+                }
+                newInserted.add(
+                    if (len > 0) {
+                        doc.slice(pos, pos + len)
+                    } else {
+                        Text.empty
+                    }
+                )
             }
+            pos += len
+            i += 2
         }
-        return ChangeSet(sections, inserted)
+        return ChangeSet(newSections, newInserted)
     }
 
-    // / Combine two subsequent change sets into a single set. `other`
-    // / must start in the document produced by `this`. If `this` goes
-    // / `docA` → `docB` and `other` represents `docB` → `docC`, the
-    // / returned value will represent the change `docA` → `docC`.
-    fun compose(other: ChangeSet): ChangeSet = when {
-        this.isEmpty -> other
-        other.isEmpty -> this
-        else -> composeSets(this, other, true) as ChangeSet
+    /**
+     * Combine two subsequent change sets into a single set. [other]
+     * must start in the document produced by `this`.
+     */
+    fun compose(other: ChangeSet): ChangeSet = if (empty) {
+        other
+    } else if (other.empty) {
+        this
+    } else {
+        composeSets(this, other, mkSet = true) as ChangeSet
     }
 
-    // / Given another change set starting in the same document, maps this
-    // / change set over the other, producing a new change set that can be
-    // / applied to the document produced by applying `other`. When
-    // / `before` is `true`, order changes as if `this` comes before
-    // / `other`, otherwise (the default) treat `other` as coming first.
-    // /
-    // / Given two changes `A` and `B`, `A.compose(B.map(A))` and
-    // / `B.compose(A.map(B, true))` will produce the same document. This
-    // / provides a basic form of [operational
-    // / transformation](https://en.wikipedia.org/wiki/Operational_transformation),
-    // / and can be used for collaborative editing.
-    fun map(other: ChangeDesc, before: Boolean = false): ChangeSet =
-        if (other.isEmpty) this else mapSet(this, other, before, true) as ChangeSet
+    /**
+     * Given another change set starting in the same document, maps
+     * this change set over the other, producing a new change set
+     * that can be applied to the document produced by applying
+     * [other].
+     */
+    fun map(other: ChangeDesc, before: Boolean = false): ChangeSet = if (other.empty) {
+        this
+    } else {
+        mapSet(this, other, before, mkSet = true) as ChangeSet
+    }
 
-    // / Iterate over the changed ranges in the document, calling `f` for
-    // / each, with the range in the original document (`fromA`-`toA`)
-    // / and the range that replaces it in the new document
-    // / (`fromB`-`toB`).
-    // /
-    // / When `individual` is true, adjacent changes are reported
-    // / separately.
+    /**
+     * Iterate over the changed ranges in the document.
+     */
     fun iterChanges(
-        f: (fromA: Int, toA: Int, fromB: Int, toB: Int, inserted: Text) -> Unit,
+        f: (
+            fromA: Int,
+            toA: Int,
+            fromB: Int,
+            toB: Int,
+            inserted: Text
+        ) -> Unit,
         individual: Boolean = false
     ) {
         iterChanges(this, f, individual)
     }
 
-    // / Get a [change description](#state.ChangeDesc) for this change
-    // / set.
-    val desc: ChangeDesc
-        get() {
-            return ChangeDesc.create(this.sections)
-        }
+    /**
+     * Get a [change description][ChangeDesc] for this change set.
+     */
+    val desc: ChangeDesc get() = ChangeDesc.create(sections)
 
-    // / @internal
-    fun filter(ranges: List<Pair<Int, Int>>): Pair<ChangeSet, ChangeDesc> {
-        val resultSections = mutableListOf<ChangeSection>()
+    internal fun filter(ranges: IntArray): FilterResult {
+        val resultSections = mutableListOf<Int>()
         val resultInserted = mutableListOf<Text>()
-        val filteredSections = mutableListOf<ChangeSection>()
+        val filteredSections = mutableListOf<Int>()
         val iter = SectionIter(this)
+        var i = 0
         var pos = 0
-        val rangeSequence: Sequence<Pair<Int, Int>> =
-            ranges.asSequence() + generateSequence { Int.MAX_VALUE to 0 }
-        rangeSequence.forEach { (next, end) ->
+        outer@ while (true) {
+            val next = if (i == ranges.size) {
+                1_000_000_000
+            } else {
+                ranges[i++]
+            }
             while (pos < next || pos == next && iter.len == 0) {
-                if (iter.done) {
-                    return ChangeSet(resultSections, resultInserted) to create(filteredSections)
-                }
+                if (iter.done) break@outer
                 val len = min(iter.len, next - pos)
-                addSection(filteredSections, len, null)
-                val ins = if (iter.ins == null) {
-                    null
-                } else if (iter.off == 0) {
-                    iter.ins
-                } else {
-                    0
-                }
+                addSection(filteredSections, len, -1)
+                val ins = if (iter.ins == -1) {
+                    -1
+                } else if (iter.off == 0) iter.ins else 0
                 addSection(resultSections, len, ins)
-                if (ins != null && ins > 0) addInsert(resultInserted, resultSections, iter.text)
+                if (ins > 0) {
+                    addInsert(
+                        resultInserted,
+                        resultSections,
+                        iter.text
+                    )
+                }
                 iter.forward(len)
                 pos += len
             }
-
+            val end = ranges[i++]
             while (pos < end) {
-                if (iter.done) {
-                    return ChangeSet(resultSections, resultInserted) to create(filteredSections)
-                }
+                if (iter.done) break@outer
                 val len = min(iter.len, end - pos)
-                addSection(resultSections, len, null)
+                addSection(resultSections, len, -1)
                 addSection(
                     filteredSections,
                     len,
-                    if (iter.ins == null) {
-                        null
-                    } else if (iter.off == 0) {
-                        iter.ins
-                    } else {
-                        0
-                    }
+                    if (iter.ins == -1) {
+                        -1
+                    } else if (iter.off == 0) iter.ins else 0
                 )
                 iter.forward(len)
                 pos += len
             }
         }
-        error("Unreachable code")
+        return FilterResult(
+            changes = createSet(
+                resultSections.toIntArray(),
+                resultInserted
+            ),
+            filtered = ChangeDesc.create(
+                filteredSections.toIntArray()
+            )
+        )
     }
 
-    // / Serialize this change set to a JSON-representable value.
-//    fun toJSON(): any {
-//        let parts :(Int |[Int, ...string[]])[] = []
-//        for (let i = 0; i < this.sections.length; i += 2) {
-//        let len = this.sections[i], ins = this.sections[i+1]
-//        if (ins < 0) parts.push(len)
-//        else if (ins == 0) parts.push([len])
-//        else parts.push(([len] as [ Int, ... string []]).concat(this.inserted[i >> 1].toJSON()) as any)
-//    }
-//        return parts
-//    }
+    /**
+     * Serialize this change set to a JSON-representable value.
+     */
+    fun toChangeSetJSON(): List<Any> {
+        val parts = mutableListOf<Any>()
+        var i = 0
+        while (i < sections.size) {
+            val len = sections[i]
+            val ins = sections[i + 1]
+            if (ins < 0) {
+                parts.add(len)
+            } else if (ins == 0) {
+                parts.add(listOf(len))
+            } else {
+                val list = mutableListOf<Any>(len)
+                list.addAll(inserted[i shr 1].toJSON())
+                parts.add(list)
+            }
+            i += 2
+        }
+        return parts
+    }
 
     companion object {
-        // / Create a change set for the given changes, for a document of the
-        // / given length, using `lineSep` as line separator.
+        /**
+         * Create a change set for the given changes, for a document
+         * of the given length, using [lineSep] as line separator.
+         */
         fun of(changes: ChangeSpec, length: Int, lineSep: String? = null): ChangeSet {
-            var sections = mutableListOf<ChangeSection>()
+            val lineSepRegex =
+                if (lineSep != null) {
+                    Regex(Regex.escape(lineSep))
+                } else {
+                    DefaultSplit
+                }
+            var sections = mutableListOf<Int>()
             var inserted = mutableListOf<Text>()
             var pos = 0
             var total: ChangeSet? = null
 
             fun flush(force: Boolean = false) {
                 if (!force && sections.isEmpty()) return
-                if (pos < length) addSection(sections, length - pos, null)
-                val set = ChangeSet(sections, inserted)
-                total = total?.let { it.compose(set.map(it)) } ?: set
+                if (pos < length) addSection(sections, length - pos, -1)
+                val set = ChangeSet(
+                    sections.toIntArray(),
+                    inserted
+                )
+                total = total?.compose(set.map(total!!)) ?: set
                 sections = mutableListOf()
                 inserted = mutableListOf()
                 pos = 0
@@ -465,36 +547,45 @@ class ChangeSet private constructor(
 
             fun process(spec: ChangeSpec) {
                 when (spec) {
-                    is ChangeSpecSet -> {
-                        for (sub in spec.content) process(sub)
+                    is ChangeSpec.Multi -> {
+                        for (sub in spec.specs) process(sub)
                     }
-
-                    is ChangeSet -> {
-                        if (spec.length != length) {
+                    is ChangeSpec.Set -> {
+                        if (spec.changeSet.length != length) {
                             throw IllegalArgumentException(
                                 "Mismatched change set length " +
-                                    "(got ${spec.length}, expected $length)"
+                                    "(got ${spec.changeSet.length}" +
+                                    ", expected $length)"
                             )
                         }
                         flush()
-                        total = total?.let { it.compose(spec.map(it)) } ?: spec
+                        total = total?.compose(
+                            spec.changeSet.map(total!!)
+                        ) ?: spec.changeSet
                     }
-
-                    is ChangeSpecData -> {
+                    is ChangeSpec.Single -> {
                         val from = spec.from
                         val to = spec.to ?: from
-                        val insert = spec.insert
                         if (from > to || from < 0 || to > length) {
                             throw IllegalArgumentException(
-                                "Invalid change range $from to $to (in doc of length $length)"
+                                "Invalid change range $from to " +
+                                    "$to (in doc of length $length)"
                             )
                         }
-                        // !insert ? Text.empty : typeof insert == "string" ? Text.of(insert.split(lineSep || DefaultSplit)) : insert
-                        val insText = insert ?: Text.empty
+                        val insText = when (val ins = spec.insert) {
+                            null -> Text.empty
+                            is InsertContent.StringContent ->
+                                Text.of(
+                                    ins.value.split(lineSepRegex)
+                                )
+                            is InsertContent.TextContent -> ins.value
+                        }
                         val insLen = insText.length
                         if (from == to && insLen == 0) return
                         if (from < pos) flush()
-                        if (from > pos) addSection(sections, from - pos, null)
+                        if (from > pos) {
+                            addSection(sections, from - pos, -1)
+                        }
                         addSection(sections, to - from, insLen)
                         addInsert(inserted, sections, insText)
                         pos = to
@@ -507,108 +598,154 @@ class ChangeSet private constructor(
             return total!!
         }
 
-        // / Create an empty changeset of the given length.
+        /**
+         * Create an empty changeset of the given length.
+         */
         fun empty(length: Int): ChangeSet = ChangeSet(
-            if (length != 0) listOf(ChangeSection(length)) else emptyList(),
+            if (length > 0) {
+                intArrayOf(length, -1)
+            } else {
+                intArrayOf()
+            },
             emptyList()
         )
 
-        // / Create a changeset from its JSON representation (as produced by
-        // / [`toJSON`](#state.ChangeSet.toJSON).
-//        fun fromJSON (json: any) {
-//            if (!Array.isArray(json)) throw new IllegalArgumentException ("Invalid JSON representation of ChangeSet")
-//            let sections =[], inserted = []
-//            for (let i = 0; i < json.length; i++) {
-//            let part = json [i]
-//            if (typeof part == "Int") {
-//            sections.push(part, -1)
-//        } else if (!Array.isArray(part) || typeof part[0] != "Int" || part.some((e, i) => i && typeof e != "string")) {
-//            throw new IllegalArgumentException ("Invalid JSON representation of ChangeSet")
-//        } else if (part.length == 1) {
-//            sections.push(part[0], 0)
-//        } else {
-//            while (inserted.length < i) inserted.push(Text.empty)
-//            inserted[i] = Text.of(part.slice(1))
-//            sections.push(part[0], inserted[i].length)
-//        }
-//        }
-//            return new ChangeSet (sections, inserted)
-//        }
+        /**
+         * Create a changeset from its JSON representation.
+         */
+        @Suppress("UNCHECKED_CAST")
+        fun changeSetFromJSON(json: List<Any>): ChangeSet {
+            val sections = mutableListOf<Int>()
+            val inserted = mutableListOf<Text>()
+            for (i in json.indices) {
+                val part = json[i]
+                when {
+                    part is Number -> {
+                        sections.add(part.toInt())
+                        sections.add(-1)
+                    }
+                    part is List<*> -> {
+                        val list = part as List<Any>
+                        if (list.isEmpty() ||
+                            list[0] !is Number
+                        ) {
+                            throw IllegalArgumentException(
+                                "Invalid JSON representation " +
+                                    "of ChangeSet"
+                            )
+                        }
+                        if (list.size == 1) {
+                            sections.add(
+                                (list[0] as Number).toInt()
+                            )
+                            sections.add(0)
+                        } else {
+                            while (inserted.size < i) {
+                                inserted.add(Text.empty)
+                            }
+                            inserted.add(
+                                i,
+                                Text.of(
+                                    list.drop(1)
+                                        .map { it.toString() }
+                                )
+                            )
+                            sections.add(
+                                (list[0] as Number).toInt()
+                            )
+                            sections.add(inserted[i].length)
+                        }
+                    }
+                    else -> throw IllegalArgumentException(
+                        "Invalid JSON representation of ChangeSet"
+                    )
+                }
+            }
+            return ChangeSet(
+                sections.toIntArray(),
+                inserted
+            )
+        }
 
-        @JvmName("createChangeSection")
-        // / @internal
-        internal fun createSet(sections: List<ChangeSection>, inserted: List<Text>) =
+        internal fun createSet(sections: IntArray, inserted: List<Text>): ChangeSet =
             ChangeSet(sections, inserted)
-
-        // / @internal
-        internal fun createSet(sections: List<Pair<Int, Int>>, inserted: List<Text>) = ChangeSet(
-            sections.map { ChangeSection(it.first, it.second.takeIf { it >= 0 }) },
-            inserted
-        )
     }
 }
 
-internal fun addSection(
-    sections: MutableList<ChangeSection>,
-    len: Int,
-    ins: Int?,
-    forceJoin: Boolean = false
-) {
-    if (len == 0 && (ins == null || ins == 0)) return
-    val last = sections.size - 1
-    if (last >= 0 && (ins == null || ins == 0) && ins == sections[last].ins) {
-        sections[last] = sections[last].plus(len = len)
-    } else if (last >= 0 && len == 0 && sections[last].len == 0) {
-        sections[last] = sections[last].plus(ins = ins ?: -1)
+data class FilterResult(
+    val changes: ChangeSet,
+    val filtered: ChangeDesc
+)
+
+private fun addSection(sections: MutableList<Int>, len: Int, ins: Int, forceJoin: Boolean = false) {
+    if (len == 0 && ins <= 0) return
+    val last = sections.size - 2
+    if (last >= 0 && ins <= 0 && ins == sections[last + 1]) {
+        sections[last] = sections[last] + len
+    } else if (last >= 0 && len == 0 && sections[last] == 0) {
+        sections[last + 1] = sections[last + 1] + ins
     } else if (forceJoin) {
-        sections[last] = sections[last].plus(len = len, ins = ins)
+        sections[last] = sections[last] + len
+        sections[last + 1] = sections[last + 1] + ins
     } else {
-        sections.add(ChangeSection(len, ins))
+        sections.add(len)
+        sections.add(ins)
     }
 }
 
-internal fun addInsert(
-    values: MutableList<Text>,
-    sections: MutableList<ChangeSection>,
-    value: Text
-) {
+private fun addInsert(values: MutableList<Text>, sections: List<Int>, value: Text) {
     if (value.length == 0) return
-    val index = (sections.size - 1)
+    val index = (sections.size - 2) shr 1
     if (index < values.size) {
-        values[values.size - 1] = values[values.size - 1].append(value)
+        values[values.size - 1] =
+            values[values.size - 1].append(value)
     } else {
         while (values.size < index) values.add(Text.empty)
         values.add(value)
     }
 }
 
-internal fun iterChanges(
+private fun iterChanges(
     desc: ChangeDesc,
-    f: (fromA: Int, toA: Int, fromB: Int, toB: Int, text: Text) -> Unit,
+    f: (
+        fromA: Int,
+        toA: Int,
+        fromB: Int,
+        toB: Int,
+        text: Text
+    ) -> Unit,
     individual: Boolean
 ) {
-    val inserted = (desc as ChangeSet).inserted
+    val inserted = (desc as? ChangeSet)?.inserted
     var posA = 0
     var posB = 0
     var i = 0
     while (i < desc.sections.size) {
-        var (len, ins) = desc.sections[i++]
-        if (ins == null) {
+        val len = desc.sections[i++]
+        val ins = desc.sections[i++]
+        if (ins < 0) {
             posA += len
             posB += len
         } else {
             var endA = posA
             var endB = posB
             var text = Text.empty
+            var curLen = len
+            var curIns = ins
             while (true) {
-                endA += len
-                endB += ins!!
-                if (ins != 0 && inserted.isNotEmpty()) {
-                    text = text.append(inserted[i - 1])
+                endA += curLen
+                endB += curIns
+                if (curIns > 0 && inserted != null) {
+                    text = text.append(inserted[(i - 2) shr 1])
                 }
-                if (individual || i == desc.sections.size || desc.sections[i].ins == null) break
-                len = desc.sections[i].len
-                ins = desc.sections[i++].ins
+                if (individual ||
+                    i == desc.sections.size ||
+                    desc.sections[i + 1] < 0
+                ) {
+                    break
+                }
+                curLen = desc.sections[i++]
+                curIns = desc.sections[i++]
             }
             f(posA, endA, posB, endB, text)
             posA = endA
@@ -617,66 +754,75 @@ internal fun iterChanges(
     }
 }
 
-internal fun mapSet(setA: ChangeSet, setB: ChangeDesc, before: Boolean): ChangeDesc =
-    mapSet(setA, setB, before, mkSet = true)
+private fun iterChanges(
+    desc: ChangeDesc,
+    f: (fromA: Int, toA: Int, fromB: Int, toB: Int) -> Unit,
+    individual: Boolean
+) {
+    iterChanges(
+        desc,
+        { fromA, toA, fromB, toB, _ ->
+            f(fromA, toA, fromB, toB)
+        },
+        individual
+    )
+}
 
-internal fun mapSet(
+private fun mapSet(
     setA: ChangeDesc,
     setB: ChangeDesc,
     before: Boolean,
     mkSet: Boolean = false
 ): ChangeDesc {
-    // Produce a copy of setA that applies to the document after setB
-    // has been applied (assuming both start at the same document).
-    val sections = mutableListOf<ChangeSection>()
-    val insert = if (mkSet) mutableListOf<Text>() else null
+    val sections = mutableListOf<Int>()
+    val insert: MutableList<Text>? =
+        if (mkSet) mutableListOf() else null
     val a = SectionIter(setA)
     val b = SectionIter(setB)
-    // Iterate over both sets in parallel. inserted tracks, for changes
-    // in A that have to be processed piece-by-piece, whether their
-    // content has been inserted already, and refers to the section
-    // index.
     var inserted = -1
     while (true) {
-        if (a.done && b.len != 0 || b.done && a.len != 0) {
-            throw Error("Mismatched change set lengths")
-        } else if (a.ins == null && b.ins == null && !a.done && !b.done) {
-            // Move across ranges skipped by both sets.
+        if (a.done && b.len > 0 || b.done && a.len > 0) {
+            throw IllegalStateException(
+                "Mismatched change set lengths"
+            )
+        } else if (a.ins == -1 && b.ins == -1) {
             val len = min(a.len, b.len)
-            addSection(sections, len, null)
+            addSection(sections, len, -1)
             a.forward(len)
             b.forward(len)
-        } else if (b.ins != null &&
+        } else if (b.ins >= 0 &&
             (
-                a.ins == null ||
-                    inserted == a.i ||
+                a.ins < 0 || inserted == a.i ||
                     a.off == 0 &&
-                    (b.len < a.len || b.len == a.len && !before)
+                    (
+                        b.len < a.len ||
+                            b.len == a.len && !before
+                        )
                 )
         ) {
-            // If there's a change in B that comes before the next change in
-            // A (ordered by start pos, then len, then before flag), skip
-            // that (and process any changes in A it covers).
-            var len = b.len
-            addSection(sections, b.ins!!, null)
-            while (len != 0) {
-                val piece = min(a.len, len)
-                if (a.ins != null && inserted < a.i && a.len <= piece) {
+            val len = b.len
+            addSection(sections, b.ins, -1)
+            var remaining = len
+            while (remaining > 0) {
+                val piece = min(a.len, remaining)
+                if (a.ins >= 0 && inserted < a.i &&
+                    a.len <= piece
+                ) {
                     addSection(sections, 0, a.ins)
-                    if (insert != null) addInsert(insert, sections, a.text)
+                    if (insert != null) {
+                        addInsert(insert, sections, a.text)
+                    }
                     inserted = a.i
                 }
                 a.forward(piece)
-                len -= piece
+                remaining -= piece
             }
             b.next()
-        } else if (a.ins != null) {
-            // Process the part of a change in A up to the start of the next
-            // non-deletion change in B (if overlapping).
+        } else if (a.ins >= 0) {
             var len = 0
             var left = a.len
-            while (left != 0) {
-                if (b.ins == null) {
+            while (left > 0) {
+                if (b.ins == -1) {
                     val piece = min(left, b.len)
                     len += piece
                     left -= piece
@@ -688,62 +834,84 @@ internal fun mapSet(
                     break
                 }
             }
-            addSection(sections, len, if (inserted < a.i) a.ins else 0)
-            if (insert != null && inserted < a.i) addInsert(insert, sections, a.text)
+            addSection(
+                sections,
+                len,
+                if (inserted < a.i) a.ins else 0
+            )
+            if (insert != null && inserted < a.i) {
+                addInsert(insert, sections, a.text)
+            }
             inserted = a.i
             a.forward(a.len - left)
         } else if (a.done && b.done) {
             return if (insert != null) {
-                ChangeSet.createSet(sections, insert)
+                ChangeSet.createSet(
+                    sections.toIntArray(),
+                    insert
+                )
             } else {
-                ChangeDesc.create(sections)
+                ChangeDesc.create(sections.toIntArray())
             }
         } else {
-            throw Error("Mismatched change set lengths")
+            throw IllegalStateException(
+                "Mismatched change set lengths"
+            )
         }
     }
 }
 
-internal fun composeSets(setA: ChangeSet, setB: ChangeSet): ChangeSet =
-    composeSets(setA, setB, true) as ChangeSet
-
-internal fun composeSets(setA: ChangeDesc, setB: ChangeDesc, mkSet: Boolean? = null): ChangeDesc {
-    val mkSet = mkSet ?: (setA is ChangeSet && setB is ChangeSet)
-    val sections = mutableListOf<ChangeSection>()
-    val insert = if (mkSet) mutableListOf<Text>() else null
+private fun composeSets(setA: ChangeDesc, setB: ChangeDesc, mkSet: Boolean = false): ChangeDesc {
+    val sections = mutableListOf<Int>()
+    val insert: MutableList<Text>? =
+        if (mkSet) mutableListOf() else null
     val a = SectionIter(setA)
     val b = SectionIter(setB)
     var open = false
     while (true) {
         if (a.done && b.done) {
             return if (insert != null) {
-                ChangeSet.createSet(sections, insert)
+                ChangeSet.createSet(
+                    sections.toIntArray(),
+                    insert
+                )
             } else {
-                ChangeDesc.create(sections)
+                ChangeDesc.create(sections.toIntArray())
             }
         } else if (a.ins == 0) { // Deletion in A
             addSection(sections, a.len, 0, open)
             a.next()
         } else if (b.len == 0 && !b.done) { // Insertion in B
             addSection(sections, 0, b.ins, open)
-            if (insert != null) addInsert(insert, sections, b.text)
+            if (insert != null) {
+                addInsert(insert, sections, b.text)
+            }
             b.next()
         } else if (a.done || b.done) {
-            throw Error("Mismatched change set lengths ($setA) ($setB) ${a.done} ${b.done}")
+            throw IllegalStateException(
+                "Mismatched change set lengths"
+            )
         } else {
             val len = min(a.len2, b.len)
             val sectionLen = sections.size
-            if (a.ins == null) {
-                val insB = when {
-                    b.ins == null -> null
-                    b.off != 0 -> 0
-                    else -> b.ins
-                }
+            if (a.ins == -1) {
+                val insB = if (b.ins == -1) {
+                    -1
+                } else if (b.off != 0) 0 else b.ins
                 addSection(sections, len, insB, open)
-                if (insert != null && insB != 0) addInsert(insert, sections, b.text)
-            } else if (b.ins == null) {
-                addSection(sections, if (a.off != 0) 0 else a.len, len, open)
-                if (insert != null) addInsert(insert, sections, a.textBit(len))
+                if (insert != null && insB != 0) {
+                    addInsert(insert, sections, b.text)
+                }
+            } else if (b.ins == -1) {
+                addSection(
+                    sections,
+                    if (a.off != 0) 0 else a.len,
+                    len,
+                    open
+                )
+                if (insert != null) {
+                    addInsert(insert, sections, a.textBit(len))
+                }
             } else {
                 addSection(
                     sections,
@@ -751,9 +919,14 @@ internal fun composeSets(setA: ChangeDesc, setB: ChangeDesc, mkSet: Boolean? = n
                     if (b.off != 0) 0 else b.ins,
                     open
                 )
-                if (insert != null && b.off == 0) addInsert(insert, sections, b.text)
+                if (insert != null && b.off == 0) {
+                    addInsert(insert, sections, b.text)
+                }
             }
-            open = ((a.ins ?: -1) > len || b.ins != null && b.len > len) &&
+            open = (
+                a.ins > len ||
+                    b.ins >= 0 && b.len > len
+                ) &&
                 (open || sections.size > sectionLen)
             a.forward2(len)
             b.forward(len)
@@ -761,73 +934,78 @@ internal fun composeSets(setA: ChangeDesc, setB: ChangeDesc, mkSet: Boolean? = n
     }
 }
 
-internal class SectionIter constructor(val set: ChangeDesc) {
+internal class SectionIter(private val set: ChangeDesc) {
     var i = 0
+        private set
     var len: Int = 0
+        private set
     var off: Int = 0
-    var ins: Int? = null
-    var done = false
+        private set
+    var ins: Int = 0
+        private set
 
     init {
-        this.next()
+        next()
     }
 
     fun next() {
-        val sections = this.set.sections
-        if (this.i < sections.size) {
-            this.len = sections[this.i].len
-            this.ins = sections[this.i++].ins
+        if (i < set.sections.size) {
+            len = set.sections[i++]
+            ins = set.sections[i++]
         } else {
-            this.len = 0
-            this.ins = null
-            this.done = true
+            len = 0
+            ins = -2
         }
-        this.off = 0
+        off = 0
     }
 
-//    val done: Boolean
-//        get() {
-//            return this.ins == -2
-//        }
+    val done: Boolean get() = ins == -2
 
-    val len2: Int
-        get() {
-            return ins ?: len
-        }
+    val len2: Int get() = if (ins < 0) len else ins
 
     val text: Text
         get() {
-            val inserted = (this.set as ChangeSet).inserted
-            val index = this.i - 1
-            return inserted.getOrNull(index) ?: Text.empty
+            val changeSet = set as? ChangeSet
+                ?: return Text.empty
+            val index = (i - 2) shr 1
+            return if (index >= changeSet.inserted.size) {
+                Text.empty
+            } else {
+                changeSet.inserted[index]
+            }
         }
 
-    fun textBit(len: Int?): Text {
-        val inserted = (this.set as ChangeSet).inserted
-        val index = (this.i - 1)
-        return inserted.takeIf { len != null && len != 0 }
-            ?.getOrNull(index)
-            ?.slice(this.off, len?.plus(this.off))
-            ?: Text.empty
+    fun textBit(len: Int? = null): Text {
+        val changeSet = set as? ChangeSet
+            ?: return Text.empty
+        val index = (i - 2) shr 1
+        return if (index >= changeSet.inserted.size && len == null) {
+            Text.empty
+        } else {
+            changeSet.inserted[index].slice(
+                off,
+                if (len == null) Int.MAX_VALUE else off + len
+            )
+        }
     }
 
     fun forward(len: Int) {
         if (len == this.len) {
-            this.next()
+            next()
         } else {
             this.len -= len
-            this.off += len
+            off += len
         }
     }
 
     fun forward2(len: Int) {
-        if (this.ins == null) {
-            this.forward(len)
-        } else if (len == this.ins) {
-            this.next()
+        if (ins == -1) {
+            forward(len)
+        } else if (len == ins) {
+            next()
         } else {
-            this.ins = this.ins?.minus(len)
-            this.off += len
+            ins -= len
+            off += len
         }
     }
 }

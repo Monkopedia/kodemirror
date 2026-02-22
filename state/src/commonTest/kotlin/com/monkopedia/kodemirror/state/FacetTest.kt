@@ -63,10 +63,13 @@ class FacetTest {
     @Test
     fun sortsExtensionsByPriority() {
         val st = mk(
-            str.of("a"), str.of("b"), Prec.high(str.of("c")),
+            str.of("a"),
+            str.of("b"),
+            Prec.high(str.of("c")),
             Prec.highest(str.of("d")),
             Prec.low(str.of("e")),
-            Prec.high(str.of("f")), str.of("g")
+            Prec.high(str.of("f")),
+            str.of("g")
         )
         assertEquals("d,c,f,a,b,g,e", st.facet(str).joinToString(","))
     }
@@ -100,7 +103,7 @@ class FacetTest {
     fun canHandleDependenciesOnFacetsThatAreNotPresentInTheState() {
         val st = mk(
             num.compute(listOf(str.asSlot())) { s -> s.facet(str).joinToString("").length },
-            str.compute(listOf(bool.asSlot())) { s -> s.facet(bool).toString() }
+            str.compute(listOf(bool.asSlot())) { s -> s.facet(bool).joinToString("") }
         )
         assertEquals("0", st.update(TransactionSpec()).state.facet(num).joinToString(","))
     }
@@ -111,7 +114,9 @@ class FacetTest {
         var st = mk(num.compute(listOf(Slot.Doc)) { count++ })
         assertEquals("0", st.facet(num).joinToString(","))
         st = st.update(
-            TransactionSpec(changes = ChangeSpec.Single(from = 0, insert = InsertContent.StringContent("hello")))
+            TransactionSpec(
+                changes = ChangeSpec.Single(from = 0, insert = InsertContent.StringContent("hello"))
+            )
         ).state
         assertEquals("1", st.facet(num).joinToString(","))
         st = st.update(TransactionSpec()).state
@@ -124,7 +129,9 @@ class FacetTest {
         var st = mk(num.compute(listOf(Slot.Selection)) { count++ })
         assertEquals("0", st.facet(num).joinToString(","))
         st = st.update(
-            TransactionSpec(changes = ChangeSpec.Single(from = 0, insert = InsertContent.StringContent("hello")))
+            TransactionSpec(
+                changes = ChangeSpec.Single(from = 0, insert = InsertContent.StringContent("hello"))
+            )
         ).state
         assertEquals("1", st.facet(num).joinToString(","))
         st = st.update(TransactionSpec(selection = SelectionSpec.CursorSpec(anchor = 2))).state
@@ -143,7 +150,9 @@ class FacetTest {
         )
         assertEquals("1", st.facet(num).joinToString(","))
         st = st.update(
-            TransactionSpec(changes = ChangeSpec.Single(from = 0, insert = InsertContent.StringContent("hello")))
+            TransactionSpec(
+                changes = ChangeSpec.Single(from = 0, insert = InsertContent.StringContent("hello"))
+            )
         ).state
         assertEquals("100,10,1", st.facet(num).joinToString(","))
     }
@@ -161,7 +170,9 @@ class FacetTest {
         var st = mk(f.of(1), f.compute(listOf(Slot.Doc)) { s -> s.doc.length }, f.of(3))
         assertEquals(4, st.facet(f))
         st = st.update(
-            TransactionSpec(changes = ChangeSpec.Single(from = 0, insert = InsertContent.StringContent("hello")))
+            TransactionSpec(
+                changes = ChangeSpec.Single(from = 0, insert = InsertContent.StringContent("hello"))
+            )
         ).state
         assertEquals(9, st.facet(f))
     }
@@ -173,7 +184,9 @@ class FacetTest {
             TransactionSpec(
                 effects = listOf(
                     StateEffect.reconfigure.of(
-                        ExtensionList(listOf(num.compute(listOf(Slot.Doc)) { s -> s.doc.length }, num.of(2)))
+                        ExtensionList(
+                            listOf(num.compute(listOf(Slot.Doc)) { s -> s.doc.length }, num.of(2))
+                        )
                     )
                 )
             )
@@ -269,12 +282,17 @@ class FacetTest {
 
     @Test
     fun updatesFacetsComputedFromStaticValuesOnReconfigure() {
-        var st = mk(num.compute(listOf(str.asSlot())) { state -> state.facet(str).size }, str.of("A"))
-        st = st.update(TransactionSpec(effects = listOf(StateEffect.appendConfig.of(str.of("B"))))).state
+        var st =
+            mk(num.compute(listOf(str.asSlot())) { state -> state.facet(str).size }, str.of("A"))
+        st = st.update(
+            TransactionSpec(effects = listOf(StateEffect.appendConfig.of(str.of("B"))))
+        ).state
         assertEquals("2", st.facet(num).joinToString(","))
         assertSame(
             st.facet(num),
-            st.update(TransactionSpec(effects = listOf(StateEffect.appendConfig.of(bool.of(false))))).state.facet(num)
+            st.update(
+                TransactionSpec(effects = listOf(StateEffect.appendConfig.of(bool.of(false))))
+            ).state.facet(num)
         )
     }
 

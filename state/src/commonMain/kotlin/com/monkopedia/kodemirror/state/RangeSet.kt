@@ -18,146 +18,135 @@
  */
 package com.monkopedia.kodemirror.state
 
-import com.monkopedia.kodemirror.state.Side.Companion.asSide
-import com.monkopedia.kodemirror.state.SingleOrList.Companion.list
-import kotlin.jvm.JvmName
 import kotlin.math.max
 import kotlin.math.min
 
-// import {ChangeDesc, MapMode} from "./change"
+// The maximum amount of ranges to store in a single chunk
+private const val CHUNK_SIZE = 250
 
-// / Each range is associated with a value, which must inherit from
-// / this class.
-interface RangeValue {
+// A large value to use for max/min values.
+private const val FAR = 1_000_000_000
 
-    // / The bias value at the start of the range. Determines how the
-    // / range is positioned relative to other ranges starting at this
-    // / position. Defaults to 0.
-    val startSide: Int
-        get() = 0
+/**
+ * Each range is associated with a value, which must inherit from
+ * this class.
+ */
+abstract class RangeValue {
+    /**
+     * Compare this value with another value. Used when comparing
+     * rangesets. The default implementation compares by identity.
+     */
+    open fun eq(other: RangeValue): Boolean = this === other
 
-    // / The bias value at the end of the range. Defaults to 0.
-    val endSide: Int
-        get() = 0
+    /**
+     * The bias value at the start of the range. Defaults to 0.
+     */
+    open val startSide: Int = 0
 
-    // / The mode with which the location of the range should be mapped
-    // / when its `from` and `to` are the same, to decide whether a
-    // / change deletes the range. Defaults to `MapMode.TrackDel`.
-    val mapMode: MapMode
-        get() = MapMode.TrackDel
+    /**
+     * The bias value at the end of the range. Defaults to 0.
+     */
+    open val endSide: Int = 0
 
-    // / Determines whether this value marks a point range. Regular
-    // / ranges affect the part of the document they cover, and are
-    // / meaningless when empty. Point ranges have a meaning on their
-    // / own. When non-empty, a point range is treated as atomic and
-    // / shadows any ranges contained in it.
-    val point: Boolean
-        get() = false
+    /**
+     * The mode with which the location of the range should be
+     * mapped when its `from` and `to` are the same. Defaults to
+     * [MapMode.TrackDel].
+     */
+    open val mapMode: MapMode = MapMode.TrackDel
 
-    companion object {
-        // / Create a [range](#state.Range) with this value.
-        fun <T : RangeValue> T.range(from: Int, to: Int = from): Range<T> =
-            Range.create(from, to, this)
+    /**
+     * Determines whether this value marks a point range.
+     */
+    open val point: Boolean = false
+
+    /**
+     * Create a [Range] with this value.
+     */
+    fun range(from: Int, to: Int = from): Range<Nothing> {
+        @Suppress("UNCHECKED_CAST")
+        return Range.create(from, to, this) as Range<Nothing>
     }
 }
 
-// / A range associates a value with a range of positions.
-data class Range<T : RangeValue> private constructor(
-    // / The range's start position.
+private fun cmpVal(a: RangeValue, b: RangeValue): Boolean =
+    a === b || a::class == b::class && a.eq(b)
+
+/**
+ * A range associates a value with a range of positions.
+ */
+class Range<out T : RangeValue> private constructor(
+    /** The range's start position. */
     val from: Int,
-    // / Its end position.
+    /** Its end position. */
     val to: Int,
-    // / The value associated with this range.
-    val value: T
+    /** The value associated with this range. */
+    val value: @UnsafeVariance T
 ) {
-
     companion object {
-        // / @internal
         internal fun <T : RangeValue> create(from: Int, to: Int, value: T): Range<T> =
-            Range<T>(from, to, value)
+            Range(from, to, value)
     }
 }
 
-internal fun cmpRange(a: Range<*>, b: Range<*>): Boolean = (
-    (a.from - b.from).takeIf {
-        it != 0
-    } ?: (a.value.startSide - b.value.startSide)
-    ) != 0
+private fun <T : RangeValue> cmpRange(a: Range<T>, b: Range<T>): Int {
+    val d = a.from - b.from
+    return if (d != 0) {
+        d
+    } else {
+        a.value.startSide - b.value.startSide
+    }
+}
 
-// / Collection of methods used when comparing range sets.
+/**
+ * Collection of methods used when comparing range sets.
+ */
 interface RangeComparator<T : RangeValue> {
-    // / Notifies the comparator that a range (in positions in the new
-    // / document) has the given sets of values associated with it, which
-    // / are different in the old (A) and new (B) sets.
-    fun compareRange(from: Int, to: Int, activeA: List<T>, activeB: List<T>): Unit
+    fun compareRange(from: Int, to: Int, activeA: List<T>, activeB: List<T>)
 
-    // / Notification for a changed (or inserted, or deleted) point range.
-    fun comparePoint(from: Int, to: Int, pointA: T?, pointB: T?): Unit
+    fun comparePoint(from: Int, to: Int, pointA: T?, pointB: T?)
 
-    fun boundChange(pos: Int): Unit = Unit
+    fun boundChange(pos: Int) {}
 }
 
-// / Methods used when iterating over the spans created by a set of
-// / ranges. The entire iterated range will be covered with either
-// / `span` or `point` calls.
+/**
+ * Methods used when iterating over the spans created by a set
+ * of ranges.
+ */
 interface SpanIterator<T : RangeValue> {
-    // / Called for any ranges not covered by point decorations. `active`
-    // / holds the values that the range is marked with (and may be
-    // / empty). `openStart` indicates how many of those ranges are open
-    // / (continued) at the start of the span.
-    fun span(from: Int, to: Int, active: List<T>, openStart: Int): Unit
+    fun span(from: Int, to: Int, active: List<T>, openStart: Int)
 
-    // / Called when going over a point decoration. The active range
-    // / decorations that cover the point and have a higher precedence
-    // / are provided in `active`. The open count in `openStart` counts
-    // / the Int of those ranges that started before the point and. If
-    // / the point started before the iterated range, `openStart` will be
-    // / `active.length + 1` to signal this.
-    fun point(from: Int, to: Int, value: T, active: List<T>, openStart: Int, index: Int): Unit
+    fun point(from: Int, to: Int, value: T, active: List<T>, openStart: Int, index: Int)
 }
 
-object C {
-    // The maximum amount of ranges to store in a single chunk
-    const val ChunkSize = 250
-
-    // A large (fixnum) value to use for max/min values.
-    const val Far = Int.MAX_VALUE shr 2
-}
-
-class Chunk<T : RangeValue> constructor(
+internal class Chunk<T : RangeValue>(
     val from: List<Int>,
     val to: List<Int>,
-    value: List<T>,
-    // Chunks are marked with the largest point that occurs
-    // in them (or -1 for no points), so that scans that are
-    // only interested in points (such as the
-    // heightmap-related logic) can skip range-only chunks.
+    val value: List<T>,
     val maxPoint: Int
 ) {
-    private var valueImpl: List<T>? = value
-    val value: List<T>
-        get() = valueImpl ?: error("NO TOUCH")
+    val length: Int get() = to[to.size - 1]
 
-    internal fun clearForTest() {
-        valueImpl = null
-    }
-
-    val length: Int
-        get() {
-            return this.to[this.to.size - 1]
-        }
-
-    // Find the index of the given position and side. Use the ranges'
-    // `from` pos when `end == false`, `to` when `end == true`.
     fun findIndex(pos: Int, side: Int, end: Boolean, startAt: Int = 0): Int {
-        val arr = if (end) this.to else this.from
+        val arr = if (end) to else from
         var lo = startAt
         var hi = arr.size
         while (true) {
             if (lo == hi) return lo
-            val mid = (lo + hi) shr 1
-            val diff = arr[mid] - pos or
-                { (if (end) this.value[mid].endSide else this.value[mid].startSide) - side }
+            val mid = (lo + hi) ushr 1
+            val diff = (arr[mid] - pos).let { d ->
+                if (d != 0) {
+                    d
+                } else {
+                    (
+                        if (end) {
+                            value[mid].endSide
+                        } else {
+                            value[mid].startSide
+                        }
+                        ) - side
+                }
+            }
             if (mid == lo) return if (diff >= 0) lo else hi
             if (diff >= 0) {
                 hi = mid
@@ -167,329 +156,399 @@ class Chunk<T : RangeValue> constructor(
         }
     }
 
-    fun between(
-        offset: Int,
-        from: Int,
-        to: Int,
-        f: (from: Int, to: Int, value: T) -> Boolean
-    ): Boolean {
-        var i = this.findIndex(from, -C.Far, true)
-        val e = this.findIndex(to, C.Far, false, i)
-        while (i < e) {
-            if (!f(this.from[i] + offset, this.to[i] + offset, this.value[i])) return false
-            i++
+    fun between(offset: Int, from: Int, to: Int, f: (Int, Int, T) -> Boolean?): Boolean? {
+        val start = findIndex(from, -FAR, true)
+        val e = findIndex(to, FAR, false, start)
+        for (i in start until e) {
+            if (f(
+                    this.from[i] + offset,
+                    this.to[i] + offset,
+                    value[i]
+                ) == false
+            ) {
+                return false
+            }
         }
-        return true
+        return null
     }
 
-    fun map(offset: Int, changes: ChangeDesc): MappedChunk<T>? {
-        val value = mutableListOf<T>()
-        val from = mutableListOf<Int>()
-        val to = mutableListOf<Int>()
+    data class MapResult<T : RangeValue>(
+        val mapped: Chunk<T>?,
+        val pos: Int
+    )
+
+    fun map(offset: Int, changes: ChangeDesc): MapResult<T> {
+        val newValue = mutableListOf<T>()
+        val newFrom = mutableListOf<Int>()
+        val newTo = mutableListOf<Int>()
         var newPos = -1
-        var maxPoint = -1
-        for (i in this.value.indices) {
-            val v = this.value[i]
-            val curFrom = this.from[i] + offset
-            val curTo = this.to[i] + offset
-            var newFrom: Int
-            var newTo: Int
+        var maxPt = -1
+        for (i in value.indices) {
+            val v = value[i]
+            val curFrom = from[i] + offset
+            val curTo = to[i] + offset
+            val mappedFrom: Int
+            val mappedTo: Int
             if (curFrom == curTo) {
-                val mapped = changes.mapPos(curFrom, v.startSide.asSide, v.mapMode)
-                    ?: continue
-                newFrom = mapped
-                newTo = mapped
-                if (
-                    v.startSide !=
-                    v.endSide
-                ) {
-                    newTo = changes.mapPos(curFrom, v.endSide.asSide) ?: 0
-                    if (newTo < newFrom) continue
+                val mapped = changes.mapPos(
+                    curFrom, v.startSide, v.mapMode
+                ) ?: continue
+                mappedFrom = mapped
+                mappedTo = if (v.startSide != v.endSide) {
+                    val mt =
+                        changes.mapPos(curFrom, v.endSide)
+                    if (mt < mappedFrom) continue else mt
+                } else {
+                    mapped
                 }
             } else {
-                newFrom = changes.mapPos(curFrom, v.startSide.asSide) ?: 0
-                newTo = changes.mapPos(curTo, v.endSide.asSide) ?: 0
-                if (newFrom > newTo ||
-                    (newFrom == newTo && v.startSide > 0 && v.endSide <= 0)
+                mappedFrom =
+                    changes.mapPos(curFrom, v.startSide)
+                mappedTo =
+                    changes.mapPos(curTo, v.endSide)
+                if (mappedFrom > mappedTo ||
+                    (
+                        mappedFrom == mappedTo &&
+                            v.startSide > 0 &&
+                            v.endSide <= 0
+                        )
                 ) {
                     continue
                 }
             }
-            if (((newTo - newFrom) or { v.endSide - v.startSide }) < 0) continue
-            if (newPos < 0) newPos = newFrom
-            if (v.point) maxPoint = max(maxPoint, newTo - newFrom)
-            value.add(v)
-            from.add(newFrom - newPos)
-            to.add(newTo - newPos)
+            if ((mappedTo - mappedFrom).let { d ->
+                    if (d != 0) {
+                        d
+                    } else {
+                        v.endSide - v.startSide
+                    }
+                } < 0
+            ) {
+                continue
+            }
+            if (newPos < 0) newPos = mappedFrom
+            if (v.point) {
+                maxPt = max(maxPt, mappedTo - mappedFrom)
+            }
+            newValue.add(v)
+            newFrom.add(mappedFrom - newPos)
+            newTo.add(mappedTo - newPos)
         }
-        return if (value.size != 0) {
-            MappedChunk(
-                mapped = Chunk(from, to, value, maxPoint),
-                pos = newPos
-            )
-        } else {
-            null
-        }
+        return MapResult(
+            if (newValue.isNotEmpty()) {
+                Chunk(newFrom, newTo, newValue, maxPt)
+            } else {
+                null
+            },
+            newPos
+        )
     }
-
-    data class MappedChunk<T : RangeValue>(val mapped: Chunk<T>, val pos: Int)
 }
 
-// / A range cursor is an object that moves to the next range every
-// / time you call `next` on it. Note that, unlike ES6 iterators, these
-// / start out pointing at the first element, so you should call `next`
-// / only after reading the first range (if any).
+/**
+ * A range cursor is an object that moves to the next range
+ * every time you call [next] on it.
+ */
 interface RangeCursor<T> {
-    // / Move the iterator forward.
     fun next()
-
-    // / The next range's value. Holds `null` when the cursor has reached
-    // / its end.
-    val value: T?
-
-    // / The next range's start position.
-    val from: Int
-
-    // / The next end position.
-    val to: Int
+    fun goto(pos: Int, side: Int = -FAR): RangeCursor<T>
+    var value: T?
+    var from: Int
+    var to: Int
+    var rank: Int
 }
 
-data class RangeSetUpdate<T : RangeValue>(
-    // / An array of ranges to add. If given, this should be sorted by
-    // / `from` position and `startSide` unless
-    // / [`sort`](#state.RangeSet.update^updateSpec.sort) is given as
-    // / `true`.
-    val add: List<Range<out T>>? = null,
-
-    // / Indicates whether the library should sort the ranges in `add`.
-    // / Defaults to `false`.
+/**
+ * Specification for updating a range set.
+ */
+class RangeSetUpdate<T : RangeValue>(
+    val add: List<Range<T>> = emptyList(),
     val sort: Boolean = false,
-
-    // / Filter the ranges already in the set. Only those for which this
-    // / fun returns `true` are kept.
-    val filter: ((from: Int, to: Int, value: T) -> Boolean)? = null,
-
-    // / Can be used to limit the range on which the filter is
-    // / applied. Filtering only a small range, as opposed to the entire
-    // / set, can make updates cheaper.
-    val filterFrom: Int? = null,
-
-    // / The end position to apply the filter to.
-    val filterTo: Int? = null
+    val filter: (
+        (from: Int, to: Int, value: T) -> Boolean
+    )? = null,
+    val filterFrom: Int = 0,
+    val filterTo: Int = Int.MAX_VALUE
 )
 
-// / A range set stores a collection of [ranges](#state.Range) in a
-// / way that makes them efficient to [map](#state.RangeSet.map) and
-// / [update](#state.RangeSet.update). This is an immutable data
-// / structure.
-class RangeSet<T : RangeValue> private constructor(
-    // / @internal
+/**
+ * A range set stores a collection of [Range]s in a way that
+ * makes them efficient to [map] and [update]. This is an
+ * immutable data structure.
+ */
+class RangeSet<T : RangeValue> internal constructor(
     internal val chunkPos: List<Int>,
-    // / @internal
     internal val chunk: List<Chunk<T>>,
-    nextLayer: RangeSet<T>? = null,
-    // / @internal
+    nextLayer: RangeSet<T>?,
     internal val maxPoint: Int
 ) {
-    // / @internal
-    internal val nextLayer: RangeSet<T> = nextLayer ?: this
+    // Mutable backing allows the cyclic self-reference for
+    // the empty singleton (nextLayer === this).
+    internal var nextLayer: RangeSet<T> = nextLayer ?: this
 
-    // / @internal
-    val length: Int
+    internal val length: Int
         get() {
-            val last = this.chunk.size - 1
-            return if (last < 0) 0 else max(this.chunkEnd(last), this.nextLayer.length)
+            val last = chunk.size - 1
+            return if (last < 0) {
+                0
+            } else {
+                max(chunkEnd(last), nextLayer.length)
+            }
         }
 
-    // / The Int of ranges in the set.
+    /** The number of ranges in the set. */
     val size: Int
         get() {
-            if (this.isEmpty) return 0
-            return chunk.sumOf { it.value.size } + this.nextLayer.size
+            if (isEmpty) return 0
+            var s = nextLayer.size
+            for (c in chunk) s += c.value.size
+            return s
         }
 
-    // / @internal
-    fun chunkEnd(index: Int): Int = this.chunkPos[index] + this.chunk[index].length
+    internal fun chunkEnd(index: Int): Int = chunkPos[index] + chunk[index].length
 
-    // / Update the range set, optionally adding new ranges or filtering
-    // / out existing ones.
-    // /
-    // / (Note: The type parameter is just there as a kludge to work
-    // / around TypeScript variance issues that prevented `RangeSet<X>`
-    // / from being a subtype of `RangeSet<Y>` when `X` is a subtype of
-    // / `Y`.)
-    fun update(updateSpec: RangeSetUpdate<T>): RangeSet<T> {
-        var add: List<Range<out T>> = updateSpec.add ?: mutableListOf()
-        val sort = updateSpec.sort
-        val filterFrom = updateSpec.filterFrom ?: 0
-        val filterTo = updateSpec.filterTo ?: this.length
-
-        val filter = updateSpec.filter
+    /**
+     * Update the range set, optionally adding new ranges or
+     * filtering out existing ones.
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun <U : T> update(updateSpec: RangeSetUpdate<U>): RangeSet<T> {
+        var add: List<Range<U>> = updateSpec.add
+        val filterFrom = updateSpec.filterFrom
+        val filterTo =
+            if (updateSpec.filterTo == Int.MAX_VALUE) {
+                length
+            } else {
+                updateSpec.filterTo
+            }
+        val filter = updateSpec.filter as
+            ((Int, Int, T) -> Boolean)?
         if (add.isEmpty() && filter == null) return this
-        if (sort) {
-            add =
-                add.toList().sortedWith { a, b -> if (cmpRange(a, b)) 1 else -1 }
+        if (updateSpec.sort) {
+            add = add.sortedWith(::cmpRange)
         }
-        if (this.isEmpty) {
-            return if (add.isNotEmpty()) of(add.list) else this
+        if (isEmpty) {
+            return if (add.isNotEmpty()) {
+                of(add) as RangeSet<T>
+            } else {
+                this
+            }
         }
 
-        val cur = LayerCursor(this, null, -1).goto(0)
+        val cur =
+            LayerCursor(this, null, -1).goto(0)
         var i = 0
-        val spill = mutableListOf<Range<out T>>()
+        val spill = mutableListOf<Range<T>>()
         val builder = RangeSetBuilder<T>()
         while (cur.value != null || i < add.size) {
             if (i < add.size &&
-                ((cur.from - add[i].from) or { (cur.startSide - add[i].value.startSide) }) >= 0
+                (cur.from - add[i].from).let { d ->
+                    if (d != 0) {
+                        d
+                    } else {
+                        cur.startSide -
+                            add[i].value.startSide
+                    }
+                } >= 0
             ) {
                 val range = add[i++]
-                if (!builder.addInner(range.from, range.to, range.value)) {
-                    spill.add(range)
+                if (!builder.addInner(
+                        range.from,
+                        range.to,
+                        range.value
+                    )
+                ) {
+                    spill.add(range as Range<T>)
                 }
-            } else if (cur.rangeIndex == 1 &&
-                cur.chunkIndex < this.chunk.size &&
-                (i == add.size || this.chunkEnd(cur.chunkIndex) < add[i].from) &&
+            } else if (
+                cur.rangeIndex == 1 &&
+                cur.chunkIndex < chunk.size &&
+                (
+                    i == add.size ||
+                        chunkEnd(cur.chunkIndex) <
+                        add[i].from
+                    ) &&
                 (
                     filter == null ||
-                        filterFrom > this.chunkEnd(cur.chunkIndex) ||
-                        filterTo < this.chunkPos[cur.chunkIndex]
+                        filterFrom >
+                        chunkEnd(cur.chunkIndex) ||
+                        filterTo <
+                        chunkPos[cur.chunkIndex]
                     ) &&
-                builder.addChunk(this.chunkPos[cur.chunkIndex], this.chunk[cur.chunkIndex])
+                builder.addChunk(
+                    chunkPos[cur.chunkIndex],
+                    chunk[cur.chunkIndex]
+                )
             ) {
                 cur.nextChunk()
             } else {
                 if (filter == null ||
                     filterFrom > cur.to ||
                     filterTo < cur.from ||
-                    filter(cur.from, cur.to, cur.value!!)
+                    filter(
+                        cur.from, cur.to, cur.value!!
+                    )
                 ) {
-                    if (!builder.addInner(cur.from, cur.to, cur.value!!)) {
-                        spill.add(Range.create(cur.from, cur.to, cur.value!!))
+                    if (!builder.addInner(
+                            cur.from,
+                            cur.to,
+                            cur.value!!
+                        )
+                    ) {
+                        spill.add(
+                            Range.create(
+                                cur.from,
+                                cur.to,
+                                cur.value!!
+                            )
+                        )
                     }
                 }
                 cur.next()
             }
         }
 
-        val set: RangeSet<T> = if (this.nextLayer.isEmpty && spill.isEmpty()) {
-            empty()
-        } else {
-            this.nextLayer.update(
-                RangeSetUpdate(
-                    add = spill,
-                    filter = filter,
-                    filterFrom = filterFrom,
-                    filterTo = filterTo
+        val nextUpdate =
+            if (nextLayer.isEmpty && spill.isEmpty()) {
+                empty()
+            } else {
+                nextLayer.update(
+                    RangeSetUpdate(
+                        add = spill,
+                        filter = filter,
+                        filterFrom = filterFrom,
+                        filterTo = filterTo
+                    )
                 )
-            )
-        }
-        return builder.finishInner(set)
+            }
+        return builder.finishInner(nextUpdate)
     }
 
-    // / Map this range set through a set of changes, return the new set.
+    /** Map this range set through a set of changes. */
     fun map(changes: ChangeDesc): RangeSet<T> {
-        if (changes.isEmpty || this.isEmpty) return this
+        if (changes.empty || isEmpty) return this
 
         val chunks = mutableListOf<Chunk<T>>()
-        val chunkPos = mutableListOf<Int>()
-        var maxPoint = -1
-        for (i in this.chunk.indices) {
-            val start = this.chunkPos[i]
-            val chunk = this.chunk[i]
-            val touch = changes.touchesRange(start, start + chunk.length)
-            if (touch == false) {
-                maxPoint = max(maxPoint, chunk.maxPoint)
-                chunks.add(chunk)
-                chunkPos.add(changes.mapPos(start)!!)
-            } else if (touch == true) {
-                chunk.map(start, changes)?.let { (mapped, pos) ->
-                    maxPoint = max(maxPoint, mapped.maxPoint)
+        val positions = mutableListOf<Int>()
+        var maxPt = -1
+        for (i in chunk.indices) {
+            val start = chunkPos[i]
+            val c = chunk[i]
+            val touch = changes.touchesRange(
+                start,
+                start + c.length
+            )
+            if (touch == TouchesResult.No) {
+                maxPt = max(maxPt, c.maxPoint)
+                chunks.add(c)
+                positions.add(changes.mapPos(start))
+            } else {
+                val (mapped, pos) =
+                    c.map(start, changes)
+                if (mapped != null) {
+                    maxPt = max(maxPt, mapped.maxPoint)
                     chunks.add(mapped)
-                    chunkPos.add(pos)
+                    positions.add(pos)
                 }
             }
         }
-        val next = this.nextLayer.map(changes)
-        return if (chunks.size == 0) {
+        val next = nextLayer.map(changes)
+        return if (chunks.isEmpty()) {
             next
         } else {
-            val set: RangeSet<T> = next
-            RangeSet(chunkPos, chunks, set, maxPoint)
+            RangeSet(positions, chunks, next, maxPt)
         }
     }
 
-    // / Iterate over the ranges that touch the region `from` to `to`,
-    // / calling `f` for each. There is no guarantee that the ranges will
-    // / be reported in any specific order. When the callback returns
-    // / `false`, iteration stops.
-    fun between(from: Int, to: Int, f: (from: Int, to: Int, value: T) -> Boolean) {
-        if (this.isEmpty) return
+    /**
+     * Iterate over the ranges that touch the region [from] to
+     * [to], calling [f] for each. When the callback returns
+     * `false`, iteration stops.
+     */
+    fun between(from: Int, to: Int, f: (from: Int, to: Int, value: T) -> Boolean?) {
+        if (isEmpty) return
         for (i in chunk.indices) {
-            val start = this.chunkPos[i]
-            val chunk = this.chunk[i]
+            val start = chunkPos[i]
+            val c = chunk[i]
             if (to >= start &&
-                from <= start + chunk.length &&
-                !chunk.between(start, from - start, to - start, f)
+                from <= start + c.length &&
+                c.between(
+                    start, from - start,
+                    to - start, f
+                ) == false
             ) {
                 return
             }
         }
-        this.nextLayer.between(from, to, f)
+        nextLayer.between(from, to, f)
     }
 
-    // / Iterate over the ranges in this set, in order, including all
-    // / ranges that end at or after `from`.
-    fun iter(from: Int = 0): Cursor<T> = HeapCursor.from(listOf(this)).goto(from)
+    /**
+     * Iterate over the ranges in this set, in order,
+     * including all ranges that end at or after [from].
+     */
+    fun iter(from: Int = 0): RangeCursor<T> = HeapCursor.from(listOf(this)).goto(from)
 
-    // / @internal
-    val isEmpty: Boolean
-        get() {
-            return this.nextLayer == this
-        }
+    /** True when this is the empty range set. */
+    val isEmpty: Boolean get() = nextLayer === this
 
     companion object {
-        // / Iterate over the ranges in a collection of sets, in order,
-        // / starting from `from`.
-        fun <T : RangeValue> iter(sets: List<RangeSet<T>>, from: Int = 0): Cursor<T> =
+        private val EMPTY: RangeSet<RangeValue> =
+            RangeSet(emptyList(), emptyList(), null, -1)
+
+        /** The empty set of ranges. */
+        @Suppress("UNCHECKED_CAST")
+        fun <T : RangeValue> empty(): RangeSet<T> = EMPTY as RangeSet<T>
+
+        /**
+         * Iterate over the ranges in a collection of sets,
+         * in order, starting from [from].
+         */
+        fun <T : RangeValue> iter(sets: List<RangeSet<T>>, from: Int = 0): RangeCursor<T> =
             HeapCursor.from(sets).goto(from)
 
-        // / @internal
-        fun <T : RangeValue> create(
-            chunkPos: List<Int>,
-            chunk: List<Chunk<T>>,
-            nextLayer: RangeSet<T>,
-            maxPoint: Int
-        ): RangeSet<T> = RangeSet<T>(chunkPos, chunk, nextLayer, maxPoint)
-
-        // / Iterate over two groups of sets, calling methods on `comparator`
-        // / to notify it of possible differences.
+        /**
+         * Iterate over two groups of sets, calling methods on
+         * [comparator] to notify it of possible differences.
+         */
         fun <T : RangeValue> compare(
             oldSets: List<RangeSet<T>>,
             newSets: List<RangeSet<T>>,
-            // / This indicates how the underlying data changed between these
-            // / ranges, and is needed to synchronize the iteration.
             textDiff: ChangeDesc,
             comparator: RangeComparator<T>,
-            // / Can be used to ignore all non-point ranges, and points below
-            // / the given size. When -1, all ranges are compared.
             minPointSize: Int = -1
         ) {
             val a = oldSets.filter { set ->
-                set.maxPoint > 0 || !set.isEmpty && set.maxPoint >= minPointSize
+                set.maxPoint > 0 ||
+                    !set.isEmpty &&
+                    set.maxPoint >= minPointSize
             }
             val b = newSets.filter { set ->
-                set.maxPoint > 0 || !set.isEmpty && set.maxPoint >= minPointSize
+                set.maxPoint > 0 ||
+                    !set.isEmpty &&
+                    set.maxPoint >= minPointSize
             }
-            val sharedChunks = findSharedChunks(a, b, textDiff)
-
-            val sideA = SpanCursor(a, sharedChunks, minPointSize)
-            val sideB = SpanCursor(b, sharedChunks, minPointSize)
+            val shared =
+                findSharedChunks(a, b, textDiff)
+            val sideA =
+                SpanCursor(a, shared, minPointSize)
+            val sideB =
+                SpanCursor(b, shared, minPointSize)
 
             textDiff.iterGaps { fromA, fromB, length ->
-                compare(sideA, fromA, sideB, fromB, length, comparator)
+                compareSpans(
+                    sideA,
+                    fromA,
+                    sideB,
+                    fromB,
+                    length,
+                    comparator
+                )
             }
-            if (textDiff.isEmpty && textDiff.length == 0) {
-                compare(
+            if (textDiff.empty &&
+                textDiff.length == 0
+            ) {
+                compareSpans(
                     sideA,
                     0,
                     sideB,
@@ -500,26 +559,45 @@ class RangeSet<T : RangeValue> private constructor(
             }
         }
 
-        // / Compare the contents of two groups of range sets, returning true
-        // / if they are equivalent in the given range.
+        /**
+         * Compare the contents of two groups of range sets,
+         * returning true if they are equivalent in the given
+         * range.
+         */
         fun <T : RangeValue> eq(
             oldSets: List<RangeSet<T>>,
             newSets: List<RangeSet<T>>,
             from: Int = 0,
-            to: Int? = null
+            to: Int = FAR - 1
         ): Boolean {
-            val to = to ?: (C.Far - 1)
-            val a = oldSets.filter { set -> !set.isEmpty && newSets.indexOf(set) < 0 }
-            val b = newSets.filter { set -> !set.isEmpty && oldSets.indexOf(set) < 0 }
+            val a = oldSets.filter { set ->
+                !set.isEmpty && set !in newSets
+            }
+            val b = newSets.filter { set ->
+                !set.isEmpty && set !in oldSets
+            }
             if (a.size != b.size) return false
             if (a.isEmpty()) return true
-            val sharedChunks = findSharedChunks(a, b)
-            val sideA = SpanCursor(a, sharedChunks, 0).goto(from)
-            val sideB = SpanCursor(b, sharedChunks, 0).goto(from)
+            val shared = findSharedChunks(a, b)
+            val sideA =
+                SpanCursor(a, shared, 0).goto(from)
+            val sideB =
+                SpanCursor(b, shared, 0).goto(from)
             while (true) {
                 if (sideA.to != sideB.to ||
-                    !sameValues(sideA.active, sideB.active) ||
-                    sideA.point == sideB.point
+                    !sameValues(
+                        sideA.active, sideB.active
+                    ) ||
+                    (
+                        sideA.point != null &&
+                            (
+                                sideB.point == null ||
+                                    !cmpVal(
+                                        sideA.point!!,
+                                        sideB.point!!
+                                    )
+                                )
+                        )
                 ) {
                     return false
                 }
@@ -529,82 +607,110 @@ class RangeSet<T : RangeValue> private constructor(
             }
         }
 
-        // / Iterate over a group of range sets at the same time, notifying
-        // / the iterator about the ranges covering every given piece of
-        // / content. Returns the open count (see
-        // / [`SpanIterator.span`](#state.SpanIterator.span)) at the end
-        // / of the iteration.
+        /**
+         * Iterate over a group of range sets at the same time,
+         * notifying the iterator about the ranges covering
+         * every given piece of content.
+         */
         fun <T : RangeValue> spans(
             sets: List<RangeSet<T>>,
             from: Int,
             to: Int,
             iterator: SpanIterator<T>,
-            // / When given and greater than -1, only points of at least this
-            // / size are taken into account.
             minPointSize: Int = -1
         ): Int {
-            val cursor = SpanCursor(sets, null, minPointSize).goto(from)
+            val cursor =
+                SpanCursor(sets, null, minPointSize)
+                    .goto(from)
             var pos = from
             var openRanges = cursor.openStart
             while (true) {
                 val curTo = min(cursor.to, to)
-                val point = cursor.point
-                if (point != null) {
-                    val active = cursor.activeForPoint(cursor.to)
+                if (cursor.point != null) {
+                    val active =
+                        cursor.activeForPoint(cursor.to)
                     val openCount = when {
-                        cursor.pointFrom < from -> active.size + 1
-                        point.startSide < 0 -> active.size
-                        else -> min(active.size, openRanges)
+                        cursor.pointFrom < from ->
+                            active.size + 1
+                        cursor.point!!.startSide < 0 ->
+                            active.size
+                        else ->
+                            min(active.size, openRanges)
                     }
                     iterator.point(
                         pos,
                         curTo,
-                        point,
+                        cursor.point!!,
                         active,
                         openCount,
                         cursor.pointRank
                     )
-                    openRanges = min(cursor.openEnd(curTo), active.size)
+                    openRanges = min(
+                        cursor.openEnd(curTo),
+                        active.size
+                    )
                 } else if (curTo > pos) {
-                    iterator.span(pos, curTo, cursor.active, openRanges)
+                    iterator.span(
+                        pos,
+                        curTo,
+                        cursor.active,
+                        openRanges
+                    )
                     openRanges = cursor.openEnd(curTo)
                 }
                 if (cursor.to > to) {
-                    return openRanges + if (point != null && cursor.to > to) 1 else 0
+                    return openRanges + if (
+                        cursor.point != null &&
+                        cursor.to > to
+                    ) {
+                        1
+                    } else {
+                        0
+                    }
                 }
                 pos = cursor.to
                 cursor.next()
             }
         }
 
-        // / Create a range set for the given range or array of ranges. By
-        // / default, this expects the ranges to be _sorted_ (by start
-        // / position and, if two start at the same position,
-        // / `value.startSide`). You can pass `true` as second argument to
-        // / cause the method to sort them.
-        fun <T : RangeValue> of(
-            ranges: SingleOrList<Range<out T>>,
-            sort: Boolean = false
-        ): RangeSet<T> {
+        /**
+         * Create a range set for the given range or array of
+         * ranges.
+         */
+        fun <T : RangeValue> of(ranges: List<Range<T>>, sort: Boolean = false): RangeSet<T> {
             val build = RangeSetBuilder<T>()
-            ranges.list.let { if (sort) lazySort(it) else it }.forEach { range ->
-                build.add(range.from, range.to, range.value)
+            val sorted =
+                if (sort) lazySort(ranges) else ranges
+            for (range in sorted) {
+                build.add(
+                    range.from,
+                    range.to,
+                    range.value
+                )
             }
             return build.finish()
         }
 
-        // / Join an array of range sets into a single set.
+        /** Create a range set from a single range. */
+        fun <T : RangeValue> of(range: Range<T>, sort: Boolean = false): RangeSet<T> =
+            of(listOf(range), sort)
+
+        /**
+         * Join an array of range sets into a single set.
+         */
         fun <T : RangeValue> join(sets: List<RangeSet<T>>): RangeSet<T> {
             if (sets.isEmpty()) return empty()
             var result = sets[sets.size - 1]
-            for (i in sets.indices.reversed().drop(1)) {
+            for (i in sets.size - 2 downTo 0) {
                 var layer = sets[i]
-                while (layer != empty<T>()) {
+                while (!layer.isEmpty) {
                     result = RangeSet(
-                        layer.chunkPos,
-                        layer.chunk,
+                        layer.chunkPos, layer.chunk,
                         result,
-                        max(layer.maxPoint, result.maxPoint)
+                        max(
+                            layer.maxPoint,
+                            result.maxPoint
+                        )
                     )
                     layer = layer.nextLayer
                 }
@@ -612,39 +718,47 @@ class RangeSet<T : RangeValue> private constructor(
             return result
         }
 
-        private val singleEmpty = RangeSet<Nothing>(emptyList(), emptyList(), null, -1)
-
-        // / The empty set of ranges.
-        @Suppress("UNCHECKED_CAST")
-        fun <T : RangeValue> empty(): RangeSet<T> = singleEmpty as RangeSet<T>
+        internal fun <T : RangeValue> create(
+            chunkPos: List<Int>,
+            chunk: List<Chunk<T>>,
+            nextLayer: RangeSet<T>,
+            maxPoint: Int
+        ): RangeSet<T> = RangeSet(
+            chunkPos,
+            chunk,
+            nextLayer,
+            maxPoint
+        )
     }
 }
 
-internal fun <T : RangeValue> lazySort(ranges: List<Range<out T>>): List<Range<out T>> {
+private fun <T : RangeValue> lazySort(ranges: List<Range<T>>): List<Range<T>> {
     if (ranges.size > 1) {
-        if (ranges.zipWithNext().any { (a, b) -> cmpRange(a, b) }) {
-            return ranges.sortedWith { a, b -> if (cmpRange(a, b)) 1 else -1 }
+        var prev = ranges[0]
+        for (i in 1 until ranges.size) {
+            val cur = ranges[i]
+            if (cmpRange(prev, cur) > 0) {
+                return ranges.sortedWith(::cmpRange)
+            }
+            prev = cur
         }
     }
     return ranges
 }
 
-// / A range set builder is a data structure that helps build up a
-// / [range set](#state.RangeSet) directly, without first allocating
-// / an array of [`Range`](#state.Range) objects.
+/**
+ * A range set builder is a data structure that helps build up
+ * a [RangeSet] directly, without first allocating an array of
+ * [Range] objects.
+ */
 class RangeSetBuilder<T : RangeValue> {
-    private var isSealed: Boolean = false
-    private val chunks = mutableListOf<Chunk<T>>()
-    private val chunkPos = mutableListOf<Int>()
+    private var chunks = mutableListOf<Chunk<T>>()
+    private var chunkPos = mutableListOf<Int>()
     private var chunkStart = -1
     private var last: T? = null
-    private var lastFrom = -C.Far
-    private var lastTo = -C.Far
+    private var lastFrom = -FAR
+    private var lastTo = -FAR
     private var from = mutableListOf<Int>()
-        get() {
-            require(!isSealed)
-            return field
-        }
     private var to = mutableListOf<Int>()
     private var value = mutableListOf<T>()
     private var maxPoint = -1
@@ -652,212 +766,236 @@ class RangeSetBuilder<T : RangeValue> {
     private var nextLayer: RangeSetBuilder<T>? = null
 
     private fun finishChunk(newArrays: Boolean) {
-        this.chunks.add(
-            Chunk(this.from.toList(), this.to.toList(), this.value.toList(), this.maxPoint)
-        )
-        this.chunkPos.add(this.chunkStart)
-        this.chunkStart = -1
-        this.setMaxPoint = max(this.setMaxPoint, this.maxPoint)
-        this.maxPoint = -1
+        chunks.add(Chunk(from, to, value, maxPoint))
+        chunkPos.add(chunkStart)
+        chunkStart = -1
+        setMaxPoint = max(setMaxPoint, maxPoint)
+        maxPoint = -1
         if (newArrays) {
-            this.from.clear()
-            this.to.clear()
-            this.value.clear()
+            from = mutableListOf()
+            to = mutableListOf()
+            value = mutableListOf()
         }
     }
 
-    // / Add a range. Ranges should be added in sorted (by `from` and
-    // / `value.startSide`) order.
+    /**
+     * Add a range. Ranges should be added in sorted (by `from`
+     * and `value.startSide`) order.
+     */
     fun add(from: Int, to: Int, value: T) {
-        if (!this.addInner(from, to, value)) {
-            (nextLayer ?: RangeSetBuilder<T>().also { nextLayer = it })
-                .add(from, to, value)
+        if (!addInner(from, to, value)) {
+            (
+                nextLayer ?: RangeSetBuilder<T>().also {
+                    nextLayer = it
+                }
+                ).add(from, to, value)
         }
     }
 
-    // / @internal
     internal fun addInner(from: Int, to: Int, value: T): Boolean {
-        val diff = (from - this.lastTo) or { value.startSide - this.last!!.endSide }
-        if (diff <= 0 &&
-            ((from - this.lastFrom) or { value.startSide - this.last!!.startSide }) < 0
+        val diff = (from - lastTo).let { d ->
+            if (d != 0) {
+                d
+            } else {
+                value.startSide - (last?.endSide ?: 0)
+            }
+        }
+        if (diff <= 0 && (from - lastFrom).let { d ->
+                if (d != 0) {
+                    d
+                } else {
+                    value.startSide -
+                        (last?.startSide ?: 0)
+                }
+            } < 0
         ) {
-            throw Error("Ranges must be added sorted by `from` position and `startSide`")
+            error(
+                "Ranges must be added sorted by `from`" +
+                    " position and `startSide`"
+            )
         }
         if (diff < 0) return false
-        if (this.from.size == C.ChunkSize) this.finishChunk(true)
-        if (this.chunkStart < 0) this.chunkStart = from
-        this.from.add(from - this.chunkStart)
-        this.to.add(to - this.chunkStart)
-        this.last = value
-        this.lastFrom = from
-        this.lastTo = to
+        if (this.from.size == CHUNK_SIZE) {
+            finishChunk(true)
+        }
+        if (chunkStart < 0) chunkStart = from
+        this.from.add(from - chunkStart)
+        this.to.add(to - chunkStart)
+        last = value
+        lastFrom = from
+        lastTo = to
         this.value.add(value)
-        if (value.point) this.maxPoint = max(this.maxPoint, to - from)
+        if (value.point) {
+            maxPoint = max(maxPoint, to - from)
+        }
         return true
     }
 
-    // / @internal
     internal fun addChunk(from: Int, chunk: Chunk<T>): Boolean {
-        if (((from - this.lastTo) or { chunk.value[0].startSide - this.last!!.endSide }) < 0) {
+        if ((from - lastTo).let { d ->
+                if (d != 0) {
+                    d
+                } else {
+                    chunk.value[0].startSide -
+                        (last?.endSide ?: 0)
+                }
+            } < 0
+        ) {
             return false
         }
-        if (this.from.size != 0) this.finishChunk(true)
-        this.setMaxPoint = max(this.setMaxPoint, chunk.maxPoint)
-        this.chunks.add(chunk)
-        this.chunkPos.add(from)
-        val last = chunk.value.size - 1
-        this.last = chunk.value[last]
-        this.lastFrom = chunk.from[last] + from
-        this.lastTo = chunk.to[last] + from
+        if (this.from.isNotEmpty()) finishChunk(true)
+        setMaxPoint = max(setMaxPoint, chunk.maxPoint)
+        chunks.add(chunk)
+        chunkPos.add(from)
+        val lastIdx = chunk.value.size - 1
+        last = chunk.value[lastIdx]
+        lastFrom = chunk.from[lastIdx] + from
+        lastTo = chunk.to[lastIdx] + from
         return true
     }
 
-    // / Finish the range set. Returns the new set. The builder can't be
-    // / used anymore after this has been called.
-    fun finish(): RangeSet<T> = this.finishInner(RangeSet.empty())
+    /**
+     * Finish the range set. Returns the new set. The builder
+     * can't be used anymore after this has been called.
+     */
+    fun finish(): RangeSet<T> = finishInner(RangeSet.empty())
 
-    // / @internal
     internal fun finishInner(next: RangeSet<T>): RangeSet<T> {
-        if (this.from.size != 0) {
-            this.finishChunk(false)
-        }
-        if (this.chunks.size == 0) {
-            return next
-        }
-        val result = RangeSet.create(
-            this.chunkPos,
-            this.chunks,
-            this.nextLayer?.finishInner(next) ?: next,
-            this.setMaxPoint
+        if (from.isNotEmpty()) finishChunk(false)
+        if (chunks.isEmpty()) return next
+        return RangeSet.create(
+            chunkPos,
+            chunks,
+            nextLayer?.finishInner(next) ?: next,
+            setMaxPoint
         )
-        isSealed = true
-        return result
     }
 }
 
-internal fun <T : RangeValue> findSharedChunks(
+private fun <T : RangeValue> findSharedChunks(
     a: List<RangeSet<T>>,
     b: List<RangeSet<T>>,
     textDiff: ChangeDesc? = null
 ): Set<Chunk<T>> {
-    val inA = mutableMapOf<Chunk<*>, Int>()
-    a.forEach { set ->
-        set.chunk.indices.forEach { i ->
-            inA[set.chunk[i]] = set.chunkPos[i]
+    val inA = mutableMapOf<Chunk<T>, Int>()
+    for (set in a) {
+        for (i in set.chunk.indices) {
+            if (set.chunk[i].maxPoint <= 0) {
+                inA[set.chunk[i]] = set.chunkPos[i]
+            }
         }
     }
     val shared = mutableSetOf<Chunk<T>>()
     for (set in b) {
-        set.chunk.indices.forEach { i ->
-            val known = inA[set.chunk[i]] ?: return@forEach
-            if ((textDiff?.mapPos(known) ?: known) == set.chunkPos[i]) {
-                val notTouches = textDiff == null ||
-                    textDiff.touchesRange(known, known + set.chunk[i].length) == false
-                if (notTouches) {
-                    shared.add(set.chunk[i])
-                }
+        for (i in set.chunk.indices) {
+            val known = inA[set.chunk[i]] ?: continue
+            val mappedPos = if (textDiff != null) {
+                textDiff.mapPos(known)
+            } else {
+                known
+            }
+            if (mappedPos == set.chunkPos[i] &&
+                (
+                    textDiff == null ||
+                        textDiff.touchesRange(
+                            known,
+                            known + set.chunk[i].length
+                        ) == TouchesResult.No
+                    )
+            ) {
+                shared.add(set.chunk[i])
             }
         }
     }
     return shared
 }
 
-sealed interface Cursor<T> : RangeCursor<T> {
-    override var from: Int
-    override var to: Int
-    override var value: T?
-
-    val startSide: Int
-    val rank: Int?
-        get() = null
-
-    fun goto(pos: Int, side: Int = -C.Far): Cursor<T>
-    fun forward(pos: Int, side: Int)
-    override fun next()
-}
-
-class LayerCursor<T : RangeValue> constructor(
+internal class LayerCursor<T : RangeValue>(
     val layer: RangeSet<T>,
     val skip: Set<Chunk<T>>?,
     val minPoint: Int,
-    override val rank: Int = 0
-) : Cursor<T> {
+    override var rank: Int = 0
+) : RangeCursor<T> {
     override var from: Int = 0
     override var to: Int = 0
     override var value: T? = null
 
     var chunkIndex: Int = 0
-
-    @get:JvmName("getRangeIndexVal")
-    @set:JvmName("setRangeIndexVal")
     var rangeIndex: Int = 0
 
-    override val startSide: Int
-        get() {
-            return this.value?.startSide ?: 0
-        }
+    val startSide: Int
+        get() = value?.startSide ?: 0
+
     val endSide: Int
-        get() {
-            return this.value?.endSide ?: 0
-        }
+        get() = value?.endSide ?: 0
 
     override fun goto(pos: Int, side: Int): LayerCursor<T> {
-        this.chunkIndex = 0
-        this.rangeIndex = 0
-        this.gotoInner(pos, side, false)
+        chunkIndex = 0
+        rangeIndex = 0
+        gotoInner(pos, side, false)
         return this
     }
 
-    fun gotoInner(pos: Int, side: Int, forward: Boolean) {
-        var varForward = forward
-        while (this.chunkIndex < this.layer.chunk.size) {
-            val next = this.layer.chunk[this.chunkIndex]
+    fun goto(pos: Int): LayerCursor<T> = goto(pos, -FAR)
+
+    private fun gotoInner(pos: Int, side: Int, forward: Boolean) {
+        var fwd = forward
+        while (chunkIndex < layer.chunk.size) {
+            val next = layer.chunk[chunkIndex]
             if (!(
-                    this.skip?.contains(next) == true ||
-                        this.layer.chunkEnd(this.chunkIndex) < pos ||
-                        next.maxPoint < this.minPoint
+                    skip != null && next in skip ||
+                        layer.chunkEnd(chunkIndex) < pos ||
+                        next.maxPoint < minPoint
                     )
             ) {
                 break
             }
-            this.chunkIndex++
-            varForward = false
+            chunkIndex++
+            fwd = false
         }
-        if (this.chunkIndex < this.layer.chunk.size) {
-            val rangeIndex = this.layer.chunk[this.chunkIndex].findIndex(
-                pos - this.layer.chunkPos[this.chunkIndex],
-                side,
-                true
-            )
-            if (!varForward || this.rangeIndex < rangeIndex) this.setRangeIndex(rangeIndex)
+        if (chunkIndex < layer.chunk.size) {
+            val ri =
+                layer.chunk[chunkIndex].findIndex(
+                    pos - layer.chunkPos[chunkIndex],
+                    side,
+                    true
+                )
+            if (!fwd || rangeIndex < ri) {
+                setRangeIndex(ri)
+            }
         }
-        this.next()
+        next()
     }
 
-    override fun forward(pos: Int, side: Int) {
-        if (((this.to - pos) or { this.endSide - side }) < 0) {
-            this.gotoInner(pos, side, true)
+    fun forward(pos: Int, side: Int) {
+        if ((to - pos).let { d ->
+                if (d != 0) d else endSide - side
+            } < 0
+        ) {
+            gotoInner(pos, side, true)
         }
     }
 
     override fun next() {
         while (true) {
-            if (this.chunkIndex == this.layer.chunk.size) {
-                this.from = C.Far
-                this.to = C.Far
-                this.value = null
+            if (chunkIndex == layer.chunk.size) {
+                from = FAR
+                to = FAR
+                value = null
                 break
             } else {
-                val chunkPos = this.layer.chunkPos[this.chunkIndex]
-                val chunk = this.layer.chunk[this.chunkIndex]
-                val from = chunkPos + chunk.from[this.rangeIndex]
-                this.from = from
-                this.to = chunkPos + chunk.to[this.rangeIndex]
-                this.value = chunk.value[this.rangeIndex]
-                this.setRangeIndex(this.rangeIndex + 1)
-                if (this.minPoint < 0 ||
-                    this.value!!.point &&
-                    this.to - this.from >= this.minPoint
+                val cp = layer.chunkPos[chunkIndex]
+                val chunk = layer.chunk[chunkIndex]
+                val f = cp + chunk.from[rangeIndex]
+                from = f
+                to = cp + chunk.to[rangeIndex]
+                value = chunk.value[rangeIndex]
+                setRangeIndex(rangeIndex + 1)
+                if (minPoint < 0 ||
+                    (
+                        value!!.point &&
+                            to - from >= minPoint
+                        )
                 ) {
                     break
                 }
@@ -865,264 +1003,359 @@ class LayerCursor<T : RangeValue> constructor(
         }
     }
 
-    fun setRangeIndex(index: Int) {
-        if (index == this.layer.chunk[this.chunkIndex].value.size) {
-            this.chunkIndex++
-            if (this.skip != null) {
-                while (this.chunkIndex < this.layer.chunk.size &&
-                    this.skip.contains(this.layer.chunk[this.chunkIndex])
-                ) {
-                    this.chunkIndex++
-                }
+    private fun setRangeIndex(index: Int) {
+        if (index ==
+            layer.chunk[chunkIndex].value.size
+        ) {
+            chunkIndex++
+            if (skip != null) {
+                while (
+                    chunkIndex < layer.chunk.size &&
+                    layer.chunk[chunkIndex] in skip
+                    ) chunkIndex++
             }
-            this.rangeIndex = 0
+            rangeIndex = 0
         } else {
-            this.rangeIndex = index
+            rangeIndex = index
         }
     }
 
     fun nextChunk() {
-        this.chunkIndex++
-        this.rangeIndex = 0
-        this.next()
+        chunkIndex++
+        rangeIndex = 0
+        next()
     }
 
-    fun compare(other: LayerCursor<T>): Int =
-        (this.from - other.from) or { this.startSide - other.startSide } or
-            { this.rank - other.rank } or
-            { this.to - other.to } or { this.endSide - other.endSide }
+    fun compare(other: LayerCursor<T>): Int {
+        return (from - other.from).let { d ->
+            if (d != 0) {
+                d
+            } else {
+                (startSide - other.startSide).let { d2 ->
+                    if (d2 != 0) {
+                        d2
+                    } else {
+                        (rank - other.rank).let { d3 ->
+                            if (d3 != 0) {
+                                d3
+                            } else {
+                                (to - other.to).let { d4 ->
+                                    if (d4 != 0) {
+                                        d4
+                                    } else {
+                                        endSide - other.endSide
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
-class HeapCursor<T : RangeValue>(val heap: MutableList<LayerCursor<T>>) : Cursor<T> {
-
+internal class HeapCursor<T : RangeValue>(
+    val heap: MutableList<LayerCursor<T>>
+) : RangeCursor<T> {
     override var from: Int = 0
     override var to: Int = 0
     override var value: T? = null
     override var rank: Int = 0
 
-    override val startSide: Int
-        get() {
-            return this.value?.startSide ?: 0
-        }
+    val startSide: Int
+        get() = value?.startSide ?: 0
 
     override fun goto(pos: Int, side: Int): HeapCursor<T> {
-        this.heap.forEach { it.goto(pos, side) }
-        for (i in heap.size / 2 downTo 0) heapBubble(this.heap, i)
-        this.next()
+        for (cur in heap) cur.goto(pos, side)
+        var i = heap.size shr 1
+        while (i >= 0) {
+            heapBubble(heap, i)
+            i--
+        }
+        next()
         return this
     }
 
-    override fun forward(pos: Int, side: Int) {
-        this.heap.forEach { cur -> cur.forward(pos, side) }
-        for (i in heap.size / 2 downTo 0) {
-            heapBubble(this.heap, i)
+    fun forward(pos: Int, side: Int) {
+        for (cur in heap) cur.forward(pos, side)
+        var i = heap.size shr 1
+        while (i >= 0) {
+            heapBubble(heap, i)
+            i--
         }
-        if (((this.to - pos) or { this.value!!.endSide - side }) < 0) this.next()
+        if ((to - pos).let { d ->
+                if (d != 0) {
+                    d
+                } else {
+                    (value?.endSide ?: 0) - side
+                }
+            } < 0
+        ) {
+            next()
+        }
     }
 
     override fun next() {
-        if (this.heap.isEmpty()) {
-            this.from = C.Far
-            this.to = C.Far
-            this.value = null
-            this.rank = -1
+        if (heap.isEmpty()) {
+            from = FAR
+            to = FAR
+            value = null
+            rank = -1
         } else {
-            val top = this.heap[0]
-            this.from = top.from
-            this.to = top.to
-            this.value = top.value
-            this.rank = top.rank
+            val top = heap[0]
+            from = top.from
+            to = top.to
+            value = top.value
+            rank = top.rank
             if (top.value != null) top.next()
-            heapBubble(this.heap, 0)
+            heapBubble(heap, 0)
         }
     }
 
     companion object {
-
         fun <T : RangeValue> from(
             sets: List<RangeSet<T>>,
             skip: Set<Chunk<T>>? = null,
             minPoint: Int = -1
-        ): Cursor<T> {
-            val heap = mutableListOf<LayerCursor<T>>()
+        ): RangeCursor<T> {
+            val heap =
+                mutableListOf<LayerCursor<T>>()
             for (i in sets.indices) {
-                var cur = sets[i]
+                var cur: RangeSet<T> = sets[i]
                 while (!cur.isEmpty) {
                     if (cur.maxPoint >= minPoint) {
-                        heap.add(LayerCursor(cur, skip, minPoint, i))
+                        heap.add(
+                            LayerCursor(
+                                cur,
+                                skip,
+                                minPoint,
+                                i
+                            )
+                        )
                     }
                     cur = cur.nextLayer
                 }
             }
-            return heap.singleOrNull() ?: HeapCursor(heap)
+            return if (heap.size == 1) {
+                heap[0]
+            } else {
+                HeapCursor(heap)
+            }
         }
     }
 }
 
-internal fun <T : RangeValue> heapBubble(heap: MutableList<LayerCursor<T>>, startIndex: Int) {
-    val cur = heap.getOrNull(startIndex) ?: return
-    var index = startIndex
+private fun <T : RangeValue> heapBubble(heap: MutableList<LayerCursor<T>>, index: Int) {
+    if (index >= heap.size) return
+    val cur = heap[index]
+    var idx = index
     while (true) {
-        var childIndex = (index shl 1) + 1
-        var child = heap.getOrNull(childIndex) ?: break
-        heap.getOrNull(childIndex + 1)?.takeIf { child.compare(it) >= 0 }?.let {
-            child = it
+        var childIndex = (idx shl 1) + 1
+        if (childIndex >= heap.size) break
+        var child = heap[childIndex]
+        if (childIndex + 1 < heap.size &&
+            child.compare(heap[childIndex + 1]) >= 0
+        ) {
+            child = heap[childIndex + 1]
             childIndex++
         }
         if (cur.compare(child) < 0) break
         heap[childIndex] = cur
-        heap[index] = child
-        index = childIndex
+        heap[idx] = child
+        idx = childIndex
     }
 }
 
-class SpanCursor<T : RangeValue>(sets: List<RangeSet<T>>, skip: Set<Chunk<T>>?, minPoint: Int) {
-    val cursor: Cursor<T> = HeapCursor.from(sets, skip, minPoint)
+internal class SpanCursor<T : RangeValue>(
+    sets: List<RangeSet<T>>,
+    skip: Set<Chunk<T>>?,
+    val minPoint: Int
+) {
+    val cursor: RangeCursor<T> =
+        HeapCursor.from(sets, skip, minPoint)
 
     val active = mutableListOf<T>()
     val activeTo = mutableListOf<Int>()
     val activeRank = mutableListOf<Int>()
     var minActive = -1
 
-    // A currently active point range, if any
     var point: T? = null
     var pointFrom = 0
     var pointRank = 0
 
-    var to = -C.Far
+    var to = -FAR
     var endSide = 0
-
-    // The amount of open active ranges at the start of the iterator.
-    // Not including points.
     var openStart = -1
 
-    fun goto(pos: Int, side: Int = -C.Far): SpanCursor<T> {
-        this.cursor.goto(pos, side)
-        this.active.clear()
-        this.activeTo.clear()
-        this.activeRank.clear()
-        this.minActive = -1
-        this.to = pos
-        this.endSide = side
-        this.openStart = -1
-        this.next()
+    private val cursorAsLayer: LayerCursor<T>?
+        get() = cursor as? LayerCursor<T>
+
+    private val cursorAsHeap: HeapCursor<T>?
+        get() = cursor as? HeapCursor<T>
+
+    private val cursorStartSide: Int
+        get() = cursorAsLayer?.startSide
+            ?: cursorAsHeap?.startSide
+            ?: (cursor.value?.startSide ?: 0)
+
+    fun goto(pos: Int, side: Int = -FAR): SpanCursor<T> {
+        cursorAsLayer?.goto(pos, side)
+            ?: cursorAsHeap?.goto(pos, side)
+            ?: cursor.goto(pos, side)
+        active.clear()
+        activeTo.clear()
+        activeRank.clear()
+        minActive = -1
+        to = pos
+        endSide = side
+        openStart = -1
+        next()
         return this
     }
 
     fun forward(pos: Int, side: Int) {
-        while (this.minActive > -1 &&
-            (this.activeTo[this.minActive] - pos) or {
-                this.active[this.minActive].endSide - side
+        while (minActive > -1 &&
+            (activeTo[minActive] - pos).let { d ->
+                if (d != 0) {
+                    d
+                } else {
+                    active[minActive].endSide - side
+                }
             } < 0
-        ) {
-            this.removeActive(this.minActive)
-        }
-        this.cursor.forward(pos, side)
+            ) removeActive(minActive)
+        cursorAsLayer?.forward(pos, side)
+            ?: cursorAsHeap?.forward(pos, side)
     }
 
-    fun removeActive(index: Int) {
-        remove(this.active, index)
-        remove(this.activeTo, index)
-        remove(this.activeRank, index)
-        this.minActive = findMinIndex(this.active, this.activeTo)
+    private fun removeActive(index: Int) {
+        removeAt(active, index)
+        removeAt(activeTo, index)
+        removeAt(activeRank, index)
+        minActive = findMinIndex(active, activeTo)
     }
 
-    fun addActive(trackOpen: MutableList<Int>?) {
+    private fun addActive(trackOpen: MutableList<Int>?) {
         var i = 0
-        val value = this.cursor.value!!
-        val to = this.cursor.to
-        val rank = this.cursor.rank!!
-        // Organize active marks by rank first, then by size
-        while (i < this.activeRank.size &&
-            ((rank - this.activeRank[i]) or { to - this.activeTo[i] }) > 0
-        ) {
-            i++
+        val v = cursor.value!!
+        val curTo = cursor.to
+        val r = cursor.rank
+        while (i < activeRank.size &&
+            (r - activeRank[i]).let { d ->
+                if (d != 0) {
+                    d
+                } else {
+                    curTo - activeTo[i]
+                }
+            } > 0
+            ) i++
+        insertAt(active, i, v)
+        insertAt(activeTo, i, curTo)
+        insertAt(activeRank, i, r)
+        if (trackOpen != null) {
+            insertAt(trackOpen, i, cursor.from)
         }
-        insert(this.active, i, value)
-        insert(this.activeTo, i, to)
-        insert(this.activeRank, i, rank)
-        trackOpen?.add(i, this.cursor.from)
-        this.minActive = findMinIndex(this.active, this.activeTo)
+        minActive = findMinIndex(active, activeTo)
     }
 
-    // After calling this, if `this.point` != null, the next range is a
-    // point. Otherwise, it's a regular range, covered by `this.active`.
     fun next() {
-        val from = this.to
-        val wasPoint = this.point
-        this.point = null
-        val trackOpen = if (this.openStart < 0) mutableListOf<Int>() else null
+        val from = to
+        val wasPoint = point
+        point = null
+        val trackOpen: MutableList<Int>? =
+            if (openStart < 0) mutableListOf() else null
         while (true) {
-            val a = this.minActive
+            val a = minActive
             if (a > -1 &&
-                (
-                    (this.activeTo[a] - this.cursor.from) or
-                        { this.active[a].endSide - this.cursor.startSide }
-                    ) <
-                0
+                (activeTo[a] - cursor.from).let { d ->
+                    if (d != 0) {
+                        d
+                    } else {
+                        active[a].endSide -
+                            cursorStartSide
+                    }
+                } < 0
             ) {
-                if (this.activeTo[a] > from) {
-                    this.to = this.activeTo[a]
-                    this.endSide = this.active[a].endSide
+                if (activeTo[a] > from) {
+                    to = activeTo[a]
+                    endSide = active[a].endSide
                     break
                 }
-                this.removeActive(a)
-                trackOpen?.removeAt(a)
-            } else if (this.cursor.value == null) {
-                this.to = C.Far
-                this.endSide = C.Far
+                removeActive(a)
+                if (trackOpen != null) {
+                    removeAt(trackOpen, a)
+                }
+            } else if (cursor.value == null) {
+                to = FAR
+                endSide = FAR
                 break
-            } else if (this.cursor.from > from) {
-                this.to = this.cursor.from
-                this.endSide = this.cursor.startSide
+            } else if (cursor.from > from) {
+                to = cursor.from
+                endSide = cursorStartSide
                 break
             } else {
-                val nextVal = this.cursor.value
-                if (!nextVal!!.point) { // Opening a range
-                    this.addActive(trackOpen)
-                    this.cursor.next()
-                } else if (wasPoint != null &&
-                    this.cursor.to == this.to &&
-                    this.cursor.from < this.cursor.to
+                val nextVal = cursor.value!!
+                if (!nextVal.point) {
+                    addActive(trackOpen)
+                    cursor.next()
+                } else if (
+                    wasPoint != null &&
+                    cursor.to == to &&
+                    cursor.from < cursor.to
                 ) {
-                    // Ignore any non-empty points that end precisely at the end of the prev point
-                    this.cursor.next()
-                } else { // New point
-                    this.point = nextVal
-                    this.pointFrom = this.cursor.from
-                    this.pointRank = this.cursor.rank!!
-                    this.to = this.cursor.to
-                    this.endSide = nextVal.endSide
-                    this.cursor.next()
-                    this.forward(this.to, this.endSide)
+                    cursor.next()
+                } else {
+                    point = nextVal
+                    pointFrom = cursor.from
+                    pointRank = cursor.rank
+                    to = cursor.to
+                    endSide = nextVal.endSide
+                    cursor.next()
+                    forward(to, endSide)
                     break
                 }
             }
         }
-        trackOpen?.reversed()?.takeWhile { it <= from }?.size?.let {
-            this.openStart = it
+        if (trackOpen != null) {
+            openStart = 0
+            for (i in trackOpen.size - 1 downTo 0) {
+                if (trackOpen[i] < from) {
+                    openStart++
+                } else {
+                    break
+                }
+            }
         }
     }
 
     fun activeForPoint(to: Int): List<T> {
-        if (this.active.size == 0) return this.active
-        val active = mutableListOf<T>()
-        for (i in this.active.indices.reversed()) {
-            if (this.activeRank[i] < this.pointRank) break
-            if (this.activeTo[i] > to ||
-                this.activeTo[i] == to &&
-                this.active[i].endSide >= this.point!!.endSide
+        if (active.isEmpty()) return active
+        val result = mutableListOf<T>()
+        for (i in active.size - 1 downTo 0) {
+            if (activeRank[i] < pointRank) break
+            if (activeTo[i] > to ||
+                (
+                    activeTo[i] == to &&
+                        active[i].endSide >=
+                        point!!.endSide
+                    )
             ) {
-                active.add(this.active[i])
+                result.add(active[i])
             }
         }
-        return active.reversed()
+        return result.reversed()
     }
 
-    fun openEnd(to: Int): Int = activeTo.reversed().takeWhile { it <= to }.size
+    fun openEnd(to: Int): Int {
+        var open = 0
+        for (i in activeTo.size - 1 downTo 0) {
+            if (activeTo[i] > to) open++ else break
+        }
+        return open
+    }
 }
 
-internal fun <T : RangeValue> compare(
+private fun <T : RangeValue> compareSpans(
     a: SpanCursor<T>,
     startA: Int,
     b: SpanCursor<T>,
@@ -1135,17 +1368,43 @@ internal fun <T : RangeValue> compare(
     val endB = startB + length
     var pos = startB
     val dPos = startB - startA
+    var boundChange = false
     while (true) {
         val dEnd = (a.to + dPos) - b.to
-        val diff = dEnd or { a.endSide - b.endSide }
+        val diff = if (dEnd != 0) {
+            dEnd
+        } else {
+            a.endSide - b.endSide
+        }
         val end = if (diff < 0) a.to + dPos else b.to
         val clipEnd = min(end, endB)
-        if (a.point != null || b.point != null) {
-            if (a.point != b.point || !sameValues(a.activeForPoint(a.to), b.activeForPoint(b.to))) {
-                comparator.comparePoint(pos, clipEnd, a.point, b.point)
+        val pt = a.point ?: b.point
+        if (pt != null) {
+            if (!(
+                    a.point != null &&
+                        b.point != null &&
+                        cmpVal(a.point!!, b.point!!) &&
+                        sameValues(
+                            a.activeForPoint(a.to),
+                            b.activeForPoint(b.to)
+                        )
+                    )
+            ) {
+                comparator.comparePoint(
+                    pos,
+                    clipEnd,
+                    a.point,
+                    b.point
+                )
             }
+            boundChange = false
         } else {
-            if (clipEnd > pos && !sameValues(a.active, b.active)) {
+            if (boundChange) {
+                comparator.boundChange(pos)
+            }
+            if (clipEnd > pos &&
+                !sameValues(a.active, b.active)
+            ) {
                 comparator.compareRange(
                     pos,
                     clipEnd,
@@ -1153,39 +1412,65 @@ internal fun <T : RangeValue> compare(
                     b.active
                 )
             }
+            if (clipEnd < endB &&
+                (
+                    dEnd != 0 ||
+                        a.openEnd(end) != b.openEnd(end)
+                    )
+            ) {
+                boundChange = true
+            }
         }
         if (end > endB) break
-        if (dEnd != 0 || a::openEnd != b::openEnd) {
-            comparator.boundChange(clipEnd)
-        }
         pos = end
         if (diff <= 0) a.next()
         if (diff >= 0) b.next()
     }
 }
 
-internal fun <T : RangeValue> sameValues(a: List<T>, b: List<T>): Boolean = a == b
-
-internal fun <T> remove(array: MutableList<T>, index: Int) {
-    array.removeAt(index)
+private fun <T : RangeValue> sameValues(a: List<T>, b: List<T>): Boolean {
+    if (a.size != b.size) return false
+    for (i in a.indices) {
+        if (a[i] !== b[i] && !cmpVal(a[i], b[i])) {
+            return false
+        }
+    }
+    return true
 }
 
-internal fun <T> insert(array: MutableList<T>, index: Int, value: T) {
-    array.add(index, value)
+private fun <T> removeAt(array: MutableList<T>, index: Int) {
+    for (i in index until array.size - 1) {
+        array[i] = array[i + 1]
+    }
+    array.removeAt(array.size - 1)
 }
 
-internal fun findMinIndex(value: List<RangeValue>, array: List<Int>): Int {
+private fun <T> insertAt(array: MutableList<T>, index: Int, value: T) {
+    array.add(value) // add a slot at the end
+    for (i in array.size - 1 downTo index + 1) {
+        array[i] = array[i - 1]
+    }
+    array[index] = value
+}
+
+private fun findMinIndex(value: List<RangeValue>, array: List<Int>): Int {
     var found = -1
-    var foundPos = C.Far
+    var foundPos = FAR
     for (i in array.indices) {
-        if (((array[i] - foundPos) or { value[i].endSide - value[found].endSide }) < 0) {
+        if ((array[i] - foundPos).let { d ->
+                if (d != 0) {
+                    d
+                } else if (found >= 0) {
+                    value[i].endSide -
+                        value[found].endSide
+                } else {
+                    -1
+                }
+            } < 0
+        ) {
             found = i
             foundPos = array[i]
         }
     }
     return found
 }
-
-internal inline infix fun Int?.or(other: () -> Int): Int = this?.takeIf {
-    it != 0
-} ?: other.invoke()

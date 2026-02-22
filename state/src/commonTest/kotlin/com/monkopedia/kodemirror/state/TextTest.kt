@@ -18,7 +18,6 @@
  */
 package com.monkopedia.kodemirror.state
 
-import kotlin.math.floor
 import kotlin.math.min
 import kotlin.random.Random
 import kotlin.test.Test
@@ -167,7 +166,8 @@ class TextTest {
         for (i in 0 until 400) {
             var start = if (i == 0) 0 else rng.nextInt(doc.length)
             var end = if (i == 399) doc.length else start + rng.nextInt(doc.length - start)
-            start = 4150; end = 4160
+            start = 4150
+            end = 4160
             assertEquals(str.substring(start, end), doc.slice(start, end).toString())
         }
     }

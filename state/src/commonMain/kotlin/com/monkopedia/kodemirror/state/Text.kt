@@ -22,57 +22,46 @@ import kotlin.math.max
 import kotlin.math.min
 
 internal object Tree {
-    // The branch factor as an exponent of 2
-    val BranchShift = 5
-
-    // The approximate branch factor of the tree (both in leaf and
-    // branch nodes)
-    val Branch = 1 shl BranchShift
+    const val BranchShift = 5
+    const val Branch = 1 shl BranchShift
 }
 
-// Flags passed to decompose
-internal sealed class Open(val from: Boolean, val to: Boolean) {
-    data object From : Open(true, false)
-    data object To : Open(false, true)
-    data object Either : Open(true, true)
-    data object Neither : Open(false, false)
-    companion object : (Boolean, Boolean) -> Open {
-        override fun invoke(p1: Boolean, p2: Boolean): Open {
-            return when {
-                p1 && p1 -> Either
-                p1 -> From
-                p2 -> To
-                else -> Neither
-            }
+internal enum class Open(val value: Int) {
+    None(0),
+    From(1),
+    To(2),
+    Both(3);
+
+    infix fun and(other: Open): Open = fromValue(value and other.value)
+    infix fun or(other: Open): Open = fromValue(value or other.value)
+
+    companion object {
+        fun fromValue(v: Int): Open = when (v) {
+            0 -> None
+            1 -> From
+            2 -> To
+            3 -> Both
+            else -> None
         }
+
+        fun of(from: Boolean, to: Boolean): Open = fromValue(
+            (if (from) From.value else 0) or (if (to) To.value else 0)
+        )
     }
 }
 
 // / A text iterator iterates over a sequence of strings. When
-// / iterating over a [`Text`](#state.Text) document, result values will
+// / iterating over a [Text] document, result values will
 // / either be lines or line breaks.
-interface TextIterator<T : TextIterator<T>> : Iterator<String>, Iterable<String> {
-    override fun next(): String {
-        next(null)
-        return value
-    }
+interface TextIterator {
+    // / Retrieve the next string. Optionally skip a given number of
+    // / positions after the current position. Always returns the
+    // / object itself.
+    fun next(skip: Int = 0): TextIterator
 
-    override fun iterator(): Iterator<String> {
-        return this
-    }
-
-    // / Retrieve the next string. Optionally skip a given Int of
-    // / positions after the current position. Always returns the object
-    // / itself.
-    fun next(skip: Int?): T
-
-    // / The current string. Will be the empty string when the cursor is
-    // / at its end or `next` hasn't been called on it yet.
+    // / The current string. Will be the empty string when the cursor
+    // / is at its end or `next` hasn't been called on it yet.
     val value: String
-
-    override fun hasNext(): Boolean {
-        return !done
-    }
 
     // / Whether the end of the iteration has been reached. You should
     // / probably check this right after calling `next`.
@@ -82,80 +71,84 @@ interface TextIterator<T : TextIterator<T>> : Iterator<String>, Iterable<String>
     val lineBreak: Boolean
 }
 
-val String.asText: Text
-    get() = Text.of(listOf(this))
-
-// / The data structure for documents. @nonabstract
-abstract class Text internal constructor() : Iterable<String> {
+// / The data structure for documents.
+abstract class Text {
     // / The length of the string.
     abstract val length: Int
 
-    // / The Int of lines in the string (always >= 1).
+    // / The number of lines in the string (always >= 1).
     abstract val lines: Int
 
     // / Get the line description around the given position.
     fun lineAt(pos: Int): Line {
-        if (pos < 0 || pos > this.length) {
+        if (pos < 0 || pos > length) {
             throw IllegalArgumentException(
-                "Invalid position $pos in document of length ${this.length}"
+                "Invalid position $pos in document of length $length"
             )
         }
-        return this.lineInner(pos, false, 1, 0)
+        return lineInner(pos, false, 1, 0)
     }
 
-    // / Get the description for the given (1-based) line Int.
+    // / Get the description for the given (1-based) line number.
     fun line(n: Int): Line {
-        if (n < 1 || n > this.lines) {
+        if (n < 1 || n > lines) {
             throw IllegalArgumentException(
-                "Invalid line Int $n in ${this.lines}-line document"
+                "Invalid line number $n in $lines-line document"
             )
         }
-        return this.lineInner(n, true, 1, 0)
+        return lineInner(n, true, 1, 0)
     }
 
-    // / @internal
     internal abstract fun lineInner(target: Int, isLine: Boolean, line: Int, offset: Int): Line
 
     // / Replace a range of the text with the given content.
     open fun replace(from: Int, to: Int, text: Text): Text {
-        val (clipFrom, clipTo) = clip(this, from, to)
+        val (clippedFrom, clippedTo) = clip(this, from, to)
         val parts = mutableListOf<Text>()
-        this.decompose(0, clipFrom, parts, Open.To)
-        if (text.length != 0) text.decompose(0, text.length, parts, Open.Either)
-        this.decompose(clipTo, this.length, parts, Open.From)
-        return TextNode.from(parts, this.length - (clipTo - clipFrom) + text.length)
+        decompose(0, clippedFrom, parts, Open.To)
+        if (text.length > 0) {
+            text.decompose(
+                0,
+                text.length,
+                parts,
+                Open.Both
+            )
+        }
+        decompose(clippedTo, length, parts, Open.From)
+        return TextNode.from(
+            parts,
+            length - (clippedTo - clippedFrom) + text.length
+        )
     }
 
     // / Append another document to this one.
     fun append(other: Text): Text {
-        return this.replace(this.length, this.length, other)
+        return replace(length, length, other)
     }
 
     // / Retrieve the text between the given points.
-    fun slice(from: Int, to: Int? = null): Text {
-        val (clipFrom, clipTo) = clip(this, from, to ?: this.length)
+    fun slice(from: Int, to: Int = length): Text {
+        val (clippedFrom, clippedTo) = clip(this, from, to)
         val parts = mutableListOf<Text>()
-        this.decompose(clipFrom, clipTo, parts, Open.Neither)
-        return TextNode.from(parts, clipTo - clipFrom)
+        decompose(clippedFrom, clippedTo, parts, Open.None)
+        return TextNode.from(parts, clippedTo - clippedFrom)
     }
 
     // / Retrieve a part of the document as a string
-    abstract fun sliceString(from: Int, to: Int? = null, lineSep: String? = null): String
+    abstract fun sliceString(from: Int, to: Int = length, lineSep: String = "\n"): String
 
-    // / @internal
-    internal abstract fun flatten(
-        target: MutableList<String> = mutableListOf()
-    ): MutableList<String>
+    internal abstract fun flatten(target: MutableList<String>)
 
-    // / @internal
-    internal abstract fun scanIdentical(other: Text, dir: Boolean): Int
+    internal abstract fun scanIdentical(other: Text, dir: Int): Int
 
     // / Test whether this text is equal to another instance.
     fun eq(other: Text): Boolean {
-        if (other == this) return true
-        if (other.length != this.length || other.lines != this.lines) return false
-        val start = this.scanIdentical(other, true)
-        val end = this.length - this.scanIdentical(other, false)
+        if (other === this) return true
+        if (other.length != length || other.lines != lines) {
+            return false
+        }
+        val start = scanIdentical(other, 1)
+        val end = length - scanIdentical(other, -1)
         val a = RawTextCursor(this)
         val b = RawTextCursor(other)
         var skip = start
@@ -164,48 +157,47 @@ abstract class Text internal constructor() : Iterable<String> {
             a.next(skip)
             b.next(skip)
             skip = 0
-            if (a.lineBreak != b.lineBreak || a.done != b.done || a.value != b.value) return false
+            if (a.lineBreak != b.lineBreak ||
+                a.done != b.done ||
+                a.value != b.value
+            ) {
+                return false
+            }
             pos += a.value.length
             if (a.done || pos >= end) return true
         }
     }
 
-    override fun iterator(): Iterator<String> {
-        return iter()
-    }
-
     // / Iterate over the text. When `dir` is `-1`, iteration happens
-    // / from end to start. This will return lines and the breaks between
-    // / them as separate strings.
-    fun iter(dir: Boolean = true): TextIterator<*> {
-        return RawTextCursor(this, dir)
-    }
+    // / from end to start. This will return lines and the breaks
+    // / between them as separate strings.
+    fun iter(dir: Int = 1): TextIterator = RawTextCursor(this, dir)
 
     // / Iterate over a range of the text. When `from` > `to`, the
     // / iterator will run in reverse.
-    fun iterRange(from: Int, to: Int = this.length): TextIterator<*> {
-        return PartialTextCursor(this, from, to)
-    }
+    fun iterRange(from: Int, to: Int = length): TextIterator = PartialTextCursor(this, from, to)
 
     // / Return a cursor that iterates over the given range of lines,
-    // / _without_ returning the line breaks between, and yielding empty
-    // / strings for empty lines.
+    // / _without_ returning the line breaks between, and yielding
+    // / empty strings for empty lines.
     // /
-    // / When `from` and `to` are given, they should be 1-based line Ints.
-    fun iterLines(from: Int? = null, to: Int? = null): TextIterator<*> {
-        val inner = if (from == null) {
-            this.iter()
+    // / When `from` and `to` are given, they should be 1-based line
+    // / numbers.
+    fun iterLines(from: Int? = null, to: Int? = null): TextIterator {
+        val inner: TextIterator
+        if (from == null) {
+            inner = iter()
         } else {
-            val to = to ?: (this.lines + 1)
-            val start = this.line(from).from
-            this.iterRange(
+            val toLine = to ?: (lines + 1)
+            val start = line(from).from
+            inner = iterRange(
                 start,
                 max(
                     start,
                     when {
-                        to == this.lines + 1 -> this.length
-                        to <= 1 -> 0
-                        else -> this.line(to - 1).to
+                        toLine == lines + 1 -> length
+                        toLine <= 1 -> 0
+                        else -> line(toLine - 1).to
                     }
                 )
             )
@@ -213,29 +205,24 @@ abstract class Text internal constructor() : Iterable<String> {
         return LineCursor(inner)
     }
 
-    // / @internal
     internal abstract fun decompose(from: Int, to: Int, target: MutableList<Text>, open: Open)
 
     // / Return the document as a string, using newline characters to
     // / separate lines.
-    override fun toString(): String {
-        return this.sliceString(0)
-    }
+    override fun toString(): String = sliceString(0)
 
     // / Convert the document to an array of lines (which can be
-    // / deserialized again via [`Text.of`](#state.Text^of)).
-//    fun toJSON() {
-//        val lines: String[] = []
-//        this.flatten(lines)
-//        return lines
-//    }
+    // / deserialized again via [Text.of]).
+    fun toJSON(): List<String> {
+        val lines = mutableListOf<String>()
+        flatten(lines)
+        return lines
+    }
 
     // / If this is a branch node, `children` will hold the `Text`
-    // / objects that it is made up of. For leaf nodes, this holds null.
+    // / objects that it is made up of. For leaf nodes, this holds
+    // / null.
     abstract val children: List<Text>?
-
-//    abstract val iterator: () -> Iterator<String>
-//    [Symbol.iterator]!: () => Iterator<string>
 
     companion object {
         // / Create a `Text` instance for the given array of lines.
@@ -245,11 +232,11 @@ abstract class Text internal constructor() : Iterable<String> {
                     "A document must have at least one line"
                 )
             }
-            if (text.isEmpty() || text.singleOrNull()?.isBlank() == true) return empty
+            if (text.size == 1 && text[0].isEmpty()) return empty
             return if (text.size <= Tree.Branch) {
                 TextLeaf(text)
             } else {
-                TextNode.from(TextLeaf.split(text))
+                TextNode.from(TextLeaf.split(text, mutableListOf()))
             }
         }
 
@@ -258,51 +245,53 @@ abstract class Text internal constructor() : Iterable<String> {
     }
 }
 
-// Leaves store an array of line strings. There are always line breaks
-// between these strings. Leaves are limited in size and have to be
-// contained in TextNode instances for bigger documents.
-internal class TextLeaf(val text: List<String>, override val length: Int = textLength(text)) :
-    Text() {
+// Leaves store an array of line strings. There are always line
+// breaks between these strings. Leaves are limited in size and
+// have to be contained in TextNode instances for bigger documents.
+internal class TextLeaf(
+    val text: List<String>,
+    override val length: Int = textLength(text)
+) : Text() {
+    override val lines: Int get() = text.size
 
-    override val lines: Int
-        get() {
-            return this.text.size
-        }
-
-    override val children: Nothing?
-        get() {
-            return null
-        }
+    override val children: List<Text>? get() = null
 
     override fun lineInner(target: Int, isLine: Boolean, line: Int, offset: Int): Line {
-        var i = 0
-        var vline = line
-        var voffset = offset
-        this.text.forEach { string ->
-            val end = voffset + string.length
-            if ((if (isLine) vline else end) >= target) {
-                return Line(voffset, end, vline, string)
+        var currentLine = line
+        var currentOffset = offset
+        for (i in text.indices) {
+            val str = text[i]
+            val end = currentOffset + str.length
+            if ((if (isLine) currentLine else end) >= target) {
+                return Line(currentOffset, end, currentLine, str)
             }
-            voffset = end + 1
-            vline++
+            currentOffset = end + 1
+            currentLine++
         }
-        throw IllegalStateException("Not found")
+        throw IllegalStateException("unreachable")
     }
 
     override fun decompose(from: Int, to: Int, target: MutableList<Text>, open: Open) {
-        val text = if (from <= 0 && to >= this.length) {
+        val text = if (from <= 0 && to >= length) {
             this
         } else {
             TextLeaf(
                 sliceText(this.text, from, to),
-                to.coerceAtMost(this.length) - from.coerceAtLeast(0)
+                min(to, length) - max(0, from)
             )
         }
-        if (open.from) {
-            val prev = target.removeLast() as TextLeaf
-            val joined = appendText(text.text, prev.text.toMutableList(), 0, text.length)
+        if (open.value and Open.From.value != 0) {
+            val prev = target.removeAt(target.size - 1) as TextLeaf
+            val joined = appendText(
+                text.text,
+                prev.text.toMutableList(),
+                0,
+                text.length
+            )
             if (joined.size <= Tree.Branch) {
-                target.add(TextLeaf(joined, prev.length + text.length))
+                target.add(
+                    TextLeaf(joined, prev.length + text.length)
+                )
             } else {
                 val mid = joined.size shr 1
                 target.add(TextLeaf(joined.subList(0, mid)))
@@ -315,186 +304,247 @@ internal class TextLeaf(val text: List<String>, override val length: Int = textL
 
     override fun replace(from: Int, to: Int, text: Text): Text {
         if (text !is TextLeaf) return super.replace(from, to, text)
-        val (clipFrom, clipTo) = clip(this, from, to)
+        val (clippedFrom, clippedTo) = clip(this, from, to)
         val lines = appendText(
             this.text,
-            appendText(text.text, sliceText(this.text, 0, clipFrom).toMutableList())
-                .toMutableList(),
-            clipTo
+            appendText(
+                text.text,
+                sliceText(this.text, 0, clippedFrom)
+            ),
+            clippedTo
         )
-        val newLen = this.length + text.length - (clipTo - clipFrom)
+        val newLen = length + text.length - (clippedTo - clippedFrom)
         if (lines.size <= Tree.Branch) return TextLeaf(lines, newLen)
-        return TextNode.from(TextLeaf.split(lines), newLen)
+        return TextNode.from(
+            TextLeaf.split(lines, mutableListOf()),
+            newLen
+        )
     }
 
-    override fun sliceString(from: Int, to: Int?, lineSep: String?): String {
-        val (clipFrom, clipTo) = clip(this, from, to ?: this.length)
-        var result = ""
+    override fun sliceString(from: Int, to: Int, lineSep: String): String {
+        val (clippedFrom, clippedTo) = clip(this, from, to)
+        val result = StringBuilder()
         var pos = 0
-        for (i in this.text.indices) {
-            val line = this.text[i]
+        for (i in text.indices) {
+            val line = text[i]
             val end = pos + line.length
-            if (pos > clipFrom && i != 0) {
-                result += lineSep ?: "\n"
-            }
-            if (clipFrom < end && clipTo > pos) {
-                result += line.substring(max(0, clipFrom - pos), min(clipTo - pos, line.length))
+            if (pos > clippedFrom && i > 0) result.append(lineSep)
+            if (clippedFrom < end && clippedTo > pos) {
+                result.append(
+                    line.substring(
+                        max(0, clippedFrom - pos),
+                        min(line.length, clippedTo - pos)
+                    )
+                )
             }
             pos = end + 1
-            if (pos > clipTo) break
+            if (pos > clippedTo) break
         }
-        return result
+        return result.toString()
     }
 
-    override fun flatten(target: MutableList<String>): MutableList<String> {
-        target.addAll(text)
-        return target
+    override fun flatten(target: MutableList<String>) {
+        for (line in text) target.add(line)
     }
 
-    override fun scanIdentical(other: Text, dir: Boolean): Int {
-        return 0
-    }
+    override fun scanIdentical(other: Text, dir: Int): Int = 0
 
     companion object {
-        fun split(text: List<String>, target: MutableList<Text> = mutableListOf()): List<Text> {
-            var part = mutableListOf<String>()
+        fun split(text: List<String>, target: MutableList<Text>): MutableList<Text> {
+            val part = mutableListOf<String>()
             var len = -1
             for (line in text) {
                 part.add(line)
                 len += line.length + 1
                 if (part.size == Tree.Branch) {
-                    target.add(TextLeaf(part, len))
-                    part = mutableListOf()
+                    target.add(TextLeaf(part.toList(), len))
+                    part.clear()
                     len = -1
                 }
             }
-            if (len > -1) target.add(TextLeaf(part, len))
+            if (len > -1) target.add(TextLeaf(part.toList(), len))
             return target
         }
     }
 }
 
-// Nodes provide the tree structure of the `Text` type. They store a
-// Int of other nodes or leaves, taking care to balance themselves
-// on changes. There are implied line breaks _between_ the children of
-// a node (but not before the first or after the last child).
-internal class TextNode(override val children: List<Text>, override val length: Int) : Text() {
-    override var lines = children.sumOf { it.lines }
+// Nodes provide the tree structure of the `Text` type. They store
+// a number of other nodes or leaves, taking care to balance
+// themselves on changes. There are implied line breaks _between_
+// the children of a node (but not before the first or after the
+// last child).
+internal class TextNode(
+    override val children: List<Text>,
+    override val length: Int
+) : Text() {
+    override var lines: Int = 0
         private set
 
+    init {
+        for (child in children) lines += child.lines
+    }
+
     override fun lineInner(target: Int, isLine: Boolean, line: Int, offset: Int): Line {
-        var i = 0
-        var vline = line
-        var voffset = offset
-        while (true) {
-            val child = this.children[i]
-            val end = voffset + child.length
-            val endLine = vline + child.lines - 1
+        var currentLine = line
+        var currentOffset = offset
+        for (i in children.indices) {
+            val child = children[i]
+            val end = currentOffset + child.length
+            val endLine = currentLine + child.lines - 1
             if ((if (isLine) endLine else end) >= target) {
-                return child.lineInner(target, isLine, vline, voffset)
+                return child.lineInner(
+                    target,
+                    isLine,
+                    currentLine,
+                    currentOffset
+                )
             }
-            voffset = end + 1
-            vline = endLine + 1
-            i++
+            currentOffset = end + 1
+            currentLine = endLine + 1
         }
+        throw IllegalStateException("unreachable")
     }
 
     override fun decompose(from: Int, to: Int, target: MutableList<Text>, open: Open) {
         var pos = 0
-        children.forEach { child ->
+        for (i in children.indices) {
+            if (pos > to) break
+            val child = children[i]
             val end = pos + child.length
             if (from <= end && to >= pos) {
-                val childOpen = Open(
-                    if (pos <= from) open.from else false,
-                    if (end >= to) open.to else false
+                val childOpen = Open.fromValue(
+                    open.value and (
+                        (if (pos <= from) Open.From.value else 0) or
+                            (if (end >= to) Open.To.value else 0)
+                        )
                 )
-                if (pos >= from && end <= to && childOpen != Open.Neither) {
+                if (pos >= from && end <= to &&
+                    childOpen == Open.None
+                ) {
                     target.add(child)
                 } else {
-                    child.decompose(from - pos, to - pos, target, childOpen)
+                    child.decompose(
+                        from - pos,
+                        to - pos,
+                        target,
+                        childOpen
+                    )
                 }
             }
             pos = end + 1
-            if (pos > to) return
         }
     }
 
     override fun replace(from: Int, to: Int, text: Text): Text {
-        val (from, to) = clip(this, from, to)
-        if (text.lines < this.lines) {
+        val (clippedFrom, clippedTo) = clip(this, from, to)
+        if (text.lines < lines) {
             var pos = 0
-            children.forEachIndexed { i, child ->
+            for (i in children.indices) {
+                val child = children[i]
                 val end = pos + child.length
-                // Fast path: if the change only affects one child and the
-                // child's size remains in the acceptable range, only update
-                // that child
-                if (from >= pos && to <= end) {
-                    val updated = child.replace(from - pos, to - pos, text)
-                    val totalLines = this.lines - child.lines + updated.lines
-                    if (updated.lines < (totalLines shr (Tree.BranchShift - 1)) &&
-                        updated.lines > (totalLines shr (Tree.BranchShift + 1))
+                if (clippedFrom >= pos && clippedTo <= end) {
+                    val updated = child.replace(
+                        clippedFrom - pos,
+                        clippedTo - pos,
+                        text
+                    )
+                    val totalLines =
+                        lines - child.lines + updated.lines
+                    if (updated.lines <
+                        (totalLines shr (Tree.BranchShift - 1)) &&
+                        updated.lines >
+                        (totalLines shr (Tree.BranchShift + 1))
                     ) {
-                        val copy = this.children.toMutableList()
+                        val copy = children.toMutableList()
                         copy[i] = updated
-                        return TextNode(copy, this.length - (to - from) + text.length)
+                        return TextNode(
+                            copy,
+                            length -
+                                (clippedTo - clippedFrom) +
+                                text.length
+                        )
                     }
                     return super.replace(pos, end, updated)
                 }
                 pos = end + 1
             }
         }
-        return super.replace(from, to, text)
+        return super.replace(clippedFrom, clippedTo, text)
     }
 
-    override fun sliceString(from: Int, to: Int?, lineSep: String?): String {
-        val (clipFrom, clipTo) = clip(this, from, to ?: this.length)
-        val sep = lineSep ?: "\n"
-        var result = ""
+    override fun sliceString(from: Int, to: Int, lineSep: String): String {
+        val (clippedFrom, clippedTo) = clip(this, from, to)
+        val result = StringBuilder()
         var pos = 0
-        children.forEachIndexed { i, child ->
+        for (i in children.indices) {
+            if (pos > clippedTo) break
+            val child = children[i]
             val end = pos + child.length
-            if (pos > clipFrom && i != 0) result += sep
-            if (clipFrom < end && clipTo > pos) {
-                result += child.sliceString(clipFrom - pos, clipTo - pos, sep)
+            if (pos > clippedFrom && i > 0) result.append(lineSep)
+            if (clippedFrom < end && clippedTo > pos) {
+                result.append(
+                    child.sliceString(
+                        clippedFrom - pos,
+                        clippedTo - pos,
+                        lineSep
+                    )
+                )
             }
             pos = end + 1
-            if (pos > clipTo) return result
         }
-        return result
+        return result.toString()
     }
 
-    override fun flatten(target: MutableList<String>): MutableList<String> {
-        children.forEach { it.flatten(target) }
-        return target
+    override fun flatten(target: MutableList<String>) {
+        for (child in children) child.flatten(target)
     }
 
-    override fun scanIdentical(other: Text, dir: Boolean): Int {
+    override fun scanIdentical(other: Text, dir: Int): Int {
         if (other !is TextNode) return 0
         var length = 0
-        val indicesA = if (dir) this.children.indices else this.children.indices.reversed()
-        val indicesB = if (dir) other.children.indices else other.children.indices.reversed()
-        indicesA.zip(indicesB).forEach { (iA, iB) ->
-            val chA = this.children[iA]
-            val chB = other.children[iB]
-            if (chA != chB) return length + chA.scanIdentical(chB, dir)
-            length += chA.length + 1
+        val iAStart: Int
+        val iBStart: Int
+        val eA: Int
+        val eB: Int
+        if (dir > 0) {
+            iAStart = 0
+            iBStart = 0
+            eA = children.size
+            eB = other.children.size
+        } else {
+            iAStart = children.size - 1
+            iBStart = other.children.size - 1
+            eA = -1
+            eB = -1
         }
-        return length
+        var iA = iAStart
+        var iB = iBStart
+        while (true) {
+            if (iA == eA || iB == eB) return length
+            val chA = children[iA]
+            val chB = other.children[iB]
+            if (chA !== chB) {
+                return length + chA.scanIdentical(chB, dir)
+            }
+            length += chA.length + 1
+            iA += dir
+            iB += dir
+        }
     }
 
     companion object {
         fun from(
-            children: List<Text>,
-            length: Int = children.fold(-1) { l, ch -> l + ch.length + 1 }
+            children: MutableList<Text>,
+            length: Int = children.fold(-1) { l, ch ->
+                l + ch.length + 1
+            }
         ): Text {
-            val lines = children.sumOf { it.lines }
+            var lines = 0
+            for (ch in children) lines += ch.lines
             if (lines < Tree.Branch) {
-                return TextLeaf(
-                    buildList {
-                        children.forEach { it.flatten(this) }
-                    },
-                    length
-                )
+                val flat = mutableListOf<String>()
+                for (ch in children) ch.flatten(flat)
+                return TextLeaf(flat, length)
             }
             val chunk = max(
                 Tree.Branch,
@@ -513,7 +563,10 @@ internal class TextNode(override val children: List<Text>, override val length: 
                     if (currentChunk.size == 1) {
                         currentChunk[0]
                     } else {
-                        TextNode.from(currentChunk.toMutableList(), currentLen)
+                        from(
+                            currentChunk.toMutableList(),
+                            currentLen
+                        )
                     }
                 )
                 currentLen = -1
@@ -522,290 +575,318 @@ internal class TextNode(override val children: List<Text>, override val length: 
             }
 
             fun add(child: Text) {
-                if (child.lines > maxChunk && child is TextNode) {
-                    children.forEach(::add)
-                } else if (
-                    child.lines > minChunk &&
+                if (child.lines > maxChunk &&
+                    child is TextNode
+                ) {
+                    for (node in child.children) add(node)
+                } else if (child.lines > minChunk &&
                     (currentLines > minChunk || currentLines == 0)
                 ) {
                     flush()
                     chunked.add(child)
-                } else if (child is TextLeaf && currentLines != 0 &&
-                    (currentChunk.lastOrNull() as? TextLeaf)
-                        ?.let { child.lines + it.lines <= Tree.Branch } == true
+                } else if (child is TextLeaf &&
+                    currentLines > 0 &&
+                    currentChunk.isNotEmpty() &&
+                    currentChunk.last() is TextLeaf
                 ) {
-                    val last = currentChunk.last()
-                    currentLines += child.lines
-                    currentLen += child.length + 1
-                    currentChunk[currentChunk.size - 1] =
-                        TextLeaf(
-                            (last as TextLeaf).text + child.text,
-                            last.length + 1 + child.length
-                        )
+                    val last = currentChunk.last() as TextLeaf
+                    if (child.lines + last.lines <= Tree.Branch) {
+                        currentLines += child.lines
+                        currentLen += child.length + 1
+                        currentChunk[currentChunk.size - 1] =
+                            TextLeaf(
+                                last.text + child.text,
+                                last.length + 1 + child.length
+                            )
+                    } else {
+                        if (currentLines + child.lines > chunk) {
+                            flush()
+                        }
+                        currentLines += child.lines
+                        currentLen += child.length + 1
+                        currentChunk.add(child)
+                    }
                 } else {
-                    if (currentLines + child.lines > chunk) flush()
+                    if (currentLines + child.lines > chunk) {
+                        flush()
+                    }
                     currentLines += child.lines
                     currentLen += child.length + 1
                     currentChunk.add(child)
                 }
             }
 
-            children.forEach(::add)
+            for (child in children) add(child)
             flush()
-            return chunked.singleOrNull() ?: TextNode(chunked, length)
+            return if (chunked.size == 1) {
+                chunked[0]
+            } else {
+                TextNode(chunked, length)
+            }
         }
     }
 }
 
-internal fun textLength(text: List<String>): Int {
-    return -1 + text.sumOf { it.length + 1 }
+private fun textLength(text: List<String>): Int {
+    var length = -1
+    for (line in text) length += line.length + 1
+    return length
 }
 
-internal fun appendText(
+private fun appendText(
     text: List<String>,
-    target: MutableList<String> = mutableListOf(),
+    target: MutableList<String>,
     from: Int = 0,
     to: Int = Int.MAX_VALUE
-): List<String> {
-    var pos = 0
+): MutableList<String> {
     var first = true
-    text.forEachIndexed { i, child ->
-        var line = child
+    var pos = 0
+    for (i in text.indices) {
+        if (pos > to) break
+        var line = text[i]
         val end = pos + line.length
         if (end >= from) {
             if (end > to) line = line.substring(0, to - pos)
             if (pos < from) line = line.substring(from - pos)
             if (first) {
-                target[target.size - 1] += line
+                target[target.size - 1] =
+                    target[target.size - 1] + line
                 first = false
             } else {
                 target.add(line)
             }
         }
         pos = end + 1
-        if (pos > to) return target
     }
     return target
 }
 
-internal fun sliceText(text: List<String>, from: Int = 0, to: Int = Int.MAX_VALUE): List<String> {
+private fun sliceText(text: List<String>, from: Int, to: Int): MutableList<String> {
     return appendText(text, mutableListOf(""), from, to)
 }
 
-internal class RawTextCursor(val text: Text, val dir: Boolean = true) :
-    TextIterator<RawTextCursor> {
+internal class RawTextCursor(
+    text: Text,
+    val dir: Int = 1
+) : TextIterator {
     override var done: Boolean = false
+        private set
     override var lineBreak: Boolean = false
+        private set
     override var value: String = ""
-    val nodes = mutableListOf(text)
-
-    // The offset into the node at each level, shifted one to the left
-    // with the top bit indicating whether the position is before (0) or
-    // after(1) the line break between the adjacent nodes.
-    val offsets = mutableListOf(
-        if (dir) {
+        private set
+    private val nodes = mutableListOf<Text>(text)
+    private val offsets = mutableListOf(
+        if (dir > 0) {
             1
-        } else if (text is TextLeaf) {
-            text.text.size shl 1
         } else {
-            text.children!!.size shl 1
+            val size = if (text is TextLeaf) {
+                text.text.size
+            } else {
+                text.children!!.size
+            }
+            size shl 1
         }
     )
 
-    fun nextInner(skip: Int, dir: Boolean): RawTextCursor {
-        var skip = skip
-        this.done = false
-        this.lineBreak = false
+    private fun nextInner(skip: Int, dir: Int): RawTextCursor {
+        var remaining = skip
+        done = false
+        lineBreak = false
         while (true) {
-            val last = this.nodes.size - 1
-            val top = this.nodes[last]
-            val offsetValue = this.offsets[last]
+            val last = nodes.size - 1
+            val top = nodes[last]
+            val offsetValue = offsets[last]
             val offset = offsetValue shr 1
-            val size = (top as? TextLeaf)?.text?.size ?: top.children!!.size
-            if (offset == (if (dir) size else 0)) {
-                if (last == 0) {
-                    this.done = true
-                    this.value = ""
-                    return this
-                }
-                if (dir) this.offsets[last - 1]++
-                this.nodes.removeLast()
-                this.offsets.removeLast()
-            } else if ((offsetValue and 1) == (if (dir) 0 else 1)) {
-                this.offsets[last] = this.offsets[last] + if (dir) 1 else -1
-                if (skip == 0) {
-                    this.lineBreak = true
-                    this.value = "\n"
-                    return this
-                }
-                skip--
-            } else if (top is TextLeaf) {
-                // Move to the next string
-                val next = top.text[offset + (if (!dir) -1 else 0)]
-                this.offsets[last] += if (dir) 1 else -1
-                if (next.length > max(0, skip)) {
-                    this.value =
-                        if (skip == 0) {
-                            next
-                        } else if (dir) {
-                            next.substring(skip)
-                        } else {
-                            next.substring(0, next.length - skip)
-                        }
-                    return this
-                }
-                skip -= next.length
+            val size = if (top is TextLeaf) {
+                top.text.size
             } else {
-                val next = top.children!![offset + (if (!dir) -1 else 0)]
-                if (skip > next.length) {
-                    skip -= next.length
-                    this.offsets[last] += if (dir) 1 else 0
+                top.children!!.size
+            }
+            if (offset == (if (dir > 0) size else 0)) {
+                if (last == 0) {
+                    done = true
+                    value = ""
+                    return this
+                }
+                if (dir > 0) offsets[last - 1]++
+                nodes.removeAt(last)
+                offsets.removeAt(last)
+            } else if (
+                (offsetValue and 1) ==
+                (if (dir > 0) 0 else 1)
+            ) {
+                offsets[last] = offsets[last] + dir
+                if (remaining == 0) {
+                    lineBreak = true
+                    value = "\n"
+                    return this
+                }
+                remaining--
+            } else if (top is TextLeaf) {
+                val next =
+                    top.text[offset + (if (dir < 0) -1 else 0)]
+                offsets[last] = offsets[last] + dir
+                if (next.length > max(0, remaining)) {
+                    value = when {
+                        remaining == 0 -> next
+                        dir > 0 -> next.substring(remaining)
+                        else -> next.substring(
+                            0, next.length - remaining
+                        )
+                    }
+                    return this
+                }
+                remaining -= next.length
+            } else {
+                val children = top.children!!
+                val next =
+                    children[offset + (if (dir < 0) -1 else 0)]
+                if (remaining > next.length) {
+                    remaining -= next.length
+                    offsets[last] = offsets[last] + dir
                 } else {
-                    if (!dir) this.offsets[last]--
-                    this.nodes.add(next)
-                    this.offsets.add(
-                        if (dir) {
-                            1
-                        } else {
-                            ((next as? TextLeaf)?.text?.size ?: next.children!!.size) shl 1
-                        }
+                    if (dir < 0) {
+                        offsets[last] = offsets[last] - 1
+                    }
+                    nodes.add(next)
+                    val nextSize = if (next is TextLeaf) {
+                        next.text.size
+                    } else {
+                        next.children!!.size
+                    }
+                    offsets.add(
+                        if (dir > 0) 1 else nextSize shl 1
                     )
                 }
             }
         }
     }
 
-    override fun next(skip: Int?): RawTextCursor {
-        var skip = skip ?: 0
-        if (skip < 0) {
-            this.nextInner(-skip, !dir)
-            skip = this.value.length
+    override fun next(skip: Int): RawTextCursor {
+        var s = skip
+        if (s < 0) {
+            nextInner(-s, -dir)
+            s = value.length
         }
-        return this.nextInner(skip, this.dir)
+        return nextInner(s, dir)
     }
-
-    // / @internal
-//    [Symbol.iterator]!: () => Iterator<string>
 }
 
-internal class PartialTextCursor(text: Text, start: Int, end: Int) :
-    TextIterator<PartialTextCursor> {
-    internal val cursor: RawTextCursor = RawTextCursor(text, start <= end)
+private class PartialTextCursor(
+    text: Text,
+    start: Int,
+    end: Int
+) : TextIterator {
+    private val cursor: RawTextCursor =
+        RawTextCursor(text, if (start > end) -1 else 1)
     override var value: String = ""
-    var pos: Int = if (start > end) text.length else 0
-    val from: Int = min(start, end)
-    val to: Int = max(start, end)
-    override var done = false
+        private set
+    private var pos: Int = if (start > end) text.length else 0
+    private val from: Int = min(start, end)
+    private val to: Int = max(start, end)
+    override var done: Boolean = false
+        private set
 
-    fun nextInner(skip: Int, dir: Boolean): PartialTextCursor {
-        var skip = skip
-        if (if (!dir) this.pos <= this.from else this.pos >= this.to) {
-            this.value = ""
-            this.done = true
+    private fun nextInner(skip: Int, dir: Int): PartialTextCursor {
+        if (if (dir < 0) pos <= from else pos >= to) {
+            value = ""
+            done = true
             return this
         }
-        skip += max(0, if (!dir) this.pos - this.to else this.from - this.pos)
-        var limit = if (!dir) this.pos - this.from else this.to - this.pos
-        if (skip > limit) skip = limit
-        limit -= skip
-        val value = this.cursor.next(skip).value
-        this.pos += (value.length + skip) * if (dir) 1 else -1
-        this.value =
-            if (value.length <= limit) {
-                value
-            } else if (!dir) {
-                value.substring(value.length - limit)
-            } else {
-                value.substring(0, limit)
-            }
-        this.done = this.value.isEmpty()
+        var s = skip + max(
+            0,
+            if (dir < 0) pos - to else from - pos
+        )
+        var limit = if (dir < 0) pos - from else to - pos
+        if (s > limit) s = limit
+        limit -= s
+        val cursorValue = cursor.next(s).value
+        pos += (cursorValue.length + s) * dir
+        value = if (cursorValue.length <= limit) {
+            cursorValue
+        } else if (dir < 0) {
+            cursorValue.substring(cursorValue.length - limit)
+        } else {
+            cursorValue.substring(0, limit)
+        }
+        done = value.isEmpty()
         return this
     }
 
-    override fun next(skip: Int?): PartialTextCursor {
-        var skip = skip ?: 0
-        if (skip < 0) {
-            skip = max(skip, this.from - this.pos)
-        } else if (skip > 0) skip = min(skip, this.to - this.pos)
-        return this.nextInner(skip, this.cursor.dir)
+    override fun next(skip: Int): PartialTextCursor {
+        var s = skip
+        if (s < 0) {
+            s = max(s, from - pos)
+        } else if (s > 0) {
+            s = min(s, to - pos)
+        }
+        return nextInner(s, cursor.dir)
     }
 
     override val lineBreak: Boolean
-        get() {
-            return this.cursor.lineBreak && this.value != ""
-        }
-
-    // / @internal
-//    [Symbol.iterator]!: () => Iterator<string>
+        get() = cursor.lineBreak && value.isNotEmpty()
 }
 
-internal class LineCursor(val inner: TextIterator<*>) : TextIterator<LineCursor> {
-    var afterBreak = true
-    override var value = ""
-    override var done = false
+private class LineCursor(
+    private val inner: TextIterator
+) : TextIterator {
+    private var afterBreak = true
+    override var value: String = ""
+        private set
+    override var done: Boolean = false
+        private set
 
-    override fun next(skip: Int?): LineCursor {
-        val next = this.inner.next(skip)
-        val done = next.done
-        val lineBreak = next.lineBreak
-        val value = next.value
-        if (done && this.afterBreak) {
-            this.value = ""
-            this.afterBreak = false
-        } else if (done) {
-            this.done = true
-            this.value = ""
-        } else if (lineBreak) {
-            if (this.afterBreak) {
-                this.value = ""
+    override fun next(skip: Int): LineCursor {
+        inner.next(skip)
+        val innerDone = inner.done
+        val innerLineBreak = inner.lineBreak
+        val innerValue = inner.value
+        if (innerDone && afterBreak) {
+            value = ""
+            afterBreak = false
+        } else if (innerDone) {
+            done = true
+            value = ""
+        } else if (innerLineBreak) {
+            if (afterBreak) {
+                value = ""
             } else {
-                this.afterBreak = true
-                this.next()
+                afterBreak = true
+                next()
             }
         } else {
-            this.value = value
-            this.afterBreak = false
+            value = innerValue
+            afterBreak = false
         }
         return this
     }
 
-    override val lineBreak: Boolean
-        get() {
-            return false
-        }
-
-    // / @internal
-//    [Symbol.iterator]!: () => Iterator<string>
+    override val lineBreak: Boolean get() = false
 }
 
-// if (typeof Symbol != "undefined") {
-//    Text.prototype[Symbol.iterator] = fun() { return this.iter() }
-//    RawTextCursor.prototype[Symbol.iterator] = PartialTextCursor.prototype[Symbol.iterator] =
-//        LineCursor.prototype[Symbol.iterator] = fun(this: Iterator<string>) { return this }
-// }
-
 // / This type describes a line in the document. It is created
-// / on-demand when lines are [queried](#state.Text.lineAt).
+// / on-demand when lines are [queried][Text.lineAt].
 class Line internal constructor(
     // / The position of the start of the line.
     val from: Int,
-    // / The position at the end of the line (_before_ the line break,
-    // / or at the end of document for the last line).
+    // / The position at the end of the line (_before_ the line
+    // / break, or at the end of document for the last line).
     val to: Int,
     // / This line's line number (1-based).
     val number: Int,
     // / The line's content.
     val text: String
 ) {
-
-    // / The length of the line (not including any line break after it).
-    val length: Int
-        get() {
-            return this.to - this.from
-        }
+    // / The length of the line (not including any line break after
+    // / it).
+    val length: Int get() = to - from
 }
 
-internal fun clip(text: Text, from: Int, to: Int): Pair<Int, Int> {
-    val start = from.coerceIn(0, text.length)
-    return start to to.coerceIn(start, text.length)
+private fun clip(text: Text, from: Int, to: Int): Pair<Int, Int> {
+    val clippedFrom = max(0, min(text.length, from))
+    return Pair(
+        clippedFrom,
+        max(clippedFrom, min(text.length, to))
+    )
 }
