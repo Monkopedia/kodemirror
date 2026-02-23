@@ -18,6 +18,13 @@
  */
 package com.monkopedia.kodemirror.state
 
+sealed interface DocSpec {
+    data class StringDoc(val content: String) : DocSpec
+    data class TextDoc(val text: Text) : DocSpec
+}
+
+fun String.asDoc(): DocSpec = DocSpec.StringDoc(this)
+
 /**
  * Options passed when creating an editor state.
  */
@@ -25,11 +32,11 @@ data class EditorStateConfig(
     /**
      * The initial document. Defaults to an empty document.
      */
-    val doc: Any? = null,
+    val doc: DocSpec? = null,
     /**
      * The starting selection. Defaults to a cursor at position 0.
      */
-    val selection: Any? = null,
+    val selection: SelectionSpec? = null,
     /**
      * Extension(s) to associate with this state.
      */
@@ -194,18 +201,18 @@ class EditorState private constructor(
      * Create a [transaction spec][TransactionSpec] that replaces
      * every selection range with the given content.
      */
-    fun replaceSelection(text: Any): TransactionSpec {
-        val textObj =
-            if (text is String) toText(text) else text as Text
+    fun replaceSelection(text: String): TransactionSpec = replaceSelection(toText(text))
+
+    fun replaceSelection(text: Text): TransactionSpec {
         return changeByRange { range ->
             ChangeByRangeResult(
                 changes = ChangeSpec.Single(
                     range.from,
                     range.to,
-                    InsertContent.TextContent(textObj)
+                    InsertContent.TextContent(text)
                 ),
                 range = EditorSelection.cursor(
-                    range.from + textObj.length
+                    range.from + text.length
                 )
             )
         }
@@ -314,9 +321,7 @@ class EditorState private constructor(
         )
         if (fields != null) {
             for ((prop, value) in fields) {
-                if (value is StateField<*> &&
-                    config.address[value.id] != null
-                ) {
+                if (config.address[value.id] != null) {
                     @Suppress("UNCHECKED_CAST")
                     val sf = value as StateField<Any?>
                     result[prop] = sf.spec.toJSON?.invoke(
@@ -465,9 +470,11 @@ class EditorState private constructor(
             }
             return create(
                 EditorStateConfig(
-                    doc = docStr,
-                    selection = EditorSelection.fromJSON(
-                        json["selection"] as Map<String, Any?>
+                    doc = DocSpec.StringDoc(docStr),
+                    selection = SelectionSpec.EditorSelectionSpec(
+                        EditorSelection.fromJSON(
+                            json["selection"] as Map<String, Any?>
+                        )
                     ),
                     extensions = if (config.extensions != null) {
                         ExtensionList(
@@ -491,43 +498,29 @@ class EditorState private constructor(
                 config.extensions ?: ExtensionList(emptyList()),
                 emptyMap()
             )
-            val doc = when (config.doc) {
-                is Text -> config.doc
-                is String -> Text.of(
-                    config.doc.split(
-                        configuration.staticFacet(
-                            lineSeparator
-                        )?.let {
-                            Regex(Regex.escape(it))
-                        } ?: DefaultSplit
-                    )
+            val lineSepRegex = configuration.staticFacet(
+                lineSeparator
+            )?.let {
+                Regex(Regex.escape(it))
+            } ?: DefaultSplit
+            val doc = when (val d = config.doc) {
+                is DocSpec.TextDoc -> d.text
+                is DocSpec.StringDoc -> Text.of(
+                    d.content.split(lineSepRegex)
                 )
                 null -> Text.of(
-                    "".split(
-                        configuration.staticFacet(
-                            lineSeparator
-                        )?.let {
-                            Regex(Regex.escape(it))
-                        } ?: DefaultSplit
-                    )
-                )
-                else -> throw IllegalArgumentException(
-                    "doc must be String or Text"
+                    "".split(lineSepRegex)
                 )
             }
-            var selection = when (config.selection) {
+            var selection = when (val s = config.selection) {
                 null -> EditorSelection.single(0)
-                is EditorSelection -> config.selection
+                is SelectionSpec.EditorSelectionSpec ->
+                    s.selection
                 is SelectionSpec.CursorSpec ->
                     EditorSelection.single(
-                        config.selection.anchor,
-                        config.selection.head
-                            ?: config.selection.anchor
+                        s.anchor,
+                        s.head ?: s.anchor
                     )
-                else -> throw IllegalArgumentException(
-                    "selection must be EditorSelection " +
-                        "or SelectionSpec.CursorSpec"
-                )
             }
             checkSelection(selection, doc.length)
             if (!configuration.staticFacet(

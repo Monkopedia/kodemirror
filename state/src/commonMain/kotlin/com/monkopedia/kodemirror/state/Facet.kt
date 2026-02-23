@@ -38,23 +38,31 @@ class ExtensionHolder(val extension: Extension) : Extension
  * state. It takes inputs from any number of extensions, and
  * combines those into a single output value.
  */
+sealed interface FacetEnabler<Input, Output> {
+    data class StaticExtension<Input, Output>(
+        val ext: Extension
+    ) : FacetEnabler<Input, Output>
+    data class DynamicExtension<Input, Output>(
+        val fn: (Facet<Input, Output>) -> Extension
+    ) : FacetEnabler<Input, Output>
+}
+
 class Facet<Input, Output> private constructor(
     internal val combineFn: (List<Input>) -> Output,
     internal val compareInput: (Input, Input) -> Boolean,
     internal val compareFn: (Output, Output) -> Boolean,
     private val isStatic: Boolean,
-    enables: Any?
+    enables: FacetEnabler<Input, Output>?
 ) : Extension {
     internal val id = nextID++
     internal val default: Output = combineFn(emptyList())
     internal val extensions: Extension?
 
     init {
-        @Suppress("UNCHECKED_CAST")
         extensions = when (enables) {
-            is Function<*> -> (enables as (Facet<Input, Output>) -> Extension)(this)
-            is Extension -> enables
-            else -> null
+            is FacetEnabler.DynamicExtension -> enables.fn(this)
+            is FacetEnabler.StaticExtension -> enables.ext
+            null -> null
         }
     }
 
@@ -71,7 +79,7 @@ class Facet<Input, Output> private constructor(
             compare: ((Output, Output) -> Boolean)? = null,
             compareInput: ((Input, Input) -> Boolean)? = null,
             static: Boolean = false,
-            enables: Any? = null
+            enables: FacetEnabler<Input, Output>? = null
         ): Facet<Input, Output> {
             @Suppress("UNCHECKED_CAST")
             val combineFn = combine
@@ -105,8 +113,7 @@ class Facet<Input, Output> private constructor(
     fun of(value: Input): Extension = FacetProvider(
         emptyList(),
         this,
-        Provider.Static,
-        value
+        ProviderValue.Static(value)
     )
 
     /**
@@ -117,7 +124,7 @@ class Facet<Input, Output> private constructor(
         if (isStatic) {
             error("Can't compute a static facet")
         }
-        return FacetProvider(deps, this, Provider.Single, get)
+        return FacetProvider(deps, this, ProviderValue.Single(get))
     }
 
     /**
@@ -128,7 +135,7 @@ class Facet<Input, Output> private constructor(
         if (isStatic) {
             error("Can't compute a static facet")
         }
-        return FacetProvider(deps, this, Provider.Multi, get)
+        return FacetProvider(deps, this, ProviderValue.Multi(get))
     }
 
     /**
@@ -174,24 +181,34 @@ sealed class Slot {
 
 fun <Output> Facet<*, Output>.asSlot(): Slot = Slot.FacetSlot(FacetReader(id, default))
 
-internal enum class Provider { Static, Single, Multi }
+internal sealed interface ProviderValue<Input> {
+    data class Static<Input>(val value: Input) : ProviderValue<Input>
+    data class Single<Input>(
+        val fn: (EditorState) -> Input
+    ) : ProviderValue<Input>
+    data class Multi<Input>(
+        val fn: (EditorState) -> List<Input>
+    ) : ProviderValue<Input>
+}
 
 internal class FacetProvider<Input>(
     val dependencies: List<Slot>,
     val facet: Facet<Input, *>,
-    val type: Provider,
-    // Input | (EditorState) -> Input | (EditorState) -> List<Input>
-    val value: Any?
+    val provider: ProviderValue<Input>
 ) : Extension {
     val id = nextID++
 
     @Suppress("UNCHECKED_CAST")
     fun dynamicSlot(addresses: Map<Int, Int>): DynamicSlot {
-        val getter = value as (EditorState) -> Any?
+        val getter: (EditorState) -> Any? = when (val p = provider) {
+            is ProviderValue.Single -> p.fn
+            is ProviderValue.Multi -> p.fn
+            is ProviderValue.Static -> error("Cannot create dynamic slot for static provider")
+        }
         val compare = facet.compareInput
         val id = this.id
         val idx = addresses[id]!! shr 1
-        val multi = type == Provider.Multi
+        val multi = provider is ProviderValue.Multi
         var depDoc = false
         var depSel = false
         val depAddrs = mutableListOf<Int>()
@@ -327,7 +344,7 @@ internal fun <Input, Output> dynamicFacetSlot(
     providers: List<FacetProvider<Input>>
 ): DynamicSlot {
     val providerAddrs = providers.map { addresses[it.id]!! }
-    val providerTypes = providers.map { it.type }
+    val providerIsMulti = providers.map { it.provider is ProviderValue.Multi }
     val dynamic = providerAddrs.filter { (it and 1) == 0 }
     val idx = addresses[facet.id]!! shr 1
 
@@ -335,7 +352,7 @@ internal fun <Input, Output> dynamicFacetSlot(
         val values = mutableListOf<Input>()
         for (i in providerAddrs.indices) {
             val value = getAddr(state, providerAddrs[i])
-            if (providerTypes[i] == Provider.Multi) {
+            if (providerIsMulti[i]) {
                 for (v in value as List<Input>) values.add(v)
             } else {
                 values.add(value as Input)
@@ -688,7 +705,7 @@ class Configuration internal constructor(
                 val oldProviders =
                     oldFacets?.get(id) ?: emptyList()
                 if (providers.all {
-                        it.type == Provider.Static
+                        it.provider is ProviderValue.Static
                     }
                 ) {
                     address[facet.id] =
@@ -701,7 +718,9 @@ class Configuration internal constructor(
                         @Suppress("UNCHECKED_CAST")
                         val f = facet as Facet<Any?, Any?>
                         val value = f.combineFn(
-                            providers.map { p -> p.value }
+                            providers.map { p ->
+                                (p.provider as ProviderValue.Static).value
+                            }
                         )
                         if (oldState != null &&
                             f.compareFn(
@@ -718,10 +737,12 @@ class Configuration internal constructor(
                     }
                 } else {
                     for (p in providers) {
-                        if (p.type == Provider.Static) {
+                        if (p.provider is ProviderValue.Static) {
                             address[p.id] =
                                 (staticValues.size shl 1) or 1
-                            staticValues.add(p.value)
+                            staticValues.add(
+                                (p.provider as ProviderValue.Static).value
+                            )
                         } else {
                             address[p.id] =
                                 dynamicSlotFactories.size shl 1

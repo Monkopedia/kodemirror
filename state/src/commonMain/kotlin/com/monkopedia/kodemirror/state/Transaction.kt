@@ -459,34 +459,41 @@ internal fun resolveTransaction(
 
 private fun filterTransaction(tr: Transaction): Transaction {
     val state = tr.startState
-    var result: Any = true // true | false | IntArray
+    var result: ChangeFilterResult = ChangeFilterResult.Accept
     for (filter in state.facet(changeFilter)) {
         val value = filter(tr)
-        if (value == false) {
-            result = false
-            break
-        }
-        if (value is IntArray) {
-            result = if (result == true) {
-                value
-            } else {
-                joinRanges(result as IntArray, value)
+        when (value) {
+            is ChangeFilterResult.Reject -> {
+                result = ChangeFilterResult.Reject
+                break
             }
+            is ChangeFilterResult.Ranges -> {
+                result = when (val r = result) {
+                    is ChangeFilterResult.Accept -> value
+                    is ChangeFilterResult.Ranges ->
+                        ChangeFilterResult.Ranges(joinRanges(r.ranges, value.ranges))
+                    is ChangeFilterResult.Reject -> result
+                }
+            }
+            is ChangeFilterResult.Accept -> {}
         }
     }
-    @Suppress("UNCHECKED_CAST")
     var currentTr = tr
-    if (result != true) {
+    if (result !is ChangeFilterResult.Accept) {
         val changes: ChangeSet
         val back: ChangeDesc
-        if (result == false) {
-            back = tr.changes.invertedDesc
-            changes = ChangeSet.empty(state.doc.length)
-        } else {
-            val filtered = tr.changes.filter(result as IntArray)
-            changes = filtered.changes
-            back = filtered.filtered
-                .mapDesc(filtered.changes).invertedDesc
+        when (result) {
+            is ChangeFilterResult.Reject -> {
+                back = tr.changes.invertedDesc
+                changes = ChangeSet.empty(state.doc.length)
+            }
+            is ChangeFilterResult.Ranges -> {
+                val filtered = tr.changes.filter(result.ranges)
+                changes = filtered.changes
+                back = filtered.filtered
+                    .mapDesc(filtered.changes).invertedDesc
+            }
+            is ChangeFilterResult.Accept -> error("unreachable")
         }
         currentTr = Transaction.create(
             state, changes,
@@ -498,18 +505,14 @@ private fun filterTransaction(tr: Transaction): Transaction {
 
     val filters = state.facet(transactionFilter)
     for (i in filters.indices.reversed()) {
-        val filtered = filters[i](currentTr)
-        if (filtered is Transaction) {
-            currentTr = filtered
-        } else {
-            @Suppress("UNCHECKED_CAST")
-            val list = filtered as List<Any>
-            if (list.size == 1 && list[0] is Transaction) {
-                currentTr = list[0] as Transaction
-            } else {
+        when (val filtered = filters[i](currentTr)) {
+            is TransactionFilterResult.Filtered -> {
+                currentTr = filtered.transaction
+            }
+            is TransactionFilterResult.Specs -> {
                 currentTr = resolveTransaction(
                     state,
-                    (filtered as List<TransactionSpec>),
+                    filtered.specs,
                     false
                 )
             }

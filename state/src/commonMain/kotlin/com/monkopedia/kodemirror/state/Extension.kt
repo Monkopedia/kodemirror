@@ -48,14 +48,25 @@ val lineSeparator: Facet<String, String?> = Facet.define(
     static = true
 )
 
+sealed interface ChangeFilterResult {
+    data object Accept : ChangeFilterResult
+    data object Reject : ChangeFilterResult
+    data class Ranges(val ranges: IntArray) : ChangeFilterResult
+}
+
 val changeFilter: Facet<
-    (Transaction) -> Any,
-    List<(Transaction) -> Any>
+    (Transaction) -> ChangeFilterResult,
+    List<(Transaction) -> ChangeFilterResult>
     > = Facet.define()
 
+sealed interface TransactionFilterResult {
+    data class Filtered(val transaction: Transaction) : TransactionFilterResult
+    data class Specs(val specs: List<TransactionSpec>) : TransactionFilterResult
+}
+
 val transactionFilter: Facet<
-    (Transaction) -> Any,
-    List<(Transaction) -> Any>
+    (Transaction) -> TransactionFilterResult,
+    List<(Transaction) -> TransactionFilterResult>
     > = Facet.define()
 
 val transactionExtender: Facet<

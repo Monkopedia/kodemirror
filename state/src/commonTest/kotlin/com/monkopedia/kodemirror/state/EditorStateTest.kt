@@ -29,14 +29,14 @@ class EditorStateTest {
 
     @Test
     fun holdsDocAndSelectionProperties() {
-        val state = EditorState.create(EditorStateConfig(doc = "hello"))
+        val state = EditorState.create(EditorStateConfig(doc = "hello".asDoc()))
         assertEquals("hello", state.doc.toString())
         assertEquals(0, state.selection.main.from)
     }
 
     @Test
     fun canApplyChanges() {
-        val state = EditorState.create(EditorStateConfig(doc = "hello"))
+        val state = EditorState.create(EditorStateConfig(doc = "hello".asDoc()))
         val transaction = state.update(
             TransactionSpec(
                 changes = ChangeSpec.Multi(
@@ -58,10 +58,12 @@ class EditorStateTest {
     fun mapsSelectionThroughChanges() {
         val state = EditorState.create(
             EditorStateConfig(
-                doc = "abcdefgh",
+                doc = "abcdefgh".asDoc(),
                 extensions = ExtensionList(listOf(EditorState.allowMultipleSelections.of(true))),
-                selection = EditorSelection.create(
-                    listOf(0, 4, 8).map { n -> EditorSelection.cursor(n) }
+                selection = SelectionSpec.EditorSelectionSpec(
+                    EditorSelection.create(
+                        listOf(0, 4, 8).map { n -> EditorSelection.cursor(n) }
+                    )
                 )
             )
         )
@@ -77,7 +79,7 @@ class EditorStateTest {
 
     @Test
     fun canStoreAnnotationsOnTransactions() {
-        val tr = EditorState.create(EditorStateConfig(doc = "foo")).update(
+        val tr = EditorState.create(EditorStateConfig(doc = "foo".asDoc())).update(
             TransactionSpec(annotations = listOf(someAnnotation.of(55)))
         )
         assertEquals(55, tr.annotation(someAnnotation))
@@ -85,7 +87,7 @@ class EditorStateTest {
 
     @Test
     fun throwsWhenAChangeBoundsAreInvalid() {
-        val state = EditorState.create(EditorStateConfig(doc = "1234"))
+        val state = EditorState.create(EditorStateConfig(doc = "1234".asDoc()))
         assertFailsWith<Exception> {
             state.update(TransactionSpec(changes = ChangeSpec.Single(from = -1, to = 1)))
         }
@@ -365,8 +367,8 @@ class EditorStateTest {
         )
         val state = EditorState.create(
             EditorStateConfig(
-                selection = cursors,
-                doc = "123"
+                selection = SelectionSpec.EditorSelectionSpec(cursors),
+                doc = "123".asDoc()
             )
         )
         assertEquals(1, state.selection.ranges.size)
@@ -384,7 +386,7 @@ class EditorStateTest {
 
     @Test
     fun changeByRangeCanMakeSimpleChanges() {
-        var state = EditorState.create(EditorStateConfig(doc = "hi"))
+        var state = EditorState.create(EditorStateConfig(doc = "hi".asDoc()))
         state = state.update(
             state.changeByRange { r ->
                 ChangeByRangeResult(
@@ -405,13 +407,15 @@ class EditorStateTest {
     fun changeByRangeDoesTheRightThingWithMultipleSelections() {
         var state = EditorState.create(
             EditorStateConfig(
-                doc = "1 2 3 4",
-                selection = EditorSelection.create(
-                    listOf(
-                        EditorSelection.range(0, 1),
-                        EditorSelection.range(2, 3),
-                        EditorSelection.range(4, 5),
-                        EditorSelection.range(6, 7)
+                doc = "1 2 3 4".asDoc(),
+                selection = SelectionSpec.EditorSelectionSpec(
+                    EditorSelection.create(
+                        listOf(
+                            EditorSelection.range(0, 1),
+                            EditorSelection.range(2, 3),
+                            EditorSelection.range(4, 5),
+                            EditorSelection.range(6, 7)
+                        )
                     )
                 ),
                 extensions = EditorState.allowMultipleSelections.of(true)
@@ -446,11 +450,15 @@ class EditorStateTest {
                 extensions = ExtensionList(
                     listOf(
                         EditorState.changeFilter.of { tr ->
-                            tr.changes.newLength <= tr.changes.length
+                            if (tr.changes.newLength <= tr.changes.length) {
+                                ChangeFilterResult.Accept
+                            } else {
+                                ChangeFilterResult.Reject
+                            }
                         }
                     )
                 ),
-                doc = "one two"
+                doc = "one two".asDoc()
             )
         )
         val tr1 = state.update(
@@ -484,14 +492,16 @@ class EditorStateTest {
                 extensions = ExtensionList(
                     listOf(
                         EditorState.changeFilter.of { tr ->
-                            intArrayOf(
-                                floor(tr.startState.doc.length.toDouble() / 3).toInt(),
-                                floor(2.0 * tr.startState.doc.length / 3).toInt()
+                            ChangeFilterResult.Ranges(
+                                intArrayOf(
+                                    floor(tr.startState.doc.length.toDouble() / 3).toInt(),
+                                    floor(2.0 * tr.startState.doc.length / 3).toInt()
+                                )
                             )
                         }
                     )
                 ),
-                doc = "onetwo"
+                doc = "onetwo".asDoc()
             )
         )
         assertEquals(
@@ -508,11 +518,15 @@ class EditorStateTest {
             EditorStateConfig(
                 extensions = ExtensionList(
                     listOf(
-                        EditorState.changeFilter.of { intArrayOf(0, 2) },
-                        EditorState.changeFilter.of { intArrayOf(4, 6) }
+                        EditorState.changeFilter.of {
+                            ChangeFilterResult.Ranges(intArrayOf(0, 2))
+                        },
+                        EditorState.changeFilter.of {
+                            ChangeFilterResult.Ranges(intArrayOf(4, 6))
+                        }
                     )
                 ),
-                doc = "onetwo"
+                doc = "onetwo".asDoc()
             )
         )
         assertEquals(
@@ -528,7 +542,7 @@ class EditorStateTest {
         val state = EditorState.create(
             EditorStateConfig(
                 extensions = ExtensionList(
-                    listOf(EditorState.changeFilter.of { false })
+                    listOf(EditorState.changeFilter.of { ChangeFilterResult.Reject })
                 )
             )
         )
@@ -565,15 +579,17 @@ class EditorStateTest {
             EditorStateConfig(
                 extensions = EditorState.transactionFilter.of { tr ->
                     if (tr.selection != null && tr.selection!!.main.to > 4) {
-                        listOf(
-                            TransactionSpec(),
-                            TransactionSpec(selection = SelectionSpec.CursorSpec(anchor = 4))
+                        TransactionFilterResult.Specs(
+                            listOf(
+                                TransactionSpec(),
+                                TransactionSpec(selection = SelectionSpec.CursorSpec(anchor = 4))
+                            )
                         )
                     } else {
-                        tr
+                        TransactionFilterResult.Filtered(tr)
                     }
                 },
-                doc = "one two"
+                doc = "one two".asDoc()
             )
         )
         assertEquals(
@@ -595,28 +611,30 @@ class EditorStateTest {
         val state = EditorState.create(
             EditorStateConfig(
                 extensions = EditorState.transactionFilter.of { tr ->
-                    listOf(
-                        TransactionSpec(
-                            changes = ChangeSpec.Set(tr.changes),
-                            selection = if (tr.selection != null) {
-                                SelectionSpec.EditorSelectionSpec(tr.selection!!)
-                            } else {
-                                null
-                            },
-                            effects = tr.effects,
-                            annotations = tr.annotations,
-                            scrollIntoView = tr.scrollIntoView
-                        ),
-                        TransactionSpec(
-                            changes = ChangeSpec.Single(
-                                from = tr.changes.newLength,
-                                insert = InsertContent.StringContent("!")
+                    TransactionFilterResult.Specs(
+                        listOf(
+                            TransactionSpec(
+                                changes = ChangeSpec.Set(tr.changes),
+                                selection = if (tr.selection != null) {
+                                    SelectionSpec.EditorSelectionSpec(tr.selection!!)
+                                } else {
+                                    null
+                                },
+                                effects = tr.effects,
+                                annotations = tr.annotations,
+                                scrollIntoView = tr.scrollIntoView
                             ),
-                            sequential = true
+                            TransactionSpec(
+                                changes = ChangeSpec.Single(
+                                    from = tr.changes.newLength,
+                                    insert = InsertContent.StringContent("!")
+                                ),
+                                sequential = true
+                            )
                         )
                     )
                 },
-                doc = "one two"
+                doc = "one two".asDoc()
             )
         )
         assertEquals(

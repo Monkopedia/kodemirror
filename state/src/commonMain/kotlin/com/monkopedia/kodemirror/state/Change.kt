@@ -314,6 +314,15 @@ sealed interface InsertContent {
     data class TextContent(val value: Text) : InsertContent
 }
 
+sealed interface ChangeSetJsonPart {
+    data class Kept(val length: Int) : ChangeSetJsonPart
+    data class Deleted(val length: Int) : ChangeSetJsonPart
+    data class Inserted(
+        val length: Int,
+        val text: List<String>
+    ) : ChangeSetJsonPart
+}
+
 /**
  * A change set represents a group of modifications to a document.
  * It stores the document length, and can only be applied to
@@ -495,20 +504,23 @@ class ChangeSet private constructor(
     /**
      * Serialize this change set to a JSON-representable value.
      */
-    fun toChangeSetJSON(): List<Any> {
-        val parts = mutableListOf<Any>()
+    fun toChangeSetJSON(): List<ChangeSetJsonPart> {
+        val parts = mutableListOf<ChangeSetJsonPart>()
         var i = 0
         while (i < sections.size) {
             val len = sections[i]
             val ins = sections[i + 1]
             if (ins < 0) {
-                parts.add(len)
+                parts.add(ChangeSetJsonPart.Kept(len))
             } else if (ins == 0) {
-                parts.add(listOf(len))
+                parts.add(ChangeSetJsonPart.Deleted(len))
             } else {
-                val list = mutableListOf<Any>(len)
-                list.addAll(inserted[i shr 1].toJSON())
-                parts.add(list)
+                parts.add(
+                    ChangeSetJsonPart.Inserted(
+                        len,
+                        inserted[i shr 1].toJSON()
+                    )
+                )
             }
             i += 2
         }
@@ -613,52 +625,30 @@ class ChangeSet private constructor(
         /**
          * Create a changeset from its JSON representation.
          */
-        @Suppress("UNCHECKED_CAST")
-        fun changeSetFromJSON(json: List<Any>): ChangeSet {
+        fun changeSetFromJSON(json: List<ChangeSetJsonPart>): ChangeSet {
             val sections = mutableListOf<Int>()
             val inserted = mutableListOf<Text>()
             for (i in json.indices) {
-                val part = json[i]
-                when {
-                    part is Number -> {
-                        sections.add(part.toInt())
+                when (val part = json[i]) {
+                    is ChangeSetJsonPart.Kept -> {
+                        sections.add(part.length)
                         sections.add(-1)
                     }
-                    part is List<*> -> {
-                        val list = part as List<Any>
-                        if (list.isEmpty() ||
-                            list[0] !is Number
-                        ) {
-                            throw IllegalArgumentException(
-                                "Invalid JSON representation " +
-                                    "of ChangeSet"
-                            )
-                        }
-                        if (list.size == 1) {
-                            sections.add(
-                                (list[0] as Number).toInt()
-                            )
-                            sections.add(0)
-                        } else {
-                            while (inserted.size < i) {
-                                inserted.add(Text.empty)
-                            }
-                            inserted.add(
-                                i,
-                                Text.of(
-                                    list.drop(1)
-                                        .map { it.toString() }
-                                )
-                            )
-                            sections.add(
-                                (list[0] as Number).toInt()
-                            )
-                            sections.add(inserted[i].length)
-                        }
+                    is ChangeSetJsonPart.Deleted -> {
+                        sections.add(part.length)
+                        sections.add(0)
                     }
-                    else -> throw IllegalArgumentException(
-                        "Invalid JSON representation of ChangeSet"
-                    )
+                    is ChangeSetJsonPart.Inserted -> {
+                        while (inserted.size < i) {
+                            inserted.add(Text.empty)
+                        }
+                        inserted.add(
+                            i,
+                            Text.of(part.text)
+                        )
+                        sections.add(part.length)
+                        sections.add(inserted[i].length)
+                    }
                 }
             }
             return ChangeSet(
