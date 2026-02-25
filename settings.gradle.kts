@@ -18,3 +18,4 @@ dependencyResolutionManagement {
 }
 
 include(":state")
+include(":view")
