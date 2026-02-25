@@ -89,10 +89,10 @@ fun normalizeKeyName(name: String, mac: Boolean = false): String {
         }
     }
 
-    // Apply modifiers in canonical order: Alt, Ctrl, Meta, Shift
-    if (alt) result = "Alt-$result"
-    if (ctrl) result = "Ctrl-$result"
-    if (meta) result = "Meta-$result"
+    // Prepend in reverse canonical order so result reads: Alt-Ctrl-Meta-Shift-key
     if (shift) result = "Shift-$result"
+    if (meta) result = "Meta-$result"
+    if (ctrl) result = "Ctrl-$result"
+    if (alt) result = "Alt-$result"
     return result
 }

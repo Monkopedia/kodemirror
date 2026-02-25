@@ -27,10 +27,8 @@ enum class Direction { LTR, RTL }
  * A bidi span records a range of text with a uniform bidi level.
  * Even levels are LTR, odd levels are RTL.
  */
-class BidiSpan(val from: Int, val to: Int, val level: Int) {
+data class BidiSpan(val from: Int, val to: Int, val level: Int) {
     val dir: Direction get() = if ((level % 2) == 0) Direction.LTR else Direction.RTL
-
-    override fun toString(): String = "BidiSpan($from-$to:$level)"
 }
 
 /** An open bidi isolate. */

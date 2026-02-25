@@ -82,7 +82,7 @@ fun moveByGroup(
     while (true) {
         val next = pos + dir
         if (next < 0 || next > len) break
-        val group = groupAt(state, next, dir)
+        val group = groupAt(state, next, -dir)
         if (group != startGroup) break
         pos = next
     }
