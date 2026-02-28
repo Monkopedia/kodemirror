@@ -56,8 +56,8 @@ data class EditorTheme(
     /** Default text style for content. */
     val contentTextStyle: TextStyle = TextStyle(
         fontFamily = editorFontFamily,
-        fontSize = 14.sp,
-        lineHeight = (14 * 1.4).sp,
+        fontSize = 13.sp,
+        lineHeight = (13 * 1.4).sp,
         color = Color(0xFFABB2BF)
     ),
     /** Whether this is a dark theme (affects some rendering decisions). */
@@ -79,8 +79,8 @@ val lightEditorTheme: EditorTheme = EditorTheme(
     gutterActiveForeground = Color(0xFF333333),
     contentTextStyle = TextStyle(
         fontFamily = editorFontFamily,
-        fontSize = 14.sp,
-        lineHeight = (14 * 1.4).sp,
+        fontSize = 13.sp,
+        lineHeight = (13 * 1.4).sp,
         color = Color(0xFF000000)
     ),
     dark = false

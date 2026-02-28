@@ -161,7 +161,7 @@ fun EditorView(state: EditorState, onUpdate: (Transaction) -> Unit, modifier: Mo
                                 Box(
                                     modifier = Modifier
                                         .weight(1f)
-                                        .padding(start = 4.dp)
+                                        .padding(start = 6.dp, end = 2.dp)
                                         .drawSelectionOverlay(
                                             state,
                                             item.from,

@@ -80,7 +80,7 @@ fun GutterView(view: EditorView, lineNumber: Int, modifier: Modifier = Modifier)
     Box(
         modifier = modifier
             .background(theme.gutterBackground)
-            .padding(horizontal = 8.dp),
+            .padding(start = 5.dp, end = 3.dp),
         contentAlignment = Alignment.CenterEnd
     ) {
         BasicText(
