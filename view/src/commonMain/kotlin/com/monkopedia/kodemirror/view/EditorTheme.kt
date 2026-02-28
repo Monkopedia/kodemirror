@@ -32,26 +32,27 @@ import com.monkopedia.kodemirror.state.Facet
  */
 data class EditorTheme(
     /** Background color of the editor container. */
-    val background: Color = Color(0xFF1E1E1E),
+    val background: Color = Color(0xFF282C34),
     /** Default foreground (text) color. */
-    val foreground: Color = Color(0xFFD4D4D4),
+    val foreground: Color = Color(0xFFABB2BF),
     /** Cursor color. */
-    val cursor: Color = Color(0xFFAEAFAD),
+    val cursor: Color = Color(0xFF528BFF),
     /** Selection background color. */
-    val selection: Color = Color(0x6038618C),
+    val selection: Color = Color(0xFF3E4451),
     /** Active line background highlight. */
-    val activeLineBackground: Color = Color(0x1AFFFFFF),
+    val activeLineBackground: Color = Color(0xFF2C313A),
     /** Gutter background. */
-    val gutterBackground: Color = Color(0xFF252526),
+    val gutterBackground: Color = Color(0xFF282C34),
     /** Gutter foreground (line numbers). */
-    val gutterForeground: Color = Color(0xFF858585),
+    val gutterForeground: Color = Color(0xFF7D8799),
     /** Gutter active foreground. */
-    val gutterActiveForeground: Color = Color(0xFFC6C6C6),
+    val gutterActiveForeground: Color = Color(0xFFCCCCCC),
     /** Default text style for content. */
     val contentTextStyle: TextStyle = TextStyle(
         fontFamily = FontFamily.Monospace,
         fontSize = 14.sp,
-        color = Color(0xFFD4D4D4)
+        lineHeight = (14 * 1.4).sp,
+        color = Color(0xFFABB2BF)
     ),
     /** Whether this is a dark theme (affects some rendering decisions). */
     val dark: Boolean = true
@@ -65,14 +66,15 @@ val lightEditorTheme: EditorTheme = EditorTheme(
     background = Color(0xFFFFFFFF),
     foreground = Color(0xFF000000),
     cursor = Color(0xFF000000),
-    selection = Color(0x60ADD6FF),
-    activeLineBackground = Color(0x0A000000),
+    selection = Color(0xFFD7D4F0),
+    activeLineBackground = Color(0x44CCEEFF),
     gutterBackground = Color(0xFFF5F5F5),
-    gutterForeground = Color(0xFF999999),
+    gutterForeground = Color(0xFF6C6C6C),
     gutterActiveForeground = Color(0xFF333333),
     contentTextStyle = TextStyle(
         fontFamily = FontFamily.Monospace,
         fontSize = 14.sp,
+        lineHeight = (14 * 1.4).sp,
         color = Color(0xFF000000)
     ),
     dark = false

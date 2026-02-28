@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -37,9 +38,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Transaction
 
@@ -120,7 +123,12 @@ fun EditorView(state: EditorState, onUpdate: (Transaction) -> Unit, modifier: Mo
         ) {
             var lineTopPx = 0f
 
-            LazyColumn(state = lazyState) {
+            LazyColumn(
+                state = lazyState,
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                    vertical = 4.dp
+                )
+            ) {
                 items(
                     items = columnItems,
                     key = { item ->
@@ -136,7 +144,14 @@ fun EditorView(state: EditorState, onUpdate: (Transaction) -> Unit, modifier: Mo
                             val capturedLineNum = item.lineNumber
                             val capturedFrom = item.from
 
-                            Row(modifier = Modifier.fillMaxWidth()) {
+                            var lineModifier: Modifier = Modifier.fillMaxWidth()
+                            for (deco in item.lineDecorations) {
+                                val bg = deco.spec.style?.background
+                                if (bg != null && bg != Color.Unspecified) {
+                                    lineModifier = lineModifier.background(bg)
+                                }
+                            }
+                            Row(modifier = lineModifier) {
                                 if (hasGutters) {
                                     GutterView(
                                         view = view,
@@ -146,6 +161,7 @@ fun EditorView(state: EditorState, onUpdate: (Transaction) -> Unit, modifier: Mo
                                 Box(
                                     modifier = Modifier
                                         .weight(1f)
+                                        .padding(start = 4.dp)
                                         .drawSelectionOverlay(
                                             state,
                                             item.from,

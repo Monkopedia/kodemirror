@@ -25,9 +25,11 @@ import androidx.compose.ui.test.runDesktopComposeUiTest
 import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
+import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.highlightActiveLine
 import com.monkopedia.kodemirror.view.lineNumbers
 import io.github.takahirom.roborazzi.captureRoboImage
 import org.junit.Test
@@ -49,7 +51,9 @@ class ActiveLineScreenshotTest {
                                 listOf(EditorSelection.cursor(cursorPos))
                             )
                         ),
-                        extensions = lineNumbers
+                        extensions = ExtensionList(
+                            listOf(lineNumbers, highlightActiveLine)
+                        )
                     )
                 )
             }
