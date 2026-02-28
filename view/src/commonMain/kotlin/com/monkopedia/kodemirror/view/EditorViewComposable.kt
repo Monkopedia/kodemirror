@@ -56,7 +56,9 @@ import com.monkopedia.kodemirror.state.Transaction
 @Composable
 fun EditorView(state: EditorState, onUpdate: (Transaction) -> Unit, modifier: Modifier = Modifier) {
     val view = remember { EditorView(state, onUpdate) }
-    val pluginHost = remember(view) { ViewPluginHost(view) }
+    val pluginHost = remember(view) {
+        ViewPluginHost(view).also { it.syncToState(state, null) }
+    }
     val lineLayoutCache = remember(view) { LineLayoutCache() }
 
     // Wire up view internals
@@ -74,8 +76,10 @@ fun EditorView(state: EditorState, onUpdate: (Transaction) -> Unit, modifier: Mo
     // Sync state + plugins whenever state changes
     LaunchedEffect(state) {
         val oldState = view.state
-        pluginHost.syncToState(state, oldState)
-        view.state = state
+        if (oldState !== state) {
+            pluginHost.syncToState(state, oldState)
+            view.state = state
+        }
     }
 
     // Derive rendering data from current state
@@ -139,9 +143,7 @@ fun EditorView(state: EditorState, onUpdate: (Transaction) -> Unit, modifier: Mo
                                         lineNumber = item.lineNumber
                                     )
                                 }
-                                BasicText(
-                                    text = item.content,
-                                    style = theme.contentTextStyle,
+                                Box(
                                     modifier = Modifier
                                         .weight(1f)
                                         .drawSelectionOverlay(
@@ -149,16 +151,24 @@ fun EditorView(state: EditorState, onUpdate: (Transaction) -> Unit, modifier: Mo
                                             item.from,
                                             item.to,
                                             theme
-                                        ),
-                                    onTextLayout = { result: TextLayoutResult ->
-                                        lineLayoutCache.store(
-                                            capturedLineNum,
-                                            capturedFrom,
-                                            capturedTop,
-                                            result
                                         )
+                                ) {
+                                    BasicText(
+                                        text = item.content,
+                                        style = theme.contentTextStyle,
+                                        onTextLayout = { result: TextLayoutResult ->
+                                            lineLayoutCache.store(
+                                                capturedLineNum,
+                                                capturedFrom,
+                                                capturedTop,
+                                                result
+                                            )
+                                        }
+                                    )
+                                    for (widget in item.inlineWidgets) {
+                                        widget.spec.widget.Content()
                                     }
-                                )
+                                }
                             }
                         }
 

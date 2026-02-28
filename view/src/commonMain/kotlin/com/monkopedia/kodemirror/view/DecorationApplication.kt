@@ -40,7 +40,8 @@ sealed class ColumnItem {
         val from: Int,
         val to: Int,
         val content: AnnotatedString,
-        val lineDecorations: List<LineDecoration> = emptyList()
+        val lineDecorations: List<LineDecoration> = emptyList(),
+        val inlineWidgets: List<WidgetDecoration> = emptyList()
     ) : ColumnItem()
 
     /**
@@ -126,11 +127,17 @@ fun buildColumnItems(
 
     // Collect line decorations
     val lineDecsByLine = mutableMapOf<Int, MutableList<LineDecoration>>()
+    // Collect inline widget decorations
+    val inlineWidgetsByLine = mutableMapOf<Int, MutableList<WidgetDecoration>>()
     for (set in decorationSets) {
         set.between(viewport.from, viewport.to) { from, _, value ->
             if (value is LineDecoration) {
                 val line = doc.lineAt(from)
                 lineDecsByLine.getOrPut(line.number) { mutableListOf() }.add(value)
+            }
+            if (value is WidgetDecoration && !value.spec.block) {
+                val line = doc.lineAt(from)
+                inlineWidgetsByLine.getOrPut(line.number) { mutableListOf() }.add(value)
             }
             null
         }
@@ -151,7 +158,10 @@ fun buildColumnItems(
         // Emit the text line
         val content = buildLineContent(line.from, line.to, line.text, decorationSets)
         val lineDecos = lineDecsByLine[lineNum] ?: emptyList()
-        items.add(ColumnItem.TextLine(lineNum, line.from, line.to, content, lineDecos))
+        val inlineWidgets = inlineWidgetsByLine[lineNum] ?: emptyList()
+        items.add(
+            ColumnItem.TextLine(lineNum, line.from, line.to, content, lineDecos, inlineWidgets)
+        )
 
         // Emit block-after widgets
         blockWidgetsAfter[line.from]?.forEach { w ->
