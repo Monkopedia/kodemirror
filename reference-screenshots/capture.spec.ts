@@ -17,10 +17,19 @@ const scenarios = fs
 for (const scenario of scenarios) {
   test(`capture ${scenario}`, async ({ page }) => {
     const filePath = path.join(scenariosDir, `${scenario}.html`);
+
+    // Log console errors for debugging
+    page.on("console", (msg) => {
+      if (msg.type() === "error") console.log(`  [console] ${msg.text()}`);
+    });
+    page.on("pageerror", (err) =>
+      console.log(`  [pageerror] ${err.message}`)
+    );
+
     await page.goto(`file://${filePath}`);
 
     // Wait for CodeMirror to initialize
-    await page.waitForSelector(".cm-editor", { timeout: 10000 });
+    await page.waitForSelector(".cm-editor", { timeout: 30000 });
     // Small delay for rendering to settle
     await page.waitForTimeout(500);
 
