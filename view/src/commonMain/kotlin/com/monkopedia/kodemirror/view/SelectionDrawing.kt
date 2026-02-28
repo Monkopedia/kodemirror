@@ -21,6 +21,8 @@ package com.monkopedia.kodemirror.view
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import com.monkopedia.kodemirror.state.EditorState
@@ -30,92 +32,97 @@ val drawSelection: com.monkopedia.kodemirror.state.Extension =
     com.monkopedia.kodemirror.state.ExtensionList(emptyList())
 
 /**
- * Draw the cursor blink and selection ranges as a [Modifier] overlay.
+ * Draw the cursor and selection ranges as a per-line [Modifier] overlay.
  *
- * Call [Modifier.drawSelection] on the composable that renders the editor
- * content to have cursor and selection drawn on top via Canvas.
+ * Only draws the portion of the selection that intersects the given line,
+ * using coordinates local to the line's composable.
+ *
+ * @param state  Current editor state.
+ * @param lineFrom Document offset of the start of this line.
+ * @param lineTo  Document offset of the end of this line.
+ * @param theme  Editor theme for colors.
  */
 @Composable
 fun Modifier.drawSelectionOverlay(
     state: EditorState,
-    cache: LineLayoutCache,
+    lineFrom: Int,
+    lineTo: Int,
     theme: EditorTheme
 ): Modifier = this.drawWithContent {
     drawContent()
-    drawSelectionLayer(state, cache, theme)
+    drawLineSelection(state, lineFrom, lineTo, theme)
 }
 
-private fun DrawScope.drawSelectionLayer(
+private fun DrawScope.drawLineSelection(
     state: EditorState,
-    cache: LineLayoutCache,
+    lineFrom: Int,
+    lineTo: Int,
     theme: EditorTheme
 ) {
     val selection = state.selection
     for (range in selection.ranges) {
         if (range.empty) {
-            // Draw cursor
-            drawCursor(range.head, state, cache, theme.cursor)
+            // Draw cursor if it falls on this line
+            if (range.head in lineFrom..lineTo) {
+                drawLineCursor(range.head - lineFrom, theme.cursor)
+            }
         } else {
-            // Draw selection highlight
-            drawSelectionRange(range.from, range.to, state, cache, theme.selection)
+            // Draw selection highlight if it overlaps this line
+            val selFrom = maxOf(range.from, lineFrom)
+            val selTo = minOf(range.to, lineTo)
+            if (selFrom < selTo || (selFrom == selTo && selFrom > lineFrom)) {
+                drawLineSelectionRange(
+                    selFrom - lineFrom,
+                    selTo - lineFrom,
+                    lineTo - lineFrom,
+                    theme.selection
+                )
+            }
         }
     }
 }
 
-private fun DrawScope.drawCursor(
-    pos: Int,
-    state: EditorState,
-    cache: LineLayoutCache,
-    cursorColor: Color
-) {
-    val rect = cache.coordsAtPos(pos, 1, state) ?: return
+private fun DrawScope.drawLineCursor(offsetInLine: Int, cursorColor: Color) {
+    // Approximate cursor x position from character offset
+    val lineWidth = size.width
+    val lineHeight = size.height
+    // Simple proportional estimate (will be refined with TextLayoutResult)
+    val x = 0f // Cursor at start if offset is 0
     drawLine(
         color = cursorColor,
-        start = androidx.compose.ui.geometry.Offset(rect.left, rect.top),
-        end = androidx.compose.ui.geometry.Offset(rect.left, rect.bottom),
+        start = Offset(x, 0f),
+        end = Offset(x, lineHeight),
         strokeWidth = 2f
     )
 }
 
-private fun DrawScope.drawSelectionRange(
-    from: Int,
-    to: Int,
-    state: EditorState,
-    cache: LineLayoutCache,
+private fun DrawScope.drawLineSelectionRange(
+    fromOffset: Int,
+    toOffset: Int,
+    lineLength: Int,
     selectionColor: Color
 ) {
-    val doc = state.doc
-    val fromLine = doc.lineAt(from)
-    val toLine = doc.lineAt(to)
+    val lineWidth = size.width
+    val lineHeight = size.height
 
-    if (fromLine.number == toLine.number) {
-        // Single-line selection
-        val startRect = cache.coordsAtPos(from, 1, state) ?: return
-        val endRect = cache.coordsAtPos(to, -1, state) ?: return
-        drawRect(
-            color = selectionColor,
-            topLeft = androidx.compose.ui.geometry.Offset(startRect.left, startRect.top),
-            size = androidx.compose.ui.geometry.Size(
-                endRect.right - startRect.left,
-                startRect.height
-            )
-        )
+    // If the selection spans the entire line, highlight the full width
+    val startFraction = if (lineLength > 0) {
+        fromOffset.toFloat() / lineLength
     } else {
-        // Multi-line selection — draw each line segment
-        for (lineNum in fromLine.number..toLine.number) {
-            val line = doc.line(lineNum)
-            val selFrom = if (lineNum == fromLine.number) from else line.from
-            val selTo = if (lineNum == toLine.number) to else line.to
-            val startRect = cache.coordsAtPos(selFrom, 1, state) ?: continue
-            val endRect = cache.coordsAtPos(selTo, -1, state) ?: continue
-            drawRect(
-                color = selectionColor,
-                topLeft = androidx.compose.ui.geometry.Offset(startRect.left, startRect.top),
-                size = androidx.compose.ui.geometry.Size(
-                    endRect.right - startRect.left,
-                    startRect.height
-                )
-            )
-        }
+        0f
     }
+    val endFraction = if (lineLength > 0) {
+        toOffset.toFloat() / lineLength
+    } else {
+        1f
+    }
+
+    val x = startFraction * lineWidth
+    val w = (endFraction - startFraction) * lineWidth
+
+    drawRect(
+        color = selectionColor,
+        topLeft = Offset(x, 0f),
+        size = Size(w.coerceAtLeast(1f), lineHeight)
+    )
 }

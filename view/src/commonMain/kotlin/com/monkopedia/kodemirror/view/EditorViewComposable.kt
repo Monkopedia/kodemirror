@@ -146,7 +146,8 @@ fun EditorView(state: EditorState, onUpdate: (Transaction) -> Unit, modifier: Mo
                                         .weight(1f)
                                         .drawSelectionOverlay(
                                             state,
-                                            lineLayoutCache,
+                                            item.from,
+                                            item.to,
                                             theme
                                         ),
                                     onTextLayout = { result: TextLayoutResult ->
