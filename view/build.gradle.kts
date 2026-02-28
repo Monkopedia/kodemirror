@@ -14,6 +14,11 @@ kotlin {
             implementation(compose.runtime)
         }
         jvmTest.dependencies {
+            implementation(project(":language"))
+            implementation(project(":lezer-common"))
+            implementation(project(":lezer-highlight"))
+            implementation(project(":lezer-lr"))
+            implementation(project(":lezer-javascript"))
             implementation(libs.roborazzi.compose.desktop)
             implementation(compose.desktop.uiTestJUnit4)
             implementation(compose.desktop.currentOs)

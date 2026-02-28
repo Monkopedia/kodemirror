@@ -26,6 +26,7 @@ import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.screenshots.TestScenarios.jsLanguageExtensions
 import io.github.takahirom.roborazzi.captureRoboImage
 import org.junit.Test
 
@@ -38,7 +39,8 @@ class NoGutterScreenshotTest {
             val state = remember {
                 EditorState.create(
                     EditorStateConfig(
-                        doc = TestScenarios.SAMPLE_CODE.asDoc()
+                        doc = TestScenarios.SAMPLE_CODE.asDoc(),
+                        extensions = jsLanguageExtensions(light = true)
                     )
                 )
             }

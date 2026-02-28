@@ -18,6 +18,14 @@
  */
 package com.monkopedia.kodemirror.view.screenshots
 
+import com.monkopedia.kodemirror.language.Language
+import com.monkopedia.kodemirror.language.defaultHighlightStyle
+import com.monkopedia.kodemirror.language.oneDarkHighlightStyle
+import com.monkopedia.kodemirror.language.syntaxHighlighting
+import com.monkopedia.kodemirror.lezer.javascript.parser
+import com.monkopedia.kodemirror.state.Extension
+import com.monkopedia.kodemirror.state.ExtensionList
+
 /**
  * Shared sample content strings for screenshot tests.
  * These match the content used in the Playwright HTML scenario files
@@ -40,4 +48,10 @@ object TestScenarios {
     """.trimMargin()
 
     val PLACEHOLDER_TEXT = "Enter your code here..."
+
+    fun jsLanguageExtensions(light: Boolean = true): Extension {
+        val lang = Language(parser, "javascript")
+        val style = if (light) defaultHighlightStyle else oneDarkHighlightStyle
+        return ExtensionList(listOf(lang.extension, syntaxHighlighting(style)))
+    }
 }

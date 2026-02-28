@@ -52,7 +52,11 @@ class ActiveLineScreenshotTest {
                             )
                         ),
                         extensions = ExtensionList(
-                            listOf(lineNumbers, highlightActiveLine)
+                            listOf(
+                                lineNumbers,
+                                highlightActiveLine,
+                                TestScenarios.jsLanguageExtensions(light = true)
+                            )
                         )
                     )
                 )

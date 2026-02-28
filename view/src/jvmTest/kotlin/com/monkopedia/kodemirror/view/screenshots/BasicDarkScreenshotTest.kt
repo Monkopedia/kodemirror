@@ -24,6 +24,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.runDesktopComposeUiTest
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
+import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.view.EditorView
 import com.monkopedia.kodemirror.view.lineNumbers
@@ -40,7 +41,12 @@ class BasicDarkScreenshotTest {
                 EditorState.create(
                     EditorStateConfig(
                         doc = TestScenarios.SAMPLE_CODE.asDoc(),
-                        extensions = lineNumbers
+                        extensions = ExtensionList(
+                            listOf(
+                                lineNumbers,
+                                TestScenarios.jsLanguageExtensions(light = false)
+                            )
+                        )
                     )
                 )
             }

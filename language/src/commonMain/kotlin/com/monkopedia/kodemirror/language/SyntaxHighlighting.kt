@@ -53,10 +53,10 @@ private class TreeHighlighter(
     view: EditorView,
     private val highlighter: Highlighter
 ) : PluginValue {
+    private val markCache = mutableMapOf<String, MarkDecoration>()
+
     var decorations: DecorationSet = buildDeco(view)
         private set
-
-    private val markCache = mutableMapOf<String, MarkDecoration>()
 
     override fun update(update: ViewUpdate) {
         val tree = syntaxTree(update.state)

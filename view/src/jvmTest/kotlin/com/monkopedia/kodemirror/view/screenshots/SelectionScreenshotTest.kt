@@ -25,6 +25,7 @@ import androidx.compose.ui.test.runDesktopComposeUiTest
 import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
+import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.view.EditorView
@@ -50,7 +51,12 @@ class SelectionScreenshotTest {
                                 listOf(EditorSelection.range(anchor, head))
                             )
                         ),
-                        extensions = lineNumbers
+                        extensions = ExtensionList(
+                            listOf(
+                                lineNumbers,
+                                TestScenarios.jsLanguageExtensions(light = true)
+                            )
+                        )
                     )
                 )
             }

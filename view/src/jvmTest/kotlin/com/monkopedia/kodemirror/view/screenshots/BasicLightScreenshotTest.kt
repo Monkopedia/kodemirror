@@ -44,7 +44,11 @@ class BasicLightScreenshotTest {
                     EditorStateConfig(
                         doc = TestScenarios.SAMPLE_CODE.asDoc(),
                         extensions = ExtensionList(
-                            listOf(lineNumbers, editorTheme.of(lightEditorTheme))
+                            listOf(
+                                lineNumbers,
+                                editorTheme.of(lightEditorTheme),
+                                TestScenarios.jsLanguageExtensions(light = true)
+                            )
                         )
                     )
                 )
