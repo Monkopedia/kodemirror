@@ -78,7 +78,7 @@ class HighlightTest {
     fun styleTagsAssignsTags() {
         val (tree, _) = buildTestTree()
         // Check that nodes have rules
-        val keywordNode = tree.children[0]
+        val keywordNode = tree.children[0] as Tree
         val rule = keywordNode.type.prop(ruleNodeProp)
         assertNotNull(rule)
         assertTrue(rule.tags.contains(tags.keyword))

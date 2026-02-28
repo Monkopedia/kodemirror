@@ -74,6 +74,17 @@ class NodeProp<T>(
          * Per-node prop for mounted trees.
          */
         val mounted = NodeProp<MountedTree>(perNode = true)
+
+        /** Context hash for context-dependent parsing. */
+        val contextHash = NodeProp<Int>(perNode = true)
+
+        /** Lookahead info attached to a node. */
+        val lookAhead = NodeProp<Int>(perNode = true)
+
+        /** Marks node types that represent skipped content (whitespace/comments). */
+        val skipped = NodeProp<Boolean>(
+            deserialize = { true }
+        )
     }
 }
 
