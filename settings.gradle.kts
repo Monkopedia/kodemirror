@@ -19,3 +19,6 @@ dependencyResolutionManagement {
 
 include(":state")
 include(":view")
+include(":lezer-common")
+include(":lezer-highlight")
+include(":language")
