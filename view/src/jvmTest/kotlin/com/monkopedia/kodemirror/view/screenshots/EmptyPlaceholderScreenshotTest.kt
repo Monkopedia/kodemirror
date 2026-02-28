@@ -18,13 +18,10 @@
  */
 package com.monkopedia.kodemirror.view.screenshots
 
-import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.remember
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.runDesktopComposeUiTest
-import androidx.compose.ui.text.TextStyle
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.ExtensionList
@@ -46,12 +43,7 @@ class EmptyPlaceholderScreenshotTest {
                         extensions = ExtensionList(
                             listOf(
                                 lineNumbers,
-                                placeholder {
-                                    BasicText(
-                                        text = TestScenarios.PLACEHOLDER_TEXT,
-                                        style = TextStyle(color = Color.Gray)
-                                    )
-                                }
+                                placeholder(TestScenarios.PLACEHOLDER_TEXT)
                             )
                         )
                     )
