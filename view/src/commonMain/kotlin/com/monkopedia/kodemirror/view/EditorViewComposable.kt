@@ -23,6 +23,7 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -37,10 +38,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.state.EditorState
@@ -98,6 +101,9 @@ fun EditorView(state: EditorState, onUpdate: (Transaction) -> Unit, modifier: Mo
 
     val lazyState = rememberLazyListState()
 
+    val density = LocalDensity.current
+    val lineHeightDp = with(density) { theme.contentTextStyle.lineHeight.toDp() }
+
     CompositionLocalProvider(LocalEditorTheme provides theme) {
         Box(
             modifier = modifier
@@ -144,14 +150,19 @@ fun EditorView(state: EditorState, onUpdate: (Transaction) -> Unit, modifier: Mo
                             val capturedLineNum = item.lineNumber
                             val capturedFrom = item.from
 
-                            var lineModifier: Modifier = Modifier.fillMaxWidth()
+                            var lineModifier: Modifier = Modifier
+                                .fillMaxWidth()
+                                .defaultMinSize(minHeight = lineHeightDp)
                             for (deco in item.lineDecorations) {
                                 val bg = deco.spec.style?.background
                                 if (bg != null && bg != Color.Unspecified) {
                                     lineModifier = lineModifier.background(bg)
                                 }
                             }
-                            Row(modifier = lineModifier) {
+                            Row(
+                                modifier = lineModifier,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                                 if (hasGutters) {
                                     GutterView(
                                         view = view,

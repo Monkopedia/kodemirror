@@ -30,7 +30,7 @@ import androidx.compose.ui.text.platform.SystemFont
 import androidx.compose.ui.unit.sp
 import com.monkopedia.kodemirror.state.Facet
 
-private val editorFontFamily = FontFamily(SystemFont("Courier New"))
+private val editorFontFamily = FontFamily(SystemFont("DejaVu Sans Mono"))
 
 /**
  * Color/style tokens for the editor.  Passed through a [CompositionLocal] so
