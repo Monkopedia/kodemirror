@@ -26,6 +26,7 @@ import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.lineNumbers
 import io.github.takahirom.roborazzi.captureRoboImage
 import org.junit.Test
 
@@ -37,7 +38,10 @@ class BasicDarkScreenshotTest {
         setContent {
             val state = remember {
                 EditorState.create(
-                    EditorStateConfig(doc = TestScenarios.SAMPLE_CODE.asDoc())
+                    EditorStateConfig(
+                        doc = TestScenarios.SAMPLE_CODE.asDoc(),
+                        extensions = lineNumbers
+                    )
                 )
             }
             EditorView(state = state, onUpdate = {})

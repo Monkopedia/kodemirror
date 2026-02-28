@@ -24,10 +24,12 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.runDesktopComposeUiTest
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
+import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.view.EditorView
 import com.monkopedia.kodemirror.view.editorTheme
 import com.monkopedia.kodemirror.view.lightEditorTheme
+import com.monkopedia.kodemirror.view.lineNumbers
 import io.github.takahirom.roborazzi.captureRoboImage
 import org.junit.Test
 
@@ -41,7 +43,9 @@ class BasicLightScreenshotTest {
                 EditorState.create(
                     EditorStateConfig(
                         doc = TestScenarios.SAMPLE_CODE.asDoc(),
-                        extensions = editorTheme.of(lightEditorTheme)
+                        extensions = ExtensionList(
+                            listOf(lineNumbers, editorTheme.of(lightEditorTheme))
+                        )
                     )
                 )
             }

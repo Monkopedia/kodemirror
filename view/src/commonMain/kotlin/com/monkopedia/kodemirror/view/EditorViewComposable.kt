@@ -22,6 +22,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
@@ -38,7 +39,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.TextLayoutResult
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Transaction
@@ -80,6 +80,7 @@ fun EditorView(state: EditorState, onUpdate: (Transaction) -> Unit, modifier: Mo
 
     // Derive rendering data from current state
     val theme = state.facet(editorTheme)
+    val hasGutters = state.facet(gutters).isNotEmpty()
     val viewport = Viewport(0, state.doc.length)
     val extensionDecos = state.facet(decorations)
     val pluginDecos = pluginHost.collectDecorations()
@@ -131,24 +132,33 @@ fun EditorView(state: EditorState, onUpdate: (Transaction) -> Unit, modifier: Mo
                             val capturedLineNum = item.lineNumber
                             val capturedFrom = item.from
 
-                            BasicText(
-                                text = item.content,
-                                style = theme.contentTextStyle,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .drawSelectionOverlay(state, lineLayoutCache, theme)
-                                    .onGloballyPositioned { coords ->
-                                        // nothing needed here; topPx is tracked below
-                                    },
-                                onTextLayout = { result: TextLayoutResult ->
-                                    lineLayoutCache.store(
-                                        capturedLineNum,
-                                        capturedFrom,
-                                        capturedTop,
-                                        result
+                            Row(modifier = Modifier.fillMaxWidth()) {
+                                if (hasGutters) {
+                                    GutterView(
+                                        view = view,
+                                        lineNumber = item.lineNumber
                                     )
                                 }
-                            )
+                                BasicText(
+                                    text = item.content,
+                                    style = theme.contentTextStyle,
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .drawSelectionOverlay(
+                                            state,
+                                            lineLayoutCache,
+                                            theme
+                                        ),
+                                    onTextLayout = { result: TextLayoutResult ->
+                                        lineLayoutCache.store(
+                                            capturedLineNum,
+                                            capturedFrom,
+                                            capturedTop,
+                                            result
+                                        )
+                                    }
+                                )
+                            }
                         }
 
                         is ColumnItem.BlockWidgetItem -> {

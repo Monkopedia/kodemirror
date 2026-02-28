@@ -28,6 +28,7 @@ import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.lineNumbers
 import io.github.takahirom.roborazzi.captureRoboImage
 import org.junit.Test
 
@@ -47,7 +48,8 @@ class ActiveLineScreenshotTest {
                             EditorSelection.create(
                                 listOf(EditorSelection.cursor(cursorPos))
                             )
-                        )
+                        ),
+                        extensions = lineNumbers
                     )
                 )
             }

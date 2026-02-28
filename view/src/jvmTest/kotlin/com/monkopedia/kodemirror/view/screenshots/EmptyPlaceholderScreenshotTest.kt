@@ -27,7 +27,9 @@ import androidx.compose.ui.test.runDesktopComposeUiTest
 import androidx.compose.ui.text.TextStyle
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
+import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.lineNumbers
 import com.monkopedia.kodemirror.view.placeholder
 import io.github.takahirom.roborazzi.captureRoboImage
 import org.junit.Test
@@ -41,12 +43,17 @@ class EmptyPlaceholderScreenshotTest {
             val state = remember {
                 EditorState.create(
                     EditorStateConfig(
-                        extensions = placeholder {
-                            BasicText(
-                                text = TestScenarios.PLACEHOLDER_TEXT,
-                                style = TextStyle(color = Color.Gray)
+                        extensions = ExtensionList(
+                            listOf(
+                                lineNumbers,
+                                placeholder {
+                                    BasicText(
+                                        text = TestScenarios.PLACEHOLDER_TEXT,
+                                        style = TextStyle(color = Color.Gray)
+                                    )
+                                }
                             )
-                        }
+                        )
                     )
                 )
             }
