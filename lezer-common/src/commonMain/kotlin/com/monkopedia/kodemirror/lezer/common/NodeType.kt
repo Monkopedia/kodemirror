@@ -49,6 +49,25 @@ class NodeType internal constructor(
         /** The empty/anonymous node type. */
         val none = NodeType("", 0, emptyMap(), isTop = false, isError = false, isSkipped = false)
 
+        /**
+         * Create a function from node types to the result type that
+         * returns values assigned to node types (or named groups of types)
+         * via the given map.
+         */
+        fun <T> match(map: Map<String, T>): (NodeType) -> T? {
+            val mapEntries = map.entries.toList()
+            return { type ->
+                var result: T? = null
+                for ((selector, value) in mapEntries) {
+                    if (type.`is`(selector)) {
+                        result = value
+                        break
+                    }
+                }
+                result
+            }
+        }
+
         /** Define a [NodeType]. */
         fun define(spec: NodeTypeSpec): NodeType {
             val propsMap = mutableMapOf<Int, Any?>()

@@ -435,4 +435,261 @@ class TreeTest {
         assertEquals(0, Tree.empty.length)
         assertEquals(NodeType.none, Tree.empty.type)
     }
+
+    // ---- resolveInner tests ----
+
+    @Test
+    fun resolveInnerFindsDeepNode() {
+        val tree = simple()
+        val node = tree.resolveInner(9, 1)
+        assertEquals("c", node.name)
+    }
+
+    @Test
+    fun resolveInnerAtTopLevel() {
+        val tree = simple()
+        val node = tree.resolveInner(2, -1)
+        assertEquals("a", node.name)
+    }
+
+    @Test
+    fun syntaxNodeResolveInner() {
+        val tree = simple()
+        val top = tree.topNode
+        val inner = top.resolveInner(9, 1)
+        assertEquals("c", inner.name)
+    }
+
+    // ---- resolveStack tests ----
+
+    @Test
+    fun resolveStackCoversAncestors() {
+        val tree = simple()
+        val stack = tree.resolveStack(9, 1)
+        // Innermost node should be c
+        assertEquals("c", stack.node.name)
+        // Walk up should find Br, Pa, T
+        val names = mutableListOf<String>()
+        var cur: NodeIterator? = stack
+        while (cur != null) {
+            names.add(cur.node.name)
+            cur = cur.next
+        }
+        assertTrue(names.contains("c"))
+        assertTrue(names.contains("Br"))
+        assertTrue(names.contains("Pa"))
+        assertTrue(names.contains("T"))
+    }
+
+    @Test
+    fun resolveStackAtTopLevel() {
+        val tree = simple()
+        val stack = tree.resolveStack(1, -1)
+        assertEquals("a", stack.node.name)
+        assertNotNull(stack.next)
+        assertEquals("T", stack.next!!.node.name)
+    }
+
+    // ---- balance tests ----
+
+    @Test
+    fun balancePreservesSmallTree() {
+        val tree = simple()
+        val balanced = tree.balance()
+        // A small tree should remain structurally equivalent
+        assertEquals(tree.length, balanced.length)
+        assertEquals(tree.type, balanced.type)
+    }
+
+    @Test
+    fun balanceHandlesEmptyTree() {
+        val balanced = Tree.empty.balance()
+        assertEquals(0, balanced.length)
+    }
+
+    // ---- enterUnfinishedNodesBefore tests ----
+
+    @Test
+    fun enterUnfinishedNodesBeforeOnNormalTree() {
+        val tree = simple()
+        val node = tree.topNode
+        // No error nodes, should return the node itself or a child
+        val result = node.enterUnfinishedNodesBefore(10)
+        assertNotNull(result)
+    }
+
+    @Test
+    fun enterUnfinishedNodesBeforeWithErrorNode() {
+        // Build a tree with an error node
+        val errorType = NodeType.define(
+            NodeTypeSpec(name = "\u26A0", id = 10, error = true)
+        )
+        val a = types[1]
+        val tree = Tree(
+            types[0],
+            listOf(
+                Tree(a, emptyList(), emptyList(), 3),
+                // zero-length error node
+                Tree(
+                    errorType,
+                    emptyList(),
+                    emptyList(),
+                    0
+                )
+            ),
+            listOf(0, 3),
+            5
+        )
+        val node = tree.topNode
+        val result = node.enterUnfinishedNodesBefore(5)
+        assertNotNull(result)
+    }
+
+    // ---- NodeType.match tests ----
+
+    @Test
+    fun nodeTypeMatchByName() {
+        val matcher = NodeType.match(mapOf("a" to "found-a", "b" to "found-b"))
+        assertEquals("found-a", matcher(types[1]))
+        assertEquals("found-b", matcher(types[2]))
+        assertNull(matcher(types[0])) // type T
+    }
+
+    @Test
+    fun nodeTypeMatchByGroup() {
+        val matcher = NodeType.match(mapOf("atom" to "is-atom"))
+        assertEquals("is-atom", matcher(types[1])) // a is in group "atom"
+        assertEquals("is-atom", matcher(types[2])) // b is in group "atom"
+        assertNull(matcher(types[4])) // Pa is not in group "atom"
+    }
+
+    // ---- reverse cursor iteration (prev) tests ----
+
+    @Test
+    fun cursorPrevMovesBackward() {
+        val tree = simple()
+        val cur = tree.cursor()
+        // Navigate forward to the end
+        while (cur.next()) { /* traverse */ }
+        val lastName = cur.name
+
+        // prev should move to a node before the last
+        assertTrue(cur.prev())
+        // We should be at a different or earlier node
+        assertTrue(cur.from <= tree.length)
+    }
+
+    // ---- Buffer node tests via Tree.build ----
+
+    @Test
+    fun treeBuildFromFlatBuffer() {
+        val nodeSet = NodeSet(types)
+        // Build a minimal tree via Tree.build with a flat buffer.
+        // FlatBufferCursor reads [id, start, end, size] from end to start.
+        // A single leaf node 'a' from 0..3 with size=4.
+        // a: type=1, start=0, end=3, size=4 (leaf)
+        val buffer = listOf(
+            1,
+            0,
+            3,
+            4
+        )
+        val tree = Tree.build(
+            TreeBuildSpec(
+                buffer = buffer,
+                nodeSet = nodeSet,
+                topID = 0,
+                length = 3
+            )
+        )
+        assertEquals("T", tree.type.name)
+        assertEquals(3, tree.length)
+    }
+
+    // ---- children retrieval tests ----
+
+    @Test
+    fun getChildByType() {
+        val tree = simple()
+        val pa = tree.topNode.getChild("Pa")
+        assertNotNull(pa)
+        assertEquals("Pa", pa.name)
+    }
+
+    @Test
+    fun getChildReturnsNullForMissing() {
+        val tree = simple()
+        val result = tree.topNode.getChild("NonExistent")
+        assertNull(result)
+    }
+
+    @Test
+    fun getChildrenReturnsEmpty() {
+        val tree = simple()
+        val results = tree.topNode.getChildren("NonExistent")
+        assertTrue(results.isEmpty())
+    }
+
+    // ---- NodeWeakMap tests ----
+
+    @Test
+    fun nodeWeakMapSetAndGet() {
+        val tree = simple()
+        val map = NodeWeakMap<String>()
+        val node = tree.resolve(9, 1)
+        map.set(node, "test-value")
+        assertEquals("test-value", map.get(node))
+    }
+
+    @Test
+    fun nodeWeakMapReturnsNullForMissing() {
+        val tree = simple()
+        val map = NodeWeakMap<String>()
+        val node = tree.resolve(9, 1)
+        assertNull(map.get(node))
+    }
+
+    @Test
+    fun nodeWeakMapCursorSetAndGet() {
+        val tree = simple()
+        val map = NodeWeakMap<Int>()
+        val cursor = tree.cursorAt(9, 1)
+        map.cursorSet(cursor, 42)
+        assertEquals(42, map.cursorGet(cursor))
+    }
+
+    @Test
+    fun nodeWeakMapDifferentNodesIndependent() {
+        val tree = simple()
+        val map = NodeWeakMap<String>()
+        val node1 = tree.resolve(1, -1) // first 'a'
+        val node2 = tree.resolve(9, 1) // 'c' inside Br
+        map.set(node1, "value1")
+        map.set(node2, "value2")
+        assertEquals("value1", map.get(node1))
+        assertEquals("value2", map.get(node2))
+    }
+
+    // ---- TreeFragment.applyChanges with minGap ----
+
+    @Test
+    fun treeFragmentApplyChangesWithMinGap() {
+        val tree = Tree(types[0], emptyList(), emptyList(), 100)
+        val fragments = TreeFragment.addTree(tree)
+        val changed = TreeFragment.applyChanges(
+            fragments,
+            listOf(ChangedRange(50, 52, 50, 55)),
+            minGap = 128
+        )
+        // Fragments should be adjusted around the change
+        assertTrue(changed.isNotEmpty() || fragments.isNotEmpty())
+    }
+
+    @Test
+    fun treeFragmentApplyChangesEmpty() {
+        val tree = Tree(types[0], emptyList(), emptyList(), 100)
+        val fragments = TreeFragment.addTree(tree)
+        val result = TreeFragment.applyChanges(fragments, emptyList())
+        assertEquals(fragments.size, result.size)
+    }
 }

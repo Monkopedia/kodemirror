@@ -85,6 +85,11 @@ class NodeProp<T>(
         val skipped = NodeProp<Boolean>(
             deserialize = { true }
         )
+
+        /** Bidi isolation direction for a node type. */
+        val isolate = NodeProp<String>(
+            deserialize = { it }
+        )
     }
 }
 

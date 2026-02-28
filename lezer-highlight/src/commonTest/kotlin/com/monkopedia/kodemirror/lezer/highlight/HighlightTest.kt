@@ -244,6 +244,104 @@ class HighlightTest {
         assertNull(result)
     }
 
+    // ---- highlightCode tests ----
+
+    @Test
+    fun highlightCodeProducesTextAndBreaks() {
+        val (tree, _) = buildTestTree()
+        val highlighter = tagHighlighter(
+            listOf(
+                TagStyleRule(tags.keyword, "kw"),
+                TagStyleRule(tags.variableName, "var"),
+                TagStyleRule(tags.number, "num")
+            )
+        )
+        val code = "let x = 42"
+        val texts = mutableListOf<Pair<String, String>>()
+        val breaks = mutableListOf<Int>()
+        var breakCount = 0
+        highlightCode(code, tree, highlighter, { text, cls ->
+            texts.add(text to cls)
+        }, {
+            breakCount++
+        })
+        // Should have styled text for keyword, var, number plus unstyled gaps
+        assertTrue(texts.any { it.first == "let" && it.second == "kw" })
+        assertTrue(texts.any { it.first == "42" && it.second == "num" })
+    }
+
+    @Test
+    fun highlightCodeWithLineBreaks() {
+        val types = listOf(
+            NodeType.define(NodeTypeSpec(name = "Program", id = 0, top = true)),
+            NodeType.define(NodeTypeSpec(name = "Keyword", id = 1))
+        )
+        val nodeSet = NodeSet(types)
+        val extended = nodeSet.extend(
+            styleTags(mapOf("Keyword" to tags.keyword))
+        )
+        // Code with newline: "let\nvar"
+        val tree = Tree(
+            extended.types[0],
+            listOf(
+                Tree(extended.types[1], emptyList(), emptyList(), 3),
+                Tree(extended.types[1], emptyList(), emptyList(), 3)
+            ),
+            listOf(0, 4),
+            7
+        )
+        val highlighter = tagHighlighter(
+            listOf(TagStyleRule(tags.keyword, "kw"))
+        )
+        val code = "let\nvar"
+        var breakCount = 0
+        highlightCode(code, tree, highlighter, { _, _ -> }, { breakCount++ })
+        assertEquals(1, breakCount)
+    }
+
+    @Test
+    fun highlightCodeEmptyString() {
+        val tree = Tree.empty
+        val highlighter = tagHighlighter(
+            listOf(TagStyleRule(tags.keyword, "kw"))
+        )
+        val texts = mutableListOf<String>()
+        highlightCode("", tree, highlighter, { text, _ ->
+            texts.add(text)
+        }, { })
+        assertTrue(texts.isEmpty())
+    }
+
+    // ---- classHighlighter tests ----
+
+    @Test
+    fun classHighlighterMapsKeyword() {
+        val result = classHighlighter.style(listOf(tags.keyword))
+        assertNotNull(result)
+        assertTrue(result.contains("tok-keyword"))
+    }
+
+    @Test
+    fun classHighlighterMapsString() {
+        val result = classHighlighter.style(listOf(tags.string))
+        assertNotNull(result)
+        assertTrue(result.contains("tok-string"))
+    }
+
+    @Test
+    fun classHighlighterMapsComment() {
+        val result = classHighlighter.style(listOf(tags.comment))
+        assertNotNull(result)
+        assertTrue(result.contains("tok-comment"))
+    }
+
+    @Test
+    fun classHighlighterMapsNumber() {
+        val result = classHighlighter.style(listOf(tags.number))
+        assertNotNull(result)
+        assertTrue(result.contains("tok-number"))
+    }
+
     @Test
     fun highlighterMultipleHighlighters() {
         val h1 = tagHighlighter(listOf(TagStyleRule(tags.keyword, "kw")))

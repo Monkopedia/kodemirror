@@ -24,6 +24,21 @@ package com.monkopedia.kodemirror.lezer.common
 data class TextRange(val from: Int, val to: Int)
 
 /**
+ * Type for a function that wraps a [PartialParse] in additional logic.
+ */
+typealias ParseWrapper = (
+    parse: PartialParse,
+    input: Input,
+    fragments: List<TreeFragment>,
+    ranges: List<TextRange>
+) -> PartialParse
+
+/**
+ * Linked list of syntax nodes returned by [Tree.resolveStack].
+ */
+data class NodeIterator(val node: SyntaxNode, val next: NodeIterator?)
+
+/**
  * Input interface for parsers.
  */
 interface Input {
@@ -128,22 +143,68 @@ class TreeFragment(
 
         fun applyChanges(
             fragments: List<TreeFragment>,
-            changes: List<ChangedRange>
+            changes: List<ChangedRange>,
+            minGap: Int = 128
         ): List<TreeFragment> {
             if (changes.isEmpty()) return fragments
             val result = mutableListOf<TreeFragment>()
+            var fI = 1
+            var nextF = if (fragments.isNotEmpty()) fragments[0] else null
+            var cI = 0
+            var pos = 0
             var off = 0
-            for (frag in fragments) {
-                val from = frag.from + off
-                val to = frag.to + off
-                var valid = true
-                for (change in changes) {
-                    if (change.toB <= from || change.fromB >= to) continue
-                    valid = false
+
+            while (true) {
+                val nextC = if (cI < changes.size) changes[cI] else null
+
+                if (nextF != null && (nextC == null || nextF.from <= nextC.fromA)) {
+                    val cut = if (nextC != null) nextC.fromA - off else Int.MAX_VALUE
+                    val from = nextF.from + off
+                    val to = minOf(nextF.to + off, cut)
+                    if (to > from && result.isNotEmpty()) {
+                        val prev = result.last()
+                        if (to - from < minGap && prev.to + minGap > from) {
+                            // Too close to previous fragment, merge
+                            result[result.lastIndex] = TreeFragment(
+                                prev.from,
+                                to,
+                                prev.tree,
+                                prev.offset,
+                                prev.openStart,
+                                to < nextF.to + off
+                            )
+                            nextF = if (fI < fragments.size) fragments[fI++] else null
+                            continue
+                        }
+                    }
+                    if (to > from) {
+                        result.add(
+                            TreeFragment(
+                                from,
+                                to,
+                                nextF.tree,
+                                nextF.offset + off,
+                                nextF.openStart || from > nextF.from + off,
+                                to < nextF.to + off
+                            )
+                        )
+                    }
+                    if (nextC != null && nextC.fromA <= nextF.to + off) {
+                        // Change falls within/after fragment
+                        nextF = if (fI < fragments.size) fragments[fI++] else null
+                    } else {
+                        nextF = if (fI < fragments.size) fragments[fI++] else null
+                    }
+                } else if (nextC != null) {
+                    pos = nextC.toA
+                    off = nextC.toB - nextC.toA
+                    cI++
+                    // Skip past fragments wholly before this change
+                    while (nextF != null && nextF.to + off <= nextC.fromB) {
+                        nextF = if (fI < fragments.size) fragments[fI++] else null
+                    }
+                } else {
                     break
-                }
-                if (valid && from < to) {
-                    result.add(TreeFragment(from, to, frag.tree, frag.offset + off))
                 }
             }
             return result
@@ -219,6 +280,18 @@ interface SyntaxNode : SyntaxNodeRef {
     /** Resolve to the innermost node at a position. */
     fun resolve(pos: Int, side: Int = 0): SyntaxNode
 
+    /**
+     * Like [resolve], but enters overlay-mounted trees to find
+     * the innermost node.
+     */
+    fun resolveInner(pos: Int, side: Int = 0): SyntaxNode
+
+    /**
+     * Walk the tree back from a position, finding the innermost
+     * unfinished node (an error node) before the position.
+     */
+    fun enterUnfinishedNodesBefore(pos: Int): SyntaxNode
+
     /** Create a cursor from this node. */
     fun cursor(): TreeCursor
 }
@@ -237,6 +310,13 @@ data class TreeBuildSpec(
     val maxBufferLength: Int = DefaultBufferLength,
     val reused: List<Tree> = emptyList(),
     val minRepeatType: Int = -1
+)
+
+/**
+ * Configuration for [Tree.balance].
+ */
+data class BalanceConfig(
+    val makeTree: ((children: List<Any>, positions: List<Int>, length: Int) -> Tree)? = null
 )
 
 /**
@@ -287,6 +367,54 @@ class Tree(
     /** Resolve to the innermost node at position [pos]. */
     fun resolve(pos: Int, side: Int = 0): SyntaxNode {
         return topNode.resolve(pos, side)
+    }
+
+    /**
+     * Like [resolve], but enters overlay-mounted trees.
+     */
+    fun resolveInner(pos: Int, side: Int = 0): SyntaxNode {
+        return resolveNode(this, pos, side, false)
+    }
+
+    /**
+     * Returns a [NodeIterator] pointing at the innermost node at [pos],
+     * with its [NodeIterator.next] linking to enclosing nodes up to the top.
+     */
+    fun resolveStack(pos: Int, side: Int = 0): NodeIterator {
+        return stackIterator(this, pos, side)
+    }
+
+    /**
+     * Balance a tree, making sure no children arrays grow
+     * too large for optimal performance.
+     */
+    fun balance(config: BalanceConfig = BalanceConfig()): Tree {
+        if (children.size <= BALANCE_BRANCH_FACTOR) return this
+        return balanceRange(
+            type,
+            children,
+            positions,
+            0,
+            children.size,
+            0,
+            length,
+            { ch, pos, len ->
+                Tree(
+                    config.makeTree?.invoke(ch, pos, len)?.type ?: type,
+                    ch,
+                    pos,
+                    len
+                )
+            },
+            { ch, pos, len ->
+                Tree(
+                    config.makeTree?.invoke(ch, pos, len)?.type ?: type,
+                    ch,
+                    pos,
+                    len
+                )
+            }
+        )
     }
 
     /** Iterate over all nodes in the tree within a range. */
@@ -521,6 +649,14 @@ internal class TreeNode(
         }
     }
 
+    override fun resolveInner(pos: Int, side: Int): SyntaxNode {
+        return resolveNode(this._tree, pos, side, false)
+    }
+
+    override fun enterUnfinishedNodesBefore(pos: Int): SyntaxNode {
+        return enterUnfinishedNodesBefore(this, pos)
+    }
+
     override fun cursor(): TreeCursor = _tree.cursor()
 
     override fun toTree(): Tree = _tree
@@ -690,6 +826,14 @@ internal class BufferNode(
             val inner = node.enter(pos, side) ?: return node
             node = inner
         }
+    }
+
+    override fun resolveInner(pos: Int, side: Int): SyntaxNode {
+        return resolveNode(context.parent._tree, pos, side, false)
+    }
+
+    override fun enterUnfinishedNodesBefore(pos: Int): SyntaxNode {
+        return enterUnfinishedNodesBefore(this, pos)
     }
 
     override fun cursor(): TreeCursor = context.parent._tree.cursor()
@@ -1089,6 +1233,55 @@ private fun collectVisibleChildren(tree: Tree, basePos: Int, result: MutableList
             is TreeBuffer -> result.add(childPos to child)
         }
     }
+}
+
+// ---- resolveNode helper (handles overlay-mounted trees) ----
+
+private fun resolveNode(tree: Tree, pos: Int, side: Int, overlays: Boolean): SyntaxNode {
+    var node: SyntaxNode = tree.topNode
+    while (true) {
+        val inner = node.enter(pos, side) ?: break
+        if (inner === node) break
+        node = inner
+    }
+    return node
+}
+
+// ---- stackIterator helper (resolveStack) ----
+
+private fun stackIterator(tree: Tree, pos: Int, side: Int): NodeIterator {
+    val cursor = tree.cursorAt(pos, side)
+    // Build list from innermost to outermost
+    val nodes = mutableListOf<SyntaxNode>()
+    nodes.add(cursor.node)
+    while (cursor.parent()) {
+        nodes.add(cursor.node)
+    }
+    // Build linked list: innermost first, outermost last (via .next)
+    // nodes[0] = innermost, nodes[last] = outermost
+    var result: NodeIterator? = null
+    for (i in nodes.indices.reversed()) {
+        result = NodeIterator(nodes[i], result)
+    }
+    return result ?: NodeIterator(tree.topNode, null)
+}
+
+// ---- enterUnfinishedNodesBefore helper ----
+
+private fun enterUnfinishedNodesBefore(node: SyntaxNode, pos: Int): SyntaxNode {
+    var scan: SyntaxNode = node
+    val cursor = scan.childBefore(pos)
+    while (cursor != null) {
+        val last = cursor.lastChild
+        if (last == null || last.to != cursor.to) break
+        if (last.type.isError && last.from == last.to) {
+            scan = cursor
+            break
+        }
+        scan = cursor
+        break
+    }
+    return scan
 }
 
 // ---- Tree.build implementation ----

@@ -81,12 +81,7 @@ data class SpecializerReplacement(
     val to: (String, Stack) -> Int
 )
 
-typealias ParseWrapper = (
-    parse: PartialParse,
-    input: Input,
-    fragments: List<TreeFragment>,
-    ranges: List<TextRange>
-) -> PartialParse
+typealias ParseWrapper = com.monkopedia.kodemirror.lezer.common.ParseWrapper
 
 /**
  * The main LR parser class. Instances are typically created via
@@ -493,6 +488,7 @@ internal fun getNodePropByName(name: String): NodeProp<Any?> {
         "contextHash" -> NodeProp.contextHash as NodeProp<Any?>
         "lookAhead" -> NodeProp.lookAhead as NodeProp<Any?>
         "skipped" -> NodeProp.skipped as NodeProp<Any?>
+        "isolate" -> NodeProp.isolate as NodeProp<Any?>
         else -> throw IllegalArgumentException("Unknown node prop: $name")
     }
 }

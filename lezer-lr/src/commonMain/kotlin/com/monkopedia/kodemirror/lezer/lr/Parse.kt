@@ -100,7 +100,7 @@ class TokenCache(parser: LRParser, val stream: InputStream) {
         if (mainToken != null) return mainToken!!
         val token = CachedToken()
         token.start = stack.pos
-        token.end = stack.pos
+        token.end = minOf(stack.pos + 1, stream.end)
         token.value = if (stack.pos == stream.end) {
             stack.p.parser.eofTerm
         } else {
@@ -491,37 +491,53 @@ class Parse(
         newStacks: MutableList<Stack>
     ): Stack? {
         var finished: Stack? = null
+        var restarted = false
 
         for (i in stacks.indices) {
             val stack = stacks[i]
-            val tokenValue = tokens[i * 2]
-            val tokenEnd = tokens[i * 2 + 1]
+            var tokenValue = tokens[i * 2]
+            var tokenEnd = tokens[i * 2 + 1]
+
+            // If dead-end, try restart (only once)
+            if (stack.deadEnd) {
+                if (restarted) continue
+                restarted = true
+                stack.restart()
+                val done = advanceFully(stack, newStacks)
+                if (done) continue
+            }
+
+            // Try force-reducing (up to ForceReduceLimit times) on a split
+            val force = stack.split()
+            var j = 0
+            while (j < Rec.ForceReduceLimit && force.forceReduce()) {
+                val done = advanceFully(force, newStacks)
+                if (done) break
+                j++
+            }
 
             // Try insert recovery
-            val insertStacks = stack.recoverByInsert(tokenValue)
-            for (inserted in insertStacks) {
+            for (inserted in stack.recoverByInsert(tokenValue)) {
                 advanceFully(inserted, newStacks)
             }
 
-            // If we have a dead end, try restart
-            if (stack.deadEnd) {
-                if (insertStacks.isEmpty()) {
-                    stack.restart()
-                    advanceFully(stack, newStacks)
+            // Try delete recovery only if not at end of stream
+            if (stream.end > stack.pos) {
+                if (tokenEnd == stack.pos) {
+                    tokenEnd++
+                    tokenValue = Term.Err
                 }
-                continue
+                val deletedStack = stack.split()
+                deletedStack.recoverByDelete(tokenValue, tokenEnd)
+                pushStackDedup(deletedStack, newStacks)
+            } else if (finished == null || finished.score < force.score) {
+                finished = force
             }
-
-            // Try delete recovery
-            val deletedStack = stack.split()
-            deletedStack.recoverByDelete(tokenValue, tokenEnd)
-            pushStackDedup(deletedStack, newStacks)
         }
 
         // Check if any recovered stack has finished
-        if (newStacks.isNotEmpty()) {
-            finished = findFinished(newStacks)
-        }
+        val foundFinished = findFinished(newStacks)
+        if (foundFinished != null) finished = foundFinished
 
         return finished
     }
@@ -578,7 +594,13 @@ fun pushStackDedup(stack: Stack, newStacks: MutableList<Stack>) {
 fun findFinished(stacks: List<Stack>): Stack? {
     var best: Stack? = null
     for (stack in stacks) {
-        if (stack.p.parser.stateFlag(stack.state, StateFlag.Accepting)) {
+        val stopped = stack.p.stoppedAt
+        if ((
+                stack.pos == stack.p.stream.end ||
+                    stopped != null && stack.pos > stopped
+                ) &&
+            stack.p.parser.stateFlag(stack.state, StateFlag.Accepting)
+        ) {
             if (best == null || best.score < stack.score) {
                 best = stack
             }

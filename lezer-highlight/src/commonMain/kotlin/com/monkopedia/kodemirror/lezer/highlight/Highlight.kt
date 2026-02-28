@@ -269,6 +269,82 @@ private fun highlightTags(highlighters: List<Highlighter>, tags: List<Tag>): Str
     return result
 }
 
+/**
+ * Highlight the given [code] string using the provided [tree] and
+ * [highlighter], calling [putText] for each piece of text with its
+ * CSS classes, and [putBreak] at line breaks.
+ */
+fun highlightCode(
+    code: String,
+    tree: Tree,
+    highlighter: Highlighter,
+    putText: (text: String, classes: String) -> Unit,
+    putBreak: () -> Unit,
+    from: Int = 0,
+    to: Int = code.length
+) {
+    var pos = from
+    fun flush(flushTo: Int, classes: String) {
+        if (flushTo <= pos) return
+        var text = code.substring(pos, flushTo)
+        if (text.isNotEmpty()) {
+            val lines = text.split("\n")
+            for (i in lines.indices) {
+                if (i > 0) putBreak()
+                if (lines[i].isNotEmpty()) putText(lines[i], classes)
+            }
+        }
+        pos = flushTo
+    }
+    highlightTree(tree, highlighter, { styleFrom, styleTo, classes ->
+        flush(styleFrom, "")
+        flush(styleTo, classes)
+    }, from, to)
+    flush(to, "")
+}
+
+/**
+ * A pre-built [Highlighter] that maps highlighting tags to `tok-*`
+ * CSS class names.
+ */
+val classHighlighter: Highlighter = tagHighlighter(
+    listOf(
+        TagStyleRule(tags.link, "tok-link"),
+        TagStyleRule(tags.heading, "tok-heading"),
+        TagStyleRule(tags.emphasis, "tok-emphasis"),
+        TagStyleRule(tags.strong, "tok-strong"),
+        TagStyleRule(tags.keyword, "tok-keyword"),
+        TagStyleRule(tags.atom, "tok-atom"),
+        TagStyleRule(tags.bool, "tok-bool"),
+        TagStyleRule(tags.url, "tok-url"),
+        TagStyleRule(tags.labelName, "tok-labelName"),
+        TagStyleRule(tags.inserted, "tok-inserted"),
+        TagStyleRule(tags.deleted, "tok-deleted"),
+        TagStyleRule(tags.literal, "tok-literal"),
+        TagStyleRule(tags.string, "tok-string"),
+        TagStyleRule(tags.number, "tok-number"),
+        TagStyleRule(
+            listOf(tags.regexp, tags.escape, tags.special(tags.string)),
+            "tok-string2"
+        ),
+        TagStyleRule(tags.variableName, "tok-variableName"),
+        TagStyleRule(tags.local(tags.variableName), "tok-variableName2"),
+        TagStyleRule(tags.definition(tags.variableName), "tok-variableName tok-definition"),
+        TagStyleRule(tags.special(tags.variableName), "tok-variableName2"),
+        TagStyleRule(tags.definition(tags.propertyName), "tok-propertyName tok-definition"),
+        TagStyleRule(tags.typeName, "tok-typeName"),
+        TagStyleRule(tags.namespace, "tok-namespace"),
+        TagStyleRule(tags.className, "tok-className"),
+        TagStyleRule(tags.macroName, "tok-macroName"),
+        TagStyleRule(tags.propertyName, "tok-propertyName"),
+        TagStyleRule(tags.operator, "tok-operator"),
+        TagStyleRule(tags.comment, "tok-comment"),
+        TagStyleRule(tags.meta, "tok-meta"),
+        TagStyleRule(tags.invalid, "tok-invalid"),
+        TagStyleRule(tags.punctuation, "tok-punctuation")
+    )
+)
+
 private class HighlightBuilder(
     var at: Int,
     val highlighters: List<Highlighter>,
