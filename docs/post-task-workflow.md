@@ -5,7 +5,7 @@
 After completing implementation work, use a `general-purpose` subagent to handle routine verification and commit tasks. The subagent should:
 
 1. **Automatically fix**: ktlint violations, license headers (spotless)
-2. **Report failures**: test failures (defer to outer agent)
+2. **Fix test failures** if the fix is clear; only report back if there's no clear direction
 3. **Commit and push**: if all checks pass
 
 ## Subagent Prompt Template
@@ -20,7 +20,7 @@ Complete the post-implementation workflow for [TASK_DESCRIPTION]:
 
 2. Run tests:
    - Run `./gradlew check`
-   - If tests FAIL, STOP and report the failure details (do not attempt to fix tests)
+   - If tests FAIL, try to fix them. Only STOP and report if you don't have a clear direction.
    - If linting fails after step 1, fix any remaining issues
 
 3. Commit changes:
@@ -36,7 +36,7 @@ Complete the post-implementation workflow for [TASK_DESCRIPTION]:
 4. Push to remote:
    - Run `git push`
 
-IMPORTANT: If tests fail in step 2, STOP immediately and return the test output. Do not commit or push. The outer agent will handle test failures.
+IMPORTANT: If tests fail in step 2, try to fix them yourself. Only STOP and report if you don't have a clear direction for the fix. Do not commit or push until tests pass.
 ```
 
 ## Usage Example
@@ -56,7 +56,8 @@ invoke Task {
 
         2. Run tests:
            - Run `./gradlew check`
-           - If tests FAIL, STOP and report the failure details
+           - If tests FAIL, try to fix them. Only STOP and report if you
+             don't have a clear direction for the fix.
            - If linting fails, fix any remaining issues
 
         3. Commit changes:
@@ -65,8 +66,6 @@ invoke Task {
 
         4. Push to remote:
            - Run `git push`
-
-        IMPORTANT: If tests fail in step 2, STOP and return test output.
     """
 }
 ```
@@ -74,9 +73,9 @@ invoke Task {
 ## Error Handling
 
 - **ktlint/spotless failures**: Subagent reads error reports and fixes them (wrap long lines, add content to empty files, etc.)
-- **Test failures**: Subagent immediately stops and returns failure details to outer agent
+- **Test failures**: Subagent tries to fix them. Only escalates to outer agent if the fix direction is unclear.
 - **Git conflicts**: Subagent reports and stops (outer agent handles)
 
 ## Rationale
 
-This pattern separates routine mechanical tasks (formatting, linting) from semantic issues (test failures). The subagent can autonomously fix style issues using the error reports, but test failures require understanding the code logic, so those are escalated.
+This pattern delegates as much as possible to the subagent. Style issues are fixed automatically. Test failures should be attempted — the subagent has full access to read code and make fixes. Only truly ambiguous failures (unclear root cause, multiple possible fixes, architectural questions) should be escalated.

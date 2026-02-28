@@ -11,7 +11,7 @@ to handle the post-task workflow. See `docs/post-task-workflow.md` for the full 
 
 The subagent should:
 1. Fix code style automatically (spotlessApply, ktlintFormat, manual fixes for remaining issues)
-2. Run tests - if tests FAIL, stop and report back (do NOT fix tests)
+2. Run tests - if tests FAIL, try to fix them. Only stop and report if you don't have a clear direction.
 3. Commit changes with proper message format
 4. Push to remote
 
@@ -28,7 +28,8 @@ Task(subagent_type: "general-purpose", model: "sonnet", description: "Run post-t
 
     2. Run tests:
        - Run ./gradlew check
-       - If FAIL: STOP and report (do not fix tests)
+       - If FAIL: try to fix the failures yourself. Only STOP and report
+         if you don't have a clear direction for the fix.
 
     3. Commit:
        - git add .
@@ -39,6 +40,22 @@ Task(subagent_type: "general-purpose", model: "sonnet", description: "Run post-t
   """
 }
 ```
+
+### Screenshot Compare & Fix
+
+When the user asks to compare screenshots or fix visual differences, follow the workflow in
+`docs/screenshot-compare-workflow.md`. Summary:
+
+1. **Capture** both CodeMirror reference and Compose screenshots (skip reference if already captured)
+2. **Compare** by reading both PNGs for each scenario
+3. **Build a fix list** — one `TaskCreate` per visual difference, with scenario/description/severity
+4. **Report the list** to the user before starting fixes
+5. **Fix loop** — for each item: fix code, run post-task workflow (commit+push), then re-capture and re-compare
+6. **Repeat** until all scenarios match or a blocker is hit
+7. **Report final status** — what was fixed, what still differs, any blockers
+
+Each fix should be a single focused commit. If tests fail during the post-task workflow, try to fix them.
+Only stop and report if there's no clear direction for the fix.
 
 ### General
 
