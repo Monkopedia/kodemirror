@@ -30,6 +30,8 @@ group = "com.monkopedia.kodemirror"
 version = "0.1.0-SNAPSHOT"
 
 kotlin {
+    jvm()
+
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
         browser {

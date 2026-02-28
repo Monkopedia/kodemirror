@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Empty Placeholder</title>
+  <style>
+    body { margin: 0; padding: 0; background: #1e1e1e; }
+    #editor { width: 800px; height: 600px; }
+  </style>
+</head>
+<body>
+  <div id="editor"></div>
+
+  <script type="module">
+    import { EditorView, basicSetup } from "https://esm.sh/@codemirror/basic-setup@0.20.0";
+    import { placeholder } from "https://esm.sh/@codemirror/view@6.34.1";
+    import { oneDark } from "https://esm.sh/@codemirror/theme-one-dark@6.1.2";
+
+    new EditorView({
+      doc: "",
+      extensions: [
+        basicSetup,
+        oneDark,
+        placeholder("Enter your code here..."),
+      ],
+      parent: document.getElementById("editor"),
+    });
+  </script>
+</body>
+</html>

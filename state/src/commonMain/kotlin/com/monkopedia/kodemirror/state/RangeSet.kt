@@ -961,7 +961,7 @@ internal class LayerCursor<T : RangeValue>(
                     true
                 )
             if (!fwd || rangeIndex < ri) {
-                setRangeIndex(ri)
+                advanceRangeIndex(ri)
             }
         }
         next()
@@ -990,7 +990,7 @@ internal class LayerCursor<T : RangeValue>(
                 from = f
                 to = cp + chunk.to[rangeIndex]
                 value = chunk.value[rangeIndex]
-                setRangeIndex(rangeIndex + 1)
+                advanceRangeIndex(rangeIndex + 1)
                 if (minPoint < 0 ||
                     (
                         value!!.point &&
@@ -1003,7 +1003,7 @@ internal class LayerCursor<T : RangeValue>(
         }
     }
 
-    private fun setRangeIndex(index: Int) {
+    private fun advanceRangeIndex(index: Int) {
         if (index ==
             layer.chunk[chunkIndex].value.size
         ) {

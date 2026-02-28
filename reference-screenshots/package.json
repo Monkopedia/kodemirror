@@ -1,0 +1,11 @@
+{
+  "name": "kodemirror-reference-screenshots",
+  "private": true,
+  "scripts": {
+    "capture": "playwright test",
+    "install-browser": "playwright install chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0"
+  }
+}
