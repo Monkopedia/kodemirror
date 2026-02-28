@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Kodemirror Screenshot Comparison</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #111;
+      color: #eee;
+      padding: 24px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 8px;
+      font-size: 1.6rem;
+      font-weight: 600;
+    }
+    .subtitle {
+      text-align: center;
+      color: #888;
+      margin-bottom: 32px;
+      font-size: 0.9rem;
+    }
+    .scenario {
+      margin-bottom: 48px;
+      border: 1px solid #333;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .scenario-header {
+      background: #1a1a1a;
+      padding: 12px 20px;
+      border-bottom: 1px solid #333;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .scenario-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+    .scenario-badge {
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: #2a2a2a;
+      color: #aaa;
+    }
+    .comparison {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+    .panel {
+      position: relative;
+    }
+    .panel + .panel {
+      border-left: 1px solid #333;
+    }
+    .panel-label {
+      text-align: center;
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 6px 10px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .panel-label.ref { background: rgba(59, 130, 246, 0.8); }
+    .panel-label.compose { background: rgba(168, 85, 247, 0.8); }
+    .panel img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .controls {
+      text-align: center;
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .controls button {
+      background: #222;
+      color: #ccc;
+      border: 1px solid #444;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.15s;
+    }
+    .controls button:hover { background: #333; color: #fff; }
+    .controls button.active {
+      background: #3b82f6;
+      color: #fff;
+      border-color: #3b82f6;
+    }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <h1>Kodemirror Screenshot Comparison</h1>
+  <p class="subtitle">CodeMirror 6 (Playwright) vs Compose Multiplatform (Roborazzi)</p>
+
+  <div class="controls">
+    <button class="filter-btn active" data-filter="all">All</button>
+  </div>
+
+  <div id="scenarios"></div>
+
+  <script>
+    const scenarios = [
+      { name: "basic-dark", description: "Dark theme with line numbers" },
+      { name: "basic-light", description: "Light theme with line numbers" },
+      { name: "no-gutter", description: "No gutter / line numbers" },
+      { name: "selection", description: "Multi-line selection" },
+      { name: "active-line", description: "Cursor on line 7" },
+      { name: "empty-placeholder", description: "Empty editor with placeholder" },
+    ];
+
+    const container = document.getElementById("scenarios");
+    const controls = document.querySelector(".controls");
+
+    // Build filter buttons
+    scenarios.forEach(s => {
+      const btn = document.createElement("button");
+      btn.className = "filter-btn";
+      btn.dataset.filter = s.name;
+      btn.textContent = s.name;
+      controls.appendChild(btn);
+    });
+
+    // Build scenario cards
+    scenarios.forEach(s => {
+      const div = document.createElement("div");
+      div.className = "scenario";
+      div.dataset.scenario = s.name;
+      div.innerHTML = `
+        <div class="scenario-header">
+          <span class="scenario-name">${s.name}</span>
+          <span class="scenario-badge">${s.description}</span>
+        </div>
+        <div class="comparison">
+          <div class="panel">
+            <span class="panel-label ref">CodeMirror</span>
+            <img src="reference-screenshots/output/${s.name}.png" alt="CodeMirror: ${s.name}">
+          </div>
+          <div class="panel">
+            <span class="panel-label compose">Compose</span>
+            <img src="view/screenshots/compose/${s.name}.png" alt="Compose: ${s.name}">
+          </div>
+        </div>
+      `;
+      container.appendChild(div);
+    });
+
+    // Filter logic
+    controls.addEventListener("click", e => {
+      if (!e.target.matches(".filter-btn")) return;
+      const filter = e.target.dataset.filter;
+
+      controls.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+      e.target.classList.add("active");
+
+      document.querySelectorAll(".scenario").forEach(s => {
+        s.classList.toggle("hidden", filter !== "all" && s.dataset.scenario !== filter);
+      });
+    });
+  </script>
+</body>
+</html>

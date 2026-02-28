@@ -40,7 +40,7 @@ class NoGutterScreenshotTest {
                 EditorState.create(
                     EditorStateConfig(
                         doc = TestScenarios.SAMPLE_CODE.asDoc(),
-                        extensions = jsLanguageExtensions(light = true)
+                        extensions = jsLanguageExtensions(light = false)
                     )
                 )
             }

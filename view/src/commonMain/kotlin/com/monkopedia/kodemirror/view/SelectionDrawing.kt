@@ -49,8 +49,8 @@ fun Modifier.drawSelectionOverlay(
     lineTo: Int,
     theme: EditorTheme
 ): Modifier = this.drawWithContent {
-    drawContent()
     drawLineSelection(state, lineFrom, lineTo, theme)
+    drawContent()
 }
 
 private fun DrawScope.drawLineSelection(

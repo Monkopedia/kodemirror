@@ -55,7 +55,7 @@ class ActiveLineScreenshotTest {
                             listOf(
                                 lineNumbers,
                                 highlightActiveLine,
-                                TestScenarios.jsLanguageExtensions(light = true)
+                                TestScenarios.jsLanguageExtensions(light = false)
                             )
                         )
                     )

@@ -54,7 +54,7 @@ class SelectionScreenshotTest {
                         extensions = ExtensionList(
                             listOf(
                                 lineNumbers,
-                                TestScenarios.jsLanguageExtensions(light = true)
+                                TestScenarios.jsLanguageExtensions(light = false)
                             )
                         )
                     )

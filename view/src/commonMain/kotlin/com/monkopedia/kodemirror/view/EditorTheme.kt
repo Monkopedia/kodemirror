@@ -16,15 +16,21 @@
  * Originally based on CodeMirror 6 by Marijn Haverbeke, licensed under MIT.
  * See NOTICE file for details.
  */
+@file:OptIn(ExperimentalTextApi::class)
+
 package com.monkopedia.kodemirror.view
 
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.platform.SystemFont
 import androidx.compose.ui.unit.sp
 import com.monkopedia.kodemirror.state.Facet
+
+private val editorFontFamily = FontFamily(SystemFont("Courier New"))
 
 /**
  * Color/style tokens for the editor.  Passed through a [CompositionLocal] so
@@ -40,7 +46,7 @@ data class EditorTheme(
     /** Selection background color. */
     val selection: Color = Color(0xFF3E4451),
     /** Active line background highlight. */
-    val activeLineBackground: Color = Color(0xFF2C313A),
+    val activeLineBackground: Color = Color(0x0B6699FF),
     /** Gutter background. */
     val gutterBackground: Color = Color(0xFF282C34),
     /** Gutter foreground (line numbers). */
@@ -49,7 +55,7 @@ data class EditorTheme(
     val gutterActiveForeground: Color = Color(0xFFCCCCCC),
     /** Default text style for content. */
     val contentTextStyle: TextStyle = TextStyle(
-        fontFamily = FontFamily.Monospace,
+        fontFamily = editorFontFamily,
         fontSize = 14.sp,
         lineHeight = (14 * 1.4).sp,
         color = Color(0xFFABB2BF)
@@ -72,7 +78,7 @@ val lightEditorTheme: EditorTheme = EditorTheme(
     gutterForeground = Color(0xFF6C6C6C),
     gutterActiveForeground = Color(0xFF333333),
     contentTextStyle = TextStyle(
-        fontFamily = FontFamily.Monospace,
+        fontFamily = editorFontFamily,
         fontSize = 14.sp,
         lineHeight = (14 * 1.4).sp,
         color = Color(0xFF000000)
