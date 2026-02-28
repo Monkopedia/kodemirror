@@ -53,6 +53,8 @@ data class EditorTheme(
     val gutterForeground: Color = Color(0xFF7D8799),
     /** Gutter active foreground. */
     val gutterActiveForeground: Color = Color(0xFFCCCCCC),
+    /** Gutter right border color. */
+    val gutterBorderColor: Color = Color.Transparent,
     /** Default text style for content. */
     val contentTextStyle: TextStyle = TextStyle(
         fontFamily = editorFontFamily,
@@ -77,6 +79,7 @@ val lightEditorTheme: EditorTheme = EditorTheme(
     gutterBackground = Color(0xFFF5F5F5),
     gutterForeground = Color(0xFF6C6C6C),
     gutterActiveForeground = Color(0xFF333333),
+    gutterBorderColor = Color(0xFFDDDDDD),
     contentTextStyle = TextStyle(
         fontFamily = editorFontFamily,
         fontSize = 13.sp,

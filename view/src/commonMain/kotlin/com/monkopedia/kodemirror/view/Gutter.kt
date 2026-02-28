@@ -26,6 +26,9 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.state.Extension
@@ -80,6 +83,17 @@ fun GutterView(view: EditorView, lineNumber: Int, modifier: Modifier = Modifier)
     Box(
         modifier = modifier
             .background(theme.gutterBackground)
+            .drawBehind {
+                val borderColor = theme.gutterBorderColor
+                if (borderColor != Color.Transparent) {
+                    drawLine(
+                        color = borderColor,
+                        start = Offset(size.width - 0.5f, 0f),
+                        end = Offset(size.width - 0.5f, size.height),
+                        strokeWidth = 1f
+                    )
+                }
+            }
             .padding(start = 5.dp, end = 3.dp),
         contentAlignment = Alignment.CenterEnd
     ) {

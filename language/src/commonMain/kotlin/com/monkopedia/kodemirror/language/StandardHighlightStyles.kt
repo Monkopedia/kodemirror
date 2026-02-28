@@ -104,12 +104,14 @@ val oneDarkHighlightStyle = HighlightStyle.define(
     listOf(
         TagStyleSpec(tags.keyword, SpanStyle(color = Color(0xFFC678DD))),
         TagStyleSpec(
-            listOf(tags.name, tags.deleted, tags.character, tags.macroName),
+            listOf(
+                tags.name,
+                tags.deleted,
+                tags.character,
+                tags.propertyName,
+                tags.macroName
+            ),
             SpanStyle(color = Color(0xFFE06C75))
-        ),
-        TagStyleSpec(
-            listOf(tags.propertyName, tags.definition(tags.variableName)),
-            SpanStyle(color = Color(0xFFE5C07B))
         ),
         TagStyleSpec(
             listOf(tags.function(tags.variableName), tags.labelName),
@@ -148,7 +150,10 @@ val oneDarkHighlightStyle = HighlightStyle.define(
             ),
             SpanStyle(color = Color(0xFF56B6C2))
         ),
-        TagStyleSpec(tags.comment, SpanStyle(color = Color(0xFF5C6370))),
+        TagStyleSpec(
+            listOf(tags.meta, tags.comment),
+            SpanStyle(color = Color(0xFF7D8799))
+        ),
         TagStyleSpec(tags.strong, SpanStyle(fontWeight = FontWeight.Bold)),
         TagStyleSpec(tags.emphasis, SpanStyle(fontStyle = FontStyle.Italic)),
         TagStyleSpec(
