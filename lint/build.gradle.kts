@@ -14,5 +14,9 @@ kotlin {
             implementation(compose.runtime)
             implementation(libs.kotlinx.datetime)
         }
+        commonTest.dependencies {
+            implementation(project(":state"))
+            implementation(project(":view"))
+        }
     }
 }

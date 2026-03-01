@@ -15,5 +15,13 @@ kotlin {
             implementation(compose.foundation)
             implementation(compose.runtime)
         }
+        commonTest.dependencies {
+            implementation(project(":state"))
+        }
+        jvmTest.dependencies {
+            implementation(kotlin("test"))
+            implementation(project(":state"))
+            implementation(project(":view"))
+        }
     }
 }
