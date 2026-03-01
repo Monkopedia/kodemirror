@@ -126,6 +126,11 @@ fun EditorView(state: EditorState, onUpdate: (Transaction) -> Unit, modifier: Mo
         0.dp
     }
 
+    // Content height in px (top padding + items + bottom padding)
+    val contentHeightPx = with(density) {
+        (4.dp + lineHeightDp * columnItems.size + 4.dp).toPx()
+    }
+
     CompositionLocalProvider(LocalEditorTheme provides theme) {
         Box(
             modifier = modifier
@@ -133,15 +138,18 @@ fun EditorView(state: EditorState, onUpdate: (Transaction) -> Unit, modifier: Mo
                 .drawWithContent {
                     // Editor background
                     drawRect(theme.background)
-                    // Full-height gutter background strip + border
+                    // Gutter background strip — only as tall as content
                     if (hasGutters) {
                         val w = gutterWidthDp.toPx()
+                        val contentH = contentHeightPx.coerceAtMost(
+                            size.height
+                        )
                         drawRect(
                             color = theme.gutterBackground,
                             topLeft = Offset.Zero,
                             size = androidx.compose.ui.geometry.Size(
                                 w,
-                                size.height
+                                contentH
                             )
                         )
                         val bc = theme.gutterBorderColor
@@ -149,7 +157,10 @@ fun EditorView(state: EditorState, onUpdate: (Transaction) -> Unit, modifier: Mo
                             drawLine(
                                 color = bc,
                                 start = Offset(w - 0.5f, 0f),
-                                end = Offset(w - 0.5f, size.height),
+                                end = Offset(
+                                    w - 0.5f,
+                                    contentH
+                                ),
                                 strokeWidth = 1f
                             )
                         }
