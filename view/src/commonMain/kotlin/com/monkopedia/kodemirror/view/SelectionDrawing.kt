@@ -25,6 +25,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.text.TextLayoutResult
 import com.monkopedia.kodemirror.state.EditorState
 
 /** Extension to select the draw-selection extension. */
@@ -41,15 +42,17 @@ val drawSelection: com.monkopedia.kodemirror.state.Extension =
  * @param lineFrom Document offset of the start of this line.
  * @param lineTo  Document offset of the end of this line.
  * @param theme  Editor theme for colors.
+ * @param textLayoutResult Layout result for accurate character positioning.
  */
 @Composable
 fun Modifier.drawSelectionOverlay(
     state: EditorState,
     lineFrom: Int,
     lineTo: Int,
-    theme: EditorTheme
+    theme: EditorTheme,
+    textLayoutResult: TextLayoutResult? = null
 ): Modifier = this.drawWithContent {
-    drawLineSelection(state, lineFrom, lineTo, theme)
+    drawLineSelection(state, lineFrom, lineTo, theme, textLayoutResult)
     drawContent()
 }
 
@@ -57,37 +60,47 @@ private fun DrawScope.drawLineSelection(
     state: EditorState,
     lineFrom: Int,
     lineTo: Int,
-    theme: EditorTheme
+    theme: EditorTheme,
+    textLayoutResult: TextLayoutResult?
 ) {
     val selection = state.selection
     for (range in selection.ranges) {
         if (range.empty) {
             // Draw cursor if it falls on this line
             if (range.head in lineFrom..lineTo) {
-                drawLineCursor(range.head - lineFrom, theme.cursor)
+                drawLineCursor(range.head - lineFrom, theme.cursor, textLayoutResult)
             }
         } else {
             // Draw selection highlight if it overlaps this line
             val selFrom = maxOf(range.from, lineFrom)
             val selTo = minOf(range.to, lineTo)
             if (selFrom < selTo || (selFrom == selTo && selFrom > lineFrom)) {
+                val extendsToNextLine = range.to > lineTo
                 drawLineSelectionRange(
                     selFrom - lineFrom,
                     selTo - lineFrom,
                     lineTo - lineFrom,
-                    theme.selection
+                    theme.selection,
+                    textLayoutResult,
+                    extendsToNextLine
                 )
             }
         }
     }
 }
 
-private fun DrawScope.drawLineCursor(offsetInLine: Int, cursorColor: Color) {
-    // Approximate cursor x position from character offset
-    val lineWidth = size.width
+private fun DrawScope.drawLineCursor(
+    offsetInLine: Int,
+    cursorColor: Color,
+    textLayoutResult: TextLayoutResult?
+) {
     val lineHeight = size.height
-    // Simple proportional estimate (will be refined with TextLayoutResult)
-    val x = 0f // Cursor at start if offset is 0
+    val textLen = textLayoutResult?.layoutInput?.text?.length
+    val x = if (textLayoutResult != null && textLen != null && offsetInLine <= textLen) {
+        textLayoutResult.getHorizontalPosition(offsetInLine, true)
+    } else {
+        0f
+    }
     drawLine(
         color = cursorColor,
         start = Offset(x, 0f),
@@ -100,26 +113,39 @@ private fun DrawScope.drawLineSelectionRange(
     fromOffset: Int,
     toOffset: Int,
     lineLength: Int,
-    selectionColor: Color
+    selectionColor: Color,
+    textLayoutResult: TextLayoutResult?,
+    extendsToNextLine: Boolean
 ) {
-    val lineWidth = size.width
     val lineHeight = size.height
+    val textLen = textLayoutResult?.layoutInput?.text?.length ?: lineLength
 
-    // If the selection spans the entire line, highlight the full width
-    val startFraction = if (lineLength > 0) {
-        fromOffset.toFloat() / lineLength
+    val x: Float
+    val endX: Float
+
+    if (textLayoutResult != null) {
+        x = textLayoutResult.getHorizontalPosition(
+            fromOffset.coerceAtMost(textLen),
+            true
+        )
+        endX = if (extendsToNextLine) {
+            // Selection continues to next line — extend to full container width
+            size.width
+        } else {
+            textLayoutResult.getHorizontalPosition(
+                toOffset.coerceAtMost(textLen),
+                true
+            )
+        }
     } else {
-        0f
-    }
-    val endFraction = if (lineLength > 0) {
-        toOffset.toFloat() / lineLength
-    } else {
-        1f
+        // Fallback: fraction-based (inaccurate but better than nothing)
+        val startFraction = if (lineLength > 0) fromOffset.toFloat() / lineLength else 0f
+        val endFraction = if (lineLength > 0) toOffset.toFloat() / lineLength else 1f
+        x = startFraction * size.width
+        endX = if (extendsToNextLine) size.width else endFraction * size.width
     }
 
-    val x = startFraction * lineWidth
-    val w = (endFraction - startFraction) * lineWidth
-
+    val w = endX - x
     drawRect(
         color = selectionColor,
         topLeft = Offset(x, 0f),

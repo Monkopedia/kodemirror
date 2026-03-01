@@ -36,6 +36,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -149,6 +150,7 @@ fun EditorView(state: EditorState, onUpdate: (Transaction) -> Unit, modifier: Mo
                             val capturedTop = lineTopPx
                             val capturedLineNum = item.lineNumber
                             val capturedFrom = item.from
+                            var textLayout by remember { mutableStateOf<TextLayoutResult?>(null) }
 
                             var lineModifier: Modifier = Modifier
                                 .fillMaxWidth()
@@ -177,13 +179,15 @@ fun EditorView(state: EditorState, onUpdate: (Transaction) -> Unit, modifier: Mo
                                             state,
                                             item.from,
                                             item.to,
-                                            theme
+                                            theme,
+                                            textLayout
                                         )
                                 ) {
                                     BasicText(
                                         text = item.content,
                                         style = theme.contentTextStyle,
                                         onTextLayout = { result: TextLayoutResult ->
+                                            textLayout = result
                                             lineLayoutCache.store(
                                                 capturedLineNum,
                                                 capturedFrom,
