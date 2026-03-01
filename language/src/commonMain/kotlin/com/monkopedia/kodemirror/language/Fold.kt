@@ -37,6 +37,7 @@ import com.monkopedia.kodemirror.view.EditorView
 import com.monkopedia.kodemirror.view.KeyBinding
 import com.monkopedia.kodemirror.view.ReplaceDecorationSpec
 import com.monkopedia.kodemirror.view.WidgetType
+import com.monkopedia.kodemirror.view.decorations
 
 /** A range that can be folded. */
 data class FoldRange(val from: Int, val to: Int)
@@ -141,7 +142,8 @@ val foldState: StateField<DecorationSet> = StateField.define(
                 }
             }
             result
-        }
+        },
+        provide = { field -> decorations.from(field) }
     )
 )
 
@@ -320,11 +322,16 @@ fun foldGutter(): Extension {
                     cssClass = "cm-foldGutter",
                     lineMarker = { view, lineFrom ->
                         val state = view.state
+                        val line = state.doc.lineAt(lineFrom)
                         val folded = foldedRanges(state)
                         var hasFold = false
-                        folded.between(lineFrom, lineFrom) { _, _, _ ->
-                            hasFold = true
-                            false
+                        folded.between(lineFrom, line.to) { from, _, _ ->
+                            if (from >= lineFrom && from <= line.to) {
+                                hasFold = true
+                                false
+                            } else {
+                                true
+                            }
                         }
                         if (hasFold) {
                             FoldGutterMarker(folded = true)
@@ -349,7 +356,7 @@ private class FoldGutterMarker(val folded: Boolean) :
     @androidx.compose.runtime.Composable
     override fun Content(theme: com.monkopedia.kodemirror.view.EditorTheme) {
         androidx.compose.foundation.text.BasicText(
-            text = if (folded) "\u25B6" else "\u25BC",
+            text = if (folded) "\u203A" else "\u2304",
             style = theme.contentTextStyle.copy(
                 color = theme.gutterForeground
             )
