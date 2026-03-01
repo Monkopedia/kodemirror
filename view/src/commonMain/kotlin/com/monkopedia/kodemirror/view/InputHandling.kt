@@ -112,24 +112,93 @@ private fun keyName(key: Key): String = when (key) {
 }
 
 /**
+ * Resolve the effective key name for a binding on the current platform.
+ *
+ * Prefers platform-specific overrides (mac/linux/win) when available,
+ * falling back to the generic [KeyBinding.key].
+ */
+private fun resolveBindingKey(binding: KeyBinding): String? {
+    val osName = currentOs
+    val platformKey = when {
+        osName.contains("mac", ignoreCase = true) ||
+            osName.contains("darwin", ignoreCase = true) -> binding.mac
+        osName.contains("win", ignoreCase = true) -> binding.win
+        osName.contains("linux", ignoreCase = true) ||
+            osName.contains("nux", ignoreCase = true) -> binding.linux
+        else -> null
+    }
+    return platformKey ?: binding.key
+}
+
+/**
+ * The current operating system name, used to resolve platform-specific
+ * key bindings. Set this to override automatic detection.
+ *
+ * Recognized values: `"Mac"`, `"Linux"`, `"Windows"`.
+ */
+var currentOs: String = platformOsName()
+
+/**
  * Dispatch a key event to the view's key bindings.
  *
  * Returns true if the event was handled (the composable should then call
  * `onKeyEvent { true }` to consume the event).
+ *
+ * Checks platform-specific key overrides (mac/linux/win), the shift
+ * variant, and the any handler.
  */
 fun handleKeyEvent(view: EditorView, event: KeyEvent): Boolean {
     if (event.type != KeyEventType.KeyDown) return false
     val name = keyEventToName(event)
+    val isShift = event.isShiftPressed
     val bindings = view.state.facet(keymap)
 
+    // Build the name without Shift for shift-variant matching
+    val nameWithoutShift = if (isShift) {
+        keyEventToNameWithoutShift(event)
+    } else {
+        null
+    }
+
     for (binding in bindings) {
-        val bindingKey = binding.key ?: continue
+        val bindingKey = resolveBindingKey(binding) ?: continue
+
+        // Direct match: full name matches binding key
         if (bindingKey == name) {
             val result = binding.run?.invoke(view) ?: false
             if (result) return true
         }
+
+        // Shift variant: event has Shift, and the base key (without Shift)
+        // matches. Call binding.shift if available.
+        if (isShift && nameWithoutShift != null &&
+            binding.shift != null && bindingKey == nameWithoutShift
+        ) {
+            val result = binding.shift.invoke(view)
+            if (result) return true
+        }
+
+        // Any handler: called for every key event matching the base key
+        if (binding.any != null && bindingKey == name) {
+            val result = binding.any.invoke(view, event)
+            if (result) return true
+        }
     }
     return false
+}
+
+/**
+ * Build a key name from a [KeyEvent] with the Shift modifier stripped.
+ */
+private fun keyEventToNameWithoutShift(event: KeyEvent): String {
+    val parts = mutableListOf<String>()
+    if (event.isAltPressed) parts.add("Alt")
+    if (event.isCtrlPressed) parts.add("Ctrl")
+    if (event.isMetaPressed) parts.add("Meta")
+    // Shift intentionally omitted
+    val name = keyName(event.key)
+    parts.add(name)
+    return parts.joinToString("-")
 }
 
 /**
