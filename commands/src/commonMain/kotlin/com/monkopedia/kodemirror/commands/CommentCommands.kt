@@ -110,7 +110,8 @@ val blockUncomment: (EditorView) -> Boolean = { view ->
 
 /** Key bindings for comment commands. */
 val commentKeymap: List<KeyBinding> = listOf(
-    KeyBinding(key = "Ctrl-/", mac = "Meta-/", run = toggleComment)
+    KeyBinding(key = "Ctrl-/", mac = "Meta-/", run = toggleComment),
+    KeyBinding(key = "Alt-Shift-a", run = toggleBlockComment)
 )
 
 private fun getCommentTokens(state: EditorState): CommentTokens? {

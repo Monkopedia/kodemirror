@@ -101,7 +101,18 @@ val defaultKeymap: List<KeyBinding> = standardKeymap + commentKeymap + listOf(
     KeyBinding(key = "Ctrl-Shift-k", run = deleteLine),
 
     // Transpose
-    KeyBinding(key = "Ctrl-t", run = transposeChars)
+    KeyBinding(key = "Ctrl-t", run = transposeChars),
+
+    // Bracket matching
+    KeyBinding(
+        key = "Ctrl-Shift-\\",
+        mac = "Meta-Shift-\\",
+        run = cursorMatchingBracket,
+        shift = selectMatchingBracket
+    ),
+
+    // Select next occurrence
+    KeyBinding(key = "Ctrl-d", mac = "Meta-d", run = selectNextOccurrence)
 )
 
 /**

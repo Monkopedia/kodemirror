@@ -18,6 +18,8 @@
  */
 package com.monkopedia.kodemirror.commands
 
+import com.monkopedia.kodemirror.language.getIndentation
+import com.monkopedia.kodemirror.language.indentString
 import com.monkopedia.kodemirror.language.matchBrackets
 import com.monkopedia.kodemirror.language.syntaxTree
 import com.monkopedia.kodemirror.state.ChangeByRangeResult
@@ -431,7 +433,8 @@ val insertNewline: (EditorView) -> Boolean = { view ->
 }
 
 /**
- * Insert a newline and copy leading whitespace from the current line.
+ * Insert a newline and indent using language-aware indentation when
+ * available, falling back to copying leading whitespace.
  */
 val insertNewlineAndIndent: (EditorView) -> Boolean = { view ->
     if (view.state.readOnly) {
@@ -440,7 +443,12 @@ val insertNewlineAndIndent: (EditorView) -> Boolean = { view ->
         val state = view.state
         val spec = state.changeByRange { sel ->
             val line = state.doc.lineAt(sel.head)
-            val indent = line.text.takeWhile { it == ' ' || it == '\t' }
+            val cols = getIndentation(state, sel.head)
+            val indent = if (cols != null) {
+                indentString(state, cols)
+            } else {
+                line.text.takeWhile { it == ' ' || it == '\t' }
+            }
             val insert = state.lineBreak + indent
             ChangeByRangeResult(
                 range = EditorSelection.cursor(sel.from + insert.length),
@@ -669,7 +677,7 @@ val cursorMatchingBracket: (EditorView) -> Boolean = { view ->
         val match = before ?: after
         val end = match?.end
         if (end != null) {
-            EditorSelection.cursor(end.from)
+            EditorSelection.cursor(end.to)
         } else {
             sel
         }
@@ -686,7 +694,7 @@ val selectMatchingBracket: (EditorView) -> Boolean = { view ->
         val match = before ?: after
         val end = match?.end
         if (end != null) {
-            EditorSelection.range(sel.anchor, end.from)
+            EditorSelection.range(sel.anchor, end.to)
         } else {
             sel
         }
@@ -710,5 +718,91 @@ val selectParentSyntax: (EditorView) -> Boolean = { view ->
             node = node.parent ?: break
         }
         EditorSelection.range(node.from, node.to)
+    }
+}
+
+/**
+ * Select the next occurrence of the current selection text (Ctrl-D style).
+ *
+ * If the cursor has no selection, selects the current word.
+ * If the cursor has a selection, finds and adds the next occurrence
+ * of the selected text as an additional selection range.
+ */
+val selectNextOccurrence: (EditorView) -> Boolean = { view ->
+    val state = view.state
+    val sel = state.selection.main
+    if (sel.empty) {
+        // No selection: select the word at cursor
+        val word = state.wordAt(sel.head)
+        if (word != null) {
+            view.dispatch(
+                TransactionSpec(
+                    selection = SelectionSpec.EditorSelectionSpec(
+                        EditorSelection.single(word.from, word.to)
+                    ),
+                    userEvent = "select"
+                )
+            )
+            true
+        } else {
+            false
+        }
+    } else {
+        // Has selection: find next occurrence and add it
+        val searchText = state.sliceDoc(sel.from, sel.to)
+        val docLen = state.doc.length
+        val existingRanges = state.selection.ranges
+
+        // Search forward from the end of the current main selection
+        var found: Pair<Int, Int>? = null
+        val searchStart = sel.to
+        // Search from current position to end of document
+        for (pos in searchStart..docLen - searchText.length) {
+            if (state.sliceDoc(pos, pos + searchText.length) == searchText) {
+                // Make sure this range doesn't overlap an existing selection
+                val overlaps = existingRanges.any { r ->
+                    pos < r.to && pos + searchText.length > r.from
+                }
+                if (!overlaps) {
+                    found = pos to (pos + searchText.length)
+                    break
+                }
+            }
+        }
+        // Wrap around if not found
+        if (found == null) {
+            for (pos in 0..searchStart - 1) {
+                if (pos + searchText.length > docLen) break
+                if (state.sliceDoc(pos, pos + searchText.length) == searchText) {
+                    val overlaps = existingRanges.any { r ->
+                        pos < r.to && pos + searchText.length > r.from
+                    }
+                    if (!overlaps) {
+                        found = pos to (pos + searchText.length)
+                        break
+                    }
+                }
+            }
+        }
+
+        if (found != null) {
+            val newRange = EditorSelection.range(found.first, found.second)
+            val allRanges = existingRanges.toList() + newRange
+            view.dispatch(
+                TransactionSpec(
+                    selection = SelectionSpec.EditorSelectionSpec(
+                        EditorSelection.create(
+                            allRanges,
+                            allRanges.size - 1
+                        )
+                    ),
+                    scrollIntoView = true,
+                    userEvent = "select"
+                )
+            )
+            true
+        } else {
+            false
+        }
     }
 }
