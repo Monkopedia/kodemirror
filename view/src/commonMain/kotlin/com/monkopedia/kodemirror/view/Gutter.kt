@@ -20,6 +20,7 @@ package com.monkopedia.kodemirror.view
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
@@ -94,7 +95,7 @@ fun GutterView(view: EditorView, lineNumber: Int, modifier: Modifier = Modifier)
         }
         // Line number column
         Box(
-            modifier = Modifier.padding(start = 5.dp, end = 3.dp),
+            modifier = Modifier.fillMaxWidth().padding(start = 5.dp, end = 3.dp),
             contentAlignment = Alignment.CenterEnd
         ) {
             BasicText(
