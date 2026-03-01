@@ -34,8 +34,9 @@
   <div id="editor"></div>
 
   <script type="module">
-    import { basicSetup, EditorView } from "codemirror";
+    import { EditorView, lineNumbers, highlightActiveLine } from "@codemirror/view";
     import { javascript } from "@codemirror/lang-javascript";
+    import { syntaxHighlighting, defaultHighlightStyle } from "@codemirror/language";
 
     const doc = `function fibonacci(n) {
   if (n <= 1) return n;
@@ -52,7 +53,9 @@ console.log(results);`;
     new EditorView({
       doc,
       extensions: [
-        basicSetup,
+        lineNumbers(),
+        highlightActiveLine(),
+        syntaxHighlighting(defaultHighlightStyle),
         javascript(),
       ],
       parent: document.getElementById("editor"),
