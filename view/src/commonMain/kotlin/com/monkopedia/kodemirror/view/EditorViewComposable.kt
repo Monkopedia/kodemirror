@@ -136,7 +136,7 @@ fun EditorView(state: EditorState, onUpdate: (Transaction) -> Unit, modifier: Mo
         (4.dp + lineHeightDp * columnItems.size + 4.dp).toPx()
     }
 
-    CompositionLocalProvider(LocalEditorTheme provides theme) {
+    CompositionLocalProvider(LocalEditorTheme provides theme, LocalEditorView provides view) {
         Box(
             modifier = modifier
                 .fillMaxSize()

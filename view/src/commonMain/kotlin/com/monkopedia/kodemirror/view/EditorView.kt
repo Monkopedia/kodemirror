@@ -18,6 +18,7 @@
  */
 package com.monkopedia.kodemirror.view
 
+import androidx.compose.runtime.compositionLocalOf
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Facet
 import com.monkopedia.kodemirror.state.Transaction
@@ -107,6 +108,11 @@ class EditorView(
         val theme: Facet<EditorTheme, EditorTheme>
             get() = editorTheme
     }
+}
+
+/** CompositionLocal that provides the current [EditorView] to panel and tooltip composables. */
+val LocalEditorView = compositionLocalOf<EditorView> {
+    error("No EditorView provided")
 }
 
 /** A simple axis-aligned rectangle used for coordinate results. */
