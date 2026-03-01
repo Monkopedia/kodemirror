@@ -152,7 +152,7 @@ private fun prevClusterBreak(str: String, pos: Int, includeExtending: Boolean): 
     @Suppress("NAME_SHADOWING")
     var pos = pos
     while (pos > 0) {
-        val found = nextClusterBreak(str, pos - 2, includeExtending)
+        val found = nextClusterBreak(str, maxOf(pos - 2, 0), includeExtending)
         if (found < pos) return found
         pos--
     }

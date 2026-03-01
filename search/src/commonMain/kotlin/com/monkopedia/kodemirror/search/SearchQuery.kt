@@ -29,6 +29,8 @@ import com.monkopedia.kodemirror.state.EditorState
  * @param regexp If true and [literal] is false, treat [search] as a regex pattern.
  * @param replace The replacement string.
  * @param wholeWord If true, only match whole words.
+ * @param test Optional filter callback. When set, only matches for which
+ *   `test(from, to, state)` returns true are included.
  */
 data class SearchQuery(
     val search: String = "",
@@ -36,7 +38,8 @@ data class SearchQuery(
     val literal: Boolean = false,
     val regexp: Boolean = false,
     val replace: String = "",
-    val wholeWord: Boolean = false
+    val wholeWord: Boolean = false,
+    val test: ((from: Int, to: Int, state: EditorState) -> Boolean)? = null
 ) {
     /** Whether this query is non-empty and (if regex) syntactically valid. */
     val valid: Boolean
@@ -65,7 +68,7 @@ data class SearchQuery(
         from: Int = 0,
         to: Int = state.doc.length
     ): Iterator<SearchMatch> {
-        return if (regexp && !literal) {
+        val base = if (regexp && !literal) {
             val options = if (caseSensitive) emptySet() else setOf(RegexOption.IGNORE_CASE)
             RegExpCursor(state.doc, search, options, from, to)
         } else {
@@ -74,12 +77,10 @@ data class SearchQuery(
             } else {
                 { it.lowercase() }
             }
-            if (wholeWord) {
-                WholeWordSearchCursor(state.doc, search, from, to, normalize)
-            } else {
-                SearchCursor(state.doc, search, from, to, normalize)
-            }
+            SearchCursor(state.doc, search, from, to, normalize)
         }
+        val cursor = if (wholeWord) WholeWordSearchCursor(base, state.doc) else base
+        return if (test != null) FilteredSearchCursor(cursor, test, state) else cursor
     }
 
     /**
@@ -131,16 +132,12 @@ data class SearchQuery(
 
 /**
  * A search cursor that only matches whole words (bounded by non-word characters).
+ * Wraps any [Iterator]<[SearchMatch]> and filters to whole-word boundaries.
  */
 internal class WholeWordSearchCursor(
-    text: com.monkopedia.kodemirror.state.Text,
-    query: String,
-    from: Int,
-    to: Int,
-    normalize: (String) -> String
+    private val inner: Iterator<SearchMatch>,
+    private val doc: com.monkopedia.kodemirror.state.Text
 ) : Iterator<SearchMatch> {
-    private val inner = SearchCursor(text, query, from, to, normalize)
-    private val doc = text
     private var nextMatch: SearchMatch? = null
 
     init {
@@ -165,6 +162,40 @@ internal class WholeWordSearchCursor(
         val wordBefore = before.isNotEmpty() && isWordChar(before[0])
         val wordAfter = after.isNotEmpty() && isWordChar(after[0])
         return wordBefore != wordAfter
+    }
+
+    override fun hasNext(): Boolean = nextMatch != null
+
+    override fun next(): SearchMatch {
+        val match = nextMatch ?: throw NoSuchElementException()
+        advance()
+        return match
+    }
+}
+
+/**
+ * A search cursor that filters matches using a test callback.
+ */
+private class FilteredSearchCursor(
+    private val inner: Iterator<SearchMatch>,
+    private val test: (Int, Int, EditorState) -> Boolean,
+    private val state: EditorState
+) : Iterator<SearchMatch> {
+    private var nextMatch: SearchMatch? = null
+
+    init {
+        advance()
+    }
+
+    private fun advance() {
+        while (inner.hasNext()) {
+            val match = inner.next()
+            if (test(match.from, match.to, state)) {
+                nextMatch = match
+                return
+            }
+        }
+        nextMatch = null
     }
 
     override fun hasNext(): Boolean = nextMatch != null

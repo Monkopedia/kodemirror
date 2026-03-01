@@ -16,6 +16,8 @@ kotlin {
         }
         jvmTest.dependencies {
             implementation(kotlin("test"))
+            implementation(project(":state"))
+            implementation(project(":view"))
         }
     }
 }

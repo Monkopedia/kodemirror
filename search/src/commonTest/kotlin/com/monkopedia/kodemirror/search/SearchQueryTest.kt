@@ -156,6 +156,58 @@ class SearchQueryTest {
     }
 
     @Test
+    fun testCallbackFiltersMatches() {
+        // Only keep matches in the second half of the doc
+        val query = SearchQuery(
+            search = "ab",
+            caseSensitive = true,
+            test = { from, _, _ -> from >= 6 }
+        )
+        val matches = collectMatches(query.getCursor(state("ab cd ab cd ab")))
+        assertEquals(listOf(6 to 8, 12 to 14), matches)
+    }
+
+    @Test
+    fun testCallbackWithRegex() {
+        // Regex search + test filter: only matches of length > 2
+        val query = SearchQuery(
+            search = "\\w+",
+            regexp = true,
+            caseSensitive = true,
+            test = { from, to, _ -> (to - from) > 2 }
+        )
+        val matches = collectMatches(query.getCursor(state("hi hey hello")))
+        assertEquals(listOf(3 to 6, 7 to 12), matches)
+    }
+
+    @Test
+    fun testCallbackReceivesCorrectPositions() {
+        val recorded = mutableListOf<Pair<Int, Int>>()
+        val query = SearchQuery(
+            search = "x",
+            caseSensitive = true,
+            test = { from, to, _ ->
+                recorded.add(from to to)
+                true
+            }
+        )
+        collectMatches(query.getCursor(state("axbxc")))
+        assertEquals(listOf(1 to 2, 3 to 4), recorded)
+    }
+
+    @Test
+    fun regexWithWholeWord() {
+        val query = SearchQuery(
+            search = "\\w+",
+            regexp = true,
+            wholeWord = true,
+            caseSensitive = true
+        )
+        val matches = collectMatches(query.getCursor(state("one two three")))
+        assertEquals(listOf(0 to 3, 4 to 7, 8 to 13), matches)
+    }
+
+    @Test
     fun validProperty() {
         assertFalse(SearchQuery(search = "").valid)
         assertFalse(SearchQuery(search = "[bad", regexp = true).valid)
