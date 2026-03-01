@@ -39,7 +39,7 @@ val indentService: Facet<(IndentContext, Int) -> Int?, List<(IndentContext, Int)
  * level). Defaults to 2.
  */
 val indentUnit: Facet<Int, Int> = Facet.define(
-    combine = { values -> values.firstOrNull() ?: 2 }
+    combine = { values -> values.firstOrNull() ?: 4 }
 )
 
 /**

@@ -19,6 +19,7 @@
 package com.monkopedia.kodemirror.view
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.window.Popup
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.Facet
@@ -53,7 +54,7 @@ val showTooltips: Facet<List<Tooltip>, List<Tooltip>> = Facet.define(
  * A composable layer that renders all active tooltips using [Popup].
  *
  * Place this inside the editor's [Box] container so tooltips appear on top of
- * the content.
+ * the content. Also renders hover tooltips from active [HoverTooltipPlugin]s.
  */
 @Composable
 fun TooltipLayer(view: EditorView) {
@@ -63,6 +64,10 @@ fun TooltipLayer(view: EditorView) {
     val all = buildList {
         if (single != null) add(single)
         addAll(multi)
+        // Collect hover tooltips from active plugins
+        val hoverPlugins = view.pluginHost
+            ?.collectHoverTooltips() ?: emptyList()
+        addAll(hoverPlugins)
     }
 
     for (tooltip in all) {
@@ -104,15 +109,16 @@ internal class HoverTooltipPlugin(
     private val view: EditorView,
     private val source: (EditorView, Int) -> Tooltip?
 ) : PluginValue {
-    var currentTooltip: Tooltip? = null
-        private set
+    private val _currentTooltip = mutableStateOf<Tooltip?>(null)
+
+    val currentTooltip: Tooltip? get() = _currentTooltip.value
 
     fun updateHover(x: Float, y: Float) {
         val pos = view.posAtCoords(x, y)
-        currentTooltip = if (pos != null) source(view, pos) else null
+        _currentTooltip.value = if (pos != null) source(view, pos) else null
     }
 
     fun clearHover() {
-        currentTooltip = null
+        _currentTooltip.value = null
     }
 }

@@ -44,6 +44,12 @@ class EditorView(
     /** Layout cache for coordinate queries (initialised by the composable). */
     internal var lineLayoutCache: LineLayoutCache? = null
 
+    /** Tracking fields for ViewUpdate flags — updated by the composable. */
+    internal var lastFirstVisibleItem: Int = 0
+    internal var lastLayoutHeight: Float = 0f
+    internal var hasFocus: Boolean = false
+    private var lastHasFocus: Boolean = false
+
     /** Dispatch one or more transaction specs against the current state. */
     fun dispatch(vararg specs: TransactionSpec) {
         val tr = state.update(*specs)
@@ -52,7 +58,14 @@ class EditorView(
 
     /** Dispatch a fully-built transaction. */
     fun dispatchTransaction(tr: Transaction) {
-        val update = ViewUpdate(this, tr.state, listOf(tr))
+        val focusChanged = hasFocus != lastHasFocus
+        lastHasFocus = hasFocus
+        val update = ViewUpdate(
+            view = this,
+            state = tr.state,
+            transactions = listOf(tr),
+            focusChanged = focusChanged
+        )
         pluginHost?.update(update)
         state = tr.state
         onUpdate(tr)

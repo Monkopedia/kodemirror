@@ -234,3 +234,57 @@ fun handleDrag(view: EditorView, start: Offset, current: Offset) {
         )
     )
 }
+
+/**
+ * Handle a rectangular (column-mode) drag selection.
+ *
+ * Creates one selection range per line between [start] and [current],
+ * spanning the same column range on each line.
+ *
+ * @param view    The editor view.
+ * @param start   The document-space coordinate where the drag started.
+ * @param current The current drag position.
+ */
+fun handleRectangularDrag(view: EditorView, start: Offset, current: Offset) {
+    val doc = view.state.doc
+    val startPos = view.posAtCoords(start.x, start.y) ?: return
+    val currentPos = view.posAtCoords(current.x, current.y) ?: return
+
+    val startLine = doc.lineAt(startPos)
+    val currentLine = doc.lineAt(currentPos)
+
+    val startCol = startPos - startLine.from
+    val currentCol = currentPos - currentLine.from
+
+    val minLineNum = minOf(startLine.number, currentLine.number)
+    val maxLineNum = maxOf(startLine.number, currentLine.number)
+    val minCol = minOf(startCol, currentCol)
+    val maxCol = maxOf(startCol, currentCol)
+
+    val ranges = mutableListOf<com.monkopedia.kodemirror.state.SelectionRange>()
+    for (lineNum in minLineNum..maxLineNum) {
+        val line = doc.line(lineNum)
+        val lineLen = line.text.length
+        val from = line.from + minOf(minCol, lineLen)
+        val to = line.from + minOf(maxCol, lineLen)
+        ranges.add(
+            com.monkopedia.kodemirror.state.EditorSelection.range(
+                from,
+                to
+            )
+        )
+    }
+
+    if (ranges.isEmpty()) return
+
+    view.dispatch(
+        com.monkopedia.kodemirror.state.TransactionSpec(
+            selection = com.monkopedia.kodemirror.state.SelectionSpec
+                .EditorSelectionSpec(
+                    com.monkopedia.kodemirror.state.EditorSelection.create(
+                        ranges
+                    )
+                )
+        )
+    )
+}

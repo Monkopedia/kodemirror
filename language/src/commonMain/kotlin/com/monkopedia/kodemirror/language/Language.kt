@@ -102,6 +102,26 @@ fun defineLanguageFacet(
 )
 
 /**
+ * Query language-specific data at a given position by walking up the syntax
+ * tree and looking for nodes with [languageDataProp] attached.
+ *
+ * Returns the facet value from the first node that has language data, or null.
+ */
+@Suppress("UNCHECKED_CAST")
+fun <T> languageDataAt(state: EditorState, facet: Facet<T, *>, pos: Int): T? {
+    val tree = syntaxTree(state)
+    var node = tree.resolveInner(pos, 0)
+    while (true) {
+        val dataFacet = node.type.prop(languageDataProp)
+        if (dataFacet != null) {
+            return state.facet(dataFacet as Facet<T, T>)
+        }
+        node = node.parent ?: break
+    }
+    return null
+}
+
+/**
  * Subclass of [Language] for LR-parser-based languages.
  *
  * Provides additional functionality for reconfiguring the parser

@@ -18,30 +18,12 @@
  */
 package com.monkopedia.kodemirror.commands
 
+import com.monkopedia.kodemirror.language.getIndentUnit
 import com.monkopedia.kodemirror.state.ChangeSpec
-import com.monkopedia.kodemirror.state.EditorState
-import com.monkopedia.kodemirror.state.Facet
 import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.view.EditorView
-
-/**
- * Facet that configures the indent unit (number of spaces per indent level).
- * Defaults to 4 spaces.
- */
-val indentUnit: Facet<Int, Int> = Facet.define(
-    combine = { values -> values.firstOrNull() ?: 4 }
-)
-
-/**
- * Get the indent unit string for the given state (spaces based on the
- * [indentUnit] facet).
- */
-fun getIndentUnit(state: EditorState): String {
-    val size = state.facet(indentUnit)
-    return " ".repeat(size)
-}
 
 /**
  * Add one level of indentation to each line in the selection.
@@ -61,7 +43,7 @@ private fun changeIndent(view: EditorView, add: Boolean): Boolean {
     val state = view.state
     if (state.readOnly) return false
 
-    val indent = getIndentUnit(state)
+    val indent = " ".repeat(getIndentUnit(state))
     val sel = state.selection.main
     val startLine = state.doc.lineAt(sel.from)
     val endLine = state.doc.lineAt(sel.to)

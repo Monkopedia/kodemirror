@@ -41,8 +41,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.isAltPressed
 import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextLayoutResult
@@ -102,6 +107,9 @@ fun EditorView(state: EditorState, onUpdate: (Transaction) -> Unit, modifier: Mo
 
     val lazyState = rememberLazyListState()
 
+    // Track Alt key state for rectangular selection
+    var altPressed by remember { mutableStateOf(false) }
+
     val density = LocalDensity.current
     val lineHeightDp = with(density) { theme.contentTextStyle.lineHeight.toDp() }
 
@@ -110,6 +118,13 @@ fun EditorView(state: EditorState, onUpdate: (Transaction) -> Unit, modifier: Mo
             modifier = modifier
                 .fillMaxSize()
                 .background(theme.background)
+                .onFocusChanged { focusState ->
+                    view.hasFocus = focusState.isFocused
+                }
+                .onPreviewKeyEvent { event ->
+                    altPressed = event.isAltPressed
+                    false
+                }
                 .onKeyEvent { event ->
                     handleKeyEvent(view, event)
                 }
@@ -128,9 +143,55 @@ fun EditorView(state: EditorState, onUpdate: (Transaction) -> Unit, modifier: Mo
                         },
                         onDrag = { _, dragAmount ->
                             dragCurrent += dragAmount
-                            handleDrag(view, dragStart, dragCurrent)
+                            if (altPressed) {
+                                handleRectangularDrag(
+                                    view,
+                                    dragStart,
+                                    dragCurrent
+                                )
+                            } else {
+                                handleDrag(
+                                    view,
+                                    dragStart,
+                                    dragCurrent
+                                )
+                            }
+                            val pos = view.posAtCoords(
+                                dragCurrent.x,
+                                dragCurrent.y
+                            )
+                            view.plugin(dropCursorViewPlugin)
+                                ?.moveTo(pos)
+                        },
+                        onDragEnd = {
+                            view.plugin(dropCursorViewPlugin)
+                                ?.moveTo(null)
+                        },
+                        onDragCancel = {
+                            view.plugin(dropCursorViewPlugin)
+                                ?.moveTo(null)
                         }
                     )
+                }
+                .pointerInput(view) {
+                    awaitPointerEventScope {
+                        while (true) {
+                            val event = awaitPointerEvent(
+                                PointerEventPass.Main
+                            )
+                            val pos = event.changes
+                                .firstOrNull()?.position
+                            if (pos != null) {
+                                val hoverTooltips =
+                                    view.pluginHost
+                                        ?.collectHoverPlugins()
+                                        ?: emptyList()
+                                for (plugin in hoverTooltips) {
+                                    plugin.updateHover(pos.x, pos.y)
+                                }
+                            }
+                        }
+                    }
                 }
         ) {
             var lineTopPx = 0f
@@ -213,6 +274,12 @@ fun EditorView(state: EditorState, onUpdate: (Transaction) -> Unit, modifier: Mo
                         }
                     }
                 }
+            }
+
+            // Sync viewport/height tracking for ViewUpdate flags
+            val firstVisible = lazyState.firstVisibleItemIndex
+            LaunchedEffect(firstVisible) {
+                view.lastFirstVisibleItem = firstVisible
             }
 
             // Tooltip layer

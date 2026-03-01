@@ -88,6 +88,26 @@ class ViewPluginHost(private val view: EditorView) {
     @Suppress("UNCHECKED_CAST")
     fun <V : PluginValue> plugin(plugin: ViewPlugin<V>): V? = instances[plugin] as? V
 
+    /**
+     * Collect all active [HoverTooltipPlugin] instances.
+     */
+    internal fun collectHoverPlugins(): List<HoverTooltipPlugin> = buildList {
+        for (inst in instances.values) {
+            if (inst is HoverTooltipPlugin) add(inst)
+        }
+    }
+
+    /**
+     * Collect active hover tooltips from all [HoverTooltipPlugin] instances.
+     */
+    fun collectHoverTooltips(): List<Tooltip> = buildList {
+        for (inst in instances.values) {
+            if (inst is HoverTooltipPlugin) {
+                inst.currentTooltip?.let { add(it) }
+            }
+        }
+    }
+
     /** Destroy all plugin instances (called when the view is disposed). */
     fun destroy() {
         for (inst in instances.values) inst.destroy()

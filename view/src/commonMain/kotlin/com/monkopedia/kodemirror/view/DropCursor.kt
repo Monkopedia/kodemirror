@@ -31,12 +31,10 @@ import com.monkopedia.kodemirror.state.RangeSet
 import com.monkopedia.kodemirror.state.RangeSetBuilder
 
 /**
- * Extension that shows a cursor at the position where a drag is currently
- * hovering, to indicate where a drop would land.
- *
- * Port of `dropcursor.ts` from CodeMirror 6.
+ * The [ViewPlugin] that manages the drop cursor. Used internally by the
+ * composable to call [DropCursorPlugin.moveTo] during drag events.
  */
-val dropCursor: Extension = ViewPlugin.define(
+internal val dropCursorViewPlugin: ViewPlugin<DropCursorPlugin> = ViewPlugin.define(
     create = { _ -> DropCursorPlugin() },
     configure = {
         copy(
@@ -45,9 +43,17 @@ val dropCursor: Extension = ViewPlugin.define(
             }
         )
     }
-).asExtension()
+)
 
-private class DropCursorPlugin : PluginValue {
+/**
+ * Extension that shows a cursor at the position where a drag is currently
+ * hovering, to indicate where a drop would land.
+ *
+ * Port of `dropcursor.ts` from CodeMirror 6.
+ */
+val dropCursor: Extension = dropCursorViewPlugin.asExtension()
+
+internal class DropCursorPlugin : PluginValue {
     /** Document position of the current drag target, or null if not dragging. */
     var pos: Int? = null
     var decos: DecorationSet = RangeSet.empty()

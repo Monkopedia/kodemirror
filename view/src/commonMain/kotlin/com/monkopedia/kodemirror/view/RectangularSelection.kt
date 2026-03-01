@@ -26,12 +26,17 @@ import com.monkopedia.kodemirror.state.Extension
  *
  * Port of `rectangular-selection.ts` from CodeMirror 6.
  *
- * Implementation note: in the Compose port this is a stub extension;
- * the gesture detection is wired up in [InputHandling].
+ * The actual gesture detection is wired up in the composable via
+ * [handleRectangularDrag]; this extension serves as the opt-in flag.
  */
 val rectangularSelection: Extension = ViewPlugin.define(
-    create = { _ -> object : PluginValue {} }
+    create = { _ -> RectangularSelectionPlugin() }
 ).asExtension()
+
+internal class RectangularSelectionPlugin : PluginValue {
+    /** Whether rectangular selection is currently active (Alt held). */
+    var active: Boolean = false
+}
 
 /**
  * Extension that changes the cursor to a crosshair when Alt is held,
@@ -41,5 +46,9 @@ val rectangularSelection: Extension = ViewPlugin.define(
  * setting a custom cursor (if supported by the platform).
  */
 val crosshairCursor: Extension = ViewPlugin.define(
-    create = { _ -> object : PluginValue {} }
+    create = { _ -> CrosshairCursorPlugin() }
 ).asExtension()
+
+internal class CrosshairCursorPlugin : PluginValue {
+    var altPressed: Boolean = false
+}
