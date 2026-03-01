@@ -172,21 +172,41 @@ fun foldable(state: EditorState, lineStart: Int): FoldRange? {
 
     // Try tree-based folding
     val tree = syntaxTree(state)
-    if (tree.length == 0) return null
+    val line = state.doc.lineAt(lineStart)
+    val lineEnd = line.to
+    if (tree.length < lineEnd) return null
 
-    val node = tree.resolveInner(lineStart, 1)
-    return findFoldInNode(node, state, lineStart)
+    return syntaxFolding(tree, state, lineStart, lineEnd)
 }
 
-private fun findFoldInNode(startNode: SyntaxNode, state: EditorState, lineStart: Int): FoldRange? {
-    var node: SyntaxNode? = startNode
-    while (node != null) {
-        val strategy = node.type.prop(foldNodeProp)
-        if (strategy != null) {
-            val range = strategy(node, state)
-            if (range != null && range.from >= lineStart) return range
+private fun syntaxFolding(
+    tree: com.monkopedia.kodemirror.lezer.common.Tree,
+    state: EditorState,
+    lineStart: Int,
+    lineEnd: Int
+): FoldRange? {
+    var onlyInner = false
+    var cur: SyntaxNode? = tree.resolveInner(lineEnd, 1)
+    while (cur != null) {
+        if (cur.to <= lineEnd || cur.from > lineEnd) {
+            cur = cur.parent
+            continue
         }
-        node = node.parent
+        if (cur.from < lineStart) onlyInner = true
+        val strategy = cur.type.prop(foldNodeProp)
+        if (strategy != null &&
+            (cur.to < tree.length - 50 || tree.length == state.doc.length || !onlyInner)
+        ) {
+            val range = strategy(cur, state)
+            if (range != null &&
+                range.from <= lineEnd &&
+                range.from >= lineStart &&
+                range.to > lineEnd
+            ) {
+                return range
+            }
+        }
+        cur = cur.parent
     }
     return null
 }
