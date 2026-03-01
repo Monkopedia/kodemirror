@@ -28,6 +28,7 @@ import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.view.EditorView
 import com.monkopedia.kodemirror.view.editorTheme
+import com.monkopedia.kodemirror.view.highlightActiveLine
 import com.monkopedia.kodemirror.view.lightEditorTheme
 import com.monkopedia.kodemirror.view.lineNumbers
 import io.github.takahirom.roborazzi.captureRoboImage
@@ -46,6 +47,7 @@ class BasicLightScreenshotTest {
                         extensions = ExtensionList(
                             listOf(
                                 lineNumbers,
+                                highlightActiveLine,
                                 editorTheme.of(lightEditorTheme),
                                 TestScenarios.jsLanguageExtensions(light = true)
                             )

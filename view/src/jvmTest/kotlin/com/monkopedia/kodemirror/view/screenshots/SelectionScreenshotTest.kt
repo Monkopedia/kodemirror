@@ -29,6 +29,7 @@ import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.highlightActiveLine
 import com.monkopedia.kodemirror.view.lineNumbers
 import io.github.takahirom.roborazzi.captureRoboImage
 import org.junit.Test
@@ -54,6 +55,7 @@ class SelectionScreenshotTest {
                         extensions = ExtensionList(
                             listOf(
                                 lineNumbers,
+                                highlightActiveLine,
                                 TestScenarios.jsLanguageExtensions(light = false)
                             )
                         )

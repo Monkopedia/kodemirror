@@ -26,6 +26,7 @@ import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.highlightActiveLine
 import com.monkopedia.kodemirror.view.lineNumbers
 import com.monkopedia.kodemirror.view.placeholder
 import io.github.takahirom.roborazzi.captureRoboImage
@@ -43,6 +44,7 @@ class EmptyPlaceholderScreenshotTest {
                         extensions = ExtensionList(
                             listOf(
                                 lineNumbers,
+                                highlightActiveLine,
                                 placeholder(TestScenarios.PLACEHOLDER_TEXT)
                             )
                         )
