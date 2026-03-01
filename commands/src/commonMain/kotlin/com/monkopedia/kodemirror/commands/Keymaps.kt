@@ -86,7 +86,7 @@ val standardKeymap: List<KeyBinding> = listOf(
  * Extended keymap that adds line operations, indent commands, and more
  * on top of [standardKeymap].
  */
-val defaultKeymap: List<KeyBinding> = standardKeymap + listOf(
+val defaultKeymap: List<KeyBinding> = standardKeymap + commentKeymap + listOf(
     // Line operations
     KeyBinding(key = "Alt-ArrowUp", run = moveLineUp),
     KeyBinding(key = "Alt-ArrowDown", run = moveLineDown),

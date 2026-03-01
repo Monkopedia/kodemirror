@@ -92,6 +92,63 @@ fun moveByGroup(
 }
 
 /**
+ * Move a selection range by one subword in [forward] direction.
+ *
+ * Subwords are delimited by camelCase boundaries (transitions from
+ * lowercase to uppercase within a Word run) in addition to the normal
+ * word/space/punctuation boundaries used by [moveByGroup].
+ */
+fun moveBySubword(
+    state: EditorState,
+    sel: SelectionRange,
+    forward: Boolean,
+    extend: Boolean = false
+): SelectionRange {
+    val doc = state.doc
+    val len = doc.length
+    var pos = sel.head
+    if (pos < 0 || pos > len) return sel
+
+    val startGroup = groupAt(state, pos, if (forward) 1 else -1)
+    val dir = if (forward) 1 else -1
+
+    // If not in a Word category, fall back to moveByGroup
+    if (startGroup != CharCategory.Word) {
+        return moveByGroup(state, sel, forward, extend)
+    }
+
+    // Move through word chars, stopping at camelCase boundaries
+    var sawLower = false
+    while (true) {
+        val next = pos + dir
+        if (next < 0 || next > len) break
+        val group = groupAt(state, next, -dir)
+        if (group != CharCategory.Word) break
+
+        // Check camelCase boundary
+        val checkPos = if (forward) next else next
+        val charAtCheck = doc.sliceString(
+            checkPos.coerceAtMost(len - 1),
+            (checkPos + 1).coerceAtMost(len)
+        )
+        if (charAtCheck.isNotEmpty()) {
+            val ch = charAtCheck[0]
+            if (forward) {
+                if (sawLower && ch.isUpperCase()) break
+                sawLower = ch.isLowerCase()
+            } else {
+                if (ch.isUpperCase() && sawLower) break
+                sawLower = ch.isLowerCase()
+            }
+        }
+        pos = next
+    }
+
+    val anchor = if (extend) sel.anchor else pos
+    return if (extend) EditorSelection.range(anchor, pos) else EditorSelection.cursor(pos)
+}
+
+/**
  * Move a selection range vertically by one line, keeping an approximate
  * horizontal position.
  *

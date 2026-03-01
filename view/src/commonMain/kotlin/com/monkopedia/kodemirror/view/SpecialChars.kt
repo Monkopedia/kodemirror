@@ -72,7 +72,7 @@ val highlightSpecialChars: Extension = run {
 private fun specialCharLabel(codePoint: Int): String = when {
     codePoint < 32 -> "^${('A'.code + codePoint - 1).toChar()}"
     codePoint == 127 -> "DEL"
-    codePoint in 0x80..0x9F -> "€".take(1) // placeholder
+    codePoint in 0x80..0x9F -> "x${codePoint.toString(16).uppercase()}"
     codePoint == 0x00AD -> "SHY"
     codePoint == 0x200B -> "ZWS"
     codePoint == 0xFEFF -> "BOM"

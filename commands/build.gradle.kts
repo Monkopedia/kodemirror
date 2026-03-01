@@ -9,6 +9,8 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":state"))
             implementation(project(":view"))
+            implementation(project(":language"))
+            implementation(project(":lezer-common"))
             implementation(compose.ui)
             implementation(compose.runtime)
         }

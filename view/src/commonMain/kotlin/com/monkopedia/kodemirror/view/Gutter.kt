@@ -79,8 +79,10 @@ fun gutter(config: GutterConfig): Extension = gutters.of(config)
 fun GutterView(view: EditorView, lineNumber: Int, modifier: Modifier = Modifier) {
     val theme = LocalEditorTheme.current
     val isActive = view.state.doc.lineAt(view.state.selection.main.head).number == lineNumber
+    val line = view.state.doc.line(lineNumber)
+    val configs = view.state.facet(gutters)
 
-    Box(
+    Row(
         modifier = modifier
             .background(theme.gutterBackground)
             .drawBehind {
@@ -93,17 +95,36 @@ fun GutterView(view: EditorView, lineNumber: Int, modifier: Modifier = Modifier)
                         strokeWidth = 1f
                     )
                 }
-            }
-            .padding(start = 5.dp, end = 3.dp),
-        contentAlignment = Alignment.CenterEnd
+            },
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        BasicText(
-            text = lineNumber.toString(),
-            style = theme.contentTextStyle.copy(
-                color = if (isActive) theme.gutterActiveForeground else theme.gutterForeground,
-                textAlign = TextAlign.End
+        // Render custom gutter markers from configs
+        for (config in configs) {
+            val lineMarkerFn = config.lineMarker
+            if (lineMarkerFn != null) {
+                val marker = lineMarkerFn(view, line.from)
+                if (marker != null) {
+                    marker.Content(theme)
+                }
+            }
+        }
+        // Line number column
+        Box(
+            modifier = Modifier.padding(start = 5.dp, end = 3.dp),
+            contentAlignment = Alignment.CenterEnd
+        ) {
+            BasicText(
+                text = lineNumber.toString(),
+                style = theme.contentTextStyle.copy(
+                    color = if (isActive) {
+                        theme.gutterActiveForeground
+                    } else {
+                        theme.gutterForeground
+                    },
+                    textAlign = TextAlign.End
+                )
             )
-        )
+        }
     }
 }
 

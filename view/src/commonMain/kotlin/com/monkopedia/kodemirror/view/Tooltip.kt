@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.window.Popup
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.Facet
+import com.monkopedia.kodemirror.state.RangeSet
 
 /**
  * Describes a tooltip to show near a document position.
@@ -89,8 +90,29 @@ fun TooltipLayer(view: EditorView) {
  *               or null.
  */
 fun hoverTooltip(source: (EditorView, Int) -> Tooltip?): Extension {
-    // Implemented as a plugin that tracks pointer position (stub)
     return ViewPlugin.define(
-        create = { _ -> object : PluginValue {} }
+        create = { view -> HoverTooltipPlugin(view, source) },
+        configure = {
+            copy(
+                decorations = { _ -> RangeSet.empty() }
+            )
+        }
     ).asExtension()
+}
+
+internal class HoverTooltipPlugin(
+    private val view: EditorView,
+    private val source: (EditorView, Int) -> Tooltip?
+) : PluginValue {
+    var currentTooltip: Tooltip? = null
+        private set
+
+    fun updateHover(x: Float, y: Float) {
+        val pos = view.posAtCoords(x, y)
+        currentTooltip = if (pos != null) source(view, pos) else null
+    }
+
+    fun clearHover() {
+        currentTooltip = null
+    }
 }

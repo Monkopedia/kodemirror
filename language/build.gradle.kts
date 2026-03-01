@@ -12,6 +12,8 @@ kotlin {
             implementation(project(":lezer-common"))
             implementation(project(":lezer-highlight"))
             implementation(compose.ui)
+            implementation(compose.foundation)
+            implementation(compose.runtime)
         }
     }
 }

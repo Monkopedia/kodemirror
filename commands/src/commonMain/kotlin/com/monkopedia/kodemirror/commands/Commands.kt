@@ -18,6 +18,8 @@
  */
 package com.monkopedia.kodemirror.commands
 
+import com.monkopedia.kodemirror.language.matchBrackets
+import com.monkopedia.kodemirror.language.syntaxTree
 import com.monkopedia.kodemirror.state.ChangeByRangeResult
 import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.EditorSelection
@@ -32,6 +34,7 @@ import com.monkopedia.kodemirror.view.EditorView
 import com.monkopedia.kodemirror.view.groupAt
 import com.monkopedia.kodemirror.view.moveByChar
 import com.monkopedia.kodemirror.view.moveByGroup
+import com.monkopedia.kodemirror.view.moveBySubword
 import com.monkopedia.kodemirror.view.moveVertically
 
 /**
@@ -532,5 +535,180 @@ val transposeChars: (EditorView) -> Boolean = { view ->
             )
         )
         true
+    }
+}
+
+// --- Simplify / collapse selection ---
+
+/** Collapse each non-empty selection range to a cursor at its anchor. */
+val simplifySelection: (EditorView) -> Boolean = { view ->
+    val state = view.state
+    val hasNonEmpty = state.selection.ranges.any { !it.empty }
+    if (!hasNonEmpty) {
+        false
+    } else {
+        val newRanges = state.selection.ranges.map { sel ->
+            EditorSelection.cursor(sel.anchor)
+        }
+        view.dispatch(
+            TransactionSpec(
+                selection = SelectionSpec.EditorSelectionSpec(
+                    EditorSelection.create(newRanges, state.selection.mainIndex)
+                ),
+                scrollIntoView = true,
+                userEvent = "select"
+            )
+        )
+        true
+    }
+}
+
+// --- Blank line insertion ---
+
+/** Insert an empty line below the current line. */
+val insertBlankLine: (EditorView) -> Boolean = { view ->
+    if (view.state.readOnly) {
+        false
+    } else {
+        val state = view.state
+        val spec = state.changeByRange { sel ->
+            val line = state.doc.lineAt(sel.head)
+            val insertPos = line.to
+            val insert = state.lineBreak
+            ChangeByRangeResult(
+                range = EditorSelection.cursor(insertPos + insert.length),
+                changes = ChangeSpec.Single(
+                    insertPos,
+                    insertPos,
+                    InsertContent.StringContent(insert)
+                )
+            )
+        }
+        view.dispatch(
+            spec.copy(
+                scrollIntoView = true,
+                userEvent = "input.type"
+            )
+        )
+        true
+    }
+}
+
+/**
+ * Insert a newline and copy the leading whitespace from the current line
+ * without any smart indentation logic.
+ */
+val insertNewlineKeepIndent: (EditorView) -> Boolean = { view ->
+    if (view.state.readOnly) {
+        false
+    } else {
+        val state = view.state
+        val spec = state.changeByRange { sel ->
+            val line = state.doc.lineAt(sel.head)
+            val indent = line.text.takeWhile { it == ' ' || it == '\t' }
+            val insert = state.lineBreak + indent
+            ChangeByRangeResult(
+                range = EditorSelection.cursor(sel.from + insert.length),
+                changes = ChangeSpec.Single(
+                    sel.from,
+                    sel.to,
+                    InsertContent.StringContent(insert)
+                )
+            )
+        }
+        view.dispatch(
+            spec.copy(
+                scrollIntoView = true,
+                userEvent = "input.type"
+            )
+        )
+        true
+    }
+}
+
+// --- Subword movement commands ---
+
+/** Move cursor one subword forward (camelCase-aware). */
+val cursorSubwordForward: (EditorView) -> Boolean = { view ->
+    updateSel(view) { sel, _ ->
+        moveBySubword(view.state, sel, forward = true)
+    }
+}
+
+/** Move cursor one subword backward (camelCase-aware). */
+val cursorSubwordBackward: (EditorView) -> Boolean = { view ->
+    updateSel(view) { sel, _ ->
+        moveBySubword(view.state, sel, forward = false)
+    }
+}
+
+/** Extend selection one subword forward (camelCase-aware). */
+val selectSubwordForward: (EditorView) -> Boolean = { view ->
+    updateSel(view) { sel, _ ->
+        moveBySubword(view.state, sel, forward = true, extend = true)
+    }
+}
+
+/** Extend selection one subword backward (camelCase-aware). */
+val selectSubwordBackward: (EditorView) -> Boolean = { view ->
+    updateSel(view) { sel, _ ->
+        moveBySubword(view.state, sel, forward = false, extend = true)
+    }
+}
+
+// --- Bracket matching commands ---
+
+/** Move cursor to the matching bracket. */
+val cursorMatchingBracket: (EditorView) -> Boolean = { view ->
+    updateSel(view) { sel, _ ->
+        val pos = sel.head
+        val state = view.state
+        // Try character before cursor
+        val before = if (pos > 0) matchBrackets(state, pos - 1, -1) else null
+        val after = if (pos < state.doc.length) matchBrackets(state, pos, 1) else null
+        val match = before ?: after
+        val end = match?.end
+        if (end != null) {
+            EditorSelection.cursor(end.from)
+        } else {
+            sel
+        }
+    }
+}
+
+/** Extend selection to the matching bracket. */
+val selectMatchingBracket: (EditorView) -> Boolean = { view ->
+    updateSel(view) { sel, _ ->
+        val pos = sel.head
+        val state = view.state
+        val before = if (pos > 0) matchBrackets(state, pos - 1, -1) else null
+        val after = if (pos < state.doc.length) matchBrackets(state, pos, 1) else null
+        val match = before ?: after
+        val end = match?.end
+        if (end != null) {
+            EditorSelection.range(sel.anchor, end.from)
+        } else {
+            sel
+        }
+    }
+}
+
+/**
+ * Select the enclosing syntax node (parent) of the current selection.
+ * Repeatedly invoking expands the selection to larger and larger nodes.
+ */
+val selectParentSyntax: (EditorView) -> Boolean = { view ->
+    updateSel(view) { sel, _ ->
+        val state = view.state
+        val tree = syntaxTree(state)
+        var node = tree.resolveInner(sel.head, 1)
+        // Find a node that's larger than the current selection
+        while (node.parent != null) {
+            if (node.from < sel.from || node.to > sel.to) {
+                break
+            }
+            node = node.parent ?: break
+        }
+        EditorSelection.range(node.from, node.to)
     }
 }

@@ -18,6 +18,14 @@
  */
 package com.monkopedia.kodemirror.view
 
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.RangeSet
 import com.monkopedia.kodemirror.state.RangeSetBuilder
@@ -59,10 +67,25 @@ private class DropCursorPlugin : PluginValue {
 }
 
 private class DropCursorWidget : WidgetType() {
-    @Suppress("EmptyFunctionBlock")
-    @androidx.compose.runtime.Composable
+    @Composable
     override fun Content() {
-        // Draws a visual cursor line via Canvas overlay in SelectionDrawing
+        val theme = LocalEditorTheme.current
+        val lineHeight = with(LocalDensity.current) {
+            theme.contentTextStyle.lineHeight.toDp()
+        }
+        val cursorColor = theme.cursor
+        Canvas(
+            modifier = Modifier
+                .width(2.dp)
+                .height(lineHeight)
+        ) {
+            drawLine(
+                color = cursorColor,
+                start = Offset(size.width / 2f, 0f),
+                end = Offset(size.width / 2f, size.height),
+                strokeWidth = 2f
+            )
+        }
     }
 
     override fun eq(other: WidgetType): Boolean = other is DropCursorWidget

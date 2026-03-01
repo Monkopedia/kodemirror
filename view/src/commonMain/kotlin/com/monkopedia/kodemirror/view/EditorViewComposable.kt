@@ -119,11 +119,16 @@ fun EditorView(state: EditorState, onUpdate: (Transaction) -> Unit, modifier: Mo
                     }
                 }
                 .pointerInput(view) {
-                    var startOffset = androidx.compose.ui.geometry.Offset.Zero
+                    var dragStart = androidx.compose.ui.geometry.Offset.Zero
+                    var dragCurrent = androidx.compose.ui.geometry.Offset.Zero
                     detectDragGestures(
-                        onDragStart = { offset -> startOffset = offset },
+                        onDragStart = { offset ->
+                            dragStart = offset
+                            dragCurrent = offset
+                        },
                         onDrag = { _, dragAmount ->
-                            startOffset += dragAmount
+                            dragCurrent += dragAmount
+                            handleDrag(view, dragStart, dragCurrent)
                         }
                     )
                 }

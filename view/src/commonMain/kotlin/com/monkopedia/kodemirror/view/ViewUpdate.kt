@@ -34,7 +34,13 @@ class ViewUpdate(
     /** The new editor state (after the transactions). */
     val state: EditorState,
     /** The transactions applied in this update (may be empty for view-only changes). */
-    val transactions: List<Transaction>
+    val transactions: List<Transaction>,
+    /** Whether the viewport or visible ranges changed. */
+    val viewportChanged: Boolean = false,
+    /** Whether the editor geometry (height/width) changed. */
+    val heightChanged: Boolean = false,
+    /** Whether the editor became focused or unfocused. */
+    val focusChanged: Boolean = false
 ) {
     /** The state before the transactions. */
     val startState: EditorState = view.state
@@ -60,15 +66,6 @@ class ViewUpdate(
             }
             return result
         }
-
-    /** Whether the viewport or visible ranges changed. */
-    val viewportChanged: Boolean get() = false // computed by composable
-
-    /** Whether the editor geometry (height/width) changed. */
-    val heightChanged: Boolean get() = false // computed by composable
-
-    /** Whether the editor became focused or unfocused. */
-    val focusChanged: Boolean get() = false
 
     /**
      * The state configuration changed (extensions were reconfigured).
