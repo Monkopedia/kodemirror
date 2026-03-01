@@ -22,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.runDesktopComposeUiTest
+import com.monkopedia.kodemirror.language.foldGutter
 import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
@@ -55,6 +56,7 @@ class SelectionScreenshotTest {
                         extensions = ExtensionList(
                             listOf(
                                 lineNumbers,
+                                foldGutter(),
                                 highlightActiveLine,
                                 TestScenarios.jsLanguageExtensions(light = false)
                             )

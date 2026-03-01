@@ -117,12 +117,16 @@ fun EditorView(state: EditorState, onUpdate: (Transaction) -> Unit, modifier: Mo
     val lineHeightDp = with(density) { theme.contentTextStyle.lineHeight.toDp() }
 
     // Compute gutter width based on digit count + padding (5dp + 3dp)
+    val configs = state.facet(gutters)
     val gutterWidthDp = if (hasGutters) {
         val maxDigits = state.doc.lines.toString().length
         val charWidthDp = with(density) {
             (theme.contentTextStyle.fontSize.toPx() * 0.6f).toDp()
         }
-        charWidthDp * maxDigits + 8.dp
+        val lineNumberWidth = charWidthDp * maxDigits + 8.dp
+        val extraGutterWidth =
+            14.dp * configs.count { it.cssClass != "cm-lineNumbers" && it.lineMarker != null }
+        lineNumberWidth + extraGutterWidth
     } else {
         0.dp
     }

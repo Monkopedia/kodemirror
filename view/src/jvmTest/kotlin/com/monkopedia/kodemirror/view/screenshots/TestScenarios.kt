@@ -18,11 +18,15 @@
  */
 package com.monkopedia.kodemirror.view.screenshots
 
+import com.monkopedia.kodemirror.language.FoldRange
 import com.monkopedia.kodemirror.language.Language
 import com.monkopedia.kodemirror.language.defaultHighlightStyle
+import com.monkopedia.kodemirror.language.foldInside
+import com.monkopedia.kodemirror.language.foldNodeProp
 import com.monkopedia.kodemirror.language.oneDarkHighlightStyle
 import com.monkopedia.kodemirror.language.syntaxHighlighting
 import com.monkopedia.kodemirror.lezer.javascript.parser
+import com.monkopedia.kodemirror.lezer.lr.ParserConfig
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList
 
@@ -49,8 +53,33 @@ object TestScenarios {
 
     val PLACEHOLDER_TEXT = "Enter your code here..."
 
+    private val foldPropSource = foldNodeProp.add { type ->
+        val foldableBlocks = setOf(
+            "Block",
+            "ClassBody",
+            "SwitchBody",
+            "EnumBody",
+            "ObjectExpression",
+            "ArrayExpression",
+            "ObjectType"
+        )
+        when (type.name) {
+            in foldableBlocks -> { node, _ -> foldInside(node) }
+            "BlockComment" -> { node, _ ->
+                val from = node.from + 2
+                val to = node.to - 2
+                if (from < to) FoldRange(from, to) else null
+            }
+            else -> null
+        }
+    }
+
+    private val configuredParser = parser.configure(
+        ParserConfig(props = listOf(foldPropSource))
+    )
+
     fun jsLanguageExtensions(light: Boolean = true): Extension {
-        val lang = Language(parser, "javascript")
+        val lang = Language(configuredParser, "javascript")
         val style = if (light) defaultHighlightStyle else oneDarkHighlightStyle
         return ExtensionList(listOf(lang.extension, syntaxHighlighting(style)))
     }

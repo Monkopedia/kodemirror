@@ -20,8 +20,8 @@ package com.monkopedia.kodemirror.view
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -83,32 +83,37 @@ fun GutterView(view: EditorView, lineNumber: Int, modifier: Modifier = Modifier)
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Render custom gutter markers from configs
         for (config in configs) {
-            val lineMarkerFn = config.lineMarker
-            if (lineMarkerFn != null) {
-                val marker = lineMarkerFn(view, line.from)
-                if (marker != null) {
-                    marker.Content(theme)
+            if (config.cssClass == "cm-lineNumbers") {
+                // Line number column
+                Box(
+                    modifier = Modifier.weight(1f).padding(start = 5.dp, end = 3.dp),
+                    contentAlignment = Alignment.CenterEnd
+                ) {
+                    BasicText(
+                        text = lineNumber.toString(),
+                        style = theme.contentTextStyle.copy(
+                            color = if (isActive) {
+                                theme.gutterActiveForeground
+                            } else {
+                                theme.gutterForeground
+                            },
+                            textAlign = TextAlign.End
+                        )
+                    )
+                }
+            } else if (config.lineMarker != null) {
+                // Other gutter columns (fold gutter, etc.)
+                Box(
+                    modifier = Modifier.width(14.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    val marker = config.lineMarker.invoke(view, line.from)
+                    if (marker != null) {
+                        marker.Content(theme)
+                    }
                 }
             }
-        }
-        // Line number column
-        Box(
-            modifier = Modifier.fillMaxWidth().padding(start = 5.dp, end = 3.dp),
-            contentAlignment = Alignment.CenterEnd
-        ) {
-            BasicText(
-                text = lineNumber.toString(),
-                style = theme.contentTextStyle.copy(
-                    color = if (isActive) {
-                        theme.gutterActiveForeground
-                    } else {
-                        theme.gutterForeground
-                    },
-                    textAlign = TextAlign.End
-                )
-            )
         }
     }
 }
