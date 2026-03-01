@@ -41,7 +41,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.isAltPressed
 import androidx.compose.ui.input.key.onKeyEvent
@@ -113,11 +115,47 @@ fun EditorView(state: EditorState, onUpdate: (Transaction) -> Unit, modifier: Mo
     val density = LocalDensity.current
     val lineHeightDp = with(density) { theme.contentTextStyle.lineHeight.toDp() }
 
+    // Compute gutter width based on digit count + padding (5dp + 3dp)
+    val gutterWidthDp = if (hasGutters) {
+        val maxDigits = state.doc.lines.toString().length
+        val charWidthDp = with(density) {
+            (theme.contentTextStyle.fontSize.toPx() * 0.6f).toDp()
+        }
+        charWidthDp * maxDigits + 8.dp
+    } else {
+        0.dp
+    }
+
     CompositionLocalProvider(LocalEditorTheme provides theme) {
         Box(
             modifier = modifier
                 .fillMaxSize()
-                .background(theme.background)
+                .drawWithContent {
+                    // Editor background
+                    drawRect(theme.background)
+                    // Full-height gutter background strip + border
+                    if (hasGutters) {
+                        val w = gutterWidthDp.toPx()
+                        drawRect(
+                            color = theme.gutterBackground,
+                            topLeft = Offset.Zero,
+                            size = androidx.compose.ui.geometry.Size(
+                                w,
+                                size.height
+                            )
+                        )
+                        val bc = theme.gutterBorderColor
+                        if (bc != Color.Transparent) {
+                            drawLine(
+                                color = bc,
+                                start = Offset(w - 0.5f, 0f),
+                                end = Offset(w - 0.5f, size.height),
+                                strokeWidth = 1f
+                            )
+                        }
+                    }
+                    drawContent()
+                }
                 .onFocusChanged { focusState ->
                     view.hasFocus = focusState.isFocused
                 }

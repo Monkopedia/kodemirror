@@ -18,7 +18,6 @@
  */
 package com.monkopedia.kodemirror.view
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -26,9 +25,6 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.state.Extension
@@ -83,19 +79,7 @@ fun GutterView(view: EditorView, lineNumber: Int, modifier: Modifier = Modifier)
     val configs = view.state.facet(gutters)
 
     Row(
-        modifier = modifier
-            .background(theme.gutterBackground)
-            .drawBehind {
-                val borderColor = theme.gutterBorderColor
-                if (borderColor != Color.Transparent) {
-                    drawLine(
-                        color = borderColor,
-                        start = Offset(size.width - 0.5f, 0f),
-                        end = Offset(size.width - 0.5f, size.height),
-                        strokeWidth = 1f
-                    )
-                }
-            },
+        modifier = modifier,
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Render custom gutter markers from configs
