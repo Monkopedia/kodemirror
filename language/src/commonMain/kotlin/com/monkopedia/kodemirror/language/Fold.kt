@@ -363,6 +363,6 @@ private class FoldGutterMarker(val folded: Boolean) :
         )
     }
 
-    override fun eq(other: com.monkopedia.kodemirror.view.GutterMarker): Boolean =
+    override fun eq(other: com.monkopedia.kodemirror.state.RangeValue): Boolean =
         other is FoldGutterMarker && folded == other.folded
 }

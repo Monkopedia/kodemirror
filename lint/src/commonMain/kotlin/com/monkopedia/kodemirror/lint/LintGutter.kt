@@ -38,7 +38,7 @@ import com.monkopedia.kodemirror.view.hoverTooltip
 
 /** Gutter marker that shows a colored circle for a diagnostic severity. */
 internal class LintGutterMarker(val severity: Severity) : GutterMarker() {
-    override fun eq(other: GutterMarker): Boolean =
+    override fun eq(other: com.monkopedia.kodemirror.state.RangeValue): Boolean =
         other is LintGutterMarker && other.severity == severity
 
     @Composable

@@ -30,11 +30,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.Facet
+import com.monkopedia.kodemirror.state.RangeValue
 
 /** A gutter marker contributes to a specific line's gutter column. */
-abstract class GutterMarker {
+abstract class GutterMarker : RangeValue() {
     /** Whether this marker is equivalent to another. */
-    open fun eq(other: GutterMarker): Boolean = this === other
+    override fun eq(other: RangeValue): Boolean = this === other
 
     /** Render the marker content. */
     @Composable
