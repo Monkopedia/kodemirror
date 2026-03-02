@@ -62,6 +62,24 @@ data class EditorTheme(
         lineHeight = (13 * 1.4).sp,
         color = Color(0xFFABB2BF)
     ),
+    /** Background for search matches. */
+    val searchMatchBackground: Color = Color(0x5972A1FF),
+    /** Background for the selected/active search match. */
+    val searchMatchSelectedBackground: Color = Color(0x2F6199FF),
+    /** Background for matches of the current selection word. */
+    val selectionMatchBackground: Color = Color(0x1AAAFE66),
+    /** Background for matching brackets. */
+    val matchingBracketBackground: Color = Color(0x4400CC00),
+    /** Background for non-matching brackets. */
+    val nonMatchingBracketBackground: Color = Color(0x44CC0000),
+    /** Panel background. */
+    val panelBackground: Color = Color(0xFF282C34),
+    /** Tooltip background. */
+    val tooltipBackground: Color = Color(0xFF353A42),
+    /** Fold placeholder text color. */
+    val foldPlaceholderColor: Color = Color(0xFFDDDDDD),
+    /** Active line gutter background. */
+    val activeLineGutterBackground: Color = Color(0x0B6699FF),
     /** Whether this is a dark theme (affects some rendering decisions). */
     val dark: Boolean = true
 )
@@ -86,6 +104,15 @@ val lightEditorTheme: EditorTheme = EditorTheme(
         lineHeight = (13 * 1.4).sp,
         color = Color(0xFF000000)
     ),
+    searchMatchBackground = Color(0x80FFD54F),
+    searchMatchSelectedBackground = Color(0x4000BFA5),
+    selectionMatchBackground = Color(0x30A0D000),
+    matchingBracketBackground = Color(0x4400CC00),
+    nonMatchingBracketBackground = Color(0x44CC0000),
+    panelBackground = Color(0xFFF5F5F5),
+    tooltipBackground = Color(0xFFF5F5F5),
+    foldPlaceholderColor = Color(0xFF555555),
+    activeLineGutterBackground = Color(0x44CCEEFF),
     dark = false
 )
 
