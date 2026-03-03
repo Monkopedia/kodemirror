@@ -192,6 +192,7 @@ private class CompletionPlugin(
 
 // ── Composable UI ──
 
+@Suppress("ktlint:standard:function-naming")
 @Composable
 private fun CompletionList(
     view: EditorView,
