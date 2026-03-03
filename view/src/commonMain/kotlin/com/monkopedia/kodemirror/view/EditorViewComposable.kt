@@ -121,7 +121,7 @@ fun EditorView(state: EditorState, onUpdate: (Transaction) -> Unit, modifier: Mo
     val gutterWidthDp = if (hasGutters) {
         val maxDigits = state.doc.lines.toString().length
         val charWidthDp = with(density) {
-            (theme.contentTextStyle.fontSize.toPx() * 0.6f).toDp()
+            (theme.contentTextStyle.fontSize.toPx() * 0.65f).toDp()
         }
         val lineNumberWidth = charWidthDp * maxDigits + 8.dp
         val extraGutterWidth =
@@ -272,13 +272,15 @@ fun EditorView(state: EditorState, onUpdate: (Transaction) -> Unit, modifier: Mo
                             val capturedFrom = item.from
                             var textLayout by remember { mutableStateOf<TextLayoutResult?>(null) }
 
-                            var lineModifier: Modifier = Modifier
+                            val lineModifier: Modifier = Modifier
                                 .fillMaxWidth()
                                 .defaultMinSize(minHeight = lineHeightDp)
+                            var contentExtraModifier: Modifier = Modifier
+                                .padding(start = 6.dp, end = 2.dp)
                             for (deco in item.lineDecorations) {
                                 val bg = deco.spec.style?.background
                                 if (bg != null && bg != Color.Unspecified) {
-                                    lineModifier = lineModifier.background(bg)
+                                    contentExtraModifier = contentExtraModifier.background(bg)
                                 }
                             }
                             Row(
@@ -295,7 +297,7 @@ fun EditorView(state: EditorState, onUpdate: (Transaction) -> Unit, modifier: Mo
                                 Box(
                                     modifier = Modifier
                                         .weight(1f)
-                                        .padding(start = 6.dp, end = 2.dp)
+                                        .then(contentExtraModifier)
                                         .drawSelectionOverlay(
                                             state,
                                             item.from,
