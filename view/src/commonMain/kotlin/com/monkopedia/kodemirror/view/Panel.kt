@@ -22,8 +22,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.state.Facet
 
 /**
@@ -76,9 +78,17 @@ fun PanelLayout(view: EditorView, modifier: Modifier = Modifier, content: @Compo
             Box(Modifier.fillMaxWidth().background(theme.panelBackground)) {
                 panel.content()
             }
+            Box(
+                Modifier.fillMaxWidth().height(1.dp)
+                    .background(theme.panelBorderColor)
+            )
         }
         content()
         for (panel in bottomPanels) {
+            Box(
+                Modifier.fillMaxWidth().height(1.dp)
+                    .background(theme.panelBorderColor)
+            )
             Box(Modifier.fillMaxWidth().background(theme.panelBackground)) {
                 panel.content()
             }

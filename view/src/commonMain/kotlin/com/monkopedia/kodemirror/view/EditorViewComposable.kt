@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -149,6 +150,10 @@ fun EditorView(state: EditorState, onUpdate: (Transaction) -> Unit, modifier: Mo
                 Box(Modifier.fillMaxWidth().background(theme.panelBackground)) {
                     panel.content()
                 }
+                Box(
+                    Modifier.fillMaxWidth().height(1.dp)
+                        .background(theme.panelBorderColor)
+                )
             }
             Box(
                 modifier = Modifier
@@ -361,6 +366,10 @@ fun EditorView(state: EditorState, onUpdate: (Transaction) -> Unit, modifier: Mo
                 TooltipLayer(view = view)
             }
             for (panel in bottomPanels) {
+                Box(
+                    Modifier.fillMaxWidth().height(1.dp)
+                        .background(theme.panelBorderColor)
+                )
                 Box(Modifier.fillMaxWidth().background(theme.panelBackground)) {
                     panel.content()
                 }

@@ -18,10 +18,15 @@
  */
 package com.monkopedia.kodemirror.view.screenshots
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.runDesktopComposeUiTest
+import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.language.foldGutter
 import com.monkopedia.kodemirror.language.foldState
 import com.monkopedia.kodemirror.state.EditorState
@@ -88,14 +93,28 @@ class ContrastFoldScreenshotTest {
 private class ContrastFoldWidget : WidgetType() {
     @androidx.compose.runtime.Composable
     override fun Content() {
-        androidx.compose.foundation.text.BasicText(
-            text = "\u2026",
-            style = com.monkopedia.kodemirror.view.LocalEditorTheme.current
-                .contentTextStyle.copy(
-                    color = com.monkopedia.kodemirror.view.LocalEditorTheme.current
-                        .foldPlaceholderColor
-                )
+        val theme = com.monkopedia.kodemirror.view.LocalEditorTheme.current
+        val shape = androidx.compose.foundation.shape.RoundedCornerShape(
+            2.dp
         )
+        androidx.compose.foundation.layout.Box(
+            modifier = androidx.compose.ui.Modifier
+                .padding(horizontal = 1.dp)
+                .background(theme.foldPlaceholderBackground, shape)
+                .border(
+                    1.dp,
+                    theme.foldPlaceholderColor.copy(alpha = 0.3f),
+                    shape
+                )
+                .padding(horizontal = 1.dp)
+        ) {
+            androidx.compose.foundation.text.BasicText(
+                text = "\u2026",
+                style = theme.contentTextStyle.copy(
+                    color = theme.foldPlaceholderColor
+                )
+            )
+        }
     }
 
     override fun eq(other: WidgetType): Boolean = other is ContrastFoldWidget

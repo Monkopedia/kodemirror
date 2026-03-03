@@ -86,8 +86,14 @@ val oneDarkTheme: EditorTheme = EditorTheme(
     matchingBracketBackground = Color(0x47BAD0F8),
     nonMatchingBracketBackground = Color(0x47BAD0F8),
     panelBackground = OneDarkColors.darkBackground,
+    panelBorderColor = Color(0xFF555555),
+    buttonBackground = Color(0xFF393939),
+    buttonBorderColor = Color(0xFF888888),
+    inputBackground = Color.Transparent,
+    inputBorderColor = Color(0xFF555555),
     tooltipBackground = OneDarkColors.tooltipBackground,
     foldPlaceholderColor = Color(0xFFDDDDDD),
+    foldPlaceholderBackground = Color(0x33EEEEEE),
     activeLineGutterBackground = OneDarkColors.highlightBackground,
     dark = true
 )

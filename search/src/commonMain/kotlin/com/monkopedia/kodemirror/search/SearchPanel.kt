@@ -18,14 +18,18 @@
  */
 package com.monkopedia.kodemirror.search
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
@@ -36,6 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.monkopedia.kodemirror.state.TransactionSpec
@@ -50,10 +55,10 @@ internal fun SearchPanel(view: EditorView) {
         color = theme.foreground,
         fontSize = (theme.contentTextStyle.fontSize.value * 0.8).sp
     )
-    val buttonBorder = Modifier.border(
-        1.dp,
-        theme.foreground.copy(alpha = 0.4f)
-    )
+    val buttonShape = RoundedCornerShape(1.dp)
+    val buttonMod = Modifier
+        .background(theme.buttonBackground, buttonShape)
+        .border(1.dp, theme.buttonBorderColor, buttonShape)
 
     val currentQuery = getSearchQuery(view.state)
     var searchText by remember { mutableStateOf(currentQuery.search) }
@@ -95,7 +100,8 @@ internal fun SearchPanel(view: EditorView) {
                     updateQuery()
                 },
                 modifier = Modifier.width(200.dp)
-                    .border(1.dp, theme.foreground.copy(alpha = 0.4f))
+                    .background(theme.inputBackground)
+                    .border(1.dp, theme.inputBorderColor)
                     .padding(2.dp),
                 textStyle = panelTextStyle,
                 cursorBrush = SolidColor(theme.cursor),
@@ -104,44 +110,47 @@ internal fun SearchPanel(view: EditorView) {
             BasicText(
                 "next",
                 style = panelTextStyle,
-                modifier = buttonBorder
+                modifier = buttonMod
                     .clickable { findNext(view) }
                     .padding(horizontal = 4.dp, vertical = 1.dp)
             )
             BasicText(
                 "previous",
                 style = panelTextStyle,
-                modifier = buttonBorder
+                modifier = buttonMod
                     .clickable { findPrevious(view) }
                     .padding(horizontal = 4.dp, vertical = 1.dp)
             )
             BasicText(
                 "all",
                 style = panelTextStyle,
-                modifier = buttonBorder
+                modifier = buttonMod
                     .clickable { selectMatches(view) }
                     .padding(horizontal = 4.dp, vertical = 1.dp)
             )
-            BasicText(
-                text = "${if (caseSensitive) "\u2611" else "\u2610"} match case",
-                style = panelTextStyle,
-                modifier = Modifier.clickable {
+            PanelCheckbox(
+                checked = caseSensitive,
+                label = "match case",
+                textStyle = panelTextStyle,
+                onToggle = {
                     caseSensitive = !caseSensitive
                     updateQuery()
                 }
             )
-            BasicText(
-                text = "${if (useRegexp) "\u2611" else "\u2610"} regexp",
-                style = panelTextStyle,
-                modifier = Modifier.clickable {
+            PanelCheckbox(
+                checked = useRegexp,
+                label = "regexp",
+                textStyle = panelTextStyle,
+                onToggle = {
                     useRegexp = !useRegexp
                     updateQuery()
                 }
             )
-            BasicText(
-                text = "${if (wholeWord) "\u2611" else "\u2610"} by word",
-                style = panelTextStyle,
-                modifier = Modifier.clickable {
+            PanelCheckbox(
+                checked = wholeWord,
+                label = "by word",
+                textStyle = panelTextStyle,
+                onToggle = {
                     wholeWord = !wholeWord
                     updateQuery()
                 }
@@ -167,7 +176,8 @@ internal fun SearchPanel(view: EditorView) {
                     updateQuery()
                 },
                 modifier = Modifier.width(200.dp)
-                    .border(1.dp, theme.foreground.copy(alpha = 0.4f))
+                    .background(theme.inputBackground)
+                    .border(1.dp, theme.inputBorderColor)
                     .padding(2.dp),
                 textStyle = panelTextStyle,
                 cursorBrush = SolidColor(theme.cursor),
@@ -176,17 +186,58 @@ internal fun SearchPanel(view: EditorView) {
             BasicText(
                 "replace",
                 style = panelTextStyle,
-                modifier = buttonBorder
+                modifier = buttonMod
                     .clickable { replaceNext(view) }
                     .padding(horizontal = 4.dp, vertical = 1.dp)
             )
             BasicText(
                 "replace all",
                 style = panelTextStyle,
-                modifier = buttonBorder
+                modifier = buttonMod
                     .clickable { replaceAll(view) }
                     .padding(horizontal = 4.dp, vertical = 1.dp)
             )
         }
+    }
+}
+
+@Composable
+private fun PanelCheckbox(
+    checked: Boolean,
+    label: String,
+    textStyle: TextStyle,
+    onToggle: () -> Unit
+) {
+    val theme = LocalEditorTheme.current
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.clickable { onToggle() }
+    ) {
+        Box(
+            modifier = Modifier.size(12.dp)
+                .border(1.dp, theme.buttonBorderColor)
+                .then(
+                    if (checked) {
+                        Modifier.background(theme.buttonBackground)
+                    } else {
+                        Modifier
+                    }
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            if (checked) {
+                BasicText(
+                    "\u2713",
+                    style = textStyle.copy(
+                        fontSize = 9.sp,
+                        lineHeight = 10.sp
+                    )
+                )
+            }
+        }
+        BasicText(
+            " $label",
+            style = textStyle
+        )
     }
 }

@@ -18,11 +18,13 @@
  */
 package com.monkopedia.kodemirror.search
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -119,10 +121,8 @@ internal fun GoToLinePanel(view: EditorView) {
             value = lineText,
             onValueChange = { lineText = it },
             modifier = Modifier.width(80.dp)
-                .border(
-                    1.dp,
-                    theme.foreground.copy(alpha = 0.4f)
-                )
+                .background(theme.inputBackground)
+                .border(1.dp, theme.inputBorderColor)
                 .padding(2.dp),
             textStyle = panelTextStyle,
             cursorBrush = SolidColor(theme.cursor),
@@ -135,11 +135,15 @@ internal fun GoToLinePanel(view: EditorView) {
             ),
             singleLine = true
         )
+        val buttonShape = RoundedCornerShape(1.dp)
         BasicText(
             " Go",
             style = panelTextStyle,
             modifier = Modifier.padding(start = 4.dp)
+                .background(theme.buttonBackground, buttonShape)
+                .border(1.dp, theme.buttonBorderColor, buttonShape)
                 .clickable { goToLine() }
+                .padding(horizontal = 4.dp, vertical = 1.dp)
         )
     }
 }

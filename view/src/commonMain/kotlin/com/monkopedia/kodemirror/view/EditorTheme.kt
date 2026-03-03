@@ -74,10 +74,22 @@ data class EditorTheme(
     val nonMatchingBracketBackground: Color = Color(0x44CC0000),
     /** Panel background. */
     val panelBackground: Color = Color(0xFF282C34),
+    /** 1px separator between panel and editor. */
+    val panelBorderColor: Color = Color(0xFF555555),
+    /** Panel button fill. */
+    val buttonBackground: Color = Color(0xFF393939),
+    /** Panel button border. */
+    val buttonBorderColor: Color = Color(0xFF888888),
+    /** Text input fill. */
+    val inputBackground: Color = Color.Transparent,
+    /** Text input border. */
+    val inputBorderColor: Color = Color(0xFF555555),
     /** Tooltip background. */
     val tooltipBackground: Color = Color(0xFF353A42),
     /** Fold placeholder text color. */
     val foldPlaceholderColor: Color = Color(0xFFDDDDDD),
+    /** Fold placeholder widget background. */
+    val foldPlaceholderBackground: Color = Color(0x33EEEEEE),
     /** Active line gutter background. */
     val activeLineGutterBackground: Color = Color(0x0B6699FF),
     /** Whether this is a dark theme (affects some rendering decisions). */
@@ -110,8 +122,14 @@ val lightEditorTheme: EditorTheme = EditorTheme(
     matchingBracketBackground = Color(0x4400CC00),
     nonMatchingBracketBackground = Color(0x44CC0000),
     panelBackground = Color(0xFFF5F5F5),
+    panelBorderColor = Color(0xFFDDDDDD),
+    buttonBackground = Color(0xFFEFF1F5),
+    buttonBorderColor = Color(0xFF888888),
+    inputBackground = Color(0xFFFFFFFF),
+    inputBorderColor = Color(0xFFC0C0C0),
     tooltipBackground = Color(0xFFF5F5F5),
     foldPlaceholderColor = Color(0xFF555555),
+    foldPlaceholderBackground = Color(0xFFEEEEEE),
     activeLineGutterBackground = Color(0x44CCEEFF),
     dark = false
 )

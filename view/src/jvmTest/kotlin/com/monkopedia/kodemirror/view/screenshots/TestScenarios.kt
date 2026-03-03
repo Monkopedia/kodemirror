@@ -114,8 +114,14 @@ object TestScenarios {
         matchingBracketBackground = Color(0x8000FF00.toInt()),
         nonMatchingBracketBackground = Color(0x80FF0000.toInt()),
         panelBackground = Color(0xFF000033),
+        panelBorderColor = Color(0xFFFF00FF),
+        buttonBackground = Color(0xFF003300),
+        buttonBorderColor = Color(0xFF00FF00),
+        inputBackground = Color(0xFF000066),
+        inputBorderColor = Color(0xFF00FFFF),
         tooltipBackground = Color(0xFF000033),
         foldPlaceholderColor = Color(0xFFFFD700),
+        foldPlaceholderBackground = Color(0x66FFD700),
         activeLineGutterBackground = Color(0x6600FF66),
         dark = true
     )
