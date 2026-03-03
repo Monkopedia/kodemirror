@@ -18,7 +18,6 @@
  */
 package com.monkopedia.kodemirror.language
 
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import com.monkopedia.kodemirror.lezer.common.NodeProp
 import com.monkopedia.kodemirror.lezer.common.SyntaxNode
@@ -33,6 +32,7 @@ import com.monkopedia.kodemirror.view.MarkDecorationSpec
 import com.monkopedia.kodemirror.view.PluginValue
 import com.monkopedia.kodemirror.view.ViewPlugin
 import com.monkopedia.kodemirror.view.ViewUpdate
+import com.monkopedia.kodemirror.view.editorTheme
 
 /** Configuration for bracket matching. */
 data class BracketMatchingConfig(
@@ -47,28 +47,6 @@ data class MatchResult(
     val start: SelectionRange,
     val end: SelectionRange?,
     val matched: Boolean
-)
-
-private val defaultMatchedStyle = SpanStyle(
-    background = Color(0x4400CC00)
-)
-
-private val defaultUnmatchedStyle = SpanStyle(
-    background = Color(0x44CC0000)
-)
-
-private val matchedDeco = Decoration.mark(
-    MarkDecorationSpec(
-        style = defaultMatchedStyle,
-        cssClass = "cm-matchingBracket"
-    )
-)
-
-private val unmatchedDeco = Decoration.mark(
-    MarkDecorationSpec(
-        style = defaultUnmatchedStyle,
-        cssClass = "cm-nonmatchingBracket"
-    )
 )
 
 private val defaultBracketPairs = mapOf(
@@ -246,8 +224,22 @@ private class BracketMatchingPlugin(
     }
 
     private fun buildDecos(state: EditorState): DecorationSet {
+        val theme = state.facet(editorTheme)
+        val matchedDeco = Decoration.mark(
+            MarkDecorationSpec(
+                style = SpanStyle(background = theme.matchingBracketBackground),
+                cssClass = "cm-matchingBracket"
+            )
+        )
+        val unmatchedDeco = Decoration.mark(
+            MarkDecorationSpec(
+                style = SpanStyle(background = theme.nonMatchingBracketBackground),
+                cssClass = "cm-nonmatchingBracket"
+            )
+        )
+
         val builder = RangeSetBuilder<Decoration>()
-        val ranges = mutableListOf<Pair<Int, Int>>()
+        val ranges = mutableListOf<Triple<Int, Int, Decoration>>()
 
         for (sel in state.selection.ranges) {
             val pos = sel.head
@@ -255,14 +247,14 @@ private class BracketMatchingPlugin(
             if (pos > 0) {
                 val match = matchBrackets(state, pos - 1, -1, config)
                 if (match != null) {
-                    addMatchRanges(match, ranges)
+                    addMatchRanges(match, matchedDeco, unmatchedDeco, ranges)
                 }
             }
             // Check character after cursor (if configured)
             if (config.afterCursor && pos < state.doc.length) {
                 val match = matchBrackets(state, pos, 1, config)
                 if (match != null) {
-                    addMatchRanges(match, ranges)
+                    addMatchRanges(match, matchedDeco, unmatchedDeco, ranges)
                 }
             }
         }
@@ -270,9 +262,9 @@ private class BracketMatchingPlugin(
         // Sort and deduplicate ranges, then add to builder
         ranges.sortBy { it.first }
         var lastTo = -1
-        for ((from, to) in ranges) {
+        for ((from, to, deco) in ranges) {
             if (from >= lastTo) {
-                builder.add(from, to, matchedDeco)
+                builder.add(from, to, deco)
                 lastTo = to
             }
         }
@@ -280,11 +272,16 @@ private class BracketMatchingPlugin(
         return builder.finish()
     }
 
-    private fun addMatchRanges(match: MatchResult, ranges: MutableList<Pair<Int, Int>>) {
+    private fun addMatchRanges(
+        match: MatchResult,
+        matchedDeco: Decoration,
+        unmatchedDeco: Decoration,
+        ranges: MutableList<Triple<Int, Int, Decoration>>
+    ) {
         val deco = if (match.matched) matchedDeco else unmatchedDeco
-        ranges.add(match.start.from to match.start.to)
+        ranges.add(Triple(match.start.from, match.start.to, deco))
         if (match.end != null && match.matched) {
-            ranges.add(match.end.from to match.end.to)
+            ranges.add(Triple(match.end.from, match.end.to, matchedDeco))
         }
     }
 }

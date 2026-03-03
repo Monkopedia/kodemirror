@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Contrast Brackets</title>
+  <style>
+    body { margin: 0; padding: 0; background: #000000; }
+    #editor { width: 800px; height: 600px; }
+  </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "codemirror": "https://esm.sh/*codemirror@6.0.1",
+        "@codemirror/state": "https://esm.sh/*@codemirror/state@6.4.1",
+        "@codemirror/view": "https://esm.sh/*@codemirror/view@6.34.1",
+        "@codemirror/language": "https://esm.sh/*@codemirror/language@6.10.6",
+        "@codemirror/commands": "https://esm.sh/*@codemirror/commands@6.7.1",
+        "@codemirror/search": "https://esm.sh/*@codemirror/search@6.5.8",
+        "@codemirror/autocomplete": "https://esm.sh/*@codemirror/autocomplete@6.18.4",
+        "@codemirror/lint": "https://esm.sh/*@codemirror/lint@6.8.4",
+        "@codemirror/lang-javascript": "https://esm.sh/*@codemirror/lang-javascript@6.2.2",
+        "@codemirror/theme-one-dark": "https://esm.sh/*@codemirror/theme-one-dark@6.1.2",
+        "@lezer/common": "https://esm.sh/*@lezer/common@1.2.3",
+        "@lezer/highlight": "https://esm.sh/*@lezer/highlight@1.2.1",
+        "@lezer/javascript": "https://esm.sh/*@lezer/javascript@1.4.21",
+        "@lezer/lr": "https://esm.sh/*@lezer/lr@1.4.2",
+        "crelt": "https://esm.sh/*crelt@1.0.6",
+        "style-mod": "https://esm.sh/*style-mod@4.1.2",
+        "w3c-keyname": "https://esm.sh/*w3c-keyname@2.2.8"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="editor"></div>
+
+  <script type="module">
+    import { basicSetup, EditorView } from "codemirror";
+    import { EditorState } from "@codemirror/state";
+    import { javascript } from "@codemirror/lang-javascript";
+    import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
+    import { tags } from "@lezer/highlight";
+
+    const extremeContrastTheme = EditorView.theme({
+      "&": { backgroundColor: "#000000", color: "#FFFFFF" },
+      ".cm-content": { caretColor: "#00FF00" },
+      "&.cm-focused .cm-cursor": { borderLeftColor: "#00FF00" },
+      "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, ::selection":
+        { backgroundColor: "#9900FF99" },
+      ".cm-activeLine": { backgroundColor: "#4DFFFF00" },
+      ".cm-gutters": {
+        backgroundColor: "#550000",
+        color: "#00FFFF",
+        borderRight: "1px solid #FF00FF",
+      },
+      ".cm-activeLineGutter": { backgroundColor: "#6600FF66" },
+      ".cm-foldPlaceholder": { color: "#FFD700" },
+      ".cm-panels": { backgroundColor: "#000033" },
+      ".cm-searchMatch": { backgroundColor: "#80AAFF00" },
+      ".cm-searchMatch.cm-searchMatch-selected": { backgroundColor: "#80FF4400" },
+      ".cm-selectionMatch": { backgroundColor: "#6600AAFF" },
+      "&.cm-focused .cm-matchingBracket": { backgroundColor: "#8000FF00" },
+      "&.cm-focused .cm-nonmatchingBracket": { backgroundColor: "#80FF0000" },
+    }, { dark: true });
+
+    const extremeContrastHighlight = HighlightStyle.define([
+      { tag: tags.keyword, color: "#FF0080" },
+      { tag: [tags.string, tags.inserted], color: "#00FF80" },
+      { tag: [tags.number, tags.changed, tags.annotation], color: "#FF8000" },
+      { tag: [tags.meta, tags.comment], color: "#808080" },
+      { tag: [tags.function(tags.variableName), tags.labelName], color: "#00FFFF" },
+      { tag: tags.variableName, color: "#FFFF00" },
+      { tag: [tags.operator, tags.operatorKeyword], color: "#FF4040" },
+      { tag: [tags.typeName, tags.className], color: "#8080FF" },
+      { tag: tags.definition(tags.variableName), color: "#00A0FF" },
+      { tag: [tags.name, tags.propertyName], color: "#FFA0A0" },
+    ]);
+
+    const doc = `function fibonacci(n) {
+  if (n <= 1) return n;
+  return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+// Calculate first 10 Fibonacci numbers
+const results = [];
+for (let i = 0; i < 10; i++) {
+  results.push(fibonacci(i));
+}
+console.log(results);`;
+
+    // Place cursor right after the opening { on line 1 to trigger bracket matching
+    const cursorPos = doc.indexOf("{") + 1;
+
+    const state = EditorState.create({
+      doc,
+      selection: { anchor: cursorPos },
+      extensions: [
+        basicSetup,
+        javascript(),
+        extremeContrastTheme,
+        syntaxHighlighting(extremeContrastHighlight),
+      ],
+    });
+
+    const view = new EditorView({
+      state,
+      parent: document.getElementById("editor"),
+    });
+
+    view.focus();
+  </script>
+</body>
+</html>

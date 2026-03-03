@@ -18,7 +18,10 @@
  */
 package com.monkopedia.kodemirror.view
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.monkopedia.kodemirror.state.Facet
@@ -66,13 +69,19 @@ fun PanelLayout(view: EditorView, modifier: Modifier = Modifier, content: @Compo
     val topPanels = all.filter { it.top }
     val bottomPanels = all.filter { !it.top }
 
+    val theme = state.facet(editorTheme)
+
     Column(modifier = modifier) {
         for (panel in topPanels) {
-            panel.content()
+            Box(Modifier.fillMaxWidth().background(theme.panelBackground)) {
+                panel.content()
+            }
         }
         content()
         for (panel in bottomPanels) {
-            panel.content()
+            Box(Modifier.fillMaxWidth().background(theme.panelBackground)) {
+                panel.content()
+            }
         }
     }
 }

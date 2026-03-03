@@ -15,6 +15,7 @@ kotlin {
         }
         jvmTest.dependencies {
             implementation(project(":language"))
+            implementation(project(":search"))
             implementation(project(":lezer-common"))
             implementation(project(":lezer-highlight"))
             implementation(project(":lezer-lr"))

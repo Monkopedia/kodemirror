@@ -18,17 +18,26 @@
  */
 package com.monkopedia.kodemirror.view.screenshots
 
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.sp
 import com.monkopedia.kodemirror.language.FoldRange
+import com.monkopedia.kodemirror.language.HighlightStyle
 import com.monkopedia.kodemirror.language.Language
+import com.monkopedia.kodemirror.language.TagStyleSpec
 import com.monkopedia.kodemirror.language.defaultHighlightStyle
 import com.monkopedia.kodemirror.language.foldInside
 import com.monkopedia.kodemirror.language.foldNodeProp
 import com.monkopedia.kodemirror.language.oneDarkHighlightStyle
 import com.monkopedia.kodemirror.language.syntaxHighlighting
+import com.monkopedia.kodemirror.lezer.highlight.tags
 import com.monkopedia.kodemirror.lezer.javascript.parser
 import com.monkopedia.kodemirror.lezer.lr.ParserConfig
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList
+import com.monkopedia.kodemirror.view.EditorTheme
+import com.monkopedia.kodemirror.view.editorTheme
 
 /**
  * Shared sample content strings for screenshot tests.
@@ -82,5 +91,82 @@ object TestScenarios {
         val lang = Language(configuredParser, "javascript")
         val style = if (light) defaultHighlightStyle else oneDarkHighlightStyle
         return ExtensionList(listOf(lang.extension, syntaxHighlighting(style)))
+    }
+
+    val extremeContrastTheme = EditorTheme(
+        background = Color(0xFF000000),
+        foreground = Color(0xFFFFFFFF),
+        cursor = Color(0xFF00FF00),
+        selection = Color(0x999900FF.toInt()),
+        activeLineBackground = Color(0x4DFFFF00),
+        gutterBackground = Color(0xFF550000),
+        gutterForeground = Color(0xFF00FFFF),
+        gutterActiveForeground = Color(0xFFFF8800),
+        gutterBorderColor = Color(0xFFFF00FF),
+        contentTextStyle = TextStyle(
+            fontSize = 13.sp,
+            lineHeight = (13 * 1.4).sp,
+            color = Color(0xFFFFFFFF)
+        ),
+        searchMatchBackground = Color(0x80AAFF00.toInt()),
+        searchMatchSelectedBackground = Color(0x80FF4400.toInt()),
+        selectionMatchBackground = Color(0x6600AAFF),
+        matchingBracketBackground = Color(0x8000FF00.toInt()),
+        nonMatchingBracketBackground = Color(0x80FF0000.toInt()),
+        panelBackground = Color(0xFF000033),
+        tooltipBackground = Color(0xFF000033),
+        foldPlaceholderColor = Color(0xFFFFD700),
+        activeLineGutterBackground = Color(0x6600FF66),
+        dark = true
+    )
+
+    private val extremeContrastHighlightStyle = HighlightStyle.define(
+        listOf(
+            TagStyleSpec(tags.keyword, SpanStyle(color = Color(0xFFFF0080.toInt()))),
+            TagStyleSpec(
+                listOf(tags.string, tags.inserted),
+                SpanStyle(color = Color(0xFF00FF80))
+            ),
+            TagStyleSpec(
+                listOf(tags.number, tags.changed, tags.annotation),
+                SpanStyle(color = Color(0xFFFF8000.toInt()))
+            ),
+            TagStyleSpec(
+                listOf(tags.meta, tags.comment),
+                SpanStyle(color = Color(0xFF808080.toInt()))
+            ),
+            TagStyleSpec(
+                listOf(tags.function(tags.variableName), tags.labelName),
+                SpanStyle(color = Color(0xFF00FFFF))
+            ),
+            TagStyleSpec(tags.variableName, SpanStyle(color = Color(0xFFFFFF00.toInt()))),
+            TagStyleSpec(
+                listOf(tags.operator, tags.operatorKeyword),
+                SpanStyle(color = Color(0xFFFF4040.toInt()))
+            ),
+            TagStyleSpec(
+                listOf(tags.typeName, tags.className),
+                SpanStyle(color = Color(0xFF8080FF.toInt()))
+            ),
+            TagStyleSpec(
+                tags.definition(tags.variableName),
+                SpanStyle(color = Color(0xFF00A0FF))
+            ),
+            TagStyleSpec(
+                listOf(tags.name, tags.propertyName),
+                SpanStyle(color = Color(0xFFFFA0A0.toInt()))
+            )
+        )
+    )
+
+    fun jsExtensionsContrast(): Extension {
+        val lang = Language(configuredParser, "javascript")
+        return ExtensionList(
+            listOf(
+                lang.extension,
+                syntaxHighlighting(extremeContrastHighlightStyle),
+                editorTheme.of(extremeContrastTheme)
+            )
+        )
     }
 }

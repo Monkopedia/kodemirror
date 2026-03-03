@@ -18,6 +18,7 @@
  */
 package com.monkopedia.kodemirror.view
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -79,9 +80,15 @@ fun GutterView(view: EditorView, lineNumber: Int, modifier: Modifier = Modifier)
     val isActive = view.state.doc.lineAt(view.state.selection.main.head).number == lineNumber
     val line = view.state.doc.line(lineNumber)
     val configs = view.state.facet(gutters)
+    val hasActiveLineGutter = isActive &&
+        configs.any { it.cssClass == "cm-activeLineGutter" }
 
     Row(
-        modifier = modifier,
+        modifier = if (hasActiveLineGutter) {
+            modifier.background(theme.activeLineGutterBackground)
+        } else {
+            modifier
+        },
         verticalAlignment = Alignment.CenterVertically
     ) {
         for (config in configs) {

@@ -18,7 +18,6 @@
  */
 package com.monkopedia.kodemirror.search
 
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
@@ -30,23 +29,13 @@ import com.monkopedia.kodemirror.view.MarkDecorationSpec
 import com.monkopedia.kodemirror.view.PluginValue
 import com.monkopedia.kodemirror.view.ViewPlugin
 import com.monkopedia.kodemirror.view.ViewUpdate
+import com.monkopedia.kodemirror.view.editorTheme
 
 /** Configuration for selection match highlighting. */
 data class HighlightSelectionMatchConfig(
     val minSelectionLength: Int = 1,
     val maxMatches: Int = 100,
     val wholeWords: Boolean = false
-)
-
-private val selectionMatchStyle = SpanStyle(
-    background = Color(0x30A0A0FF)
-)
-
-private val selectionMatchDeco = Decoration.mark(
-    MarkDecorationSpec(
-        style = selectionMatchStyle,
-        cssClass = "cm-selectionMatch"
-    )
 )
 
 /**
@@ -92,6 +81,14 @@ private class SelectionMatchPlugin(
         if (selectedText.length < config.minSelectionLength) return RangeSet.empty()
         if (selectedText.contains('\n')) return RangeSet.empty()
 
+        val theme = state.facet(editorTheme)
+        val deco = Decoration.mark(
+            MarkDecorationSpec(
+                style = SpanStyle(background = theme.selectionMatchBackground),
+                cssClass = "cm-selectionMatch"
+            )
+        )
+
         val cursor = SearchCursor(
             state.doc,
             selectedText,
@@ -104,7 +101,7 @@ private class SelectionMatchPlugin(
             if (count >= config.maxMatches) break
             // Skip the current selection itself
             if (match.from == sel.from && match.to == sel.to) continue
-            builder.add(match.from, match.to, selectionMatchDeco)
+            builder.add(match.from, match.to, deco)
             count++
         }
 

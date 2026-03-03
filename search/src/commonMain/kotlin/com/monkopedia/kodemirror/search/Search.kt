@@ -18,12 +18,23 @@
  */
 package com.monkopedia.kodemirror.search
 
+import androidx.compose.ui.text.SpanStyle
+import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList
+import com.monkopedia.kodemirror.state.RangeSet
+import com.monkopedia.kodemirror.state.RangeSetBuilder
 import com.monkopedia.kodemirror.state.Slot
+import com.monkopedia.kodemirror.view.Decoration
+import com.monkopedia.kodemirror.view.DecorationSet
 import com.monkopedia.kodemirror.view.KeyBinding
 import com.monkopedia.kodemirror.view.LocalEditorView
+import com.monkopedia.kodemirror.view.MarkDecorationSpec
 import com.monkopedia.kodemirror.view.Panel
+import com.monkopedia.kodemirror.view.PluginValue
+import com.monkopedia.kodemirror.view.ViewPlugin
+import com.monkopedia.kodemirror.view.ViewUpdate
+import com.monkopedia.kodemirror.view.editorTheme
 import com.monkopedia.kodemirror.view.keymap
 import com.monkopedia.kodemirror.view.showPanels
 
@@ -60,14 +71,93 @@ fun search(): Extension {
         }
     }
 
+    val highlightPlugin = ViewPlugin.define(
+        create = { view ->
+            SearchHighlightPlugin(view.state)
+        },
+        configure = {
+            copy(
+                decorations = { plugin ->
+                    (plugin as? SearchHighlightPlugin)?.decos
+                        ?: RangeSet.empty()
+                }
+            )
+        }
+    ).asExtension()
+
     return ExtensionList(
         listOf(
             searchQueryField,
             searchPanelOpenField,
             gotoLinePanelOpenField,
             searchPanelProvider,
+            highlightPlugin,
             keymap.of(searchKeymap),
             keymap.of(listOf(KeyBinding(key = "Mod-l", run = gotoLine)))
         )
     )
+}
+
+private class SearchHighlightPlugin(
+    state: EditorState
+) : PluginValue {
+    var decos: DecorationSet = buildDecos(state)
+
+    override fun update(update: ViewUpdate) {
+        if (update.docChanged || update.selectionSet ||
+            update.transactions.any { tr ->
+                tr.effects.any {
+                    it.`is`(toggleSearchPanel) || it.`is`(setSearchQuery)
+                }
+            }
+        ) {
+            decos = buildDecos(update.state)
+        }
+    }
+
+    private fun buildDecos(state: EditorState): DecorationSet {
+        val panelOpen = state.field(
+            searchPanelOpenField,
+            require = false
+        ) ?: false
+        if (!panelOpen) return RangeSet.empty()
+
+        val query = state.field(
+            searchQueryField,
+            require = false
+        ) ?: SearchQuery()
+        if (!query.valid) return RangeSet.empty()
+
+        val theme = state.facet(editorTheme)
+        val matchDeco = Decoration.mark(
+            MarkDecorationSpec(
+                style = SpanStyle(
+                    background = theme.searchMatchBackground
+                ),
+                cssClass = "cm-searchMatch"
+            )
+        )
+        val selectedDeco = Decoration.mark(
+            MarkDecorationSpec(
+                style = SpanStyle(
+                    background = theme.searchMatchSelectedBackground
+                ),
+                cssClass = "cm-searchMatch-selected"
+            )
+        )
+
+        val cursor = query.getCursor(state)
+        val sel = state.selection.main
+        val builder = RangeSetBuilder<Decoration>()
+        for (match in cursor) {
+            val isSelected =
+                match.from == sel.from && match.to == sel.to
+            builder.add(
+                match.from,
+                match.to,
+                if (isSelected) selectedDeco else matchDeco
+            )
+        }
+        return builder.finish()
+    }
 }
