@@ -54,7 +54,7 @@ fun search(): Extension {
         buildList {
             if (state.field(searchPanelOpenField, require = false) == true) {
                 add(
-                    Panel(top = true) {
+                    Panel(top = false) {
                         val view = LocalEditorView.current
                         SearchPanel(view)
                     }

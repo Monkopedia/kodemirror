@@ -34,10 +34,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.StateEffect
 import com.monkopedia.kodemirror.state.StateEffectType
@@ -45,24 +46,28 @@ import com.monkopedia.kodemirror.state.StateField
 import com.monkopedia.kodemirror.state.StateFieldSpec
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.LocalEditorTheme
 
-private val toggleGotoLinePanel: StateEffectType<Boolean> = StateEffect.define()
+private val toggleGotoLinePanel: StateEffectType<Boolean> =
+    StateEffect.define()
 
-internal val gotoLinePanelOpenField: StateField<Boolean> = StateField.define(
-    StateFieldSpec(
-        create = { false },
-        update = { value, tr ->
-            var result = value
-            for (effect in tr.effects) {
-                val panelEffect = effect.asType(toggleGotoLinePanel)
-                if (panelEffect != null) {
-                    result = panelEffect.value
+internal val gotoLinePanelOpenField: StateField<Boolean> =
+    StateField.define(
+        StateFieldSpec(
+            create = { false },
+            update = { value, tr ->
+                var result = value
+                for (effect in tr.effects) {
+                    val panelEffect =
+                        effect.asType(toggleGotoLinePanel)
+                    if (panelEffect != null) {
+                        result = panelEffect.value
+                    }
                 }
+                result
             }
-            result
-        }
+        )
     )
-)
 
 /** Command that opens the go-to-line dialog. */
 val gotoLine: (EditorView) -> Boolean = { view ->
@@ -77,6 +82,11 @@ val gotoLine: (EditorView) -> Boolean = { view ->
 /** Composable panel for the go-to-line dialog. */
 @Composable
 internal fun GoToLinePanel(view: EditorView) {
+    val theme = LocalEditorTheme.current
+    val panelTextStyle = theme.contentTextStyle.copy(
+        color = theme.foreground,
+        fontSize = (theme.contentTextStyle.fontSize.value * 0.8).sp
+    )
     var lineText by remember { mutableStateOf("") }
 
     fun goToLine() {
@@ -88,7 +98,9 @@ internal fun GoToLinePanel(view: EditorView) {
             TransactionSpec(
                 selection = SelectionSpec.CursorSpec(line.from),
                 scrollIntoView = true,
-                effects = listOf(toggleGotoLinePanel.of(false)),
+                effects = listOf(
+                    toggleGotoLinePanel.of(false)
+                ),
                 userEvent = "select.gotoLine"
             )
         )
@@ -98,21 +110,36 @@ internal fun GoToLinePanel(view: EditorView) {
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.padding(4.dp)
     ) {
-        BasicText("Go to line: ", modifier = Modifier.padding(end = 4.dp))
+        BasicText(
+            "Go to line: ",
+            style = panelTextStyle,
+            modifier = Modifier.padding(end = 4.dp)
+        )
         BasicTextField(
             value = lineText,
             onValueChange = { lineText = it },
-            modifier = Modifier.width(80.dp).border(1.dp, Color.Gray).padding(2.dp),
+            modifier = Modifier.width(80.dp)
+                .border(
+                    1.dp,
+                    theme.foreground.copy(alpha = 0.4f)
+                )
+                .padding(2.dp),
+            textStyle = panelTextStyle,
+            cursorBrush = SolidColor(theme.cursor),
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Number,
                 imeAction = ImeAction.Go
             ),
-            keyboardActions = KeyboardActions(onGo = { goToLine() }),
+            keyboardActions = KeyboardActions(
+                onGo = { goToLine() }
+            ),
             singleLine = true
         )
         BasicText(
             " Go",
-            modifier = Modifier.padding(start = 4.dp).clickable { goToLine() }
+            style = panelTextStyle,
+            modifier = Modifier.padding(start = 4.dp)
+                .clickable { goToLine() }
         )
     }
 }

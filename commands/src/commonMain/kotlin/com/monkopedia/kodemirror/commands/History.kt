@@ -67,15 +67,24 @@ internal class Branch(val events: List<HistoryEvent> = emptyList()) {
 
     fun mapThrough(changes: ChangeSet): Branch {
         if (events.isEmpty() || changes.empty) return this
+        // Process events from newest to oldest so that each event's
+        // concurrent-change context has the correct document length.
+        val mapped = arrayOfNulls<HistoryEvent>(events.size)
+        var c: ChangeSet = changes
+        for (i in events.size - 1 downTo 0) {
+            val event = events[i]
+            val nextC = c.map(event.changes, true)
+            mapped[i] = HistoryEvent(
+                event.changes.map(c),
+                event.startSelection.map(c),
+                event.userEvent,
+                event.timestamp
+            )
+            c = nextC
+        }
+        @Suppress("UNCHECKED_CAST")
         return Branch(
-            events.map { event ->
-                HistoryEvent(
-                    event.changes.map(changes),
-                    event.startSelection.map(changes),
-                    event.userEvent,
-                    event.timestamp
-                )
-            }
+            (mapped as Array<HistoryEvent>).toList()
         )
     }
 }
