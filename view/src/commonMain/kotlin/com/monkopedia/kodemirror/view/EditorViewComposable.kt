@@ -22,6 +22,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
@@ -99,6 +100,12 @@ fun EditorView(state: EditorState, onUpdate: (Transaction) -> Unit, modifier: Mo
 
     // Derive rendering data from current state
     val theme = state.facet(editorTheme)
+    val allPanels = buildList {
+        state.facet(showPanel)?.let { add(it) }
+        addAll(state.facet(showPanels))
+    }
+    val topPanels = allPanels.filter { it.top }
+    val bottomPanels = allPanels.filter { !it.top }
     val hasGutters = state.facet(gutters).isNotEmpty()
     val viewport = Viewport(0, state.doc.length)
     val extensionDecos = state.facet(decorations)
@@ -137,210 +144,227 @@ fun EditorView(state: EditorState, onUpdate: (Transaction) -> Unit, modifier: Mo
     }
 
     CompositionLocalProvider(LocalEditorTheme provides theme, LocalEditorView provides view) {
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .drawWithContent {
-                    // Editor background
-                    drawRect(theme.background)
-                    // Gutter background strip — only as tall as content
-                    if (hasGutters) {
-                        val w = gutterWidthDp.toPx()
-                        val contentH = contentHeightPx.coerceAtMost(
-                            size.height
-                        )
-                        drawRect(
-                            color = theme.gutterBackground,
-                            topLeft = Offset.Zero,
-                            size = androidx.compose.ui.geometry.Size(
-                                w,
-                                contentH
+        Column(modifier = modifier.fillMaxSize()) {
+            for (panel in topPanels) {
+                Box(Modifier.fillMaxWidth().background(theme.panelBackground)) {
+                    panel.content()
+                }
+            }
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .drawWithContent {
+                        // Editor background
+                        drawRect(theme.background)
+                        // Gutter background strip — only as tall as content
+                        if (hasGutters) {
+                            val w = gutterWidthDp.toPx()
+                            val contentH = contentHeightPx.coerceAtMost(
+                                size.height
                             )
-                        )
-                        val bc = theme.gutterBorderColor
-                        if (bc != Color.Transparent) {
-                            drawLine(
-                                color = bc,
-                                start = Offset(w - 0.5f, 0f),
-                                end = Offset(
-                                    w - 0.5f,
+                            drawRect(
+                                color = theme.gutterBackground,
+                                topLeft = Offset.Zero,
+                                size = androidx.compose.ui.geometry.Size(
+                                    w,
                                     contentH
-                                ),
-                                strokeWidth = 1f
-                            )
-                        }
-                    }
-                    drawContent()
-                }
-                .onFocusChanged { focusState ->
-                    view.hasFocus = focusState.isFocused
-                }
-                .onPreviewKeyEvent { event ->
-                    altPressed = event.isAltPressed
-                    false
-                }
-                .onKeyEvent { event ->
-                    handleKeyEvent(view, event)
-                }
-                .pointerInput(view) {
-                    detectTapGestures { offset ->
-                        handleTap(view, offset)
-                    }
-                }
-                .pointerInput(view) {
-                    var dragStart = androidx.compose.ui.geometry.Offset.Zero
-                    var dragCurrent = androidx.compose.ui.geometry.Offset.Zero
-                    detectDragGestures(
-                        onDragStart = { offset ->
-                            dragStart = offset
-                            dragCurrent = offset
-                        },
-                        onDrag = { _, dragAmount ->
-                            dragCurrent += dragAmount
-                            if (altPressed) {
-                                handleRectangularDrag(
-                                    view,
-                                    dragStart,
-                                    dragCurrent
                                 )
-                            } else {
-                                handleDrag(
-                                    view,
-                                    dragStart,
-                                    dragCurrent
+                            )
+                            val bc = theme.gutterBorderColor
+                            if (bc != Color.Transparent) {
+                                drawLine(
+                                    color = bc,
+                                    start = Offset(w - 0.5f, 0f),
+                                    end = Offset(
+                                        w - 0.5f,
+                                        contentH
+                                    ),
+                                    strokeWidth = 1f
                                 )
                             }
-                            val pos = view.posAtCoords(
-                                dragCurrent.x,
-                                dragCurrent.y
-                            )
-                            view.plugin(dropCursorViewPlugin)
-                                ?.moveTo(pos)
-                        },
-                        onDragEnd = {
-                            view.plugin(dropCursorViewPlugin)
-                                ?.moveTo(null)
-                        },
-                        onDragCancel = {
-                            view.plugin(dropCursorViewPlugin)
-                                ?.moveTo(null)
                         }
-                    )
-                }
-                .pointerInput(view) {
-                    awaitPointerEventScope {
-                        while (true) {
-                            val event = awaitPointerEvent(
-                                PointerEventPass.Main
-                            )
-                            val pos = event.changes
-                                .firstOrNull()?.position
-                            if (pos != null) {
-                                val hoverTooltips =
-                                    view.pluginHost
-                                        ?.collectHoverPlugins()
-                                        ?: emptyList()
-                                for (plugin in hoverTooltips) {
-                                    plugin.updateHover(pos.x, pos.y)
-                                }
-                            }
+                        drawContent()
+                    }
+                    .onFocusChanged { focusState ->
+                        view.hasFocus = focusState.isFocused
+                    }
+                    .onPreviewKeyEvent { event ->
+                        altPressed = event.isAltPressed
+                        false
+                    }
+                    .onKeyEvent { event ->
+                        handleKeyEvent(view, event)
+                    }
+                    .pointerInput(view) {
+                        detectTapGestures { offset ->
+                            handleTap(view, offset)
                         }
                     }
-                }
-        ) {
-            var lineTopPx = 0f
-
-            LazyColumn(
-                state = lazyState,
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                    vertical = 4.dp
-                )
-            ) {
-                items(
-                    items = columnItems,
-                    key = { item ->
-                        when (item) {
-                            is ColumnItem.TextLine -> "line-${item.lineNumber}"
-                            is ColumnItem.BlockWidgetItem -> "widget-${item.from}-${item.type}"
-                        }
-                    }
-                ) { item ->
-                    when (item) {
-                        is ColumnItem.TextLine -> {
-                            val capturedTop = lineTopPx
-                            val capturedLineNum = item.lineNumber
-                            val capturedFrom = item.from
-                            var textLayout by remember { mutableStateOf<TextLayoutResult?>(null) }
-
-                            val lineModifier: Modifier = Modifier
-                                .fillMaxWidth()
-                                .defaultMinSize(minHeight = lineHeightDp)
-                            var contentExtraModifier: Modifier = Modifier
-                                .padding(start = 6.dp, end = 2.dp)
-                            for (deco in item.lineDecorations) {
-                                val bg = deco.spec.style?.background
-                                if (bg != null && bg != Color.Unspecified) {
-                                    contentExtraModifier = contentExtraModifier.background(bg)
+                    .pointerInput(view) {
+                        var dragStart = androidx.compose.ui.geometry.Offset.Zero
+                        var dragCurrent = androidx.compose.ui.geometry.Offset.Zero
+                        detectDragGestures(
+                            onDragStart = { offset ->
+                                dragStart = offset
+                                dragCurrent = offset
+                            },
+                            onDrag = { _, dragAmount ->
+                                dragCurrent += dragAmount
+                                if (altPressed) {
+                                    handleRectangularDrag(
+                                        view,
+                                        dragStart,
+                                        dragCurrent
+                                    )
+                                } else {
+                                    handleDrag(
+                                        view,
+                                        dragStart,
+                                        dragCurrent
+                                    )
                                 }
+                                val pos = view.posAtCoords(
+                                    dragCurrent.x,
+                                    dragCurrent.y
+                                )
+                                view.plugin(dropCursorViewPlugin)
+                                    ?.moveTo(pos)
+                            },
+                            onDragEnd = {
+                                view.plugin(dropCursorViewPlugin)
+                                    ?.moveTo(null)
+                            },
+                            onDragCancel = {
+                                view.plugin(dropCursorViewPlugin)
+                                    ?.moveTo(null)
                             }
-                            Row(
-                                modifier = lineModifier,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                if (hasGutters) {
-                                    GutterView(
-                                        view = view,
-                                        lineNumber = item.lineNumber,
-                                        modifier = Modifier.width(gutterWidthDp)
-                                    )
-                                }
-                                Box(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .then(contentExtraModifier)
-                                        .drawSelectionOverlay(
-                                            state,
-                                            item.from,
-                                            item.to,
-                                            theme,
-                                            textLayout
-                                        )
-                                ) {
-                                    BasicText(
-                                        text = item.content,
-                                        style = theme.contentTextStyle,
-                                        onTextLayout = { result: TextLayoutResult ->
-                                            textLayout = result
-                                            lineLayoutCache.store(
-                                                capturedLineNum,
-                                                capturedFrom,
-                                                capturedTop,
-                                                result
-                                            )
-                                        }
-                                    )
-                                    for (widget in item.inlineWidgets) {
-                                        widget.spec.widget.Content()
+                        )
+                    }
+                    .pointerInput(view) {
+                        awaitPointerEventScope {
+                            while (true) {
+                                val event = awaitPointerEvent(
+                                    PointerEventPass.Main
+                                )
+                                val pos = event.changes
+                                    .firstOrNull()?.position
+                                if (pos != null) {
+                                    val hoverTooltips =
+                                        view.pluginHost
+                                            ?.collectHoverPlugins()
+                                            ?: emptyList()
+                                    for (plugin in hoverTooltips) {
+                                        plugin.updateHover(pos.x, pos.y)
                                     }
                                 }
                             }
                         }
+                    }
+            ) {
+                var lineTopPx = 0f
 
-                        is ColumnItem.BlockWidgetItem -> {
-                            item.widget.spec.widget.Content()
+                LazyColumn(
+                    state = lazyState,
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                        vertical = 4.dp
+                    )
+                ) {
+                    items(
+                        items = columnItems,
+                        key = { item ->
+                            when (item) {
+                                is ColumnItem.TextLine -> "line-${item.lineNumber}"
+                                is ColumnItem.BlockWidgetItem -> "widget-${item.from}-${item.type}"
+                            }
+                        }
+                    ) { item ->
+                        when (item) {
+                            is ColumnItem.TextLine -> {
+                                val capturedTop = lineTopPx
+                                val capturedLineNum = item.lineNumber
+                                val capturedFrom = item.from
+                                var textLayout by remember {
+                                    mutableStateOf<TextLayoutResult?>(
+                                        null
+                                    )
+                                }
+
+                                val lineModifier: Modifier = Modifier
+                                    .fillMaxWidth()
+                                    .defaultMinSize(minHeight = lineHeightDp)
+                                var contentExtraModifier: Modifier = Modifier
+                                    .padding(start = 6.dp, end = 2.dp)
+                                for (deco in item.lineDecorations) {
+                                    val bg = deco.spec.style?.background
+                                    if (bg != null && bg != Color.Unspecified) {
+                                        contentExtraModifier = contentExtraModifier.background(bg)
+                                    }
+                                }
+                                Row(
+                                    modifier = lineModifier,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    if (hasGutters) {
+                                        GutterView(
+                                            view = view,
+                                            lineNumber = item.lineNumber,
+                                            modifier = Modifier.width(gutterWidthDp)
+                                        )
+                                    }
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .then(contentExtraModifier)
+                                            .drawSelectionOverlay(
+                                                state,
+                                                item.from,
+                                                item.to,
+                                                theme,
+                                                textLayout
+                                            )
+                                    ) {
+                                        BasicText(
+                                            text = item.content,
+                                            style = theme.contentTextStyle,
+                                            onTextLayout = { result: TextLayoutResult ->
+                                                textLayout = result
+                                                lineLayoutCache.store(
+                                                    capturedLineNum,
+                                                    capturedFrom,
+                                                    capturedTop,
+                                                    result
+                                                )
+                                            }
+                                        )
+                                        for (widget in item.inlineWidgets) {
+                                            widget.spec.widget.Content()
+                                        }
+                                    }
+                                }
+                            }
+
+                            is ColumnItem.BlockWidgetItem -> {
+                                item.widget.spec.widget.Content()
+                            }
                         }
                     }
                 }
-            }
 
-            // Sync viewport/height tracking for ViewUpdate flags
-            val firstVisible = lazyState.firstVisibleItemIndex
-            LaunchedEffect(firstVisible) {
-                view.lastFirstVisibleItem = firstVisible
-            }
+                // Sync viewport/height tracking for ViewUpdate flags
+                val firstVisible = lazyState.firstVisibleItemIndex
+                LaunchedEffect(firstVisible) {
+                    view.lastFirstVisibleItem = firstVisible
+                }
 
-            // Tooltip layer
-            TooltipLayer(view = view)
+                // Tooltip layer
+                TooltipLayer(view = view)
+            }
+            for (panel in bottomPanels) {
+                Box(Modifier.fillMaxWidth().background(theme.panelBackground)) {
+                    panel.content()
+                }
+            }
         }
     }
 }
