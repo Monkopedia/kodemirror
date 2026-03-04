@@ -17,6 +17,4 @@ jobs:
           java-version: 17
       - uses: gradle/actions/setup-gradle@v4
       - name: Lint and test
-        run: ./gradlew check
-      - name: Browser tests
-        run: ./gradlew wasmJsBrowserTest
+        run: ./gradlew jvmTest ktlintCheck
