@@ -121,11 +121,12 @@ class TokenCache(parser: LRParser, val stream: InputStream) {
                         stream.read(token.start, token.end),
                         stack
                     )
-                    if ((result and 1) == Specialize.Specialize) {
-                        token.value = result shr 1
-                        break
-                    } else if ((result and 1) == Specialize.Extend) {
-                        token.extended = result shr 1
+                    if (result >= 0 && parser.dialect.allows(result shr 1)) {
+                        if ((result and 1) == Specialize.Specialize) {
+                            token.value = result shr 1
+                        } else {
+                            token.extended = result shr 1
+                        }
                         break
                     }
                 }

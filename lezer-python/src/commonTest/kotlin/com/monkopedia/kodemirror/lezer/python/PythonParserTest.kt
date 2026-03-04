@@ -56,8 +56,7 @@ class PythonParserTest {
         parse("r\"foo\\\"\" + r'\\\\'")
     )
 
-    // Parser produces a minor error node at the end of the FormatReplacement
-    // TODO: investigate context tracker interaction with nested quote types
+    // TODO: Parser produces a minor error node in format replacement with nested quotes
     @Test
     fun testNestedQuoteTypes() = assertEquals(
         "Script(ExpressionStatement(FormatString(FormatReplacement(String),\u26A0)))",

@@ -157,12 +157,11 @@ class PhpParserTest {
 
     // === Declarations ===
 
-    // Disabled: class keyword specialization issue needs investigation
-    // @Test
-    // fun classDeclarationsWithBaseClasses() = assertEquals(
-    //     "Template(TextInterpolation(PhpOpen),ClassDeclaration(class,Name,BaseClause(extends,Name),DeclarationList))",
-    //     parse("<?php\nclass A extends B {\n\n}\n")
-    // )
+    @Test
+    fun classDeclarationsWithBaseClasses() = assertEquals(
+        "Template(TextInterpolation(PhpOpen),ClassDeclaration(class,Name,BaseClause(extends,Name),DeclarationList))",
+        parse("<?php\nclass A extends B {\n\n}\n")
+    )
 
     @Test
     fun functionParameters() = assertEquals(
@@ -216,12 +215,13 @@ class PhpParserTest {
 
     // === Classes ===
 
-    // Disabled: class keyword specialization issue needs investigation
-    // @Test
-    // fun abstractClass() = assertEquals(
-    //     "Template(TextInterpolation(PhpOpen),ClassDeclaration(abstract,class,Name,DeclarationList(MethodDeclaration(Visibility,function,Name,ParamList,Block),MethodDeclaration(abstract,Visibility,function,Name,ParamList))))",
-    //     parse("<?php\n\nabstract class A {\n    public function a() {}\n    abstract public function b();\n}\n")
-    // )
+    @Test
+    fun abstractClass() = assertEquals(
+        "Template(TextInterpolation(PhpOpen),ClassDeclaration(abstract,class,Name,DeclarationList(MethodDeclaration(Visibility,function,Name,ParamList,Block),MethodDeclaration(abstract,Visibility,function,Name,ParamList))))",
+        parse(
+            "<?php\n\nabstract class A {\n    public function a() {}\n    abstract public function b();\n}\n"
+        )
+    )
 
     @Test
     fun textEndsInLessThan() = assertEquals(

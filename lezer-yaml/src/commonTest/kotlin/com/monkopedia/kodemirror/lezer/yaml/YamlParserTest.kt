@@ -108,7 +108,8 @@ class YamlParserTest {
         parse("- Mark McGwire\n- Sammy Sosa\n- Ken Griffey")
     )
 
-    // Disabled: crashes with IndexOutOfBoundsException in parser - needs YAML context tracker investigation
+    // Disabled: crashes with IndexOutOfBoundsException in lezer-lr tree builder
+    // This appears to be a core lezer-lr JS-to-Kotlin porting issue, not YAML-specific
     // @Test
     // fun example2_2MappingScalarsToScalars() = assertEquals(
     //     "Stream(Document(BlockMapping(" +

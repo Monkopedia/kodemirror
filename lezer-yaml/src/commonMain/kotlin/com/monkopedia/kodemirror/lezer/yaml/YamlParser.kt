@@ -68,7 +68,7 @@ private class Context(
     val type: Int
 ) {
     val hash: Int = (
-        (if (parent != null) parent.hash + (parent.hash shl 8) else 0) +
+        (if (parent != null) (parent.hash + parent.hash) shl 8 else 0) +
             depth + (depth shl 4) + type
         )
 

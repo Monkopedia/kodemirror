@@ -122,7 +122,7 @@ private const val cx_Raw = 16
 private const val cx_Format = 32
 
 private class Context(val parent: Context?, val indent: Int, val flags: Int) {
-    val hash: Int = ((if (parent != null) parent.hash + (parent.hash shl 8) else 0) + indent + (indent shl 4) + flags + (flags shl 6))
+    val hash: Int = ((if (parent != null) (parent.hash + parent.hash) shl 8 else 0) + indent + (indent shl 4) + flags + (flags shl 6))
 }
 
 private val topIndent = Context(null, 0, 0)
