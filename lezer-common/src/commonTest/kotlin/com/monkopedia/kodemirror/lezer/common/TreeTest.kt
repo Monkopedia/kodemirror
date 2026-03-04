@@ -280,7 +280,7 @@ class TreeTest {
     @Test
     fun cursorStopsAtAnonWithIncludeAnonymous() {
         val tree = anonTree()
-        val cur = tree.cursor(IterMode.IncludeAnonymous)
+        val cur = tree.cursor(IterMode.INCLUDE_ANONYMOUS)
         cur.moveTo(1)
         // Should land on the anonymous wrapper
         assertEquals(NodeType.none, cur.type)

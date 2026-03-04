@@ -21,7 +21,7 @@ package com.monkopedia.kodemirror.lezer.common
 /**
  * The default maximum length of a [TreeBuffer] node.
  */
-const val DefaultBufferLength = 1024
+const val DEFAULT_BUFFER_LENGTH = 1024
 
 /**
  * Abstraction for iterating over a tree buffer. A cursor initially points at the
@@ -163,22 +163,22 @@ class TreeBuffer(
  * Side constants for child finding.
  */
 internal object Side {
-    const val Before = -2
-    const val AtOrBefore = -1
-    const val Around = 0
-    const val AtOrAfter = 1
-    const val After = 2
-    const val DontCare = 4
+    const val BEFORE = -2
+    const val AT_OR_BEFORE = -1
+    const val AROUND = 0
+    const val AT_OR_AFTER = 1
+    const val AFTER = 2
+    const val DONT_CARE = 4
 }
 
 internal fun checkSide(side: Int, pos: Int, from: Int, to: Int): Boolean {
     return when (side) {
-        Side.Before -> from < pos
-        Side.AtOrBefore -> to >= pos && from < pos
-        Side.Around -> from < pos && to > pos
-        Side.AtOrAfter -> from <= pos && to > pos
-        Side.After -> to > pos
-        Side.DontCare -> true
+        Side.BEFORE -> from < pos
+        Side.AT_OR_BEFORE -> to >= pos && from < pos
+        Side.AROUND -> from < pos && to > pos
+        Side.AT_OR_AFTER -> from <= pos && to > pos
+        Side.AFTER -> to > pos
+        Side.DONT_CARE -> true
         else -> false
     }
 }

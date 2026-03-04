@@ -18,7 +18,7 @@
  */
 package com.monkopedia.kodemirror.lezer.lr
 
-import com.monkopedia.kodemirror.lezer.common.DefaultBufferLength
+import com.monkopedia.kodemirror.lezer.common.DEFAULT_BUFFER_LENGTH
 import com.monkopedia.kodemirror.lezer.common.Input
 import com.monkopedia.kodemirror.lezer.common.NodeProp
 import com.monkopedia.kodemirror.lezer.common.NodePropSource
@@ -165,21 +165,21 @@ class LRParser private constructor(
         for (set in 0 until 2) {
             var i = stateSlot(
                 state,
-                if (set != 0) ParseState.Skip else ParseState.Actions
+                if (set != 0) ParseState.SKIP else ParseState.ACTIONS
             )
             while (true) {
                 var next = data[i]
-                if (next == Seq.End) {
-                    if (data[i + 1] == Seq.Next) {
+                if (next == Seq.END) {
+                    if (data[i + 1] == Seq.NEXT) {
                         i = pair(data, i + 2)
                         next = data[i]
-                    } else if (data[i + 1] == Seq.Other) {
+                    } else if (data[i + 1] == Seq.OTHER) {
                         return pair(data, i + 2)
                     } else {
                         break
                     }
                 }
-                if (next == terminal || next == Term.Err) return pair(data, i + 1)
+                if (next == terminal || next == Term.ERR) return pair(data, i + 1)
                 i += 3
             }
         }
@@ -187,11 +187,11 @@ class LRParser private constructor(
     }
 
     fun stateSlot(state: Int, slot: Int): Int {
-        return states[(state * ParseState.Size) + slot]
+        return states[(state * ParseState.SIZE) + slot]
     }
 
     fun stateFlag(state: Int, flag: Int): Boolean {
-        return (stateSlot(state, ParseState.Flags) and flag) > 0
+        return (stateSlot(state, ParseState.FLAGS) and flag) > 0
     }
 
     fun validAction(state: Int, action: Int): Boolean {
@@ -199,12 +199,12 @@ class LRParser private constructor(
     }
 
     fun <T> allActions(state: Int, action: (Int) -> T?): T? {
-        val deflt = stateSlot(state, ParseState.DefaultReduce)
+        val deflt = stateSlot(state, ParseState.DEFAULT_REDUCE)
         var result: T? = if (deflt != 0) action(deflt) else null
-        var i = stateSlot(state, ParseState.Actions)
+        var i = stateSlot(state, ParseState.ACTIONS)
         while (result == null) {
-            if (data[i] == Seq.End) {
-                if (data[i + 1] == Seq.Next) {
+            if (data[i] == Seq.END) {
+                if (data[i + 1] == Seq.NEXT) {
                     i = pair(data, i + 2)
                 } else {
                     break
@@ -218,16 +218,16 @@ class LRParser private constructor(
 
     fun nextStates(state: Int): List<Int> {
         val result = mutableListOf<Int>()
-        var i = stateSlot(state, ParseState.Actions)
+        var i = stateSlot(state, ParseState.ACTIONS)
         while (true) {
-            if (data[i] == Seq.End) {
-                if (data[i + 1] == Seq.Next) {
+            if (data[i] == Seq.END) {
+                if (data[i + 1] == Seq.NEXT) {
                     i = pair(data, i + 2)
                 } else {
                     break
                 }
             }
-            if ((data[i + 2] and (Action.ReduceFlag shr 16)) == 0) {
+            if ((data[i + 2] and (Action.REDUCE_FLAG shr 16)) == 0) {
                 val value = data[i + 1]
                 if (!result.filterIndexed { idx, _ -> idx % 2 == 1 }.any { it == value }) {
                     result.add(data[i])
@@ -340,7 +340,7 @@ class LRParser private constructor(
                 var j = dialects[values[i]]!!
                 while (true) {
                     val id = data[j++]
-                    if (id == Seq.End) break
+                    if (id == Seq.END) break
                     if (disabled == null) disabled = IntArray(maxTerm + 1)
                     disabled[id] = 1
                 }
@@ -355,10 +355,10 @@ class LRParser private constructor(
          * parser generator.
          */
         fun deserialize(spec: ParserSpec): LRParser {
-            if (spec.version != File.Version) {
+            if (spec.version != File.VERSION) {
                 throw IllegalArgumentException(
                     "Parser version (${spec.version}) doesn't match " +
-                        "runtime version (${File.Version})"
+                        "runtime version (${File.VERSION})"
                 )
             }
 
@@ -456,7 +456,7 @@ class LRParser private constructor(
                 dialect = Dialect(null, emptyList(), null),
                 wrappers = emptyList(),
                 top = spec.topRules.values.first(),
-                bufferLength = DefaultBufferLength,
+                bufferLength = DEFAULT_BUFFER_LENGTH,
                 strict = false
             )
             parser.dialect = parser.parseDialect()
@@ -470,7 +470,7 @@ internal fun pair(data: IntArray, off: Int): Int = data[off] or (data[off + 1] s
 internal fun getSpecializer(spec: SpecializerSpec): (String, Stack) -> Int {
     if (spec.external != null) {
         val mask =
-            if (spec.extend) Specialize.Extend else Specialize.Specialize
+            if (spec.extend) Specialize.EXTEND else Specialize.SPECIALIZE
         return { value, stack ->
             (spec.external.invoke(value, stack) shl 1) or mask
         }

@@ -491,7 +491,7 @@ class TokenTest {
 
     @Test
     fun findOffsetFindsExistingTerm() {
-        val data = intArrayOf(10, 20, 30, Seq.End)
+        val data = intArrayOf(10, 20, 30, Seq.END)
         assertEquals(0, findOffset(data, 0, 10))
         assertEquals(1, findOffset(data, 0, 20))
         assertEquals(2, findOffset(data, 0, 30))
@@ -499,13 +499,13 @@ class TokenTest {
 
     @Test
     fun findOffsetReturnsNeg1ForMissing() {
-        val data = intArrayOf(10, 20, 30, Seq.End)
+        val data = intArrayOf(10, 20, 30, Seq.END)
         assertEquals(-1, findOffset(data, 0, 99))
     }
 
     @Test
     fun findOffsetRespectsStartIndex() {
-        val data = intArrayOf(10, 20, 30, Seq.End)
+        val data = intArrayOf(10, 20, 30, Seq.END)
         assertEquals(0, findOffset(data, 1, 20))
         assertEquals(1, findOffset(data, 1, 30))
         assertEquals(-1, findOffset(data, 1, 10))
@@ -516,19 +516,19 @@ class TokenTest {
     @Test
     fun overridesReturnsTrueWhenTokenAppearsFirst() {
         // token appears before prev in the precedence table
-        val table = intArrayOf(5, 10, 20, Seq.End)
+        val table = intArrayOf(5, 10, 20, Seq.END)
         assertEquals(true, overrides(5, 10, table, 0))
     }
 
     @Test
     fun overridesReturnsFalseWhenTokenAppearsAfter() {
-        val table = intArrayOf(5, 10, 20, Seq.End)
+        val table = intArrayOf(5, 10, 20, Seq.END)
         assertEquals(false, overrides(10, 5, table, 0))
     }
 
     @Test
     fun overridesReturnsTrueWhenPrevNotInTable() {
-        val table = intArrayOf(5, 10, Seq.End)
+        val table = intArrayOf(5, 10, Seq.END)
         // prev=99 not found → iPrev = -1 → return true? No: iPrev < 0 → return (iPrev < 0) || ...
         // Actually: if iPrev < 0, return -1 < 0 which is true, but wait:
         // overrides returns: iPrev < 0 || findOffset(token) < iPrev
@@ -538,7 +538,7 @@ class TokenTest {
 
     @Test
     fun overridesReturnsFalseWhenBothEqual() {
-        val table = intArrayOf(5, 10, Seq.End)
+        val table = intArrayOf(5, 10, Seq.END)
         // Same token: findOffset returns same position, not less than
         assertEquals(false, overrides(5, 5, table, 0))
     }

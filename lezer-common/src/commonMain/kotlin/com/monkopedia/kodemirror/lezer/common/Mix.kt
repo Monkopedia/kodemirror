@@ -148,7 +148,7 @@ private class MixedParse(
         var overlay: ActiveOverlay? = null
         var covered: CoverInfo? = null
         val cursor = baseTree!!.cursor(
-            IterMode.IncludeAnonymous or IterMode.IgnoreMounts
+            IterMode.INCLUDE_ANONYMOUS or IterMode.IGNORE_MOUNTS
         )
 
         scan@ while (true) {
@@ -347,7 +347,7 @@ private fun checkCover(covered: List<TextRange>, from: Int, to: Int): Cover {
 
 private class StructureCursor(root: Tree, private val offset: Int) {
     val cursor: TreeCursor = root.cursor(
-        IterMode.IncludeAnonymous or IterMode.IgnoreMounts
+        IterMode.INCLUDE_ANONYMOUS or IterMode.IGNORE_MOUNTS
     )
     var done = false
 
@@ -358,7 +358,7 @@ private class StructureCursor(root: Tree, private val offset: Int) {
                 cursor.enter(
                     p,
                     1,
-                    IterMode.IgnoreOverlays or IterMode.ExcludeBuffers
+                    IterMode.IGNORE_OVERLAYS or IterMode.EXCLUDE_BUFFERS
                 )
             } else if (!cursor.next(false)) {
                 done = true

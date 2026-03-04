@@ -32,23 +32,23 @@ fun decodeArray(input: String): IntArray {
         var value = 0
         while (true) {
             var next = input[pos++].code
-            if (next == Encode.BigValCode) {
-                value = Encode.BigVal
+            if (next == Encode.BIG_VAL_CODE) {
+                value = Encode.BIG_VAL
                 break
             }
-            if (next >= Encode.Gap2) next--
-            if (next >= Encode.Gap1) next--
-            var digit = next - Encode.Start
+            if (next >= Encode.GAP2) next--
+            if (next >= Encode.GAP1) next--
+            var digit = next - Encode.START
             val stop: Boolean
-            if (digit >= Encode.Base) {
-                digit -= Encode.Base
+            if (digit >= Encode.BASE) {
+                digit -= Encode.BASE
                 stop = true
             } else {
                 stop = false
             }
             value += digit
             if (stop) break
-            value *= Encode.Base
+            value *= Encode.BASE
         }
         if (array != null) {
             array[out++] = value

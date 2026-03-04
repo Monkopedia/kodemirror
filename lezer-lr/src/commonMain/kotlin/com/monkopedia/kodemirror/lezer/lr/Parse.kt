@@ -41,7 +41,7 @@ class TokenCache(parser: LRParser, val stream: InputStream) {
         var main: CachedToken? = null
         val parser = stack.p.parser
         val tokenizers = parser.tokenizers
-        val mask = parser.stateSlot(stack.state, ParseState.TokenizerMask)
+        val mask = parser.stateSlot(stack.state, ParseState.TOKENIZER_MASK)
         val context =
             if (stack.curContext != null) stack.curContext!!.hash else 0
         var lookAhead = 0
@@ -59,10 +59,10 @@ class TokenCache(parser: LRParser, val stream: InputStream) {
                 token.mask = mask
                 token.context = context
             }
-            if (token.lookAhead > token.end + Lookahead.Margin) {
+            if (token.lookAhead > token.end + Lookahead.MARGIN) {
                 lookAhead = max(token.lookAhead, lookAhead)
             }
-            if (token.value != Term.Err) {
+            if (token.value != Term.ERR) {
                 val startIndex = actionIndex
                 if (token.extended > -1) {
                     actionIndex = addActions(
@@ -104,7 +104,7 @@ class TokenCache(parser: LRParser, val stream: InputStream) {
         token.value = if (stack.pos == stream.end) {
             stack.p.parser.eofTerm
         } else {
-            Term.Err
+            Term.ERR
         }
         mainToken = token
         return token
@@ -122,7 +122,7 @@ class TokenCache(parser: LRParser, val stream: InputStream) {
                         stack
                     )
                     if (result >= 0 && parser.dialect.allows(result shr 1)) {
-                        if ((result and 1) == Specialize.Specialize) {
+                        if ((result and 1) == Specialize.SPECIALIZE) {
                             token.value = result shr 1
                         } else {
                             token.extended = result shr 1
@@ -132,7 +132,7 @@ class TokenCache(parser: LRParser, val stream: InputStream) {
                 }
             }
         } else {
-            token.value = Term.Err
+            token.value = Term.ERR
             token.end = stack.pos + 1
         }
     }
@@ -158,14 +158,14 @@ class TokenCache(parser: LRParser, val stream: InputStream) {
         for (set in 0 until 2) {
             var i = parser.stateSlot(
                 state,
-                if (set != 0) ParseState.Skip else ParseState.Actions
+                if (set != 0) ParseState.SKIP else ParseState.ACTIONS
             )
             while (true) {
-                if (data[i] == Seq.End) {
-                    if (data[i + 1] == Seq.Next) {
+                if (data[i] == Seq.END) {
+                    if (data[i + 1] == Seq.NEXT) {
                         i = pair(data, i + 2)
                     } else {
-                        if (idx == 0 && data[i + 1] == Seq.Other) {
+                        if (idx == 0 && data[i + 1] == Seq.OTHER) {
                             idx = putAction(
                                 pair(data, i + 2), token, end, idx
                             )
@@ -240,7 +240,7 @@ class Parse(
         var stoppedTokens: MutableList<Int>? = null
 
         // Handle left-associative reduction explosion
-        if (bigReductionCount > Rec.MaxLeftAssociativeReductionCount &&
+        if (bigReductionCount > Rec.MAX_LEFT_ASSOCIATIVE_REDUCTION_COUNT &&
             stacks.size == 1
         ) {
             val s = stacks[0]
@@ -286,7 +286,7 @@ class Parse(
             if (parser.strict) {
                 throw IllegalStateException("No parse at $pos")
             }
-            if (recovering == 0) recovering = Rec.Distance
+            if (recovering == 0) recovering = Rec.DISTANCE
         }
 
         if (recovering > 0 && stopped != null) {
@@ -306,7 +306,7 @@ class Parse(
             val maxRemaining = if (recovering == 1) {
                 1
             } else {
-                recovering * Rec.MaxRemainingPerStep
+                recovering * Rec.MAX_REMAINING_PER_STEP
             }
             if (newStacks.size > maxRemaining) {
                 newStacks.sortByDescending { it.score }
@@ -325,8 +325,8 @@ class Parse(
                     val other = newStacks[j]
                     if (stack.sameState(other) ||
                         (
-                            stack.buffer.size > Rec.MinBufferLengthPrune &&
-                                other.buffer.size > Rec.MinBufferLengthPrune
+                            stack.buffer.size > Rec.MIN_BUFFER_LENGTH_PRUNE &&
+                                other.buffer.size > Rec.MIN_BUFFER_LENGTH_PRUNE
                             )
                     ) {
                         val cmp = (stack.score - other.score).let {
@@ -348,9 +348,9 @@ class Parse(
                 }
                 idx++
             }
-            if (newStacks.size > Rec.MaxStackCount) {
+            if (newStacks.size > Rec.MAX_STACK_COUNT) {
                 newStacks.sortByDescending { it.score }
-                while (newStacks.size > Rec.MaxStackCount) {
+                while (newStacks.size > Rec.MAX_STACK_COUNT) {
                     newStacks.removeAt(newStacks.size - 1)
                 }
             }
@@ -398,7 +398,7 @@ class Parse(
 
         // Default reduce (no token needed)
         val defaultReduce =
-            parser.stateSlot(stack.state, ParseState.DefaultReduce)
+            parser.stateSlot(stack.state, ParseState.DEFAULT_REDUCE)
         if (defaultReduce > 0) {
             stack.reduce(defaultReduce)
             return true
@@ -463,7 +463,7 @@ class Parse(
             }
             val defaultReduce = parser.stateSlot(
                 stack.state,
-                ParseState.DefaultReduce
+                ParseState.DEFAULT_REDUCE
             )
             if (defaultReduce > 0) {
                 stack.reduce(defaultReduce)
@@ -477,7 +477,7 @@ class Parse(
                     if (actions.size >= 3) actions[2] else startPos
                 )
             }
-            if (++limit > Rec.ForceReduceLimit) return false
+            if (++limit > Rec.FORCE_REDUCE_LIMIT) return false
         }
     }
 
@@ -511,7 +511,7 @@ class Parse(
             // Try force-reducing (up to ForceReduceLimit times) on a split
             val force = stack.split()
             var j = 0
-            while (j < Rec.ForceReduceLimit && force.forceReduce()) {
+            while (j < Rec.FORCE_REDUCE_LIMIT && force.forceReduce()) {
                 val done = advanceFully(force, newStacks)
                 if (done) break
                 j++
@@ -526,7 +526,7 @@ class Parse(
             if (stream.end > stack.pos) {
                 if (tokenEnd == stack.pos) {
                     tokenEnd++
-                    tokenValue = Term.Err
+                    tokenValue = Term.ERR
                 }
                 val deletedStack = stack.split()
                 deletedStack.recoverByDelete(tokenValue, tokenEnd)
@@ -600,7 +600,7 @@ fun findFinished(stacks: List<Stack>): Stack? {
                 stack.pos == stack.p.stream.end ||
                     stopped != null && stack.pos > stopped
                 ) &&
-            stack.p.parser.stateFlag(stack.state, StateFlag.Accepting)
+            stack.p.parser.stateFlag(stack.state, StateFlag.ACCEPTING)
         ) {
             if (best == null || best.score < stack.score) {
                 best = stack

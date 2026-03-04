@@ -226,11 +226,11 @@ data class ChangedRange(
  * Iteration mode flags.
  */
 object IterMode {
-    const val ExcludeBuffers = 1
-    const val IncludeAnonymous = 2
-    const val IgnoreMounts = 4
-    const val IgnoreOverlays = 8
-    const val EnterBracketed = 16
+    const val EXCLUDE_BUFFERS = 1
+    const val INCLUDE_ANONYMOUS = 2
+    const val IGNORE_MOUNTS = 4
+    const val IGNORE_OVERLAYS = 8
+    const val ENTER_BRACKETED = 16
 }
 
 /**
@@ -307,7 +307,7 @@ data class TreeBuildSpec(
     val start: Int = 0,
     val bufferStart: Int = 0,
     val length: Int? = null,
-    val maxBufferLength: Int = DefaultBufferLength,
+    val maxBufferLength: Int = DEFAULT_BUFFER_LENGTH,
     val reused: List<Tree> = emptyList(),
     val minRepeatType: Int = -1
 )
@@ -323,9 +323,9 @@ data class BalanceConfig(
  * Special marker values in the buffer for reuse, context change, and lookahead.
  */
 internal object SpecialRecord {
-    const val Reuse = -1
-    const val ContextChange = -3
-    const val LookAhead = -4
+    const val REUSE = -1
+    const val CONTEXT_CHANGE = -3
+    const val LOOK_AHEAD = -4
 }
 
 private const val BALANCE_BRANCH_FACTOR = 8
@@ -422,8 +422,8 @@ class Tree(
         val from = spec.from ?: 0
         val to = spec.to ?: this.length
         val mode = spec.mode ?: 0
-        val anon = (mode and IterMode.IncludeAnonymous) != 0
-        val c = this.cursor(mode or IterMode.IncludeAnonymous)
+        val anon = (mode and IterMode.INCLUDE_ANONYMOUS) != 0
+        val c = this.cursor(mode or IterMode.INCLUDE_ANONYMOUS)
         loop@ while (true) {
             var entered = false
             if (c.from <= to && c.to >= from &&
@@ -536,21 +536,21 @@ internal class TreeNode(
     }
 
     override val firstChild: SyntaxNode?
-        get() = nextChild(0, 1, 0, Side.DontCare)
+        get() = nextChild(0, 1, 0, Side.DONT_CARE)
 
     override val lastChild: SyntaxNode?
-        get() = nextChild(_tree.children.size - 1, -1, 0, Side.DontCare)
+        get() = nextChild(_tree.children.size - 1, -1, 0, Side.DONT_CARE)
 
     override val nextSibling: SyntaxNode?
         get() = if (_parent != null && index >= 0) {
-            _parent.nextChild(index + 1, 1, 0, Side.DontCare)
+            _parent.nextChild(index + 1, 1, 0, Side.DONT_CARE)
         } else {
             null
         }
 
     override val prevSibling: SyntaxNode?
         get() = if (_parent != null && index >= 0) {
-            _parent.nextChild(index - 1, -1, 0, Side.DontCare)
+            _parent.nextChild(index - 1, -1, 0, Side.DONT_CARE)
         } else {
             null
         }
@@ -570,7 +570,7 @@ internal class TreeNode(
                     continue
                 }
                 if (next is TreeBuffer) {
-                    if (mode and IterMode.ExcludeBuffers != 0) {
+                    if (mode and IterMode.EXCLUDE_BUFFERS != 0) {
                         idx += dir
                         continue
                     }
@@ -589,11 +589,11 @@ internal class TreeNode(
                         )
                     }
                 } else if (next is Tree) {
-                    if (mode and IterMode.IncludeAnonymous != 0 ||
+                    if (mode and IterMode.INCLUDE_ANONYMOUS != 0 ||
                         !next.type.isAnonymous || hasChild(next)
                     ) {
                         val inner = TreeNode(next, start, idx, parent)
-                        return if (mode and IterMode.IncludeAnonymous != 0 ||
+                        return if (mode and IterMode.INCLUDE_ANONYMOUS != 0 ||
                             !inner.type.isAnonymous
                         ) {
                             inner
@@ -610,7 +610,7 @@ internal class TreeNode(
                 }
                 idx += dir
             }
-            if (mode and IterMode.IncludeAnonymous != 0 ||
+            if (mode and IterMode.INCLUDE_ANONYMOUS != 0 ||
                 !parent.type.isAnonymous
             ) {
                 return null
@@ -629,7 +629,7 @@ internal class TreeNode(
     }
 
     override fun childAfter(pos: Int): SyntaxNode? {
-        return nextChild(0, 1, pos, Side.After)
+        return nextChild(0, 1, pos, Side.AFTER)
     }
 
     override fun childBefore(pos: Int): SyntaxNode? {
@@ -637,7 +637,7 @@ internal class TreeNode(
             _tree.children.size - 1,
             -1,
             pos,
-            Side.Before
+            Side.BEFORE
         )
     }
 
@@ -718,16 +718,16 @@ internal class BufferNode(
     }
 
     override val firstChild: SyntaxNode?
-        get() = child(1, 0, Side.DontCare)
+        get() = child(1, 0, Side.DONT_CARE)
     override val lastChild: SyntaxNode?
-        get() = child(-1, 0, Side.DontCare)
+        get() = child(-1, 0, Side.DONT_CARE)
 
-    override fun childAfter(pos: Int): SyntaxNode? = child(1, pos, Side.After)
+    override fun childAfter(pos: Int): SyntaxNode? = child(1, pos, Side.AFTER)
 
-    override fun childBefore(pos: Int): SyntaxNode? = child(-1, pos, Side.Before)
+    override fun childBefore(pos: Int): SyntaxNode? = child(-1, pos, Side.BEFORE)
 
     override fun enter(pos: Int, side: Int, mode: Int): SyntaxNode? {
-        if (mode and IterMode.ExcludeBuffers != 0) return null
+        if (mode and IterMode.EXCLUDE_BUFFERS != 0) return null
         val buffer = context.buffer
         val childIdx = buffer.findChild(
             index + 4,
@@ -754,7 +754,7 @@ internal class BufferNode(
                 context.index + dir,
                 dir,
                 0,
-                Side.DontCare
+                Side.DONT_CARE
             )
         }
     }
@@ -790,7 +790,7 @@ internal class BufferNode(
                         index,
                         -1,
                         0,
-                        Side.DontCare
+                        Side.DONT_CARE
                     )
                 )
             }
@@ -869,6 +869,7 @@ class TreeCursor internal constructor(
     root: Tree,
     internal val mode: Int = 0
 ) : SyntaxNodeRef {
+    @Suppress("ktlint:standard:property-naming")
     internal var _tree: TreeNode = TreeNode(root, 0, null, 0)
     internal var buffer: BufferContext? = null
     private val stack = mutableListOf<Int>()
@@ -994,23 +995,23 @@ class TreeCursor internal constructor(
     }
 
     /** Move to the first child. Returns true if successful. */
-    fun firstChild(): Boolean = enterChild(1, 0, Side.DontCare)
+    fun firstChild(): Boolean = enterChild(1, 0, Side.DONT_CARE)
 
     /** Move to the last child. */
-    fun lastChild(): Boolean = enterChild(-1, 0, Side.DontCare)
+    fun lastChild(): Boolean = enterChild(-1, 0, Side.DONT_CARE)
 
     /** Move to the first child that ends after [pos]. */
-    fun childAfter(pos: Int): Boolean = enterChild(1, pos, Side.After)
+    fun childAfter(pos: Int): Boolean = enterChild(1, pos, Side.AFTER)
 
     /** Move to the last child that starts before [pos]. */
-    fun childBefore(pos: Int): Boolean = enterChild(-1, pos, Side.Before)
+    fun childBefore(pos: Int): Boolean = enterChild(-1, pos, Side.BEFORE)
 
     /** Enter child at position. */
     fun enter(pos: Int, side: Int, enterMode: Int = mode): Boolean {
         if (buffer == null) {
             return yieldResult(_tree.enter(pos, side, enterMode))
         }
-        return if (enterMode and IterMode.ExcludeBuffers != 0) {
+        return if (enterMode and IterMode.EXCLUDE_BUFFERS != 0) {
             false
         } else {
             enterChild(1, pos, side)
@@ -1028,7 +1029,7 @@ class TreeCursor internal constructor(
                         _tree.index + dir,
                         dir,
                         0,
-                        Side.DontCare,
+                        Side.DONT_CARE,
                         mode
                     )
                 )
@@ -1045,7 +1046,7 @@ class TreeCursor internal constructor(
                         index,
                         -1,
                         0,
-                        Side.DontCare
+                        Side.DONT_CARE
                     )
                 )
             }
@@ -1064,7 +1065,7 @@ class TreeCursor internal constructor(
                     buf.index + dir,
                     dir,
                     0,
-                    Side.DontCare,
+                    Side.DONT_CARE,
                     mode
                 )
             )
@@ -1083,7 +1084,7 @@ class TreeCursor internal constructor(
     fun parent(): Boolean {
         if (buffer == null) {
             return yieldNode(
-                if (mode and IterMode.IncludeAnonymous != 0) {
+                if (mode and IterMode.INCLUDE_ANONYMOUS != 0) {
                     _tree._parent
                 } else {
                     _tree.parent as? TreeNode
@@ -1091,7 +1092,7 @@ class TreeCursor internal constructor(
             )
         }
         if (stack.isNotEmpty()) return yieldBuf(stack.removeLast())
-        val parentNode = if (mode and IterMode.IncludeAnonymous != 0) {
+        val parentNode = if (mode and IterMode.INCLUDE_ANONYMOUS != 0) {
             buffer!!.parent
         } else {
             buffer!!.parent.nextSignificantParent()
@@ -1124,7 +1125,7 @@ class TreeCursor internal constructor(
                 val e = if (dir < 0) -1 else parentNode._tree.children.size
                 while (i != e) {
                     val child = parentNode!!._tree.children[i]
-                    if (mode and IterMode.IncludeAnonymous != 0 ||
+                    if (mode and IterMode.INCLUDE_ANONYMOUS != 0 ||
                         child is TreeBuffer ||
                         (child is Tree && !child.type.isAnonymous) ||
                         (child is Tree && hasChild(child))
@@ -1141,7 +1142,7 @@ class TreeCursor internal constructor(
     }
 
     private fun move(dir: Int, enter: Boolean): Boolean {
-        if (enter && enterChild(dir, 0, Side.DontCare)) return true
+        if (enter && enterChild(dir, 0, Side.DONT_CARE)) return true
         while (true) {
             if (sibling(dir)) return true
             if (atLastNode(dir) || !parent()) return false
@@ -1346,9 +1347,9 @@ private fun buildTree(spec: TreeBuildSpec): Tree {
             buffer[--idx] = end - bufferStart
             buffer[--idx] = start - bufferStart
             buffer[--idx] = id
-        } else if (size == SpecialRecord.ContextChange) {
+        } else if (size == SpecialRecord.CONTEXT_CHANGE) {
             contextHash = id
-        } else if (size == SpecialRecord.LookAhead) {
+        } else if (size == SpecialRecord.LOOK_AHEAD) {
             lookAhead = id
         }
         return idx
@@ -1380,8 +1381,8 @@ private fun buildTree(spec: TreeBuildSpec): Tree {
             fork.next()
             while (fork.pos > startPos) {
                 if (fork.size < 0) {
-                    if (fork.size == SpecialRecord.ContextChange ||
-                        fork.size == SpecialRecord.LookAhead
+                    if (fork.size == SpecialRecord.CONTEXT_CHANGE ||
+                        fork.size == SpecialRecord.LOOK_AHEAD
                     ) {
                         localSkipped += 4
                     } else {
@@ -1480,16 +1481,16 @@ private fun buildTree(spec: TreeBuildSpec): Tree {
         if (size < 0) {
             cursor.next()
             when (size) {
-                SpecialRecord.Reuse -> {
+                SpecialRecord.REUSE -> {
                     children.add(reused[id])
                     positions.add(start - parentStart)
                     return
                 }
-                SpecialRecord.ContextChange -> {
+                SpecialRecord.CONTEXT_CHANGE -> {
                     contextHash = id
                     return
                 }
-                SpecialRecord.LookAhead -> {
+                SpecialRecord.LOOK_AHEAD -> {
                     lookAhead = id
                     return
                 }

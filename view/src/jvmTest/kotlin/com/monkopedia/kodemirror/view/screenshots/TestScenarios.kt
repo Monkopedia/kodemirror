@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.sp
+import com.monkopedia.kodemirror.lang.javascript.parser
 import com.monkopedia.kodemirror.language.FoldRange
 import com.monkopedia.kodemirror.language.HighlightStyle
 import com.monkopedia.kodemirror.language.Language
@@ -32,7 +33,6 @@ import com.monkopedia.kodemirror.language.foldNodeProp
 import com.monkopedia.kodemirror.language.oneDarkHighlightStyle
 import com.monkopedia.kodemirror.language.syntaxHighlighting
 import com.monkopedia.kodemirror.lezer.highlight.tags
-import com.monkopedia.kodemirror.lang.javascript.parser
 import com.monkopedia.kodemirror.lezer.lr.ParserConfig
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList

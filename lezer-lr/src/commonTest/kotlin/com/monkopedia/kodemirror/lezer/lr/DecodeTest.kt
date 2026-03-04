@@ -41,21 +41,21 @@ class DecodeTest {
      * The encoding works as follows:
      * - Special case: 0xffff is encoded as char code 126 ('~')
      * - Otherwise, digits are emitted most-significant first in base 46
-     * - Each digit is offset by [Encode.Start] (32)
-     * - The last emitted digit (least significant) has [Encode.Base] (46) added
+     * - Each digit is offset by [Encode.START] (32)
+     * - The last emitted digit (least significant) has [Encode.BASE] (46) added
      *   to signal stop
      * - Gap characters at code points 34 ('"') and 92 ('\\') are skipped over
      */
     private fun encodeValue(v: Int): String {
-        if (v == Encode.BigVal) {
-            return Encode.BigValCode.toChar().toString()
+        if (v == Encode.BIG_VAL) {
+            return Encode.BIG_VAL_CODE.toChar().toString()
         }
         // Decompose value into base-46 digits, LSB first
         val digits = mutableListOf<Int>()
         var remaining = v
         do {
-            digits.add(remaining % Encode.Base)
-            remaining /= Encode.Base
+            digits.add(remaining % Encode.BASE)
+            remaining /= Encode.BASE
         } while (remaining > 0)
         // Reverse to get MSB first (decoder reads MSB first)
         digits.reverse()
@@ -63,12 +63,12 @@ class DecodeTest {
         for (i in digits.indices) {
             val digit = digits[i]
             val isLast = i == digits.size - 1
-            val encodedDigit = if (isLast) digit + Encode.Base else digit
-            var charCode = encodedDigit + Encode.Start
+            val encodedDigit = if (isLast) digit + Encode.BASE else digit
+            var charCode = encodedDigit + Encode.START
             // Adjust for gap characters: if charCode >= Gap1 (34), increment
             // if charCode >= Gap2 (92), increment again
-            if (charCode >= Encode.Gap1) charCode++
-            if (charCode >= Encode.Gap2) charCode++
+            if (charCode >= Encode.GAP1) charCode++
+            if (charCode >= Encode.GAP2) charCode++
             sb.append(charCode.toChar())
         }
         return sb.toString()
@@ -171,7 +171,7 @@ class DecodeTest {
 
     @Test
     fun bigValEncodedAsTildeChar() {
-        // '~' has char code 126 = Encode.BigValCode
+        // '~' has char code 126 = Encode.BIG_VAL_CODE
         // An array of [0xffff] should contain '~' for the bigval
         val encoded = encodeArray(intArrayOf(0xffff))
         assertTrue(encoded.contains('~'))
@@ -257,7 +257,7 @@ class DecodeTest {
     @Test
     fun encodeValueSmallProducesSingleChar() {
         // Values 0..45 should each produce a single character
-        for (v in 0 until Encode.Base) {
+        for (v in 0 until Encode.BASE) {
             val encoded = encodeValue(v)
             assertEquals(1, encoded.length, "Value $v should encode as single char")
         }
@@ -283,8 +283,8 @@ class DecodeTest {
         for (v in listOf(0, 1, 10, 45, 46, 100, 500, 1000, 5000)) {
             val encoded = encodeValue(v)
             for (c in encoded) {
-                assertTrue(c.code != Encode.Gap1, "Encoded value $v contains Gap1 char")
-                assertTrue(c.code != Encode.Gap2, "Encoded value $v contains Gap2 char")
+                assertTrue(c.code != Encode.GAP1, "Encoded value $v contains Gap1 char")
+                assertTrue(c.code != Encode.GAP2, "Encoded value $v contains Gap2 char")
             }
         }
     }
@@ -294,8 +294,8 @@ class DecodeTest {
         val expected = IntArray(50) { it * 100 }
         val encoded = encodeArray(expected)
         for (c in encoded) {
-            assertTrue(c.code != Encode.Gap1, "Encoded array contains Gap1 char ('\"')")
-            assertTrue(c.code != Encode.Gap2, "Encoded array contains Gap2 char ('\\\\')")
+            assertTrue(c.code != Encode.GAP1, "Encoded array contains Gap1 char ('\"')")
+            assertTrue(c.code != Encode.GAP2, "Encoded array contains Gap2 char ('\\\\')")
         }
     }
 

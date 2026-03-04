@@ -20,89 +20,89 @@ package com.monkopedia.kodemirror.lezer.lr
 
 /** Parse action bit layout constants. */
 object Action {
-    const val ReduceFlag = 1 shl 16
-    const val ValueMask = (1 shl 16) - 1
-    const val ReduceDepthShift = 19
-    const val RepeatFlag = 1 shl 17
-    const val GotoFlag = 1 shl 17
-    const val StayFlag = 1 shl 18
+    const val REDUCE_FLAG = 1 shl 16
+    const val VALUE_MASK = (1 shl 16) - 1
+    const val REDUCE_DEPTH_SHIFT = 19
+    const val REPEAT_FLAG = 1 shl 17
+    const val GOTO_FLAG = 1 shl 17
+    const val STAY_FLAG = 1 shl 18
 }
 
 /** Parse state flag constants. */
 object StateFlag {
-    const val Skipped = 1
-    const val Accepting = 2
+    const val SKIPPED = 1
+    const val ACCEPTING = 2
 }
 
 /** Specialization constants. */
 object Specialize {
-    const val Specialize = 0
-    const val Extend = 1
+    const val SPECIALIZE = 0
+    const val EXTEND = 1
 }
 
 /** Term constants. */
 object Term {
-    const val Err = 0
+    const val ERR = 0
 }
 
 /** Sequence marker constants. */
 object Seq {
-    const val End = 0xffff
-    const val Done = 0
-    const val Next = 1
-    const val Other = 2
+    const val END = 0xffff
+    const val DONE = 0
+    const val NEXT = 1
+    const val OTHER = 2
 }
 
 /** Memory layout of parse states. */
 object ParseState {
-    const val Flags = 0
-    const val Actions = 1
-    const val Skip = 2
-    const val TokenizerMask = 3
-    const val DefaultReduce = 4
-    const val ForcedReduce = 5
-    const val Size = 6
+    const val FLAGS = 0
+    const val ACTIONS = 1
+    const val SKIP = 2
+    const val TOKENIZER_MASK = 3
+    const val DEFAULT_REDUCE = 4
+    const val FORCED_REDUCE = 5
+    const val SIZE = 6
 }
 
 /** Encoding constants for binary data. */
 object Encode {
-    const val BigValCode = 126
-    const val BigVal = 0xffff
-    const val Start = 32
-    const val Gap1 = 34 // '"'
-    const val Gap2 = 92 // '\\'
-    const val Base = 46 // (126 - 32 - 2) / 2
+    const val BIG_VAL_CODE = 126
+    const val BIG_VAL = 0xffff
+    const val START = 32
+    const val GAP1 = 34 // '"'
+    const val GAP2 = 92 // '\\'
+    const val BASE = 46 // (126 - 32 - 2) / 2
 }
 
 /** File format version. */
 object File {
-    const val Version = 14
+    const val VERSION = 14
 }
 
 /** Recovery constants. */
 object Recover {
-    const val Insert = 200
-    const val Delete = 190
-    const val Reduce = 100
-    const val MaxNext = 4
-    const val MaxInsertStackDepth = 300
-    const val DampenInsertStackDepth = 120
-    const val MinBigReduction = 2000
+    const val INSERT = 200
+    const val DELETE = 190
+    const val REDUCE = 100
+    const val MAX_NEXT = 4
+    const val MAX_INSERT_STACK_DEPTH = 300
+    const val DAMPEN_INSERT_STACK_DEPTH = 120
+    const val MIN_BIG_REDUCTION = 2000
 }
 
 /** Parse loop constants. */
 object Rec {
-    const val Distance = 5
-    const val MaxRemainingPerStep = 3
-    const val MinBufferLengthPrune = 500
-    const val ForceReduceLimit = 10
-    const val CutDepth = 2800 * 3
-    const val CutTo = 2000 * 3
-    const val MaxLeftAssociativeReductionCount = 300
-    const val MaxStackCount = 12
+    const val DISTANCE = 5
+    const val MAX_REMAINING_PER_STEP = 3
+    const val MIN_BUFFER_LENGTH_PRUNE = 500
+    const val FORCE_REDUCE_LIMIT = 10
+    const val CUT_DEPTH = 2800 * 3
+    const val CUT_TO = 2000 * 3
+    const val MAX_LEFT_ASSOCIATIVE_REDUCTION_COUNT = 300
+    const val MAX_STACK_COUNT = 12
 }
 
 /** Lookahead margin. */
 object Lookahead {
-    const val Margin = 25
+    const val MARGIN = 25
 }

@@ -104,6 +104,7 @@ private val smallRanges: List<Range<Value>> = buildList {
     }
 }
 
+@Suppress("ktlint:standard:property-naming")
 private var _set0: RangeSet<Value>? = null
 private fun set0(): RangeSet<Value> {
     if (_set0 == null) _set0 = mkSet(smallRanges)

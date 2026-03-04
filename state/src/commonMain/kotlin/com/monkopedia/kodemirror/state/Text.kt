@@ -22,8 +22,8 @@ import kotlin.math.max
 import kotlin.math.min
 
 internal object Tree {
-    const val BranchShift = 5
-    const val Branch = 1 shl BranchShift
+    const val BRANCH_SHIFT = 5
+    const val BRANCH = 1 shl BRANCH_SHIFT
 }
 
 internal enum class Open(val value: Int) {
@@ -233,7 +233,7 @@ abstract class Text {
                 )
             }
             if (text.size == 1 && text[0].isEmpty()) return empty
-            return if (text.size <= Tree.Branch) {
+            return if (text.size <= Tree.BRANCH) {
                 TextLeaf(text)
             } else {
                 TextNode.from(TextLeaf.split(text, mutableListOf()))
@@ -288,7 +288,7 @@ internal class TextLeaf(
                 0,
                 text.length
             )
-            if (joined.size <= Tree.Branch) {
+            if (joined.size <= Tree.BRANCH) {
                 target.add(
                     TextLeaf(joined, prev.length + text.length)
                 )
@@ -314,7 +314,7 @@ internal class TextLeaf(
             clippedTo
         )
         val newLen = length + text.length - (clippedTo - clippedFrom)
-        if (lines.size <= Tree.Branch) return TextLeaf(lines, newLen)
+        if (lines.size <= Tree.BRANCH) return TextLeaf(lines, newLen)
         return TextNode.from(
             TextLeaf.split(lines, mutableListOf()),
             newLen
@@ -356,7 +356,7 @@ internal class TextLeaf(
             for (line in text) {
                 part.add(line)
                 len += line.length + 1
-                if (part.size == Tree.Branch) {
+                if (part.size == Tree.BRANCH) {
                     target.add(TextLeaf(part.toList(), len))
                     part.clear()
                     len = -1
@@ -451,9 +451,9 @@ internal class TextNode(
                     val totalLines =
                         lines - child.lines + updated.lines
                     if (updated.lines <
-                        (totalLines shr (Tree.BranchShift - 1)) &&
+                        (totalLines shr (Tree.BRANCH_SHIFT - 1)) &&
                         updated.lines >
-                        (totalLines shr (Tree.BranchShift + 1))
+                        (totalLines shr (Tree.BRANCH_SHIFT + 1))
                     ) {
                         val copy = children.toMutableList()
                         copy[i] = updated
@@ -541,14 +541,14 @@ internal class TextNode(
         ): Text {
             var lines = 0
             for (ch in children) lines += ch.lines
-            if (lines < Tree.Branch) {
+            if (lines < Tree.BRANCH) {
                 val flat = mutableListOf<String>()
                 for (ch in children) ch.flatten(flat)
                 return TextLeaf(flat, length)
             }
             val chunk = max(
-                Tree.Branch,
-                lines shr Tree.BranchShift
+                Tree.BRANCH,
+                lines shr Tree.BRANCH_SHIFT
             )
             val maxChunk = chunk shl 1
             val minChunk = chunk shr 1
@@ -590,7 +590,7 @@ internal class TextNode(
                     currentChunk.last() is TextLeaf
                 ) {
                     val last = currentChunk.last() as TextLeaf
-                    if (child.lines + last.lines <= Tree.Branch) {
+                    if (child.lines + last.lines <= Tree.BRANCH) {
                         currentLines += child.lines
                         currentLen += child.length + 1
                         currentChunk[currentChunk.size - 1] =

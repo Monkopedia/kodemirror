@@ -381,7 +381,7 @@ internal fun readToken(
         var low = 0
         var high = data[state + 2]
         // Special case for EOF
-        if (input.next < 0 && high > low && data[accEnd + high * 3 - 3] == Seq.End) {
+        if (input.next < 0 && high > low && data[accEnd + high * 3 - 3] == Seq.END) {
             state = data[accEnd + high * 3 - 1]
             continue@scan
         }
@@ -409,7 +409,7 @@ internal fun findOffset(data: IntArray, start: Int, term: Int): Int {
     var i = start
     while (true) {
         val next = data[i]
-        if (next == Seq.End) return -1
+        if (next == Seq.END) return -1
         if (next == term) return i - start
         i++
     }

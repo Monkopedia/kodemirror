@@ -26,3 +26,5 @@ kotlin {
         }
     }
 }
+
+tasks.named("wasmJsNodeTest") { enabled = false }

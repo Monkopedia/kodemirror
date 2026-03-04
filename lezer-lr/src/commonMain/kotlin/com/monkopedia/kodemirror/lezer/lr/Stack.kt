@@ -62,10 +62,10 @@ class Stack(
     }
 
     fun reduce(action: Int) {
-        var depth = action shr Action.ReduceDepthShift
-        val type = action and Action.ValueMask
+        var depth = action shr Action.REDUCE_DEPTH_SHIFT
+        val type = action and Action.VALUE_MASK
         val parser = p.parser
-        val lookaheadRecord = reducePos < pos - Lookahead.Margin && setLookAhead(pos)
+        val lookaheadRecord = reducePos < pos - Lookahead.MARGIN && setLookAhead(pos)
         val dPrec = parser.dynamicPrecedence(type)
         if (dPrec != 0) score += dPrec
         if (depth == 0) {
@@ -77,10 +77,10 @@ class Stack(
             return
         }
         val base = stack.size - ((depth - 1) * 3) -
-            (if ((action and Action.StayFlag) != 0) 6 else 0)
+            (if ((action and Action.STAY_FLAG) != 0) 6 else 0)
         val start = if (base > 0) stack[base - 2] else p.ranges[0].from
         val size = reducePos - start
-        if (size >= Recover.MinBigReduction &&
+        if (size >= Recover.MIN_BIG_REDUCTION &&
             !(p.parser.nodeSet.types.getOrNull(type)?.let { it.name.isEmpty() } == true)
         ) {
             if (start == p.lastBigReductionStart) {
@@ -94,12 +94,12 @@ class Stack(
         }
         val bufferBase = if (base > 0) stack[base - 1] else 0
         val count = this.bufferBase + buffer.size - bufferBase
-        if (type < parser.minRepeatTerm || (action and Action.RepeatFlag) != 0) {
+        if (type < parser.minRepeatTerm || (action and Action.REPEAT_FLAG) != 0) {
             val storeEnd =
-                if (parser.stateFlag(state, StateFlag.Skipped)) pos else reducePos
+                if (parser.stateFlag(state, StateFlag.SKIPPED)) pos else reducePos
             storeNode(type, start, storeEnd, count + 4, true)
         }
-        if ((action and Action.StayFlag) != 0) {
+        if ((action and Action.STAY_FLAG) != 0) {
             state = stack[base]
         } else {
             val baseStateID = stack[base - 3]
@@ -110,7 +110,7 @@ class Stack(
     }
 
     fun storeNode(term: Int, start: Int, end: Int, size: Int = 4, mustSink: Boolean = false) {
-        if (term == Term.Err &&
+        if (term == Term.ERR &&
             (stack.isEmpty() || stack.last() < buffer.size + bufferBase)
         ) {
             var cur: Stack? = this
@@ -119,7 +119,7 @@ class Stack(
                 top = cur.bufferBase - cur.parent!!.bufferBase
                 cur = cur.parent
             }
-            if (top > 0 && cur!!.buffer[top - 4] == Term.Err && cur.buffer[top - 1] > -1) {
+            if (top > 0 && cur!!.buffer[top - 4] == Term.ERR && cur.buffer[top - 1] > -1) {
                 if (start == end) return
                 if (cur.buffer[top - 2] >= start) {
                     cur.buffer[top - 2] = end
@@ -134,7 +134,7 @@ class Stack(
             buffer.add(size)
         } else {
             var index = buffer.size
-            if (index > 0 && (buffer[index - 4] != Term.Err || buffer[index - 1] < 0)) {
+            if (index > 0 && (buffer[index - 4] != Term.ERR || buffer[index - 1] < 0)) {
                 var mustMove = false
                 var scan = index
                 while (scan > 0 && buffer[scan - 2] > end) {
@@ -172,13 +172,13 @@ class Stack(
     }
 
     fun shift(action: Int, type: Int, start: Int, end: Int) {
-        if ((action and Action.GotoFlag) != 0) {
-            pushState(action and Action.ValueMask, pos)
-        } else if ((action and Action.StayFlag) == 0) {
+        if ((action and Action.GOTO_FLAG) != 0) {
+            pushState(action and Action.VALUE_MASK, pos)
+        } else if ((action and Action.STAY_FLAG) == 0) {
             val nextState = action
             val parser = p.parser
             pos = end
-            val skipped = parser.stateFlag(nextState, StateFlag.Skipped)
+            val skipped = parser.stateFlag(nextState, StateFlag.SKIPPED)
             if (!skipped && (end > start || type <= parser.maxNode)) reducePos = end
             pushState(nextState, if (skipped) start else min(start, reducePos))
             shiftContext(type, start)
@@ -201,7 +201,7 @@ class Stack(
     }
 
     fun apply(action: Int, next: Int, nextStart: Int, nextEnd: Int) {
-        if ((action and Action.ReduceFlag) != 0) {
+        if ((action and Action.REDUCE_FLAG) != 0) {
             reduce(action)
         } else {
             shift(action, next, nextStart, nextEnd)
@@ -254,29 +254,29 @@ class Stack(
     fun recoverByDelete(next: Int, nextEnd: Int) {
         val isNode = next <= p.parser.maxNode
         if (isNode) storeNode(next, pos, nextEnd, 4)
-        storeNode(Term.Err, pos, nextEnd, if (isNode) 8 else 4)
+        storeNode(Term.ERR, pos, nextEnd, if (isNode) 8 else 4)
         pos = nextEnd
         reducePos = nextEnd
-        score -= Recover.Delete
+        score -= Recover.DELETE
     }
 
     fun canShift(term: Int): Boolean {
         val sim = SimulatedStack(this)
         while (true) {
-            val action = p.parser.stateSlot(sim.state, ParseState.DefaultReduce).toInt()
+            val action = p.parser.stateSlot(sim.state, ParseState.DEFAULT_REDUCE).toInt()
                 .takeIf { it != 0 }
                 ?: p.parser.hasAction(sim.state, term)
             if (action == 0) return false
-            if ((action and Action.ReduceFlag) == 0) return true
+            if ((action and Action.REDUCE_FLAG) == 0) return true
             sim.reduce(action)
         }
     }
 
     fun recoverByInsert(next: Int): List<Stack> {
-        if (stack.size >= Recover.MaxInsertStackDepth) return emptyList()
+        if (stack.size >= Recover.MAX_INSERT_STACK_DEPTH) return emptyList()
         val nextStates = p.parser.nextStates(state).toMutableList()
-        if (nextStates.size > Recover.MaxNext shl 1 ||
-            stack.size >= Recover.DampenInsertStackDepth
+        if (nextStates.size > Recover.MAX_NEXT shl 1 ||
+            stack.size >= Recover.DAMPEN_INSERT_STACK_DEPTH
         ) {
             val best = mutableListOf<Int>()
             var i = 0
@@ -288,9 +288,9 @@ class Stack(
                 }
                 i += 2
             }
-            if (stack.size < Recover.DampenInsertStackDepth) {
+            if (stack.size < Recover.DAMPEN_INSERT_STACK_DEPTH) {
                 i = 0
-                while (best.size < Recover.MaxNext shl 1 && i < nextStates.size) {
+                while (best.size < Recover.MAX_NEXT shl 1 && i < nextStates.size) {
                     val s = nextStates[i + 1]
                     if (!best.filterIndexed { idx, _ -> idx % 2 == 1 }.any { it == s }) {
                         best.add(nextStates[i])
@@ -304,15 +304,15 @@ class Stack(
         }
         val result = mutableListOf<Stack>()
         var i = 0
-        while (i < nextStates.size && result.size < Recover.MaxNext) {
+        while (i < nextStates.size && result.size < Recover.MAX_NEXT) {
             val s = nextStates[i + 1]
             if (s != state) {
                 val stack = split()
                 stack.pushState(s, pos)
-                stack.storeNode(Term.Err, stack.pos, stack.pos, 4, true)
+                stack.storeNode(Term.ERR, stack.pos, stack.pos, 4, true)
                 stack.shiftContext(nextStates[i], pos)
                 stack.reducePos = pos
-                stack.score -= Recover.Insert
+                stack.score -= Recover.INSERT
                 result.add(stack)
             }
             i += 2
@@ -322,19 +322,19 @@ class Stack(
 
     fun forceReduce(): Boolean {
         val parser = p.parser
-        val reduce = parser.stateSlot(state, ParseState.ForcedReduce)
-        if ((reduce and Action.ReduceFlag) == 0) return false
+        val reduce = parser.stateSlot(state, ParseState.FORCED_REDUCE)
+        if ((reduce and Action.REDUCE_FLAG) == 0) return false
         var actualReduce = reduce
         if (!parser.validAction(state, reduce)) {
-            val depth = reduce shr Action.ReduceDepthShift
-            val term = reduce and Action.ValueMask
+            val depth = reduce shr Action.REDUCE_DEPTH_SHIFT
+            val term = reduce and Action.VALUE_MASK
             val target = stack.size - depth * 3
             if (target < 0 || parser.getGoto(stack[target], term, false) < 0) {
                 val backup = findForcedReduction() ?: return false
                 actualReduce = backup
             }
-            storeNode(Term.Err, pos, pos, 4, true)
-            score -= Recover.Reduce
+            storeNode(Term.ERR, pos, pos, 4, true)
+            score -= Recover.REDUCE
         }
         reducePos = pos
         reduce(actualReduce)
@@ -348,15 +348,15 @@ class Stack(
             if (seen.contains(state)) return null
             seen.add(state)
             return parser.allActions(state) { action ->
-                if ((action and (Action.StayFlag or Action.GotoFlag)) != 0) {
+                if ((action and (Action.STAY_FLAG or Action.GOTO_FLAG)) != 0) {
                     null
-                } else if ((action and Action.ReduceFlag) != 0) {
-                    val rDepth = (action shr Action.ReduceDepthShift) - depth
+                } else if ((action and Action.REDUCE_FLAG) != 0) {
+                    val rDepth = (action shr Action.REDUCE_DEPTH_SHIFT) - depth
                     if (rDepth > 1) {
-                        val term = action and Action.ValueMask
+                        val term = action and Action.VALUE_MASK
                         val target = this.stack.size - rDepth * 3
                         if (target >= 0 && parser.getGoto(this.stack[target], term, false) >= 0) {
-                            (rDepth shl Action.ReduceDepthShift) or Action.ReduceFlag or term
+                            (rDepth shl Action.REDUCE_DEPTH_SHIFT) or Action.REDUCE_FLAG or term
                         } else {
                             null
                         }
@@ -372,9 +372,9 @@ class Stack(
     }
 
     fun forceAll(): Stack {
-        while (!p.parser.stateFlag(state, StateFlag.Accepting)) {
+        while (!p.parser.stateFlag(state, StateFlag.ACCEPTING)) {
             if (!forceReduce()) {
-                storeNode(Term.Err, pos, pos, 4, true)
+                storeNode(Term.ERR, pos, pos, 4, true)
                 break
             }
         }
@@ -385,12 +385,12 @@ class Stack(
         get() {
             if (stack.size != 3) return false
             val parser = p.parser
-            return parser.data[parser.stateSlot(state, ParseState.Actions)] == Seq.End &&
-                parser.stateSlot(state, ParseState.DefaultReduce) == 0
+            return parser.data[parser.stateSlot(state, ParseState.ACTIONS)] == Seq.END &&
+                parser.stateSlot(state, ParseState.DEFAULT_REDUCE) == 0
         }
 
     fun restart() {
-        storeNode(Term.Err, pos, pos, 4, true)
+        storeNode(Term.ERR, pos, pos, 4, true)
         state = stack[0]
         stack.clear()
     }
@@ -485,8 +485,8 @@ class SimulatedStack(val start: Stack) {
     var base: Int = stack.size
 
     fun reduce(action: Int) {
-        val term = action and Action.ValueMask
-        val depth = action shr Action.ReduceDepthShift
+        val term = action and Action.VALUE_MASK
+        val depth = action shr Action.REDUCE_DEPTH_SHIFT
         if (depth == 0) {
             if (stack === start.stack) stack = stack.toMutableList()
             stack.add(state)

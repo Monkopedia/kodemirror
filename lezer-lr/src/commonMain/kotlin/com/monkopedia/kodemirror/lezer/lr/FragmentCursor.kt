@@ -31,11 +31,11 @@ import kotlin.math.min
  * Cut a tree at [pos], returning a safe boundary position on the given [side].
  *
  * Walks down the tree to find a non-error node boundary near [pos] and
- * returns a position offset by [Lookahead.Margin] so that incremental
+ * returns a position offset by [Lookahead.MARGIN] so that incremental
  * reparsing does not lose context.
  */
 internal fun cutAt(tree: Tree, pos: Int, side: Int): Int {
-    val cursor = tree.cursor(IterMode.IncludeAnonymous)
+    val cursor = tree.cursor(IterMode.INCLUDE_ANONYMOUS)
     cursor.moveTo(pos)
     while (true) {
         if (!(if (side < 0) cursor.childBefore(pos) else cursor.childAfter(pos))) {
@@ -44,9 +44,9 @@ internal fun cutAt(tree: Tree, pos: Int, side: Int): Int {
                     !cursor.type.isError
                 ) {
                     return if (side < 0) {
-                        max(0, min(cursor.to - 1, pos - Lookahead.Margin))
+                        max(0, min(cursor.to - 1, pos - Lookahead.MARGIN))
                     } else {
-                        min(tree.length, max(cursor.from + 1, pos + Lookahead.Margin))
+                        min(tree.length, max(cursor.from + 1, pos + Lookahead.MARGIN))
                     }
                 }
                 if (if (side < 0) cursor.prevSibling() else cursor.nextSibling()) break

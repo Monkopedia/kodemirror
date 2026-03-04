@@ -28,12 +28,12 @@ import kotlin.math.min
 // - 1 bit for whether the range is inverted (head before anchor)
 // - Any further bits hold the goal column
 private object RangeFlag {
-    const val BidiLevelMask = 7
-    const val AssocBefore = 8
-    const val AssocAfter = 16
-    const val Inverted = 32
-    const val GoalColumnOffset = 6
-    const val NoGoalColumn = 0xffffff
+    const val BIDI_LEVEL_MASK = 7
+    const val ASSOC_BEFORE = 8
+    const val ASSOC_AFTER = 16
+    const val INVERTED = 32
+    const val GOAL_COLUMN_OFFSET = 6
+    const val NO_GOAL_COLUMN = 0xffffff
 }
 
 /**
@@ -52,12 +52,12 @@ class SelectionRange private constructor(
     /** The anchor of the range—the side that doesn't move. */
     val anchor: Int
         get() =
-            if (flags and RangeFlag.Inverted != 0) to else from
+            if (flags and RangeFlag.INVERTED != 0) to else from
 
     /** The head of the range, which is moved when extended. */
     val head: Int
         get() =
-            if (flags and RangeFlag.Inverted != 0) from else to
+            if (flags and RangeFlag.INVERTED != 0) from else to
 
     /** True when `anchor` and `head` are at the same position. */
     val empty: Boolean get() = from == to
@@ -70,8 +70,8 @@ class SelectionRange private constructor(
      */
     val assoc: Int
         get() = when {
-            flags and RangeFlag.AssocBefore != 0 -> -1
-            flags and RangeFlag.AssocAfter != 0 -> 1
+            flags and RangeFlag.ASSOC_BEFORE != 0 -> -1
+            flags and RangeFlag.ASSOC_AFTER != 0 -> 1
             else -> 0
         }
 
@@ -81,7 +81,7 @@ class SelectionRange private constructor(
      */
     val bidiLevel: Int?
         get() {
-            val level = flags and RangeFlag.BidiLevelMask
+            val level = flags and RangeFlag.BIDI_LEVEL_MASK
             return if (level == 7) null else level
         }
 
@@ -90,8 +90,8 @@ class SelectionRange private constructor(
      */
     val goalColumn: Int?
         get() {
-            val value = flags ushr RangeFlag.GoalColumnOffset
-            return if (value == RangeFlag.NoGoalColumn) {
+            val value = flags ushr RangeFlag.GOAL_COLUMN_OFFSET
+            return if (value == RangeFlag.NO_GOAL_COLUMN) {
                 null
             } else {
                 value
@@ -330,9 +330,9 @@ class EditorSelection private constructor(
                 if (assoc == 0) {
                     0
                 } else if (assoc < 0) {
-                    RangeFlag.AssocBefore
+                    RangeFlag.ASSOC_BEFORE
                 } else {
-                    RangeFlag.AssocAfter
+                    RangeFlag.ASSOC_AFTER
                 }
                 ) or
                 (
@@ -343,8 +343,8 @@ class EditorSelection private constructor(
                     }
                     ) or
                 (
-                    (goalColumn ?: RangeFlag.NoGoalColumn) shl
-                        RangeFlag.GoalColumnOffset
+                    (goalColumn ?: RangeFlag.NO_GOAL_COLUMN) shl
+                        RangeFlag.GOAL_COLUMN_OFFSET
                     )
         )
 
@@ -356,8 +356,8 @@ class EditorSelection private constructor(
             bidiLevel: Int? = null
         ): SelectionRange {
             val flags = (
-                (goalColumn ?: RangeFlag.NoGoalColumn) shl
-                    RangeFlag.GoalColumnOffset
+                (goalColumn ?: RangeFlag.NO_GOAL_COLUMN) shl
+                    RangeFlag.GOAL_COLUMN_OFFSET
                 ) or (
                 if (bidiLevel == null) {
                     7
@@ -369,8 +369,8 @@ class EditorSelection private constructor(
                 SelectionRange.create(
                     head,
                     anchor,
-                    RangeFlag.Inverted or
-                        RangeFlag.AssocAfter or flags
+                    RangeFlag.INVERTED or
+                        RangeFlag.ASSOC_AFTER or flags
                 )
             } else {
                 SelectionRange.create(
@@ -378,7 +378,7 @@ class EditorSelection private constructor(
                     head,
                     (
                         if (head > anchor) {
-                            RangeFlag.AssocBefore
+                            RangeFlag.ASSOC_BEFORE
                         } else {
                             0
                         }

@@ -31,6 +31,7 @@ class NodeType internal constructor(
     val isSkipped: Boolean
 ) {
     /** Check whether this type is part of a given group (via [NodeProp.group]). */
+    @Suppress("ktlint:standard:function-naming")
     fun `is`(nameOrGroup: String): Boolean {
         if (this.name == nameOrGroup) return true
         val groups = prop(NodeProp.group)

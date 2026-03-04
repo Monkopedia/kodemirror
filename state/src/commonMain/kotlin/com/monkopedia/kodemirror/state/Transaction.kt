@@ -77,6 +77,7 @@ class StateEffect<Value> internal constructor(
     /**
      * Tells you whether this effect object is of a given type.
      */
+    @Suppress("ktlint:standard:function-naming")
     fun <T> `is`(type: StateEffectType<T>): Boolean = this.type === type
 
     @Suppress("UNCHECKED_CAST")
@@ -185,7 +186,10 @@ class Transaction private constructor(
     /** Whether the selection should be scrolled into view. */
     val scrollIntoView: Boolean
 ) {
+    @Suppress("ktlint:standard:property-naming")
     internal var _doc: Text? = null
+
+    @Suppress("ktlint:standard:property-naming")
     internal var _state: EditorState? = null
 
     init {
