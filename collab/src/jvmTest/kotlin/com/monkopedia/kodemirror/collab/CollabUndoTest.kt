@@ -19,6 +19,7 @@
 package com.monkopedia.kodemirror.collab
 
 import com.monkopedia.kodemirror.commands.history
+import com.monkopedia.kodemirror.commands.isolateHistory
 import com.monkopedia.kodemirror.commands.redo
 import com.monkopedia.kodemirror.commands.undo
 import com.monkopedia.kodemirror.state.ChangeDesc
@@ -184,9 +185,23 @@ class CollabUndoTest {
         }
         s.type(0, "!")
         s.type(1, "!")
+        s.update(0) {
+            it.update(
+                TransactionSpec(
+                    annotations = listOf(isolateHistory.of("full"))
+                )
+            )
+        }
         s.delay(0) {
             s.type(0, " ...")
             s.type(1, " ,,,")
+        }
+        s.update(0) {
+            it.update(
+                TransactionSpec(
+                    annotations = listOf(isolateHistory.of("full"))
+                )
+            )
         }
         s.type(0, "*")
         s.type(1, "*")

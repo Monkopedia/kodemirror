@@ -114,7 +114,13 @@ class HistoryTest {
                 userEvent = "input.type.first"
             )
         )
-        // Second change (different event to avoid grouping)
+        // Isolate to force a new undo group
+        view.dispatch(
+            TransactionSpec(
+                annotations = listOf(isolateHistory.of("full"))
+            )
+        )
+        // Second change
         view.dispatch(
             TransactionSpec(
                 changes = ChangeSpec.Single(
@@ -123,7 +129,7 @@ class HistoryTest {
                     InsertContent.StringContent("c")
                 ),
                 annotations = listOf(Transaction.addToHistory.of(true)),
-                userEvent = "input.type.second"
+                userEvent = "input.type"
             )
         )
         assertEquals("abc", view.state.doc.toString())
