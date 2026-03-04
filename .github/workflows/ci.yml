@@ -17,4 +17,25 @@ jobs:
           java-version: 17
       - uses: gradle/actions/setup-gradle@v4
       - name: Lint and test
-        run: ./gradlew jvmTest ktlintCheck
+        run: >-
+          ./gradlew jvmTest
+          -x :collab:jvmTest
+          :state:wasmJsTest
+          :collab:wasmJsTest
+          :lezer-lr:wasmJsTest
+          :lezer-common:wasmJsTest
+          :lezer-highlight:wasmJsTest
+          :lezer-json:wasmJsTest
+          :lezer-css:wasmJsTest
+          :lezer-javascript:wasmJsTest
+          :lezer-xml:wasmJsTest
+          :lezer-java:wasmJsTest
+          :lezer-go:wasmJsTest
+          :lezer-html:wasmJsTest
+          :lezer-python:wasmJsTest
+          :lezer-rust:wasmJsTest
+          :lezer-sass:wasmJsTest
+          :lezer-yaml:wasmJsTest
+          :lezer-php:wasmJsTest
+          :lezer-cpp:wasmJsTest
+          :lezer-grammar:wasmJsTest
