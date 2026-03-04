@@ -74,7 +74,7 @@ private fun indentBody(context: TreeIndentContext, node: SyntaxNode): Int? {
     }
     if (Regex("""^\s*(else:|elif |except |finally:|case\s+[^=:]+:)""")
             .containsMatchIn(context.textAfter) &&
-        context.lineIndent(context.pos, -1) > base
+        context.lineIndent(context.pos, -1) <= base
     ) {
         return null
     }
@@ -98,11 +98,11 @@ val pythonLanguage: LRLanguage = LRLanguage.define(
                                 } else {
                                     cx.node
                                 }
-                            indentBody(cx, body) ?: cx.`continue`()
+                            indentBody(cx, body) ?: cx.continueAt()
                         }
                         "MatchBody" -> { cx ->
                             val inner = innerBody(cx)
-                            indentBody(cx, inner ?: cx.node) ?: cx.`continue`()
+                            indentBody(cx, inner ?: cx.node) ?: cx.continueAt()
                         }
                         "IfStatement" -> { cx ->
                             if (Regex("""^\s*(else:|elif )""")
@@ -110,14 +110,14 @@ val pythonLanguage: LRLanguage = LRLanguage.define(
                             ) {
                                 cx.baseIndent
                             } else {
-                                cx.`continue`()
+                                cx.continueAt()
                             }
                         }
                         "ForStatement", "WhileStatement" -> { cx ->
                             if (Regex("""^\s*else:""").containsMatchIn(cx.textAfter)) {
                                 cx.baseIndent
                             } else {
-                                cx.`continue`()
+                                cx.continueAt()
                             }
                         }
                         "TryStatement" -> { cx ->
@@ -126,14 +126,14 @@ val pythonLanguage: LRLanguage = LRLanguage.define(
                             ) {
                                 cx.baseIndent
                             } else {
-                                cx.`continue`()
+                                cx.continueAt()
                             }
                         }
                         "MatchStatement" -> { cx ->
                             if (Regex("""^\s*case """).containsMatchIn(cx.textAfter)) {
                                 cx.baseIndent + cx.unit
                             } else {
-                                cx.`continue`()
+                                cx.continueAt()
                             }
                         }
                         "TupleExpression", "ComprehensionExpression",
@@ -153,9 +153,9 @@ val pythonLanguage: LRLanguage = LRLanguage.define(
                         "Script" -> { cx ->
                             val inner = innerBody(cx)
                             if (inner != null) {
-                                indentBody(cx, inner) ?: cx.`continue`()
+                                indentBody(cx, inner) ?: cx.continueAt()
                             } else {
-                                cx.`continue`()
+                                cx.continueAt()
                             }
                         }
                         else -> null

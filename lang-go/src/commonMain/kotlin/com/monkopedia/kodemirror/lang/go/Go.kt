@@ -40,20 +40,22 @@ val goLanguage: LRLanguage = LRLanguage.define(
         ParserConfig(
             props = listOf(
                 indentNodeProp.add { type ->
-                    when (type.name) {
-                        "IfStatement" ->
+                    when {
+                        type.name == "IfStatement" ->
                             continuedIndent(except = Regex("""^\s*(\{|else\b)"""))
-                        "LabeledStatement" -> flatIndent
-                        "SwitchBlock", "SelectBlock" -> { cx ->
+                        type.name == "LabeledStatement" -> flatIndent
+                        type.name == "SwitchBlock" ||
+                            type.name == "SelectBlock" -> { cx ->
                             val after = cx.textAfter
                             val closed = Regex("""^\s*\}""").containsMatchIn(after)
                             val isCase =
                                 Regex("""^\s*(case|default)\b""").containsMatchIn(after)
                             cx.baseIndent + if (closed || isCase) 0 else cx.unit
                         }
-                        "Block" -> delimitedIndent(closing = "}")
-                        "BlockComment" -> { _ -> null }
-                        "Statement" -> continuedIndent(except = Regex("""^\{"""))
+                        type.name == "Block" -> delimitedIndent(closing = "}")
+                        type.name == "BlockComment" -> { _ -> null }
+                        type.`is`("Statement") ->
+                            continuedIndent(except = Regex("""^\{"""))
                         else -> null
                     }
                 },

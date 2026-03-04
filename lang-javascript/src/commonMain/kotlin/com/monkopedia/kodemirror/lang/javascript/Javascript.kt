@@ -34,13 +34,13 @@ import com.monkopedia.kodemirror.lezer.common.NodePropSource
 import com.monkopedia.kodemirror.lezer.lr.ParserConfig
 
 private val jsIndentProp: NodePropSource<*> = indentNodeProp.add { type ->
-    when (type.name) {
-        "IfStatement" ->
+    when {
+        type.name == "IfStatement" ->
             continuedIndent(except = Regex("""^\s*(\{|else\b)"""))
-        "TryStatement" ->
+        type.name == "TryStatement" ->
             continuedIndent(except = Regex("""^\s*(\{|catch\b|finally\b)"""))
-        "LabeledStatement" -> flatIndent
-        "SwitchBody" -> { cx ->
+        type.name == "LabeledStatement" -> flatIndent
+        type.name == "SwitchBody" -> { cx ->
             val after = cx.textAfter
             val closed = Regex("""^\s*\}""").containsMatchIn(after)
             val isCase =
@@ -48,22 +48,23 @@ private val jsIndentProp: NodePropSource<*> = indentNodeProp.add { type ->
             val unit = getIndentUnit(cx.state)
             cx.baseIndent + (if (closed) 0 else if (isCase) 1 else 2) * unit
         }
-        "Block" -> delimitedIndent(closing = "}")
-        "ArrowFunction" -> { cx -> cx.baseIndent + cx.unit }
-        "TemplateString", "BlockComment" -> { _ -> null }
-        "Statement", "Property" ->
-            continuedIndent(except = Regex("""^\s*\{"""))
-        "JSXElement" -> { cx ->
+        type.name == "Block" -> delimitedIndent(closing = "}")
+        type.name == "ArrowFunction" -> { cx -> cx.baseIndent + cx.unit }
+        type.name == "TemplateString" || type.name == "BlockComment" ->
+            { _ -> null }
+        type.name == "JSXElement" -> { cx ->
             val closed = Regex("""^\s*</""").containsMatchIn(cx.textAfter)
             cx.lineIndent(cx.node.from) + if (closed) 0 else cx.unit
         }
-        "JSXEscape" -> { cx ->
+        type.name == "JSXEscape" -> { cx ->
             val closed = Regex("""\s*\}""").containsMatchIn(cx.textAfter)
             cx.lineIndent(cx.node.from) + if (closed) 0 else cx.unit
         }
-        "JSXOpenTag", "JSXSelfClosingTag" -> { cx ->
+        type.name == "JSXOpenTag" || type.name == "JSXSelfClosingTag" -> { cx ->
             cx.column(cx.node.from) + cx.unit
         }
+        type.`is`("Statement") || type.name == "Property" ->
+            continuedIndent(except = Regex("""^\s*\{"""))
         else -> null
     }
 }

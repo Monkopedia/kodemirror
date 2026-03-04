@@ -40,16 +40,18 @@ val cppLanguage: LRLanguage = LRLanguage.define(
         ParserConfig(
             props = listOf(
                 indentNodeProp.add { type ->
-                    when (type.name) {
-                        "IfStatement" ->
+                    when {
+                        type.name == "IfStatement" ->
                             continuedIndent(except = Regex("""^\s*(\{|else\b)"""))
-                        "TryStatement" ->
+                        type.name == "TryStatement" ->
                             continuedIndent(except = Regex("""^\s*(\{|catch)\b"""))
-                        "LabeledStatement" -> flatIndent
-                        "CaseStatement" -> { cx -> cx.baseIndent + cx.unit }
-                        "BlockComment" -> { _ -> null }
-                        "CompoundStatement" -> delimitedIndent(closing = "}")
-                        "Statement" -> continuedIndent(except = Regex("""^\{"""))
+                        type.name == "LabeledStatement" -> flatIndent
+                        type.name == "CaseStatement" -> { cx -> cx.baseIndent + cx.unit }
+                        type.name == "BlockComment" -> { _ -> null }
+                        type.name == "CompoundStatement" ->
+                            delimitedIndent(closing = "}")
+                        type.`is`("Statement") ->
+                            continuedIndent(except = Regex("""^\{"""))
                         else -> null
                     }
                 },

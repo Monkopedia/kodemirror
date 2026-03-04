@@ -40,12 +40,14 @@ val rustLanguage: LRLanguage = LRLanguage.define(
         ParserConfig(
             props = listOf(
                 indentNodeProp.add { type ->
-                    when (type.name) {
-                        "IfExpression" ->
+                    when {
+                        type.name == "IfExpression" ->
                             continuedIndent(except = Regex("""^\s*(\{|else\b)"""))
-                        "String", "BlockComment" -> { _ -> null }
-                        "AttributeItem" -> { cx -> cx.baseIndent }
-                        "Statement", "MatchArm" -> continuedIndent()
+                        type.name == "String" || type.name == "BlockComment" ->
+                            { _ -> null }
+                        type.name == "AttributeItem" -> { cx -> cx.baseIndent }
+                        type.name == "MatchArm" -> continuedIndent()
+                        type.`is`("Statement") -> continuedIndent()
                         else -> null
                     }
                 },

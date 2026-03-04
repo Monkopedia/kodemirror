@@ -41,7 +41,7 @@ val htmlLanguage: LRLanguage = LRLanguage.define(
                             val match = Regex("""^(\s*)(<\/)?""").find(cx.textAfter)
                             val matchLen = match?.value?.length ?: 0
                             if (cx.node.to <= cx.pos + matchLen) {
-                                cx.`continue`()
+                                cx.continueAt()
                             } else {
                                 val hasClosing = match?.groupValues?.get(2)?.isNotEmpty() == true
                                 cx.lineIndent(cx.node.from) + if (hasClosing) 0 else cx.unit
@@ -54,7 +54,7 @@ val htmlLanguage: LRLanguage = LRLanguage.define(
                             val wsMatch = Regex("""\s*""").find(cx.textAfter)
                             val wsLen = wsMatch?.value?.length ?: 0
                             if (cx.pos + wsLen < cx.node.to) {
-                                cx.`continue`()
+                                cx.continueAt()
                             } else {
                                 var endElt = cx.node
                                 while (true) {

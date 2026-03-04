@@ -40,14 +40,14 @@ val phpLanguage: LRLanguage = LRLanguage.define(
         ParserConfig(
             props = listOf(
                 indentNodeProp.add { type ->
-                    when (type.name) {
-                        "IfStatement" -> continuedIndent(
+                    when {
+                        type.name == "IfStatement" -> continuedIndent(
                             except = Regex("""^\s*(\{|else\b|elseif\b|endif\b)""")
                         )
-                        "TryStatement" -> continuedIndent(
+                        type.name == "TryStatement" -> continuedIndent(
                             except = Regex("""^\s*(\{|catch\b|finally\b)""")
                         )
-                        "SwitchBody" -> { cx ->
+                        type.name == "SwitchBody" -> { cx ->
                             val after = cx.textAfter
                             val closed = Regex("""^\s*\}""").containsMatchIn(after)
                             val isCase =
@@ -55,12 +55,14 @@ val phpLanguage: LRLanguage = LRLanguage.define(
                             val unit = getIndentUnit(cx.state)
                             cx.baseIndent + (if (closed) 0 else if (isCase) 1 else 2) * unit
                         }
-                        "ColonBlock" -> { cx -> cx.baseIndent + cx.unit }
-                        "Block", "EnumBody", "DeclarationList" ->
+                        type.name == "ColonBlock" -> { cx -> cx.baseIndent + cx.unit }
+                        type.name == "Block" || type.name == "EnumBody" ||
+                            type.name == "DeclarationList" ->
                             delimitedIndent(closing = "}")
-                        "ArrowFunction" -> { cx -> cx.baseIndent + cx.unit }
-                        "String", "BlockComment" -> { _ -> null }
-                        "Statement" -> continuedIndent(
+                        type.name == "ArrowFunction" -> { cx -> cx.baseIndent + cx.unit }
+                        type.name == "String" || type.name == "BlockComment" ->
+                            { _ -> null }
+                        type.`is`("Statement") -> continuedIndent(
                             except = Regex("""^(\{|end(for|foreach|switch|while)\b)""")
                         )
                         else -> null

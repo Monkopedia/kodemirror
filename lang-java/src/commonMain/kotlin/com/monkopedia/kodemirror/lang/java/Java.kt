@@ -41,13 +41,13 @@ val javaLanguage: LRLanguage = LRLanguage.define(
         ParserConfig(
             props = listOf(
                 indentNodeProp.add { type ->
-                    when (type.name) {
-                        "IfStatement" ->
+                    when {
+                        type.name == "IfStatement" ->
                             continuedIndent(except = Regex("""^\s*(\{|else\b)"""))
-                        "TryStatement" ->
+                        type.name == "TryStatement" ->
                             continuedIndent(except = Regex("""^\s*(\{|catch|finally)\b"""))
-                        "LabeledStatement" -> flatIndent
-                        "SwitchBlock" -> { cx ->
+                        type.name == "LabeledStatement" -> flatIndent
+                        type.name == "SwitchBlock" -> { cx ->
                             val after = cx.textAfter
                             val closed = Regex("""^\s*\}""").containsMatchIn(after)
                             val isCase =
@@ -55,9 +55,10 @@ val javaLanguage: LRLanguage = LRLanguage.define(
                             val unit = getIndentUnit(cx.state)
                             cx.baseIndent + (if (closed) 0 else if (isCase) 1 else 2) * unit
                         }
-                        "Block" -> delimitedIndent(closing = "}")
-                        "BlockComment" -> { _ -> null }
-                        "Statement" -> continuedIndent(except = Regex("""^\{"""))
+                        type.name == "Block" -> delimitedIndent(closing = "}")
+                        type.name == "BlockComment" -> { _ -> null }
+                        type.`is`("Statement") ->
+                            continuedIndent(except = Regex("""^\{"""))
                         else -> null
                     }
                 },

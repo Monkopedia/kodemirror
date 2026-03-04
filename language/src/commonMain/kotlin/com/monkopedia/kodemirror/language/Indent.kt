@@ -103,8 +103,13 @@ class TreeIndentContext(
     simulateBreak: Int? = null,
     simulateDoubleBreak: Boolean = false
 ) : IndentContext(state, simulateBreak, simulateDoubleBreak) {
-    /** The node at the indent position. */
-    val node: SyntaxNode = syntaxTree(state).resolveInner(pos, -1)
+    /**
+     * The current context node. Initially the innermost node at the indent
+     * position, but updated by [indentFrom] to the node bearing the indent
+     * strategy before the strategy function is called.
+     */
+    var node: SyntaxNode = syntaxTree(state).resolveInner(pos)
+        internal set
 
     /** Get the column of a given position. */
     fun column(pos: Int, bias: Int = 1): Int {
@@ -113,12 +118,11 @@ class TreeIndentContext(
         return countIndent(line.text.substring(0, offset), state.tabSize)
     }
 
-    /** The line that the indentation is being computed for. */
+    /** The text on the line after the indent position. */
     val textAfter: String
         get() {
             val line = state.doc.lineAt(pos)
-            val after = line.text.substring(pos - line.from)
-            return after.trimStart()
+            return line.text.substring(pos - line.from)
         }
 
     /** The base indentation of the line the node starts on. */
@@ -135,7 +139,7 @@ class TreeIndentContext(
      * strategy doesn't want to handle the current case and defers to
      * an ancestor.
      */
-    fun `continue`(): Int? = indentFrom(node.parent, pos, this)
+    fun continueAt(): Int? = indentFrom(node.parent, pos, this)
 }
 
 /**
@@ -169,13 +173,90 @@ private fun getTreeIndent(cx: TreeIndentContext): Int? {
 internal fun indentFrom(start: SyntaxNode?, pos: Int, cx: TreeIndentContext): Int? {
     var node = start
     while (node != null) {
-        val strategy = node.type.prop(indentNodeProp)
+        val strategy = indentStrategy(node)
         if (strategy != null) {
+            cx.node = node
             return strategy(cx)
         }
         node = node.parent
     }
-    return null
+    return 0
+}
+
+private fun indentStrategy(node: SyntaxNode): ((TreeIndentContext) -> Int?)? {
+    val strategy = node.type.prop(indentNodeProp)
+    if (strategy != null) return strategy
+    val first = node.firstChild
+    val close = first?.type?.prop(NodeProp.closedBy)
+    if (first != null && close != null) {
+        val last = node.lastChild
+        val closedAt = if (last != null && close.contains(last.name)) last.from else null
+        return { cx ->
+            delimitedStrategy(
+                cx,
+                align = true,
+                units = 1,
+                closing = null,
+                closedAt = if (closedAt != null && !ignoreClosed(cx)) closedAt else null
+            )
+        }
+    }
+    return if (node.parent == null) { _ -> 0 } else null
+}
+
+private fun ignoreClosed(cx: TreeIndentContext): Boolean {
+    return cx.pos == cx.simulateBreak && cx.simulateDoubleBreak
+}
+
+private fun bracketedAligned(context: TreeIndentContext): Pair<Int, Int>? {
+    val tree = context.node
+    val openToken = tree.childAfter(tree.from) ?: return null
+    val last = tree.lastChild
+    val sim = context.simulateBreak
+    val openLine = context.state.doc.lineAt(openToken.from)
+    val lineEnd = if (sim == null || sim <= openLine.from) {
+        openLine.to
+    } else {
+        minOf(openLine.to, sim)
+    }
+    var pos = openToken.to
+    while (true) {
+        val next = tree.childAfter(pos) ?: return null
+        if (last != null && next.from >= last.from) return null
+        if (!next.type.isSkipped) {
+            if (next.from >= lineEnd) return null
+            val afterOpen = openLine.text.substring(openToken.to - openLine.from)
+            val space = afterOpen.takeWhile { it == ' ' }.length
+            return Pair(openToken.from, openToken.to + space)
+        }
+        pos = next.to
+    }
+}
+
+internal fun delimitedStrategy(
+    context: TreeIndentContext,
+    align: Boolean,
+    units: Int,
+    closing: String? = null,
+    closedAt: Int? = null
+): Int {
+    val after = context.textAfter
+    val space = after.takeWhile { it == ' ' || it == '\t' }.length
+    val closed = (
+        closing != null &&
+            after.length >= space + closing.length &&
+            after.substring(space, space + closing.length) == closing
+        ) ||
+        closedAt == context.pos + space
+    val aligned = if (align) bracketedAligned(context) else null
+    if (aligned != null) {
+        return if (closed) {
+            context.column(aligned.first)
+        } else {
+            context.column(aligned.second)
+        }
+    }
+    return context.baseIndent + if (closed) 0 else context.unit * units
 }
 
 /**
@@ -220,13 +301,7 @@ fun delimitedIndent(
     units: Int = 1
 ): (TreeIndentContext) -> Int? {
     return { cx ->
-        val unit = getIndentUnit(cx.state)
-        val base = cx.baseIndent
-        if (closing != null && cx.textAfter.startsWith(closing)) {
-            base
-        } else {
-            base + unit * units
-        }
+        delimitedStrategy(cx, align, units, closing)
     }
 }
 
