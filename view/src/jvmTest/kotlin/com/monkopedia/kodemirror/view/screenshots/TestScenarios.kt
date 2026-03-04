@@ -32,7 +32,7 @@ import com.monkopedia.kodemirror.language.foldNodeProp
 import com.monkopedia.kodemirror.language.oneDarkHighlightStyle
 import com.monkopedia.kodemirror.language.syntaxHighlighting
 import com.monkopedia.kodemirror.lezer.highlight.tags
-import com.monkopedia.kodemirror.lezer.javascript.parser
+import com.monkopedia.kodemirror.lang.javascript.parser
 import com.monkopedia.kodemirror.lezer.lr.ParserConfig
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList

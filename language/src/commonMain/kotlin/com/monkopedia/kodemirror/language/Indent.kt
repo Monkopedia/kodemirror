@@ -86,6 +86,9 @@ open class IndentContext(
         return countIndent(line.text, state.tabSize)
     }
 
+    /** The indent unit size for this state. */
+    val unit: Int get() = getIndentUnit(state)
+
     /** The text content of the document. */
     val textAfterPos: String get() = ""
 }
@@ -126,6 +129,13 @@ class TreeIndentContext(
     val baseIndentFor: (SyntaxNode) -> Int = { n ->
         lineIndent(n.from)
     }
+
+    /**
+     * Skip to parent node's indent strategy. Use this when a node's
+     * strategy doesn't want to handle the current case and defers to
+     * an ancestor.
+     */
+    fun `continue`(): Int? = indentFrom(node.parent, pos, this)
 }
 
 /**
@@ -153,15 +163,17 @@ fun getIndentation(state: EditorState, pos: Int): Int? {
 }
 
 private fun getTreeIndent(cx: TreeIndentContext): Int? {
-    var node = cx.node
-    // Walk up to find a node with an indent strategy
-    while (true) {
+    return indentFrom(cx.node, cx.pos, cx)
+}
+
+internal fun indentFrom(start: SyntaxNode?, pos: Int, cx: TreeIndentContext): Int? {
+    var node = start
+    while (node != null) {
         val strategy = node.type.prop(indentNodeProp)
         if (strategy != null) {
             return strategy(cx)
         }
-        val parent = node.parent ?: break
-        node = parent
+        node = node.parent
     }
     return null
 }
@@ -221,11 +233,19 @@ fun delimitedIndent(
 /**
  * Standard indent strategy: continue the indentation of the previous line,
  * optionally with additional units.
+ *
+ * @param units Number of indent units to add.
+ * @param except When the text after the cursor matches this regex, return
+ *   [baseIndent] without extra indentation.
  */
-fun continuedIndent(units: Int = 1): (TreeIndentContext) -> Int? {
+fun continuedIndent(units: Int = 1, except: Regex? = null): (TreeIndentContext) -> Int? {
     return { cx ->
         val unit = getIndentUnit(cx.state)
-        cx.baseIndent + unit * units
+        if (except != null && except.containsMatchIn(cx.textAfter)) {
+            cx.baseIndent
+        } else {
+            cx.baseIndent + unit * units
+        }
     }
 }
 
