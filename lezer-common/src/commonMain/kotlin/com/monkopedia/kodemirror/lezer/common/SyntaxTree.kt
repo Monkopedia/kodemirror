@@ -1493,7 +1493,7 @@ private fun buildTree(spec: TreeBuildSpec): Tree {
                     lookAhead = id
                     return
                 }
-                else -> error("Unrecognized record size: $size")
+                else -> return
             }
         }
 

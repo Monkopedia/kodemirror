@@ -527,13 +527,18 @@ class StackBufferCursor(
             index = stack.bufferBase - next.bufferBase
             stack = next
             buffer = next.buffer
+        } else {
+            // Match JS behavior: when no parent, cursor is exhausted.
+            // JS returns undefined for negative array indices; we set pos=0
+            // so callers' `while (cursor.pos > 0)` loops terminate.
+            pos = 0
         }
     }
 
-    override val id: Int get() = buffer[index - 4]
-    override val start: Int get() = buffer[index - 3]
-    override val end: Int get() = buffer[index - 2]
-    override val size: Int get() = buffer[index - 1]
+    override val id: Int get() = buffer.getOrElse(index - 4) { 0 }
+    override val start: Int get() = buffer.getOrElse(index - 3) { 0 }
+    override val end: Int get() = buffer.getOrElse(index - 2) { 0 }
+    override val size: Int get() = buffer.getOrElse(index - 1) { 0 }
 
     override fun next() {
         index -= 4
