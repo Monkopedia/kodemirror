@@ -45,10 +45,10 @@ private fun ebnfTokenize(stream: StringStream, state: EbnfState): String? {
             state.stringType = peek
             stream.next()
             state.stack.add(0, EBNF_STATE_STRING)
-        } else if (stream.match("/*") != null) {
+        } else if (stream.match("/*")) {
             state.stack.add(0, EBNF_STATE_COMMENT)
             state.commentType = EBNF_COMMENT_SLASH
-        } else if (stream.match("(*") != null) {
+        } else if (stream.match("(*")) {
             state.stack.add(0, EBNF_STATE_COMMENT)
             state.commentType = EBNF_COMMENT_PARENTHESIS
         }
@@ -71,11 +71,11 @@ private fun ebnfTokenize(stream: StringStream, state: EbnfState): String? {
         }
         EBNF_STATE_COMMENT -> {
             while (state.stack.firstOrNull() == EBNF_STATE_COMMENT && !stream.eol()) {
-                if (state.commentType == EBNF_COMMENT_SLASH && stream.match("*/") != null) {
+                if (state.commentType == EBNF_COMMENT_SLASH && stream.match("*/")) {
                     state.stack.removeFirst()
                     state.commentType = null
                 } else if (state.commentType == EBNF_COMMENT_PARENTHESIS &&
-                    stream.match("*)") != null
+                    stream.match("*)")
                 ) {
                     state.stack.removeFirst()
                     state.commentType = null
@@ -87,7 +87,7 @@ private fun ebnfTokenize(stream: StringStream, state: EbnfState): String? {
         }
         EBNF_STATE_CHARACTER_CLASS -> {
             while (state.stack.firstOrNull() == EBNF_STATE_CHARACTER_CLASS && !stream.eol()) {
-                if (stream.match(Regex("^[^\\]\\\\]+")) == null && stream.match(".") == null) {
+                if (stream.match(Regex("^[^\\]\\\\]+")) == null && stream.next() == null) {
                     state.stack.removeFirst()
                 }
             }
@@ -108,7 +108,7 @@ private fun ebnfTokenize(stream: StringStream, state: EbnfState): String? {
                 }
                 peek == "%" -> {
                     when {
-                        stream.match("%%") != null -> "header"
+                        stream.match("%%") -> "header"
                         stream.match(Regex("^%[A-Za-z]+")) != null -> "keyword"
                         stream.match(Regex("^%}")) != null -> "bracket"
                         else -> {
@@ -148,7 +148,7 @@ private fun ebnfTokenize(stream: StringStream, state: EbnfState): String? {
                     }
                 }
                 peek == "." -> {
-                    if (stream.match(".") != null) {
+                    if (stream.match(".")) {
                         "atom"
                     } else {
                         stream.next()
@@ -156,7 +156,7 @@ private fun ebnfTokenize(stream: StringStream, state: EbnfState): String? {
                     }
                 }
                 peek == "*" || peek == "-" || peek == "+" || peek == "^" -> {
-                    if (stream.match(peek!!) != null) {
+                    if (stream.match(peek!!)) {
                         "atom"
                     } else {
                         stream.next()
@@ -165,7 +165,7 @@ private fun ebnfTokenize(stream: StringStream, state: EbnfState): String? {
                 }
                 peek == "$" -> {
                     when {
-                        stream.match("$$") != null -> "builtin"
+                        stream.match("$$") -> "builtin"
                         stream.match(Regex("^\\$[0-9]+")) != null -> "variableName.special"
                         else -> {
                             stream.next()
@@ -181,11 +181,11 @@ private fun ebnfTokenize(stream: StringStream, state: EbnfState): String? {
                         null
                     }
                 }
-                stream.match("//") != null -> {
+                stream.match("//") -> {
                     stream.skipToEnd()
                     "comment"
                 }
-                stream.match("return") != null -> "operator"
+                stream.match("return") -> "operator"
                 stream.match(Regex("^[a-zA-Z_][a-zA-Z0-9_]*")) != null -> {
                     when {
                         stream.match(Regex("(?=[(.])"), false) != null -> "variable"

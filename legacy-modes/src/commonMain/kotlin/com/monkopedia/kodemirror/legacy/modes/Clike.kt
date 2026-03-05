@@ -32,7 +32,7 @@ private fun words(str: String): Set<String> = str.split(" ").filter { it.isNotEm
 // Context
 // ---------------------------------------------------------------------------
 
-internal data class ClikeContext(
+data class ClikeContext(
     val indented: Int,
     val column: Int,
     val type: String,
@@ -287,7 +287,9 @@ fun mkClike(config: ClikeConfig): StreamParser<ClikeState> {
                 // If the function consumed one char and returned null, check if it's punctuation
                 if (s == null && nextCh != null && stream.start == savedStart) {
                     val consumed = stream.string.substring(savedStart, stream.pos)
-                    if (consumed.length == 1 && config.isPunctuationChar.containsMatchIn(consumed)) {
+                    val isPunct = config.isPunctuationChar
+                        .containsMatchIn(consumed)
+                    if (consumed.length == 1 && isPunct) {
                         curPunc = consumed
                     }
                 }
@@ -403,7 +405,9 @@ fun mkClike(config: ClikeConfig): StreamParser<ClikeState> {
             val closing = firstChar == ctx.type
             return when {
                 ctx.type == "statement" -> {
-                    ctx.indented + (if (firstChar == "{") 0 else (config.statementIndentUnit ?: context.unit))
+                    val stmtIndent =
+                        config.statementIndentUnit ?: context.unit
+                    ctx.indented + (if (firstChar == "{") 0 else stmtIndent)
                 }
                 ctx.align == true && !(config.dontAlignCalls && ctx.type == ")") -> {
                     ctx.column + if (closing) 0 else 1
@@ -860,8 +864,10 @@ private val javaConfig = ClikeConfig(
             "try volatile while @interface"
     ),
     typesSet = words(
-        "var byte short int long float double boolean char void Boolean Byte Character Double Float " +
-            "Integer Long Number Object Short String StringBuffer StringBuilder Void"
+        "var byte short int long float double boolean char void " +
+            "Boolean Byte Character Double Float " +
+            "Integer Long Number Object Short String " +
+            "StringBuffer StringBuilder Void"
     ),
     blockKeywords = words("catch class do else finally for if switch try while"),
     defKeywords = words("class interface enum @interface"),
@@ -897,9 +903,12 @@ private val csharpConfig = ClikeConfig(
         "abstract as async await base break case catch checked class const continue" +
             " default delegate do else enum event explicit extern finally fixed for" +
             " foreach goto if implicit in init interface internal is lock namespace new" +
-            " operator out override params private protected public readonly record ref required return sealed" +
-            " sizeof stackalloc static struct switch this throw try typeof unchecked" +
-            " unsafe using virtual void volatile while add alias ascending descending dynamic from get" +
+            " operator out override params private protected public" +
+            " readonly record ref required return sealed" +
+            " sizeof stackalloc static struct switch this throw" +
+            " try typeof unchecked" +
+            " unsafe using virtual void volatile while add alias" +
+            " ascending descending dynamic from get" +
             " global group into join let orderby partial remove select set value var yield"
     ),
     typesSet = words(
@@ -929,19 +938,29 @@ private val scalaConfig = ClikeConfig(
     name = "scala",
     keywords = words(
         "abstract case catch class def do else extends final finally for forSome if " +
-            "implicit import lazy match new null object override package private protected return " +
-            "sealed super this throw trait try type val var while with yield _ " +
-            "assert assume require print println printf readLine readBoolean readByte readShort " +
+            "implicit import lazy match new null object override " +
+            "package private protected return " +
+            "sealed super this throw trait try type val var " +
+            "while with yield _ " +
+            "assert assume require print println printf " +
+            "readLine readBoolean readByte readShort " +
             "readChar readInt readLong readFloat readDouble"
     ),
     typesSet = words(
         "AnyVal App Application Array BufferedIterator BigDecimal BigInt Char Console Either " +
-            "Enumeration Equiv Error Exception Fractional Function IndexedSeq Int Integral Iterable " +
-            "Iterator List Map Numeric Nil NotNull Option Ordered Ordering PartialFunction PartialOrdering " +
-            "Product Proxy Range Responder Seq Serializable Set Specializable Stream StringBuilder " +
-            "StringContext Symbol Throwable Traversable TraversableOnce Tuple Unit Vector " +
-            "Boolean Byte Character CharSequence Class ClassLoader Cloneable Comparable " +
-            "Compiler Double Exception Float Integer Long Math Number Object Package Pair Process " +
+            "Enumeration Equiv Error Exception Fractional " +
+            "Function IndexedSeq Int Integral Iterable " +
+            "Iterator List Map Numeric Nil NotNull Option " +
+            "Ordered Ordering PartialFunction " +
+            "PartialOrdering " +
+            "Product Proxy Range Responder Seq Serializable " +
+            "Set Specializable Stream StringBuilder " +
+            "StringContext Symbol Throwable Traversable " +
+            "TraversableOnce Tuple Unit Vector " +
+            "Boolean Byte Character CharSequence Class " +
+            "ClassLoader Cloneable Comparable " +
+            "Compiler Double Exception Float Integer Long " +
+            "Math Number Object Package Pair Process " +
             "Runtime Runnable SecurityManager Short StackTraceElement StrictMath String " +
             "StringBuffer System Thread ThreadGroup ThreadLocal Throwable Triple Void"
     ),
@@ -996,18 +1015,27 @@ private val kotlinConfig = ClikeConfig(
         "package as typealias class interface this super val operator " +
             "var fun for is in This throw return annotation " +
             "break continue object if else while do try when !in !is as? " +
-            "file import where by get set abstract enum open inner override private public internal " +
-            "protected catch finally out final vararg reified dynamic companion constructor init " +
+            "file import where by get set abstract enum open " +
+            "inner override private public internal " +
+            "protected catch finally out final vararg reified " +
+            "dynamic companion constructor init " +
             "sealed field property receiver param sparam lateinit data inline noinline tailrec " +
             "external annotation crossinline const operator infix suspend actual expect setparam"
     ),
     typesSet = words(
         "Boolean Byte Character CharSequence Class ClassLoader Cloneable Comparable " +
-            "Compiler Double Exception Float Integer Long Math Number Object Package Pair Process " +
-            "Runtime Runnable SecurityManager Short StackTraceElement StrictMath String " +
-            "StringBuffer System Thread ThreadGroup ThreadLocal Throwable Triple Void Annotation Any BooleanArray " +
-            "ByteArray Char CharArray DeprecationLevel DoubleArray Enum FloatArray Function Int IntArray Lazy " +
-            "LazyThreadSafetyMode LongArray Nothing ShortArray Unit"
+            "Compiler Double Exception Float Integer Long " +
+            "Math Number Object Package Pair Process " +
+            "Runtime Runnable SecurityManager Short " +
+            "StackTraceElement StrictMath String " +
+            "StringBuffer System Thread ThreadGroup " +
+            "ThreadLocal Throwable Triple Void " +
+            "Annotation Any BooleanArray " +
+            "ByteArray Char CharArray DeprecationLevel " +
+            "DoubleArray Enum FloatArray Function Int " +
+            "IntArray Lazy " +
+            "LazyThreadSafetyMode LongArray Nothing " +
+            "ShortArray Unit"
     ),
     indentSwitch = false,
     indentStatements = false,
@@ -1049,14 +1077,19 @@ private val kotlinConfig = ClikeConfig(
                 (state.prevToken == "variable" && firstChar == ".") ||
                 ((state.prevToken == "}" || state.prevToken == ")") && firstChar == ".") ->
                 indentUnit * 2 + ctx.indented
-            ctx.align == true && ctx.type == "}" ->
-                ctx.indented + (
-                    if (state.context.type == (if (textAfter.isNotEmpty()) textAfter[0].toString() else "")) {
-                        0
-                    } else {
-                        indentUnit
-                    }
-                    )
+            ctx.align == true && ctx.type == "}" -> {
+                val ta = if (textAfter.isNotEmpty()) {
+                    textAfter[0].toString()
+                } else {
+                    ""
+                }
+                val offset = if (state.context.type == ta) {
+                    0
+                } else {
+                    indentUnit
+                }
+                ctx.indented + offset
+            }
             else -> null
         }
     },
@@ -1138,8 +1171,11 @@ private val shaderConfig = ClikeConfig(
 private val nesCConfig = ClikeConfig(
     name = "nesc",
     keywords = words(
-        "$cKeywordsStr as atomic async call command component components configuration event generic " +
-            "implementation includes interface module new norace nx_struct nx_union post provides " +
+        "$cKeywordsStr as atomic async call command " +
+            "component components configuration " +
+            "event generic " +
+            "implementation includes interface module " +
+            "new norace nx_struct nx_union post provides " +
             "signal task uses abstract extends"
     ),
     types = ::cTypes,
@@ -1175,10 +1211,13 @@ private val objectiveCppConfig = ClikeConfig(
     types = ::objCTypes,
     builtin = words(objCBuiltinsStr),
     blockKeywords = words(
-        "$cBlockKeywordsStr @synthesize @try @catch @finally @autoreleasepool @synchronized class try catch"
+        "$cBlockKeywordsStr @synthesize @try @catch " +
+            "@finally @autoreleasepool @synchronized " +
+            "class try catch"
     ),
     defKeywords = words(
-        "$cDefKeywordsStr @interface @implementation @protocol @class class namespace"
+        "$cDefKeywordsStr @interface @implementation " +
+            "@protocol @class class namespace"
     ),
     dontIndentStatements = Regex("^@.*$|^template$"),
     typeFirstDefinitions = true,
@@ -1247,18 +1286,22 @@ private val ceylonConfig = ClikeConfig(
         first == first.uppercaseChar() && first != first.lowercaseChar()
     },
     blockKeywords = words(
-        "case catch class dynamic else finally for function if interface module new object switch try while"
+        "case catch class dynamic else finally for " +
+            "function if interface module new object " +
+            "switch try while"
     ),
     defKeywords = words("class dynamic function interface module object package value"),
     builtin = words(
         "abstract actual aliased annotation by default deprecated doc final formal late license" +
-            " native optional sealed see serializable shared suppressWarnings tagged throws variable"
+            " native optional sealed see serializable " +
+            "shared suppressWarnings tagged throws variable"
     ),
     isPunctuationChar = Regex("[\\[\\]{}(),:;.`]"),
     isOperatorChar = Regex("[+\\-*&%=<>!?|^~:/]"),
     numberStart = Regex("[\\d#$]"),
     number = Regex(
-        "^(?:#[\\da-fA-F_]+|\\$[01_]+|[\\d_]+[kMGTPmunpf]?|[\\d_]+\\.[\\d_]+(?:[eE][-+]?\\d+|[kMGTPmunpf]|)|)",
+        "^(?:#[\\da-fA-F_]+|\\$[01_]+|[\\d_]+[kMGTPmunpf]?" +
+            "|[\\d_]+\\.[\\d_]+(?:[eE][-+]?\\d+|[kMGTPmunpf]|)|)",
         RegexOption.IGNORE_CASE
     ),
     multiLineStrings = true,

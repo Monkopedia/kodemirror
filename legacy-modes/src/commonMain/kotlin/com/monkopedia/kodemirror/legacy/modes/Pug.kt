@@ -81,7 +81,7 @@ private fun pugNextToken(stream: StringStream, state: PugState): String? {
     // includeFilteredContinued
     if (state.isIncludeFiltered) {
         state.isIncludeFiltered = false
-        if (stream.match(Regex("^:[\\w\\-]+"))) {
+        if (stream.match(Regex("^:[\\w\\-]+")) != null) {
             state.restOfLine = "string"
             // setStringMode
             state.indentOf = stream.indentation()
@@ -92,14 +92,14 @@ private fun pugNextToken(stream: StringStream, state: PugState): String? {
 
     // eachContinued
     if (state.isEach) {
-        if (stream.match(Regex("^ in\\b"))) {
+        if (stream.match(Regex("^ in\\b")) != null) {
             state.javaScriptLine = true
             state.isEach = false
             return "keyword"
         } else if (stream.sol() || stream.eol()) {
             state.isEach = false
         } else if (stream.next() != null) {
-            while (!stream.match(Regex("^ in\\b"), false) && stream.next() != null) {
+            while (stream.match(Regex("^ in\\b"), false) == null && stream.next() != null) {
                 // eat chars
             }
             return "variable"
@@ -178,8 +178,9 @@ private fun pugNextToken(stream: StringStream, state: PugState): String? {
         if (state.javaScriptArgumentsDepth == 0 && stream.peek() != "(") {
             state.javaScriptArguments = false
         } else {
-            if (stream.peek() == "(") state.javaScriptArgumentsDepth++
-            else if (stream.peek() == ")") state.javaScriptArgumentsDepth--
+            if (stream.peek() == "(") {
+                state.javaScriptArgumentsDepth++
+            } else if (stream.peek() == ")") state.javaScriptArgumentsDepth--
             if (state.javaScriptArgumentsDepth == 0) {
                 state.javaScriptArguments = false
             } else {
@@ -194,7 +195,7 @@ private fun pugNextToken(stream: StringStream, state: PugState): String? {
     // callArguments
     if (state.mixinCallAfter) {
         state.mixinCallAfter = false
-        if (!stream.match(Regex("^\\( *[-\\w]+ *="), false)) {
+        if (stream.match(Regex("^\\( *[-\\w]+ *="), false) == null) {
             state.javaScriptArguments = true
             state.javaScriptArgumentsDepth = 0
         }
@@ -213,9 +214,9 @@ private fun pugNextToken(stream: StringStream, state: PugState): String? {
     }
 
     // yield
-    if (stream.match(Regex("^yield\\b"))) return "keyword"
+    if (stream.match(Regex("^yield\\b")) != null) return "keyword"
     // doctype
-    if (stream.match(Regex("^(?:doctype) *([^\\n]+)?"))) return "meta"
+    if (stream.match(Regex("^(?:doctype) *([^\\n]+)?")) != null) return "meta"
     // interpolation
     if (stream.match("#{")) {
         state.isInterpolating = true
@@ -223,49 +224,57 @@ private fun pugNextToken(stream: StringStream, state: PugState): String? {
         return "punctuation"
     }
     // case
-    if (stream.match(Regex("^case\\b"))) {
-        state.javaScriptLine = true; return "keyword"
+    if (stream.match(Regex("^case\\b")) != null) {
+        state.javaScriptLine = true
+        return "keyword"
     }
     // when
-    if (stream.match(Regex("^when\\b"))) {
+    if (stream.match(Regex("^when\\b")) != null) {
         state.javaScriptLine = true
         state.javaScriptLineExcludesColon = true
         return "keyword"
     }
     // default
-    if (stream.match(Regex("^default\\b"))) return "keyword"
+    if (stream.match(Regex("^default\\b")) != null) return "keyword"
     // extends
-    if (stream.match(Regex("^extends?\\b"))) {
-        state.restOfLine = "string"; return "keyword"
+    if (stream.match(Regex("^extends?\\b")) != null) {
+        state.restOfLine = "string"
+        return "keyword"
     }
     // append / prepend
-    if (stream.match(Regex("^append\\b"))) {
-        state.restOfLine = "variable"; return "keyword"
+    if (stream.match(Regex("^append\\b")) != null) {
+        state.restOfLine = "variable"
+        return "keyword"
     }
-    if (stream.match(Regex("^prepend\\b"))) {
-        state.restOfLine = "variable"; return "keyword"
+    if (stream.match(Regex("^prepend\\b")) != null) {
+        state.restOfLine = "variable"
+        return "keyword"
     }
     // block
-    if (stream.match(Regex("^block\\b *(?:(prepend|append)\\b)?"))) {
-        state.restOfLine = "variable"; return "keyword"
+    if (stream.match(Regex("^block\\b *(?:(prepend|append)\\b)?")) != null) {
+        state.restOfLine = "variable"
+        return "keyword"
     }
     // include
-    if (stream.match(Regex("^include\\b"))) {
-        state.restOfLine = "string"; return "keyword"
+    if (stream.match(Regex("^include\\b")) != null) {
+        state.restOfLine = "string"
+        return "keyword"
     }
     // includeFiltered
     if (stream.match(Regex("^include:([a-zA-Z0-9\\-]+)"), false) != null &&
         stream.match("include")
     ) {
-        state.isIncludeFiltered = true; return "keyword"
+        state.isIncludeFiltered = true
+        return "keyword"
     }
     // mixin
-    if (stream.match(Regex("^mixin\\b"))) {
-        state.javaScriptLine = true; return "keyword"
+    if (stream.match(Regex("^mixin\\b")) != null) {
+        state.javaScriptLine = true
+        return "keyword"
     }
     // call
     if (stream.match(Regex("^\\+([-\\w]+)")) != null) {
-        if (!stream.match(Regex("^\\( *[-\\w]+ *="), false)) {
+        if (stream.match(Regex("^\\( *[-\\w]+ *="), false) == null) {
             state.javaScriptArguments = true
             state.javaScriptArgumentsDepth = 0
         }
@@ -281,37 +290,41 @@ private fun pugNextToken(stream: StringStream, state: PugState): String? {
         }
     }
     // conditional
-    if (stream.match(Regex("^(if|unless|else if|else)\\b"))) {
-        state.javaScriptLine = true; return "keyword"
+    if (stream.match(Regex("^(if|unless|else if|else)\\b")) != null) {
+        state.javaScriptLine = true
+        return "keyword"
     }
     // each
-    if (stream.match(Regex("^(- *)?(each|for)\\b"))) {
-        state.isEach = true; return "keyword"
+    if (stream.match(Regex("^(- *)?(each|for)\\b")) != null) {
+        state.isEach = true
+        return "keyword"
     }
     // while
-    if (stream.match(Regex("^while\\b"))) {
-        state.javaScriptLine = true; return "keyword"
+    if (stream.match(Regex("^while\\b")) != null) {
+        state.javaScriptLine = true
+        return "keyword"
     }
     // tag
-    val tagMatch = stream.match(Regex("^(\\w(?:[-:\\w]*\\w)?)/?")))
+    val tagMatch = stream.match(Regex("^(\\w(?:[-:\\w]*\\w)?)/?"))
     if (tagMatch != null) {
         state.lastTag = tagMatch.groupValues[1].lowercase()
         return "tag"
     }
     // filter
-    if (stream.match(Regex("^:([\\w\\-]+)"))) {
+    if (stream.match(Regex("^:([\\w\\-]+)")) != null) {
         state.indentOf = stream.indentation()
         state.indentToken = "string"
         return "atom"
     }
     // code
-    if (stream.match(Regex("^(!?=|-)"))) {
-        state.javaScriptLine = true; return "punctuation"
+    if (stream.match(Regex("^(!?=|-)")) != null) {
+        state.javaScriptLine = true
+        return "punctuation"
     }
     // id
-    if (stream.match(Regex("^#([\\w-]+)"))) return "builtin"
+    if (stream.match(Regex("^#([\\w-]+)")) != null) return "builtin"
     // className
-    if (stream.match(Regex("^\\.([\\w-]+)"))) return "className"
+    if (stream.match(Regex("^\\.([\\w-]+)")) != null) return "className"
     // attrs
     if (stream.peek() == "(") {
         stream.next()
@@ -323,7 +336,7 @@ private fun pugNextToken(stream: StringStream, state: PugState): String? {
         return "punctuation"
     }
     // attributesBlock
-    if (stream.match(Regex("^&attributes\\b"))) {
+    if (stream.match(Regex("^&attributes\\b")) != null) {
         state.javaScriptArguments = true
         state.javaScriptArgumentsDepth = 0
         return "keyword"
@@ -331,15 +344,15 @@ private fun pugNextToken(stream: StringStream, state: PugState): String? {
     // indent
     if (stream.sol() && stream.eatSpace()) return "indent"
     // comment
-    if (stream.match(Regex("^ *\\/\\/(-)?([^\\n]*)"))) {
+    if (stream.match(Regex("^ *\\/\\/(-)?([^\\n]*)")) != null) {
         state.indentOf = stream.indentation()
         state.indentToken = "comment"
         return "comment"
     }
     // colon
-    if (stream.match(Regex("^: *"))) return "colon"
+    if (stream.match(Regex("^: *")) != null) return "colon"
     // text
-    if (stream.match(Regex("^(?:\\| ?| )([^\\n]+)"))) return "string"
+    if (stream.match(Regex("^(?:\\| ?| )([^\\n]+)")) != null) return "string"
     if (stream.match(Regex("^(<[^\\n]*)"), false) != null) {
         state.indentOf = stream.indentation()
         state.indentToken = "string"

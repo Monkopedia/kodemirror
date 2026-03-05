@@ -55,7 +55,7 @@ private val jsIsOperatorChar = Regex("[+\\-*&%=<>!?|~^@]")
 private val jsIsJsonldKeyword =
     Regex("^@(context|id|value|language|type|container|list|set|reverse|index|base|vocab|graph)\"")
 
-private data class JSLexical(
+data class JSLexical(
     val indented: Int,
     val column: Int,
     val type: String,
@@ -74,7 +74,8 @@ data class JavaScriptConfig(
 )
 
 class JavaScriptState(
-    var tokenize: Int = 0, // 0=base, 1=string, 2=comment, 3=quasi
+    // 0=base, 1=string, 2=comment, 3=quasi
+    var tokenize: Int = 0,
     var stringQuote: String = "",
     var lastType: String = "sof",
     var indented: Int = 0,
@@ -272,7 +273,8 @@ private fun mkJavaScript(config: JavaScriptConfig): StreamParser<JavaScriptState
                 stringQuote = state.stringQuote,
                 lastType = state.lastType,
                 indented = state.indented,
-                lexical = state.lexical, // JSLexical is immutable data class - safe to share
+                // JSLexical is immutable data class - safe to share
+                lexical = state.lexical,
                 fatArrowAt = state.fatArrowAt
             )
         }

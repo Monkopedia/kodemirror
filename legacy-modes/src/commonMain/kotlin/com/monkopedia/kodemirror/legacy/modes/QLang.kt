@@ -30,7 +30,7 @@ private val qKeywords = Regex(
 // Matches characters that terminate a token in Q
 private val qTokenEnd = Regex("[|/&^!+:\\\\\\-*%\$=~#;@><,?_'\"\\[\\(\\]\\)\\s{}]")
 
-internal data class QContext(
+data class QContext(
     val prev: QContext?,
     val indent: Int,
     val col: Int,
@@ -158,7 +158,12 @@ private fun qTokenBlockComment(stream: StringStream, state: QLangState): String 
     return "comment"
 }
 
-private fun qTokenCommentToEOF(stream: StringStream, @Suppress("UNUSED_PARAMETER") state: QLangState): String {
+private fun qTokenCommentToEOF(
+    stream: StringStream,
+    @Suppress(
+        "UNUSED_PARAMETER"
+    ) state: QLangState
+): String {
     stream.skipToEnd()
     return "comment"
 }

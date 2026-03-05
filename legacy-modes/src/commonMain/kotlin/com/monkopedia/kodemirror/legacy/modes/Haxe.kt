@@ -119,7 +119,7 @@ val hxml: StreamParser<HxmlState> = object : StreamParser<HxmlState> {
 
 // The haxe mode is complex with combinator-based parsing.
 // We simplify by just doing tokenization and basic indent tracking.
-class HaxeState(
+data class HaxeState(
     var tokenize: Int = 0, // 0=base, 1=string, 2=comment
     var stringQuote: String = "",
     var indented: Int = 0,

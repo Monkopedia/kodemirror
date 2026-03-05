@@ -90,7 +90,7 @@ private val asn1AccessTypes = (
 
 private val asn1IsOperatorChar = Regex("[|^]")
 
-private class Asn1Context(
+class Asn1Context(
     val indented: Int,
     val column: Int,
     val type: String,

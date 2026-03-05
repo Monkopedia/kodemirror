@@ -374,7 +374,7 @@ object CssKeywords {
     val values: List<String> = cssValueKeywords_
 }
 
-private data class CssContext(
+data class CssContext(
     val type: String,
     val indent: Int,
     val prev: CssContext?
@@ -391,7 +391,8 @@ data class CssConfig(
 )
 
 class CssState(
-    var tokenize: Int = 0, // 0=base, 1=string, 2=cComment, 3=parenthesized
+    // 0=base, 1=string, 2=cComment, 3=parenthesized
+    var tokenize: Int = 0,
     var stringQuote: String = "",
     var state: String = "top",
     var stateArg: String? = null,
@@ -526,8 +527,12 @@ fun mkCSS(config: CssConfig): StreamParser<CssState> {
         return state.context.type
     }
 
+    // stateDispatchFn is assigned after all state functions are defined to break the
+    // circular forward-reference cycle: pass -> stateDispatch -> state fns -> pass.
+    var stateDispatchFn: ((String, StringStream, CssState) -> String)? = null
+
     fun pass(tp: String, stream: StringStream, state: CssState): String {
-        return stateDispatch(tp, stream, state)
+        return stateDispatchFn!!(tp, stream, state)
     }
 
     fun popAndPass(tp: String, stream: StringStream, state: CssState, n: Int = 1): String {
@@ -545,28 +550,6 @@ fun mkCSS(config: CssConfig): StreamParser<CssState> {
             cssValueKeywords.contains(word) -> "atom"
             cssColorKeywords.contains(word) -> "keyword"
             else -> "variable"
-        }
-    }
-
-    fun stateDispatch(tp: String, stream: StringStream, state: CssState): String {
-        return when (state.context.type) {
-            "top" -> stateTop(tp, stream, state)
-            "block" -> stateBlock(tp, stream, state)
-            "maybeprop" -> stateMaybeprop(tp, stream, state)
-            "prop" -> stateProp(tp, stream, state)
-            "propBlock" -> statePropBlock(tp, stream, state)
-            "parens" -> stateParens(tp, stream, state)
-            "pseudo" -> statePseudo(tp, stream, state)
-            "documentTypes" -> stateDocumentTypes(tp, stream, state)
-            "atBlock" -> stateAtBlock(tp, stream, state)
-            "atComponentBlock" -> stateAtComponentBlock(tp, stream, state)
-            "atBlock_parens" -> stateAtBlockParens(tp, stream, state)
-            "restricted_atBlock_before" -> stateRestrictedAtBlockBefore(tp, stream, state)
-            "restricted_atBlock" -> stateRestrictedAtBlock(tp, stream, state)
-            "keyframes" -> stateKeyframes(tp, stream, state)
-            "at" -> stateAt(tp, stream, state)
-            "interpolation" -> stateInterpolation(tp, stream, state)
-            else -> state.context.type
         }
     }
 
@@ -696,14 +679,6 @@ fun mkCSS(config: CssConfig): StreamParser<CssState> {
         return pass(tp, stream, state)
     }
 
-    fun stateDocumentTypes(tp: String, stream: StringStream, state: CssState): String {
-        if (tp == "word" && cssDocumentTypes.contains(stream.current())) {
-            override = "tag"
-            return state.context.type
-        }
-        return stateAtBlock(tp, stream, state)
-    }
-
     fun stateAtBlock(tp: String, stream: StringStream, state: CssState): String {
         if (tp == "(") return pushContext(state, stream, "atBlock_parens")
         if (tp == "}" || tp == ";") return popAndPass(tp, stream, state)
@@ -729,6 +704,14 @@ fun mkCSS(config: CssConfig): StreamParser<CssState> {
             }
         }
         return state.context.type
+    }
+
+    fun stateDocumentTypes(tp: String, stream: StringStream, state: CssState): String {
+        if (tp == "word" && cssDocumentTypes.contains(stream.current())) {
+            override = "tag"
+            return state.context.type
+        }
+        return stateAtBlock(tp, stream, state)
     }
 
     fun stateAtComponentBlock(tp: String, stream: StringStream, state: CssState): String {
@@ -801,6 +784,29 @@ fun mkCSS(config: CssConfig): StreamParser<CssState> {
         return "interpolation"
     }
 
+    // Assign the dispatch function now that all state functions are defined.
+    stateDispatchFn = { tp, stream, state ->
+        when (state.context.type) {
+            "top" -> stateTop(tp, stream, state)
+            "block" -> stateBlock(tp, stream, state)
+            "maybeprop" -> stateMaybeprop(tp, stream, state)
+            "prop" -> stateProp(tp, stream, state)
+            "propBlock" -> statePropBlock(tp, stream, state)
+            "parens" -> stateParens(tp, stream, state)
+            "pseudo" -> statePseudo(tp, stream, state)
+            "documentTypes" -> stateDocumentTypes(tp, stream, state)
+            "atBlock" -> stateAtBlock(tp, stream, state)
+            "atComponentBlock" -> stateAtComponentBlock(tp, stream, state)
+            "atBlock_parens" -> stateAtBlockParens(tp, stream, state)
+            "restricted_atBlock_before" -> stateRestrictedAtBlockBefore(tp, stream, state)
+            "restricted_atBlock" -> stateRestrictedAtBlock(tp, stream, state)
+            "keyframes" -> stateKeyframes(tp, stream, state)
+            "at" -> stateAt(tp, stream, state)
+            "interpolation" -> stateInterpolation(tp, stream, state)
+            else -> state.context.type
+        }
+    }
+
     return object : StreamParser<CssState> {
         override val name: String get() = config.name
 
@@ -818,7 +824,8 @@ fun mkCSS(config: CssConfig): StreamParser<CssState> {
                 stringQuote = state.stringQuote,
                 state = state.state,
                 stateArg = state.stateArg,
-                context = state.context // immutable data class
+                // immutable data class - safe to share
+                context = state.context
             )
         }
 
@@ -862,7 +869,7 @@ fun mkCSS(config: CssConfig): StreamParser<CssState> {
 
             override = style
             if (type != "comment") {
-                state.state = stateDispatch(type, stream, state)
+                state.state = stateDispatchFn!!(type, stream, state)
             }
             return override
         }

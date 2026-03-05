@@ -25,7 +25,7 @@ import com.monkopedia.kodemirror.language.StringStream
 data class ClojureCtx(
     val prev: ClojureCtx?,
     val start: Int,
-    var indentTo: Any // Int or "next"
+    var indentTo: Any? // Int, "next", or null
 )
 
 data class ClojureState(
@@ -318,7 +318,7 @@ val clojure: StreamParser<ClojureState> = object : StreamParser<ClojureState> {
             state.ctx = ClojureCtx(
                 prev = state.ctx,
                 start = stream.column(),
-                indentTo = null as Any
+                indentTo = null
             )
         } else if (type == "close") {
             state.ctx = state.ctx.prev ?: state.ctx
