@@ -74,7 +74,9 @@ private fun ebnfTokenize(stream: StringStream, state: EbnfState): String? {
                 if (state.commentType == EBNF_COMMENT_SLASH && stream.match("*/") != null) {
                     state.stack.removeFirst()
                     state.commentType = null
-                } else if (state.commentType == EBNF_COMMENT_PARENTHESIS && stream.match("*)") != null) {
+                } else if (state.commentType == EBNF_COMMENT_PARENTHESIS &&
+                    stream.match("*)") != null
+                ) {
                     state.stack.removeFirst()
                     state.commentType = null
                 } else {
@@ -119,38 +121,64 @@ private fun ebnfTokenize(stream: StringStream, state: EbnfState): String? {
                     when {
                         stream.match(Regex("^/[A-Za-z]+")) != null -> "keyword"
                         peek == "\\" -> {
-                            if (stream.match(Regex("^\\\\[a-z]+")) != null) "string.special" else {
-                                stream.next(); null
+                            if (stream.match(Regex("^\\\\[a-z]+")) != null) {
+                                "string.special"
+                            } else {
+                                stream.next()
+                                null
                             }
                         }
                         else -> {
-                            stream.next(); null
+                            stream.next()
+                            null
                         }
                     }
                 }
                 peek == "\\" -> {
-                    if (stream.match(Regex("^\\\\[a-z]+"
-                    )) != null
-                    ) "string.special" else {
-                        stream.next(); null
+                    if (stream.match(
+                            Regex(
+                                "^\\\\[a-z]+"
+                            )
+                        ) != null
+                    ) {
+                        "string.special"
+                    } else {
+                        stream.next()
+                        null
                     }
                 }
                 peek == "." -> {
-                    if (stream.match(".") != null) "atom" else { stream.next(); null }
+                    if (stream.match(".") != null) {
+                        "atom"
+                    } else {
+                        stream.next()
+                        null
+                    }
                 }
                 peek == "*" || peek == "-" || peek == "+" || peek == "^" -> {
-                    if (stream.match(peek!!) != null) "atom" else { stream.next(); null }
+                    if (stream.match(peek!!) != null) {
+                        "atom"
+                    } else {
+                        stream.next()
+                        null
+                    }
                 }
                 peek == "$" -> {
                     when {
                         stream.match("$$") != null -> "builtin"
                         stream.match(Regex("^\\$[0-9]+")) != null -> "variableName.special"
-                        else -> { stream.next(); null }
+                        else -> {
+                            stream.next()
+                            null
+                        }
                     }
                 }
                 peek == "<" -> {
-                    if (stream.match(Regex("^<<[a-zA-Z_]+>>")) != null) "builtin" else {
-                        stream.next(); null
+                    if (stream.match(Regex("^<<[a-zA-Z_]+>>")) != null) {
+                        "builtin"
+                    } else {
+                        stream.next()
+                        null
                     }
                 }
                 stream.match("//") != null -> {

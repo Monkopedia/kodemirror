@@ -69,7 +69,7 @@ private val cypherSystemKeywords = cypherWordRegexp(
 
 private val cypherOperatorChars = Regex("[*+\\-<>=&|~%^]")
 
-internal data class CypherContext(
+data class CypherContext(
     val prev: CypherContext?,
     val indent: Int,
     val col: Int,

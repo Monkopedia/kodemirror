@@ -23,10 +23,17 @@ import com.monkopedia.kodemirror.language.StringStream
 
 private val dylanUnnamedDefinition = listOf("interface")
 private val dylanNamedDefinition = listOf(
-    "module", "library", "macro", "C-struct", "C-union", "C-function", "C-callable-wrapper"
+    "module",
+    "library",
+    "macro",
+    "C-struct",
+    "C-union",
+    "C-function",
+    "C-callable-wrapper"
 )
 private val dylanTypeParameterizedDefinition = listOf("class", "C-subtype", "C-mapped-subtype")
-private val dylanOtherParameterizedDefinition = listOf("method", "function", "C-variable", "C-address")
+private val dylanOtherParameterizedDefinition =
+    listOf("method", "function", "C-variable", "C-address")
 private val dylanConstantSimpleDefinition = listOf("constant")
 private val dylanVariableSimpleDefinition = listOf("variable")
 private val dylanOtherSimpleDefinition = listOf("generic", "domain", "C-pointer-type", "table")
@@ -34,12 +41,14 @@ private val dylanStatement = listOf(
     "if", "block", "begin", "method", "case", "for", "select", "when", "unless", "until",
     "while", "iterate", "profiling", "dynamic-bind"
 )
-private val dylanSeparator = listOf("finally", "exception", "cleanup", "else", "elseif", "afterwards")
+private val dylanSeparator =
+    listOf("finally", "exception", "cleanup", "else", "elseif", "afterwards")
 private val dylanOther = listOf(
     "above", "below", "by", "from", "handler", "in", "instance", "let", "local", "otherwise",
     "slot", "subclass", "then", "to", "keyed-by", "virtual"
 )
-private val dylanSignalingCalls = listOf("signal", "error", "cerror", "break", "check-type", "abort")
+private val dylanSignalingCalls =
+    listOf("signal", "error", "cerror", "break", "check-type", "abort")
 
 private val dylanDefinition =
     dylanTypeParameterizedDefinition +
@@ -70,7 +79,7 @@ private val dylanStyleLookup: Map<String, String> = buildMap {
 private val dylanSymbolPattern = "[-_a-zA-Z?!*@<>\$%]+"
 private val dylanSymbol = Regex("^$dylanSymbolPattern")
 
-private val dylanPatternSymbolKeyword = Regex("^${dylanSymbolPattern}:")
+private val dylanPatternSymbolKeyword = Regex("^$dylanSymbolPattern:")
 private val dylanPatternSymbolClass = Regex("^<$dylanSymbolPattern>")
 private val dylanPatternSymbolGlobal = Regex("^\\*$dylanSymbolPattern\\*")
 private val dylanPatternSymbolConstant = Regex("^\\\$$dylanSymbolPattern")
@@ -88,7 +97,11 @@ data class DylanState(
     var currentIndent: Int = 0
 )
 
-private fun dylanChain(stream: StringStream, state: DylanState, f: (StringStream, DylanState) -> String?): String? {
+private fun dylanChain(
+    stream: StringStream,
+    state: DylanState,
+    f: (StringStream, DylanState) -> String?
+): String? {
     state.tokenize = f
     return f(stream, state)
 }
@@ -179,7 +192,9 @@ private fun dylanTokenBase(stream: StringStream, state: DylanState): String? {
     if (stream.match(dylanPatternSymbolKeyword) != null) return dylanPatternStyles["symbolKeyword"]
     if (stream.match(dylanPatternSymbolClass) != null) return dylanPatternStyles["symbolClass"]
     if (stream.match(dylanPatternSymbolGlobal) != null) return dylanPatternStyles["symbolGlobal"]
-    if (stream.match(dylanPatternSymbolConstant) != null) return dylanPatternStyles["symbolConstant"]
+    if (stream.match(dylanPatternSymbolConstant) != null) {
+        return dylanPatternStyles["symbolConstant"]
+    }
 
     if (Regex("[+\\-*/^=<>&|]").containsMatchIn(ch)) {
         stream.next()

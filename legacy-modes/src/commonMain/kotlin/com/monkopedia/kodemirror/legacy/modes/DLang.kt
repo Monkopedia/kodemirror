@@ -46,7 +46,7 @@ private val dLangAtoms = setOf("exit", "failure", "success", "true", "false", "n
 
 private val dLangIsOperatorChar = Regex("[+\\-*&%=<>!?|/]")
 
-internal data class DContext(
+data class DContext(
     val indented: Int,
     val column: Int,
     val type: String,
@@ -79,7 +79,7 @@ private fun dPopContext(state: DState): DContext? {
 private fun dTokenBase(stream: StringStream, state: DState): String? {
     val ch = stream.next() ?: return null
     if (ch == "@") {
-        stream.eatWhile(Regex("[\\w$_]"))
+        stream.eatWhile(Regex("[\\w\$_]"))
         return "meta"
     }
     if (ch == "\"" || ch == "'" || ch == "`") {
@@ -112,7 +112,7 @@ private fun dTokenBase(stream: StringStream, state: DState): String? {
         stream.eatWhile(dLangIsOperatorChar)
         return "operator"
     }
-    stream.eatWhile(Regex("[\\w$_\u00a1-\uffff]"))
+    stream.eatWhile(Regex("[\\w\$_\u00a1-\uffff]"))
     val cur = stream.current()
     if (cur in dLangKeywords) {
         if (cur in dLangBlockKeywords) state.curPunc = "newstatement"
