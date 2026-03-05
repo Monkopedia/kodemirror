@@ -66,6 +66,9 @@ open class Language(
 ) {
     /** The extension value to install this as the document language. */
     val extension: Extension = language.of(this)
+
+    /** Whether this language allows nesting other languages inside it. */
+    open val allowsNesting: Boolean get() = true
 }
 
 /**
