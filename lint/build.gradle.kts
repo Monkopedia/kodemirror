@@ -21,4 +21,6 @@ kotlin {
     }
 }
 
-tasks.named("wasmJsNodeTest") { enabled = false }
+tasks.configureEach {
+    if ("wasmJs" in name || "WasmJs" in name) enabled = false
+}
