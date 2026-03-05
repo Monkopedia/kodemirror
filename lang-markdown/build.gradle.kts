@@ -7,7 +7,6 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":lezer-common"))
             implementation(project(":lezer-highlight"))
-            implementation(project(":lezer-markdown"))
             implementation(project(":language"))
             implementation(project(":state"))
             implementation(project(":view"))
