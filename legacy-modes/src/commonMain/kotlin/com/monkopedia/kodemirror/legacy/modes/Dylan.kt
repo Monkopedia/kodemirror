@@ -183,7 +183,7 @@ private fun dylanTokenBase(stream: StringStream, state: DylanState): String? {
     } else if (".,".contains(ch)) {
         stream.next()
         return "punctuation"
-    } else if (stream.match("end") != null) {
+    } else if (stream.match("end")) {
         return "keyword"
     }
 
@@ -200,7 +200,7 @@ private fun dylanTokenBase(stream: StringStream, state: DylanState): String? {
         stream.next()
         return "operator"
     }
-    if (stream.match("define") != null) {
+    if (stream.match("define")) {
         return "def"
     }
     stream.eatWhile(Regex("[\\w\\-]"))

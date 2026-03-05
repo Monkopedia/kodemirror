@@ -42,22 +42,35 @@ val rustLegacy: StreamParser<SimpleModeState> = simpleMode(
                 ),
                 SimpleModeRule(
                     Regex(
-                        """(?:(?:[0-9][0-9_]*)(?:(?:[Ee][+-]?[0-9_]+)|\.[0-9_]+(?:[Ee][+-]?[0-9_]+)?)(?:f32|f64)?)|(?:0(?:b[01_]+|(?:o[0-7_]+)|(?:x[0-9a-fA-F_]+))|(?:[0-9][0-9_]*))(?:u8|u16|u32|u64|i8|i16|i32|i64|isize|usize)?"""
+                        """(?:(?:[0-9][0-9_]*)(?:(?:[Ee][+-]?[0-9_]+)|\.[0-9_]+""" +
+                            """(?:[Ee][+-]?[0-9_]+)?)(?:f32|f64)?)|(?:0(?:b[01_]+|""" +
+                            """(?:o[0-7_]+)|(?:x[0-9a-fA-F_]+))|(?:[0-9][0-9_]*))""" +
+                            """(?:u8|u16|u32|u64|i8|i16|i32|i64|isize|usize)?"""
                     ),
                     token = "number"
                 ),
                 SimpleModeRule(
-                    Regex("""(let(?:\s+mut)?|fn|enum|mod|struct|type|union)(\s+)([a-zA-Z_][a-zA-Z0-9_]*)"""),
+                    Regex(
+                        """(let(?:\s+mut)?|fn|enum|mod|struct|type|union)""" +
+                            """(\s+)([a-zA-Z_][a-zA-Z0-9_]*)"""
+                    ),
                     token = listOf("keyword", null, "def")
                 ),
                 SimpleModeRule(
                     Regex(
-                        """(?:abstract|alignof|as|async|await|box|break|continue|const|crate|do|dyn|else|enum|extern|fn|for|final|if|impl|in|loop|macro|match|mod|move|offsetof|override|priv|proc|pub|pure|ref|return|self|sizeof|static|struct|super|trait|type|typeof|union|unsafe|unsized|use|virtual|where|while|yield)\b"""
+                        """(?:abstract|alignof|as|async|await|box|break|continue|const|""" +
+                            """crate|do|dyn|else|enum|extern|fn|for|final|if|impl|in|loop|""" +
+                            """macro|match|mod|move|offsetof|override|priv|proc|pub|pure|""" +
+                            """ref|return|self|sizeof|static|struct|super|trait|type|typeof|""" +
+                            """union|unsafe|unsized|use|virtual|where|while|yield)\b"""
                     ),
                     token = "keyword"
                 ),
                 SimpleModeRule(
-                    Regex("""\b(?:Self|isize|usize|char|bool|u8|u16|u32|u64|f16|f32|f64|i8|i16|i32|i64|str|Option)\b"""),
+                    Regex(
+                        """\b(?:Self|isize|usize|char|bool|u8|u16|u32|u64|f16|f32|f64|""" +
+                            """i8|i16|i32|i64|str|Option)\b"""
+                    ),
                     token = "atom"
                 ),
                 SimpleModeRule(
@@ -78,11 +91,11 @@ val rustLegacy: StreamParser<SimpleModeState> = simpleMode(
                 SimpleModeRule(Regex("""[\}\]\)]"""), token = null, dedent = true)
             ),
             "string" to listOf(
-                SimpleModeRule(Regex("""""""""), token = "string", next = "start"),
+                SimpleModeRule(Regex("\""), token = "string", next = "start"),
                 SimpleModeRule(Regex("""(?:[^\\"]|\\(?:.|${'$'}))*"""), token = "string")
             ),
             "string_raw" to listOf(
-                SimpleModeRule(Regex("""""""""), token = "string", next = "start"),
+                SimpleModeRule(Regex("\""), token = "string", next = "start"),
                 SimpleModeRule(Regex("""[^"]*"""), token = "string")
             ),
             "string_raw_hash" to listOf(

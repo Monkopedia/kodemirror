@@ -46,8 +46,8 @@ private val swiftTypes = (
         "Never,Optional,Set,String,UInt8,UInt16,UInt32,UInt64,Void"
     ).split(",").toSet()
 
-private const val swiftOperators = "+-/*%=|&<>~^?!"
-private const val swiftPunc = ":;,.(){}[]"
+private const val SWIFT_OPERATORS = "+-/*%=|&<>~^?!"
+private const val SWIFT_PUNC = ":;,.(){}[]"
 
 private val swiftBinary = Regex("^-?0b[01][01_]*")
 private val swiftOctal = Regex("^-?0o[0-7][0-7_]*")
@@ -187,11 +187,11 @@ val swiftLang: StreamParser<SwiftState> = object : StreamParser<SwiftState> {
         if (stream.match(swiftHexadecimal) != null) return "number"
         if (stream.match(swiftDecimal) != null) return "number"
         if (stream.match(swiftProperty) != null) return "property"
-        if (swiftOperators.contains(ch[0])) {
+        if (SWIFT_OPERATORS.contains(ch[0])) {
             stream.next()
             return "operator"
         }
-        if (swiftPunc.contains(ch[0])) {
+        if (SWIFT_PUNC.contains(ch[0])) {
             stream.next()
             stream.match("..")
             return "punctuation"
@@ -268,7 +268,7 @@ val swiftLang: StreamParser<SwiftState> = object : StreamParser<SwiftState> {
         } else if (state.prev == null) state.prev = style
 
         if (style == "punctuation") {
-            val bracket = Regex("[([{]|([)\\]}])").find(stream.current())
+            val bracket = Regex("[\\(\\[{]|([)\\]}])").find(stream.current())
             if (bracket != null) {
                 if (bracket.groupValues[1].isNotEmpty()) {
                     popContext(state)

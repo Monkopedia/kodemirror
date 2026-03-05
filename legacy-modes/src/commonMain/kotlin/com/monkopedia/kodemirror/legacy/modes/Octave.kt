@@ -22,11 +22,11 @@ import com.monkopedia.kodemirror.language.StreamParser
 import com.monkopedia.kodemirror.language.StringStream
 
 private fun octaveWordRegexp(words: List<String>): Regex {
-    return Regex("^(?:(?:${words.joinToString(")|(?:")}))\b")
+    return Regex("^(?:(?:${words.joinToString(")|(?:")}))\\b")
 }
 
 private val octaveSingleOperators = Regex("^[+\\-*/&|^~<>!@'\\\\]")
-private val octaveSingleDelimiters = Regex("^[([{},;.:=]")
+private val octaveSingleDelimiters = Regex("^[(\\[{},;.:=]")
 private val octaveDoubleOperators =
     Regex("^(?:==|~=|<=|>=|<<|>>|\\.[+\\-*/^\\\\])")
 private val octaveDoubleDelimiters =

@@ -38,7 +38,8 @@ private val clSymbol = Regex("[^\\s'`,@()\\[\\]\";]")
 data class ClCtx(
     val prev: ClCtx?,
     val start: Int,
-    var indentTo: Any? // Int, "next", or null
+    // indentTo: Int, "next", or null
+    var indentTo: Any?
 )
 
 data class CommonLispState(
@@ -139,7 +140,8 @@ private fun clBase(stream: StringStream, state: CommonLispState): String? {
                     "bracket"
                 }
                 next != null && Regex("[+\\-=.']").containsMatchIn(next) -> null
-                next != null && Regex("\\d").containsMatchIn(next) && stream.match(Regex("^\\d*#")) != null -> null
+                next != null && Regex("\\d").containsMatchIn(next) &&
+                    stream.match(Regex("^\\d*#")) != null -> null
                 next == "|" -> {
                     state.tokenize = ::clInComment
                     clInComment(stream, state)
@@ -162,8 +164,9 @@ private fun clBase(stream: StringStream, state: CommonLispState): String? {
             clTypeHolder = "symbol"
             when {
                 name == "nil" || name == "t" || name.startsWith(":") -> "atom"
-                state.lastType == "open" &&
-                    (clSpecialForm.containsMatchIn(name) || clAssumeBody.containsMatchIn(name)) -> "keyword"
+                state.lastType == "open" && (
+                    clSpecialForm.containsMatchIn(name) || clAssumeBody.containsMatchIn(name)
+                    ) -> "keyword"
                 name.startsWith("&") -> "variableName.special"
                 else -> "variableName"
             }

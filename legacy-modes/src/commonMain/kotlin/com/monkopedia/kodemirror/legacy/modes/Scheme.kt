@@ -205,7 +205,8 @@ private fun schemeHandleDefault(stream: StringStream, state: SchemeState): Strin
                 }
             }
         }
-        Regex("^[-+0-9.]").containsMatchIn(ch) && schemeIsDecimalNumber(stream, backup = true) -> "number"
+        Regex("^[-+0-9.]").containsMatchIn(ch) &&
+            schemeIsDecimalNumber(stream, backup = true) -> "number"
         ch == ";" -> {
             stream.skipToEnd()
             "comment"

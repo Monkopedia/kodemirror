@@ -198,7 +198,8 @@ private fun textileDisabled(state: TextileState): String? {
         "code" -> textileTokenStyles["code"]
         "pre" -> textileTokenStyles["pre"]
         else -> if (state.notextile) {
-            textileTokenStyles["notextile"] + (state.layoutType?.let { " ${textileTokenStyles[it]}" } ?: "")
+            textileTokenStyles["notextile"] +
+                (state.layoutType?.let { " ${textileTokenStyles[it]}" } ?: "")
         } else {
             null
         }
@@ -365,7 +366,8 @@ private fun textileModeNewLayout(stream: StringStream, state: TextileState): Str
         !textileDisabled(state).let { it != null } -> when {
             stream.match(textileRe("listLayout"), consume = false) != null -> ::textileModeList
             stream.match(textileRe("drawTable"), consume = false) != null -> ::textileModeTable
-            stream.match(textileRe("linkDefinition"), consume = false) != null -> ::textileModeLinkDefinition
+            stream.match(textileRe("linkDefinition"), consume = false) != null ->
+                ::textileModeLinkDefinition
             stream.match(textileRe("definitionList")) != null -> ::textileModeDefinitionList
             stream.match(textileRe("html"), consume = false) != null -> ::textileModeHtml
             else -> null

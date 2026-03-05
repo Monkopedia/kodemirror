@@ -24,7 +24,8 @@ import com.monkopedia.kodemirror.language.StringStream
 
 private val csOperators =
     Regex(
-        "^(?:->|=>|\\+[+=]?|-[\\-=]?|\\*[\\*=]?|/[/=]?|[=!]=|<[><]?=?|>>?=?|%=?|&=?|\\|=?|\\^=?|~|!|\\?|(or|and|\\|\\|||&&|\\?)=)"
+        "^(?:->|=>|\\+[+=]?|-[\\-=]?|\\*[\\*=]?|/[/=]?|[=!]=|<[><]?=?|>>?=?|%=?|&=?|" +
+            "\\|=?|\\^=?|~|!|\\?|(or|and|\\|\\|||&&|\\?)=)"
     )
 private val csDelimiters = Regex("^(?:[(\\[\\]{},:`=;]|\\.\\.\\.?)")
 private val csIdentifiers = Regex("^[_A-Za-z\$][_A-Za-z\$0-9]*")
@@ -160,8 +161,16 @@ private fun csTokenBase(stream: StringStream, state: CoffeeScriptState): String?
         }
         var intLiteral = false
         if (stream.match(Regex("^-?0x[0-9a-fA-F]+"), consume = true) != null) intLiteral = true
-        if (!intLiteral && stream.match(Regex("^-?[1-9]\\d*([eE][\\+\\-]?\\d+)?"), consume = true) != null) intLiteral = true
-        if (!intLiteral && stream.match(Regex("^-?0(?![\\dx])"), consume = true) != null) intLiteral = true
+        if (!intLiteral &&
+            stream.match(Regex("^-?[1-9]\\d*([eE][\\+\\-]?\\d+)?"), consume = true) != null
+        ) {
+            intLiteral = true
+        }
+        if (!intLiteral &&
+            stream.match(Regex("^-?0(?![\\dx])"), consume = true) != null
+        ) {
+            intLiteral = true
+        }
         if (intLiteral) return "number"
     }
 
@@ -178,10 +187,16 @@ private fun csTokenBase(stream: StringStream, state: CoffeeScriptState): String?
         }
     }
 
-    if (stream.match(csOperators) != null || stream.match(csWordOperators) != null) return "operator"
+    if (stream.match(csOperators) != null || stream.match(csWordOperators) != null) {
+        return "operator"
+    }
     if (stream.match(csDelimiters) != null) return "punctuation"
     if (stream.match(csConstants) != null) return "atom"
-    if (stream.match(csAtProp) != null || (state.prop && stream.match(csIdentifiers) != null)) return "property"
+    if (stream.match(csAtProp) != null ||
+        (state.prop && stream.match(csIdentifiers) != null)
+    ) {
+        return "property"
+    }
     if (stream.match(csKeywords) != null) return "keyword"
     if (stream.match(csIdentifiers) != null) return "variable"
 

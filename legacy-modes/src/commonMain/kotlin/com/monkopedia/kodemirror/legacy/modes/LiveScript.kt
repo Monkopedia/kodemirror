@@ -26,8 +26,8 @@ private val lsIdentifier =
     "(?![\\d\\s])[\$\\w\\xAA-\\uFFDC](?:(?!\\s)[\$\\w\\xAA-\\uFFDC]|-[A-Za-z])*"
 
 private val lsIndenter = Regex(
-    "(?:[({[=:]|[-~]>|\\b(?:e(?:lse|xport)|d(?:o|efault)|t(?:ry|hen)|finally|" +
-        "import(?:\\s*all)?|const|var|let|new|catch(?:\\s*$lsIdentifier)?))\\s*$"
+    "(?:[({\\[=:]|[-~]>|\\b(?:e(?:lse|xport)|d(?:o|efault)|t(?:ry|hen)|finally|" +
+        "import(?:\\s*all)?|const|var|let|new|catch(?:\\s*$lsIdentifier)?))\\s*\$"
 )
 
 private val lsKeywordend = "(?![\$\\w]|-[A-Za-z]|\\s*:(?![:=]))"
@@ -104,8 +104,8 @@ private fun buildLsRules(): Map<String, List<LsRule>> {
         LsRule(
             token = "regexp",
             regex = Regex(
-                "^\\/(?:[^[/\\n\\\\]*(?:(?:\\\\.|\\[[^\\]\\n\\\\]*" +
-                    "(?:\\\\.[^\\]\\n\\\\]*)*\\])[^[/\\n\\\\]*)*)\\/[gimy\$]{0,4}"
+                "^\\/(?:[^\\[/\\n\\\\]*(?:(?:\\\\.|\\[[^\\]\\n\\\\]*" +
+                    "(?:\\\\.[^\\]\\n\\\\]*)*\\])[^\\[/\\n\\\\]*)*)\\/[gimy\$]{0,4}"
             ),
             next = "key"
         ),
@@ -118,7 +118,7 @@ private fun buildLsRules(): Map<String, List<LsRule>> {
                     "(?:e[+-]?\\d[\\d_]*)?[\\w\$]*)"
             )
         ),
-        LsRule(token = "paren", regex = Regex("^[({[]")),
+        LsRule(token = "paren", regex = Regex("^[({\\[]")),
         LsRule(token = "paren", regex = Regex("^[)}\\]]"), next = "key"),
         LsRule(token = "operatorKeyword", regex = Regex("^\\S+")),
         LsRule(token = "content", regex = Regex("^\\s+"))

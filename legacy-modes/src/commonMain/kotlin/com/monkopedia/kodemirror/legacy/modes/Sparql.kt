@@ -71,7 +71,8 @@ data class SparqlState(
 private fun sparqlEatPnLocal(stream: StringStream) {
     stream.match(
         Regex(
-            "(\\.(?=[\\w_\\-\\\\%])|[:\\w_-]|\\\\[-\\\\_~.!\$&'()*+,;=/?#@%]|%[a-fA-F\\d][a-fA-F\\d])+"
+            "(\\.(?=[\\w_\\-\\\\%])|[:\\w_-]|\\\\[-\\\\_~.!\$&'()*+,;=/?#@%]|" +
+                "%[a-fA-F\\d][a-fA-F\\d])+"
         )
     )
 }
@@ -130,7 +131,9 @@ private fun sparqlTokenBase(stream: StringStream, state: SparqlState): String? {
     } else if (ch == "@") {
         stream.eatWhile(Regex("[a-z\\d\\-]"))
         return "meta"
-    } else if (sparqlPrefixStart.containsMatchIn(ch) && stream.match(sparqlPrefixRemainder) != null) {
+    } else if (sparqlPrefixStart.containsMatchIn(ch) &&
+        stream.match(sparqlPrefixRemainder) != null
+    ) {
         sparqlEatPnLocal(stream)
         return "atom"
     }
@@ -185,7 +188,9 @@ val sparql: StreamParser<SparqlState> = object : StreamParser<SparqlState> {
 
     override fun token(stream: StringStream, state: SparqlState): String? {
         if (stream.sol()) {
-            if (state.context != null && state.context!!.align == null) state.context!!.align = false
+            if (state.context != null && state.context!!.align == null) {
+                state.context!!.align = false
+            }
             state.indent = stream.indentation()
         }
         if (stream.eatSpace()) return null
@@ -216,7 +221,8 @@ val sparql: StreamParser<SparqlState> = object : StreamParser<SparqlState> {
             }
             curPunc == "." && state.context?.type == "pattern" ->
                 sparqlPopContext(state)
-            style != null && Regex("atom|string|variable").containsMatchIn(style) && state.context != null -> {
+            style != null && Regex("atom|string|variable").containsMatchIn(style) &&
+                state.context != null -> {
                 val ctxType = state.context!!.type
                 if (ctxType == "}" || ctxType == "]") {
                     sparqlPushContext(state, "pattern", stream.column())
