@@ -50,6 +50,24 @@ val showPanels: Facet<List<Panel>, List<Panel>> = Facet.define(
 )
 
 /**
+ * The facet that provides all active panels. This is an alias for
+ * [showPanels], exported under a name matching the upstream
+ * CodeMirror API.
+ */
+val panels: Facet<List<Panel>, List<Panel>> = showPanels
+
+/**
+ * Get all active panels in the given state.
+ */
+fun getPanel(view: EditorView): List<Panel> {
+    val state = view.state
+    return buildList {
+        state.facet(showPanel)?.let { add(it) }
+        addAll(state.facet(showPanels))
+    }
+}
+
+/**
  * A layout composable that wraps the editor content with top/bottom panels.
  *
  * Usage:

@@ -80,3 +80,28 @@ data class ScrollMarginSpec(
 val perLineTextDirection: Facet<Boolean, Boolean> = Facet.define(
     combine = { values -> values.any { it } }
 )
+
+/**
+ * Facet for registering an exception handler. When an extension
+ * throws an exception, it can be reported through this handler
+ * instead of crashing the editor. If no handler is configured,
+ * the exception is printed to stderr.
+ */
+val exceptionSink: Facet<(Throwable) -> Unit, List<(Throwable) -> Unit>> =
+    Facet.define()
+
+/**
+ * Log an exception that occurred during extension execution.
+ * Reports to handlers registered via [exceptionSink], or prints
+ * to stderr if none are configured.
+ */
+fun logException(state: com.monkopedia.kodemirror.state.EditorState, exception: Throwable) {
+    val handlers = state.facet(exceptionSink)
+    if (handlers.isEmpty()) {
+        exception.printStackTrace()
+    } else {
+        for (handler in handlers) {
+            handler(exception)
+        }
+    }
+}

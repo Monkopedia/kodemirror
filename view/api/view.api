@@ -293,6 +293,7 @@ public final class com/monkopedia/kodemirror/view/GutterKt {
 	public static final fun GutterView (Lcom/monkopedia/kodemirror/view/EditorView;ILandroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;II)V
 	public static final fun getGutters ()Lcom/monkopedia/kodemirror/state/Facet;
 	public static final fun getHighlightActiveLineGutter ()Lcom/monkopedia/kodemirror/state/Extension;
+	public static final fun getLineNumberMarkers ()Lcom/monkopedia/kodemirror/state/Facet;
 	public static final fun getLineNumbers ()Lcom/monkopedia/kodemirror/state/Extension;
 	public static final fun gutter (Lcom/monkopedia/kodemirror/view/GutterConfig;)Lcom/monkopedia/kodemirror/state/Extension;
 }
@@ -303,6 +304,11 @@ public abstract class com/monkopedia/kodemirror/view/GutterMarker : com/monkoped
 	public abstract fun Content (Lcom/monkopedia/kodemirror/view/EditorTheme;Landroidx/compose/runtime/Composer;I)V
 	public fun eq (Lcom/monkopedia/kodemirror/state/RangeValue;)Z
 	public fun getElementClass ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/view/HighlightWhitespaceKt {
+	public static final fun getHighlightTrailingWhitespace ()Lcom/monkopedia/kodemirror/state/Extension;
+	public static final fun getHighlightWhitespace ()Lcom/monkopedia/kodemirror/state/Extension;
 }
 
 public final class com/monkopedia/kodemirror/view/InputHandlingKt {
@@ -519,6 +525,8 @@ public final class com/monkopedia/kodemirror/view/Panel {
 
 public final class com/monkopedia/kodemirror/view/PanelKt {
 	public static final fun PanelLayout (Lcom/monkopedia/kodemirror/view/EditorView;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun getPanel (Lcom/monkopedia/kodemirror/view/EditorView;)Ljava/util/List;
+	public static final fun getPanels ()Lcom/monkopedia/kodemirror/state/Facet;
 	public static final fun getShowPanel ()Lcom/monkopedia/kodemirror/state/Facet;
 	public static final fun getShowPanels ()Lcom/monkopedia/kodemirror/state/Facet;
 }
@@ -703,9 +711,13 @@ public final class com/monkopedia/kodemirror/view/Tooltip {
 
 public final class com/monkopedia/kodemirror/view/TooltipKt {
 	public static final fun TooltipLayer (Lcom/monkopedia/kodemirror/view/EditorView;Landroidx/compose/runtime/Composer;I)V
+	public static final fun closeHoverTooltips (Lcom/monkopedia/kodemirror/view/EditorView;)V
 	public static final fun getShowTooltip ()Lcom/monkopedia/kodemirror/state/Facet;
 	public static final fun getShowTooltips ()Lcom/monkopedia/kodemirror/state/Facet;
+	public static final fun getTooltips (Lcom/monkopedia/kodemirror/view/EditorView;)Ljava/util/List;
+	public static final fun hasHoverTooltips (Lcom/monkopedia/kodemirror/view/EditorView;)Z
 	public static final fun hoverTooltip (Lkotlin/jvm/functions/Function2;)Lcom/monkopedia/kodemirror/state/Extension;
+	public static final fun repositionTooltips (Lcom/monkopedia/kodemirror/view/EditorView;)V
 }
 
 public final class com/monkopedia/kodemirror/view/ViewExtensionsKt {
@@ -714,9 +726,11 @@ public final class com/monkopedia/kodemirror/view/ViewExtensionsKt {
 	public static final fun getDecorations ()Lcom/monkopedia/kodemirror/state/Facet;
 	public static final fun getEditable ()Lcom/monkopedia/kodemirror/state/Facet;
 	public static final fun getEditorAttributes ()Lcom/monkopedia/kodemirror/state/Facet;
+	public static final fun getExceptionSink ()Lcom/monkopedia/kodemirror/state/Facet;
 	public static final fun getLineWrapping ()Lcom/monkopedia/kodemirror/state/Extension;
 	public static final fun getPerLineTextDirection ()Lcom/monkopedia/kodemirror/state/Facet;
 	public static final fun getScrollMargins ()Lcom/monkopedia/kodemirror/state/Facet;
+	public static final fun logException (Lcom/monkopedia/kodemirror/state/EditorState;Ljava/lang/Throwable;)V
 }
 
 public final class com/monkopedia/kodemirror/view/ViewPlugin {

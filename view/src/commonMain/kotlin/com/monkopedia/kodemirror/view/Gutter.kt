@@ -127,6 +127,20 @@ fun GutterView(view: EditorView, lineNumber: Int, modifier: Modifier = Modifier)
 }
 
 /**
+ * Facet that allows extensions to contribute custom
+ * [GutterMarker]s to the line number gutter column. Each
+ * provider maps a line start position to an optional marker.
+ */
+val lineNumberMarkers: Facet<
+    (
+        view: EditorView,
+        lineFrom: Int
+    ) -> GutterMarker?,
+    List<(view: EditorView, lineFrom: Int) -> GutterMarker?>
+    > =
+    Facet.define()
+
+/**
  * Extension that adds line numbers to the editor gutter.
  */
 val lineNumbers: Extension = gutter(

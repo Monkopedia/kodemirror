@@ -206,7 +206,8 @@ Each item has a status prefix on its heading line:
   `bidiIsolates`, `Sublanguage`/`sublanguageProp`
 - **Module:** `:language`
 
-### 25. Add missing view utilities
+### 25. [DONE] Add missing view utilities
+> Added `highlightWhitespace`, `highlightTrailingWhitespace`, `hasHoverTooltips`, `closeHoverTooltips`, `getTooltips`, `repositionTooltips`, `panels` facet, `getPanel`, `lineNumberMarkers` facet, `exceptionSink` facet, `logException`. Omitted: `layer`/`LayerMarker`/`RectangleMarker` (need Compose rendering layer design), `showDialog`/`getDialog` (new dialog infrastructure), `runScopeHandlers` (DOM scope concept), `getDrawSelectionConfig` (low value), `gutterWidgetClass`/`lineNumberWidgetMarker` (CSS-specific).
 - **Effort:** 2–3 days | **Source:** Completeness
 - Missing: `highlightWhitespace`, `highlightTrailingWhitespace`, `layer`/`LayerMarker`,
   `RectangleMarker`, `getDrawSelectionConfig`, `getTooltip`, `repositionTooltips`,

@@ -105,6 +105,46 @@ fun hoverTooltip(source: (EditorView, Int) -> Tooltip?): Extension {
     ).asExtension()
 }
 
+/**
+ * Check whether any hover tooltips are currently active in the
+ * given [view].
+ */
+fun hasHoverTooltips(view: EditorView): Boolean {
+    return view.pluginHost?.collectHoverPlugins()
+        ?.any { it.currentTooltip != null } == true
+}
+
+/**
+ * Programmatically close all hover tooltips in the given [view].
+ */
+fun closeHoverTooltips(view: EditorView) {
+    view.pluginHost?.collectHoverPlugins()?.forEach { it.clearHover() }
+}
+
+/**
+ * Get all active tooltips in the given state, including both
+ * facet-provided tooltips and hover tooltips.
+ */
+fun getTooltips(view: EditorView): List<Tooltip> {
+    val state = view.state
+    return buildList {
+        state.facet(showTooltip)?.let { add(it) }
+        addAll(state.facet(showTooltips))
+        view.pluginHost?.collectHoverTooltips()?.let { addAll(it) }
+    }
+}
+
+/**
+ * Force repositioning of all tooltips. In Compose, tooltips are
+ * automatically repositioned via state changes, so this is
+ * effectively a no-op. Provided for API compatibility with
+ * upstream CodeMirror.
+ */
+@Suppress("UNUSED_PARAMETER")
+fun repositionTooltips(view: EditorView) {
+    // In Compose, tooltips reposition automatically via recomposition
+}
+
 internal class HoverTooltipPlugin(
     private val view: EditorView,
     private val source: (EditorView, Int) -> Tooltip?
