@@ -274,6 +274,88 @@ val cursorCharLeft: (EditorView) -> Boolean = { view ->
 }
 ```
 
+## Text input pipeline
+
+The input pipeline in Kodemirror differs fundamentally from upstream
+CodeMirror, which uses `ContentEditable` and DOM `input`/`beforeinput`
+events. Kodemirror uses Compose's input system:
+
+```
+KeyEvent (Compose onPreviewKeyEvent)
+  → keyEventToName() converts to string like "Ctrl-s"
+  → Match against keymap facet bindings
+  → If matched: command(view) → dispatch(TransactionSpec)
+  → If unmatched: fall through to text input handling
+  → Text input → insert character transaction
+  → Transaction → state update → Compose recomposition
+```
+
+The `keyEventToName()` function in `InputHandling.kt` translates
+Compose `KeyEvent` objects into the string format used by `KeyBinding`
+(e.g. `"Ctrl-Alt-Enter"`). Modifier keys are prefixed in alphabetical
+order: `Alt`, `Ctrl`, `Meta`, `Shift`.
+
+Platform differences in key handling:
+- **macOS**: `Mod` maps to `Meta` (Command key)
+- **Linux/Windows**: `Mod` maps to `Ctrl`
+- The `KeyBinding.mac` field allows platform-specific overrides
+
+Character input that doesn't match any binding is handled as a text
+insertion. The composable detects character key presses and dispatches
+an insert transaction with the `"input"` user event annotation.
+
+## Document rendering and large documents
+
+The editor content is rendered inside a `LazyColumn`, which is
+Compose's virtualized list. Only visible lines are composed and laid
+out. This means:
+
+- **Memory**: Only visible lines are in the composition tree, so
+  million-line documents don't create millions of composables
+- **Parsing**: The syntax tree is parsed incrementally. Only the
+  visible range (plus a buffer) is parsed eagerly
+- **Decorations**: `DecorationSet` is a `RangeSet` that can be
+  efficiently queried for the visible range without scanning all
+  decorations
+- **Scrolling**: The `LazyListState` manages scroll position and
+  reports which items are visible
+
+Each line is a separate composable that receives its text, decorations,
+and line-level styling. Within a line, text is rendered as an
+`AnnotatedString` with `SpanStyle` values applied from decorations
+and syntax highlighting.
+
+### Viewport and visible range
+
+The `EditorView` tracks which document positions are visible. View
+plugins can react to viewport changes through `ViewUpdate.viewportChanged`.
+This is important for plugins that compute decorations only for the
+visible range (e.g. syntax highlighting, code folding markers).
+
+## Selection and cursor drawing
+
+In upstream CodeMirror, the browser's native selection and caret APIs
+handle cursor display. Kodemirror draws its own selection and cursors
+because Compose text doesn't expose the same native selection
+primitives.
+
+The `drawSelectionOverlay()` modifier is applied to each line
+composable. It uses `drawWithContent` to paint:
+
+1. **Selection highlights** — semi-transparent rectangles covering the
+   selected text range, using `theme.selection` color
+2. **Cursors** — thin vertical lines at cursor positions, using
+   `theme.cursor` color
+
+The drawing uses `TextLayoutResult` from Compose's text measurement to
+map document positions to pixel coordinates within each line. Only the
+portion of the selection that intersects each line is drawn — the
+per-line overlay approach avoids a single large canvas.
+
+For multi-cursor support, each `SelectionRange` in the
+`EditorSelection` is drawn independently. Cursors blink via a
+`LaunchedEffect` coroutine that toggles visibility at a fixed interval.
+
 ## Coordinate queries
 
 The `EditorView` class provides methods for mapping between document

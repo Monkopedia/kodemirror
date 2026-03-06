@@ -232,7 +232,8 @@ Each item has a status prefix on its heading line:
   `transactionExtender`, `invertedEffects`, `readOnly` all lack documentation.
 - **File:** `state/src/commonMain/kotlin/.../state/Extension.kt`
 
-### 29. Expand the-view guide with missing topics
+### 29. [DONE] Expand the-view guide with missing topics
+> Added three sections: Text input pipeline (keyEventToName → keymap → command → dispatch), Document rendering and large documents (LazyColumn virtualization), Selection and cursor drawing (drawWithContent overlay).
 - **Effort:** 1–2 days | **Source:** Documentation
 - Text input pipeline (Compose `onKeyEvent` -> command dispatch -> Transaction -> state update) is
   undocumented. This is where Kodemirror differs most from upstream (Compose vs DOM ContentEditable).
