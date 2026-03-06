@@ -2,8 +2,8 @@ site_name: Kodemirror
 site_description: CodeMirror 6, ported to Kotlin Multiplatform and Compose
 site_url: https://monkopedia.github.io/kodemirror/
 
-repo_name: anthropics/kodemirror
-repo_url: https://github.com/anthropics/kodemirror
+repo_name: Monkopedia/kodemirror
+repo_url: https://github.com/Monkopedia/kodemirror
 
 theme:
   name: material
