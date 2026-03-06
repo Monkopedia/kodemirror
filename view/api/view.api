@@ -223,6 +223,7 @@ public final class com/monkopedia/kodemirror/view/EditorTheme {
 
 public final class com/monkopedia/kodemirror/view/EditorThemeKt {
 	public static final fun activeLineStyle (Lcom/monkopedia/kodemirror/view/EditorTheme;)Landroidx/compose/ui/text/SpanStyle;
+	public static final fun editorThemeFromColors-EXAOFh0 (JJJJJZ)Lcom/monkopedia/kodemirror/view/EditorTheme;
 	public static final fun getDefaultEditorTheme ()Lcom/monkopedia/kodemirror/view/EditorTheme;
 	public static final fun getEditorTheme ()Lcom/monkopedia/kodemirror/state/Facet;
 	public static final fun getLightEditorTheme ()Lcom/monkopedia/kodemirror/view/EditorTheme;

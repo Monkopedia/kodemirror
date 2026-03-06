@@ -147,3 +147,73 @@ fun EditorTheme.selectionStyle(): SpanStyle = SpanStyle(background = selection)
 
 /** Convenience extension to build a [SpanStyle] for active line. */
 fun EditorTheme.activeLineStyle(): SpanStyle = SpanStyle(background = activeLineBackground)
+
+/**
+ * Create an [EditorTheme] from semantic color values, designed for easy
+ * integration with Material Design color schemes.
+ *
+ * ```kotlin
+ * // With Material 3:
+ * val colors = MaterialTheme.colorScheme
+ * val theme = editorThemeFromColors(
+ *     background = colors.surface,
+ *     foreground = colors.onSurface,
+ *     primary = colors.primary,
+ *     surface = colors.surfaceVariant,
+ *     outline = colors.outline,
+ *     dark = colors.surface.luminance() < 0.5f
+ * )
+ * ```
+ *
+ * @param background Editor background color
+ * @param foreground Default text color
+ * @param primary Accent color (cursor, active elements)
+ * @param surface Surface color (panels, tooltips, gutter)
+ * @param outline Border/separator color
+ * @param dark Whether this is a dark theme
+ */
+fun editorThemeFromColors(
+    background: Color,
+    foreground: Color,
+    primary: Color,
+    surface: Color,
+    outline: Color,
+    dark: Boolean
+): EditorTheme {
+    val dimForeground = foreground.copy(alpha = 0.5f)
+    val subtleHighlight = primary.copy(alpha = if (dark) 0.15f else 0.2f)
+    val selectionColor = primary.copy(alpha = if (dark) 0.3f else 0.25f)
+    return EditorTheme(
+        background = background,
+        foreground = foreground,
+        cursor = primary,
+        selection = selectionColor,
+        activeLineBackground = subtleHighlight,
+        gutterBackground = surface,
+        gutterForeground = dimForeground,
+        gutterActiveForeground = foreground,
+        gutterBorderColor = outline,
+        contentTextStyle = TextStyle(
+            fontFamily = editorFontFamily,
+            fontSize = 13.sp,
+            lineHeight = (13 * 1.4).sp,
+            color = foreground
+        ),
+        searchMatchBackground = primary.copy(alpha = 0.35f),
+        searchMatchSelectedBackground = primary.copy(alpha = 0.2f),
+        selectionMatchBackground = primary.copy(alpha = 0.1f),
+        matchingBracketBackground = Color(0x4400CC00),
+        nonMatchingBracketBackground = Color(0x44CC0000),
+        panelBackground = surface,
+        panelBorderColor = outline,
+        buttonBackground = surface,
+        buttonBorderColor = outline,
+        inputBackground = background,
+        inputBorderColor = outline,
+        tooltipBackground = surface,
+        foldPlaceholderColor = dimForeground,
+        foldPlaceholderBackground = surface,
+        activeLineGutterBackground = subtleHighlight,
+        dark = dark
+    )
+}

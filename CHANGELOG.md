@@ -31,7 +31,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `Decoration.line(style: SpanStyle, ...)` convenience overload
 - `operator fun StateField<T>.getValue(EditorState, KProperty)` property delegate
 - KDoc for top-level facets in `Extension.kt`
+- `editorThemeFromColors()` factory for Material Design color scheme integration
 - KDoc for all 137 legacy-mode StreamParser entry points
+- CodeMirror 6 migration guide
+- Getting Started tutorial
+- Expanded the-view guide with input pipeline, virtualization, and selection drawing
 - Extension index guide page
 - Troubleshooting guide page
 - Platform-specific setup snippets in bundle guide

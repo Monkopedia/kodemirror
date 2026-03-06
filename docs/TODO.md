@@ -240,7 +240,8 @@ Each item has a status prefix on its heading line:
 - Also missing: discussion of `LazyColumn` virtualization and its implications for large documents,
   and the selection/cursor drawing mechanism (`drawWithContent` overlay).
 
-### 30. Create a "Getting Started" step-by-step tutorial
+### 30. [DONE] Create a "Getting Started" step-by-step tutorial
+> Created `docs-site/docs/guide/getting-started.md` — covers project setup, dependencies, minimal editor, state pattern, adding features (completion, search, themes, read-only), programmatic changes.
 - **Effort:** 1–2 days | **Source:** Documentation
 - No step-by-step tutorial walks through creating a project from scratch: project setup, adding
   dependencies, writing a minimal editor composable, running it. Distinct from the existing
@@ -337,7 +338,8 @@ Each item has a status prefix on its heading line:
 - Accept `String` directly: `EditorState.create(doc = "Hello", extensions = ...)` instead of
   requiring `.asDoc()`.
 
-### 48. Add `MaterialTheme` to `EditorTheme` bridge
+### 48. [DONE] Add `MaterialTheme` to `EditorTheme` bridge
+> Added `editorThemeFromColors(background, foreground, primary, surface, outline, dark)` factory function that maps semantic colors to all EditorTheme fields. Works with Material3 ColorScheme without requiring it as a dependency.
 - **Effort:** 1 day | **Source:** Frontend DX
 - No automatic bridging between `MaterialTheme.colorScheme` and `EditorTheme`.
 

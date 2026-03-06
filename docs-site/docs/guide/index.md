@@ -3,6 +3,8 @@
 This guide covers the core concepts behind Kodemirror, a Kotlin
 Multiplatform port of CodeMirror 6.
 
+- [Getting Started](getting-started.md) — Step-by-step tutorial for
+  creating your first Kodemirror editor
 - [Architecture](architecture.md) — Module structure, dependency layers,
   platform targets, and how the design differs from upstream CodeMirror
 - [Data Model](data-model.md) — Documents, changes, selections, facets,
