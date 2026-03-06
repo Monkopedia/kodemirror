@@ -54,6 +54,14 @@ apiValidation {
     klib {
         enabled = false
     }
+    // Filter Compose compiler-generated ComposableSingletons from public API.
+    // These have hash-based method names that change with any code modification.
+    ignoredClasses.addAll(
+        listOf(
+            "com.monkopedia.kodemirror.search.ComposableSingletons\$SearchKt",
+            "com.monkopedia.kodemirror.lint.ComposableSingletons\$LintKt"
+        )
+    )
 }
 
 tasks.configureEach {

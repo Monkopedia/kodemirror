@@ -1,10 +1,3 @@
-public final class com/monkopedia/kodemirror/search/ComposableSingletons$SearchKt {
-	public static final field INSTANCE Lcom/monkopedia/kodemirror/search/ComposableSingletons$SearchKt;
-	public fun <init> ()V
-	public final fun getLambda$2132847180$search ()Lkotlin/jvm/functions/Function2;
-	public final fun getLambda$692970211$search ()Lkotlin/jvm/functions/Function2;
-}
-
 public final class com/monkopedia/kodemirror/search/GotoLineKt {
 	public static final fun getGotoLine ()Lkotlin/jvm/functions/Function1;
 }

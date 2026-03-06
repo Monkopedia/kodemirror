@@ -22,7 +22,7 @@ Each item has a status prefix on its heading line:
   empty pages; IDE shows no quick-docs. Mechanical find-and-replace in one file.
 - **File:** `state/src/commonMain/kotlin/.../state/Text.kt`
 
-### 2. Filter `ComposableSingletons` from public API
+### 2. [DONE] Filter `ComposableSingletons` from public API
 - **Effort:** < 1 day | **Source:** Architecture
 - `ComposableSingletons$SearchKt` and `ComposableSingletons$LintKt` appear in `.api` dumps with
   hash-based method names that change with any code edit. Must be excluded from the public API surface
