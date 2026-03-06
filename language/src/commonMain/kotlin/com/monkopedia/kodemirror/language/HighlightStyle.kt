@@ -113,6 +113,17 @@ class HighlightStyleBuilder @PublishedApi internal constructor() {
     }
 }
 
+/**
+ * Resolve the [SpanStyle] that would be applied to a token with
+ * the given [tags] by the provided [style].
+ *
+ * Returns `null` if the highlight style has no rule for these tags.
+ */
+fun highlightingFor(style: HighlightStyle, tags: List<Tag>): SpanStyle? {
+    val cls = style.style(tags) ?: return null
+    return style.spanStyleFor(cls)
+}
+
 /** Marks DSL scope for [HighlightStyleBuilder]. */
 @DslMarker
 annotation class HighlightStyleDsl

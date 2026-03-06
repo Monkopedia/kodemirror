@@ -34,6 +34,19 @@ import com.monkopedia.kodemirror.view.ViewPlugin
 import com.monkopedia.kodemirror.view.ViewUpdate
 import com.monkopedia.kodemirror.view.editorTheme
 
+/**
+ * A [NodeProp] that language parsers can attach to node types to
+ * provide custom bracket-matching behavior. The function receives
+ * the syntax node and the document state, and returns a
+ * [MatchResult] if this node represents a bracket, or `null`
+ * otherwise.
+ *
+ * This allows languages with non-standard bracket syntax to
+ * participate in bracket matching and highlighting.
+ */
+val bracketMatchingHandle: NodeProp<(SyntaxNode, EditorState) -> MatchResult?> =
+    NodeProp()
+
 /** Configuration for bracket matching. */
 data class BracketMatchingConfig(
     val afterCursor: Boolean = true,
@@ -74,7 +87,15 @@ fun matchBrackets(
 ): MatchResult? {
     val tree = syntaxTree(state)
 
-    // Try tree-based matching first
+    // Try custom bracket matching handle first
+    val node = tree.resolveInner(pos, dir)
+    val handle = node.type.prop(bracketMatchingHandle)
+    if (handle != null) {
+        val result = handle(node, state)
+        if (result != null) return result
+    }
+
+    // Try tree-based matching
     val treeResult = tryTreeMatch(state, tree, pos, dir, config)
     if (treeResult != null) return treeResult
 

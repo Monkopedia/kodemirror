@@ -198,7 +198,8 @@ Each item has a status prefix on its heading line:
 - Missing history: `undoSelection`, `redoSelection`, `historyField` (make public)
 - **File:** `commands/src/commonMain/kotlin/.../commands/Commands.kt`
 
-### 24. Add missing language parsing context APIs
+### 24. [DONE] Add missing language parsing context APIs
+> Added `ensureSyntaxTree`, `syntaxTreeAvailable`, `syntaxParserRunning`, `forceParsing`, `LanguageDescription`, `highlightingFor`, `bracketMatchingHandle`. Note: `ParseContext` omitted (sync model makes it redundant), `bidiIsolates` omitted (DOM/CSS-specific concept), `Sublanguage`/`sublanguageProp` omitted (significant nesting infrastructure needing design decision).
 - **Effort:** 2–3 days | **Source:** Completeness
 - Missing: `ensureSyntaxTree`, `ParseContext`, `LanguageDescription`, `syntaxTreeAvailable`,
   `syntaxParserRunning`, `forceParsing`, `highlightingFor`, `bracketMatchingHandle`,

@@ -193,6 +193,129 @@ fun syntaxTree(state: EditorState): Tree {
 }
 
 /**
+ * Get the syntax tree for the state if it covers at least up to
+ * position [upto]. In Kodemirror's synchronous parsing model, the
+ * tree always covers the full document, so this always returns the
+ * tree when one is available.
+ *
+ * @param upto The minimum document position the tree must cover.
+ * @param timeout Ignored in the synchronous parsing model. Present
+ *   for API compatibility with upstream CodeMirror.
+ * @return The syntax tree, or `null` if no language is configured.
+ */
+fun ensureSyntaxTree(
+    state: EditorState,
+    upto: Int,
+    @Suppress("UNUSED_PARAMETER") timeout: Int = 0
+): Tree? {
+    val tree = syntaxTree(state)
+    return if (tree.length == 0 && state.facet(language) == null) null else tree
+}
+
+/**
+ * Check whether a complete syntax tree is available up to the
+ * given position. In Kodemirror's synchronous parsing model, the
+ * tree always covers the full document, so this returns `true`
+ * whenever a language is configured.
+ *
+ * @param upto The position to check coverage for. Defaults to the
+ *   full document length.
+ */
+fun syntaxTreeAvailable(
+    state: EditorState,
+    @Suppress("UNUSED_PARAMETER") upto: Int = state.doc.length
+): Boolean {
+    return state.facet(language) != null
+}
+
+/**
+ * Check whether the syntax parser is currently running in the
+ * background. In Kodemirror's synchronous parsing model, parsing
+ * completes immediately on every state update, so this always
+ * returns `false`.
+ */
+@Suppress("UNUSED_PARAMETER")
+fun syntaxParserRunning(state: EditorState): Boolean {
+    return false
+}
+
+/**
+ * Force a complete re-parse of the document. In Kodemirror's
+ * synchronous parsing model, the tree is always current, so this
+ * returns the existing tree.
+ *
+ * This function is provided for API compatibility with upstream
+ * CodeMirror, where it forces async parsing to complete
+ * synchronously.
+ */
+fun forceParsing(state: EditorState): Tree {
+    return syntaxTree(state)
+}
+
+/**
+ * Metadata descriptor for a language. Used for language detection
+ * and dynamic language loading.
+ *
+ * @param name Human-readable name of the language (e.g., "JavaScript").
+ * @param alias Alternative names for the language (e.g., "js", "ecmascript").
+ * @param extensions File extensions associated with the language
+ *   (e.g., `listOf("js", "mjs", "cjs")`).
+ * @param filename Regex patterns matching filenames for this language
+ *   (e.g., `listOf(Regex("Makefile"))` for Makefiles without extensions).
+ * @param load Factory function that creates a [LanguageSupport] instance.
+ */
+data class LanguageDescription(
+    val name: String,
+    val alias: List<String> = emptyList(),
+    val extensions: List<String> = emptyList(),
+    val filename: List<Regex> = emptyList(),
+    val load: (() -> LanguageSupport)? = null
+) {
+    /**
+     * Check whether this language matches a given file name.
+     */
+    fun matchFilename(filename: String): Boolean {
+        val ext = filename.substringAfterLast('.', "")
+        if (ext.isNotEmpty() && extensions.any { it.equals(ext, ignoreCase = true) }) {
+            return true
+        }
+        return this.filename.any { it.containsMatchIn(filename) }
+    }
+
+    /**
+     * Check whether this language matches a given name or alias.
+     */
+    fun matchLanguageName(name: String): Boolean {
+        if (this.name.equals(name, ignoreCase = true)) return true
+        return alias.any { it.equals(name, ignoreCase = true) }
+    }
+
+    companion object {
+        /**
+         * Find a language description matching a file name from a
+         * list of descriptions.
+         */
+        fun matchFilename(
+            descriptions: List<LanguageDescription>,
+            filename: String
+        ): LanguageDescription? {
+            return descriptions.firstOrNull { it.matchFilename(filename) }
+        }
+
+        /**
+         * Find a language description matching a language name from
+         * a list of descriptions.
+         */
+        fun matchLanguageName(
+            descriptions: List<LanguageDescription>,
+            name: String
+        ): LanguageDescription? {
+            return descriptions.firstOrNull { it.matchLanguageName(name) }
+        }
+    }
+}
+
+/**
  * Comment tokens for a language, used by comment toggle commands.
  */
 data class CommentTokens(
