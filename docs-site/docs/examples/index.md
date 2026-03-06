@@ -26,3 +26,16 @@ complete Kotlin snippets adapted from the upstream
 
 - [Autocompletion](autocompletion.md) — Code completion dropdown
 - [Linting](lint.md) — Diagnostics and error reporting
+- [Gutters](gutter.md) — Line numbers and custom gutter markers
+- [Panels](panel.md) — UI strips above or below the editor
+- [Tooltips](tooltip.md) — Floating UI anchored to document positions
+
+## Advanced
+
+- [Zebra Stripes](zebra.md) — Line-level decoration with ViewPlugin
+- [Language Package](lang-package.md) — Defining a language for Kodemirror
+- [Mixed-Language Parsing](mixed-language.md) — Nested languages in one document
+- [Collaborative Editing](collab.md) — Real-time multi-user editing
+- [Split View](split.md) — Two panes sharing one document
+- [Large Documents](million.md) — Handling millions of lines efficiently
+- [Bidirectional Text](bidi.md) — Right-to-left and mixed-direction text

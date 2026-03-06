@@ -68,5 +68,15 @@ nav:
       - Decorations: examples/decoration.md
       - Autocompletion: examples/autocompletion.md
       - Linting: examples/lint.md
+      - Gutters: examples/gutter.md
+      - Panels: examples/panel.md
+      - Tooltips: examples/tooltip.md
+      - Zebra Stripes: examples/zebra.md
+      - Language Package: examples/lang-package.md
+      - Mixed-Language Parsing: examples/mixed-language.md
+      - Collaborative Editing: examples/collab.md
+      - Split View: examples/split.md
+      - Large Documents: examples/million.md
+      - Bidirectional Text: examples/bidi.md
   - Reference:
       - reference/index.md
