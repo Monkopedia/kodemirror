@@ -1,0 +1,44 @@
+# Changelog
+
+All notable changes to Kodemirror will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+
+## [Unreleased]
+
+### Added
+- `extensionListOf(vararg Extension)` factory function
+- `operator fun Extension.plus(other: Extension)` for combining extensions
+- `operator fun Text.get(range: IntRange)` for slicing text
+- `operator fun EditorState.get(field: StateField<T>)` for field access
+- `String.asInsert()` extension for converting strings to `InsertContent`
+- `Int.asCursor()` extension for creating cursor `SelectionSpec`
+- `EditorSelection.asSpec()` extension for converting to `SelectionSpec`
+- `EditorState.create(doc: String, ...)` convenience overload
+- `EditorState.currentLine`, `.selectedText`, `.cursorPosition` properties
+- `Text.isEmpty`, `.isNotEmpty`, `.lineSequence()` properties
+- `keymapOf(bindings: List<KeyBinding>)` overload accepting a list
+- `selectSelectionMatches` search command
+- KDoc for top-level facets in `Extension.kt`
+- Extension index guide page
+- Troubleshooting guide page
+- Platform-specific setup snippets in bundle guide
+- FacetReader and PluginSpec.configure documentation
+
+### Changed
+- Renamed `tags` object to `Tags` (PascalCase convention)
+- Renamed `jsHighlight` to `jsHighlighting` (consistent with other modules)
+- Renamed `tagLanguage` to `jinjaTagLanguage` / `liquidTagLanguage`
+- Converted `Prec` lambda properties to functions
+- Made `phpHighlighting` and `angularHighlighting` public
+- Moved `vueHighlighting` from `VueParser.kt` to separate `VueHighlight.kt`
+- Converted `// /` comments to KDoc in `Text.kt` and `Column.kt`
+
+### Removed
+- `StateEffect.is()` method (use `asType()` instead)
+
+### Internal
+- Made lezer-lr internal state (`Stack`, `Parse`, `CachedToken`,
+  `InputStream`, `SimulatedStack`, `TokenCache`, `StackBufferCursor`,
+  and constant objects) `internal`
+- Filtered `ComposableSingletons` from public API dumps

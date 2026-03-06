@@ -20,10 +20,13 @@ package com.monkopedia.kodemirror.lezer.markdown
 
 class LeafBlock(
     val start: Int,
-    var content: String
+    content: String
 ) {
+    var content: String = content
+        internal set
     internal val marks: MutableList<Element> = mutableListOf()
     var parsers: MutableList<LeafBlockParser> = mutableListOf()
+        internal set
 }
 
 class Line {

@@ -207,8 +207,6 @@ public final class com/monkopedia/kodemirror/lezer/markdown/LeafBlock {
 	public final fun getContent ()Ljava/lang/String;
 	public final fun getParsers ()Ljava/util/List;
 	public final fun getStart ()I
-	public final fun setContent (Ljava/lang/String;)V
-	public final fun setParsers (Ljava/util/List;)V
 }
 
 public abstract interface class com/monkopedia/kodemirror/lezer/markdown/LeafBlockParser {

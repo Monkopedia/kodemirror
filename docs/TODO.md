@@ -269,7 +269,7 @@ Each item has a status prefix on its heading line:
 - `tags` uses lowercase class name, violating Kotlin PascalCase convention. IDE warnings.
 - **File:** `lezer-highlight/src/commonMain/kotlin/.../highlight/Tags.kt`
 
-### 35. Make `Rule.next` and `LeafBlock.content`/`parsers` visibility restricted
+### 35. [DONE] Make `Rule.next` and `LeafBlock.content`/`parsers` visibility restricted
 - **Effort:** < 1 day | **Source:** Architecture
 - Mutable linked-list pointer and markdown parser internals exposed publicly.
 
