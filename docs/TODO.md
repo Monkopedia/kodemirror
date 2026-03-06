@@ -171,7 +171,8 @@ Each item has a status prefix on its heading line:
 
 ## Priority 4 — Medium Impact, Completeness Gaps
 
-### 21. Port `lang-javascript` completion, snippets, and autoCloseTags
+### 21. [DONE] Port `lang-javascript` completion, snippets, and autoCloseTags
+> Added `localCompletionSource`, `scopeCompletionSource`, `completionPath`, `snippets`, `typescriptSnippets`, and `autoCloseTags`. Wired into `javascript()` function with autocompletion config.
 - **Effort:** 2–3 days | **Source:** Completeness
 - Missing: `localCompletionSource`, `scopeCompletionSource`, `completionPath`, `snippets`,
   `typescriptSnippets`, `autoCloseTags`. JS is the most commonly used language in code editors.
