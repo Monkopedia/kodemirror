@@ -95,6 +95,25 @@ class EditorView(
     val editable: Boolean
         get() = state.facet(com.monkopedia.kodemirror.view.editable)
 
+    val textDirection: Direction
+        get() {
+            val doc = state.doc
+            val firstLine = if (doc.lines > 0) doc.line(1).text else ""
+            return autoDirection(firstLine, 0, firstLine.length)
+        }
+
+    fun textDirectionAt(pos: Int): Direction {
+        if (!state.facet(perLineTextDirection)) return textDirection
+        val line = state.doc.lineAt(pos)
+        return autoDirection(line.text, 0, line.text.length)
+    }
+
+    fun bidiSpans(line: com.monkopedia.kodemirror.state.Line): List<BidiSpan> {
+        return computeOrder(line.text, textDirectionAt(line.from))
+    }
+
+    fun phrase(phrase: String, vararg insert: Any): String = state.phrase(phrase, *insert)
+
     companion object {
         /** Facet that registers update listeners called after every transaction. */
         val updateListener: Facet<(ViewUpdate) -> Unit, List<(ViewUpdate) -> Unit>> =

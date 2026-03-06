@@ -78,5 +78,7 @@ nav:
       - Split View: examples/split.md
       - Large Documents: examples/million.md
       - Bidirectional Text: examples/bidi.md
+      - Inverted Effects: examples/inverted-effect.md
+      - Internationalization: examples/translate.md
   - Reference:
       - reference/index.md

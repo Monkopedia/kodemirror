@@ -22,9 +22,14 @@ import com.monkopedia.kodemirror.lezer.common.NodeProp
 import com.monkopedia.kodemirror.lezer.common.SyntaxNode
 import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.EditorState
+import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.Facet
 import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.Line
+import com.monkopedia.kodemirror.state.SelectionSpec
+import com.monkopedia.kodemirror.state.TransactionFilterResult
+import com.monkopedia.kodemirror.state.TransactionSpec
+import com.monkopedia.kodemirror.state.transactionFilter
 
 /**
  * Facet used to register indent services. An indent service is a
@@ -343,8 +348,80 @@ internal fun countIndent(text: String, tabSize: Int = 4): Int {
 }
 
 /** Get the length (in characters) of the leading whitespace. */
-private fun currentIndentLength(text: String): Int {
+internal fun currentIndentLength(text: String): Int {
     var i = 0
     while (i < text.length && (text[i] == ' ' || text[i] == '\t')) i++
     return i
+}
+
+/**
+ * Extension that automatically re-indents the current line when the
+ * user types a character that triggers indentation changes (e.g. a
+ * closing brace).
+ *
+ * Language data providers register `"indentOnInput"` [Regex] entries
+ * that are tested against the text from the start of the line to the
+ * cursor. When a match is found and the computed indentation differs
+ * from the current one, the line is re-indented.
+ */
+val indentOnInput: Extension = transactionFilter.of { tr ->
+    if (!tr.docChanged || !tr.isUserEvent("input.type")) {
+        return@of TransactionFilterResult.Filtered(tr)
+    }
+
+    val state = tr.state
+    val changes = mutableListOf<ChangeSpec>()
+    val selRanges = mutableListOf<SelectionSpec>()
+    var changed = false
+
+    for (range in state.selection.ranges) {
+        val pos = range.head
+        val line = state.doc.lineAt(pos)
+        val col = pos - line.from
+        val lineText = line.text
+        val upToCursor = lineText.substring(0, minOf(col, lineText.length))
+
+        val triggers = state.languageDataAt<Regex>("indentOnInput", pos)
+        val matches = triggers.any { it.containsMatchIn(upToCursor) }
+        if (!matches) continue
+
+        val desired = getIndentation(state, line.from) ?: continue
+        val current = countIndent(lineText, state.tabSize)
+        if (current == desired) continue
+
+        val currentLen = currentIndentLength(lineText)
+        val newIndent = indentString(state, desired)
+        changes.add(
+            ChangeSpec.Single(
+                line.from,
+                line.from + currentLen,
+                InsertContent.StringContent(newIndent)
+            )
+        )
+        val cursorShift = newIndent.length - currentLen
+        selRanges.add(SelectionSpec.CursorSpec(pos + cursorShift))
+        changed = true
+    }
+
+    if (changed) {
+        TransactionFilterResult.Specs(
+            listOf(
+                TransactionSpec(
+                    changes = if (changes.size == 1) {
+                        changes[0]
+                    } else {
+                        ChangeSpec.Multi(changes)
+                    },
+                    selection = if (selRanges.size == 1) {
+                        selRanges[0]
+                    } else {
+                        null
+                    },
+                    userEvent = "input.type"
+                )
+            )
+        )
+    } else {
+        TransactionFilterResult.Filtered(tr)
+    }
 }

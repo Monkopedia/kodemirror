@@ -18,6 +18,8 @@
  */
 package com.monkopedia.kodemirror.autocomplete
 
+import com.monkopedia.kodemirror.view.EditorView
+
 /**
  * A single completion option.
  *
@@ -38,6 +40,7 @@ data class Completion(
     val type: String? = null,
     val boost: Int = 0,
     val apply: String? = null,
+    val applyFn: ((EditorView, Completion, Int, Int) -> Unit)? = null,
     val section: CompletionSection? = null
 )
 

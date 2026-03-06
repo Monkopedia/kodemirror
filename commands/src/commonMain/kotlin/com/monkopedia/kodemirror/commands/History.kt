@@ -33,6 +33,7 @@ import com.monkopedia.kodemirror.state.StateField
 import com.monkopedia.kodemirror.state.StateFieldSpec
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
+import com.monkopedia.kodemirror.state.invertedEffects
 import com.monkopedia.kodemirror.view.EditorView
 import com.monkopedia.kodemirror.view.KeyBinding
 import com.monkopedia.kodemirror.view.keymapOf
@@ -73,7 +74,9 @@ internal class HistoryEvent(
 
     companion object {
         fun fromTransaction(tr: Transaction, selection: EditorSelection? = null): HistoryEvent? {
-            val effects = emptyList<StateEffect<*>>()
+            val effects = tr.startState
+                .facet(invertedEffects)
+                .flatMap { fn -> fn(tr) }
             if (effects.isEmpty() && tr.changes.empty) return null
             return HistoryEvent(
                 tr.changes.invert(tr.startState.doc),

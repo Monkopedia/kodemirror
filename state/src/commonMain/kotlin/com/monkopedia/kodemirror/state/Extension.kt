@@ -74,6 +74,11 @@ val transactionExtender: Facet<
     List<(Transaction) -> TransactionExtenderResult?>
     > = Facet.define()
 
+val invertedEffects: Facet<
+    (Transaction) -> List<StateEffect<*>>,
+    List<(Transaction) -> List<StateEffect<*>>>
+    > = Facet.define()
+
 val readOnly: Facet<Boolean, Boolean> = Facet.define(
     combine = { values ->
         values.firstOrNull() ?: false

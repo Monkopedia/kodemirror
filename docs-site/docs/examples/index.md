@@ -39,3 +39,5 @@ complete Kotlin snippets adapted from the upstream
 - [Split View](split.md) — Two panes sharing one document
 - [Large Documents](million.md) — Handling millions of lines efficiently
 - [Bidirectional Text](bidi.md) — Right-to-left and mixed-direction text
+- [Inverted Effects](inverted-effect.md) — Undo/redo with state effects
+- [Internationalization](translate.md) — Translating UI strings
