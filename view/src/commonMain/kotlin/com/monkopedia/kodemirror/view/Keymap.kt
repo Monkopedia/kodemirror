@@ -52,8 +52,11 @@ val keymap: Facet<List<KeyBinding>, List<KeyBinding>> = Facet.define(
     combine = { values -> values.flatten() }
 )
 
-/** Convenience: create an extension from a list of key bindings. */
+/** Convenience: create an extension from key bindings. */
 fun keymapOf(vararg bindings: KeyBinding): Extension = keymap.of(bindings.toList())
+
+/** Convenience: create an extension from a list of key bindings. */
+fun keymapOf(bindings: List<KeyBinding>): Extension = keymap.of(bindings)
 
 /**
  * Normalize a key name string to a canonical form, resolving modifier aliases.

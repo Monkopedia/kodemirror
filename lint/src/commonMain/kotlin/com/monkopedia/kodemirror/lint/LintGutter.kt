@@ -79,7 +79,7 @@ fun lintGutter(config: LintGutterConfig = LintGutterConfig()): Extension {
             },
             lineMarkerChange = { update ->
                 update.transactions.any { tr ->
-                    tr.effects.any { it.`is`(setDiagnosticsEffect) }
+                    tr.effects.any { it.asType(setDiagnosticsEffect) != null }
                 }
             }
         )

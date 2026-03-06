@@ -80,19 +80,19 @@ Each item has a status prefix on its heading line:
 - For `SelectionRange.eq(other, includeAssoc)`, keep as secondary method; `equals()` for common case.
 - **Files:** `state/.../Selection.kt`, `Text.kt`, `RangeSet.kt`; `view/.../Decoration.kt`
 
-### 9. Add `String.asInsert()` extension / String overload for `ChangeSpec.Single.insert`
+### 9. [DONE] Add `String.asInsert()` extension / String overload for `ChangeSpec.Single.insert`
 - **Effort:** < 1 hour | **Source:** Kotlin Ergonomics, Frontend DX
 - Every programmatic text change requires `InsertContent.StringContent("...")`. Add implicit
   `String` to `InsertContent` conversion.
 - **File:** `state/src/commonMain/kotlin/.../state/Change.kt`
 
-### 10. Remove `StateEffect.is()` method
+### 10. [DONE] Remove `StateEffect.is()` method
 - **Effort:** < 1 hour | **Source:** Kotlin Ergonomics
 - `is` is a reserved keyword requiring backtick-escaping. Has `@Suppress("ktlint:standard:function-naming")`.
   Replace all call sites with the existing `asType()` method.
 - **File:** `state/src/commonMain/kotlin/.../state/Transaction.kt`
 
-### 11. Add `keymapOf(List<KeyBinding>)` overload
+### 11. [DONE] Add `keymapOf(List<KeyBinding>)` overload
 - **Effort:** < 1 hour | **Source:** Frontend DX
 - Eliminates `keymapOf(*indentWithTab.toTypedArray())` spread pattern in almost every editor setup.
 - **File:** `view/src/commonMain/kotlin/.../view/Keymap.kt`
@@ -101,27 +101,31 @@ Each item has a status prefix on its heading line:
 
 ## Priority 3 — Medium Impact, Ergonomics & Compose Integration
 
-### 12. Add `rememberEditorState` composable + `@Immutable` annotations
+### 12. [BLOCKED] Add `rememberEditorState` composable + `@Immutable` annotations
+> **Blocked:** Needs design decision — should `rememberEditorState` take `EditorStateConfig` or individual params? Which types should get `@Immutable` and does that affect hashCode contracts? Need to review Compose stability semantics.
 - **Effort:** 1–2 days | **Source:** Frontend DX, Kotlin Ergonomics
 - Every editor repeats: `var state by remember { mutableStateOf(EditorState.create(config)) }` +
   `onUpdate = { tr -> state = tr.state }`. A `rememberEditorState` composable eliminates this.
   Also annotate `EditorState`, `EditorTheme`, etc. with `@Immutable` to enable Compose skip
   optimizations.
 
-### 13. Add simple `EditorView` overload with `initialDoc` and `onChange`
+### 13. [BLOCKED] Add simple `EditorView` overload with `initialDoc` and `onChange`
+> **Blocked:** Needs design decision — API shape for the simplified editor composable. Should it manage state internally or expose it? How does it interact with extensions?
 - **Effort:** 1 day | **Source:** Frontend DX
 - Provide a convenience `EditorView` overload that accepts `initialDoc: String`,
   `extensions: List<Extension>`, and `onChange: (String) -> Unit`, managing its own state internally.
   Covers the 80% use case where developers just want text in/text out without understanding the
   full transaction model.
 
-### 14. Add type-safe `LanguageDataKey<T>`
+### 14. [BLOCKED] Add type-safe `LanguageDataKey<T>`
+> **Blocked:** Needs design decision — how to integrate typed keys with the existing `languageDataAt` API without breaking backward compatibility. Similar to `AnnotationType<T>` pattern but applied to a different mechanism.
 - **Effort:** 1–2 days | **Source:** Kotlin Ergonomics
 - `EditorState.languageDataAt(name: String, pos: Int)` uses `Map<String, Any?>` + unchecked cast.
   Replace with typed key class similar to `AnnotationType<T>`.
 - **File:** `state/src/commonMain/kotlin/.../state/State.kt`
 
-### 15. Replace CSS class strings with sealed class/enum identifiers
+### 15. [BLOCKED] Replace CSS class strings with sealed class/enum identifiers
+> **Blocked:** Needs design decision — significant API change affecting gutter, decoration, and lint modules. Need to decide replacement type (sealed class vs enum vs type alias) and migration strategy.
 - **Effort:** 1–2 days | **Source:** Kotlin Ergonomics, Architecture
 - `GutterConfig.cssClass`, `Diagnostic.markClass`, `MarkDecorationSpec.cssClass`, and
   `MarkDecorationSpec.attributes` all reference CSS/DOM concepts meaningless in Compose.
@@ -129,18 +133,21 @@ Each item has a status prefix on its heading line:
   Replace with sealed class or enum; remove or replace DOM attribute fields.
 - **Files:** `view/.../Gutter.kt`, `view/.../Decoration.kt`, `lint/.../Lint.kt`
 
-### 16. Add `suspend` overloads for linter and completion sources
+### 16. [BLOCKED] Add `suspend` overloads for linter and completion sources
+> **Blocked:** Needs design decision — how should coroutine scope be provided? Via parameter, CoroutineScope extension, or ViewPlugin lifecycle? Affects the entire async interaction model.
 - **Effort:** 2–3 days | **Source:** Kotlin Ergonomics
 - Zero `suspend fun` or `Flow` usage in core modules. Async linting and network-backed completions
   need coroutine support. This is essential for a coroutine-native Kotlin API.
 
-### 17. Rename `jsHighlight` to `jsHighlighting` and prefix `parser` properties
+### 17. [BLOCKED] Rename `jsHighlight` to `jsHighlighting` and prefix `parser` properties
+> **Blocked:** Breaking change — need to decide on deprecation strategy (deprecation cycle with `@Deprecated` + `ReplaceWith` or hard rename). Affects ~15 language modules for parser property renaming.
 - **Effort:** < 1 day | **Source:** Architecture
 - `jsHighlight` is the only language module not matching `{lang}Highlighting` pattern.
 - Top-level `parser` property across ~15 modules causes star-import collisions. Rename to
   `javaParser`, `pythonParser`, `cppParser`, etc.
 
-### 18. Type the `tag` field in `TagStyleSpec`, `TagStyleRule`, and `NodeSpec`
+### 18. [BLOCKED] Type the `tag` field in `TagStyleSpec`, `TagStyleRule`, and `NodeSpec`
+> **Blocked:** Needs design decision — tag currently accepts both `Tag` and modifier functions `(Tag) -> Tag`. Need a union type or sealed interface to represent both cases. Also affects `TreeBuildSpec.buffer` and `NestedParse.overlay`.
 - **Effort:** 1 day | **Source:** Architecture
 - `TagStyleSpec.tag`, `TagStyleRule.tag`, and `NodeSpec.style` are currently `Any` (from JS dynamic
   typing). Should accept `Tag` or `(Tag) -> Tag` for modifiers.
@@ -153,7 +160,8 @@ Each item has a status prefix on its heading line:
 - `operator fun get` on `EditorState`: `state[myField]` instead of `state.field(myField)`
 - `invoke` operator on `Facet`: `editable(false)` instead of `editable.of(false)`
 
-### 20. Add simple `onChange: (String) -> Unit` convenience
+### 20. [BLOCKED] Add simple `onChange: (String) -> Unit` convenience
+> **Blocked:** Overlaps with #13 (simple EditorView overload). Should be designed together to avoid redundant APIs.
 - **Effort:** < 1 day | **Source:** Frontend DX
 - Many developers just want document text changes. The transaction model is powerful but overkill
   for simple cases. Provide an `UpdateListener` extension or helper that extracts document text

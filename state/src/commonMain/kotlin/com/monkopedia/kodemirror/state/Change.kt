@@ -314,6 +314,9 @@ sealed interface InsertContent {
     data class TextContent(val value: Text) : InsertContent
 }
 
+/** Convert this [String] to an [InsertContent] for use in [ChangeSpec.Single]. */
+fun String.asInsert(): InsertContent = InsertContent.StringContent(this)
+
 sealed interface ChangeSetJsonPart {
     data class Kept(val length: Int) : ChangeSetJsonPart
     data class Deleted(val length: Int) : ChangeSetJsonPart

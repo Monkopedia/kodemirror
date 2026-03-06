@@ -697,7 +697,7 @@ class EditorStateTest {
         val tr = state.update(TransactionSpec(scrollIntoView = true))
         assertEquals(
             "2,1",
-            tr.effects.map { e -> if (e.`is`(eff)) e.value else 0 }.joinToString(",")
+            tr.effects.map { e -> if (e.asType(eff) != null) e.value else 0 }.joinToString(",")
         )
     }
 }

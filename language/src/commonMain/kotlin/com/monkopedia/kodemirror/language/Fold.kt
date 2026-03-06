@@ -359,7 +359,9 @@ fun foldGutter(): Extension {
                     },
                     lineMarkerChange = { update ->
                         update.docChanged || update.transactions.any { tr ->
-                            tr.effects.any { it.`is`(foldEffect) || it.`is`(unfoldEffect) }
+                            tr.effects.any {
+                                it.asType(foldEffect) != null || it.asType(unfoldEffect) != null
+                            }
                         }
                     }
                 )

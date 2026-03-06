@@ -74,12 +74,6 @@ class StateEffect<Value> internal constructor(
         }
     }
 
-    /**
-     * Tells you whether this effect object is of a given type.
-     */
-    @Suppress("ktlint:standard:function-naming")
-    fun <T> `is`(type: StateEffectType<T>): Boolean = this.type === type
-
     @Suppress("UNCHECKED_CAST")
     fun <T> asType(type: StateEffectType<T>): StateEffect<T>? =
         if (this.type === type) this as StateEffect<T> else null

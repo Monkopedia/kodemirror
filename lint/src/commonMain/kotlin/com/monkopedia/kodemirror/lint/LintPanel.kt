@@ -50,8 +50,8 @@ internal val lintPanelOpen: StateField<Boolean> = StateField.define(
         update = { value, tr ->
             var result = value
             for (effect in tr.effects) {
-                if (effect.`is`(openPanelEffect)) result = true
-                if (effect.`is`(closePanelEffect)) result = false
+                if (effect.asType(openPanelEffect) != null) result = true
+                if (effect.asType(closePanelEffect) != null) result = false
             }
             result
         }

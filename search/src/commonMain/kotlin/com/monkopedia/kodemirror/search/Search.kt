@@ -107,7 +107,7 @@ private class SearchHighlightPlugin(
         if (update.docChanged || update.selectionSet ||
             update.transactions.any { tr ->
                 tr.effects.any {
-                    it.`is`(toggleSearchPanel) || it.`is`(setSearchQuery)
+                    it.asType(toggleSearchPanel) != null || it.asType(setSearchQuery) != null
                 }
             }
         ) {

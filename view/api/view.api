@@ -358,6 +358,7 @@ public final class com/monkopedia/kodemirror/view/KeyBinding {
 
 public final class com/monkopedia/kodemirror/view/KeymapKt {
 	public static final fun getKeymap ()Lcom/monkopedia/kodemirror/state/Facet;
+	public static final fun keymapOf (Ljava/util/List;)Lcom/monkopedia/kodemirror/state/Extension;
 	public static final fun keymapOf ([Lcom/monkopedia/kodemirror/view/KeyBinding;)Lcom/monkopedia/kodemirror/state/Extension;
 	public static final fun normalizeKeyName (Ljava/lang/String;Z)Ljava/lang/String;
 	public static synthetic fun normalizeKeyName$default (Ljava/lang/String;ZILjava/lang/Object;)Ljava/lang/String;

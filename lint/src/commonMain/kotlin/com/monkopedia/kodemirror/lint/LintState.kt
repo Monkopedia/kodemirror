@@ -171,7 +171,7 @@ internal class LinterPlugin(
         // Check for force lint effect
         for (tr in update.transactions) {
             for (effect in tr.effects) {
-                if (effect.`is`(forceLintEffect)) {
+                if (effect.asType(forceLintEffect) != null) {
                     runLinter()
                     return
                 }

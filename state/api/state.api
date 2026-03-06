@@ -82,6 +82,7 @@ public final class com/monkopedia/kodemirror/state/ChangeFilterResult$Reject : c
 }
 
 public final class com/monkopedia/kodemirror/state/ChangeKt {
+	public static final fun asInsert (Ljava/lang/String;)Lcom/monkopedia/kodemirror/state/InsertContent;
 	public static final fun getDefaultSplit ()Lkotlin/text/Regex;
 }
 
@@ -756,7 +757,6 @@ public final class com/monkopedia/kodemirror/state/StateEffect {
 	public static final field Companion Lcom/monkopedia/kodemirror/state/StateEffect$Companion;
 	public final fun asType (Lcom/monkopedia/kodemirror/state/StateEffectType;)Lcom/monkopedia/kodemirror/state/StateEffect;
 	public final fun getValue ()Ljava/lang/Object;
-	public final fun is (Lcom/monkopedia/kodemirror/state/StateEffectType;)Z
 	public final fun map (Lcom/monkopedia/kodemirror/state/ChangeDesc;)Lcom/monkopedia/kodemirror/state/StateEffect;
 }
 

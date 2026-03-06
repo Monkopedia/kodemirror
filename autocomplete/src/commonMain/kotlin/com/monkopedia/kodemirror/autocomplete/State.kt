@@ -72,7 +72,7 @@ internal val completionStateField: StateField<CompletionState> = StateField.defi
                         open = filtered.isNotEmpty()
                     )
                 }
-                if (effect.`is`(closeCompletionEffect)) {
+                if (effect.asType(closeCompletionEffect) != null) {
                     result = CompletionState.empty
                 }
                 val selectEffect = effect.asType(setSelectedCompletion)

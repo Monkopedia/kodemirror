@@ -254,7 +254,7 @@ class FacetTest {
                 },
                 update = { value, tr ->
                     tr.effects.fold(value) { v, e ->
-                        if (e.`is`(effect)) v + (e as StateEffect<Int>).value else v
+                        if (e.asType(effect) != null) v + (e as StateEffect<Int>).value else v
                     }
                 }
             )
