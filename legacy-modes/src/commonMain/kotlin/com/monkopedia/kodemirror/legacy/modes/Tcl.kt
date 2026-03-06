@@ -154,6 +154,7 @@ private fun tclTokenUnparsed(stream: StringStream, state: TclState): String {
     return "meta"
 }
 
+/** Stream parser for Tcl. */
 val tcl: StreamParser<TclState> = object : StreamParser<TclState> {
     override val name: String get() = "tcl"
 

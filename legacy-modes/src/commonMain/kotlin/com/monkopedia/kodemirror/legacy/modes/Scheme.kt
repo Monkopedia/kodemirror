@@ -275,6 +275,7 @@ private fun schemeHandleDefault(stream: StringStream, state: SchemeState): Strin
     }
 }
 
+/** Stream parser for Scheme. */
 val scheme: StreamParser<SchemeState> = object : StreamParser<SchemeState> {
     override val name: String get() = "scheme"
 

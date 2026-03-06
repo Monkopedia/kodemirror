@@ -414,6 +414,7 @@ private fun sassTokenLexer(stream: StringStream, state: SassState): String? {
     return style
 }
 
+/** Stream parser for Sass (indented syntax). */
 val sassLegacy: StreamParser<SassState> = object : StreamParser<SassState> {
     override val name: String get() = "sass"
 

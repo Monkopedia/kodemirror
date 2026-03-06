@@ -108,6 +108,16 @@ CompletionConfig(
 | `acceptCompletion` | Enter | Accept selected completion |
 | `closeCompletion` | Escape | Close dropdown |
 
+## Related API
+
+- [`Completion`](/api/autocomplete/com.monkopedia.kodemirror.autocomplete/-completion/) — completion option data class
+- [`CompletionResult`](/api/autocomplete/com.monkopedia.kodemirror.autocomplete/-completion-result/) — result of a completion source query
+- [`CompletionContext`](/api/autocomplete/com.monkopedia.kodemirror.autocomplete/-completion-context/) — context passed to completion sources
+- [`CompletionConfig`](/api/autocomplete/com.monkopedia.kodemirror.autocomplete/-completion-config/) — configuration for autocompletion
+- [`CompletionType`](/api/autocomplete/com.monkopedia.kodemirror.autocomplete/-completion-type/) — standard completion type enum
+- [`completeFromList`](/api/autocomplete/com.monkopedia.kodemirror.autocomplete/complete-from-list.html) — create a source from a static list
+- [`ifIn`](/api/autocomplete/com.monkopedia.kodemirror.autocomplete/if-in.html) / [`ifNotIn`](/api/autocomplete/com.monkopedia.kodemirror.autocomplete/if-not-in.html) — context-aware source wrappers
+
 ---
 
 *Based on the [CodeMirror Autocompletion example](https://codemirror.net/examples/autocompletion/).*

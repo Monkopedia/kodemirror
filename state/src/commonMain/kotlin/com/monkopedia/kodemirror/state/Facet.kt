@@ -538,6 +538,73 @@ data class StateFieldSpec<Value>(
     val fromJSON: ((Any?, EditorState) -> Value)? = null
 )
 
+/**
+ * Builder scope for defining a [StateField] via DSL.
+ *
+ * Example:
+ * ```kotlin
+ * val counter = StateField.define<Int> {
+ *     create { 0 }
+ *     update { value, tr -> value + tr.changes.newLength }
+ * }
+ * ```
+ */
+@StateFieldDsl
+class StateFieldBuilder<Value> @PublishedApi internal constructor() {
+    private var createFn: ((EditorState) -> Value)? = null
+    private var updateFn: ((Value, Transaction) -> Value)? = null
+    private var compareFn: ((Value, Value) -> Boolean)? = null
+    private var provideFn: ((StateField<Value>) -> Extension)? = null
+
+    /** Set the function that creates the initial value for this field. */
+    fun create(block: (EditorState) -> Value) {
+        createFn = block
+    }
+
+    /** Set the function that updates the value on each transaction. */
+    fun update(block: (Value, Transaction) -> Value) {
+        updateFn = block
+    }
+
+    /** Set a custom comparison function (defaults to `==`). */
+    fun compare(block: (Value, Value) -> Boolean) {
+        compareFn = block
+    }
+
+    /** Provide an extension derived from this field (e.g. a facet provider). */
+    fun provide(block: (StateField<Value>) -> Extension) {
+        provideFn = block
+    }
+
+    @PublishedApi
+    internal fun build(): StateFieldSpec<Value> {
+        return StateFieldSpec(
+            create = requireNotNull(createFn) { "StateField requires a create {} block" },
+            update = requireNotNull(updateFn) { "StateField requires an update {} block" },
+            compare = compareFn,
+            provide = provideFn
+        )
+    }
+}
+
+/** Marks DSL scope for [StateFieldBuilder] to prevent accidental scope leaking. */
+@DslMarker
+annotation class StateFieldDsl
+
+/**
+ * Define a [StateField] using a DSL builder.
+ *
+ * ```kotlin
+ * val counter = StateField.define<Int> {
+ *     create { 0 }
+ *     update { value, tr -> value + 1 }
+ * }
+ * ```
+ */
+inline fun <Value> StateField.Companion.define(
+    block: StateFieldBuilder<Value>.() -> Unit
+): StateField<Value> = define(StateFieldBuilder<Value>().apply(block).build())
+
 private object PrecValue {
     const val LOWEST = 4
     const val LOW = 3

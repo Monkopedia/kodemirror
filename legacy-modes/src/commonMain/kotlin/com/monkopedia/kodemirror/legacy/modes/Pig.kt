@@ -158,6 +158,7 @@ private fun pigTokenBase(stream: StringStream, state: PigState): String? {
     return "variable"
 }
 
+/** Stream parser for Pig Latin (Apache Pig). */
 val pig: StreamParser<PigState> = object : StreamParser<PigState> {
     override val name: String get() = "pig"
 

@@ -344,6 +344,7 @@ private fun sasTokenize(stream: StringStream, state: SasState): String? {
     return null
 }
 
+/** Stream parser for SAS. */
 val sas: StreamParser<SasState> = object : StreamParser<SasState> {
     override val name: String get() = "sas"
 

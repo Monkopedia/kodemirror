@@ -131,6 +131,13 @@ val extensions = ExtensionList(listOf(
 ))
 ```
 
+## Related API
+
+- [`GutterConfig`](/api/view/com.monkopedia.kodemirror.view/-gutter-config/) — gutter configuration
+- [`lineNumbers`](/api/view/com.monkopedia.kodemirror.view/line-numbers.html) — line number gutter extension
+- [`gutter`](/api/view/com.monkopedia.kodemirror.view/gutter.html) — custom gutter extension
+- [`GutterMarker`](/api/view/com.monkopedia.kodemirror.view/-gutter-marker/) — base class for gutter markers
+
 ---
 
 *Based on the [CodeMirror Gutter example](https://codemirror.net/examples/gutter/).*

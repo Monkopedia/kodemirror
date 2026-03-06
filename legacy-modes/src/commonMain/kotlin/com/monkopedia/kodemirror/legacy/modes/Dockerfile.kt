@@ -44,6 +44,7 @@ private val instructionWithArguments = Regex(
     RegexOption.IGNORE_CASE
 )
 
+/** Stream parser for Dockerfile. */
 val dockerFile: StreamParser<SimpleModeState> = simpleMode(
     SimpleModeConfig(
         name = "dockerfile",

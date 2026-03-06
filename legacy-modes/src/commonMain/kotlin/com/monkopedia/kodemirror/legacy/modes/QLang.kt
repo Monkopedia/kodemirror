@@ -204,6 +204,7 @@ private fun qPopContext(state: QLangState) {
     state.context = ctx.prev
 }
 
+/** Stream parser for Q (Kx Systems). */
 val q: StreamParser<QLangState> = object : StreamParser<QLangState> {
     override val name: String get() = "q"
 

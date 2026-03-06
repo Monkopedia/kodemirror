@@ -109,6 +109,12 @@ val state = EditorState.create(EditorStateConfig(
 | `showTooltip` | `Facet<Tooltip?, Tooltip?>` | Single tooltip (first non-null wins) |
 | `showTooltips` | `Facet<List<Tooltip>, List<Tooltip>>` | Multiple simultaneous tooltips |
 
+## Related API
+
+- [`Tooltip`](/api/view/com.monkopedia.kodemirror.view/-tooltip/) — tooltip data class
+- [`showTooltip`](/api/view/com.monkopedia.kodemirror.view/show-tooltip.html) — facet for single tooltips
+- [`showTooltips`](/api/view/com.monkopedia.kodemirror.view/show-tooltips.html) — facet for multiple tooltips
+
 ---
 
 *Based on the [CodeMirror Tooltip example](https://codemirror.net/examples/tooltip/).*

@@ -107,6 +107,7 @@ private fun httpBody(
     return null
 }
 
+/** Stream parser for HTTP request/response. */
 val http: StreamParser<HttpState> = object : StreamParser<HttpState> {
     override val name: String get() = "http"
 

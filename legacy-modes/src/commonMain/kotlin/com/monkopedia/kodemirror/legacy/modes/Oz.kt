@@ -243,6 +243,7 @@ private fun tokenOzBase(stream: StringStream, state: OzState): String? {
     return "variable"
 }
 
+/** Stream parser for Oz. */
 val oz: StreamParser<OzState> = object : StreamParser<OzState> {
     override val name: String get() = "oz"
 

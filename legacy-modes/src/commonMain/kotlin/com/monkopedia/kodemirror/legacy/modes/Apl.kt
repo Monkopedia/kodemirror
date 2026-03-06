@@ -55,6 +55,7 @@ data class AplState(
     var escape: Boolean = false
 )
 
+/** Stream parser for APL. */
 val apl: StreamParser<AplState> = object : StreamParser<AplState> {
     override val name: String get() = "apl"
 

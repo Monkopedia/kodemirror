@@ -252,6 +252,7 @@ private fun dylanTokenString(quote: String, style: String): (StringStream, Dylan
         style
     }
 
+/** Stream parser for Dylan. */
 val dylan: StreamParser<DylanState> = object : StreamParser<DylanState> {
     override val name: String get() = "dylan"
 

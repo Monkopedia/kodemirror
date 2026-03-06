@@ -199,6 +199,7 @@ private fun shellTokenHeredoc(delim: String): (StringStream, ShellState) -> Stri
         "string.special"
     }
 
+/** Stream parser for Shell/Bash. */
 val shell: StreamParser<ShellState> = object : StreamParser<ShellState> {
     override val name: String get() = "shell"
 

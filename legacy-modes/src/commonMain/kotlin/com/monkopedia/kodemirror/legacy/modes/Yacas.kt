@@ -44,6 +44,7 @@ data class YacasState(
     var scopes: MutableList<String> = mutableListOf()
 )
 
+/** Stream parser for Yacas. */
 val yacas: StreamParser<YacasState> = object : StreamParser<YacasState> {
     override val name: String get() = "yacas"
     override val languageData: Map<String, Any>

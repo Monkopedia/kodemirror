@@ -1418,16 +1418,41 @@ private val dartConfig = ClikeConfig(
 // Exported parsers
 // ---------------------------------------------------------------------------
 
+/** Stream parser for C. */
 val c: StreamParser<ClikeState> = mkClike(cConfig)
+
+/** Stream parser for C++. */
 val cpp: StreamParser<ClikeState> = mkClike(cppConfig)
+
+/** Stream parser for Java. */
 val java: StreamParser<ClikeState> = mkClike(javaConfig)
+
+/** Stream parser for C#. */
 val csharp: StreamParser<ClikeState> = mkClike(csharpConfig)
+
+/** Stream parser for Scala. */
 val scala: StreamParser<ClikeState> = mkClike(scalaConfig)
+
+/** Stream parser for Kotlin. */
 val kotlin: StreamParser<ClikeState> = mkClike(kotlinConfig)
+
+/** Stream parser for GLSL (shader). */
 val shader: StreamParser<ClikeState> = mkClike(shaderConfig)
+
+/** Stream parser for nesC. */
 val nesC: StreamParser<ClikeState> = mkClike(nesCConfig)
+
+/** Stream parser for Objective-C. */
 val objectiveC: StreamParser<ClikeState> = mkClike(objectiveCConfig)
+
+/** Stream parser for Objective-C++. */
 val objectiveCpp: StreamParser<ClikeState> = mkClike(objectiveCppConfig)
+
+/** Stream parser for Squirrel. */
 val squirrel: StreamParser<ClikeState> = mkClike(squirrelConfig)
+
+/** Stream parser for Ceylon. */
 val ceylon: StreamParser<ClikeState> = mkClike(ceylonConfig)
+
+/** Stream parser for Dart. */
 val dart: StreamParser<ClikeState> = mkClike(dartConfig)

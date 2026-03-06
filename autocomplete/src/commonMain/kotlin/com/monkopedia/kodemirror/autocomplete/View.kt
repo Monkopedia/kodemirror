@@ -161,6 +161,7 @@ private fun applyCompletion(view: EditorView, completion: Completion, result: Co
             changes = ChangeSpec.Single(from, to, InsertContent.StringContent(text)),
             selection = SelectionSpec.CursorSpec(from + text.length),
             effects = listOf(closeCompletionEffect.of(Unit)),
+            annotations = listOf(pickedCompletion.of(completion)),
             userEvent = "input.complete"
         )
     )
@@ -312,6 +313,24 @@ val completeAnyWord: CompletionSource = { ctx ->
     } else {
         null
     }
+}
+
+// ── Context-aware source wrappers ──
+
+/**
+ * Wrap a [CompletionSource] so it only activates when the cursor is inside
+ * one of the given syntax node [types].
+ */
+fun ifIn(types: List<String>, source: CompletionSource): CompletionSource = { ctx ->
+    if (ctx.tokenBefore(types) != null) source(ctx) else null
+}
+
+/**
+ * Wrap a [CompletionSource] so it only activates when the cursor is NOT
+ * inside one of the given syntax node [types].
+ */
+fun ifNotIn(types: List<String>, source: CompletionSource): CompletionSource = { ctx ->
+    if (ctx.tokenBefore(types) == null) source(ctx) else null
 }
 
 // ── Entry point ──

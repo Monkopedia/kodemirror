@@ -237,5 +237,8 @@ private fun mkStex(mathMode: Boolean): StreamParser<StexState> {
     }
 }
 
+/** Stream parser for LaTeX. */
 val stex: StreamParser<StexState> = mkStex(false)
+
+/** Stream parser for LaTeX (math mode). */
 val stexMath: StreamParser<StexState> = mkStex(true)

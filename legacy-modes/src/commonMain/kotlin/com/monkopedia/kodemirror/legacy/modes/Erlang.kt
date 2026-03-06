@@ -537,6 +537,7 @@ private fun erlIndenter(state: ErlangState, textAfter: String, cx: IndentContext
     return null
 }
 
+/** Stream parser for Erlang. */
 val erlang: StreamParser<ErlangState> = object : StreamParser<ErlangState> {
     override val name: String get() = "erlang"
 

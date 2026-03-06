@@ -316,5 +316,8 @@ private fun mkVbScript(isASP: Boolean): StreamParser<VbScriptState> {
     }
 }
 
+/** Stream parser for VBScript. */
 val vbScript: StreamParser<VbScriptState> = mkVbScript(false)
+
+/** Stream parser for VBScript (ASP). */
 val vbScriptASP: StreamParser<VbScriptState> = mkVbScript(true)

@@ -207,6 +207,7 @@ private fun ebnfTokenize(stream: StringStream, state: EbnfState): String? {
     }
 }
 
+/** Stream parser for EBNF. */
 val ebnf: StreamParser<EbnfState> = object : StreamParser<EbnfState> {
     override val name: String get() = "ebnf"
 

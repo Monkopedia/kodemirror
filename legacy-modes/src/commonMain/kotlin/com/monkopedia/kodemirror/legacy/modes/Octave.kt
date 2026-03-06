@@ -150,6 +150,7 @@ private fun tokenOctaveBase(stream: StringStream, state: OctaveState): String? {
     return "error"
 }
 
+/** Stream parser for Octave/MATLAB. */
 val octave: StreamParser<OctaveState> = object : StreamParser<OctaveState> {
     override val name: String get() = "octave"
 

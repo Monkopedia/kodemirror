@@ -139,6 +139,7 @@ private fun mkMscgenParser(config: MscgenLangConfig): StreamParser<MscgenState> 
     }
 }
 
+/** Stream parser for MscGen. */
 @Suppress("ktlint:standard:max-line-length")
 val mscgen: StreamParser<MscgenState> = mkMscgenParser(
     MscgenLangConfig(
@@ -163,6 +164,7 @@ val mscgen: StreamParser<MscgenState> = mkMscgenParser(
     )
 )
 
+/** Stream parser for MsGenny. */
 @Suppress("ktlint:standard:max-line-length")
 val msgenny: StreamParser<MscgenState> = mkMscgenParser(
     MscgenLangConfig(
@@ -193,6 +195,7 @@ val msgenny: StreamParser<MscgenState> = mkMscgenParser(
     )
 )
 
+/** Stream parser for Xu. */
 @Suppress("ktlint:standard:max-line-length")
 val xu: StreamParser<MscgenState> = mkMscgenParser(
     MscgenLangConfig(

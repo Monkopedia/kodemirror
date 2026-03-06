@@ -115,6 +115,13 @@ fun MyPanel() {
 | `--cm-editor-background` | `EditorTheme.background: Color` |
 | Applied via DOM class swap | Applied via Compose recomposition |
 
+## Related API
+
+- [`EditorTheme`](/api/view/com.monkopedia.kodemirror.view/-editor-theme/) — editor theme data class
+- [`HighlightStyle`](/api/language/com.monkopedia.kodemirror.language/-highlight-style/) — tag-to-style mapping
+- [`TagStyleSpec`](/api/language/com.monkopedia.kodemirror.language/-tag-style-spec/) — tag style specification
+- [`Tags`](/api/lezer-highlight/com.monkopedia.kodemirror.lezer.highlight/-tags/) — standard syntax tag definitions
+
 ---
 
 *Based on the [CodeMirror Styling example](https://codemirror.net/examples/styling/).*

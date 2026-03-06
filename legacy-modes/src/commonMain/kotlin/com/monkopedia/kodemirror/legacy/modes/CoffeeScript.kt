@@ -298,6 +298,7 @@ private fun csTokenLexer(stream: StringStream, state: CoffeeScriptState): String
     return if (style == "indent" || style == "dedent") null else style
 }
 
+/** Stream parser for CoffeeScript. */
 val coffeeScript: StreamParser<CoffeeScriptState> = object : StreamParser<CoffeeScriptState> {
     override val name: String get() = "coffeescript"
 

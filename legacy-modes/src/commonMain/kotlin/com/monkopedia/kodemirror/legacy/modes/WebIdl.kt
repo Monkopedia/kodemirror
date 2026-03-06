@@ -80,6 +80,7 @@ data class WebIdlState(
     var endDef: Boolean = false
 )
 
+/** Stream parser for WebIDL. */
 val webIDL: StreamParser<WebIdlState> = object : StreamParser<WebIdlState> {
     override val name: String get() = "webidl"
 

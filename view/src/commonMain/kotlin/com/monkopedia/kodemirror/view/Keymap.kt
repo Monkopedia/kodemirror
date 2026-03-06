@@ -59,6 +59,57 @@ fun keymapOf(vararg bindings: KeyBinding): Extension = keymap.of(bindings.toList
 fun keymapOf(bindings: List<KeyBinding>): Extension = keymap.of(bindings)
 
 /**
+ * Builder scope for defining key bindings via DSL.
+ *
+ * Example:
+ * ```kotlin
+ * val myKeymap = keymapOf {
+ *     "Ctrl-s" { save(it); true }
+ *     "Ctrl-z" { undo(it); true }
+ *     bind("Ctrl-f", mac = "Meta-f") { openSearch(it); true }
+ * }
+ * ```
+ */
+@KeymapDsl
+class KeymapBuilder @PublishedApi internal constructor() {
+    @PublishedApi
+    internal val bindings = mutableListOf<KeyBinding>()
+
+    /** Bind a key to a command. */
+    operator fun String.invoke(run: (EditorView) -> Boolean) {
+        bindings.add(KeyBinding(key = this, run = run))
+    }
+
+    /** Bind a key with platform-specific overrides. */
+    fun bind(
+        key: String? = null,
+        mac: String? = null,
+        win: String? = null,
+        linux: String? = null,
+        run: (EditorView) -> Boolean
+    ) {
+        bindings.add(KeyBinding(key = key, mac = mac, win = win, linux = linux, run = run))
+    }
+}
+
+/** Marks DSL scope for [KeymapBuilder]. */
+@DslMarker
+annotation class KeymapDsl
+
+/**
+ * Create a keymap extension using a DSL builder.
+ *
+ * ```kotlin
+ * val myKeymap = keymapOf {
+ *     "Ctrl-s" { save(it); true }
+ *     "Ctrl-z" { undo(it); true }
+ * }
+ * ```
+ */
+inline fun keymapOf(block: KeymapBuilder.() -> Unit): Extension =
+    keymap.of(KeymapBuilder().apply(block).bindings)
+
+/**
  * Normalize a key name string to a canonical form, resolving modifier aliases.
  *
  * Examples:

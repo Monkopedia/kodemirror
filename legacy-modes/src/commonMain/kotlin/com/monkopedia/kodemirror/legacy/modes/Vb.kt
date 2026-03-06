@@ -84,6 +84,7 @@ data class VbState(
     var doInCurrentLine: Boolean = false
 )
 
+/** Stream parser for Visual Basic. */
 val vb: StreamParser<VbState> = object : StreamParser<VbState> {
     override val name: String get() = "vb"
     override val languageData: Map<String, Any>

@@ -28,6 +28,7 @@ data class TomlState(
     var inArray: Int = 0
 )
 
+/** Stream parser for TOML. */
 val toml: StreamParser<TomlState> = object : StreamParser<TomlState> {
     override val name: String get() = "toml"
     override val languageData: Map<String, Any>

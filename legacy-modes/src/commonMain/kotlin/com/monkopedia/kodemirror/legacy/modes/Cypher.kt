@@ -136,6 +136,7 @@ private fun cypherTokenBase(stream: StringStream, state: CypherState): String? {
     return "variable"
 }
 
+/** Stream parser for Cypher (Neo4j). */
 val cypher: StreamParser<CypherState> = object : StreamParser<CypherState> {
     override val name: String get() = "cypher"
 

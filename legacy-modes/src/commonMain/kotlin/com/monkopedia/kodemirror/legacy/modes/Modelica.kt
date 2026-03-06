@@ -132,6 +132,7 @@ private fun modelicaTokenUnsignedNumber(stream: StringStream, state: ModelicaSta
     return "number"
 }
 
+/** Stream parser for Modelica. */
 val modelica: StreamParser<ModelicaState> = object : StreamParser<ModelicaState> {
     override val name: String get() = "modelica"
 

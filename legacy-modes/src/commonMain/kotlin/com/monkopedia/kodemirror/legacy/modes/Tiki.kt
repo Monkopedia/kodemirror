@@ -39,6 +39,7 @@ data class TikiState(
     var context: TikiContext? = null
 )
 
+/** Stream parser for Tiki Wiki. */
 val tiki: StreamParser<TikiState> = object : StreamParser<TikiState> {
     override val name: String get() = "tiki"
 

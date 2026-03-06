@@ -35,6 +35,7 @@ private val cons = listOf("true", "false", "on", "off", "yes", "no")
 private val keywordRegex =
     Regex("\\b((" + cons.joinToString(")|(") + "))$", RegexOption.IGNORE_CASE)
 
+/** Stream parser for YAML. */
 val yamlLegacy: StreamParser<YamlState> = object : StreamParser<YamlState> {
     override val name: String get() = "yaml"
     override fun startState(indentUnit: Int) = YamlState()

@@ -32,6 +32,7 @@ private fun errorIfNotEmpty(stream: StringStream): String? {
     return if (nonWS != null) "error" else null
 }
 
+/** Stream parser for ASCII Armor (PGP). */
 val asciiArmor: StreamParser<AsciiArmorState> =
     object : StreamParser<AsciiArmorState> {
         override val name: String get() = "asciiarmor"

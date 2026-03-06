@@ -30,6 +30,7 @@ data class BrainfuckState(
 
 private val reserve = setOf('>', '<', '+', '-', '.', ',', '[', ']')
 
+/** Stream parser for Brainfuck. */
 val brainfuck: StreamParser<BrainfuckState> = object : StreamParser<BrainfuckState> {
     override val name: String get() = "brainfuck"
     override fun startState(indentUnit: Int) = BrainfuckState()

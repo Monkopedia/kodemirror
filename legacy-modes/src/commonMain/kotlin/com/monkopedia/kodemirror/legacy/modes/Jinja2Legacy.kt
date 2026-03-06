@@ -194,6 +194,7 @@ private fun jinja2TokenBase(stream: StringStream, state: Jinja2State): String? {
     return null
 }
 
+/** Stream parser for Jinja2. */
 val jinja2Legacy: StreamParser<Jinja2State> = object : StreamParser<Jinja2State> {
     override val name: String get() = "jinja2"
     override fun startState(indentUnit: Int) = Jinja2State()

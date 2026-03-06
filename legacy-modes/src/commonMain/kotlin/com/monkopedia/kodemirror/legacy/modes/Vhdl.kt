@@ -65,6 +65,7 @@ data class VhdlState(
     var startOfLine: Boolean = true
 )
 
+/** Stream parser for VHDL. */
 val vhdl: StreamParser<VhdlState> = object : StreamParser<VhdlState> {
     override val name: String get() = "vhdl"
     override val languageData: Map<String, Any>

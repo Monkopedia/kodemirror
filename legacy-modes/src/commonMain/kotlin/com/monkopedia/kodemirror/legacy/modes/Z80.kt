@@ -142,5 +142,8 @@ private fun mkZ80(ez80: Boolean): StreamParser<Z80State> {
     }
 }
 
+/** Stream parser for Z80 assembly. */
 val z80: StreamParser<Z80State> = mkZ80(false)
+
+/** Stream parser for eZ80 assembly. */
 val ez80: StreamParser<Z80State> = mkZ80(true)

@@ -50,6 +50,7 @@ data class VelocityState(
     var lastTokenWasBuiltin: Boolean = false
 )
 
+/** Stream parser for Apache Velocity. */
 val velocity: StreamParser<VelocityState> = object : StreamParser<VelocityState> {
     override val name: String get() = "velocity"
     override val languageData: Map<String, Any>

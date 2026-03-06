@@ -504,8 +504,10 @@ fun mkPython(parserConf: PythonConfig = PythonConfig()): StreamParser<PythonStat
     }
 }
 
+/** Stream parser for Python. */
 val pythonLegacy: StreamParser<PythonState> = mkPython()
 
+/** Stream parser for Cython. */
 val cython: StreamParser<PythonState> = mkPython(
     PythonConfig(
         extra_keywords = (

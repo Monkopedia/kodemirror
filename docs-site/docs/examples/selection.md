@@ -111,6 +111,12 @@ if (word != null) {
 }
 ```
 
+## Related API
+
+- [`EditorSelection`](/api/state/com.monkopedia.kodemirror.state/-editor-selection/) — selection state
+- [`SelectionRange`](/api/state/com.monkopedia.kodemirror.state/-selection-range/) — a single selection range
+- [`SelectionSpec`](/api/state/com.monkopedia.kodemirror.state/-selection-spec/) — selection specification for transactions
+
 ---
 
 *Based on the [CodeMirror Selection example](https://codemirror.net/examples/selection/).*

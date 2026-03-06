@@ -26,6 +26,7 @@ data class SpreadsheetState(
     var stack: MutableList<String> = mutableListOf()
 )
 
+/** Stream parser for Spreadsheet formulas. */
 val spreadsheet: StreamParser<SpreadsheetState> = object : StreamParser<SpreadsheetState> {
     override val name: String get() = "spreadsheet"
 

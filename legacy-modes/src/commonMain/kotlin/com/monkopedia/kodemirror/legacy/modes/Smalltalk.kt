@@ -175,6 +175,7 @@ private fun stNextTemporaries(
     return StToken("variable", context, false)
 }
 
+/** Stream parser for Smalltalk. */
 val smalltalk: StreamParser<SmalltalkState> = object : StreamParser<SmalltalkState> {
     override val name: String get() = "smalltalk"
 

@@ -567,5 +567,8 @@ fun mkXML(parserConfig: XmlConfig): StreamParser<XmlState> {
     }
 }
 
+/** Stream parser for XML. */
 val xmlLegacy: StreamParser<XmlState> = mkXML(XmlConfig())
+
+/** Stream parser for HTML. */
 val html: StreamParser<XmlState> = mkXML(XmlConfig(htmlMode = true))

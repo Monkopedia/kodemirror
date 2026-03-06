@@ -239,6 +239,7 @@ private fun groovyPopContext(state: GroovyState): GroovyContext {
     return state.context
 }
 
+/** Stream parser for Groovy. */
 val groovy: StreamParser<GroovyState> = object : StreamParser<GroovyState> {
     override val name: String get() = "groovy"
 

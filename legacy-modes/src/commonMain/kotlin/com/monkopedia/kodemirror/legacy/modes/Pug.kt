@@ -371,6 +371,7 @@ private fun pugNextToken(stream: StringStream, state: PugState): String? {
     return null
 }
 
+/** Stream parser for Pug (Jade). */
 @Suppress("UNCHECKED_CAST")
 val pug: StreamParser<PugState> = object : StreamParser<PugState> {
     override val name: String get() = "pug"

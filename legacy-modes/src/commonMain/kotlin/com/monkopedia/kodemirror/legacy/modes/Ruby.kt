@@ -293,6 +293,7 @@ private fun rubyTokenBase(stream: StringStream, state: RubyState): String? {
     return null
 }
 
+/** Stream parser for Ruby. */
 val ruby: StreamParser<RubyState> = object : StreamParser<RubyState> {
     override val name: String get() = "ruby"
 

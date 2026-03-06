@@ -18,8 +18,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `EditorState.currentLine`, `.selectedText`, `.cursorPosition` properties
 - `Text.isEmpty`, `.isNotEmpty`, `.lineSequence()` properties
 - `keymapOf(bindings: List<KeyBinding>)` overload accepting a list
+- `keymapOf { }` DSL builder for key bindings
 - `selectSelectionMatches` search command
+- `SearchQuery.validOrNull()` factory method
+- `CompletionType` enum for standard completion types
+- `pickedCompletion` annotation for tracking accepted completions
+- `ifIn` / `ifNotIn` context-aware completion source wrappers
+- `hasNextSnippetField` / `hasPrevSnippetField` snippet state queries
+- `StateField.define<T> { create { }; update { } }` DSL builder
+- `HighlightStyle.define { Tags.keyword styles SpanStyle(...) }` DSL builder
+- `Decoration.mark(style: SpanStyle, ...)` convenience overload
+- `Decoration.line(style: SpanStyle, ...)` convenience overload
+- `operator fun StateField<T>.getValue(EditorState, KProperty)` property delegate
 - KDoc for top-level facets in `Extension.kt`
+- KDoc for all 137 legacy-mode StreamParser entry points
 - Extension index guide page
 - Troubleshooting guide page
 - Platform-specific setup snippets in bundle guide
@@ -33,6 +45,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Made `phpHighlighting` and `angularHighlighting` public
 - Moved `vueHighlighting` from `VueParser.kt` to separate `VueHighlight.kt`
 - Converted `// /` comments to KDoc in `Text.kt` and `Column.kt`
+- Made `LeafBlock.content` and `LeafBlock.parsers` setters internal
 
 ### Removed
 - `StateEffect.is()` method (use `asType()` instead)

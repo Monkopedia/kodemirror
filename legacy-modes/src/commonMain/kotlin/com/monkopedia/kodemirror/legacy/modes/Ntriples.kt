@@ -74,6 +74,7 @@ private fun transitState(state: NtriplesState, c: Char) {
     }
 }
 
+/** Stream parser for N-Triples (RDF). */
 val ntriples: StreamParser<NtriplesState> = object : StreamParser<NtriplesState> {
     override val name: String get() = "ntriples"
     override fun startState(indentUnit: Int) = NtriplesState()

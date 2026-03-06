@@ -94,6 +94,7 @@ private fun cmakeTokenize(stream: StringStream, state: CmakeState): String? {
     return null
 }
 
+/** Stream parser for CMake. */
 val cmake: StreamParser<CmakeState> = object : StreamParser<CmakeState> {
     override val name: String get() = "cmake"
 

@@ -80,6 +80,7 @@ data class TtcnState(
     var startOfLine: Boolean = true
 )
 
+/** Stream parser for TTCN-3. */
 val ttcn: StreamParser<TtcnState> = object : StreamParser<TtcnState> {
     override val name: String get() = "ttcn"
     override val languageData: Map<String, Any>

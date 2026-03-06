@@ -645,3 +645,19 @@ data class ChangeByRangeResult(
     val changes: ChangeSpec? = null,
     val effects: List<StateEffect<*>>? = null
 )
+
+/**
+ * Property delegate for reading a [StateField] value from [EditorState].
+ *
+ * ```kotlin
+ * val counterField = StateField.define<Int>(...)
+ *
+ * // Instead of: state.field(counterField)
+ * // Write:      state.counter
+ * val EditorState.counter by counterField
+ * ```
+ */
+operator fun <T> StateField<T>.getValue(
+    thisRef: EditorState,
+    property: kotlin.reflect.KProperty<*>
+): T = thisRef.field(this)

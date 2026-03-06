@@ -216,6 +216,7 @@ private fun lsTokenBase(stream: StringStream, state: LiveScriptState): String {
     return "error"
 }
 
+/** Stream parser for LiveScript. */
 val liveScript: StreamParser<LiveScriptState> = object : StreamParser<LiveScriptState> {
     override val name: String get() = "livescript"
 

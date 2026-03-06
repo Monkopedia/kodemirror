@@ -200,6 +200,7 @@ private fun eclTokenComment(stream: StringStream, state: EclState): String {
     return "comment"
 }
 
+/** Stream parser for ECL. */
 val ecl: StreamParser<EclState> = object : StreamParser<EclState> {
     override val name: String get() = "ecl"
 

@@ -140,6 +140,7 @@ private fun nginxTokenString(quote: String): (StringStream, NginxState) -> Nginx
     }
 }
 
+/** Stream parser for Nginx configuration. */
 val nginx: StreamParser<NginxState> = object : StreamParser<NginxState> {
     override val name: String get() = "nginx"
 

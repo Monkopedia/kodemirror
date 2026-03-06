@@ -975,6 +975,7 @@ private fun stylusKeyframesState(
     return Pair(state.context.type, ov)
 }
 
+/** Stream parser for Stylus. */
 val stylus: StreamParser<StylusState> = object : StreamParser<StylusState> {
     override val name: String get() = "stylus"
 

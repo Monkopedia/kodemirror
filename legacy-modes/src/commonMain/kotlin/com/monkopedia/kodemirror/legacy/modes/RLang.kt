@@ -175,6 +175,7 @@ private fun rTokenString(quote: String): (StringStream, RState) -> String? = fn@
     }
 }
 
+/** Stream parser for R. */
 val r: StreamParser<RState> = object : StreamParser<RState> {
     override val name: String get() = "r"
 

@@ -87,6 +87,7 @@ data class SolrState(
     var tokenize: (StringStream, SolrState) -> String? = ::solrTokenBase
 )
 
+/** Stream parser for Solr. */
 val solr: StreamParser<SolrState> = object : StreamParser<SolrState> {
     override val name: String get() = "solr"
     override fun startState(indentUnit: Int) = SolrState()

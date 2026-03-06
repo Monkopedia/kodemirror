@@ -157,6 +157,7 @@ private fun luaString(quote: String): (StringStream, LuaState) -> String? = { st
     "string"
 }
 
+/** Stream parser for Lua. */
 val lua: StreamParser<LuaState> = object : StreamParser<LuaState> {
     override val name: String get() = "lua"
 

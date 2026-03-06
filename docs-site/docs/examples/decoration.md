@@ -153,6 +153,18 @@ val highlightPlugin = ViewPlugin.define(
 
 Include `highlightPlugin.asExtension()` in your extensions.
 
+## Related API
+
+- [`Decoration`](/api/view/com.monkopedia.kodemirror.view/-decoration/) — base decoration class
+- [`MarkDecorationSpec`](/api/view/com.monkopedia.kodemirror.view/-mark-decoration-spec/) — spec for mark decorations
+- [`WidgetDecorationSpec`](/api/view/com.monkopedia.kodemirror.view/-widget-decoration-spec/) — spec for widget decorations
+- [`LineDecorationSpec`](/api/view/com.monkopedia.kodemirror.view/-line-decoration-spec/) — spec for line decorations
+- [`ReplaceDecorationSpec`](/api/view/com.monkopedia.kodemirror.view/-replace-decoration-spec/) — spec for replace decorations
+- [`WidgetType`](/api/view/com.monkopedia.kodemirror.view/-widget-type/) — base class for custom widgets
+- [`RangeSetBuilder`](/api/state/com.monkopedia.kodemirror.state/-range-set-builder/) — builds ordered decoration sets
+- [`ViewPlugin`](/api/view/com.monkopedia.kodemirror.view/-view-plugin/) — view plugin for viewport-aware decorations
+- [`StateField`](/api/state/com.monkopedia.kodemirror.state/-state-field/) — state field for persistent decorations
+
 ---
 
 *Based on the [CodeMirror Decoration example](https://codemirror.net/examples/decoration/).*

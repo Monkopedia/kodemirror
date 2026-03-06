@@ -193,6 +193,7 @@ data class CobolIndent(
     val indent: Int
 )
 
+/** Stream parser for COBOL. */
 val cobol: StreamParser<CobolState> = object : StreamParser<CobolState> {
     override val name: String get() = "cobol"
 

@@ -189,6 +189,7 @@ private fun mlDefaultTokenBase(stream: StringStream, state: MlLikeState): String
     return null
 }
 
+/** Stream parser for OCaml. */
 @Suppress("ktlint:standard:max-line-length")
 val oCaml: StreamParser<MlLikeState> = mlLike(
     name = "ocaml",
@@ -215,6 +216,7 @@ val oCaml: StreamParser<MlLikeState> = mlLike(
     )
 )
 
+/** Stream parser for F#. */
 @Suppress("ktlint:standard:max-line-length")
 val fSharp: StreamParser<MlLikeState> = mlLike(
     name = "fsharp",
@@ -251,6 +253,7 @@ val fSharp: StreamParser<MlLikeState> = mlLike(
     slashComments = true
 )
 
+/** Stream parser for Standard ML. */
 val sml: StreamParser<MlLikeState> = mlLike(
     name = "sml",
     extraWords = mapOf(

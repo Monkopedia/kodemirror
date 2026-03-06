@@ -29,6 +29,7 @@ private val rpmHeaderLine = Regex(
 )
 private val rpmSimpleEmail = Regex("^[\\w+.-]+@[\\w.-]+")
 
+/** Stream parser for RPM changelog. */
 val rpmChanges: StreamParser<Unit> = object : StreamParser<Unit> {
     override val name: String get() = "rpmchanges"
     override fun startState(indentUnit: Int) = Unit
@@ -68,6 +69,7 @@ data class RpmSpecState(
     var section: Boolean = false
 )
 
+/** Stream parser for RPM spec. */
 val rpmSpec: StreamParser<RpmSpecState> = object : StreamParser<RpmSpecState> {
     override val name: String get() = "rpmspec"
 

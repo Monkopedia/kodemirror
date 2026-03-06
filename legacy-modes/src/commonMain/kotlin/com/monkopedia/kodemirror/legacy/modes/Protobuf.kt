@@ -62,6 +62,7 @@ private fun protobufTokenBase(stream: StringStream): String? {
     return null
 }
 
+/** Stream parser for Protocol Buffers. */
 val protobuf: StreamParser<Unit> = object : StreamParser<Unit> {
     override val name: String get() = "protobuf"
     override fun startState(indentUnit: Int) = Unit

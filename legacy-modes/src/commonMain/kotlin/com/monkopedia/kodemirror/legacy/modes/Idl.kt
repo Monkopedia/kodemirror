@@ -281,6 +281,7 @@ private fun idlTokenBase(stream: StringStream): String? {
     return null
 }
 
+/** Stream parser for IDL. */
 val idl: StreamParser<Unit> = object : StreamParser<Unit> {
     override val name: String get() = "idl"
 

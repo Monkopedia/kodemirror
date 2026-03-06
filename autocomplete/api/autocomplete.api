@@ -197,6 +197,8 @@ public final class com/monkopedia/kodemirror/autocomplete/SnippetKt {
 	public static final fun getPrevSnippetField ()Lkotlin/jvm/functions/Function1;
 	public static final fun getSnippetKeymap ()Ljava/util/List;
 	public static final fun getSnippetState ()Lcom/monkopedia/kodemirror/state/StateField;
+	public static final fun hasNextSnippetField (Lcom/monkopedia/kodemirror/state/EditorState;)Z
+	public static final fun hasPrevSnippetField (Lcom/monkopedia/kodemirror/state/EditorState;)Z
 	public static final fun snippet (Ljava/lang/String;)Lkotlin/jvm/functions/Function4;
 	public static final fun snippetCompletion (Ljava/lang/String;Lcom/monkopedia/kodemirror/autocomplete/Completion;)Lcom/monkopedia/kodemirror/autocomplete/Completion;
 	public static final fun snippets ()Lcom/monkopedia/kodemirror/state/Extension;
@@ -205,6 +207,7 @@ public final class com/monkopedia/kodemirror/autocomplete/SnippetKt {
 public final class com/monkopedia/kodemirror/autocomplete/StateKt {
 	public static final fun completionStatus (Lcom/monkopedia/kodemirror/state/EditorState;)Ljava/lang/String;
 	public static final fun currentCompletions (Lcom/monkopedia/kodemirror/state/EditorState;)Ljava/util/List;
+	public static final fun getPickedCompletion ()Lcom/monkopedia/kodemirror/state/AnnotationType;
 	public static final fun getSetSelectedCompletion ()Lcom/monkopedia/kodemirror/state/StateEffectType;
 	public static final fun selectedCompletion (Lcom/monkopedia/kodemirror/state/EditorState;)Lcom/monkopedia/kodemirror/autocomplete/Completion;
 	public static final fun selectedCompletionIndex (Lcom/monkopedia/kodemirror/state/EditorState;)I
@@ -219,6 +222,8 @@ public final class com/monkopedia/kodemirror/autocomplete/ViewKt {
 	public static final fun getCompleteAnyWord ()Lkotlin/jvm/functions/Function1;
 	public static final fun getCompletionKeymap ()Ljava/util/List;
 	public static final fun getStartCompletion ()Lkotlin/jvm/functions/Function1;
+	public static final fun ifIn (Ljava/util/List;Lkotlin/jvm/functions/Function1;)Lkotlin/jvm/functions/Function1;
+	public static final fun ifNotIn (Ljava/util/List;Lkotlin/jvm/functions/Function1;)Lkotlin/jvm/functions/Function1;
 	public static final fun insertCompletionText (Lcom/monkopedia/kodemirror/state/EditorState;Ljava/lang/String;II)Lcom/monkopedia/kodemirror/state/TransactionSpec;
 	public static final fun moveCompletionSelection (ZLjava/lang/String;)Lkotlin/jvm/functions/Function1;
 	public static synthetic fun moveCompletionSelection$default (ZLjava/lang/String;ILjava/lang/Object;)Lkotlin/jvm/functions/Function1;

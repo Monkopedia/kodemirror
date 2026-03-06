@@ -351,6 +351,7 @@ private fun juliaTokenStringFactory(delimiter: String): (StringStream, JuliaStat
     }
 }
 
+/** Stream parser for Julia. */
 val julia: StreamParser<JuliaState> = object : StreamParser<JuliaState> {
     override val name: String get() = "julia"
 

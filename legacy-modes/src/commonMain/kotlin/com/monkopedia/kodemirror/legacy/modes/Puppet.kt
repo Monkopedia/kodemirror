@@ -200,6 +200,7 @@ data class PuppetState(
     var pending: String? = null
 )
 
+/** Stream parser for Puppet. */
 val puppet: StreamParser<PuppetState> = object : StreamParser<PuppetState> {
     override val name: String get() = "puppet"
 

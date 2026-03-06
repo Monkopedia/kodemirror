@@ -338,6 +338,7 @@ private fun psTokenMultiString(stream: StringStream, state: PowerShellState): St
     return "string"
 }
 
+/** Stream parser for PowerShell. */
 val powerShell: StreamParser<PowerShellState> = object : StreamParser<PowerShellState> {
     override val name: String get() = "powershell"
 

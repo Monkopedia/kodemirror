@@ -924,6 +924,7 @@ private fun tokenCCommentForHook(stream: StringStream, state: CssState): List<St
     return listOf("comment", "comment")
 }
 
+/** Stream parser for CSS. */
 val cssLegacy: StreamParser<CssState> = mkCSS(
     CssConfig(
         name = "css",
@@ -940,6 +941,7 @@ val cssLegacy: StreamParser<CssState> = mkCSS(
     )
 )
 
+/** Stream parser for SCSS. */
 val sCSS: StreamParser<CssState> = mkCSS(
     CssConfig(
         name = "scss",
@@ -983,6 +985,7 @@ val sCSS: StreamParser<CssState> = mkCSS(
     )
 )
 
+/** Stream parser for Less. */
 val less: StreamParser<CssState> = mkCSS(
     CssConfig(
         name = "less",
@@ -1029,6 +1032,7 @@ val less: StreamParser<CssState> = mkCSS(
     )
 )
 
+/** Stream parser for GSS (Closure Stylesheets). */
 val gss: StreamParser<CssState> = mkCSS(
     CssConfig(
         name = "gss",

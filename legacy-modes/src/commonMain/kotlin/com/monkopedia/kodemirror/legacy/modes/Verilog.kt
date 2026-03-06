@@ -89,6 +89,7 @@ data class VerilogState(
     var startOfLine: Boolean = true
 )
 
+/** Stream parser for Verilog/SystemVerilog. */
 val verilog: StreamParser<VerilogState> = run {
     val openClose = mutableMapOf<String, String?>()
     for (keyword in verilogBlockKeywords) {

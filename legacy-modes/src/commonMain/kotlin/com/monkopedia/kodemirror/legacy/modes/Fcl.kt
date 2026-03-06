@@ -141,6 +141,7 @@ private fun fclPopContext(state: FclState) {
     state.context = prev
 }
 
+/** Stream parser for FCL (IEC 61131-3). */
 val fcl: StreamParser<FclState> = object : StreamParser<FclState> {
     override val name: String get() = "fcl"
 

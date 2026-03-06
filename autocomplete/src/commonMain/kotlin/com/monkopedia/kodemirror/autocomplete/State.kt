@@ -18,11 +18,19 @@
  */
 package com.monkopedia.kodemirror.autocomplete
 
+import com.monkopedia.kodemirror.state.Annotation
+import com.monkopedia.kodemirror.state.AnnotationType
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.StateEffect
 import com.monkopedia.kodemirror.state.StateEffectType
 import com.monkopedia.kodemirror.state.StateField
 import com.monkopedia.kodemirror.state.StateFieldSpec
+
+/**
+ * Transaction annotation that tags a transaction where a completion was
+ * accepted. Extensions can read this to react to completion events.
+ */
+val pickedCompletion: AnnotationType<Completion> = Annotation.define()
 
 /** Effect to set the selected completion index. */
 val setSelectedCompletion: StateEffectType<Int> = StateEffect.define()

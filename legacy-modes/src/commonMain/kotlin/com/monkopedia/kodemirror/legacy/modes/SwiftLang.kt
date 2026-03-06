@@ -73,6 +73,7 @@ data class SwiftState(
     var tokenize: MutableList<(StringStream, SwiftState, String?) -> String?> = mutableListOf()
 )
 
+/** Stream parser for Swift. */
 val swiftLang: StreamParser<SwiftState> = object : StreamParser<SwiftState> {
     override val name: String get() = "swift"
     override val languageData: Map<String, Any>

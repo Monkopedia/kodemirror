@@ -196,6 +196,7 @@ private fun mircTokenUnparsed(stream: StringStream, state: MircState): String {
     return "meta"
 }
 
+/** Stream parser for mIRC script. */
 val mirc: StreamParser<MircState> = object : StreamParser<MircState> {
     override val name: String get() = "mirc"
 

@@ -125,6 +125,7 @@ private fun mboxReadToken(stream: StringStream, state: MboxState): String? {
     return null
 }
 
+/** Stream parser for mbox (email). */
 val mbox: StreamParser<MboxState> = object : StreamParser<MboxState> {
     override val name: String get() = "mbox"
 

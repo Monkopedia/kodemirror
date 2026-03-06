@@ -105,6 +105,13 @@ You can query a compartment's current content:
 val currentLanguage = languageCompartment.get(state)
 ```
 
+## Related API
+
+- [`Compartment`](/api/state/com.monkopedia.kodemirror.state/-compartment/) — dynamic extension reconfiguration
+- [`Extension`](/api/state/com.monkopedia.kodemirror.state/-extension/) — base extension type
+- [`Facet`](/api/state/com.monkopedia.kodemirror.state/-facet/) — facet system for extension composition
+- [`StateEffect`](/api/state/com.monkopedia.kodemirror.state/-state-effect/) — state effect for reconfiguration
+
 ---
 
 *Based on the [CodeMirror Configuration example](https://codemirror.net/examples/config/).*

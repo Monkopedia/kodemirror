@@ -255,5 +255,8 @@ private fun mkGas(arch: String): StreamParser<GasState> {
     }
 }
 
+/** Stream parser for GAS (GNU Assembler). */
 val gas: StreamParser<GasState> = mkGas("x86")
+
+/** Stream parser for GAS (ARM). */
 val gasArm: StreamParser<GasState> = mkGas("arm")

@@ -414,14 +414,18 @@ private fun mkJavaScript(config: JavaScriptConfig): StreamParser<JavaScriptState
     }
 }
 
+/** Stream parser for JavaScript. */
 val javaScriptLegacy: StreamParser<JavaScriptState> =
     mkJavaScript(JavaScriptConfig(name = "javascript"))
 
+/** Stream parser for JSON. */
 val json: StreamParser<JavaScriptState> =
     mkJavaScript(JavaScriptConfig(name = "json", json = true))
 
+/** Stream parser for JSON-LD. */
 val jsonld: StreamParser<JavaScriptState> =
     mkJavaScript(JavaScriptConfig(name = "json", jsonld = true))
 
+/** Stream parser for TypeScript. */
 val typescript: StreamParser<JavaScriptState> =
     mkJavaScript(JavaScriptConfig(name = "typescript", typescript = true))

@@ -25,6 +25,7 @@ data class TroffState(
     var tokens: MutableList<((StringStream, TroffState) -> String?)> = mutableListOf()
 )
 
+/** Stream parser for Troff/Groff. */
 val troff: StreamParser<TroffState> = object : StreamParser<TroffState> {
     override val name: String get() = "troff"
 

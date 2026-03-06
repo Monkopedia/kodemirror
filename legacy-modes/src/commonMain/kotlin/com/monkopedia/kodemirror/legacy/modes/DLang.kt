@@ -169,6 +169,7 @@ private fun dTokenNestedComment(stream: StringStream, state: DState): String {
     return "comment"
 }
 
+/** Stream parser for D. */
 val d: StreamParser<DState> = object : StreamParser<DState> {
     override val name: String get() = "d"
 

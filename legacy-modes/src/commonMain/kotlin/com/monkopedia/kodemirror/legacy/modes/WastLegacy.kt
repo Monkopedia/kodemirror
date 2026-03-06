@@ -131,6 +131,7 @@ data class WastLegacyState(
     var inComment: Boolean = false
 )
 
+/** Stream parser for WebAssembly Text (WAT). */
 val wastLegacy: StreamParser<WastLegacyState> = object : StreamParser<WastLegacyState> {
     override val name: String get() = "wast"
 

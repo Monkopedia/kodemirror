@@ -72,5 +72,47 @@ class HighlightStyle private constructor(
             val delegate = tagHighlighter(tagRules, scope = scope)
             return HighlightStyle(specs, delegate, styleMap)
         }
+
+        /**
+         * Define a [HighlightStyle] using a DSL builder.
+         *
+         * ```kotlin
+         * val myStyle = HighlightStyle.define {
+         *     Tags.keyword styles SpanStyle(color = Color.Blue)
+         *     Tags.string styles SpanStyle(color = Color.Green)
+         *     listOf(Tags.number, Tags.bool) styles SpanStyle(color = Color.Cyan)
+         * }
+         * ```
+         */
+        inline fun define(
+            noinline scope: ((NodeType) -> Boolean)? = null,
+            block: HighlightStyleBuilder.() -> Unit
+        ): HighlightStyle = define(
+            HighlightStyleBuilder().apply(block).specs,
+            scope
+        )
     }
 }
+
+/**
+ * Builder scope for defining a [HighlightStyle] via DSL.
+ */
+@HighlightStyleDsl
+class HighlightStyleBuilder @PublishedApi internal constructor() {
+    @PublishedApi
+    internal val specs = mutableListOf<TagStyleSpec>()
+
+    /** Map a single [Tag] to a [SpanStyle]. */
+    infix fun Tag.styles(style: SpanStyle) {
+        specs.add(TagStyleSpec(tag = this, style = style))
+    }
+
+    /** Map multiple [Tag]s to the same [SpanStyle]. */
+    infix fun List<Tag>.styles(style: SpanStyle) {
+        specs.add(TagStyleSpec(tag = this, style = style))
+    }
+}
+
+/** Marks DSL scope for [HighlightStyleBuilder]. */
+@DslMarker
+annotation class HighlightStyleDsl

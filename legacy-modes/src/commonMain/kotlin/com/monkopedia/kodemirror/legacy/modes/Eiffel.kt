@@ -86,6 +86,7 @@ private fun eiffelReadQuoted(quote: String, style: String): (StringStream, Eiffe
         style
     }
 
+/** Stream parser for Eiffel. */
 val eiffel: StreamParser<EiffelState> = object : StreamParser<EiffelState> {
     override val name: String get() = "eiffel"
 

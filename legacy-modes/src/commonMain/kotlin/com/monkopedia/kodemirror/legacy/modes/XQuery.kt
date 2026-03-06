@@ -392,6 +392,7 @@ private fun xqTokenBase(stream: StringStream, state: XQueryState): String? {
     }
 }
 
+/** Stream parser for XQuery. */
 val xQuery: StreamParser<XQueryState> = object : StreamParser<XQueryState> {
     override val name: String get() = "xquery"
 

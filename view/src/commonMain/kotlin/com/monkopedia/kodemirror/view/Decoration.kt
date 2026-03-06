@@ -98,11 +98,49 @@ sealed class Decoration : RangeValue() {
         /** Create a mark (inline text style) decoration. */
         fun mark(spec: MarkDecorationSpec): MarkDecoration = MarkDecoration(spec)
 
+        /**
+         * Create a mark decoration with a [SpanStyle].
+         *
+         * ```kotlin
+         * val bold = Decoration.mark(
+         *     style = SpanStyle(fontWeight = FontWeight.Bold)
+         * )
+         * ```
+         */
+        fun mark(
+            style: SpanStyle,
+            inclusive: Boolean = false,
+            inclusiveStart: Boolean = false,
+            inclusiveEnd: Boolean = false,
+            cssClass: String? = null
+        ): MarkDecoration = MarkDecoration(
+            MarkDecorationSpec(
+                style = style,
+                inclusive = inclusive,
+                inclusiveStart = inclusiveStart,
+                inclusiveEnd = inclusiveEnd,
+                cssClass = cssClass
+            )
+        )
+
         /** Create a widget (inline composable) decoration. */
         fun widget(spec: WidgetDecorationSpec): WidgetDecoration = WidgetDecoration(spec)
 
         /** Create a line decoration (whole-line attributes). */
         fun line(spec: LineDecorationSpec): LineDecoration = LineDecoration(spec)
+
+        /**
+         * Create a line decoration with a [SpanStyle].
+         *
+         * ```kotlin
+         * val activeLine = Decoration.line(
+         *     style = SpanStyle(background = Color(0x20000000))
+         * )
+         * ```
+         */
+        fun line(style: SpanStyle, cssClass: String? = null): LineDecoration = LineDecoration(
+            LineDecorationSpec(style = style, cssClass = cssClass)
+        )
 
         /** Create a replace decoration (hide/replace a range). */
         fun replace(spec: ReplaceDecorationSpec): ReplaceDecoration = ReplaceDecoration(spec)

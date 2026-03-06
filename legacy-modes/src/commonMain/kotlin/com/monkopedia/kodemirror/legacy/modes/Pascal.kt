@@ -138,6 +138,7 @@ private fun pascalTokenCommentBraces(stream: StringStream, state: PascalState): 
     return "comment"
 }
 
+/** Stream parser for Pascal. */
 val pascal: StreamParser<PascalState> =
     object : StreamParser<PascalState> {
         override val name: String get() = "pascal"

@@ -75,6 +75,7 @@ data class ForthState(
     var wordList: MutableList<String> = mutableListOf()
 )
 
+/** Stream parser for Forth. */
 val forth: StreamParser<ForthState> = object : StreamParser<ForthState> {
     override val name: String get() = "forth"
 

@@ -327,6 +327,7 @@ private fun sqlTokenComment(stream: StringStream, state: SqlLegacyState, depth: 
     return "comment"
 }
 
+/** Stream parser for SQL (standard). */
 val standardSQL: StreamParser<SqlLegacyState> = makeSqlParser(
     SqlParserConfig(
         keywords = sqlSet("$sqlKeywordsStr begin"),
@@ -338,6 +339,7 @@ val standardSQL: StreamParser<SqlLegacyState> = makeSqlParser(
     )
 )
 
+/** Stream parser for MySQL. */
 val mySQL: StreamParser<SqlLegacyState> = makeSqlParser(
     SqlParserConfig(
         client = sqlSet(
@@ -400,6 +402,7 @@ val mySQL: StreamParser<SqlLegacyState> = makeSqlParser(
     )
 )
 
+/** Stream parser for MariaDB SQL. */
 val mariaDB: StreamParser<SqlLegacyState> = makeSqlParser(
     SqlParserConfig(
         keywords = sqlSet(
@@ -456,6 +459,7 @@ val mariaDB: StreamParser<SqlLegacyState> = makeSqlParser(
     )
 )
 
+/** Stream parser for SQLite. */
 val sqlite: StreamParser<SqlLegacyState> = makeSqlParser(
     SqlParserConfig(
         keywords = sqlSet(
@@ -486,6 +490,7 @@ val sqlite: StreamParser<SqlLegacyState> = makeSqlParser(
     )
 )
 
+/** Stream parser for Cassandra CQL. */
 val cassandra: StreamParser<SqlLegacyState> = makeSqlParser(
     SqlParserConfig(
         keywords = sqlSet(
@@ -508,6 +513,7 @@ val cassandra: StreamParser<SqlLegacyState> = makeSqlParser(
     )
 )
 
+/** Stream parser for PL/SQL. */
 val plSQL: StreamParser<SqlLegacyState> = makeSqlParser(
     SqlParserConfig(
         keywords = sqlSet(
@@ -543,6 +549,7 @@ val plSQL: StreamParser<SqlLegacyState> = makeSqlParser(
     )
 )
 
+/** Stream parser for Hive SQL. */
 val hive: StreamParser<SqlLegacyState> = makeSqlParser(
     SqlParserConfig(
         keywords = sqlSet(
@@ -582,6 +589,7 @@ val hive: StreamParser<SqlLegacyState> = makeSqlParser(
     )
 )
 
+/** Stream parser for PostgreSQL. */
 val pgSQL: StreamParser<SqlLegacyState> = makeSqlParser(
     SqlParserConfig(
         keywords = sqlSet(
@@ -640,6 +648,7 @@ val pgSQL: StreamParser<SqlLegacyState> = makeSqlParser(
     )
 )
 
+/** Stream parser for Spark SQL. */
 val sparkSQL: StreamParser<SqlLegacyState> = makeSqlParser(
     SqlParserConfig(
         keywords = sqlSet(

@@ -174,6 +174,7 @@ private fun clBase(stream: StringStream, state: CommonLispState): String? {
     }
 }
 
+/** Stream parser for Common Lisp. */
 val commonLisp: StreamParser<CommonLispState> = object : StreamParser<CommonLispState> {
     override val name: String get() = "commonlisp"
 

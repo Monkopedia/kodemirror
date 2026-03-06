@@ -194,6 +194,20 @@ fun snippetCompletion(template: String, completion: Completion): Completion {
     return completion.copy(applyFn = snippet(template))
 }
 
+// ── Snippet state queries ──
+
+/** Whether there is a next snippet field to navigate to. */
+fun hasNextSnippetField(state: com.monkopedia.kodemirror.state.EditorState): Boolean {
+    val active = state.field(snippetState, require = false)
+    return active != null && active.fieldIndex < active.fields.size - 1
+}
+
+/** Whether there is a previous snippet field to navigate to. */
+fun hasPrevSnippetField(state: com.monkopedia.kodemirror.state.EditorState): Boolean {
+    val active = state.field(snippetState, require = false)
+    return active != null && active.fieldIndex > 0
+}
+
 // ── Commands ──
 
 /** Move to the next snippet field, or clear the snippet if at the last field. */

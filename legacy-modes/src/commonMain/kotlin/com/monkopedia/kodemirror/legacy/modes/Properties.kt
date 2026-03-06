@@ -28,6 +28,7 @@ data class PropertiesState(
     var afterSection: Boolean = false
 )
 
+/** Stream parser for Java .properties. */
 val properties: StreamParser<PropertiesState> = object : StreamParser<PropertiesState> {
     override val name: String get() = "properties"
     override fun startState(indentUnit: Int) = PropertiesState()

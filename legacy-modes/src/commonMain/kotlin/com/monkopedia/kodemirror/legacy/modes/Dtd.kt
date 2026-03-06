@@ -150,6 +150,7 @@ private fun dtdComputeIndent(state: DtdState, textAfter: String, cx: IndentConte
     return state.baseIndent + n * cx.unit
 }
 
+/** Stream parser for DTD. */
 val dtd: StreamParser<DtdState> = object : StreamParser<DtdState> {
     override val name: String get() = "dtd"
 

@@ -152,6 +152,7 @@ data class SieveState(
     var multiLineString: Boolean = false
 )
 
+/** Stream parser for Sieve (email filtering). */
 val sieve: StreamParser<SieveState> = object : StreamParser<SieveState> {
     override val name: String get() = "sieve"
 

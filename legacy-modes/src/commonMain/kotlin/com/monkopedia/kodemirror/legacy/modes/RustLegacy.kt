@@ -20,6 +20,7 @@ package com.monkopedia.kodemirror.legacy.modes
 
 import com.monkopedia.kodemirror.language.StreamParser
 
+/** Stream parser for Rust. */
 val rustLegacy: StreamParser<SimpleModeState> = simpleMode(
     SimpleModeConfig(
         name = "rust",

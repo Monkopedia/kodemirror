@@ -209,6 +209,7 @@ data class ElmState(
     var f: ElmTokenFn = elmNormal()
 )
 
+/** Stream parser for Elm. */
 val elm: StreamParser<ElmState> = object : StreamParser<ElmState> {
     override val name: String get() = "elm"
 

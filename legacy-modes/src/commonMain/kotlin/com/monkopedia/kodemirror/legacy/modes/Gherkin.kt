@@ -122,6 +122,7 @@ private val gherkinStepsRE = Regex(
         "|عندما |ثم |بفرض |با فرض |اما |اذاً |آنگاه |כאשר |וגם |בהינתן |אזי |אז |אבל )"
 )
 
+/** Stream parser for Gherkin (Cucumber). */
 val gherkin: StreamParser<GherkinState> = object : StreamParser<GherkinState> {
     override val name: String get() = "gherkin"
 

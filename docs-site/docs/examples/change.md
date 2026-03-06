@@ -125,6 +125,13 @@ val newPos = changes.mapPos(oldPos)
 val newPos = changes.mapPos(oldPos, assoc = 1) // after insertion
 ```
 
+## Related API
+
+- [`TransactionSpec`](/api/state/com.monkopedia.kodemirror.state/-transaction-spec/) — transaction specification
+- [`ChangeSpec`](/api/state/com.monkopedia.kodemirror.state/-change-spec/) — change specification
+- [`ChangeSet`](/api/state/com.monkopedia.kodemirror.state/-change-set/) — immutable change set
+- [`EditorView.dispatch`](/api/view/com.monkopedia.kodemirror.view/-editor-view/dispatch.html) — apply transactions
+
 ---
 
 *Based on the [CodeMirror Changes example](https://codemirror.net/examples/change/).*

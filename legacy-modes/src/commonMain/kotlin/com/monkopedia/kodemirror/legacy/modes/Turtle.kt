@@ -40,6 +40,7 @@ data class TurtleState(
 private val keywords = Regex("^(?:@prefix|@base|a)$", RegexOption.IGNORE_CASE)
 private val operatorChars = Regex("[*+\\-<>=&|]")
 
+/** Stream parser for Turtle (RDF). */
 val turtle: StreamParser<TurtleState> = object : StreamParser<TurtleState> {
     override val name: String get() = "turtle"
     override val languageData: Map<String, Any>

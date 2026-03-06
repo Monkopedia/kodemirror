@@ -35,6 +35,7 @@ private fun pegjsIdentifier(stream: StringStream): MatchResult? {
     return stream.match(Regex("^[a-zA-Z_][a-zA-Z0-9_]*"))
 }
 
+/** Stream parser for PEG.js. */
 val pegjs: StreamParser<PegjsState> = object : StreamParser<PegjsState> {
     override val name: String get() = "pegjs"
 

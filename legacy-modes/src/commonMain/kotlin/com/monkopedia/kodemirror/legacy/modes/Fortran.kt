@@ -157,6 +157,7 @@ private fun fortranTokenString(quote: String): (StringStream, FortranState) -> S
         "string"
     }
 
+/** Stream parser for Fortran. */
 val fortran: StreamParser<FortranState> =
     object : StreamParser<FortranState> {
         override val name: String get() = "fortran"

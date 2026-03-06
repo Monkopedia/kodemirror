@@ -62,6 +62,7 @@ data class HxmlState(
     var inString: Boolean = false
 )
 
+/** Stream parser for HXML (Haxe build). */
 val hxml: StreamParser<HxmlState> = object : StreamParser<HxmlState> {
     override val name: String get() = "hxml"
     override fun startState(indentUnit: Int) = HxmlState()
@@ -137,6 +138,7 @@ data class HaxeState(
     var lexicalPrevIndented: Int = 0
 )
 
+/** Stream parser for Haxe. */
 val haxe: StreamParser<HaxeState> = object : StreamParser<HaxeState> {
     override val name: String get() = "haxe"
 

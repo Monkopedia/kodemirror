@@ -552,6 +552,7 @@ private fun textileStartNewLine(stream: StringStream, state: TextileState) {
     }
 }
 
+/** Stream parser for Textile. */
 val textile: StreamParser<TextileState> = object : StreamParser<TextileState> {
     override val name: String get() = "textile"
 

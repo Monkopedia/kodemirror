@@ -27,6 +27,7 @@ private val TOKEN_NAMES = mapOf(
     '@' to "meta"
 )
 
+/** Stream parser for Diff/Patch. */
 val diff: StreamParser<Unit> = object : StreamParser<Unit> {
     override val name: String get() = "diff"
     override fun startState(indentUnit: Int) = Unit

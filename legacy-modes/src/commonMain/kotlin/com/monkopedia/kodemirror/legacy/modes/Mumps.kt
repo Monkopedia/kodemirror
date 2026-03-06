@@ -146,6 +146,7 @@ private fun mumpsTokenBase(stream: StringStream, state: MumpsState): String? {
     return "error"
 }
 
+/** Stream parser for MUMPS. */
 val mumps: StreamParser<MumpsState> = object : StreamParser<MumpsState> {
     override val name: String get() = "mumps"
 

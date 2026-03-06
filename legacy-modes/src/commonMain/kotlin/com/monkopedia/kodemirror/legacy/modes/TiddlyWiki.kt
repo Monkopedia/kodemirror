@@ -46,6 +46,7 @@ data class TiddlyWikiState(
     var block: Boolean = false
 )
 
+/** Stream parser for TiddlyWiki. */
 val tiddlyWiki: StreamParser<TiddlyWikiState> = object : StreamParser<TiddlyWikiState> {
     override val name: String get() = "tiddlywiki"
 

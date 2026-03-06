@@ -158,6 +158,7 @@ private fun mmaTokenComment(stream: StringStream, state: MathematicaState): Stri
     return "comment"
 }
 
+/** Stream parser for Mathematica. */
 val mathematica: StreamParser<MathematicaState> = object : StreamParser<MathematicaState> {
     override val name: String get() = "mathematica"
 

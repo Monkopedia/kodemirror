@@ -453,6 +453,7 @@ private fun crystalTokenHereDoc(
     }
 }
 
+/** Stream parser for Crystal. */
 val crystal: StreamParser<CrystalState> = object : StreamParser<CrystalState> {
     override val name: String get() = "crystal"
 

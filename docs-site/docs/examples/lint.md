@@ -118,6 +118,15 @@ forceLinting(view)
 | `closeLintPanel` | — | Close the diagnostics panel |
 | `nextDiagnostic` | F8 | Jump to next diagnostic |
 
+## Related API
+
+- [`Diagnostic`](/api/lint/com.monkopedia.kodemirror.lint/-diagnostic/) — diagnostic data class
+- [`Severity`](/api/lint/com.monkopedia.kodemirror.lint/-severity/) — diagnostic severity enum
+- [`Action`](/api/lint/com.monkopedia.kodemirror.lint/-action/) — quick fix action
+- [`LintConfig`](/api/lint/com.monkopedia.kodemirror.lint/-lint-config/) — linter configuration
+- [`linter`](/api/lint/com.monkopedia.kodemirror.lint/linter.html) — create a linter extension
+- [`lintGutter`](/api/lint/com.monkopedia.kodemirror.lint/lint-gutter.html) — show severity icons in gutter
+
 ---
 
 *Based on the [CodeMirror Lint example](https://codemirror.net/examples/lint/).*

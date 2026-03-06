@@ -547,6 +547,7 @@ private fun perlTokenPerl(stream: StringStream, state: PerlState): String? {
     return null
 }
 
+/** Stream parser for Perl. */
 val perl: StreamParser<PerlState> = object : StreamParser<PerlState> {
     override val name: String get() = "perl"
     override fun startState(indentUnit: Int) = PerlState()

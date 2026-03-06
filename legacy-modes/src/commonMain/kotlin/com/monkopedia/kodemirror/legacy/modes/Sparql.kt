@@ -162,6 +162,7 @@ private fun sparqlPopContext(state: SparqlState) {
     state.context = state.context?.prev
 }
 
+/** Stream parser for SPARQL. */
 val sparql: StreamParser<SparqlState> = object : StreamParser<SparqlState> {
     override val name: String get() = "sparql"
 

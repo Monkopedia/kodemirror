@@ -446,6 +446,7 @@ public final class com/monkopedia/kodemirror/state/FacetEnabler$StaticExtension 
 
 public final class com/monkopedia/kodemirror/state/FacetKt {
 	public static final fun asSlot (Lcom/monkopedia/kodemirror/state/Facet;)Lcom/monkopedia/kodemirror/state/Slot;
+	public static final fun define (Lcom/monkopedia/kodemirror/state/StateField$Companion;Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/kodemirror/state/StateField;
 	public static final fun ensureAddr (Lcom/monkopedia/kodemirror/state/EditorState;I)Lcom/monkopedia/kodemirror/state/SlotStatus;
 	public static final fun extensionListOf ([Lcom/monkopedia/kodemirror/state/Extension;)Lcom/monkopedia/kodemirror/state/ExtensionList;
 	public static final fun getAddr (Lcom/monkopedia/kodemirror/state/EditorState;I)Ljava/lang/Object;
@@ -789,6 +790,18 @@ public final class com/monkopedia/kodemirror/state/StateField$Companion {
 	public final fun define (Lcom/monkopedia/kodemirror/state/StateFieldSpec;)Lcom/monkopedia/kodemirror/state/StateField;
 }
 
+public final class com/monkopedia/kodemirror/state/StateFieldBuilder {
+	public fun <init> ()V
+	public final fun build ()Lcom/monkopedia/kodemirror/state/StateFieldSpec;
+	public final fun compare (Lkotlin/jvm/functions/Function2;)V
+	public final fun create (Lkotlin/jvm/functions/Function1;)V
+	public final fun provide (Lkotlin/jvm/functions/Function1;)V
+	public final fun update (Lkotlin/jvm/functions/Function2;)V
+}
+
+public abstract interface annotation class com/monkopedia/kodemirror/state/StateFieldDsl : java/lang/annotation/Annotation {
+}
+
 public final class com/monkopedia/kodemirror/state/StateFieldSpec {
 	public fun <init> (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;)V
 	public synthetic fun <init> (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -813,6 +826,7 @@ public final class com/monkopedia/kodemirror/state/StateFieldSpec {
 
 public final class com/monkopedia/kodemirror/state/StateKt {
 	public static final fun asDoc (Ljava/lang/String;)Lcom/monkopedia/kodemirror/state/DocSpec;
+	public static final fun getValue (Lcom/monkopedia/kodemirror/state/StateField;Lcom/monkopedia/kodemirror/state/EditorState;Lkotlin/reflect/KProperty;)Ljava/lang/Object;
 }
 
 public abstract class com/monkopedia/kodemirror/state/Text {

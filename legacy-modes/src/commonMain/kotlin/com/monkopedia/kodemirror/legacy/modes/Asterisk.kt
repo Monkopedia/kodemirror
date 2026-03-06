@@ -160,6 +160,7 @@ private fun asteriskBasicToken(stream: StringStream, state: AsteriskState): Stri
     return null
 }
 
+/** Stream parser for Asterisk dialplan. */
 val asterisk: StreamParser<AsteriskState> =
     object : StreamParser<AsteriskState> {
         override val name: String get() = "asterisk"

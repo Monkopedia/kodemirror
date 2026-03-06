@@ -275,6 +275,7 @@ private fun clojureInComment(stream: StringStream, state: ClojureState): Pair<St
     return "space" to "comment"
 }
 
+/** Stream parser for Clojure. */
 val clojure: StreamParser<ClojureState> = object : StreamParser<ClojureState> {
     override val name: String get() = "clojure"
     override fun startState(indentUnit: Int) = ClojureState()

@@ -148,6 +148,7 @@ private fun goPopContext(state: GoState): GoContext? {
     return state.context
 }
 
+/** Stream parser for Go. */
 val goLang: StreamParser<GoState> = object : StreamParser<GoState> {
     override val name: String get() = "go"
 

@@ -122,8 +122,12 @@ public abstract class com/monkopedia/kodemirror/view/Decoration : com/monkopedia
 }
 
 public final class com/monkopedia/kodemirror/view/Decoration$Companion {
+	public final fun line (Landroidx/compose/ui/text/SpanStyle;Ljava/lang/String;)Lcom/monkopedia/kodemirror/view/LineDecoration;
 	public final fun line (Lcom/monkopedia/kodemirror/view/LineDecorationSpec;)Lcom/monkopedia/kodemirror/view/LineDecoration;
+	public static synthetic fun line$default (Lcom/monkopedia/kodemirror/view/Decoration$Companion;Landroidx/compose/ui/text/SpanStyle;Ljava/lang/String;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/view/LineDecoration;
+	public final fun mark (Landroidx/compose/ui/text/SpanStyle;ZZZLjava/lang/String;)Lcom/monkopedia/kodemirror/view/MarkDecoration;
 	public final fun mark (Lcom/monkopedia/kodemirror/view/MarkDecorationSpec;)Lcom/monkopedia/kodemirror/view/MarkDecoration;
+	public static synthetic fun mark$default (Lcom/monkopedia/kodemirror/view/Decoration$Companion;Landroidx/compose/ui/text/SpanStyle;ZZZLjava/lang/String;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/view/MarkDecoration;
 	public final fun replace (Lcom/monkopedia/kodemirror/view/ReplaceDecorationSpec;)Lcom/monkopedia/kodemirror/view/ReplaceDecoration;
 	public final fun widget (Lcom/monkopedia/kodemirror/view/WidgetDecorationSpec;)Lcom/monkopedia/kodemirror/view/WidgetDecoration;
 }
@@ -356,9 +360,22 @@ public final class com/monkopedia/kodemirror/view/KeyBinding {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/monkopedia/kodemirror/view/KeymapBuilder {
+	public static final field $stable I
+	public fun <init> ()V
+	public final fun bind (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun bind$default (Lcom/monkopedia/kodemirror/view/KeymapBuilder;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun getBindings ()Ljava/util/List;
+	public final fun invoke (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+}
+
+public abstract interface annotation class com/monkopedia/kodemirror/view/KeymapDsl : java/lang/annotation/Annotation {
+}
+
 public final class com/monkopedia/kodemirror/view/KeymapKt {
 	public static final fun getKeymap ()Lcom/monkopedia/kodemirror/state/Facet;
 	public static final fun keymapOf (Ljava/util/List;)Lcom/monkopedia/kodemirror/state/Extension;
+	public static final fun keymapOf (Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/kodemirror/state/Extension;
 	public static final fun keymapOf ([Lcom/monkopedia/kodemirror/view/KeyBinding;)Lcom/monkopedia/kodemirror/state/Extension;
 	public static final fun normalizeKeyName (Ljava/lang/String;Z)Ljava/lang/String;
 	public static synthetic fun normalizeKeyName$default (Ljava/lang/String;ZILjava/lang/Object;)Ljava/lang/String;
