@@ -24,6 +24,7 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint")
     id("com.diffplug.spotless")
     id("org.jetbrains.kotlinx.atomicfu")
+    id("org.jetbrains.kotlinx.kover")
 }
 
 group = "com.monkopedia.kodemirror"

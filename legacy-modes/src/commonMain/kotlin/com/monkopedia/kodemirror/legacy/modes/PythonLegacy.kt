@@ -37,7 +37,8 @@ data class PythonScope(
 )
 
 class PythonState(
-    var tokenize: Int = 0, // 0=tokenBase, 1+=string tokenizers
+    // 0=tokenBase, 1+=string tokenizers
+    var tokenize: Int = 0,
     var scopes: MutableList<PythonScope> =
         mutableListOf(PythonScope(0, "py", null)),
     var indent: Int = 0,
@@ -188,7 +189,8 @@ fun mkPython(parserConf: PythonConfig = PythonConfig()): StreamParser<PythonStat
 
         if (stream.match(Regex("^[0-9.]"), false) != null) {
             var floatLiteral = false
-            if (stream.match(Regex("^[\\d_]*\\.\\d+(e[+-]?\\d+)?", RegexOption.IGNORE_CASE)) != null) {
+            val floatRe = Regex("^[\\d_]*\\.\\d+(e[+-]?\\d+)?", RegexOption.IGNORE_CASE)
+            if (stream.match(floatRe) != null) {
                 floatLiteral = true
             }
             if (stream.match(Regex("^[\\d_]+\\.\\d*")) != null) floatLiteral = true

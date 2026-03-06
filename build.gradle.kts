@@ -7,6 +7,13 @@ plugins {
     alias(libs.plugins.ktlint) apply false
     alias(libs.plugins.spotless) apply false
     alias(libs.plugins.roborazzi) apply false
+    alias(libs.plugins.kover)
+}
+
+dependencies {
+    subprojects.forEach { subproject ->
+        kover(subproject)
+    }
 }
 
 tasks.register<Exec>("captureReferenceScreenshots") {

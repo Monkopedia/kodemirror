@@ -305,7 +305,10 @@ private fun erlTokenizer(stream: StringStream, state: ErlangState): String? {
     // attributes and type specs
     if (erlPeekToken(state) == null &&
         stream.match(
-            Regex("-\\s*[a-z\u00DF-\u00F6\u00F8-\u00FF][\\w\u00D8-\u00DE\u00C0-\u00D6\u00DF-\u00F6\u00F8-\u00FF]*")
+            Regex(
+                "-\\s*[a-z\u00DF-\u00F6\u00F8-\u00FF]" +
+                    "[\\w\u00D8-\u00DE\u00C0-\u00D6\u00DF-\u00F6\u00F8-\u00FF]*"
+            )
         ) != null
     ) {
         return if (erlIsMember(stream.current(), erlTypeWords)) {

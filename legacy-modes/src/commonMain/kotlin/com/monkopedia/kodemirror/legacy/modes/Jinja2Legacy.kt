@@ -24,10 +24,12 @@ import com.monkopedia.kodemirror.language.StringStream
 data class Jinja2State(
     var tokenize: (StringStream, Jinja2State) -> String? = ::jinja2TokenBase,
     var incomment: Boolean = false,
-    var intag: Any = false, // false, true, or a String like "}" or "%"
+    // false, true, or a String like "}" or "%"
+    var intag: Any = false,
     var operator: Boolean = false,
     var sign: Boolean = false,
-    var instring: Any = false, // false or a String like "'" or "\""
+    // false or a String like "'" or "\""
+    var instring: Any = false,
     var inbraces: Int = 0,
     var inbrackets: Int = 0,
     var lineTag: Boolean = false

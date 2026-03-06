@@ -25,7 +25,8 @@ import com.monkopedia.kodemirror.language.StringStream
 data class ClojureCtx(
     val prev: ClojureCtx?,
     val start: Int,
-    var indentTo: Any? // Int, "next", or null
+    // Int, "next", or null
+    var indentTo: Any?
 )
 
 data class ClojureState(

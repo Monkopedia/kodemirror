@@ -96,8 +96,14 @@ private fun qTokenBase(stream: StringStream, state: QLangState): String? {
     ) {
         var t: String? = null
         stream.backUp(1)
-        if (stream.match(Regex("^\\d{4}\\.\\d{2}(m|\\.\\d{2}([DT](\\d{2}(:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?)?)?)?)")) != null ||
-            stream.match(Regex("^\\d+D(\\d{2}(:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?)?)")) != null ||
+        if (stream.match(
+                Regex(
+                    "^\\d{4}\\.\\d{2}(m|\\.\\d{2}([DT](\\d{2}(:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?)?))?)"
+                )
+            ) != null ||
+            stream.match(
+                Regex("^\\d+D(\\d{2}(:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?)?)")
+            ) != null ||
             stream.match(Regex("^\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?")) != null ||
             stream.match(Regex("^\\d+[ptuv]{1}")) != null
         ) {
@@ -234,7 +240,8 @@ val q: StreamParser<QLangState> = object : StreamParser<QLangState> {
                 }
             }
             cp == "." && ctx != null && ctx.type == "pattern" -> qPopContext(state)
-            style != null && Regex("atom|string|variable").containsMatchIn(style) && ctx != null -> {
+            style != null &&
+                Regex("atom|string|variable").containsMatchIn(style) && ctx != null -> {
                 if (Regex("[}\\]]").containsMatchIn(ctx.type)) {
                     qPushContext(state, "pattern", stream.column())
                 } else if (ctx.type == "pattern" && ctx.align != true) {

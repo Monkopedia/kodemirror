@@ -39,7 +39,9 @@ private val cypherFuncs = cypherWordRegexp(
 )
 
 private val cypherPreds = cypherWordRegexp(
-    listOf("all", "and", "any", "contains", "exists", "has", "in", "none", "not", "or", "single", "xor")
+    listOf(
+        "all", "and", "any", "contains", "exists", "has", "in", "none", "not", "or", "single", "xor"
+    )
 )
 
 private val cypherKeywords = cypherWordRegexp(

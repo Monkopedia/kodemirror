@@ -87,15 +87,19 @@ class XmlContext(
 )
 
 data class XmlState(
-    var tokenize: Int = 0, // 0=inText, 1=inTag, 2+=inAttribute/inBlock
-    var stateHandler: Int = 0, // 0=base, 1=tagName, 2=closeName, etc.
+    // 0=inText, 1=inTag, 2+=inAttribute/inBlock
+    var tokenize: Int = 0,
+    // 0=base, 1=tagName, 2=closeName, etc.
+    var stateHandler: Int = 0,
     var indented: Int = 0,
     var tagName: String? = null,
     var tagStart: Int? = null,
     var context: XmlContext? = null,
     var stringStartCol: Int = 0,
-    var tokenizeData: String? = null, // for inBlock/inAttribute/doctype
-    var tokenizeDepth: Int = 0, // for doctype
+    // for inBlock/inAttribute/doctype
+    var tokenizeData: String? = null,
+    // for doctype
+    var tokenizeDepth: Int = 0,
     var isInAttribute: Boolean = false,
     var baseIndent: Int = 0
 )
@@ -456,7 +460,8 @@ fun mkXML(parserConfig: XmlConfig): StreamParser<XmlState> {
         override fun startState(indentUnit: Int) = XmlState()
 
         override fun copyState(state: XmlState): XmlState = state.copy(
-            context = state.context // XmlContext is immutable-ish
+            // XmlContext is immutable-ish
+            context = state.context
         )
 
         override fun token(stream: StringStream, state: XmlState): String? {

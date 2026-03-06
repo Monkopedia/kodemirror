@@ -39,7 +39,8 @@ data class PendingToken(val text: String, val token: String?)
  */
 class SimpleModeRule(
     val regex: Regex,
-    val token: Any?, // String?, List<String?>, or (MatchResult) -> String?
+    // String?, List<String?>, or (MatchResult) -> String?
+    val token: Any?,
     val sol: Boolean = false,
     val next: String? = null,
     val push: String? = null,

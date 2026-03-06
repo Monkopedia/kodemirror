@@ -34,7 +34,8 @@ class PugState(
     var javaScriptArgumentsDepth: Int = 0,
     var isInterpolating: Boolean = false,
     var interpolationNesting: Int = 0,
-    var jsState: Any? = null, // JavaScript state
+    // JavaScript state
+    var jsState: Any? = null,
     var restOfLine: String = "",
     var isIncludeFiltered: Boolean = false,
     var isEach: Boolean = false,

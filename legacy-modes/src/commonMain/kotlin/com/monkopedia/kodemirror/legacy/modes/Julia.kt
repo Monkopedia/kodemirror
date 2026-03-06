@@ -192,7 +192,9 @@ private fun juliaTokenBase(stream: StringStream, state: JuliaState): String? {
         if (stream.match(Regex("^0x\\.[0-9a-f_]+p[+-]?[_\\d]+", RegexOption.IGNORE_CASE)) != null) {
             numberLiteral = true
         }
-        if (!numberLiteral && stream.match(Regex("^0x[0-9a-f_]+", RegexOption.IGNORE_CASE)) != null) {
+        if (!numberLiteral &&
+            stream.match(Regex("^0x[0-9a-f_]+", RegexOption.IGNORE_CASE)) != null
+        ) {
             numberLiteral = true
         }
         if (!numberLiteral && stream.match(Regex("^0b[01_]+", RegexOption.IGNORE_CASE)) != null) {

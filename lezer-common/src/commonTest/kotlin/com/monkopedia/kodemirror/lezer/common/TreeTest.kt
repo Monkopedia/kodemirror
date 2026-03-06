@@ -692,4 +692,114 @@ class TreeTest {
         val result = TreeFragment.applyChanges(fragments, emptyList())
         assertEquals(fragments.size, result.size)
     }
+
+    // ---- EXCLUDE_BUFFERS mode ----
+
+    @Test
+    fun cursorExcludeBuffersSkipsBufferNodes() {
+        // Build a tree that contains a TreeBuffer child
+        val nodeSet = NodeSet(types)
+        val bufferData = intArrayOf(
+            // A leaf: type=1, start=0, end=2, endIndex=4
+            1,
+            0,
+            2,
+            4,
+            // B leaf: type=2, start=2, end=4, endIndex=8
+            2,
+            2,
+            4,
+            8
+        )
+        val treeBuffer = TreeBuffer(bufferData, 4, nodeSet)
+        val tree = Tree(
+            types[0],
+            listOf(treeBuffer),
+            listOf(0),
+            4
+        )
+        // Without EXCLUDE_BUFFERS: cursor should find buffer children
+        val normalCur = tree.cursor()
+        val normalNames = mutableListOf<String>()
+        do {
+            normalNames.add(normalCur.name)
+        } while (normalCur.next())
+        assertTrue(normalNames.contains("a"), "Normal cursor should see buffer nodes")
+
+        // With EXCLUDE_BUFFERS: cursor should skip buffer nodes
+        val excludeCur = tree.cursor(IterMode.EXCLUDE_BUFFERS)
+        val excludeNames = mutableListOf<String>()
+        do {
+            excludeNames.add(excludeCur.name)
+        } while (excludeCur.next())
+        assertTrue(
+            !excludeNames.contains("a") && !excludeNames.contains("b"),
+            "EXCLUDE_BUFFERS cursor should skip buffer node children"
+        )
+    }
+
+    // ---- Buffer node cursor navigation ----
+
+    @Test
+    fun cursorNavigatesBufferNodes() {
+        val nodeSet = NodeSet(types)
+        // Parent node containing two children in a buffer
+        val bufferData = intArrayOf(
+            // A leaf
+            1,
+            0,
+            3,
+            4,
+            // B leaf
+            2,
+            3,
+            6,
+            8
+        )
+        val treeBuffer = TreeBuffer(bufferData, 6, nodeSet)
+        val tree = Tree(
+            types[0],
+            listOf(treeBuffer),
+            listOf(0),
+            6
+        )
+        val cur = tree.cursor()
+        assertEquals("T", cur.name)
+        assertTrue(cur.firstChild(), "Should enter buffer children")
+        assertEquals("a", cur.name)
+        assertEquals(0, cur.from)
+        assertEquals(3, cur.to)
+        assertTrue(cur.nextSibling(), "Should move to next buffer sibling")
+        assertEquals("b", cur.name)
+        assertEquals(3, cur.from)
+        assertEquals(6, cur.to)
+        assertTrue(cur.parent(), "Should return to parent from buffer")
+        assertEquals("T", cur.name)
+    }
+
+    // ---- Mounted tree prop ----
+
+    @Test
+    fun mountedTreePropertySetAndRead() {
+        val innerTree = Tree(types[1], emptyList(), emptyList(), 5)
+        // Create a dummy parser for MountedTree (we need to make one)
+        val dummyParser = object : Parser() {
+            override fun createParse(
+                input: Input,
+                fragments: List<TreeFragment>,
+                ranges: List<TextRange>
+            ): PartialParse {
+                error("Not implemented")
+            }
+        }
+        val mounted = MountedTree(innerTree, null, dummyParser)
+        val propValues = mapOf<Int, Any?>(NodeProp.mounted.id to mounted)
+        val hostTree = Tree(types[0], emptyList(), emptyList(), 10, propValues)
+
+        val retrieved = hostTree.prop(NodeProp.mounted)
+        assertNotNull(retrieved)
+        assertEquals(innerTree, retrieved.tree)
+        assertNull(retrieved.overlay)
+        assertEquals(dummyParser, retrieved.parser)
+    }
 }

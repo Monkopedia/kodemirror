@@ -231,7 +231,10 @@ private fun perlTokenPerl(stream: StringStream, state: PerlState): String? {
         )
     }
     if (stream.match(
-            Regex("^(-?((\\d[\\d_]*)?\\.[0-9]+(e[+-]?\\d+)?|\\d+\\.\\d*)|0x[\\da-fA-F_]+|0b[01_]+|\\d[\\d_]*(e[+-]?\\d+)?)")
+            Regex(
+                "^(-?((\\d[\\d_]*)?\\.[0-9]+(e[+-]?\\d+)?|\\d+\\.\\d*)" +
+                    "|0x[\\da-fA-F_]+|0b[01_]+|\\d[\\d_]*(e[+-]?\\d+)?)"
+            )
         ) != null
     ) {
         return "number"
