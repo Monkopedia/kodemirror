@@ -13,6 +13,69 @@ CodeMirror 6 is a modular code editor for the web, authored primarily by Marijn 
 
 Extensions compose via a **facet-based system** that deduplicates values and respects precedence ordering.
 
+## Upstream Version Tracking
+
+Each kodemirror module was ported from a specific upstream npm version. When updating a module,
+diff the upstream source between the "Ported Version" and the latest release to identify changes.
+
+### Lezer Parser Infrastructure
+
+| Kodemirror Module | Upstream Package | Ported Version |
+|---|---|---|
+| `:lezer-common` | `@lezer/common` | 1.5.1 |
+| `:lezer-highlight` | `@lezer/highlight` | 1.2.3 |
+| `:lezer-lr` | `@lezer/lr` | 1.4.8 |
+
+### Core Packages
+
+| Kodemirror Module | Upstream Package | Ported Version |
+|---|---|---|
+| `:state` | `@codemirror/state` | 6.5.4 |
+| `:view` | `@codemirror/view` | 6.39.16 |
+| `:commands` | `@codemirror/commands` | 6.10.2 |
+| `:language` | `@codemirror/language` | 6.12.2 |
+| `:autocomplete` | `@codemirror/autocomplete` | 6.20.1 |
+| `:search` | `@codemirror/search` | 6.6.0 |
+| `:lint` | `@codemirror/lint` | 6.9.5 |
+| `:collab` | `@codemirror/collab` | 6.1.1 |
+| `:merge` | `@codemirror/merge` | 6.12.0 |
+
+### Convenience / Theme / Legacy
+
+| Kodemirror Module | Upstream Package | Ported Version |
+|---|---|---|
+| `:theme-one-dark` | `@codemirror/theme-one-dark` | 6.1.3 |
+| `:legacy-modes` | `@codemirror/legacy-modes` | 6.5.2 |
+
+### Language Packages
+
+| Kodemirror Module | Upstream Package | Ported Version |
+|---|---|---|
+| `:lang-javascript` | `@codemirror/lang-javascript` | 6.2.5 |
+| `:lang-html` | `@codemirror/lang-html` | 6.4.11 |
+| `:lang-css` | `@codemirror/lang-css` | 6.3.1 |
+| `:lang-json` | `@codemirror/lang-json` | 6.0.2 |
+| `:lang-xml` | `@codemirror/lang-xml` | 6.1.0 |
+| `:lang-python` | `@codemirror/lang-python` | 6.2.1 |
+| `:lang-rust` | `@codemirror/lang-rust` | 6.0.2 |
+| `:lang-cpp` | `@codemirror/lang-cpp` | 6.0.3 |
+| `:lang-java` | `@codemirror/lang-java` | 6.0.2 |
+| `:lang-php` | `@codemirror/lang-php` | 6.0.2 |
+| `:lang-go` | `@codemirror/lang-go` | 6.0.1 |
+| `:lang-sass` | `@codemirror/lang-sass` | 6.0.2 |
+| `:lang-yaml` | `@codemirror/lang-yaml` | 6.1.2 |
+| `:lang-markdown` | `@codemirror/lang-markdown` + `@lezer/markdown` | 6.5.0 / 1.6.3 |
+| `:lang-sql` | `@codemirror/lang-sql` | 6.10.0 |
+| `:lang-less` | `@codemirror/lang-less` | 6.0.2 |
+| `:lang-vue` | `@codemirror/lang-vue` | 0.1.3 |
+| `:lang-angular` | `@codemirror/lang-angular` | 0.1.4 |
+| `:lang-wast` | `@codemirror/lang-wast` | 6.0.2 |
+| `:lang-liquid` | `@codemirror/lang-liquid` | 6.3.2 |
+| `:lang-jinja` | `@codemirror/lang-jinja` | 6.0.0 |
+| `:lang-grammar` | `@codemirror/lang-lezer` | 6.0.2 |
+
+*Versions recorded 2026-03-05 — the latest npm releases at time of porting.*
+
 ## Test Infrastructure
 
 | Component | Tool |
