@@ -35,6 +35,9 @@ class ExtensionList(
 fun extensionListOf(vararg extensions: Extension): ExtensionList =
     ExtensionList(extensions.toList())
 
+/** Combine two extensions into an [ExtensionList]. */
+operator fun Extension.plus(other: Extension): ExtensionList = ExtensionList(listOf(this, other))
+
 class ExtensionHolder(val extension: Extension) : Extension
 
 /**

@@ -11,3 +11,6 @@ Multiplatform port of CodeMirror 6.
   panels, tooltips, gutters, and input handling
 - [Extending](extending.md) — State fields, view plugins, facets,
   compartments, decorations, and precedence
+
+See also the [API Reference](../reference/index.md) for generated
+KDoc documentation of every module.

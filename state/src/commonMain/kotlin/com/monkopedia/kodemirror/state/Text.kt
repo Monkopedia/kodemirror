@@ -145,6 +145,9 @@ abstract class Text {
     /** Retrieve a part of the document as a string. */
     abstract fun sliceString(from: Int, to: Int = length, lineSep: String = "\n"): String
 
+    /** Retrieve a part of the document as a string using an [IntRange]. */
+    operator fun get(range: IntRange): String = sliceString(range.first, range.last + 1)
+
     internal abstract fun flatten(target: MutableList<String>)
 
     internal abstract fun scanIdentical(other: Text, dir: Int): Int

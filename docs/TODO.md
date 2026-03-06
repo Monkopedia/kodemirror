@@ -153,7 +153,7 @@ Each item has a status prefix on its heading line:
   typing). Should accept `Tag` or `(Tag) -> Tag` for modifiers.
   Also type `TreeBuildSpec.buffer` as `List<Int>`/`IntArray` and `NestedParse.overlay`.
 
-### 19. Add operator overloads where natural
+### 19. [DONE] Add operator overloads where natural
 - **Effort:** < 1 day | **Source:** Kotlin Ergonomics
 - `operator fun plus` on `Extension`: `ext1 + ext2 + ext3` instead of `ExtensionList(listOf(...))`
 - `operator fun get` on `Text`: `doc[from..to]` instead of `doc.sliceString(from, to)`
@@ -215,7 +215,7 @@ Each item has a status prefix on its heading line:
 
 ## Priority 5 — Medium Impact, Documentation
 
-### 26. Add API docs link to guide index
+### 26. [DONE] Add API docs link to guide index
 - **Effort:** < 1 hour | **Source:** Documentation
 - No path from guides to generated API reference. Add link to `docs-site/docs/guide/index.md`
   and `docs-site/docs/examples/index.md`.
@@ -225,7 +225,7 @@ Each item has a status prefix on its heading line:
 - Examples reference types like `RangeSetBuilder`, `Completion`, `Diagnostic` without linking to
   API docs. Add inline links or a "Related API" section to each example page.
 
-### 28. Add KDoc to top-level facets in `Extension.kt`
+### 28. [DONE] Add KDoc to top-level facets in `Extension.kt`
 - **Effort:** < 1 hour | **Source:** Documentation
 - `languageData`, `allowMultipleSelections`, `lineSeparator`, `changeFilter`, `transactionFilter`,
   `transactionExtender`, `invertedEffects`, `readOnly` all lack documentation.

@@ -321,6 +321,7 @@ public final class com/monkopedia/kodemirror/state/EditorState {
 	public final fun facet (Lcom/monkopedia/kodemirror/state/FacetReader;)Ljava/lang/Object;
 	public final fun field (Lcom/monkopedia/kodemirror/state/StateField;)Ljava/lang/Object;
 	public final fun field (Lcom/monkopedia/kodemirror/state/StateField;Z)Ljava/lang/Object;
+	public final fun get (Lcom/monkopedia/kodemirror/state/StateField;)Ljava/lang/Object;
 	public final fun getDoc ()Lcom/monkopedia/kodemirror/state/Text;
 	public final fun getLineBreak ()Ljava/lang/String;
 	public final fun getReadOnly ()Z
@@ -443,6 +444,7 @@ public final class com/monkopedia/kodemirror/state/FacetKt {
 	public static final fun ensureAddr (Lcom/monkopedia/kodemirror/state/EditorState;I)Lcom/monkopedia/kodemirror/state/SlotStatus;
 	public static final fun extensionListOf ([Lcom/monkopedia/kodemirror/state/Extension;)Lcom/monkopedia/kodemirror/state/ExtensionList;
 	public static final fun getAddr (Lcom/monkopedia/kodemirror/state/EditorState;I)Ljava/lang/Object;
+	public static final fun plus (Lcom/monkopedia/kodemirror/state/Extension;Lcom/monkopedia/kodemirror/state/Extension;)Lcom/monkopedia/kodemirror/state/ExtensionList;
 }
 
 public final class com/monkopedia/kodemirror/state/FacetReader {
@@ -813,6 +815,7 @@ public abstract class com/monkopedia/kodemirror/state/Text {
 	public fun <init> ()V
 	public final fun append (Lcom/monkopedia/kodemirror/state/Text;)Lcom/monkopedia/kodemirror/state/Text;
 	public final fun eq (Lcom/monkopedia/kodemirror/state/Text;)Z
+	public final fun get (Lkotlin/ranges/IntRange;)Ljava/lang/String;
 	public abstract fun getChildren ()Ljava/util/List;
 	public abstract fun getLength ()I
 	public abstract fun getLines ()I

@@ -41,3 +41,6 @@ complete Kotlin snippets adapted from the upstream
 - [Bidirectional Text](bidi.md) — Right-to-left and mixed-direction text
 - [Inverted Effects](inverted-effect.md) — Undo/redo with state effects
 - [Internationalization](translate.md) — Translating UI strings
+
+See also the [API Reference](../reference/index.md) for generated
+KDoc documentation of every module.

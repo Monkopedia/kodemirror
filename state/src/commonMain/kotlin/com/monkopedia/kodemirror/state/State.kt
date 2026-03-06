@@ -109,6 +109,9 @@ class EditorState private constructor(
         return getAddr(this, addr) as T
     }
 
+    /** Retrieve the value of a [state field][StateField] using index syntax. */
+    operator fun <T> get(field: StateField<T>): T = field(field)
+
     /**
      * Create a [Transaction] that updates this state.
      */
