@@ -57,5 +57,16 @@ nav:
       - Extending: guide/extending.md
   - Examples:
       - examples/index.md
+      - Basic Setup: examples/basic.md
+      - Gradle Setup: examples/bundle.md
+      - Dynamic Configuration: examples/config.md
+      - Themes and Styling: examples/styling.md
+      - Tab Handling: examples/tab.md
+      - Read-Only Mode: examples/readonly.md
+      - Programmatic Changes: examples/change.md
+      - Selection Handling: examples/selection.md
+      - Decorations: examples/decoration.md
+      - Autocompletion: examples/autocompletion.md
+      - Linting: examples/lint.md
   - Reference:
       - reference/index.md
