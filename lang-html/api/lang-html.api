@@ -1,13 +1,71 @@
+public final class com/monkopedia/kodemirror/lang/html/HtmlCloseTagsKt {
+	public static final fun getAutoCloseTags ()Lcom/monkopedia/kodemirror/state/Extension;
+}
+
+public final class com/monkopedia/kodemirror/lang/html/HtmlCompleteKt {
+	public static final fun getHtmlCompletionSource ()Lkotlin/jvm/functions/Function1;
+	public static final fun htmlCompletionSourceWith (Lcom/monkopedia/kodemirror/lang/html/HtmlCompletionConfig;)Lkotlin/jvm/functions/Function1;
+	public static synthetic fun htmlCompletionSourceWith$default (Lcom/monkopedia/kodemirror/lang/html/HtmlCompletionConfig;ILjava/lang/Object;)Lkotlin/jvm/functions/Function1;
+}
+
+public final class com/monkopedia/kodemirror/lang/html/HtmlCompletionConfig {
+	public fun <init> ()V
+	public fun <init> (Ljava/util/Map;Ljava/util/Map;)V
+	public synthetic fun <init> (Ljava/util/Map;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/Map;
+	public final fun component2 ()Ljava/util/Map;
+	public final fun copy (Ljava/util/Map;Ljava/util/Map;)Lcom/monkopedia/kodemirror/lang/html/HtmlCompletionConfig;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/lang/html/HtmlCompletionConfig;Ljava/util/Map;Ljava/util/Map;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/lang/html/HtmlCompletionConfig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getExtraGlobalAttributes ()Ljava/util/Map;
+	public final fun getExtraTags ()Ljava/util/Map;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class com/monkopedia/kodemirror/lang/html/HtmlHighlightKt {
 	public static final fun getHtmlHighlighting ()Lcom/monkopedia/kodemirror/lezer/common/NodePropSource;
 }
 
 public final class com/monkopedia/kodemirror/lang/html/HtmlKt {
 	public static final fun getHtmlLanguage ()Lcom/monkopedia/kodemirror/language/LRLanguage;
-	public static final fun html ()Lcom/monkopedia/kodemirror/language/LanguageSupport;
+	public static final fun html (Lcom/monkopedia/kodemirror/lang/html/HtmlCompletionConfig;Z)Lcom/monkopedia/kodemirror/language/LanguageSupport;
+	public static synthetic fun html$default (Lcom/monkopedia/kodemirror/lang/html/HtmlCompletionConfig;ZILjava/lang/Object;)Lcom/monkopedia/kodemirror/language/LanguageSupport;
 }
 
 public final class com/monkopedia/kodemirror/lang/html/HtmlParserKt {
 	public static final fun getParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
+}
+
+public final class com/monkopedia/kodemirror/lang/html/HtmlSchema {
+	public static final field Companion Lcom/monkopedia/kodemirror/lang/html/HtmlSchema$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/util/Map;Ljava/util/Map;)V
+	public synthetic fun <init> (Ljava/util/Map;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getAllTags ()Ljava/util/List;
+	public final fun getGlobalAttrNames ()Ljava/util/List;
+	public final fun getGlobalAttrs ()Ljava/util/Map;
+	public final fun getTags ()Ljava/util/Map;
+}
+
+public final class com/monkopedia/kodemirror/lang/html/HtmlSchema$Companion {
+	public final fun getDefault ()Lcom/monkopedia/kodemirror/lang/html/HtmlSchema;
+}
+
+public final class com/monkopedia/kodemirror/lang/html/TagSpec {
+	public fun <init> ()V
+	public fun <init> (Ljava/util/Map;ZLjava/util/List;)V
+	public synthetic fun <init> (Ljava/util/Map;ZLjava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/Map;
+	public final fun component2 ()Z
+	public final fun component3 ()Ljava/util/List;
+	public final fun copy (Ljava/util/Map;ZLjava/util/List;)Lcom/monkopedia/kodemirror/lang/html/TagSpec;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/lang/html/TagSpec;Ljava/util/Map;ZLjava/util/List;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/lang/html/TagSpec;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAttrs ()Ljava/util/Map;
+	public final fun getChildren ()Ljava/util/List;
+	public final fun getGlobalAttrs ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 

@@ -18,6 +18,8 @@
  */
 package com.monkopedia.kodemirror.lang.html
 
+import com.monkopedia.kodemirror.autocomplete.CompletionConfig
+import com.monkopedia.kodemirror.autocomplete.autocompletion
 import com.monkopedia.kodemirror.language.CommentTokens
 import com.monkopedia.kodemirror.language.FoldRange
 import com.monkopedia.kodemirror.language.LRLanguage
@@ -26,6 +28,8 @@ import com.monkopedia.kodemirror.language.commentTokens
 import com.monkopedia.kodemirror.language.foldNodeProp
 import com.monkopedia.kodemirror.language.indentNodeProp
 import com.monkopedia.kodemirror.lezer.lr.ParserConfig
+import com.monkopedia.kodemirror.state.Extension
+import com.monkopedia.kodemirror.state.ExtensionList
 
 /**
  * A language provider based on the Lezer HTML parser, extended with
@@ -100,13 +104,28 @@ val htmlLanguage: LRLanguage = LRLanguage.define(
 )
 
 /**
- * HTML language support.
+ * HTML language support with autocompletion and auto-closing tags.
+ *
+ * @param config Optional completion configuration for extending the
+ *   default HTML schema with additional tags or attributes.
+ * @param selfClosingTags Whether to include [autoCloseTags] support
+ *   (enabled by default).
  */
-fun html(): LanguageSupport = LanguageSupport(
-    htmlLanguage,
-    support = commentTokens.of(
-        CommentTokens(
-            block = CommentTokens.BlockComment("<!--", "-->")
+fun html(
+    config: HtmlCompletionConfig = HtmlCompletionConfig(),
+    selfClosingTags: Boolean = true
+): LanguageSupport {
+    val support = mutableListOf<Extension>(
+        commentTokens.of(
+            CommentTokens(
+                block = CommentTokens.BlockComment("<!--", "-->")
+            )
+        ),
+        autocompletion(
+            CompletionConfig(override = listOf(htmlCompletionSourceWith(config)))
         )
     )
-)
+    if (selfClosingTags) support.add(autoCloseTags)
+
+    return LanguageSupport(htmlLanguage, support = ExtensionList(support))
+}

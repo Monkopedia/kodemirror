@@ -177,7 +177,8 @@ Each item has a status prefix on its heading line:
 - Missing: `localCompletionSource`, `scopeCompletionSource`, `completionPath`, `snippets`,
   `typescriptSnippets`, `autoCloseTags`. JS is the most commonly used language in code editors.
 
-### 22. Port `lang-html` autoCloseTags and completion
+### 22. [DONE] Port `lang-html` autoCloseTags and completion
+> Added `autoCloseTags`, `htmlCompletionSource`, `htmlCompletionSourceWith()`, `HtmlSchema` with full tag/attribute data, `HtmlCompletionConfig`, and `TagSpec`. Wired into `html()` function.
 - **Effort:** 1–2 days | **Source:** Completeness
 - Missing: `autoCloseTags`, `htmlCompletion`, `htmlCompletionSourceWith()`.
   Auto-close HTML tags on `>` is one of the most expected editor behaviors.

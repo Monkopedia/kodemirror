@@ -10,6 +10,7 @@ kotlin {
             implementation(project(":lezer-lr"))
             implementation(project(":language"))
             implementation(project(":state"))
+            implementation(project(":autocomplete"))
         }
     }
 }
