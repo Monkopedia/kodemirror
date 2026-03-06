@@ -25,4 +25,3 @@ jobs:
           :lezer-common:wasmJsTest
           :lezer-highlight:wasmJsTest
           :lezer-lr:wasmJsTest
-          :lang-grammar:wasmJsTest
