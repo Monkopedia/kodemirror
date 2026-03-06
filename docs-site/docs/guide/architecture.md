@@ -45,7 +45,7 @@ Depends on `:state`, `:view`, `:lezer-common`, and `:lezer-highlight`.
 |--------|---------|---------|
 | `:view` | `com.monkopedia.kodemirror.view` | Compose rendering, `EditorView`, `ViewPlugin`, decorations, gutters, panels, tooltips |
 
-Depends on `:state`, `:language`, `:search`, and the Lezer modules.
+Depends on `:state` and Compose (foundation, ui, runtime).
 This is the main Compose integration layer.
 
 ### Layer 5 — Features
