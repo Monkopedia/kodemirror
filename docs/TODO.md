@@ -139,8 +139,8 @@ Each item has a status prefix on its heading line:
 - Zero `suspend fun` or `Flow` usage in core modules. Async linting and network-backed completions
   need coroutine support. This is essential for a coroutine-native Kotlin API.
 
-### 17. [BLOCKED] Rename `jsHighlight` to `jsHighlighting` and prefix `parser` properties
-> **Blocked:** Breaking change — need to decide on deprecation strategy (deprecation cycle with `@Deprecated` + `ReplaceWith` or hard rename). Affects ~15 language modules for parser property renaming.
+### 17. [BLOCKED] Prefix `parser` properties across language modules
+> **Blocked:** Renaming ~16 top-level `parser` properties (e.g. `parser` → `javaParser`) is a large breaking change affecting every lang-* module. The `jsHighlight` → `jsHighlighting` rename is done.
 - **Effort:** < 1 day | **Source:** Architecture
 - `jsHighlight` is the only language module not matching `{lang}Highlighting` pattern.
 - Top-level `parser` property across ~15 modules causes star-import collisions. Rename to
@@ -288,7 +288,7 @@ Each item has a status prefix on its heading line:
 - Target: `Decoration.mark { style { background = Color(...); fontWeight = FontWeight.Bold } }`
 - Eliminates `MarkDecorationSpec(style = SpanStyle(...))` ceremony.
 
-### 39. Add `EditorState` convenience extensions
+### 39. [DONE] Add `EditorState` convenience extensions
 - **Effort:** < 1 day | **Source:** Kotlin Ergonomics
 - `val EditorState.currentLine`, `.selectedText`, `.cursorPosition`, `.isEmpty`
 
@@ -339,7 +339,7 @@ Each item has a status prefix on its heading line:
 - Ironic absence for a Kotlin-first library. Even a Java grammar with Kotlin extensions would be
   high value.
 
-### 50. Add missing highlighting exports and fix placement
+### 50. [DONE] Add missing highlighting exports and fix placement
 - **Effort:** < 1 day | **Source:** Architecture
 - `lang-php`: No `phpHighlighting` export. `lang-angular`: No `angularHighlighting` or `parser`.
 - `lang-vue`: Move highlighting from `VueParserKt` to a separate `VueHighlightKt` for consistency
@@ -350,7 +350,8 @@ Each item has a status prefix on its heading line:
 - Both `lang-jinja` and `lang-liquid` export a top-level `tagLanguage` property. Rename to
   `jinjaTagLanguage` and `liquidTagLanguage` to prevent confusion.
 
-### 52. Filter `$stable` fields from API dumps
+### 52. [BLOCKED] Filter `$stable` fields from API dumps
+> **Blocked:** BCV doesn't support filtering individual synthetic fields by name pattern. The `$stable` fields are Compose compiler-generated and cannot be suppressed via `nonPublicMarkers` or `ignoredClasses`. Would need a custom post-processing step or upstream BCV feature.
 - **Effort:** < 1 hour | **Source:** Architecture
 - 82 classes expose Compose compiler `$stable` field. Cosmetic but adds noise.
 
@@ -359,7 +360,7 @@ Each item has a status prefix on its heading line:
 - `IterMode.INCLUDE_ANONYMOUS`, `.EXCLUDE_BUFFERS`, etc. are integer bit flags. Kotlin idiom is
   `EnumSet` or sealed class.
 
-### 54. Add `Text` convenience extensions
+### 54. [DONE] Add `Text` convenience extensions
 - **Effort:** < 1 hour | **Source:** Kotlin Ergonomics
 - `Text.isEmpty`, `.isNotEmpty`, `.lineSequence()`, `operator fun get(range: IntRange)`
 
@@ -399,7 +400,7 @@ Each item has a status prefix on its heading line:
 - `lang-python/src/commonTest/.../PythonParserTest.kt:59` — TODO: parser produces minor error node.
 - Investigate whether these are upstream fidelity issues or Kodemirror-specific.
 
-### 62. Add platform-specific setup to bundle.md
+### 62. [DONE] Add platform-specific setup to bundle.md
 - **Effort:** < 1 day | **Source:** Documentation
 - Show complete Android and Desktop `build.gradle.kts` snippets.
 
@@ -426,12 +427,12 @@ Each item has a status prefix on its heading line:
 - Guide doesn't mention that `Text.of()` expects split lines (no embedded newlines).
 - Missing coverage of `Text.iter()` variants and `RawTextCursor`.
 
-### 68. Add troubleshooting section to docs
+### 68. [DONE] Add troubleshooting section to docs
 - **Effort:** < 1 day | **Source:** Documentation
 - Common issues like Java version requirements (project needs Java 11+), wasmJs test environment
   setup, and common build errors are not documented for users.
 
-### 69. Add changelog / version history
+### 69. [DONE] Add changelog / version history
 - **Effort:** < 1 day | **Source:** Documentation
 - As a pre-1.0 project at version `0.1.0-SNAPSHOT`, there is no changelog documenting breaking
   changes between versions. Start a `CHANGELOG.md` to track changes as the API stabilizes.

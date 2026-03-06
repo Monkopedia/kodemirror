@@ -322,9 +322,12 @@ public final class com/monkopedia/kodemirror/state/EditorState {
 	public final fun field (Lcom/monkopedia/kodemirror/state/StateField;)Ljava/lang/Object;
 	public final fun field (Lcom/monkopedia/kodemirror/state/StateField;Z)Ljava/lang/Object;
 	public final fun get (Lcom/monkopedia/kodemirror/state/StateField;)Ljava/lang/Object;
+	public final fun getCurrentLine ()Lcom/monkopedia/kodemirror/state/Line;
+	public final fun getCursorPosition ()I
 	public final fun getDoc ()Lcom/monkopedia/kodemirror/state/Text;
 	public final fun getLineBreak ()Ljava/lang/String;
 	public final fun getReadOnly ()Z
+	public final fun getSelectedText ()Ljava/lang/String;
 	public final fun getSelection ()Lcom/monkopedia/kodemirror/state/EditorSelection;
 	public final fun getTabSize ()I
 	public final fun languageDataAt (Ljava/lang/String;II)Ljava/util/List;
@@ -821,6 +824,8 @@ public abstract class com/monkopedia/kodemirror/state/Text {
 	public abstract fun getChildren ()Ljava/util/List;
 	public abstract fun getLength ()I
 	public abstract fun getLines ()I
+	public final fun isEmpty ()Z
+	public final fun isNotEmpty ()Z
 	public final fun iter (I)Lcom/monkopedia/kodemirror/state/TextIterator;
 	public static synthetic fun iter$default (Lcom/monkopedia/kodemirror/state/Text;IILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/TextIterator;
 	public final fun iterLines (Ljava/lang/Integer;Ljava/lang/Integer;)Lcom/monkopedia/kodemirror/state/TextIterator;
@@ -829,6 +834,7 @@ public abstract class com/monkopedia/kodemirror/state/Text {
 	public static synthetic fun iterRange$default (Lcom/monkopedia/kodemirror/state/Text;IIILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/TextIterator;
 	public final fun line (I)Lcom/monkopedia/kodemirror/state/Line;
 	public final fun lineAt (I)Lcom/monkopedia/kodemirror/state/Line;
+	public final fun lineSequence ()Lkotlin/sequences/Sequence;
 	public fun replace (IILcom/monkopedia/kodemirror/state/Text;)Lcom/monkopedia/kodemirror/state/Text;
 	public final fun slice (II)Lcom/monkopedia/kodemirror/state/Text;
 	public static synthetic fun slice$default (Lcom/monkopedia/kodemirror/state/Text;IIILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/Text;

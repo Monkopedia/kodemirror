@@ -20,25 +20,9 @@
 
 package com.monkopedia.kodemirror.lang.vue
 
-import com.monkopedia.kodemirror.lezer.highlight.Tags
-import com.monkopedia.kodemirror.lezer.highlight.styleTags
 import com.monkopedia.kodemirror.lezer.lr.LRParser
 import com.monkopedia.kodemirror.lezer.lr.LocalTokenGroup
 import com.monkopedia.kodemirror.lezer.lr.ParserSpec
-
-val vueHighlighting = styleTags(
-    mapOf(
-        "Text" to Tags.content,
-        "Is" to Tags.definitionOperator,
-        "AttributeName" to Tags.attributeName,
-        "VueAttributeName" to Tags.keyword,
-        "Identifier" to Tags.variableName,
-        "AttributeValue ScriptAttributeValue" to Tags.attributeValue,
-        "Entity" to Tags.character,
-        "{{ }}" to Tags.brace,
-        "@ :" to Tags.punctuation
-    )
-)
 
 internal val vueParser: LRParser = LRParser.deserialize(
     ParserSpec(

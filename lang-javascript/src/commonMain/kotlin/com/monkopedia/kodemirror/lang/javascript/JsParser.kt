@@ -926,7 +926,7 @@ val parser: LRParser = LRParser.deserialize(
                 "JSXEndTag"
             )
         ),
-        propSources = listOf(jsHighlight),
+        propSources = listOf(jsHighlighting),
         skippedNodes = listOf(0, 5, 6, 278),
         repeatNodeCount = 37,
         tokenData = "\$Fq07[R!bOX%ZXY+gYZ-yZ[+g[]%Z]^.c^p%Zpq+gqr/mrs3cst:_tuEruvJSvwLkwx! Yxy!'iyz!(" +

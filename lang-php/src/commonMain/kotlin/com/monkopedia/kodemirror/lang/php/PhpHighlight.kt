@@ -23,7 +23,8 @@ package com.monkopedia.kodemirror.lang.php
 import com.monkopedia.kodemirror.lezer.highlight.Tags
 import com.monkopedia.kodemirror.lezer.highlight.styleTags
 
-internal val phpHighlighting = styleTags(
+/** Highlighting rules for PHP syntax. */
+val phpHighlighting = styleTags(
     mapOf(
         "Visibility abstract final static" to Tags.modifier,
         "for foreach while do if else elseif switch try catch finally return throw break continue default case" to Tags.controlKeyword,

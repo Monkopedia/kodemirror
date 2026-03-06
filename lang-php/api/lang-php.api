@@ -1,3 +1,7 @@
+public final class com/monkopedia/kodemirror/lang/php/PhpHighlightKt {
+	public static final fun getPhpHighlighting ()Lcom/monkopedia/kodemirror/lezer/common/NodePropSource;
+}
+
 public final class com/monkopedia/kodemirror/lang/php/PhpKt {
 	public static final fun getPhpLanguage ()Lcom/monkopedia/kodemirror/language/LRLanguage;
 	public static final fun php ()Lcom/monkopedia/kodemirror/language/LanguageSupport;

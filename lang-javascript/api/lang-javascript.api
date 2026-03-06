@@ -8,7 +8,7 @@ public final class com/monkopedia/kodemirror/lang/javascript/JavascriptKt {
 }
 
 public final class com/monkopedia/kodemirror/lang/javascript/JsHighlightKt {
-	public static final fun getJsHighlight ()Lcom/monkopedia/kodemirror/lezer/common/NodePropSource;
+	public static final fun getJsHighlighting ()Lcom/monkopedia/kodemirror/lezer/common/NodePropSource;
 }
 
 public final class com/monkopedia/kodemirror/lang/javascript/JsParserKt {

@@ -13,6 +13,7 @@ Multiplatform port of CodeMirror 6.
   compartments, decorations, and precedence
 - [Extension Index](extensions-index.md) — Which module provides each
   common extension
+- [Troubleshooting](troubleshooting.md) — Common issues and solutions
 
 See also the [API Reference](../reference/index.md) for generated
 KDoc documentation of every module.

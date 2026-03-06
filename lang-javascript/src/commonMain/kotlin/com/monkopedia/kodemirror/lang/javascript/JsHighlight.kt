@@ -23,7 +23,7 @@ package com.monkopedia.kodemirror.lang.javascript
 import com.monkopedia.kodemirror.lezer.highlight.Tags as t
 import com.monkopedia.kodemirror.lezer.highlight.styleTags
 
-val jsHighlight = styleTags(
+val jsHighlighting = styleTags(
     mapOf(
         "get set async static" to t.modifier,
         "for while do if else switch try catch finally return throw break continue default case defer" to

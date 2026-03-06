@@ -148,6 +148,19 @@ abstract class Text {
     /** Retrieve a part of the document as a string using an [IntRange]. */
     operator fun get(range: IntRange): String = sliceString(range.first, range.last + 1)
 
+    /** True if this document has no content. */
+    val isEmpty: Boolean get() = length == 0
+
+    /** True if this document has content. */
+    val isNotEmpty: Boolean get() = length > 0
+
+    /** Return a sequence of lines in this document. */
+    fun lineSequence(): Sequence<Line> = sequence {
+        for (i in 1..lines) {
+            yield(line(i))
+        }
+    }
+
     internal abstract fun flatten(target: MutableList<String>)
 
     internal abstract fun scanIdentical(other: Text, dir: Int): Int

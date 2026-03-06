@@ -3,3 +3,7 @@ public final class com/monkopedia/kodemirror/lang/angular/AngularKt {
 	public static final fun getAngularLanguage ()Lcom/monkopedia/kodemirror/language/LRLanguage;
 }
 
+public final class com/monkopedia/kodemirror/lang/angular/AngularParserKt {
+	public static final fun getAngularHighlighting ()Lcom/monkopedia/kodemirror/lezer/common/NodePropSource;
+}
+

@@ -1,9 +1,9 @@
+public final class com/monkopedia/kodemirror/lang/vue/VueHighlightKt {
+	public static final fun getVueHighlighting ()Lcom/monkopedia/kodemirror/lezer/common/NodePropSource;
+}
+
 public final class com/monkopedia/kodemirror/lang/vue/VueKt {
 	public static final fun getVueLanguage ()Lcom/monkopedia/kodemirror/language/LRLanguage;
 	public static final fun vue ()Lcom/monkopedia/kodemirror/language/LanguageSupport;
-}
-
-public final class com/monkopedia/kodemirror/lang/vue/VueParserKt {
-	public static final fun getVueHighlighting ()Lcom/monkopedia/kodemirror/lezer/common/NodePropSource;
 }
 

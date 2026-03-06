@@ -55,6 +55,63 @@ automatically.
 | `:autocomplete` | `:state`, `:view`, `:language` |
 | `:view` | `:state` |
 
+## Platform-specific setup
+
+### Android
+
+For Android projects, add the Compose Multiplatform plugin and
+Kodemirror dependencies:
+
+```kotlin
+// build.gradle.kts (app module)
+plugins {
+    id("com.android.application")
+    kotlin("multiplatform")
+    id("org.jetbrains.compose")
+    id("org.jetbrains.kotlin.plugin.compose")
+}
+
+kotlin {
+    androidTarget()
+    sourceSets {
+        androidMain.dependencies {
+            implementation("com.monkopedia.kodemirror:state:0.1.0-SNAPSHOT")
+            implementation("com.monkopedia.kodemirror:view:0.1.0-SNAPSHOT")
+            implementation("com.monkopedia.kodemirror:commands:0.1.0-SNAPSHOT")
+            implementation("com.monkopedia.kodemirror:language:0.1.0-SNAPSHOT")
+            implementation("com.monkopedia.kodemirror:lang-javascript:0.1.0-SNAPSHOT")
+        }
+    }
+}
+```
+
+### Desktop (JVM)
+
+For Compose Desktop applications:
+
+```kotlin
+// build.gradle.kts
+plugins {
+    kotlin("multiplatform")
+    id("org.jetbrains.compose")
+    id("org.jetbrains.kotlin.plugin.compose")
+}
+
+kotlin {
+    jvm()
+    sourceSets {
+        jvmMain.dependencies {
+            implementation(compose.desktop.currentOs)
+            implementation("com.monkopedia.kodemirror:state:0.1.0-SNAPSHOT")
+            implementation("com.monkopedia.kodemirror:view:0.1.0-SNAPSHOT")
+            implementation("com.monkopedia.kodemirror:commands:0.1.0-SNAPSHOT")
+            implementation("com.monkopedia.kodemirror:language:0.1.0-SNAPSHOT")
+            implementation("com.monkopedia.kodemirror:lang-javascript:0.1.0-SNAPSHOT")
+        }
+    }
+}
+```
+
 ## Choosing extensions
 
 Unlike upstream CodeMirror where `@codemirror/basic-setup` bundles a

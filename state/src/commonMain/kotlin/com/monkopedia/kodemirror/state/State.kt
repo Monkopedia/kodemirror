@@ -625,6 +625,19 @@ class EditorState private constructor(
         get() = facet(
             com.monkopedia.kodemirror.state.readOnly
         )
+
+    /** The line containing the primary cursor. */
+    val currentLine: Line get() = doc.lineAt(selection.main.head)
+
+    /** The text currently selected by the primary selection, or empty string for cursors. */
+    val selectedText: String
+        get() {
+            val main = selection.main
+            return if (main.empty) "" else doc.sliceString(main.from, main.to)
+        }
+
+    /** The character position of the primary cursor. */
+    val cursorPosition: Int get() = selection.main.head
 }
 
 data class ChangeByRangeResult(

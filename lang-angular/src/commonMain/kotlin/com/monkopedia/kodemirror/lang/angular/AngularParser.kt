@@ -25,7 +25,8 @@ import com.monkopedia.kodemirror.lezer.highlight.styleTags
 import com.monkopedia.kodemirror.lezer.lr.LRParser
 import com.monkopedia.kodemirror.lezer.lr.ParserSpec
 
-internal val angularHighlighting = styleTags(
+/** Highlighting rules for Angular template syntax. */
+val angularHighlighting = styleTags(
     mapOf(
         "Text" to Tags.content,
         "Is" to Tags.definitionOperator,
