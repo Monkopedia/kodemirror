@@ -440,6 +440,7 @@ public final class com/monkopedia/kodemirror/state/FacetEnabler$StaticExtension 
 public final class com/monkopedia/kodemirror/state/FacetKt {
 	public static final fun asSlot (Lcom/monkopedia/kodemirror/state/Facet;)Lcom/monkopedia/kodemirror/state/Slot;
 	public static final fun ensureAddr (Lcom/monkopedia/kodemirror/state/EditorState;I)Lcom/monkopedia/kodemirror/state/SlotStatus;
+	public static final fun extensionListOf ([Lcom/monkopedia/kodemirror/state/Extension;)Lcom/monkopedia/kodemirror/state/ExtensionList;
 	public static final fun getAddr (Lcom/monkopedia/kodemirror/state/EditorState;I)Ljava/lang/Object;
 }
 

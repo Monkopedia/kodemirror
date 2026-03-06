@@ -55,14 +55,15 @@ Each item has a status prefix on its heading line:
 - Users must manage 6+ separate dependency versions for a basic editor. A Bill of Materials
   (`kodemirror-bom`) would let users align all module versions with a single entry.
 
-### 6. Add `extensionListOf(vararg Extension)` factory
+### 6. [DONE] Add `extensionListOf(vararg Extension)` factory
 - **Effort:** < 1 hour | **Source:** Frontend DX, Kotlin Ergonomics
 - `ExtensionList(listOf(...))` double-wrapping appears in every editor, every compartment
   reconfiguration, every theme bundle. Add `extensionListOf(vararg)` or make
   `EditorStateConfig.extensions` accept `List<Extension>` directly.
 - **File:** `state/src/commonMain/kotlin/.../state/Extension.kt`
 
-### 7. Add DSL builders for `EditorState` and `TransactionSpec`
+### 7. [BLOCKED] Add DSL builders for `EditorState` and `TransactionSpec`
+> **Blocked:** Needs design decision — what should the DSL API look like? Should the builder scope use operator overloading (`+lineNumbers`) or named methods? Should `TransactionSpec` builder support both `changes` and `annotations`? Need to review `EditorStateConfig`, `TransactionSpec`, and `ChangeSpec` APIs before designing.
 - **Effort:** 2–3 days | **Source:** Kotlin Ergonomics
 - The two most common API entry points have significant ceremony:
   - `EditorState.create(EditorStateConfig(..., extensions = ExtensionList(listOf(...))))`
@@ -71,7 +72,8 @@ Each item has a status prefix on its heading line:
   `view.dispatch { insert(0, "Hello") }`
 - Use `@DslMarker` annotation on builder scopes to prevent accidental scope leaking.
 
-### 8. Replace `eq()` methods with `equals()` / `hashCode()`
+### 8. [BLOCKED] Replace `eq()` methods with `equals()` / `hashCode()`
+> **Blocked:** Needs design decision — `SelectionRange.eq(other, includeAssoc)` has an extra parameter; should `equals()` use `includeAssoc=true` or `false` by default? Also `eq()` is used extensively in internal comparison logic — need to audit all call sites to ensure `equals()` semantics are correct. Breaking change that needs a clear migration strategy.
 - **Effort:** 1–2 days | **Source:** Kotlin Ergonomics
 - `SelectionRange`, `EditorSelection`, `Text`, `RangeValue`, `WidgetType` define `eq()` instead of
   Kotlin's `equals()`. Breaks `==`, collections, and surprises every Kotlin developer.

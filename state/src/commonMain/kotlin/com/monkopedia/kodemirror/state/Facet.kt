@@ -31,6 +31,10 @@ class ExtensionList(
     val extensions: List<Extension>
 ) : Extension
 
+/** Create an [ExtensionList] from the given [extensions]. */
+fun extensionListOf(vararg extensions: Extension): ExtensionList =
+    ExtensionList(extensions.toList())
+
 class ExtensionHolder(val extension: Extension) : Extension
 
 /**
