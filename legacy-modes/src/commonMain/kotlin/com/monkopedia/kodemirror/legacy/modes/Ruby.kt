@@ -342,7 +342,8 @@ val ruby: StreamParser<RubyState> = object : StreamParser<RubyState> {
         val curPunc = state.curPunc
         if (kwtype == "indent" || curPunc != null && Regex("[({\\[]").containsMatchIn(curPunc)) {
             state.context = RubyContext(curPunc ?: style ?: "", state.indented, state.context)
-        } else if ((kwtype == "dedent" || curPunc != null && Regex("[)\\]}]").containsMatchIn(curPunc)) &&
+        } else if (
+            (kwtype == "dedent" || curPunc != null && Regex("[)\\]}]").containsMatchIn(curPunc)) &&
             state.context.prev != null
         ) {
             state.context = state.context.prev!!
@@ -359,7 +360,8 @@ val ruby: StreamParser<RubyState> = object : StreamParser<RubyState> {
         val firstChar = if (textAfter.isNotEmpty()) textAfter[0].toString() else ""
         val ct = state.context
         val closed = ct.type == rubyClosing[firstChar] ||
-            ct.type == "keyword" && Regex("^(?:end|until|else|elsif|when|rescue)\\b").containsMatchIn(textAfter)
+            ct.type == "keyword" &&
+            Regex("^(?:end|until|else|elsif|when|rescue)\\b").containsMatchIn(textAfter)
         return ct.indented + (if (closed) 0 else context.unit) +
             (if (state.continuedLine) context.unit else 0)
     }

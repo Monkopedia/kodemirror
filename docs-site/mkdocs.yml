@@ -1,0 +1,61 @@
+site_name: Kodemirror
+site_description: CodeMirror 6, ported to Kotlin Multiplatform and Compose
+site_url: https://monkopedia.github.io/kodemirror/
+
+repo_name: anthropics/kodemirror
+repo_url: https://github.com/anthropics/kodemirror
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+plugins:
+  - search
+  - minify:
+      minify_html: true
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - pymdownx.details
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Guide:
+      - guide/index.md
+      - Architecture: guide/architecture.md
+      - Data Model: guide/data-model.md
+      - The View: guide/the-view.md
+      - Extending: guide/extending.md
+  - Examples:
+      - examples/index.md
+  - Reference:
+      - reference/index.md

@@ -92,7 +92,9 @@ val tiki: StreamParser<TikiState> = object : StreamParser<TikiState> {
             while (!stream.eol()) {
                 val ch = stream.next()
                 val peek = stream.peek()
-                if (ch == " " || ch == "," || (peek != null && Regex("[ )}]").containsMatchIn(peek))) {
+                if (ch == " " || ch == "," ||
+                    (peek != null && Regex("[ )}]").containsMatchIn(peek))
+                ) {
                     state.tokenize = ::inPlugin
                     break
                 }

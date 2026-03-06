@@ -25,6 +25,7 @@ plugins {
     id("com.diffplug.spotless")
     id("org.jetbrains.kotlinx.atomicfu")
     id("org.jetbrains.kotlinx.kover")
+    id("org.jetbrains.dokka")
 }
 
 group = "com.monkopedia.kodemirror"

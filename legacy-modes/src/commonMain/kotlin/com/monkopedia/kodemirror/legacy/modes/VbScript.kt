@@ -167,9 +167,13 @@ private fun mkVbScript(isASP: Boolean): StreamParser<VbScriptState> {
             return "comment"
         }
 
-        if (stream.match(Regex("^((&H)|(&O))?[0-9.]", RegexOption.IGNORE_CASE), false) != null &&
-            stream.match(Regex("^((&H)|(&O))?[0-9.]+[a-z_]", RegexOption.IGNORE_CASE), false) == null
-        ) {
+        val isNumStart = stream.match(
+            Regex("^((&H)|(&O))?[0-9.]", RegexOption.IGNORE_CASE), false
+        ) != null
+        val isNumIdent = stream.match(
+            Regex("^((&H)|(&O))?[0-9.]+[a-z_]", RegexOption.IGNORE_CASE), false
+        ) != null
+        if (isNumStart && !isNumIdent) {
             var floatLiteral = false
             if (stream.match(Regex("^\\d*\\.\\d+", RegexOption.IGNORE_CASE)) != null) {
                 floatLiteral = true

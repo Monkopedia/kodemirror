@@ -46,9 +46,9 @@ private val ttcnTypes = (
     ).split(" ").toSet()
 
 private val ttcnTimerOps = "read running start stop timeout".split(" ").toSet()
-private val ttcnPortOps = "call catch check clear getcall getreply halt raise receive reply send trigger".split(
-    " "
-).toSet()
+private val ttcnPortOps = (
+    "call catch check clear getcall getreply halt raise receive reply send trigger"
+    ).split(" ").toSet()
 private val ttcnConfigOps = "create connect disconnect done kill killed map unmap".split(
     " "
 ).toSet()
