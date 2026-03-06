@@ -24,6 +24,7 @@ import com.monkopedia.kodemirror.language.matchBrackets
 import com.monkopedia.kodemirror.language.syntaxTree
 import com.monkopedia.kodemirror.state.ChangeByRangeResult
 import com.monkopedia.kodemirror.state.ChangeSpec
+import com.monkopedia.kodemirror.state.CharCategory
 import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.InsertContent
@@ -72,6 +73,46 @@ val cursorCharRight: (EditorView) -> Boolean = { view ->
     updateSel(view) { sel, _ -> moveByChar(view.state, sel, forward = true) }
 }
 
+/**
+ * Move cursor one character forward (logical direction).
+ *
+ * In left-to-right text this is the same as [cursorCharRight].
+ * The distinction matters in bidirectional text where forward
+ * follows document order rather than visual order.
+ */
+val cursorCharForward: (EditorView) -> Boolean = { view ->
+    updateSel(view) { sel, _ -> moveByChar(view.state, sel, forward = true) }
+}
+
+/**
+ * Move cursor one character backward (logical direction).
+ *
+ * @see cursorCharForward
+ */
+val cursorCharBackward: (EditorView) -> Boolean = { view ->
+    updateSel(view) { sel, _ -> moveByChar(view.state, sel, forward = false) }
+}
+
+/**
+ * Move cursor one character forward by logical string index,
+ * using grapheme cluster breaks for boundary detection.
+ */
+val cursorCharForwardLogical: (EditorView) -> Boolean = { view ->
+    updateSel(view) { sel, _ ->
+        byCharLogical(view.state, sel, forward = true, extend = false)
+    }
+}
+
+/**
+ * Move cursor one character backward by logical string index,
+ * using grapheme cluster breaks for boundary detection.
+ */
+val cursorCharBackwardLogical: (EditorView) -> Boolean = { view ->
+    updateSel(view) { sel, _ ->
+        byCharLogical(view.state, sel, forward = false, extend = false)
+    }
+}
+
 /** Move cursor one word group to the left. */
 val cursorGroupLeft: (EditorView) -> Boolean = { view ->
     updateSel(view) { sel, _ -> moveByGroup(view.state, sel, forward = false) }
@@ -80,6 +121,60 @@ val cursorGroupLeft: (EditorView) -> Boolean = { view ->
 /** Move cursor one word group to the right. */
 val cursorGroupRight: (EditorView) -> Boolean = { view ->
     updateSel(view) { sel, _ -> moveByGroup(view.state, sel, forward = true) }
+}
+
+/**
+ * Move cursor one word group forward (logical direction).
+ *
+ * @see cursorGroupLeft
+ */
+val cursorGroupForward: (EditorView) -> Boolean = { view ->
+    updateSel(view) { sel, _ -> moveByGroup(view.state, sel, forward = true) }
+}
+
+/**
+ * Move cursor one word group backward (logical direction).
+ *
+ * @see cursorGroupLeft
+ */
+val cursorGroupBackward: (EditorView) -> Boolean = { view ->
+    updateSel(view) { sel, _ -> moveByGroup(view.state, sel, forward = false) }
+}
+
+/**
+ * Move cursor to the start of the next word group (Windows
+ * convention). Unlike [cursorGroupForward] which stops at the
+ * end of the current group, this skips past trailing whitespace
+ * and stops at the beginning of the next word.
+ */
+val cursorGroupForwardWin: (EditorView) -> Boolean = { view ->
+    updateSel(view) { sel, _ ->
+        moveToGroupStart(view.state, sel, forward = true, extend = false)
+    }
+}
+
+/**
+ * Move cursor to the nearest syntax boundary in the left
+ * direction. Tries bracket matching first; if no bracket
+ * match is found, walks the syntax tree to find the nearest
+ * enclosing node boundary.
+ */
+val cursorSyntaxLeft: (EditorView) -> Boolean = { view ->
+    updateSel(view) { sel, _ ->
+        moveBySyntax(view.state, sel, forward = false)
+    }
+}
+
+/**
+ * Move cursor to the nearest syntax boundary in the right
+ * direction.
+ *
+ * @see cursorSyntaxLeft
+ */
+val cursorSyntaxRight: (EditorView) -> Boolean = { view ->
+    updateSel(view) { sel, _ ->
+        moveBySyntax(view.state, sel, forward = true)
+    }
 }
 
 /** Move cursor one line up. */
@@ -102,6 +197,54 @@ val cursorLineStart: (EditorView) -> Boolean = { view ->
 
 /** Move cursor to the end of the current line. */
 val cursorLineEnd: (EditorView) -> Boolean = { view ->
+    updateSel(view) { sel, _ ->
+        val line = view.state.doc.lineAt(sel.head)
+        EditorSelection.cursor(line.to)
+    }
+}
+
+/**
+ * Move cursor to the line boundary in the forward direction.
+ * In the absence of soft line wrapping, this is equivalent to
+ * [cursorLineEnd].
+ */
+val cursorLineBoundaryForward: (EditorView) -> Boolean = { view ->
+    updateSel(view) { sel, _ ->
+        val line = view.state.doc.lineAt(sel.head)
+        EditorSelection.cursor(line.to)
+    }
+}
+
+/**
+ * Move cursor to the line boundary in the backward direction.
+ * In the absence of soft line wrapping, this is equivalent to
+ * [cursorLineStart].
+ */
+val cursorLineBoundaryBackward: (EditorView) -> Boolean = { view ->
+    updateSel(view) { sel, _ ->
+        val line = view.state.doc.lineAt(sel.head)
+        EditorSelection.cursor(line.from)
+    }
+}
+
+/**
+ * Move cursor to the line boundary on the left side (visual
+ * direction). Same as [cursorLineBoundaryBackward] in
+ * left-to-right text.
+ */
+val cursorLineBoundaryLeft: (EditorView) -> Boolean = { view ->
+    updateSel(view) { sel, _ ->
+        val line = view.state.doc.lineAt(sel.head)
+        EditorSelection.cursor(line.from)
+    }
+}
+
+/**
+ * Move cursor to the line boundary on the right side (visual
+ * direction). Same as [cursorLineBoundaryForward] in
+ * left-to-right text.
+ */
+val cursorLineBoundaryRight: (EditorView) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         val line = view.state.doc.lineAt(sel.head)
         EditorSelection.cursor(line.to)
@@ -158,6 +301,40 @@ val selectCharRight: (EditorView) -> Boolean = { view ->
     }
 }
 
+/** Extend selection one character forward (logical direction). */
+val selectCharForward: (EditorView) -> Boolean = { view ->
+    updateSel(view) { sel, _ ->
+        moveByChar(view.state, sel, forward = true, extend = true)
+    }
+}
+
+/** Extend selection one character backward (logical direction). */
+val selectCharBackward: (EditorView) -> Boolean = { view ->
+    updateSel(view) { sel, _ ->
+        moveByChar(view.state, sel, forward = false, extend = true)
+    }
+}
+
+/**
+ * Extend selection one character forward by logical string
+ * index, using grapheme cluster breaks.
+ */
+val selectCharForwardLogical: (EditorView) -> Boolean = { view ->
+    updateSel(view) { sel, _ ->
+        byCharLogical(view.state, sel, forward = true, extend = true)
+    }
+}
+
+/**
+ * Extend selection one character backward by logical string
+ * index, using grapheme cluster breaks.
+ */
+val selectCharBackwardLogical: (EditorView) -> Boolean = { view ->
+    updateSel(view) { sel, _ ->
+        byCharLogical(view.state, sel, forward = false, extend = true)
+    }
+}
+
 /** Extend selection one word group to the left. */
 val selectGroupLeft: (EditorView) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
@@ -169,6 +346,46 @@ val selectGroupLeft: (EditorView) -> Boolean = { view ->
 val selectGroupRight: (EditorView) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         moveByGroup(view.state, sel, forward = true, extend = true)
+    }
+}
+
+/** Extend selection one word group forward (logical direction). */
+val selectGroupForward: (EditorView) -> Boolean = { view ->
+    updateSel(view) { sel, _ ->
+        moveByGroup(view.state, sel, forward = true, extend = true)
+    }
+}
+
+/** Extend selection one word group backward (logical direction). */
+val selectGroupBackward: (EditorView) -> Boolean = { view ->
+    updateSel(view) { sel, _ ->
+        moveByGroup(view.state, sel, forward = false, extend = true)
+    }
+}
+
+/**
+ * Extend selection to the start of the next word group
+ * (Windows convention).
+ *
+ * @see cursorGroupForwardWin
+ */
+val selectGroupForwardWin: (EditorView) -> Boolean = { view ->
+    updateSel(view) { sel, _ ->
+        moveToGroupStart(view.state, sel, forward = true, extend = true)
+    }
+}
+
+/** Extend selection to the nearest syntax boundary on the left. */
+val selectSyntaxLeft: (EditorView) -> Boolean = { view ->
+    updateSel(view) { sel, _ ->
+        moveBySyntax(view.state, sel, forward = false, extend = true)
+    }
+}
+
+/** Extend selection to the nearest syntax boundary on the right. */
+val selectSyntaxRight: (EditorView) -> Boolean = { view ->
+    updateSel(view) { sel, _ ->
+        moveBySyntax(view.state, sel, forward = true, extend = true)
     }
 }
 
@@ -199,6 +416,60 @@ val selectLineEnd: (EditorView) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         val line = view.state.doc.lineAt(sel.head)
         EditorSelection.range(sel.anchor, line.to)
+    }
+}
+
+/** Extend selection to the line boundary in the forward direction. */
+val selectLineBoundaryForward: (EditorView) -> Boolean = { view ->
+    updateSel(view) { sel, _ ->
+        val line = view.state.doc.lineAt(sel.head)
+        EditorSelection.range(sel.anchor, line.to)
+    }
+}
+
+/** Extend selection to the line boundary in the backward direction. */
+val selectLineBoundaryBackward: (EditorView) -> Boolean = { view ->
+    updateSel(view) { sel, _ ->
+        val line = view.state.doc.lineAt(sel.head)
+        EditorSelection.range(sel.anchor, line.from)
+    }
+}
+
+/** Extend selection to the line boundary on the left side (visual). */
+val selectLineBoundaryLeft: (EditorView) -> Boolean = { view ->
+    updateSel(view) { sel, _ ->
+        val line = view.state.doc.lineAt(sel.head)
+        EditorSelection.range(sel.anchor, line.from)
+    }
+}
+
+/** Extend selection to the line boundary on the right side (visual). */
+val selectLineBoundaryRight: (EditorView) -> Boolean = { view ->
+    updateSel(view) { sel, _ ->
+        val line = view.state.doc.lineAt(sel.head)
+        EditorSelection.range(sel.anchor, line.to)
+    }
+}
+
+/** Extend selection one page up. */
+val selectPageUp: (EditorView) -> Boolean = { view ->
+    updateSel(view) { sel, v ->
+        var result = sel
+        repeat(PAGE_SIZE) {
+            result = moveVertically(v, result, forward = false, extend = true)
+        }
+        result
+    }
+}
+
+/** Extend selection one page down. */
+val selectPageDown: (EditorView) -> Boolean = { view ->
+    updateSel(view) { sel, v ->
+        var result = sel
+        repeat(PAGE_SIZE) {
+            result = moveVertically(v, result, forward = true, extend = true)
+        }
+        result
     }
 }
 
@@ -280,6 +551,22 @@ val deleteCharForward: (EditorView) -> Boolean = { view ->
     }
 }
 
+/**
+ * Delete one character backward without indent-unit awareness.
+ *
+ * Unlike [deleteCharBackward], which may delete an entire indent
+ * unit of whitespace, this always deletes exactly one grapheme
+ * cluster.
+ */
+val deleteCharBackwardStrict: (EditorView) -> Boolean = { view ->
+    deleteBy(view, forward = false) { state, sel ->
+        val line = state.doc.lineAt(sel.head)
+        val lineOffset = sel.head - line.from
+        val prevOffset = findClusterBreak(line.text, lineOffset, forward = false)
+        line.from + prevOffset
+    }
+}
+
 /** Delete one word group backward. */
 val deleteGroupBackward: (EditorView) -> Boolean = { view ->
     deleteBy(view, forward = false) { state, sel ->
@@ -308,6 +595,41 @@ val deleteGroupForward: (EditorView) -> Boolean = { view ->
             pos = next
         }
         pos
+    }
+}
+
+/**
+ * Delete to the start of the next word group (Windows
+ * convention). Deletes through trailing whitespace to the
+ * beginning of the next word.
+ *
+ * @see cursorGroupForwardWin
+ */
+val deleteGroupForwardWin: (EditorView) -> Boolean = { view ->
+    deleteBy(view, forward = true) { state, sel ->
+        moveToGroupStart(state, sel, forward = true, extend = false).head
+    }
+}
+
+/**
+ * Delete to the line boundary in the backward direction.
+ * In the absence of soft line wrapping, this is equivalent
+ * to [deleteToLineStart].
+ */
+val deleteLineBoundaryBackward: (EditorView) -> Boolean = { view ->
+    deleteBy(view, forward = false) { state, sel ->
+        state.doc.lineAt(sel.head).from
+    }
+}
+
+/**
+ * Delete to the line boundary in the forward direction.
+ * In the absence of soft line wrapping, this is equivalent
+ * to [deleteToLineEnd].
+ */
+val deleteLineBoundaryForward: (EditorView) -> Boolean = { view ->
+    deleteBy(view, forward = true) { state, sel ->
+        state.doc.lineAt(sel.head).to
     }
 }
 
@@ -355,6 +677,42 @@ val deleteLine: (EditorView) -> Boolean = { view ->
             )
         )
         true
+    }
+}
+
+/**
+ * Remove trailing whitespace from every line in the document.
+ *
+ * This command does not require a selection — it operates on the
+ * entire document.
+ */
+val deleteTrailingWhitespace: (EditorView) -> Boolean = { view ->
+    val state = view.state
+    if (state.readOnly) {
+        false
+    } else {
+        val trailingWs = Regex("\\s+$")
+        val changes = mutableListOf<ChangeSpec>()
+        for (i in 1..state.doc.lines) {
+            val line = state.doc.line(i)
+            val match = trailingWs.find(line.text)
+            if (match != null) {
+                changes.add(
+                    ChangeSpec.Single(line.from + match.range.first, line.to)
+                )
+            }
+        }
+        if (changes.isEmpty()) {
+            false
+        } else {
+            view.dispatch(
+                TransactionSpec(
+                    changes = ChangeSpec.Multi(changes),
+                    userEvent = "delete"
+                )
+            )
+            true
+        }
     }
 }
 
@@ -469,6 +827,13 @@ val insertNewlineAndIndent: (EditorView) -> Boolean = { view ->
     }
 }
 
+/**
+ * Insert a newline and auto-indent. This is an alias for
+ * [insertNewlineAndIndent], exported as a separate name to match
+ * the upstream CodeMirror API.
+ */
+val newlineAndIndent: (EditorView) -> Boolean = insertNewlineAndIndent
+
 /** Insert a tab character or indent unit. */
 val insertTab: (EditorView) -> Boolean = { view ->
     if (view.state.readOnly) {
@@ -569,6 +934,26 @@ val simplifySelection: (EditorView) -> Boolean = { view ->
         )
         true
     }
+}
+
+// --- Multi-cursor commands ---
+
+/**
+ * Add a cursor on the line above each existing cursor head.
+ * Creates a new selection range at the vertically projected
+ * position, keeping all existing selections.
+ */
+val addCursorAbove: (EditorView) -> Boolean = { view ->
+    addCursorVertically(view, forward = false)
+}
+
+/**
+ * Add a cursor on the line below each existing cursor head.
+ *
+ * @see addCursorAbove
+ */
+val addCursorBelow: (EditorView) -> Boolean = { view ->
+    addCursorVertically(view, forward = true)
 }
 
 // --- Blank line insertion ---
@@ -805,4 +1190,175 @@ val selectNextOccurrence: (EditorView) -> Boolean = { view ->
             false
         }
     }
+}
+
+// --- Helper functions for new command variants ---
+
+/**
+ * Move by character using logical string indices and grapheme
+ * cluster breaks for boundary detection.
+ */
+private fun byCharLogical(
+    state: EditorState,
+    sel: SelectionRange,
+    forward: Boolean,
+    extend: Boolean
+): SelectionRange {
+    val line = state.doc.lineAt(sel.head)
+    val lineOffset = sel.head - line.from
+    val newOffset = if (forward) {
+        if (lineOffset >= line.text.length) {
+            // At end of line, move to start of next line
+            if (sel.head >= state.doc.length) return sel
+            val nextLine = state.doc.lineAt(sel.head + 1)
+            val head = nextLine.from
+            val anchor = if (extend) sel.anchor else head
+            return if (extend) {
+                EditorSelection.range(anchor, head)
+            } else {
+                EditorSelection.cursor(head)
+            }
+        } else {
+            findClusterBreak(line.text, lineOffset, forward = true)
+        }
+    } else {
+        if (lineOffset <= 0) {
+            // At start of line, move to end of previous line
+            if (sel.head <= 0) return sel
+            val prevLine = state.doc.lineAt(sel.head - 1)
+            val head = prevLine.to
+            val anchor = if (extend) sel.anchor else head
+            return if (extend) {
+                EditorSelection.range(anchor, head)
+            } else {
+                EditorSelection.cursor(head)
+            }
+        } else {
+            findClusterBreak(line.text, lineOffset, forward = false)
+        }
+    }
+    val head = line.from + newOffset
+    val anchor = if (extend) sel.anchor else head
+    return if (extend) {
+        EditorSelection.range(anchor, head)
+    } else {
+        EditorSelection.cursor(head)
+    }
+}
+
+/**
+ * Windows-style word group movement: moves past the current group
+ * and any trailing whitespace to stop at the start of the next
+ * non-whitespace group.
+ */
+private fun moveToGroupStart(
+    state: EditorState,
+    sel: SelectionRange,
+    forward: Boolean,
+    extend: Boolean
+): SelectionRange {
+    val len = state.doc.length
+    var pos = sel.head
+    val dir = if (forward) 1 else -1
+
+    // First, skip past the current group
+    val startGroup = groupAt(state, pos, dir)
+    while (true) {
+        val next = pos + dir
+        if (next < 0 || next > len) break
+        val group = groupAt(state, next, -dir)
+        if (group != startGroup) break
+        pos = next
+    }
+
+    // Then skip past any whitespace
+    while (true) {
+        val next = pos + dir
+        if (next < 0 || next > len) break
+        val group = groupAt(state, next, -dir)
+        if (group != CharCategory.Space) break
+        pos = next
+    }
+
+    val anchor = if (extend) sel.anchor else pos
+    return if (extend) {
+        EditorSelection.range(anchor, pos)
+    } else {
+        EditorSelection.cursor(pos)
+    }
+}
+
+/**
+ * Navigate by syntax tree structure. Tries bracket matching
+ * first; if no bracket match is found, walks up the tree to
+ * find the nearest enclosing node whose boundary is in the
+ * target direction.
+ */
+private fun moveBySyntax(
+    state: EditorState,
+    sel: SelectionRange,
+    forward: Boolean,
+    extend: Boolean = false
+): SelectionRange {
+    val pos = sel.head
+
+    // Try bracket matching first
+    val before = if (pos > 0) matchBrackets(state, pos - 1, -1) else null
+    val after = if (pos < state.doc.length) matchBrackets(state, pos, 1) else null
+    val bracketMatch = before ?: after
+    if (bracketMatch?.end != null) {
+        val target = bracketMatch.end!!.to
+        val anchor = if (extend) sel.anchor else target
+        return if (extend) {
+            EditorSelection.range(anchor, target)
+        } else {
+            EditorSelection.cursor(target)
+        }
+    }
+
+    // Walk the syntax tree to find the nearest enclosing node boundary
+    val tree = syntaxTree(state)
+    var node = tree.resolveInner(pos, 1)
+    while (node.parent != null) {
+        if (forward && node.to > pos) break
+        if (!forward && node.from < pos) break
+        node = node.parent ?: break
+    }
+    val target = if (forward) node.to else node.from
+    if (target == pos) return sel
+    val anchor = if (extend) sel.anchor else target
+    return if (extend) {
+        EditorSelection.range(anchor, target)
+    } else {
+        EditorSelection.cursor(target)
+    }
+}
+
+/**
+ * Add a new cursor above or below each existing cursor head.
+ */
+private fun addCursorVertically(view: EditorView, forward: Boolean): Boolean {
+    val state = view.state
+    val newRanges = mutableListOf<SelectionRange>()
+    newRanges.addAll(state.selection.ranges)
+
+    for (sel in state.selection.ranges) {
+        val projected = moveVertically(view, sel, forward)
+        // Only add if the new position is different from the original
+        if (projected.head != sel.head) {
+            newRanges.add(EditorSelection.cursor(projected.head))
+        }
+    }
+
+    if (newRanges.size == state.selection.ranges.size) return false
+
+    val newSel = EditorSelection.create(newRanges, newRanges.size - 1)
+    view.dispatch(
+        TransactionSpec(
+            selection = SelectionSpec.EditorSelectionSpec(newSel),
+            scrollIntoView = true,
+            userEvent = "select"
+        )
+    )
+    return true
 }

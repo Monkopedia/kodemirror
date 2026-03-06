@@ -383,7 +383,7 @@ internal class HistoryState(
     }
 }
 
-internal val historyField: StateField<HistoryState> = StateField.define(
+private val _historyField: StateField<HistoryState> = StateField.define(
     StateFieldSpec(
         create = { HistoryState(emptyList(), emptyList()) },
         update = { value, tr ->
@@ -447,37 +447,65 @@ internal val historyField: StateField<HistoryState> = StateField.define(
     )
 )
 
+/**
+ * The state field that stores undo/redo history. Can be used to
+ * check whether history is active in a given state (by checking
+ * `state.field(historyField, false) != null`) or to check undo/redo
+ * availability via [undoDepth] and [redoDepth].
+ */
+val historyField: StateField<*> = _historyField
+
+/** Undo the last change. */
 val undo: (EditorView) -> Boolean = { view ->
-    applyHistory(view, isUndo = true)
+    applyHistory(view, isUndo = true, onlySelection = false)
 }
 
+/** Redo the last undone change. */
 val redo: (EditorView) -> Boolean = { view ->
-    applyHistory(view, isUndo = false)
+    applyHistory(view, isUndo = false, onlySelection = false)
 }
 
-private fun applyHistory(view: EditorView, isUndo: Boolean): Boolean {
+/**
+ * Undo a change or selection change. Unlike [undo], this will
+ * also restore selection-only changes (cursor movements) that
+ * occurred between edits, stepping through selection history.
+ */
+val undoSelection: (EditorView) -> Boolean = { view ->
+    applyHistory(view, isUndo = true, onlySelection = true)
+}
+
+/**
+ * Redo a change or selection change.
+ *
+ * @see undoSelection
+ */
+val redoSelection: (EditorView) -> Boolean = { view ->
+    applyHistory(view, isUndo = false, onlySelection = true)
+}
+
+private fun applyHistory(view: EditorView, isUndo: Boolean, onlySelection: Boolean): Boolean {
     val state = view.state
-    val histState = state.field(historyField, false) ?: return false
+    val histState = state.field(_historyField, false) ?: return false
     val side = if (isUndo) BranchName.Done else BranchName.Undone
-    val tr = histState.pop(side, state, false) ?: return false
+    val tr = histState.pop(side, state, onlySelection) ?: return false
     view.dispatchTransaction(tr)
     return true
 }
 
 fun undoDepth(state: EditorState): Int {
-    val hist = state.field(historyField, false) ?: return 0
+    val hist = state.field(_historyField, false) ?: return 0
     return hist.done.count { it.changes != null }
 }
 
 fun redoDepth(state: EditorState): Int {
-    val hist = state.field(historyField, false) ?: return 0
+    val hist = state.field(_historyField, false) ?: return 0
     return hist.undone.count { it.changes != null }
 }
 
 fun history(config: HistoryConfig = HistoryConfig()): Extension {
     return ExtensionList(
         listOf(
-            historyField,
+            _historyField,
             keymapOf(
                 KeyBinding(
                     key = "Ctrl-z",

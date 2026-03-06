@@ -183,7 +183,8 @@ Each item has a status prefix on its heading line:
 - Missing: `autoCloseTags`, `htmlCompletion`, `htmlCompletionSourceWith()`.
   Auto-close HTML tags on `>` is one of the most expected editor behaviors.
 
-### 23. Add missing ~30 command variants
+### 23. [DONE] Add missing ~30 command variants
+> Added 30+ commands: cursor forward/backward/logical/syntax/lineBoundary variants, group forward/backward/win, selection equivalents, selectPageUp/Down, deleteCharBackwardStrict, deleteGroupForwardWin, deleteLineBoundaryBackward/Forward, deleteTrailingWhitespace, addCursorAbove/Below, newlineAndIndent alias, undoSelection/redoSelection, public historyField. `toggleTabFocusMode`/`temporarilySetTabFocusMode` omitted (DOM-specific, no Compose equivalent).
 - **Effort:** 2 days | **Source:** Completeness
 - Missing cursor commands: `cursorCharForward/Backward`, `cursorCharForwardLogical/BackwardLogical`,
   `cursorGroupForward/Backward`, `cursorGroupForwardWin`, `cursorSyntaxLeft/Right`,
