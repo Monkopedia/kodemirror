@@ -252,7 +252,8 @@ Each item has a status prefix on its heading line:
   dependencies, writing a minimal editor composable, running it. Distinct from the existing
   `basic.md` example which shows code but not the full project setup process.
 
-### 31. Create a complete sample project
+### 31. [BLOCKED] Create a complete sample project
+> **Blocked:** Needs design decision — should this be Android, Desktop (JVM), or both? Should it be a separate repository or a `samples/` directory in this repo? What Gradle setup (version catalog, convention plugins, standalone)?
 - **Effort:** 2–3 days | **Source:** Documentation, Frontend DX
 - No runnable examples. Create a minimal Android or Desktop app in `samples/` that users can clone
   and run. Include platform-specific `build.gradle.kts` setup.
@@ -265,7 +266,8 @@ Each item has a status prefix on its heading line:
 
 ## Priority 6 — Lower Impact, Polish
 
-### 33. Restrict legacy-mode state class mutability
+### 33. [BLOCKED] Restrict legacy-mode state class mutability
+> **Blocked:** Affects 100+ state classes across 99 files. The `StreamParser<State>` generic interface requires `State` to be `public` since it's exposed via the public `StreamParser.startState` return type. Making setters `internal` would require either: (a) splitting into public interfaces + internal implementations for each state, or (b) a module-level approach where state types are package-private. Both are significant refactoring efforts needing architectural decision.
 - **Effort:** 3+ days | **Source:** Architecture
 - All 100+ stream-parser state classes (`AplState`, `AsciiArmorState`, etc.) have public mutable
   setters. The `StreamParser<State>` generic interface may need revisiting to enable `internal`
@@ -348,7 +350,8 @@ Each item has a status prefix on its heading line:
 - **Effort:** 1 day | **Source:** Frontend DX
 - No automatic bridging between `MaterialTheme.colorScheme` and `EditorTheme`.
 
-### 49. Consider a `lang-kotlin` module
+### 49. [BLOCKED] Consider a `lang-kotlin` module
+> **Blocked:** Requires creating a new Lezer grammar or porting an existing grammar. No upstream CodeMirror Kotlin grammar exists. Would need to either create one from scratch or adapt the Java grammar with Kotlin-specific extensions. Significant effort requiring language grammar expertise.
 - **Effort:** 3+ days | **Source:** Frontend DX
 - Ironic absence for a Kotlin-first library. Even a Java grammar with Kotlin extensions would be
   high value.
@@ -425,7 +428,8 @@ Each item has a status prefix on its heading line:
 - **Effort:** < 1 day | **Source:** Documentation
 - Show complete Android and Desktop `build.gradle.kts` snippets.
 
-### 63. Add visual screenshots to example pages
+### 63. [BLOCKED] Add visual screenshots to example pages
+> **Blocked:** Requires a running sample application to capture screenshots. Depends on #31 (sample project) being unblocked first.
 - **Effort:** 1–2 days | **Source:** Documentation
 - At least for `basic.md`, `decoration.md`, `styling.md`.
 
@@ -465,12 +469,14 @@ Each item has a status prefix on its heading line:
 - Comparison tables exist inline across multiple guides. Consolidate into a dedicated migration
   reference for JavaScript developers familiar with CM6 upstream.
 
-### 71. Consider `@codemirror/language-data` port
+### 71. [BLOCKED] Consider `@codemirror/language-data` port
+> **Blocked:** Lower priority — KMP apps typically know their language at compile time. The `LanguageDescription` data class was added in #24 which provides the building blocks. A full port would require registering descriptions for all ~30 language modules.
 - **Effort:** 2–3 days | **Source:** Completeness
 - Language metadata for dynamic loading. Lower priority since KMP apps typically know language at
   compile time.
 
-### 72. Consider `@codemirror/lsp-client` port
+### 72. [BLOCKED] Consider `@codemirror/lsp-client` port
+> **Blocked:** Significant effort requiring KMP-compatible transport layer (WebSocket, stdio). No upstream KMP LSP client exists. Needs design decision on transport abstraction and coroutine integration.
 - **Effort:** 5+ days | **Source:** Completeness
 - LSP client for autocompletion, hover, go-to-definition. New upstream addition; would need
   KMP-compatible transport.
