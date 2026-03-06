@@ -31,7 +31,7 @@ import kotlin.math.max
  * in the parser and provides the [getActions] method which determines the
  * set of parse actions available at the current position.
  */
-class TokenCache(parser: LRParser, val stream: InputStream) {
+internal class TokenCache(parser: LRParser, val stream: InputStream) {
     var tokens: List<CachedToken> = parser.tokenizers.map { CachedToken() }
     var mainToken: CachedToken? = null
     val actions: MutableList<Int> = mutableListOf()
@@ -187,7 +187,7 @@ class TokenCache(parser: LRParser, val stream: InputStream) {
  * The core parse driver. Implements [PartialParse] and manages a set
  * of parallel [Stack]s that advance through the input.
  */
-class Parse(
+internal class Parse(
     val parser: LRParser,
     val input: Input,
     fragments: List<TreeFragment>,
@@ -575,7 +575,7 @@ class Parse(
  * at the same position and state. If a duplicate is found, the one with
  * the higher score is kept.
  */
-fun pushStackDedup(stack: Stack, newStacks: MutableList<Stack>) {
+internal fun pushStackDedup(stack: Stack, newStacks: MutableList<Stack>) {
     for (i in newStacks.indices) {
         val other = newStacks[i]
         if (other.pos == stack.pos && other.sameState(stack)) {
@@ -592,7 +592,7 @@ fun pushStackDedup(stack: Stack, newStacks: MutableList<Stack>) {
  * Search a list of stacks for one that has reached an accepting state.
  * Returns the best such stack (by score), or null if none are accepting.
  */
-fun findFinished(stacks: List<Stack>): Stack? {
+internal fun findFinished(stacks: List<Stack>): Stack? {
     var best: Stack? = null
     for (stack in stacks) {
         val stopped = stack.p.stoppedAt

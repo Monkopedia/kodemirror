@@ -22,19 +22,36 @@ import com.monkopedia.kodemirror.lezer.common.BufferCursor
 import com.monkopedia.kodemirror.lezer.common.Tree
 import kotlin.math.min
 
-class Stack(
-    val p: Parse,
-    val stack: MutableList<Int>,
-    var state: Int,
-    var reducePos: Int,
-    var pos: Int,
-    var score: Int,
-    var buffer: MutableList<Int>,
-    var bufferBase: Int,
-    var curContext: StackContext?,
-    var lookAhead: Int = 0,
-    var parent: Stack?
+class Stack internal constructor(
+    internal val p: Parse,
+    internal val stack: MutableList<Int>,
+    state: Int,
+    reducePos: Int,
+    pos: Int,
+    score: Int,
+    buffer: MutableList<Int>,
+    bufferBase: Int,
+    curContext: StackContext?,
+    lookAhead: Int = 0,
+    parent: Stack?
 ) {
+    var state: Int = state
+        internal set
+    var reducePos: Int = reducePos
+        internal set
+    var pos: Int = pos
+        internal set
+    var score: Int = score
+        internal set
+    var buffer: MutableList<Int> = buffer
+        internal set
+    var bufferBase: Int = bufferBase
+        internal set
+    internal var curContext: StackContext? = curContext
+    var lookAhead: Int = lookAhead
+        internal set
+    var parent: Stack? = parent
+        internal set
     override fun toString(): String {
         val states = stack.filterIndexed { i, _ -> i % 3 == 0 } + state
         val scoreStr = if (score != 0) "!$score" else ""
@@ -42,7 +59,7 @@ class Stack(
     }
 
     companion object {
-        fun start(p: Parse, state: Int, pos: Int = 0): Stack {
+        internal fun start(p: Parse, state: Int, pos: Int = 0): Stack {
             val cx = p.parser.context
             return Stack(
                 p, mutableListOf(), state, pos, pos, 0, mutableListOf(), 0,
@@ -54,14 +71,14 @@ class Stack(
 
     val context: Any? get() = curContext?.context
 
-    fun pushState(state: Int, start: Int) {
+    internal fun pushState(state: Int, start: Int) {
         stack.add(this.state)
         stack.add(start)
         stack.add(bufferBase + buffer.size)
         this.state = state
     }
 
-    fun reduce(action: Int) {
+    internal fun reduce(action: Int) {
         var depth = action shr Action.REDUCE_DEPTH_SHIFT
         val type = action and Action.VALUE_MASK
         val parser = p.parser
@@ -109,7 +126,13 @@ class Stack(
         reduceContext(type, start)
     }
 
-    fun storeNode(term: Int, start: Int, end: Int, size: Int = 4, mustSink: Boolean = false) {
+    internal fun storeNode(
+        term: Int,
+        start: Int,
+        end: Int,
+        size: Int = 4,
+        mustSink: Boolean = false
+    ) {
         if (term == Term.ERR &&
             (stack.isEmpty() || stack.last() < buffer.size + bufferBase)
         ) {
@@ -171,7 +194,7 @@ class Stack(
         }
     }
 
-    fun shift(action: Int, type: Int, start: Int, end: Int) {
+    internal fun shift(action: Int, type: Int, start: Int, end: Int) {
         if ((action and Action.GOTO_FLAG) != 0) {
             pushState(action and Action.VALUE_MASK, pos)
         } else if ((action and Action.STAY_FLAG) == 0) {
@@ -200,7 +223,7 @@ class Stack(
         }
     }
 
-    fun apply(action: Int, next: Int, nextStart: Int, nextEnd: Int) {
+    internal fun apply(action: Int, next: Int, nextStart: Int, nextEnd: Int) {
         if ((action and Action.REDUCE_FLAG) != 0) {
             reduce(action)
         } else {
@@ -208,7 +231,7 @@ class Stack(
         }
     }
 
-    fun useNode(value: Tree, next: Int) {
+    internal fun useNode(value: Tree, next: Int) {
         var index = p.reused.size - 1
         if (index < 0 || p.reused[index] != value) {
             p.reused.add(value)
@@ -236,7 +259,7 @@ class Stack(
         }
     }
 
-    fun split(): Stack {
+    internal fun split(): Stack {
         var parent: Stack? = this
         var off = parent!!.buffer.size
         while (off > 0 && parent!!.buffer[off - 2] > parent.reducePos) off -= 4
@@ -251,7 +274,7 @@ class Stack(
         )
     }
 
-    fun recoverByDelete(next: Int, nextEnd: Int) {
+    internal fun recoverByDelete(next: Int, nextEnd: Int) {
         val isNode = next <= p.parser.maxNode
         if (isNode) storeNode(next, pos, nextEnd, 4)
         storeNode(Term.ERR, pos, nextEnd, if (isNode) 8 else 4)
@@ -272,7 +295,7 @@ class Stack(
         }
     }
 
-    fun recoverByInsert(next: Int): List<Stack> {
+    internal fun recoverByInsert(next: Int): List<Stack> {
         if (stack.size >= Recover.MAX_INSERT_STACK_DEPTH) return emptyList()
         val nextStates = p.parser.nextStates(state).toMutableList()
         if (nextStates.size > Recover.MAX_NEXT shl 1 ||
@@ -320,7 +343,7 @@ class Stack(
         return result
     }
 
-    fun forceReduce(): Boolean {
+    internal fun forceReduce(): Boolean {
         val parser = p.parser
         val reduce = parser.stateSlot(state, ParseState.FORCED_REDUCE)
         if ((reduce and Action.REDUCE_FLAG) == 0) return false
@@ -341,7 +364,7 @@ class Stack(
         return true
     }
 
-    fun findForcedReduction(): Int? {
+    internal fun findForcedReduction(): Int? {
         val parser = p.parser
         val seen = mutableListOf<Int>()
         fun explore(state: Int, depth: Int): Int? {
@@ -371,7 +394,7 @@ class Stack(
         return explore(state, 0)
     }
 
-    fun forceAll(): Stack {
+    internal fun forceAll(): Stack {
         while (!p.parser.stateFlag(state, StateFlag.ACCEPTING)) {
             if (!forceReduce()) {
                 storeNode(Term.ERR, pos, pos, 4, true)
@@ -381,7 +404,7 @@ class Stack(
         return this
     }
 
-    val deadEnd: Boolean
+    internal val deadEnd: Boolean
         get() {
             if (stack.size != 3) return false
             val parser = p.parser
@@ -389,13 +412,13 @@ class Stack(
                 parser.stateSlot(state, ParseState.DEFAULT_REDUCE) == 0
         }
 
-    fun restart() {
+    internal fun restart() {
         storeNode(Term.ERR, pos, pos, 4, true)
         state = stack[0]
         stack.clear()
     }
 
-    fun sameState(other: Stack): Boolean {
+    internal fun sameState(other: Stack): Boolean {
         if (state != other.state || stack.size != other.stack.size) return false
         var i = 0
         while (i < stack.size) {
@@ -439,7 +462,7 @@ class Stack(
         }
     }
 
-    fun emitLookAhead() {
+    internal fun emitLookAhead() {
         val last = buffer.size - 1
         if (last < 0 || buffer[last] != -4) {
             buffer.add(lookAhead)
@@ -457,20 +480,20 @@ class Stack(
         }
     }
 
-    fun setLookAhead(lookAhead: Int): Boolean {
+    internal fun setLookAhead(lookAhead: Int): Boolean {
         if (lookAhead <= this.lookAhead) return false
         emitLookAhead()
         this.lookAhead = lookAhead
         return true
     }
 
-    fun close() {
+    internal fun close() {
         if (curContext != null && curContext!!.tracker.strict) emitContext()
         if (lookAhead > 0) emitLookAhead()
     }
 }
 
-class StackContext(val tracker: ContextTracker<*>, val context: Any?) {
+internal class StackContext(val tracker: ContextTracker<*>, val context: Any?) {
     val hash: Int = if (tracker.strict) {
         @Suppress("UNCHECKED_CAST")
         (tracker as ContextTracker<Any?>).hash(context)
@@ -479,7 +502,7 @@ class StackContext(val tracker: ContextTracker<*>, val context: Any?) {
     }
 }
 
-class SimulatedStack(val start: Stack) {
+internal class SimulatedStack(val start: Stack) {
     var state: Int = start.state
     var stack: MutableList<Int> = start.stack // shared initially
     var base: Int = stack.size
@@ -501,7 +524,7 @@ class SimulatedStack(val start: Stack) {
     }
 }
 
-class StackBufferCursor(
+internal class StackBufferCursor(
     var stack: Stack,
     override var pos: Int,
     var index: Int

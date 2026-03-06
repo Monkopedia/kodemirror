@@ -19,7 +19,7 @@
 package com.monkopedia.kodemirror.lezer.lr
 
 /** Parse action bit layout constants. */
-object Action {
+internal object Action {
     const val REDUCE_FLAG = 1 shl 16
     const val VALUE_MASK = (1 shl 16) - 1
     const val REDUCE_DEPTH_SHIFT = 19
@@ -29,24 +29,24 @@ object Action {
 }
 
 /** Parse state flag constants. */
-object StateFlag {
+internal object StateFlag {
     const val SKIPPED = 1
     const val ACCEPTING = 2
 }
 
 /** Specialization constants. */
-object Specialize {
+internal object Specialize {
     const val SPECIALIZE = 0
     const val EXTEND = 1
 }
 
 /** Term constants. */
-object Term {
+internal object Term {
     const val ERR = 0
 }
 
 /** Sequence marker constants. */
-object Seq {
+internal object Seq {
     const val END = 0xffff
     const val DONE = 0
     const val NEXT = 1
@@ -54,7 +54,7 @@ object Seq {
 }
 
 /** Memory layout of parse states. */
-object ParseState {
+internal object ParseState {
     const val FLAGS = 0
     const val ACTIONS = 1
     const val SKIP = 2
@@ -65,7 +65,7 @@ object ParseState {
 }
 
 /** Encoding constants for binary data. */
-object Encode {
+internal object Encode {
     const val BIG_VAL_CODE = 126
     const val BIG_VAL = 0xffff
     const val START = 32
@@ -75,12 +75,12 @@ object Encode {
 }
 
 /** File format version. */
-object File {
+internal object File {
     const val VERSION = 14
 }
 
 /** Recovery constants. */
-object Recover {
+internal object Recover {
     const val INSERT = 200
     const val DELETE = 190
     const val REDUCE = 100
@@ -91,7 +91,7 @@ object Recover {
 }
 
 /** Parse loop constants. */
-object Rec {
+internal object Rec {
     const val DISTANCE = 5
     const val MAX_REMAINING_PER_STEP = 3
     const val MIN_BUFFER_LENGTH_PRUNE = 500
@@ -103,6 +103,6 @@ object Rec {
 }
 
 /** Lookahead margin. */
-object Lookahead {
+internal object Lookahead {
     const val MARGIN = 25
 }

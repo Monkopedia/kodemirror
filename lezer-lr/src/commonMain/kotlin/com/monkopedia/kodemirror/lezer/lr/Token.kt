@@ -23,7 +23,7 @@ import com.monkopedia.kodemirror.lezer.common.TextRange
 import kotlin.math.max
 import kotlin.math.min
 
-class CachedToken {
+internal class CachedToken {
     var start: Int = -1
     var value: Int = -1
     var end: Int = -1
@@ -33,7 +33,7 @@ class CachedToken {
     var context: Int = 0
 }
 
-val nullToken = CachedToken()
+internal val nullToken = CachedToken()
 
 interface Tokenizer {
     fun token(input: InputStream, stack: Stack)
@@ -47,25 +47,31 @@ interface Tokenizer {
  * input as a stream of characters, tracking lookahead and hiding the complexity
  * of ranges from tokenizer code.
  */
-class InputStream(
+class InputStream internal constructor(
     val input: Input,
     val ranges: List<TextRange>
 ) {
     var chunk: String = ""
+        internal set
     var chunkOff: Int = 0
+        internal set
     var chunkPos: Int
+        internal set
     private var chunk2: String = ""
     private var chunk2Pos: Int = 0
 
     /** The character code of the next code unit in the input, or -1 at EOF. */
     var next: Int = -1
+        internal set
 
-    var token: CachedToken = nullToken
+    internal var token: CachedToken = nullToken
 
     /** The current position of the stream. */
     var pos: Int
+        internal set
 
     var end: Int
+        internal set
 
     private var rangeIndex: Int = 0
     private var range: TextRange
@@ -222,7 +228,7 @@ class InputStream(
         return this.next
     }
 
-    fun reset(pos: Int, token: CachedToken? = null): InputStream {
+    internal fun reset(pos: Int, token: CachedToken? = null): InputStream {
         if (token != null) {
             this.token = token
             token.start = pos
@@ -272,7 +278,7 @@ class InputStream(
     }
 }
 
-class TokenGroup(val data: IntArray, val id: Int) : Tokenizer {
+internal class TokenGroup(val data: IntArray, val id: Int) : Tokenizer {
     override val contextual: Boolean = false
     override val fallback: Boolean = false
     override val extend: Boolean = false

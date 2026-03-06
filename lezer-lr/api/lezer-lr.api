@@ -1,31 +1,3 @@
-public final class com/monkopedia/kodemirror/lezer/lr/Action {
-	public static final field GOTO_FLAG I
-	public static final field INSTANCE Lcom/monkopedia/kodemirror/lezer/lr/Action;
-	public static final field REDUCE_DEPTH_SHIFT I
-	public static final field REDUCE_FLAG I
-	public static final field REPEAT_FLAG I
-	public static final field STAY_FLAG I
-	public static final field VALUE_MASK I
-}
-
-public final class com/monkopedia/kodemirror/lezer/lr/CachedToken {
-	public fun <init> ()V
-	public final fun getContext ()I
-	public final fun getEnd ()I
-	public final fun getExtended ()I
-	public final fun getLookAhead ()I
-	public final fun getMask ()I
-	public final fun getStart ()I
-	public final fun getValue ()I
-	public final fun setContext (I)V
-	public final fun setEnd (I)V
-	public final fun setExtended (I)V
-	public final fun setLookAhead (I)V
-	public final fun setMask (I)V
-	public final fun setStart (I)V
-	public final fun setValue (I)V
-}
-
 public final class com/monkopedia/kodemirror/lezer/lr/ContextTracker {
 	public fun <init> (Ljava/lang/Object;Lkotlin/jvm/functions/Function4;Lkotlin/jvm/functions/Function4;Lkotlin/jvm/functions/Function4;Lkotlin/jvm/functions/Function1;Z)V
 	public synthetic fun <init> (Ljava/lang/Object;Lkotlin/jvm/functions/Function4;Lkotlin/jvm/functions/Function4;Lkotlin/jvm/functions/Function4;Lkotlin/jvm/functions/Function1;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -49,16 +21,6 @@ public final class com/monkopedia/kodemirror/lezer/lr/Dialect {
 	public final fun getSource ()Ljava/lang/String;
 }
 
-public final class com/monkopedia/kodemirror/lezer/lr/Encode {
-	public static final field BASE I
-	public static final field BIG_VAL I
-	public static final field BIG_VAL_CODE I
-	public static final field GAP1 I
-	public static final field GAP2 I
-	public static final field INSTANCE Lcom/monkopedia/kodemirror/lezer/lr/Encode;
-	public static final field START I
-}
-
 public final class com/monkopedia/kodemirror/lezer/lr/ExternalTokenizer : com/monkopedia/kodemirror/lezer/lr/Tokenizer {
 	public fun <init> (Lkotlin/jvm/functions/Function2;ZZZ)V
 	public synthetic fun <init> (Lkotlin/jvm/functions/Function2;ZZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -68,13 +30,7 @@ public final class com/monkopedia/kodemirror/lezer/lr/ExternalTokenizer : com/mo
 	public fun token (Lcom/monkopedia/kodemirror/lezer/lr/InputStream;Lcom/monkopedia/kodemirror/lezer/lr/Stack;)V
 }
 
-public final class com/monkopedia/kodemirror/lezer/lr/File {
-	public static final field INSTANCE Lcom/monkopedia/kodemirror/lezer/lr/File;
-	public static final field VERSION I
-}
-
 public final class com/monkopedia/kodemirror/lezer/lr/InputStream {
-	public fun <init> (Lcom/monkopedia/kodemirror/lezer/common/Input;Ljava/util/List;)V
 	public final fun acceptToken (II)V
 	public static synthetic fun acceptToken$default (Lcom/monkopedia/kodemirror/lezer/lr/InputStream;IIILjava/lang/Object;)V
 	public final fun acceptTokenTo (II)V
@@ -89,19 +45,9 @@ public final class com/monkopedia/kodemirror/lezer/lr/InputStream {
 	public final fun getNext ()I
 	public final fun getPos ()I
 	public final fun getRanges ()Ljava/util/List;
-	public final fun getToken ()Lcom/monkopedia/kodemirror/lezer/lr/CachedToken;
 	public final fun peek (I)I
 	public final fun read (II)Ljava/lang/String;
-	public final fun reset (ILcom/monkopedia/kodemirror/lezer/lr/CachedToken;)Lcom/monkopedia/kodemirror/lezer/lr/InputStream;
-	public static synthetic fun reset$default (Lcom/monkopedia/kodemirror/lezer/lr/InputStream;ILcom/monkopedia/kodemirror/lezer/lr/CachedToken;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/lr/InputStream;
 	public final fun resolveOffset (II)Ljava/lang/Integer;
-	public final fun setChunk (Ljava/lang/String;)V
-	public final fun setChunkOff (I)V
-	public final fun setChunkPos (I)V
-	public final fun setEnd (I)V
-	public final fun setNext (I)V
-	public final fun setPos (I)V
-	public final fun setToken (Lcom/monkopedia/kodemirror/lezer/lr/CachedToken;)V
 }
 
 public final class com/monkopedia/kodemirror/lezer/lr/LRParser : com/monkopedia/kodemirror/lezer/common/Parser {
@@ -162,58 +108,6 @@ public final class com/monkopedia/kodemirror/lezer/lr/LocalTokenGroup : com/monk
 	public fun getFallback ()Z
 	public final fun getPrecTable ()I
 	public fun token (Lcom/monkopedia/kodemirror/lezer/lr/InputStream;Lcom/monkopedia/kodemirror/lezer/lr/Stack;)V
-}
-
-public final class com/monkopedia/kodemirror/lezer/lr/Lookahead {
-	public static final field INSTANCE Lcom/monkopedia/kodemirror/lezer/lr/Lookahead;
-	public static final field MARGIN I
-}
-
-public final class com/monkopedia/kodemirror/lezer/lr/Parse : com/monkopedia/kodemirror/lezer/common/PartialParse {
-	public fun <init> (Lcom/monkopedia/kodemirror/lezer/lr/LRParser;Lcom/monkopedia/kodemirror/lezer/common/Input;Ljava/util/List;Ljava/util/List;)V
-	public fun advance ()Lcom/monkopedia/kodemirror/lezer/common/Tree;
-	public final fun getBigReductionCount ()I
-	public final fun getInput ()Lcom/monkopedia/kodemirror/lezer/common/Input;
-	public final fun getLastBigReductionSize ()I
-	public final fun getLastBigReductionStart ()I
-	public final fun getMinStackPos ()I
-	public final fun getNextStackID ()I
-	public fun getParsedPos ()I
-	public final fun getParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
-	public final fun getRanges ()Ljava/util/List;
-	public final fun getRecovering ()I
-	public final fun getReused ()Ljava/util/List;
-	public final fun getStacks ()Ljava/util/List;
-	public fun getStoppedAt ()Ljava/lang/Integer;
-	public final fun getStream ()Lcom/monkopedia/kodemirror/lezer/lr/InputStream;
-	public final fun getTokens ()Lcom/monkopedia/kodemirror/lezer/lr/TokenCache;
-	public final fun getTopTerm ()I
-	public final fun setBigReductionCount (I)V
-	public final fun setLastBigReductionSize (I)V
-	public final fun setLastBigReductionStart (I)V
-	public final fun setMinStackPos (I)V
-	public final fun setNextStackID (I)V
-	public final fun setRecovering (I)V
-	public final fun setStacks (Ljava/util/List;)V
-	public final fun stackID (Lcom/monkopedia/kodemirror/lezer/lr/Stack;)Ljava/lang/String;
-	public final fun stackToTree (Lcom/monkopedia/kodemirror/lezer/lr/Stack;)Lcom/monkopedia/kodemirror/lezer/common/Tree;
-	public fun stopAt (I)V
-}
-
-public final class com/monkopedia/kodemirror/lezer/lr/ParseKt {
-	public static final fun findFinished (Ljava/util/List;)Lcom/monkopedia/kodemirror/lezer/lr/Stack;
-	public static final fun pushStackDedup (Lcom/monkopedia/kodemirror/lezer/lr/Stack;Ljava/util/List;)V
-}
-
-public final class com/monkopedia/kodemirror/lezer/lr/ParseState {
-	public static final field ACTIONS I
-	public static final field DEFAULT_REDUCE I
-	public static final field FLAGS I
-	public static final field FORCED_REDUCE I
-	public static final field INSTANCE Lcom/monkopedia/kodemirror/lezer/lr/ParseState;
-	public static final field SIZE I
-	public static final field SKIP I
-	public static final field TOKENIZER_MASK I
 }
 
 public final class com/monkopedia/kodemirror/lezer/lr/ParserConfig {
@@ -293,55 +187,6 @@ public final class com/monkopedia/kodemirror/lezer/lr/ParserSpec {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class com/monkopedia/kodemirror/lezer/lr/Rec {
-	public static final field CUT_DEPTH I
-	public static final field CUT_TO I
-	public static final field DISTANCE I
-	public static final field FORCE_REDUCE_LIMIT I
-	public static final field INSTANCE Lcom/monkopedia/kodemirror/lezer/lr/Rec;
-	public static final field MAX_LEFT_ASSOCIATIVE_REDUCTION_COUNT I
-	public static final field MAX_REMAINING_PER_STEP I
-	public static final field MAX_STACK_COUNT I
-	public static final field MIN_BUFFER_LENGTH_PRUNE I
-}
-
-public final class com/monkopedia/kodemirror/lezer/lr/Recover {
-	public static final field DAMPEN_INSERT_STACK_DEPTH I
-	public static final field DELETE I
-	public static final field INSERT I
-	public static final field INSTANCE Lcom/monkopedia/kodemirror/lezer/lr/Recover;
-	public static final field MAX_INSERT_STACK_DEPTH I
-	public static final field MAX_NEXT I
-	public static final field MIN_BIG_REDUCTION I
-	public static final field REDUCE I
-}
-
-public final class com/monkopedia/kodemirror/lezer/lr/Seq {
-	public static final field DONE I
-	public static final field END I
-	public static final field INSTANCE Lcom/monkopedia/kodemirror/lezer/lr/Seq;
-	public static final field NEXT I
-	public static final field OTHER I
-}
-
-public final class com/monkopedia/kodemirror/lezer/lr/SimulatedStack {
-	public fun <init> (Lcom/monkopedia/kodemirror/lezer/lr/Stack;)V
-	public final fun getBase ()I
-	public final fun getStack ()Ljava/util/List;
-	public final fun getStart ()Lcom/monkopedia/kodemirror/lezer/lr/Stack;
-	public final fun getState ()I
-	public final fun reduce (I)V
-	public final fun setBase (I)V
-	public final fun setStack (Ljava/util/List;)V
-	public final fun setState (I)V
-}
-
-public final class com/monkopedia/kodemirror/lezer/lr/Specialize {
-	public static final field EXTEND I
-	public static final field INSTANCE Lcom/monkopedia/kodemirror/lezer/lr/Specialize;
-	public static final field SPECIALIZE I
-}
-
 public final class com/monkopedia/kodemirror/lezer/lr/SpecializerReplacement {
 	public fun <init> (Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;)V
 	public final fun component1 ()Lkotlin/jvm/functions/Function2;
@@ -375,129 +220,22 @@ public final class com/monkopedia/kodemirror/lezer/lr/SpecializerSpec {
 
 public final class com/monkopedia/kodemirror/lezer/lr/Stack {
 	public static final field Companion Lcom/monkopedia/kodemirror/lezer/lr/Stack$Companion;
-	public fun <init> (Lcom/monkopedia/kodemirror/lezer/lr/Parse;Ljava/util/List;IIIILjava/util/List;ILcom/monkopedia/kodemirror/lezer/lr/StackContext;ILcom/monkopedia/kodemirror/lezer/lr/Stack;)V
-	public synthetic fun <init> (Lcom/monkopedia/kodemirror/lezer/lr/Parse;Ljava/util/List;IIIILjava/util/List;ILcom/monkopedia/kodemirror/lezer/lr/StackContext;ILcom/monkopedia/kodemirror/lezer/lr/Stack;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun apply (IIII)V
 	public final fun canShift (I)Z
-	public final fun close ()V
 	public final fun dialectEnabled (I)Z
-	public final fun emitLookAhead ()V
-	public final fun findForcedReduction ()Ljava/lang/Integer;
-	public final fun forceAll ()Lcom/monkopedia/kodemirror/lezer/lr/Stack;
-	public final fun forceReduce ()Z
 	public final fun getBuffer ()Ljava/util/List;
 	public final fun getBufferBase ()I
 	public final fun getContext ()Ljava/lang/Object;
-	public final fun getCurContext ()Lcom/monkopedia/kodemirror/lezer/lr/StackContext;
-	public final fun getDeadEnd ()Z
 	public final fun getLookAhead ()I
-	public final fun getP ()Lcom/monkopedia/kodemirror/lezer/lr/Parse;
 	public final fun getParent ()Lcom/monkopedia/kodemirror/lezer/lr/Stack;
 	public final fun getParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
 	public final fun getPos ()I
 	public final fun getReducePos ()I
 	public final fun getScore ()I
-	public final fun getStack ()Ljava/util/List;
 	public final fun getState ()I
-	public final fun pushState (II)V
-	public final fun recoverByDelete (II)V
-	public final fun recoverByInsert (I)Ljava/util/List;
-	public final fun reduce (I)V
-	public final fun restart ()V
-	public final fun sameState (Lcom/monkopedia/kodemirror/lezer/lr/Stack;)Z
-	public final fun setBuffer (Ljava/util/List;)V
-	public final fun setBufferBase (I)V
-	public final fun setCurContext (Lcom/monkopedia/kodemirror/lezer/lr/StackContext;)V
-	public final fun setLookAhead (I)V
-	public final fun setLookAhead (I)Z
-	public final fun setParent (Lcom/monkopedia/kodemirror/lezer/lr/Stack;)V
-	public final fun setPos (I)V
-	public final fun setReducePos (I)V
-	public final fun setScore (I)V
-	public final fun setState (I)V
-	public final fun shift (IIII)V
-	public final fun split ()Lcom/monkopedia/kodemirror/lezer/lr/Stack;
-	public final fun storeNode (IIIIZ)V
-	public static synthetic fun storeNode$default (Lcom/monkopedia/kodemirror/lezer/lr/Stack;IIIIZILjava/lang/Object;)V
 	public fun toString ()Ljava/lang/String;
-	public final fun useNode (Lcom/monkopedia/kodemirror/lezer/common/Tree;I)V
 }
 
 public final class com/monkopedia/kodemirror/lezer/lr/Stack$Companion {
-	public final fun start (Lcom/monkopedia/kodemirror/lezer/lr/Parse;II)Lcom/monkopedia/kodemirror/lezer/lr/Stack;
-	public static synthetic fun start$default (Lcom/monkopedia/kodemirror/lezer/lr/Stack$Companion;Lcom/monkopedia/kodemirror/lezer/lr/Parse;IIILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/lr/Stack;
-}
-
-public final class com/monkopedia/kodemirror/lezer/lr/StackBufferCursor : com/monkopedia/kodemirror/lezer/common/BufferCursor {
-	public static final field Companion Lcom/monkopedia/kodemirror/lezer/lr/StackBufferCursor$Companion;
-	public fun <init> (Lcom/monkopedia/kodemirror/lezer/lr/Stack;II)V
-	public fun fork ()Lcom/monkopedia/kodemirror/lezer/common/BufferCursor;
-	public final fun getBuffer ()Ljava/util/List;
-	public fun getEnd ()I
-	public fun getId ()I
-	public final fun getIndex ()I
-	public fun getPos ()I
-	public fun getSize ()I
-	public final fun getStack ()Lcom/monkopedia/kodemirror/lezer/lr/Stack;
-	public fun getStart ()I
-	public final fun maybeNext ()V
-	public fun next ()V
-	public final fun setBuffer (Ljava/util/List;)V
-	public final fun setIndex (I)V
-	public fun setPos (I)V
-	public final fun setStack (Lcom/monkopedia/kodemirror/lezer/lr/Stack;)V
-}
-
-public final class com/monkopedia/kodemirror/lezer/lr/StackBufferCursor$Companion {
-	public final fun create (Lcom/monkopedia/kodemirror/lezer/lr/Stack;I)Lcom/monkopedia/kodemirror/lezer/lr/StackBufferCursor;
-	public static synthetic fun create$default (Lcom/monkopedia/kodemirror/lezer/lr/StackBufferCursor$Companion;Lcom/monkopedia/kodemirror/lezer/lr/Stack;IILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/lr/StackBufferCursor;
-}
-
-public final class com/monkopedia/kodemirror/lezer/lr/StackContext {
-	public fun <init> (Lcom/monkopedia/kodemirror/lezer/lr/ContextTracker;Ljava/lang/Object;)V
-	public final fun getContext ()Ljava/lang/Object;
-	public final fun getHash ()I
-	public final fun getTracker ()Lcom/monkopedia/kodemirror/lezer/lr/ContextTracker;
-}
-
-public final class com/monkopedia/kodemirror/lezer/lr/StateFlag {
-	public static final field ACCEPTING I
-	public static final field INSTANCE Lcom/monkopedia/kodemirror/lezer/lr/StateFlag;
-	public static final field SKIPPED I
-}
-
-public final class com/monkopedia/kodemirror/lezer/lr/Term {
-	public static final field ERR I
-	public static final field INSTANCE Lcom/monkopedia/kodemirror/lezer/lr/Term;
-}
-
-public final class com/monkopedia/kodemirror/lezer/lr/TokenCache {
-	public fun <init> (Lcom/monkopedia/kodemirror/lezer/lr/LRParser;Lcom/monkopedia/kodemirror/lezer/lr/InputStream;)V
-	public final fun addActions (Lcom/monkopedia/kodemirror/lezer/lr/Stack;III)I
-	public final fun getActions ()Ljava/util/List;
-	public final fun getActions (Lcom/monkopedia/kodemirror/lezer/lr/Stack;)Ljava/util/List;
-	public final fun getMainToken ()Lcom/monkopedia/kodemirror/lezer/lr/CachedToken;
-	public final fun getMainToken (Lcom/monkopedia/kodemirror/lezer/lr/Stack;)Lcom/monkopedia/kodemirror/lezer/lr/CachedToken;
-	public final fun getStream ()Lcom/monkopedia/kodemirror/lezer/lr/InputStream;
-	public final fun getTokens ()Ljava/util/List;
-	public final fun putAction (IIII)I
-	public final fun setMainToken (Lcom/monkopedia/kodemirror/lezer/lr/CachedToken;)V
-	public final fun setTokens (Ljava/util/List;)V
-	public final fun updateCachedToken (Lcom/monkopedia/kodemirror/lezer/lr/CachedToken;Lcom/monkopedia/kodemirror/lezer/lr/Tokenizer;Lcom/monkopedia/kodemirror/lezer/lr/Stack;)V
-}
-
-public final class com/monkopedia/kodemirror/lezer/lr/TokenGroup : com/monkopedia/kodemirror/lezer/lr/Tokenizer {
-	public fun <init> ([II)V
-	public fun getContextual ()Z
-	public final fun getData ()[I
-	public fun getExtend ()Z
-	public fun getFallback ()Z
-	public final fun getId ()I
-	public fun token (Lcom/monkopedia/kodemirror/lezer/lr/InputStream;Lcom/monkopedia/kodemirror/lezer/lr/Stack;)V
-}
-
-public final class com/monkopedia/kodemirror/lezer/lr/TokenKt {
-	public static final fun getNullToken ()Lcom/monkopedia/kodemirror/lezer/lr/CachedToken;
 }
 
 public abstract interface class com/monkopedia/kodemirror/lezer/lr/Tokenizer {

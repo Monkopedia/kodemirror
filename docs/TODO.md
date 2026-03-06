@@ -29,7 +29,7 @@ Each item has a status prefix on its heading line:
   via `internal` visibility, `@PublishedApi`, or API dump exclusion.
 - **Files:** `search/api/search.api`, `lint/api/lint.api`
 
-### 3. Make lezer-lr internal state `internal`
+### 3. [DONE] Make lezer-lr internal state `internal`
 - **Effort:** 3+ days | **Source:** Architecture
 - `Stack` (10 setters), `Parse` (7), `CachedToken` (7), `InputStream` (6), `SimulatedStack` (3),
   `TokenCache` (3), `StackBufferCursor` (4) all expose public mutable setters. External code can
@@ -42,13 +42,15 @@ Each item has a status prefix on its heading line:
 
 ## Priority 2 — High Impact, Core DX
 
-### 4. Add `basicSetup` / `minimalSetup` convenience bundle
+### 4. [BLOCKED] Add `basicSetup` / `minimalSetup` convenience bundle
+> **Blocked:** Needs design decision — should this be a new `:basic-setup` module or added to an existing one? Which extensions to include? Depends on which upstream `basicSetup` extensions exist in this project.
 - **Effort:** 1–2 days | **Source:** Completeness, Frontend DX
 - Biggest onboarding friction. Every new editor requires manually assembling 10+ extensions.
   CodeMirror upstream provides `basicSetup` as the standard entry point. Bundle: line numbers,
   history, bracket matching, folding, autocompletion, search, default keymap, syntax highlighting.
 
-### 5. Add `kodemirror-bom` Gradle BOM
+### 5. [BLOCKED] Add `kodemirror-bom` Gradle BOM
+> **Blocked:** Needs design decision — BOM module setup and version management strategy. Should wait until module list is stabilized.
 - **Effort:** 1 day | **Source:** Frontend DX
 - Users must manage 6+ separate dependency versions for a basic editor. A Bill of Materials
   (`kodemirror-bom`) would let users align all module versions with a single entry.
