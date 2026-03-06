@@ -1,3 +1,18 @@
+public final class com/monkopedia/kodemirror/lang/javascript/CompletionPathResult {
+	public fun <init> (Ljava/util/List;Ljava/lang/String;I)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()I
+	public final fun copy (Ljava/util/List;Ljava/lang/String;I)Lcom/monkopedia/kodemirror/lang/javascript/CompletionPathResult;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/lang/javascript/CompletionPathResult;Ljava/util/List;Ljava/lang/String;IILjava/lang/Object;)Lcom/monkopedia/kodemirror/lang/javascript/CompletionPathResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFrom ()I
+	public final fun getName ()Ljava/lang/String;
+	public final fun getPath ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class com/monkopedia/kodemirror/lang/javascript/JavascriptKt {
 	public static final fun getJavascriptLanguage ()Lcom/monkopedia/kodemirror/language/LRLanguage;
 	public static final fun getJsxLanguage ()Lcom/monkopedia/kodemirror/language/LRLanguage;
@@ -7,11 +22,26 @@ public final class com/monkopedia/kodemirror/lang/javascript/JavascriptKt {
 	public static synthetic fun javascript$default (ZZILjava/lang/Object;)Lcom/monkopedia/kodemirror/language/LanguageSupport;
 }
 
+public final class com/monkopedia/kodemirror/lang/javascript/JsCloseTagsKt {
+	public static final fun autoCloseTags ()Lcom/monkopedia/kodemirror/state/Extension;
+}
+
+public final class com/monkopedia/kodemirror/lang/javascript/JsCompleteKt {
+	public static final fun completionPath (Lcom/monkopedia/kodemirror/autocomplete/CompletionContext;)Lcom/monkopedia/kodemirror/lang/javascript/CompletionPathResult;
+	public static final fun getLocalCompletionSource ()Lkotlin/jvm/functions/Function1;
+	public static final fun scopeCompletionSource (Ljava/util/Map;)Lkotlin/jvm/functions/Function1;
+}
+
 public final class com/monkopedia/kodemirror/lang/javascript/JsHighlightKt {
 	public static final fun getJsHighlighting ()Lcom/monkopedia/kodemirror/lezer/common/NodePropSource;
 }
 
 public final class com/monkopedia/kodemirror/lang/javascript/JsParserKt {
 	public static final fun getParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
+}
+
+public final class com/monkopedia/kodemirror/lang/javascript/JsSnippetsKt {
+	public static final fun getSnippets ()Ljava/util/List;
+	public static final fun getTypescriptSnippets ()Ljava/util/List;
 }
 

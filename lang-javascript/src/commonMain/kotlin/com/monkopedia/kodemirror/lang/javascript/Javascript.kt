@@ -18,6 +18,9 @@
  */
 package com.monkopedia.kodemirror.lang.javascript
 
+import com.monkopedia.kodemirror.autocomplete.CompletionConfig
+import com.monkopedia.kodemirror.autocomplete.autocompletion
+import com.monkopedia.kodemirror.autocomplete.completeFromList
 import com.monkopedia.kodemirror.language.CommentTokens
 import com.monkopedia.kodemirror.language.FoldRange
 import com.monkopedia.kodemirror.language.LRLanguage
@@ -32,6 +35,8 @@ import com.monkopedia.kodemirror.language.getIndentUnit
 import com.monkopedia.kodemirror.language.indentNodeProp
 import com.monkopedia.kodemirror.lezer.common.NodePropSource
 import com.monkopedia.kodemirror.lezer.lr.ParserConfig
+import com.monkopedia.kodemirror.state.Extension
+import com.monkopedia.kodemirror.state.ExtensionList
 
 private val jsIndentProp: NodePropSource<*> = indentNodeProp.add { type ->
     when {
@@ -140,6 +145,11 @@ val tsxLanguage: LRLanguage = LRLanguage.define(
 
 /**
  * JavaScript language support.
+ *
+ * @param jsx Enable JSX syntax support. When `true`, the returned
+ *   language support also includes [autoCloseTags].
+ * @param typescript Enable TypeScript syntax support. When `true`,
+ *   TypeScript-specific [snippets][typescriptSnippets] are included.
  */
 fun javascript(jsx: Boolean = false, typescript: Boolean = false): LanguageSupport {
     val lang = when {
@@ -148,13 +158,25 @@ fun javascript(jsx: Boolean = false, typescript: Boolean = false): LanguageSuppo
         typescript -> typescriptLanguage
         else -> javascriptLanguage
     }
-    return LanguageSupport(
-        lang,
-        support = commentTokens.of(
+
+    val snippetList = if (typescript) typescriptSnippets else snippets
+    val support = mutableListOf<Extension>(
+        commentTokens.of(
             CommentTokens(
                 line = "//",
                 block = CommentTokens.BlockComment("/*", "*/")
             )
+        ),
+        autocompletion(
+            CompletionConfig(
+                override = listOf(
+                    localCompletionSource,
+                    completeFromList(snippetList)
+                )
+            )
         )
     )
+    if (jsx) support.add(autoCloseTags())
+
+    return LanguageSupport(lang, support = ExtensionList(support))
 }
