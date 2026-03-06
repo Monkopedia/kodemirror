@@ -45,11 +45,11 @@ class HighlightTest {
         val extended = nodeSet.extend(
             styleTags(
                 mapOf(
-                    "Keyword" to tags.keyword,
-                    "String" to tags.string,
-                    "Number" to tags.number,
-                    "Comment" to tags.comment,
-                    "Identifier" to tags.variableName
+                    "Keyword" to Tags.keyword,
+                    "String" to Tags.string,
+                    "Number" to Tags.number,
+                    "Comment" to Tags.comment,
+                    "Identifier" to Tags.variableName
                 )
             )
         )
@@ -81,61 +81,61 @@ class HighlightTest {
         val keywordNode = tree.children[0] as Tree
         val rule = keywordNode.type.prop(ruleNodeProp)
         assertNotNull(rule)
-        assertTrue(rule.tags.contains(tags.keyword))
+        assertTrue(rule.tags.contains(Tags.keyword))
     }
 
     @Test
     fun tagHighlighterMatchesTags() {
         val highlighter = tagHighlighter(
             listOf(
-                TagStyleRule(tags.keyword, "kw"),
-                TagStyleRule(tags.string, "str"),
-                TagStyleRule(tags.number, "num")
+                TagStyleRule(Tags.keyword, "kw"),
+                TagStyleRule(Tags.string, "str"),
+                TagStyleRule(Tags.number, "num")
             )
         )
 
-        assertEquals("kw", highlighter.style(listOf(tags.keyword)))
-        assertEquals("str", highlighter.style(listOf(tags.string)))
-        assertEquals("num", highlighter.style(listOf(tags.number)))
-        assertNull(highlighter.style(listOf(tags.comment)))
+        assertEquals("kw", highlighter.style(listOf(Tags.keyword)))
+        assertEquals("str", highlighter.style(listOf(Tags.string)))
+        assertEquals("num", highlighter.style(listOf(Tags.number)))
+        assertNull(highlighter.style(listOf(Tags.comment)))
     }
 
     @Test
     fun tagHighlighterFallsBackToParent() {
         val highlighter = tagHighlighter(
             listOf(
-                TagStyleRule(tags.keyword, "kw")
+                TagStyleRule(Tags.keyword, "kw")
             )
         )
 
         // controlKeyword is a subtag of keyword
-        assertEquals("kw", highlighter.style(listOf(tags.controlKeyword)))
+        assertEquals("kw", highlighter.style(listOf(Tags.controlKeyword)))
     }
 
     @Test
     fun tagHighlighterPrefersSpecificTag() {
         val highlighter = tagHighlighter(
             listOf(
-                TagStyleRule(tags.keyword, "kw"),
-                TagStyleRule(tags.controlKeyword, "ctrl-kw")
+                TagStyleRule(Tags.keyword, "kw"),
+                TagStyleRule(Tags.controlKeyword, "ctrl-kw")
             )
         )
 
-        assertEquals("ctrl-kw", highlighter.style(listOf(tags.controlKeyword)))
-        assertEquals("kw", highlighter.style(listOf(tags.keyword)))
+        assertEquals("ctrl-kw", highlighter.style(listOf(Tags.controlKeyword)))
+        assertEquals("kw", highlighter.style(listOf(Tags.keyword)))
     }
 
     @Test
     fun tagHighlighterWithAll() {
         val highlighter = tagHighlighter(
             listOf(
-                TagStyleRule(tags.keyword, "kw")
+                TagStyleRule(Tags.keyword, "kw")
             ),
             all = "base"
         )
 
-        assertEquals("base kw", highlighter.style(listOf(tags.keyword)))
-        assertEquals("base", highlighter.style(listOf(tags.comment)))
+        assertEquals("base kw", highlighter.style(listOf(Tags.keyword)))
+        assertEquals("base", highlighter.style(listOf(Tags.comment)))
     }
 
     @Test
@@ -143,9 +143,9 @@ class HighlightTest {
         val (tree, _) = buildTestTree()
         val highlighter = tagHighlighter(
             listOf(
-                TagStyleRule(tags.keyword, "kw"),
-                TagStyleRule(tags.variableName, "var"),
-                TagStyleRule(tags.number, "num")
+                TagStyleRule(Tags.keyword, "kw"),
+                TagStyleRule(Tags.variableName, "var"),
+                TagStyleRule(Tags.number, "num")
             )
         )
 
@@ -165,9 +165,9 @@ class HighlightTest {
         val (tree, _) = buildTestTree()
         val highlighter = tagHighlighter(
             listOf(
-                TagStyleRule(tags.keyword, "kw"),
-                TagStyleRule(tags.variableName, "var"),
-                TagStyleRule(tags.number, "num")
+                TagStyleRule(Tags.keyword, "kw"),
+                TagStyleRule(Tags.variableName, "var"),
+                TagStyleRule(Tags.number, "num")
             )
         )
 
@@ -185,7 +185,7 @@ class HighlightTest {
         val ranges = mutableListOf<Triple<Int, Int, String>>()
         highlightTree(
             Tree.empty,
-            tagHighlighter(listOf(TagStyleRule(tags.keyword, "kw"))),
+            tagHighlighter(listOf(TagStyleRule(Tags.keyword, "kw"))),
             { from, to, cls -> ranges.add(Triple(from, to, cls)) }
         )
         assertTrue(ranges.isEmpty())
@@ -202,8 +202,8 @@ class HighlightTest {
         val extended = nodeSet.extend(
             styleTags(
                 mapOf(
-                    "String" to tags.string,
-                    "String/Escape" to tags.escape
+                    "String" to Tags.string,
+                    "String/Escape" to Tags.escape
                 )
             )
         )
@@ -226,7 +226,7 @@ class HighlightTest {
         val extended = nodeSet.extend(
             styleTags(
                 mapOf(
-                    "A B" to tags.keyword
+                    "A B" to Tags.keyword
                 )
             )
         )
@@ -251,9 +251,9 @@ class HighlightTest {
         val (tree, _) = buildTestTree()
         val highlighter = tagHighlighter(
             listOf(
-                TagStyleRule(tags.keyword, "kw"),
-                TagStyleRule(tags.variableName, "var"),
-                TagStyleRule(tags.number, "num")
+                TagStyleRule(Tags.keyword, "kw"),
+                TagStyleRule(Tags.variableName, "var"),
+                TagStyleRule(Tags.number, "num")
             )
         )
         val code = "let x = 42"
@@ -278,7 +278,7 @@ class HighlightTest {
         )
         val nodeSet = NodeSet(types)
         val extended = nodeSet.extend(
-            styleTags(mapOf("Keyword" to tags.keyword))
+            styleTags(mapOf("Keyword" to Tags.keyword))
         )
         // Code with newline: "let\nvar"
         val tree = Tree(
@@ -291,7 +291,7 @@ class HighlightTest {
             7
         )
         val highlighter = tagHighlighter(
-            listOf(TagStyleRule(tags.keyword, "kw"))
+            listOf(TagStyleRule(Tags.keyword, "kw"))
         )
         val code = "let\nvar"
         var breakCount = 0
@@ -303,7 +303,7 @@ class HighlightTest {
     fun highlightCodeEmptyString() {
         val tree = Tree.empty
         val highlighter = tagHighlighter(
-            listOf(TagStyleRule(tags.keyword, "kw"))
+            listOf(TagStyleRule(Tags.keyword, "kw"))
         )
         val texts = mutableListOf<String>()
         highlightCode("", tree, highlighter, { text, _ ->
@@ -316,36 +316,36 @@ class HighlightTest {
 
     @Test
     fun classHighlighterMapsKeyword() {
-        val result = classHighlighter.style(listOf(tags.keyword))
+        val result = classHighlighter.style(listOf(Tags.keyword))
         assertNotNull(result)
         assertTrue(result.contains("tok-keyword"))
     }
 
     @Test
     fun classHighlighterMapsString() {
-        val result = classHighlighter.style(listOf(tags.string))
+        val result = classHighlighter.style(listOf(Tags.string))
         assertNotNull(result)
         assertTrue(result.contains("tok-string"))
     }
 
     @Test
     fun classHighlighterMapsComment() {
-        val result = classHighlighter.style(listOf(tags.comment))
+        val result = classHighlighter.style(listOf(Tags.comment))
         assertNotNull(result)
         assertTrue(result.contains("tok-comment"))
     }
 
     @Test
     fun classHighlighterMapsNumber() {
-        val result = classHighlighter.style(listOf(tags.number))
+        val result = classHighlighter.style(listOf(Tags.number))
         assertNotNull(result)
         assertTrue(result.contains("tok-number"))
     }
 
     @Test
     fun highlighterMultipleHighlighters() {
-        val h1 = tagHighlighter(listOf(TagStyleRule(tags.keyword, "kw")))
-        val h2 = tagHighlighter(listOf(TagStyleRule(tags.keyword, "key")))
+        val h1 = tagHighlighter(listOf(TagStyleRule(Tags.keyword, "kw")))
+        val h2 = tagHighlighter(listOf(TagStyleRule(Tags.keyword, "key")))
 
         val (tree, _) = buildTestTree()
         val ranges = mutableListOf<Triple<Int, Int, String>>()

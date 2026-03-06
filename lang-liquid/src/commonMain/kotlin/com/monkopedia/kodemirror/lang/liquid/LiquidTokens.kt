@@ -136,7 +136,7 @@ internal val comment = rawTokenizer("endcomment", COMMENT_TEXT, ENDCOMMENT_TAG_S
 internal val raw = rawTokenizer("endraw", RAW_TEXT, ENDRAW_TAG_START)
 
 /**
- * Inline comment tokenizer: handles #... inline comments inside tags.
+ * Inline comment tokenizer: handles #... inline comments inside Tags.
  */
 internal val inlineComment = ExternalTokenizer({ input, _ ->
     if (input.next != CH_HASH) return@ExternalTokenizer

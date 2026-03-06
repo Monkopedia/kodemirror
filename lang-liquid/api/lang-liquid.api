@@ -27,7 +27,7 @@ public final class com/monkopedia/kodemirror/lang/liquid/LiquidCompletionConfig 
 
 public final class com/monkopedia/kodemirror/lang/liquid/LiquidKt {
 	public static final fun getLiquidLanguage ()Lcom/monkopedia/kodemirror/language/LRLanguage;
-	public static final fun getTagLanguage ()Lcom/monkopedia/kodemirror/language/LRLanguage;
+	public static final fun getLiquidTagLanguage ()Lcom/monkopedia/kodemirror/language/LRLanguage;
 	public static final fun liquid (Lcom/monkopedia/kodemirror/lang/liquid/LiquidCompletionConfig;Lcom/monkopedia/kodemirror/language/LanguageSupport;)Lcom/monkopedia/kodemirror/language/LanguageSupport;
 	public static synthetic fun liquid$default (Lcom/monkopedia/kodemirror/lang/liquid/LiquidCompletionConfig;Lcom/monkopedia/kodemirror/language/LanguageSupport;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/language/LanguageSupport;
 	public static final fun makeLiquid (Lcom/monkopedia/kodemirror/language/Language;)Lcom/monkopedia/kodemirror/language/LRLanguage;

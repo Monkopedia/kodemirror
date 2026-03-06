@@ -43,6 +43,7 @@ public final class com/monkopedia/kodemirror/search/SearchCommandsKt {
 	public static final fun getReplaceNext ()Lkotlin/jvm/functions/Function1;
 	public static final fun getSearchKeymap ()Ljava/util/List;
 	public static final fun getSelectMatches ()Lkotlin/jvm/functions/Function1;
+	public static final fun getSelectSelectionMatches ()Lkotlin/jvm/functions/Function1;
 }
 
 public final class com/monkopedia/kodemirror/search/SearchCursor : java/util/Iterator, kotlin/jvm/internal/markers/KMappedMarker {

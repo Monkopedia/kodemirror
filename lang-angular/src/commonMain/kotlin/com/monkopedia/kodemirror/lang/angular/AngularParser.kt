@@ -20,27 +20,27 @@
 
 package com.monkopedia.kodemirror.lang.angular
 
+import com.monkopedia.kodemirror.lezer.highlight.Tags
 import com.monkopedia.kodemirror.lezer.highlight.styleTags
-import com.monkopedia.kodemirror.lezer.highlight.tags
 import com.monkopedia.kodemirror.lezer.lr.LRParser
 import com.monkopedia.kodemirror.lezer.lr.ParserSpec
 
 internal val angularHighlighting = styleTags(
     mapOf(
-        "Text" to tags.content,
-        "Is" to tags.definitionOperator,
-        "AttributeName" to tags.attributeName,
-        "AttributeValue ExpressionAttributeValue StatementAttributeValue" to tags.attributeValue,
-        "Entity" to tags.character,
-        "InvalidEntity" to tags.invalid,
-        "BoundAttributeName/Identifier" to tags.attributeName,
-        "EventName/Identifier" to tags.special(tags.attributeName),
-        "ReferenceName/Identifier" to tags.variableName,
-        "DirectiveName/Identifier" to tags.keyword,
-        "{{ }}" to tags.brace,
-        "( )" to tags.paren,
-        "[ ]" to tags.bracket,
-        "# '*'" to tags.punctuation
+        "Text" to Tags.content,
+        "Is" to Tags.definitionOperator,
+        "AttributeName" to Tags.attributeName,
+        "AttributeValue ExpressionAttributeValue StatementAttributeValue" to Tags.attributeValue,
+        "Entity" to Tags.character,
+        "InvalidEntity" to Tags.invalid,
+        "BoundAttributeName/Identifier" to Tags.attributeName,
+        "EventName/Identifier" to Tags.special(Tags.attributeName),
+        "ReferenceName/Identifier" to Tags.variableName,
+        "DirectiveName/Identifier" to Tags.keyword,
+        "{{ }}" to Tags.brace,
+        "( )" to Tags.paren,
+        "[ ]" to Tags.bracket,
+        "# '*'" to Tags.punctuation
     )
 )
 

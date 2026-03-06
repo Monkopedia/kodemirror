@@ -106,28 +106,28 @@ class TagTest {
 
     @Test
     fun standardTagsExist() {
-        assertNotNull(tags.comment)
-        assertNotNull(tags.keyword)
-        assertNotNull(tags.string)
-        assertNotNull(tags.number)
-        assertNotNull(tags.operator)
-        assertNotNull(tags.punctuation)
+        assertNotNull(Tags.comment)
+        assertNotNull(Tags.keyword)
+        assertNotNull(Tags.string)
+        assertNotNull(Tags.number)
+        assertNotNull(Tags.operator)
+        assertNotNull(Tags.punctuation)
     }
 
     @Test
     fun standardTagHierarchy() {
         // lineComment is a subtag of comment
-        assertTrue(tags.lineComment.set.contains(tags.comment))
+        assertTrue(Tags.lineComment.set.contains(Tags.comment))
         // keyword subtags
-        assertTrue(tags.controlKeyword.set.contains(tags.keyword))
+        assertTrue(Tags.controlKeyword.set.contains(Tags.keyword))
         // bracket is a subtag of punctuation
-        assertTrue(tags.bracket.set.contains(tags.punctuation))
+        assertTrue(Tags.bracket.set.contains(Tags.punctuation))
     }
 
     @Test
     fun standardModifiers() {
-        val defVar = tags.definition(tags.variableName)
+        val defVar = Tags.definition(Tags.variableName)
         assertNotNull(defVar)
-        assertEquals(tags.variableName, defVar.base)
+        assertEquals(Tags.variableName, defVar.base)
     }
 }

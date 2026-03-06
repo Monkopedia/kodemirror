@@ -20,7 +20,7 @@ package com.monkopedia.kodemirror.language
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
-import com.monkopedia.kodemirror.lezer.highlight.tags
+import com.monkopedia.kodemirror.lezer.highlight.Tags
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -33,8 +33,8 @@ class HighlightStyleTest {
     fun defineCreatesHighlightStyleWithCorrectSpecsSize() {
         val hs = HighlightStyle.define(
             listOf(
-                TagStyleSpec(tags.keyword, SpanStyle(color = Color.Red)),
-                TagStyleSpec(tags.comment, SpanStyle(color = Color.Gray))
+                TagStyleSpec(Tags.keyword, SpanStyle(color = Color.Red)),
+                TagStyleSpec(Tags.comment, SpanStyle(color = Color.Gray))
             )
         )
         assertEquals(2, hs.specs.size)
@@ -44,10 +44,10 @@ class HighlightStyleTest {
     fun styleReturnsClassForMatchingTag() {
         val hs = HighlightStyle.define(
             listOf(
-                TagStyleSpec(tags.keyword, SpanStyle(color = Color.Red))
+                TagStyleSpec(Tags.keyword, SpanStyle(color = Color.Red))
             )
         )
-        val cls = hs.style(listOf(tags.keyword))
+        val cls = hs.style(listOf(Tags.keyword))
         assertEquals("hl-0", cls)
     }
 
@@ -56,10 +56,10 @@ class HighlightStyleTest {
         val expected = SpanStyle(color = Color.Red)
         val hs = HighlightStyle.define(
             listOf(
-                TagStyleSpec(tags.keyword, expected)
+                TagStyleSpec(Tags.keyword, expected)
             )
         )
-        val cls = hs.style(listOf(tags.keyword))
+        val cls = hs.style(listOf(Tags.keyword))
         assertNotNull(cls)
         val result = hs.spanStyleFor(cls)
         assertEquals(expected, result)
@@ -69,11 +69,11 @@ class HighlightStyleTest {
     fun styleReturnsNullForNonMatchingTag() {
         val hs = HighlightStyle.define(
             listOf(
-                TagStyleSpec(tags.keyword, SpanStyle(color = Color.Red))
+                TagStyleSpec(Tags.keyword, SpanStyle(color = Color.Red))
             )
         )
-        // tags.comment was not registered, should return null
-        val cls = hs.style(listOf(tags.comment))
+        // Tags.comment was not registered, should return null
+        val cls = hs.style(listOf(Tags.comment))
         assertNull(cls)
     }
 
@@ -81,7 +81,7 @@ class HighlightStyleTest {
     fun spanStyleForReturnsNullForUnknownClass() {
         val hs = HighlightStyle.define(
             listOf(
-                TagStyleSpec(tags.keyword, SpanStyle(color = Color.Red))
+                TagStyleSpec(Tags.keyword, SpanStyle(color = Color.Red))
             )
         )
         assertNull(hs.spanStyleFor("hl-99"))
@@ -92,14 +92,14 @@ class HighlightStyleTest {
     fun multipleSpecsGetCorrectIndices() {
         val hs = HighlightStyle.define(
             listOf(
-                TagStyleSpec(tags.keyword, SpanStyle(color = Color.Red)),
-                TagStyleSpec(tags.comment, SpanStyle(color = Color.Gray)),
-                TagStyleSpec(tags.string, SpanStyle(color = Color.Green))
+                TagStyleSpec(Tags.keyword, SpanStyle(color = Color.Red)),
+                TagStyleSpec(Tags.comment, SpanStyle(color = Color.Gray)),
+                TagStyleSpec(Tags.string, SpanStyle(color = Color.Green))
             )
         )
-        assertEquals("hl-0", hs.style(listOf(tags.keyword)))
-        assertEquals("hl-1", hs.style(listOf(tags.comment)))
-        assertEquals("hl-2", hs.style(listOf(tags.string)))
+        assertEquals("hl-0", hs.style(listOf(Tags.keyword)))
+        assertEquals("hl-1", hs.style(listOf(Tags.comment)))
+        assertEquals("hl-2", hs.style(listOf(Tags.string)))
     }
 
     @Test

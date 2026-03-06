@@ -343,7 +343,9 @@ public final class com/monkopedia/kodemirror/state/EditorState {
 
 public final class com/monkopedia/kodemirror/state/EditorState$Companion {
 	public final fun create (Lcom/monkopedia/kodemirror/state/EditorStateConfig;)Lcom/monkopedia/kodemirror/state/EditorState;
+	public final fun create (Ljava/lang/String;Lcom/monkopedia/kodemirror/state/Extension;Lcom/monkopedia/kodemirror/state/SelectionSpec;)Lcom/monkopedia/kodemirror/state/EditorState;
 	public static synthetic fun create$default (Lcom/monkopedia/kodemirror/state/EditorState$Companion;Lcom/monkopedia/kodemirror/state/EditorStateConfig;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/EditorState;
+	public static synthetic fun create$default (Lcom/monkopedia/kodemirror/state/EditorState$Companion;Ljava/lang/String;Lcom/monkopedia/kodemirror/state/Extension;Lcom/monkopedia/kodemirror/state/SelectionSpec;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/EditorState;
 	public final fun fromJSON (Ljava/util/Map;Lcom/monkopedia/kodemirror/state/EditorStateConfig;Ljava/util/Map;)Lcom/monkopedia/kodemirror/state/EditorState;
 	public static synthetic fun fromJSON$default (Lcom/monkopedia/kodemirror/state/EditorState$Companion;Ljava/util/Map;Lcom/monkopedia/kodemirror/state/EditorStateConfig;Ljava/util/Map;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/EditorState;
 	public final fun getAllowMultipleSelections ()Lcom/monkopedia/kodemirror/state/Facet;
@@ -518,11 +520,11 @@ public final class com/monkopedia/kodemirror/state/MapMode : java/lang/Enum {
 
 public final class com/monkopedia/kodemirror/state/Prec {
 	public static final field INSTANCE Lcom/monkopedia/kodemirror/state/Prec;
-	public final fun getDefault ()Lkotlin/jvm/functions/Function1;
-	public final fun getHigh ()Lkotlin/jvm/functions/Function1;
-	public final fun getHighest ()Lkotlin/jvm/functions/Function1;
-	public final fun getLow ()Lkotlin/jvm/functions/Function1;
-	public final fun getLowest ()Lkotlin/jvm/functions/Function1;
+	public final fun default (Lcom/monkopedia/kodemirror/state/Extension;)Lcom/monkopedia/kodemirror/state/Extension;
+	public final fun high (Lcom/monkopedia/kodemirror/state/Extension;)Lcom/monkopedia/kodemirror/state/Extension;
+	public final fun highest (Lcom/monkopedia/kodemirror/state/Extension;)Lcom/monkopedia/kodemirror/state/Extension;
+	public final fun low (Lcom/monkopedia/kodemirror/state/Extension;)Lcom/monkopedia/kodemirror/state/Extension;
+	public final fun lowest (Lcom/monkopedia/kodemirror/state/Extension;)Lcom/monkopedia/kodemirror/state/Extension;
 }
 
 public final class com/monkopedia/kodemirror/state/Range {
@@ -926,6 +928,11 @@ public final class com/monkopedia/kodemirror/state/TransactionFilterResult$Specs
 	public final fun getSpecs ()Ljava/util/List;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/state/TransactionKt {
+	public static final fun asCursor (I)Lcom/monkopedia/kodemirror/state/SelectionSpec;
+	public static final fun asSpec (Lcom/monkopedia/kodemirror/state/EditorSelection;)Lcom/monkopedia/kodemirror/state/SelectionSpec;
 }
 
 public final class com/monkopedia/kodemirror/state/TransactionSpec {

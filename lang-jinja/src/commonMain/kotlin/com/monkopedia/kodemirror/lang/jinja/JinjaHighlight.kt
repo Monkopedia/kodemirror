@@ -18,8 +18,8 @@
  */
 package com.monkopedia.kodemirror.lang.jinja
 
+import com.monkopedia.kodemirror.lezer.highlight.Tags as t
 import com.monkopedia.kodemirror.lezer.highlight.styleTags
-import com.monkopedia.kodemirror.lezer.highlight.tags as t
 
 internal val jinjaHighlighting = styleTags(
     mapOf(

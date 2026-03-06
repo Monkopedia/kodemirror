@@ -213,6 +213,39 @@ val selectMatches: (EditorView) -> Boolean = { view ->
     }
 }
 
+/** Select all instances of the currently selected text. */
+val selectSelectionMatches: (EditorView) -> Boolean = { view ->
+    val state = view.state
+    val sel = state.selection.main
+    val selectedText = state.doc.sliceString(sel.from, sel.to)
+    if (selectedText.isEmpty()) {
+        false
+    } else {
+        val ranges = mutableListOf<com.monkopedia.kodemirror.state.SelectionRange>()
+        val docText = state.doc.toString()
+        var searchFrom = 0
+        while (true) {
+            val idx = docText.indexOf(selectedText, searchFrom)
+            if (idx < 0) break
+            ranges.add(EditorSelection.range(idx, idx + selectedText.length))
+            searchFrom = idx + selectedText.length
+        }
+        if (ranges.size > 1) {
+            view.dispatch(
+                TransactionSpec(
+                    selection = SelectionSpec.EditorSelectionSpec(
+                        EditorSelection.create(ranges)
+                    ),
+                    userEvent = "select.search.selectionMatches"
+                )
+            )
+            true
+        } else {
+            false
+        }
+    }
+}
+
 /** Default search keymap bindings. */
 val searchKeymap: List<KeyBinding> = listOf(
     KeyBinding(key = "Mod-f", run = openSearchPanel),

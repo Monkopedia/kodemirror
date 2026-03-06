@@ -249,7 +249,7 @@ Each item has a status prefix on its heading line:
 - No runnable examples. Create a minimal Android or Desktop app in `samples/` that users can clone
   and run. Include platform-specific `build.gradle.kts` setup.
 
-### 32. Scan for other files with `// /` comment style
+### 32. [DONE] Scan for other files with `// /` comment style
 - **Effort:** < 1 hour | **Source:** Documentation
 - `Text.kt` is the most critical, but other files from the upstream port may have the same issue.
 
@@ -264,7 +264,7 @@ Each item has a status prefix on its heading line:
   visibility. Consider making just the setters `internal` while keeping the types public.
 - **Directory:** `legacy-modes/src/commonMain/kotlin/.../modes/`
 
-### 34. Rename `tags` object to `Tags`
+### 34. [DONE] Rename `tags` object to `Tags`
 - **Effort:** < 1 hour (+ migration) | **Source:** Architecture
 - `tags` uses lowercase class name, violating Kotlin PascalCase convention. IDE warnings.
 - **File:** `lezer-highlight/src/commonMain/kotlin/.../highlight/Tags.kt`
@@ -292,11 +292,11 @@ Each item has a status prefix on its heading line:
 - **Effort:** < 1 day | **Source:** Kotlin Ergonomics
 - `val EditorState.currentLine`, `.selectedText`, `.cursorPosition`, `.isEmpty`
 
-### 40. Add `SelectionSpec` convenience constructors
+### 40. [DONE] Add `SelectionSpec` convenience constructors
 - **Effort:** < 1 hour | **Source:** Kotlin Ergonomics
 - `EditorSelection.asSpec()`, `Int.asCursor()` to reduce `SelectionSpec.EditorSelectionSpec(...)` verbosity.
 
-### 41. Convert `Prec` lambda properties to functions
+### 41. [DONE] Convert `Prec` lambda properties to functions
 - **Effort:** < 1 hour | **Source:** Kotlin Ergonomics
 - `Prec.highest`, `.high`, `.default`, `.low`, `.lowest` are stored as lambda properties (JS pattern).
   Should be `fun highest(ext: Extension): Extension`.
@@ -321,11 +321,11 @@ Each item has a status prefix on its heading line:
 - Missing: `pickedCompletion`, `ifIn`/`ifNotIn`, `hasNextSnippetField`/`hasPrevSnippetField`,
   `CompletionInfo` type, `CompletionSource` type alias.
 
-### 46. Add `selectSelectionMatches` to search module
+### 46. [DONE] Add `selectSelectionMatches` to search module
 - **Effort:** < 1 hour | **Source:** Completeness
 - Select all instances of current selection text. Single missing command.
 
-### 47. Add `DocSpec` String overload for `EditorStateConfig`
+### 47. [DONE] Add `DocSpec` String overload for `EditorStateConfig`
 - **Effort:** < 1 hour | **Source:** Frontend DX
 - Accept `String` directly: `EditorState.create(doc = "Hello", extensions = ...)` instead of
   requiring `.asDoc()`.
@@ -345,7 +345,7 @@ Each item has a status prefix on its heading line:
 - `lang-vue`: Move highlighting from `VueParserKt` to a separate `VueHighlightKt` for consistency
   with all other language modules.
 
-### 51. Fix `getTagLanguage` name collision
+### 51. [DONE] Fix `getTagLanguage` name collision
 - **Effort:** < 1 hour | **Source:** Architecture
 - Both `lang-jinja` and `lang-liquid` export a top-level `tagLanguage` property. Rename to
   `jinjaTagLanguage` and `liquidTagLanguage` to prevent confusion.
@@ -411,17 +411,17 @@ Each item has a status prefix on its heading line:
 - **Effort:** 1 day | **Source:** Documentation
 - 103 files, one-line KDoc each for the top-level `StreamParser` val.
 
-### 65. Document cross-module extension discoverability
+### 65. [DONE] Document cross-module extension discoverability
 - **Effort:** < 1 day | **Source:** Frontend DX, Documentation
 - Finding where `lineNumbers` lives (`:view`), `history()` (`:commands`), `bracketMatching()`
   (`:language`) is non-obvious. Add a module-to-extension index page or table in the docs.
 
-### 66. Add missing docs to extending guide
+### 66. [DONE] Add missing docs to extending guide
 - **Effort:** < 1 day | **Source:** Documentation
 - No discussion of `FacetReader` and when to use it vs. direct `Facet`.
 - No mention of `PluginSpec.configure` pattern (used in code but not explained).
 
-### 67. Add `Text.of()` nuance and iterator docs to data-model guide
+### 67. [DONE] Add `Text.of()` nuance and iterator docs to data-model guide
 - **Effort:** < 1 hour | **Source:** Documentation
 - Guide doesn't mention that `Text.of()` expects split lines (no embedded newlines).
 - Missing coverage of `Text.iter()` variants and `RawTextCursor`.

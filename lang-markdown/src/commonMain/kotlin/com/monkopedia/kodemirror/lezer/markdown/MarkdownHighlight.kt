@@ -22,8 +22,8 @@ import com.monkopedia.kodemirror.lezer.common.NodeProp
 import com.monkopedia.kodemirror.lezer.common.NodeSet
 import com.monkopedia.kodemirror.lezer.common.NodeType
 import com.monkopedia.kodemirror.lezer.common.NodeTypeSpec
+import com.monkopedia.kodemirror.lezer.highlight.Tags as t
 import com.monkopedia.kodemirror.lezer.highlight.styleTags
-import com.monkopedia.kodemirror.lezer.highlight.tags as t
 
 val markdownHighlighting = styleTags(
     mapOf(

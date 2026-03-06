@@ -27,7 +27,7 @@ public final class com/monkopedia/kodemirror/lang/jinja/JinjaCompletionConfig {
 
 public final class com/monkopedia/kodemirror/lang/jinja/JinjaKt {
 	public static final fun getJinjaLanguage ()Lcom/monkopedia/kodemirror/language/LRLanguage;
-	public static final fun getTagLanguage ()Lcom/monkopedia/kodemirror/language/LRLanguage;
+	public static final fun getJinjaTagLanguage ()Lcom/monkopedia/kodemirror/language/LRLanguage;
 	public static final fun jinja (Lcom/monkopedia/kodemirror/lang/jinja/JinjaCompletionConfig;Lcom/monkopedia/kodemirror/language/LanguageSupport;)Lcom/monkopedia/kodemirror/language/LanguageSupport;
 	public static synthetic fun jinja$default (Lcom/monkopedia/kodemirror/lang/jinja/JinjaCompletionConfig;Lcom/monkopedia/kodemirror/language/LanguageSupport;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/language/LanguageSupport;
 	public static final fun makeJinja (Lcom/monkopedia/kodemirror/language/Language;)Lcom/monkopedia/kodemirror/language/LRLanguage;

@@ -19,9 +19,9 @@
 package com.monkopedia.kodemirror.lang.json
 
 import com.monkopedia.kodemirror.lezer.highlight.TagStyleRule
+import com.monkopedia.kodemirror.lezer.highlight.Tags as t
 import com.monkopedia.kodemirror.lezer.highlight.highlightTree
 import com.monkopedia.kodemirror.lezer.highlight.tagHighlighter
-import com.monkopedia.kodemirror.lezer.highlight.tags as t
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

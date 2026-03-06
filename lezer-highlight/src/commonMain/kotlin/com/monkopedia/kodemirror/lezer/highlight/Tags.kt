@@ -19,10 +19,10 @@
 package com.monkopedia.kodemirror.lezer.highlight
 
 /**
- * The default set of highlighting tags.
+ * The default set of highlighting Tags.
  */
-@Suppress("MemberVisibilityCanBePrivate", "ClassName")
-object tags {
+@Suppress("MemberVisibilityCanBePrivate")
+object Tags {
     private val comment_ = Tag.define("comment")
     private val name_ = Tag.define("name")
     private val typeName_ = Tag.define("typeName", name_)

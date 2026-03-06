@@ -25,7 +25,7 @@ class HtmlParserTest {
 
     private fun parse(input: String): String = treeToString(parser.parse(input))
 
-    // === tags.txt tests ===
+    // === Tags.txt tests ===
 
     @Test
     fun parsesRegularTag() = assertEquals(

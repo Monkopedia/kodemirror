@@ -67,8 +67,8 @@ public final class com/monkopedia/kodemirror/lezer/highlight/TagStyleRule {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class com/monkopedia/kodemirror/lezer/highlight/tags {
-	public static final field INSTANCE Lcom/monkopedia/kodemirror/lezer/highlight/tags;
+public final class com/monkopedia/kodemirror/lezer/highlight/Tags {
+	public static final field INSTANCE Lcom/monkopedia/kodemirror/lezer/highlight/Tags;
 	public final fun getAngleBracket ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
 	public final fun getAnnotation ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
 	public final fun getArithmeticOperator ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;

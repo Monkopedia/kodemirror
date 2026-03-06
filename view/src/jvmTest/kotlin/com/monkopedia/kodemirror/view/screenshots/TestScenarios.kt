@@ -32,7 +32,7 @@ import com.monkopedia.kodemirror.language.foldInside
 import com.monkopedia.kodemirror.language.foldNodeProp
 import com.monkopedia.kodemirror.language.oneDarkHighlightStyle
 import com.monkopedia.kodemirror.language.syntaxHighlighting
-import com.monkopedia.kodemirror.lezer.highlight.tags
+import com.monkopedia.kodemirror.lezer.highlight.Tags
 import com.monkopedia.kodemirror.lezer.lr.ParserConfig
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList
@@ -128,38 +128,38 @@ object TestScenarios {
 
     private val extremeContrastHighlightStyle = HighlightStyle.define(
         listOf(
-            TagStyleSpec(tags.keyword, SpanStyle(color = Color(0xFFFF0080.toInt()))),
+            TagStyleSpec(Tags.keyword, SpanStyle(color = Color(0xFFFF0080.toInt()))),
             TagStyleSpec(
-                listOf(tags.string, tags.inserted),
+                listOf(Tags.string, Tags.inserted),
                 SpanStyle(color = Color(0xFF00FF80))
             ),
             TagStyleSpec(
-                listOf(tags.number, tags.changed, tags.annotation),
+                listOf(Tags.number, Tags.changed, Tags.annotation),
                 SpanStyle(color = Color(0xFFFF8000.toInt()))
             ),
             TagStyleSpec(
-                listOf(tags.meta, tags.comment),
+                listOf(Tags.meta, Tags.comment),
                 SpanStyle(color = Color(0xFF808080.toInt()))
             ),
             TagStyleSpec(
-                listOf(tags.function(tags.variableName), tags.labelName),
+                listOf(Tags.function(Tags.variableName), Tags.labelName),
                 SpanStyle(color = Color(0xFF00FFFF))
             ),
-            TagStyleSpec(tags.variableName, SpanStyle(color = Color(0xFFFFFF00.toInt()))),
+            TagStyleSpec(Tags.variableName, SpanStyle(color = Color(0xFFFFFF00.toInt()))),
             TagStyleSpec(
-                listOf(tags.operator, tags.operatorKeyword),
+                listOf(Tags.operator, Tags.operatorKeyword),
                 SpanStyle(color = Color(0xFFFF4040.toInt()))
             ),
             TagStyleSpec(
-                listOf(tags.typeName, tags.className),
+                listOf(Tags.typeName, Tags.className),
                 SpanStyle(color = Color(0xFF8080FF.toInt()))
             ),
             TagStyleSpec(
-                tags.definition(tags.variableName),
+                Tags.definition(Tags.variableName),
                 SpanStyle(color = Color(0xFF00A0FF))
             ),
             TagStyleSpec(
-                listOf(tags.name, tags.propertyName),
+                listOf(Tags.name, Tags.propertyName),
                 SpanStyle(color = Color(0xFFFFA0A0.toInt()))
             )
         )

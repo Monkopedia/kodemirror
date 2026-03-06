@@ -59,17 +59,17 @@ values:
 
 ```kotlin
 import com.monkopedia.kodemirror.language.*
-import com.monkopedia.kodemirror.lezer.highlight.tags
+import com.monkopedia.kodemirror.lezer.highlight.Tags
 import androidx.compose.ui.text.SpanStyle
 
 val myHighlighting = HighlightStyle.define(listOf(
-    TagStyleSpec(tags.keyword, SpanStyle(color = Color(0xFFCBA6F7))),
-    TagStyleSpec(tags.string, SpanStyle(color = Color(0xFFA6E3A1))),
-    TagStyleSpec(tags.comment, SpanStyle(color = Color(0xFF6C7086))),
-    TagStyleSpec(tags.number, SpanStyle(color = Color(0xFFFAB387))),
-    TagStyleSpec(tags.variableName, SpanStyle(color = Color(0xFFCDD6F4))),
-    TagStyleSpec(tags.typeName, SpanStyle(color = Color(0xFFF9E2AF))),
-    TagStyleSpec(tags.function(tags.variableName), SpanStyle(color = Color(0xFF89B4FA)))
+    TagStyleSpec(Tags.keyword, SpanStyle(color = Color(0xFFCBA6F7))),
+    TagStyleSpec(Tags.string, SpanStyle(color = Color(0xFFA6E3A1))),
+    TagStyleSpec(Tags.comment, SpanStyle(color = Color(0xFF6C7086))),
+    TagStyleSpec(Tags.number, SpanStyle(color = Color(0xFFFAB387))),
+    TagStyleSpec(Tags.variableName, SpanStyle(color = Color(0xFFCDD6F4))),
+    TagStyleSpec(Tags.typeName, SpanStyle(color = Color(0xFFF9E2AF))),
+    TagStyleSpec(Tags.function(Tags.variableName), SpanStyle(color = Color(0xFF89B4FA)))
 ))
 ```
 

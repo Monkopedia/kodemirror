@@ -23,77 +23,77 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
-import com.monkopedia.kodemirror.lezer.highlight.tags
+import com.monkopedia.kodemirror.lezer.highlight.Tags
 
 /**
  * A default highlight style (works well with light themes).
  */
 val defaultHighlightStyle = HighlightStyle.define(
     listOf(
-        TagStyleSpec(tags.meta, SpanStyle(color = Color(0xFF404740))),
+        TagStyleSpec(Tags.meta, SpanStyle(color = Color(0xFF404740))),
         TagStyleSpec(
-            tags.link,
+            Tags.link,
             SpanStyle(textDecoration = TextDecoration.Underline)
         ),
         TagStyleSpec(
-            tags.heading,
+            Tags.heading,
             SpanStyle(
                 textDecoration = TextDecoration.Underline,
                 fontWeight = FontWeight.Bold
             )
         ),
-        TagStyleSpec(tags.emphasis, SpanStyle(fontStyle = FontStyle.Italic)),
-        TagStyleSpec(tags.strong, SpanStyle(fontWeight = FontWeight.Bold)),
+        TagStyleSpec(Tags.emphasis, SpanStyle(fontStyle = FontStyle.Italic)),
+        TagStyleSpec(Tags.strong, SpanStyle(fontWeight = FontWeight.Bold)),
         TagStyleSpec(
-            tags.strikethrough,
+            Tags.strikethrough,
             SpanStyle(textDecoration = TextDecoration.LineThrough)
         ),
-        TagStyleSpec(tags.keyword, SpanStyle(color = Color(0xFF770088))),
+        TagStyleSpec(Tags.keyword, SpanStyle(color = Color(0xFF770088))),
         TagStyleSpec(
             listOf(
-                tags.atom,
-                tags.bool,
-                tags.url,
-                tags.contentSeparator,
-                tags.labelName
+                Tags.atom,
+                Tags.bool,
+                Tags.url,
+                Tags.contentSeparator,
+                Tags.labelName
             ),
             SpanStyle(color = Color(0xFF221199))
         ),
         TagStyleSpec(
-            listOf(tags.literal, tags.inserted),
+            listOf(Tags.literal, Tags.inserted),
             SpanStyle(color = Color(0xFF116644))
         ),
         TagStyleSpec(
-            listOf(tags.string, tags.deleted),
+            listOf(Tags.string, Tags.deleted),
             SpanStyle(color = Color(0xFFAA1111))
         ),
         TagStyleSpec(
-            listOf(tags.regexp, tags.escape, tags.special(tags.string)),
+            listOf(Tags.regexp, Tags.escape, Tags.special(Tags.string)),
             SpanStyle(color = Color(0xFFEE4400))
         ),
         TagStyleSpec(
-            tags.definition(tags.variableName),
+            Tags.definition(Tags.variableName),
             SpanStyle(color = Color(0xFF0000FF))
         ),
         TagStyleSpec(
-            tags.local(tags.variableName),
+            Tags.local(Tags.variableName),
             SpanStyle(color = Color(0xFF3300AA))
         ),
         TagStyleSpec(
-            listOf(tags.typeName, tags.namespace),
+            listOf(Tags.typeName, Tags.namespace),
             SpanStyle(color = Color(0xFF008855))
         ),
-        TagStyleSpec(tags.className, SpanStyle(color = Color(0xFF116677))),
+        TagStyleSpec(Tags.className, SpanStyle(color = Color(0xFF116677))),
         TagStyleSpec(
-            listOf(tags.special(tags.variableName), tags.macroName),
+            listOf(Tags.special(Tags.variableName), Tags.macroName),
             SpanStyle(color = Color(0xFF225566))
         ),
         TagStyleSpec(
-            tags.definition(tags.propertyName),
+            Tags.definition(Tags.propertyName),
             SpanStyle(color = Color(0xFF0000CC))
         ),
-        TagStyleSpec(tags.comment, SpanStyle(color = Color(0xFF994400))),
-        TagStyleSpec(tags.invalid, SpanStyle(color = Color(0xFFFF0000)))
+        TagStyleSpec(Tags.comment, SpanStyle(color = Color(0xFF994400))),
+        TagStyleSpec(Tags.invalid, SpanStyle(color = Color(0xFFFF0000)))
     )
 )
 
@@ -102,80 +102,80 @@ val defaultHighlightStyle = HighlightStyle.define(
  */
 val oneDarkHighlightStyle = HighlightStyle.define(
     listOf(
-        TagStyleSpec(tags.keyword, SpanStyle(color = Color(0xFFC678DD))),
+        TagStyleSpec(Tags.keyword, SpanStyle(color = Color(0xFFC678DD))),
         TagStyleSpec(
             listOf(
-                tags.name,
-                tags.deleted,
-                tags.character,
-                tags.propertyName,
-                tags.macroName
+                Tags.name,
+                Tags.deleted,
+                Tags.character,
+                Tags.propertyName,
+                Tags.macroName
             ),
             SpanStyle(color = Color(0xFFE06C75))
         ),
         TagStyleSpec(
-            listOf(tags.function(tags.variableName), tags.labelName),
+            listOf(Tags.function(Tags.variableName), Tags.labelName),
             SpanStyle(color = Color(0xFF61AFEF))
         ),
         TagStyleSpec(
-            listOf(tags.color, tags.constant(tags.name), tags.standard(tags.name)),
+            listOf(Tags.color, Tags.constant(Tags.name), Tags.standard(Tags.name)),
             SpanStyle(color = Color(0xFFD19A66))
         ),
         TagStyleSpec(
-            listOf(tags.definition(tags.name), tags.separator),
+            listOf(Tags.definition(Tags.name), Tags.separator),
             SpanStyle(color = Color(0xFFABB2BF))
         ),
         TagStyleSpec(
             listOf(
-                tags.typeName,
-                tags.className,
-                tags.number,
-                tags.changed,
-                tags.annotation,
-                tags.modifier,
-                tags.self,
-                tags.namespace
+                Tags.typeName,
+                Tags.className,
+                Tags.number,
+                Tags.changed,
+                Tags.annotation,
+                Tags.modifier,
+                Tags.self,
+                Tags.namespace
             ),
             SpanStyle(color = Color(0xFFE5C07B))
         ),
         TagStyleSpec(
             listOf(
-                tags.operator,
-                tags.operatorKeyword,
-                tags.url,
-                tags.escape,
-                tags.regexp,
-                tags.link,
-                tags.special(tags.string)
+                Tags.operator,
+                Tags.operatorKeyword,
+                Tags.url,
+                Tags.escape,
+                Tags.regexp,
+                Tags.link,
+                Tags.special(Tags.string)
             ),
             SpanStyle(color = Color(0xFF56B6C2))
         ),
         TagStyleSpec(
-            listOf(tags.meta, tags.comment),
+            listOf(Tags.meta, Tags.comment),
             SpanStyle(color = Color(0xFF7D8799))
         ),
-        TagStyleSpec(tags.strong, SpanStyle(fontWeight = FontWeight.Bold)),
-        TagStyleSpec(tags.emphasis, SpanStyle(fontStyle = FontStyle.Italic)),
+        TagStyleSpec(Tags.strong, SpanStyle(fontWeight = FontWeight.Bold)),
+        TagStyleSpec(Tags.emphasis, SpanStyle(fontStyle = FontStyle.Italic)),
         TagStyleSpec(
-            tags.strikethrough,
+            Tags.strikethrough,
             SpanStyle(textDecoration = TextDecoration.LineThrough)
         ),
-        TagStyleSpec(tags.link, SpanStyle(textDecoration = TextDecoration.Underline)),
+        TagStyleSpec(Tags.link, SpanStyle(textDecoration = TextDecoration.Underline)),
         TagStyleSpec(
-            tags.heading,
+            Tags.heading,
             SpanStyle(
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFFE06C75)
             )
         ),
         TagStyleSpec(
-            listOf(tags.atom, tags.bool, tags.special(tags.variableName)),
+            listOf(Tags.atom, Tags.bool, Tags.special(Tags.variableName)),
             SpanStyle(color = Color(0xFFD19A66))
         ),
         TagStyleSpec(
-            listOf(tags.processingInstruction, tags.string, tags.inserted),
+            listOf(Tags.processingInstruction, Tags.string, Tags.inserted),
             SpanStyle(color = Color(0xFF98C379))
         ),
-        TagStyleSpec(tags.invalid, SpanStyle(color = Color(0xFFFF0000)))
+        TagStyleSpec(Tags.invalid, SpanStyle(color = Color(0xFFFF0000)))
     )
 )

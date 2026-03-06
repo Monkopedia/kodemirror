@@ -18,7 +18,7 @@
  */
 package com.monkopedia.kodemirror.lezer.markdown
 
-import com.monkopedia.kodemirror.lezer.highlight.tags as t
+import com.monkopedia.kodemirror.lezer.highlight.Tags as t
 
 // ---- Strikethrough ----
 

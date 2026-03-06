@@ -19,6 +19,10 @@ doc.length       // total character count (including newlines)
 doc.lines        // number of lines (always >= 1)
 ```
 
+> **Note:** `Text.of()` expects each element to be a single line
+> without embedded newline characters. To create a `Text` from a full
+> string (with newlines), use `Text.of("content".split("\n"))`.
+
 ### Querying lines
 
 `Text` provides two ways to look up line information, both returning a
@@ -39,11 +43,19 @@ doc.toString()                   // full content as a single string
 
 ### Iteration
 
+`Text` provides several iterator variants via `TextIterator`:
+
 ```kotlin
-val iter = doc.iter()            // forward character iterator
-val iter = doc.iterRange(10, 50) // iterator over a range
-val iter = doc.iterLines()       // iterate line by line
+val iter = doc.iter()              // forward from start
+val iter = doc.iter(-1)            // backward from end
+val iter = doc.iterRange(10, 50)   // iterator over a character range
+val iter = doc.iterLines()         // iterate line by line
+val iter = doc.iterLines(3)        // iterate from line 3 onward
 ```
+
+Each call to `iter.next()` advances the iterator and returns the
+next chunk of text. Check `iter.done` to know when iteration is
+complete. The `iter.value` property holds the current chunk.
 
 `Text` is serialized with `toJSON()` (returns `List<String>`) and
 restored with `Text.of(lines)`.

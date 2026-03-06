@@ -30,8 +30,8 @@ import com.monkopedia.kodemirror.lezer.common.Tree
 import com.monkopedia.kodemirror.lezer.common.TreeBuildSpec
 import com.monkopedia.kodemirror.lezer.common.TreeFragment
 import com.monkopedia.kodemirror.lezer.highlight.Tag
+import com.monkopedia.kodemirror.lezer.highlight.Tags as highlightTags
 import com.monkopedia.kodemirror.lezer.highlight.styleTags
-import com.monkopedia.kodemirror.lezer.highlight.tags as highlightTags
 import com.monkopedia.kodemirror.state.Facet
 
 /**

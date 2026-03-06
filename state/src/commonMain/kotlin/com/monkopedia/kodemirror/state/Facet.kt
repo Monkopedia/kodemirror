@@ -552,21 +552,11 @@ private object PrecValue {
  * to override this.
  */
 object Prec {
-    val highest: (Extension) -> Extension = { ext ->
-        PrecExtension(ext, PrecValue.HIGHEST)
-    }
-    val high: (Extension) -> Extension = { ext ->
-        PrecExtension(ext, PrecValue.HIGH)
-    }
-    val default: (Extension) -> Extension = { ext ->
-        PrecExtension(ext, PrecValue.DEFAULT)
-    }
-    val low: (Extension) -> Extension = { ext ->
-        PrecExtension(ext, PrecValue.LOW)
-    }
-    val lowest: (Extension) -> Extension = { ext ->
-        PrecExtension(ext, PrecValue.LOWEST)
-    }
+    fun highest(ext: Extension): Extension = PrecExtension(ext, PrecValue.HIGHEST)
+    fun high(ext: Extension): Extension = PrecExtension(ext, PrecValue.HIGH)
+    fun default(ext: Extension): Extension = PrecExtension(ext, PrecValue.DEFAULT)
+    fun low(ext: Extension): Extension = PrecExtension(ext, PrecValue.LOW)
+    fun lowest(ext: Extension): Extension = PrecExtension(ext, PrecValue.LOWEST)
 }
 
 internal class PrecExtension(

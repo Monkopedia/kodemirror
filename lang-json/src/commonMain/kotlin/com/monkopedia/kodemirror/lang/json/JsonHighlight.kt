@@ -18,8 +18,8 @@
  */
 package com.monkopedia.kodemirror.lang.json
 
+import com.monkopedia.kodemirror.lezer.highlight.Tags as t
 import com.monkopedia.kodemirror.lezer.highlight.styleTags
-import com.monkopedia.kodemirror.lezer.highlight.tags as t
 
 val jsonHighlighting = styleTags(
     mapOf(

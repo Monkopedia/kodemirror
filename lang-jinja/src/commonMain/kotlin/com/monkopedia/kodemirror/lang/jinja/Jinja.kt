@@ -50,9 +50,9 @@ private val allStatements = setOf(
 )
 
 /**
- * The core Jinja tag language (without HTML wrapping).
+ * The Jinja tag language (without HTML wrapping).
  */
-val tagLanguage: LRLanguage = LRLanguage.define(
+val jinjaTagLanguage: LRLanguage = LRLanguage.define(
     parser = parser.configure(
         ParserConfig(
             props = listOf(
@@ -111,7 +111,7 @@ fun makeJinja(baseLanguage: Language): LRLanguage {
         }
     }
     return LRLanguage.define(
-        parser = (tagLanguage.parser as LRParser).configure(
+        parser = (jinjaTagLanguage.parser as LRParser).configure(
             ParserConfig(wrap = wrap)
         ),
         name = "jinja"

@@ -89,6 +89,23 @@ Dependencies are expressed as `Slot` values:
 val value = state.facet(myFacet)
 ```
 
+### FacetReader
+
+`FacetReader` is the read-side interface of a `Facet`. Use
+`FacetReader` when code only needs to _read_ from a facet, not
+provide values to it. This makes APIs more flexible — callers can pass
+either a `Facet` or a computed facet reader.
+
+```kotlin
+// A function that reads a facet without needing to know its input type
+fun readAnyFacet(state: EditorState, reader: FacetReader<Int>) {
+    val value: Int = state.facet(reader)
+}
+```
+
+`Facet<I, O>` implements `FacetReader<O>`, so you can pass a facet
+anywhere a reader is expected.
+
 ## State fields
 
 A `StateField<Value>` stores a value that persists across transactions.
@@ -205,6 +222,25 @@ val myPlugin = ViewPlugin.define { view -> MyPlugin(view) }
 ```
 
 Include it in extensions with `myPlugin.asExtension()`.
+
+### Configuring a plugin with `PluginSpec`
+
+`ViewPlugin.define` accepts an optional `configure` lambda that
+customizes the `PluginSpec`. This is how you attach decoration
+providers, event handlers, or other plugin-level options:
+
+```kotlin
+val myPlugin = ViewPlugin.define(
+    create = { view -> MyPlugin(view) },
+    configure = {
+        // `this` is a PluginSpec — copy it with new properties
+        copy(
+            decorations = { plugin -> (plugin as MyPlugin).decorations },
+            eventHandlers = mapOf("keydown" to { plugin, event -> false })
+        )
+    }
+)
+```
 
 ### Plugins with decorations
 

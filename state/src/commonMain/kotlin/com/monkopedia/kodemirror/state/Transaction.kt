@@ -163,6 +163,12 @@ sealed interface SelectionSpec {
     ) : SelectionSpec
 }
 
+/** Create a [SelectionSpec] placing the cursor at [pos]. */
+fun Int.asCursor(): SelectionSpec = SelectionSpec.CursorSpec(this)
+
+/** Convert this [EditorSelection] to a [SelectionSpec]. */
+fun EditorSelection.asSpec(): SelectionSpec = SelectionSpec.EditorSelectionSpec(this)
+
 /**
  * Changes to the editor state are grouped into transactions.
  */

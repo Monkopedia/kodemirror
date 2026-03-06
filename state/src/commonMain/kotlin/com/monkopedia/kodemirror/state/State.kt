@@ -494,6 +494,21 @@ class EditorState private constructor(
         }
 
         /**
+         * Create a new state with a string document and optional extensions.
+         */
+        fun create(
+            doc: String,
+            extensions: Extension? = null,
+            selection: SelectionSpec? = null
+        ): EditorState = create(
+            EditorStateConfig(
+                doc = doc.asDoc(),
+                extensions = extensions,
+                selection = selection
+            )
+        )
+
+        /**
          * Create a new state.
          */
         fun create(config: EditorStateConfig = EditorStateConfig()): EditorState {

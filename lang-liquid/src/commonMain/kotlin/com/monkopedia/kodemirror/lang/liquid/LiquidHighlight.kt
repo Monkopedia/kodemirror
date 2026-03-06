@@ -18,8 +18,8 @@
  */
 package com.monkopedia.kodemirror.lang.liquid
 
+import com.monkopedia.kodemirror.lezer.highlight.Tags as t
 import com.monkopedia.kodemirror.lezer.highlight.styleTags
-import com.monkopedia.kodemirror.lezer.highlight.tags as t
 
 internal val liquidHighlighting = styleTags(
     mapOf(
