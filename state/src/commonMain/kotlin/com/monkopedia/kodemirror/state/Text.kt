@@ -50,36 +50,44 @@ internal enum class Open(val value: Int) {
     }
 }
 
-// / A text iterator iterates over a sequence of strings. When
-// / iterating over a [Text] document, result values will
-// / either be lines or line breaks.
+/**
+ * A text iterator iterates over a sequence of strings. When
+ * iterating over a [Text] document, result values will
+ * either be lines or line breaks.
+ */
 interface TextIterator {
-    // / Retrieve the next string. Optionally skip a given number of
-    // / positions after the current position. Always returns the
-    // / object itself.
+    /**
+     * Retrieve the next string. Optionally skip a given number of
+     * positions after the current position. Always returns the
+     * object itself.
+     */
     fun next(skip: Int = 0): TextIterator
 
-    // / The current string. Will be the empty string when the cursor
-    // / is at its end or `next` hasn't been called on it yet.
+    /**
+     * The current string. Will be the empty string when the cursor
+     * is at its end or `next` hasn't been called on it yet.
+     */
     val value: String
 
-    // / Whether the end of the iteration has been reached. You should
-    // / probably check this right after calling `next`.
+    /**
+     * Whether the end of the iteration has been reached. You should
+     * probably check this right after calling `next`.
+     */
     val done: Boolean
 
-    // / Whether the current string represents a line break.
+    /** Whether the current string represents a line break. */
     val lineBreak: Boolean
 }
 
-// / The data structure for documents.
+/** The data structure for documents. */
 abstract class Text {
-    // / The length of the string.
+    /** The length of the string. */
     abstract val length: Int
 
-    // / The number of lines in the string (always >= 1).
+    /** The number of lines in the string (always >= 1). */
     abstract val lines: Int
 
-    // / Get the line description around the given position.
+    /** Get the line description around the given position. */
     fun lineAt(pos: Int): Line {
         if (pos < 0 || pos > length) {
             throw IllegalArgumentException(
@@ -89,7 +97,7 @@ abstract class Text {
         return lineInner(pos, false, 1, 0)
     }
 
-    // / Get the description for the given (1-based) line number.
+    /** Get the description for the given (1-based) line number. */
     fun line(n: Int): Line {
         if (n < 1 || n > lines) {
             throw IllegalArgumentException(
@@ -101,7 +109,7 @@ abstract class Text {
 
     internal abstract fun lineInner(target: Int, isLine: Boolean, line: Int, offset: Int): Line
 
-    // / Replace a range of the text with the given content.
+    /** Replace a range of the text with the given content. */
     open fun replace(from: Int, to: Int, text: Text): Text {
         val (clippedFrom, clippedTo) = clip(this, from, to)
         val parts = mutableListOf<Text>()
@@ -121,12 +129,12 @@ abstract class Text {
         )
     }
 
-    // / Append another document to this one.
+    /** Append another document to this one. */
     fun append(other: Text): Text {
         return replace(length, length, other)
     }
 
-    // / Retrieve the text between the given points.
+    /** Retrieve the text between the given points. */
     fun slice(from: Int, to: Int = length): Text {
         val (clippedFrom, clippedTo) = clip(this, from, to)
         val parts = mutableListOf<Text>()
@@ -134,14 +142,14 @@ abstract class Text {
         return TextNode.from(parts, clippedTo - clippedFrom)
     }
 
-    // / Retrieve a part of the document as a string
+    /** Retrieve a part of the document as a string. */
     abstract fun sliceString(from: Int, to: Int = length, lineSep: String = "\n"): String
 
     internal abstract fun flatten(target: MutableList<String>)
 
     internal abstract fun scanIdentical(other: Text, dir: Int): Int
 
-    // / Test whether this text is equal to another instance.
+    /** Test whether this text is equal to another instance. */
     fun eq(other: Text): Boolean {
         if (other === this) return true
         if (other.length != length || other.lines != lines) {
@@ -168,21 +176,27 @@ abstract class Text {
         }
     }
 
-    // / Iterate over the text. When `dir` is `-1`, iteration happens
-    // / from end to start. This will return lines and the breaks
-    // / between them as separate strings.
+    /**
+     * Iterate over the text. When [dir] is `-1`, iteration happens
+     * from end to start. This will return lines and the breaks
+     * between them as separate strings.
+     */
     fun iter(dir: Int = 1): TextIterator = RawTextCursor(this, dir)
 
-    // / Iterate over a range of the text. When `from` > `to`, the
-    // / iterator will run in reverse.
+    /**
+     * Iterate over a range of the text. When [from] > [to], the
+     * iterator will run in reverse.
+     */
     fun iterRange(from: Int, to: Int = length): TextIterator = PartialTextCursor(this, from, to)
 
-    // / Return a cursor that iterates over the given range of lines,
-    // / _without_ returning the line breaks between, and yielding
-    // / empty strings for empty lines.
-    // /
-    // / When `from` and `to` are given, they should be 1-based line
-    // / numbers.
+    /**
+     * Return a cursor that iterates over the given range of lines,
+     * _without_ returning the line breaks between, and yielding
+     * empty strings for empty lines.
+     *
+     * When [from] and [to] are given, they should be 1-based line
+     * numbers.
+     */
     fun iterLines(from: Int? = null, to: Int? = null): TextIterator {
         val inner: TextIterator
         if (from == null) {
@@ -207,25 +221,31 @@ abstract class Text {
 
     internal abstract fun decompose(from: Int, to: Int, target: MutableList<Text>, open: Open)
 
-    // / Return the document as a string, using newline characters to
-    // / separate lines.
+    /**
+     * Return the document as a string, using newline characters to
+     * separate lines.
+     */
     override fun toString(): String = sliceString(0)
 
-    // / Convert the document to an array of lines (which can be
-    // / deserialized again via [Text.of]).
+    /**
+     * Convert the document to an array of lines (which can be
+     * deserialized again via [Text.of]).
+     */
     fun toJSON(): List<String> {
         val lines = mutableListOf<String>()
         flatten(lines)
         return lines
     }
 
-    // / If this is a branch node, `children` will hold the `Text`
-    // / objects that it is made up of. For leaf nodes, this holds
-    // / null.
+    /**
+     * If this is a branch node, [children] will hold the [Text]
+     * objects that it is made up of. For leaf nodes, this holds
+     * null.
+     */
     abstract val children: List<Text>?
 
     companion object {
-        // / Create a `Text` instance for the given array of lines.
+        /** Create a [Text] instance for the given array of lines. */
         fun of(text: List<String>): Text {
             if (text.isEmpty()) {
                 throw IllegalArgumentException(
@@ -240,7 +260,7 @@ abstract class Text {
             }
         }
 
-        // / The empty document.
+        /** The empty document. */
         val empty: Text = TextLeaf(listOf(""), 0)
     }
 }
@@ -865,21 +885,27 @@ private class LineCursor(
     override val lineBreak: Boolean get() = false
 }
 
-// / This type describes a line in the document. It is created
-// / on-demand when lines are [queried][Text.lineAt].
+/**
+ * This type describes a line in the document. It is created
+ * on-demand when lines are [queried][Text.lineAt].
+ */
 class Line internal constructor(
-    // / The position of the start of the line.
+    /** The position of the start of the line. */
     val from: Int,
-    // / The position at the end of the line (_before_ the line
-    // / break, or at the end of document for the last line).
+    /**
+     * The position at the end of the line (_before_ the line
+     * break, or at the end of document for the last line).
+     */
     val to: Int,
-    // / This line's line number (1-based).
+    /** This line's line number (1-based). */
     val number: Int,
-    // / The line's content.
+    /** The line's content. */
     val text: String
 ) {
-    // / The length of the line (not including any line break after
-    // / it).
+    /**
+     * The length of the line (not including any line break after
+     * it).
+     */
     val length: Int get() = to - from
 }
 
