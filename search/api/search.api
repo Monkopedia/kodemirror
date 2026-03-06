@@ -79,6 +79,7 @@ public final class com/monkopedia/kodemirror/search/SearchMatch {
 
 public final class com/monkopedia/kodemirror/search/SearchQuery {
 	public static final field $stable I
+	public static final field Companion Lcom/monkopedia/kodemirror/search/SearchQuery$Companion;
 	public fun <init> ()V
 	public fun <init> (Ljava/lang/String;ZZZLjava/lang/String;ZLkotlin/jvm/functions/Function3;)V
 	public synthetic fun <init> (Ljava/lang/String;ZZZLjava/lang/String;ZLkotlin/jvm/functions/Function3;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -106,6 +107,11 @@ public final class com/monkopedia/kodemirror/search/SearchQuery {
 	public final fun getWholeWord ()Z
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/search/SearchQuery$Companion {
+	public final fun validOrNull (Ljava/lang/String;ZZZLjava/lang/String;ZLkotlin/jvm/functions/Function3;)Lcom/monkopedia/kodemirror/search/SearchQuery;
+	public static synthetic fun validOrNull$default (Lcom/monkopedia/kodemirror/search/SearchQuery$Companion;Ljava/lang/String;ZZZLjava/lang/String;ZLkotlin/jvm/functions/Function3;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/search/SearchQuery;
 }
 
 public final class com/monkopedia/kodemirror/search/SearchStateKt {

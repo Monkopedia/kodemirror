@@ -301,17 +301,20 @@ Each item has a status prefix on its heading line:
 - `Prec.highest`, `.high`, `.default`, `.low`, `.lowest` are stored as lambda properties (JS pattern).
   Should be `fun highest(ext: Extension): Extension`.
 
-### 42. Add `kotlinx.serialization` support alongside `toJSON`/`fromJSON`
+### 42. [BLOCKED] Add `kotlinx.serialization` support alongside `toJSON`/`fromJSON`
+> **Blocked:** Needs design decision — should `@Serializable` be added to core types? This would add a `kotlinx.serialization` dependency to the state module. Also need to decide on serializer shape for `EditorState` (which has computed fields).
 - **Effort:** 2–3 days | **Source:** Kotlin Ergonomics
 - `toJSON()`/`fromJSON()` use `Map<String, Any?>`. Add `@Serializable` data classes or serializers.
   Also consider renaming to `serialize()`/`deserialize()`.
 
-### 43. Consider `Completion.type` as enum/sealed class
+### 43. [DONE] Consider `Completion.type` as enum/sealed class
+> Added `CompletionType` enum with standard type values. `Completion.type` remains `String?` for compatibility; use `CompletionType.FUNCTION.value` etc.
 - **Effort:** 1 day | **Source:** Kotlin Ergonomics, Frontend DX
 - Currently `String?` ("keyword", "function", "variable", etc.) with no discoverability.
   An enum would provide exhaustive matching and prevent typos.
 
-### 44. Consider inline value classes for positions
+### 44. [BLOCKED] Consider inline value classes for positions
+> **Blocked:** Major breaking change affecting virtually every API surface. Would need to change every `Int` position parameter across all modules. Should wait for 1.0 planning.
 - **Effort:** 2–3 days | **Source:** Kotlin Ergonomics
 - `@JvmInline value class DocPosition(val value: Int)` and `LineNumber(val value: Int)` would
   prevent mixing up positions and line numbers at zero runtime cost.
@@ -355,7 +358,8 @@ Each item has a status prefix on its heading line:
 - **Effort:** < 1 hour | **Source:** Architecture
 - 82 classes expose Compose compiler `$stable` field. Cosmetic but adds noise.
 
-### 53. Consider `IterMode` as `EnumSet` instead of bit flags
+### 53. [SKIP] Consider `IterMode` as `EnumSet` instead of bit flags
+> **Skipped:** Deeply integrated with bitwise operations throughout tree traversal code (15+ call sites). Bit flags are idiomatic for parser internals and the conversion would add overhead without meaningful API improvement.
 - **Effort:** 1 day | **Source:** Architecture
 - `IterMode.INCLUDE_ANONYMOUS`, `.EXCLUDE_BUFFERS`, etc. are integer bit flags. Kotlin idiom is
   `EnumSet` or sealed class.
@@ -372,23 +376,26 @@ Each item has a status prefix on its heading line:
 - **Effort:** 1 day | **Source:** Kotlin Ergonomics
 - `val EditorState.counter by counterField` via `ReadOnlyProperty` delegate.
 
-### 57. Use named `fun interface` for `GutterConfig` function parameters
+### 57. [SKIP] Use named `fun interface` for `GutterConfig` function parameters
+> **Skipped:** Kotlin lambda syntax already works well at call sites. Named `fun interface` types would add API surface without clear benefit — SAM conversion is only needed for Java interop.
 - **Effort:** < 1 day | **Source:** Kotlin Ergonomics
 - `lineMarker`, `lineMarkerChange`, etc. are generic function types. Named functional interfaces
   would improve readability at call sites and allow SAM conversion.
 
-### 58. Add validated factory for `SearchQuery`
+### 58. [DONE] Add validated factory for `SearchQuery`
 - **Effort:** < 1 day | **Source:** Kotlin Ergonomics
 - `SearchQuery.valid` is a computed property but invalid queries can still be constructed and used.
   Consider a validated factory method or builder that returns `null`/throws on invalid input.
 
-### 59. Address Java interop type erasure
+### 59. [BLOCKED] Address Java interop type erasure
+> **Blocked:** Needs design decision — KMP targets (Android, Desktop, wasmJs) all use Kotlin callers. Java interop is low priority for a Compose Multiplatform library. May just need documentation rather than code changes.
 - **Effort:** 1–2 days | **Source:** Architecture
 - `Facet`, `StateField`, `StateEffect`, `EditorState.facet()`, `EditorState.field()` lose generic
   type parameters at the JVM boundary due to type erasure. Java callers see raw `Object` types.
   Consider adding `@JvmName` variants or documenting the Java interop story.
 
-### 60. Verify `:state` minor completeness gaps
+### 60. [DONE] Verify `:state` minor completeness gaps
+> All verified present: `TextIterator` interface, `wordAt` on `EditorState`, all 5 `Prec` methods.
 - **Effort:** < 1 day | **Source:** Completeness
 - Verify presence/absence of: `TextIterator` interface (may be handled differently in Kotlin),
   `wordAt` on `EditorState`, full coverage of `Prec` methods (`highest`, `high`, `default`,

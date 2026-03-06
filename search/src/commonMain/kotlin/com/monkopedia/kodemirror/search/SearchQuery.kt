@@ -128,6 +128,34 @@ data class SearchQuery(
 
     /** Expand replacement for a simple string match. */
     fun expandReplace(): String = replace
+
+    companion object {
+        /**
+         * Create a [SearchQuery] only if the given parameters form a
+         * valid query. Returns `null` for empty search strings or
+         * invalid regex patterns.
+         */
+        fun validOrNull(
+            search: String,
+            caseSensitive: Boolean = false,
+            literal: Boolean = false,
+            regexp: Boolean = false,
+            replace: String = "",
+            wholeWord: Boolean = false,
+            test: ((from: Int, to: Int, state: EditorState) -> Boolean)? = null
+        ): SearchQuery? {
+            val query = SearchQuery(
+                search = search,
+                caseSensitive = caseSensitive,
+                literal = literal,
+                regexp = regexp,
+                replace = replace,
+                wholeWord = wholeWord,
+                test = test
+            )
+            return if (query.valid) query else null
+        }
+    }
 }
 
 /**

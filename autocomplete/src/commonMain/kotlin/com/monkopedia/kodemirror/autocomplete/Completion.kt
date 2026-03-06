@@ -21,6 +21,25 @@ package com.monkopedia.kodemirror.autocomplete
 import com.monkopedia.kodemirror.view.EditorView
 
 /**
+ * Standard completion type indicators. Use [value] as the [Completion.type]
+ * string, or pass the enum directly to [Completion] via [CompletionType.value].
+ */
+enum class CompletionType(val value: String) {
+    CLASS("class"),
+    CONSTANT("constant"),
+    ENUM("enum"),
+    FUNCTION("function"),
+    INTERFACE("interface"),
+    KEYWORD("keyword"),
+    METHOD("method"),
+    NAMESPACE("namespace"),
+    PROPERTY("property"),
+    TEXT("text"),
+    TYPE("type"),
+    VARIABLE("variable")
+}
+
+/**
  * A single completion option.
  *
  * @param label The text to insert (and the primary display text).

@@ -136,6 +136,25 @@ public final class com/monkopedia/kodemirror/autocomplete/CompletionSection {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/monkopedia/kodemirror/autocomplete/CompletionType : java/lang/Enum {
+	public static final field CLASS Lcom/monkopedia/kodemirror/autocomplete/CompletionType;
+	public static final field CONSTANT Lcom/monkopedia/kodemirror/autocomplete/CompletionType;
+	public static final field ENUM Lcom/monkopedia/kodemirror/autocomplete/CompletionType;
+	public static final field FUNCTION Lcom/monkopedia/kodemirror/autocomplete/CompletionType;
+	public static final field INTERFACE Lcom/monkopedia/kodemirror/autocomplete/CompletionType;
+	public static final field KEYWORD Lcom/monkopedia/kodemirror/autocomplete/CompletionType;
+	public static final field METHOD Lcom/monkopedia/kodemirror/autocomplete/CompletionType;
+	public static final field NAMESPACE Lcom/monkopedia/kodemirror/autocomplete/CompletionType;
+	public static final field PROPERTY Lcom/monkopedia/kodemirror/autocomplete/CompletionType;
+	public static final field TEXT Lcom/monkopedia/kodemirror/autocomplete/CompletionType;
+	public static final field TYPE Lcom/monkopedia/kodemirror/autocomplete/CompletionType;
+	public static final field VARIABLE Lcom/monkopedia/kodemirror/autocomplete/CompletionType;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getValue ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lcom/monkopedia/kodemirror/autocomplete/CompletionType;
+	public static fun values ()[Lcom/monkopedia/kodemirror/autocomplete/CompletionType;
+}
+
 public final class com/monkopedia/kodemirror/autocomplete/ConfigKt {
 	public static final fun getCompletionConfig ()Lcom/monkopedia/kodemirror/state/Facet;
 }
