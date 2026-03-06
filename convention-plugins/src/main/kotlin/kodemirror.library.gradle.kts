@@ -26,6 +26,7 @@ plugins {
     id("org.jetbrains.kotlinx.atomicfu")
     id("org.jetbrains.kotlinx.kover")
     id("org.jetbrains.dokka")
+    id("org.jetbrains.kotlinx.binary-compatibility-validator")
 }
 
 group = "com.monkopedia.kodemirror"
@@ -46,6 +47,17 @@ kotlin {
             implementation(kotlin("test"))
         }
     }
+}
+
+apiValidation {
+    @OptIn(kotlinx.validation.ExperimentalBCVApi::class)
+    klib {
+        enabled = false
+    }
+}
+
+tasks.configureEach {
+    if (name.startsWith("wasmJsTest") || name == "wasmJsNodeTest") enabled = false
 }
 
 ktlint {

@@ -1,0 +1,107 @@
+public final class com/monkopedia/kodemirror/commands/CommandsKt {
+	public static final fun getCursorCharLeft ()Lkotlin/jvm/functions/Function1;
+	public static final fun getCursorCharRight ()Lkotlin/jvm/functions/Function1;
+	public static final fun getCursorDocEnd ()Lkotlin/jvm/functions/Function1;
+	public static final fun getCursorDocStart ()Lkotlin/jvm/functions/Function1;
+	public static final fun getCursorGroupLeft ()Lkotlin/jvm/functions/Function1;
+	public static final fun getCursorGroupRight ()Lkotlin/jvm/functions/Function1;
+	public static final fun getCursorLineDown ()Lkotlin/jvm/functions/Function1;
+	public static final fun getCursorLineEnd ()Lkotlin/jvm/functions/Function1;
+	public static final fun getCursorLineStart ()Lkotlin/jvm/functions/Function1;
+	public static final fun getCursorLineUp ()Lkotlin/jvm/functions/Function1;
+	public static final fun getCursorMatchingBracket ()Lkotlin/jvm/functions/Function1;
+	public static final fun getCursorPageDown ()Lkotlin/jvm/functions/Function1;
+	public static final fun getCursorPageUp ()Lkotlin/jvm/functions/Function1;
+	public static final fun getCursorSubwordBackward ()Lkotlin/jvm/functions/Function1;
+	public static final fun getCursorSubwordForward ()Lkotlin/jvm/functions/Function1;
+	public static final fun getDeleteCharBackward ()Lkotlin/jvm/functions/Function1;
+	public static final fun getDeleteCharForward ()Lkotlin/jvm/functions/Function1;
+	public static final fun getDeleteGroupBackward ()Lkotlin/jvm/functions/Function1;
+	public static final fun getDeleteGroupForward ()Lkotlin/jvm/functions/Function1;
+	public static final fun getDeleteLine ()Lkotlin/jvm/functions/Function1;
+	public static final fun getDeleteToLineEnd ()Lkotlin/jvm/functions/Function1;
+	public static final fun getDeleteToLineStart ()Lkotlin/jvm/functions/Function1;
+	public static final fun getInsertBlankLine ()Lkotlin/jvm/functions/Function1;
+	public static final fun getInsertNewline ()Lkotlin/jvm/functions/Function1;
+	public static final fun getInsertNewlineAndIndent ()Lkotlin/jvm/functions/Function1;
+	public static final fun getInsertNewlineKeepIndent ()Lkotlin/jvm/functions/Function1;
+	public static final fun getInsertTab ()Lkotlin/jvm/functions/Function1;
+	public static final fun getSelectAll ()Lkotlin/jvm/functions/Function1;
+	public static final fun getSelectCharLeft ()Lkotlin/jvm/functions/Function1;
+	public static final fun getSelectCharRight ()Lkotlin/jvm/functions/Function1;
+	public static final fun getSelectDocEnd ()Lkotlin/jvm/functions/Function1;
+	public static final fun getSelectDocStart ()Lkotlin/jvm/functions/Function1;
+	public static final fun getSelectGroupLeft ()Lkotlin/jvm/functions/Function1;
+	public static final fun getSelectGroupRight ()Lkotlin/jvm/functions/Function1;
+	public static final fun getSelectLine ()Lkotlin/jvm/functions/Function1;
+	public static final fun getSelectLineDown ()Lkotlin/jvm/functions/Function1;
+	public static final fun getSelectLineEnd ()Lkotlin/jvm/functions/Function1;
+	public static final fun getSelectLineStart ()Lkotlin/jvm/functions/Function1;
+	public static final fun getSelectLineUp ()Lkotlin/jvm/functions/Function1;
+	public static final fun getSelectMatchingBracket ()Lkotlin/jvm/functions/Function1;
+	public static final fun getSelectNextOccurrence ()Lkotlin/jvm/functions/Function1;
+	public static final fun getSelectParentSyntax ()Lkotlin/jvm/functions/Function1;
+	public static final fun getSelectSubwordBackward ()Lkotlin/jvm/functions/Function1;
+	public static final fun getSelectSubwordForward ()Lkotlin/jvm/functions/Function1;
+	public static final fun getSimplifySelection ()Lkotlin/jvm/functions/Function1;
+	public static final fun getSplitLine ()Lkotlin/jvm/functions/Function1;
+	public static final fun getTransposeChars ()Lkotlin/jvm/functions/Function1;
+}
+
+public final class com/monkopedia/kodemirror/commands/CommentCommandsKt {
+	public static final fun getBlockComment ()Lkotlin/jvm/functions/Function1;
+	public static final fun getBlockUncomment ()Lkotlin/jvm/functions/Function1;
+	public static final fun getCommentKeymap ()Ljava/util/List;
+	public static final fun getLineComment ()Lkotlin/jvm/functions/Function1;
+	public static final fun getLineUncomment ()Lkotlin/jvm/functions/Function1;
+	public static final fun getToggleBlockComment ()Lkotlin/jvm/functions/Function1;
+	public static final fun getToggleComment ()Lkotlin/jvm/functions/Function1;
+}
+
+public final class com/monkopedia/kodemirror/commands/HistoryConfig {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (JI)V
+	public synthetic fun <init> (JIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component2 ()I
+	public final fun copy (JI)Lcom/monkopedia/kodemirror/commands/HistoryConfig;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/commands/HistoryConfig;JIILjava/lang/Object;)Lcom/monkopedia/kodemirror/commands/HistoryConfig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getGroupDelay ()J
+	public final fun getMinDepth ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/commands/HistoryKt {
+	public static final fun getIsolateHistory ()Lcom/monkopedia/kodemirror/state/AnnotationType;
+	public static final fun getRedo ()Lkotlin/jvm/functions/Function1;
+	public static final fun getUndo ()Lkotlin/jvm/functions/Function1;
+	public static final fun history (Lcom/monkopedia/kodemirror/commands/HistoryConfig;)Lcom/monkopedia/kodemirror/state/Extension;
+	public static synthetic fun history$default (Lcom/monkopedia/kodemirror/commands/HistoryConfig;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/Extension;
+	public static final fun redoDepth (Lcom/monkopedia/kodemirror/state/EditorState;)I
+	public static final fun undoDepth (Lcom/monkopedia/kodemirror/state/EditorState;)I
+}
+
+public final class com/monkopedia/kodemirror/commands/IndentCommandsKt {
+	public static final fun getIndentLess ()Lkotlin/jvm/functions/Function1;
+	public static final fun getIndentMore ()Lkotlin/jvm/functions/Function1;
+}
+
+public final class com/monkopedia/kodemirror/commands/KeymapsKt {
+	public static final fun defaultKeymapExtension ()Lcom/monkopedia/kodemirror/state/Extension;
+	public static final fun getDefaultKeymap ()Ljava/util/List;
+	public static final fun getEmacsStyleKeymap ()Ljava/util/List;
+	public static final fun getIndentWithTab ()Ljava/util/List;
+	public static final fun getStandardKeymap ()Ljava/util/List;
+	public static final fun standardKeymapExtension ()Lcom/monkopedia/kodemirror/state/Extension;
+}
+
+public final class com/monkopedia/kodemirror/commands/LineCommandsKt {
+	public static final fun getCopyLineDown ()Lkotlin/jvm/functions/Function1;
+	public static final fun getCopyLineUp ()Lkotlin/jvm/functions/Function1;
+	public static final fun getMoveLineDown ()Lkotlin/jvm/functions/Function1;
+	public static final fun getMoveLineUp ()Lkotlin/jvm/functions/Function1;
+}
+

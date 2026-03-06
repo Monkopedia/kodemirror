@@ -1,0 +1,157 @@
+public final class com/monkopedia/kodemirror/lezer/highlight/HighlightKt {
+	public static final fun getClassHighlighter ()Lcom/monkopedia/kodemirror/lezer/highlight/Highlighter;
+	public static final fun getRuleNodeProp ()Lcom/monkopedia/kodemirror/lezer/common/NodeProp;
+	public static final fun getStyleTags (Lcom/monkopedia/kodemirror/lezer/common/SyntaxNodeRef;)Lcom/monkopedia/kodemirror/lezer/highlight/Rule;
+	public static final fun highlightCode (Ljava/lang/String;Lcom/monkopedia/kodemirror/lezer/common/Tree;Lcom/monkopedia/kodemirror/lezer/highlight/Highlighter;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;II)V
+	public static synthetic fun highlightCode$default (Ljava/lang/String;Lcom/monkopedia/kodemirror/lezer/common/Tree;Lcom/monkopedia/kodemirror/lezer/highlight/Highlighter;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;IIILjava/lang/Object;)V
+	public static final fun highlightTree (Lcom/monkopedia/kodemirror/lezer/common/Tree;Lcom/monkopedia/kodemirror/lezer/highlight/Highlighter;Lkotlin/jvm/functions/Function3;II)V
+	public static final fun highlightTree (Lcom/monkopedia/kodemirror/lezer/common/Tree;Ljava/util/List;Lkotlin/jvm/functions/Function3;II)V
+	public static synthetic fun highlightTree$default (Lcom/monkopedia/kodemirror/lezer/common/Tree;Lcom/monkopedia/kodemirror/lezer/highlight/Highlighter;Lkotlin/jvm/functions/Function3;IIILjava/lang/Object;)V
+	public static synthetic fun highlightTree$default (Lcom/monkopedia/kodemirror/lezer/common/Tree;Ljava/util/List;Lkotlin/jvm/functions/Function3;IIILjava/lang/Object;)V
+	public static final fun styleTags (Ljava/util/Map;)Lcom/monkopedia/kodemirror/lezer/common/NodePropSource;
+	public static final fun tagHighlighter (Ljava/util/List;Lkotlin/jvm/functions/Function1;Ljava/lang/String;)Lcom/monkopedia/kodemirror/lezer/highlight/Highlighter;
+	public static synthetic fun tagHighlighter$default (Ljava/util/List;Lkotlin/jvm/functions/Function1;Ljava/lang/String;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/highlight/Highlighter;
+}
+
+public abstract interface class com/monkopedia/kodemirror/lezer/highlight/Highlighter {
+	public fun scope (Lcom/monkopedia/kodemirror/lezer/common/NodeType;)Z
+	public abstract fun style (Ljava/util/List;)Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/lezer/highlight/Highlighter$DefaultImpls {
+	public static fun scope (Lcom/monkopedia/kodemirror/lezer/highlight/Highlighter;Lcom/monkopedia/kodemirror/lezer/common/NodeType;)Z
+}
+
+public final class com/monkopedia/kodemirror/lezer/highlight/Rule {
+	public static final field Companion Lcom/monkopedia/kodemirror/lezer/highlight/Rule$Companion;
+	public final fun getContext ()Ljava/util/List;
+	public final fun getDepth ()I
+	public final fun getInherit ()Z
+	public final fun getNext ()Lcom/monkopedia/kodemirror/lezer/highlight/Rule;
+	public final fun getOpaque ()Z
+	public final fun getTags ()Ljava/util/List;
+	public final fun setNext (Lcom/monkopedia/kodemirror/lezer/highlight/Rule;)V
+	public final fun sort (Lcom/monkopedia/kodemirror/lezer/highlight/Rule;)Lcom/monkopedia/kodemirror/lezer/highlight/Rule;
+}
+
+public final class com/monkopedia/kodemirror/lezer/highlight/Rule$Companion {
+	public final fun getEmpty ()Lcom/monkopedia/kodemirror/lezer/highlight/Rule;
+}
+
+public final class com/monkopedia/kodemirror/lezer/highlight/Tag {
+	public static final field Companion Lcom/monkopedia/kodemirror/lezer/highlight/Tag$Companion;
+	public final fun getBase ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getId ()I
+	public final fun getSet ()Ljava/util/List;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/lezer/highlight/Tag$Companion {
+	public final fun define (Lcom/monkopedia/kodemirror/lezer/highlight/Tag;)Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun define (Ljava/lang/String;Lcom/monkopedia/kodemirror/lezer/highlight/Tag;)Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public static synthetic fun define$default (Lcom/monkopedia/kodemirror/lezer/highlight/Tag$Companion;Ljava/lang/String;Lcom/monkopedia/kodemirror/lezer/highlight/Tag;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun defineModifier (Ljava/lang/String;)Lkotlin/jvm/functions/Function1;
+	public static synthetic fun defineModifier$default (Lcom/monkopedia/kodemirror/lezer/highlight/Tag$Companion;Ljava/lang/String;ILjava/lang/Object;)Lkotlin/jvm/functions/Function1;
+}
+
+public final class com/monkopedia/kodemirror/lezer/highlight/TagStyleRule {
+	public fun <init> (Ljava/lang/Object;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/Object;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/Object;Ljava/lang/String;)Lcom/monkopedia/kodemirror/lezer/highlight/TagStyleRule;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/lezer/highlight/TagStyleRule;Ljava/lang/Object;Ljava/lang/String;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/highlight/TagStyleRule;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getClass ()Ljava/lang/String;
+	public final fun getTag ()Ljava/lang/Object;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/lezer/highlight/tags {
+	public static final field INSTANCE Lcom/monkopedia/kodemirror/lezer/highlight/tags;
+	public final fun getAngleBracket ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getAnnotation ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getArithmeticOperator ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getAtom ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getAttributeName ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getAttributeValue ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getBitwiseOperator ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getBlockComment ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getBool ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getBrace ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getBracket ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getChanged ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getCharacter ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getClassName ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getColor ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getComment ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getCompareOperator ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getConstant ()Lkotlin/jvm/functions/Function1;
+	public final fun getContent ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getContentSeparator ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getControlKeyword ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getControlOperator ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getDefinition ()Lkotlin/jvm/functions/Function1;
+	public final fun getDefinitionKeyword ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getDefinitionOperator ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getDeleted ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getDerefOperator ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getDocComment ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getDocString ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getDocumentMeta ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getEmphasis ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getEscape ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getFloat ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getFunction ()Lkotlin/jvm/functions/Function1;
+	public final fun getHeading ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getHeading1 ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getHeading2 ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getHeading3 ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getHeading4 ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getHeading5 ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getHeading6 ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getInserted ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getInteger ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getInvalid ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getKeyword ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getLabelName ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getLineComment ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getLink ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getList ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getLiteral ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getLocal ()Lkotlin/jvm/functions/Function1;
+	public final fun getLogicOperator ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getMacroName ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getMeta ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getModifier ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getModuleKeyword ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getMonospace ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getName ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getNamespace ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getNull ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getNumber ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getOperator ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getOperatorKeyword ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getParen ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getProcessingInstruction ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getPropertyName ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getPunctuation ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getQuote ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getRegexp ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getSelf ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getSeparator ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getSpecial ()Lkotlin/jvm/functions/Function1;
+	public final fun getSquareBracket ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getStandard ()Lkotlin/jvm/functions/Function1;
+	public final fun getStrikethrough ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getString ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getStrong ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getTagName ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getTypeName ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getTypeOperator ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getUnit ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getUpdateOperator ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getUrl ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+	public final fun getVariableName ()Lcom/monkopedia/kodemirror/lezer/highlight/Tag;
+}
+

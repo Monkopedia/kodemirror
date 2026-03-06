@@ -1,0 +1,61 @@
+public final class com/monkopedia/kodemirror/collab/CollabConfig {
+	public fun <init> ()V
+	public fun <init> (ILjava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (ILjava/lang/String;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Lkotlin/jvm/functions/Function1;
+	public final fun copy (ILjava/lang/String;Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/kodemirror/collab/CollabConfig;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/collab/CollabConfig;ILjava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/collab/CollabConfig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getClientID ()Ljava/lang/String;
+	public final fun getSharedEffects ()Lkotlin/jvm/functions/Function1;
+	public final fun getStartVersion ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/collab/CollabKt {
+	public static final fun collab (Lcom/monkopedia/kodemirror/collab/CollabConfig;)Lcom/monkopedia/kodemirror/state/Extension;
+	public static synthetic fun collab$default (Lcom/monkopedia/kodemirror/collab/CollabConfig;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/Extension;
+	public static final fun getClientID (Lcom/monkopedia/kodemirror/state/EditorState;)Ljava/lang/String;
+	public static final fun getSyncedVersion (Lcom/monkopedia/kodemirror/state/EditorState;)I
+	public static final fun rebaseUpdates (Ljava/util/List;Ljava/util/List;)Ljava/util/List;
+	public static final fun receiveUpdates (Lcom/monkopedia/kodemirror/state/EditorState;Ljava/util/List;)Lcom/monkopedia/kodemirror/state/TransactionSpec;
+	public static final fun sendableUpdates (Lcom/monkopedia/kodemirror/state/EditorState;)Ljava/util/List;
+}
+
+public final class com/monkopedia/kodemirror/collab/SendableUpdate {
+	public fun <init> (Lcom/monkopedia/kodemirror/state/ChangeSet;Ljava/lang/String;Ljava/util/List;Lcom/monkopedia/kodemirror/state/Transaction;)V
+	public synthetic fun <init> (Lcom/monkopedia/kodemirror/state/ChangeSet;Ljava/lang/String;Ljava/util/List;Lcom/monkopedia/kodemirror/state/Transaction;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/monkopedia/kodemirror/state/ChangeSet;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()Lcom/monkopedia/kodemirror/state/Transaction;
+	public final fun copy (Lcom/monkopedia/kodemirror/state/ChangeSet;Ljava/lang/String;Ljava/util/List;Lcom/monkopedia/kodemirror/state/Transaction;)Lcom/monkopedia/kodemirror/collab/SendableUpdate;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/collab/SendableUpdate;Lcom/monkopedia/kodemirror/state/ChangeSet;Ljava/lang/String;Ljava/util/List;Lcom/monkopedia/kodemirror/state/Transaction;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/collab/SendableUpdate;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getChanges ()Lcom/monkopedia/kodemirror/state/ChangeSet;
+	public final fun getClientID ()Ljava/lang/String;
+	public final fun getEffects ()Ljava/util/List;
+	public final fun getOrigin ()Lcom/monkopedia/kodemirror/state/Transaction;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/collab/Update {
+	public fun <init> (Lcom/monkopedia/kodemirror/state/ChangeSet;Ljava/lang/String;Ljava/util/List;)V
+	public synthetic fun <init> (Lcom/monkopedia/kodemirror/state/ChangeSet;Ljava/lang/String;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/monkopedia/kodemirror/state/ChangeSet;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/util/List;
+	public final fun copy (Lcom/monkopedia/kodemirror/state/ChangeSet;Ljava/lang/String;Ljava/util/List;)Lcom/monkopedia/kodemirror/collab/Update;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/collab/Update;Lcom/monkopedia/kodemirror/state/ChangeSet;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/collab/Update;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getChanges ()Lcom/monkopedia/kodemirror/state/ChangeSet;
+	public final fun getClientID ()Ljava/lang/String;
+	public final fun getEffects ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+

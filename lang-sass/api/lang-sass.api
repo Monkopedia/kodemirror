@@ -1,0 +1,13 @@
+public final class com/monkopedia/kodemirror/lang/sass/SassHighlightKt {
+	public static final fun getSassHighlighting ()Lcom/monkopedia/kodemirror/lezer/common/NodePropSource;
+}
+
+public final class com/monkopedia/kodemirror/lang/sass/SassKt {
+	public static final fun getSassLanguage ()Lcom/monkopedia/kodemirror/language/LRLanguage;
+	public static final fun sass ()Lcom/monkopedia/kodemirror/language/LanguageSupport;
+}
+
+public final class com/monkopedia/kodemirror/lang/sass/SassParserKt {
+	public static final fun getParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
+}
+

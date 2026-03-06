@@ -1,0 +1,13 @@
+public final class com/monkopedia/kodemirror/lang/less/LessHighlightKt {
+	public static final fun getLessHighlighting ()Lcom/monkopedia/kodemirror/lezer/common/NodePropSource;
+}
+
+public final class com/monkopedia/kodemirror/lang/less/LessKt {
+	public static final fun getLessLanguage ()Lcom/monkopedia/kodemirror/language/LRLanguage;
+	public static final fun less ()Lcom/monkopedia/kodemirror/language/LanguageSupport;
+}
+
+public final class com/monkopedia/kodemirror/lang/less/LessParserKt {
+	public static final fun getParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
+}
+

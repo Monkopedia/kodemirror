@@ -1,0 +1,13 @@
+public final class com/monkopedia/kodemirror/lang/wast/WastHighlightKt {
+	public static final fun getWastHighlighting ()Lcom/monkopedia/kodemirror/lezer/common/NodePropSource;
+}
+
+public final class com/monkopedia/kodemirror/lang/wast/WastKt {
+	public static final fun getWastLanguage ()Lcom/monkopedia/kodemirror/language/LRLanguage;
+	public static final fun wast ()Lcom/monkopedia/kodemirror/language/LanguageSupport;
+}
+
+public final class com/monkopedia/kodemirror/lang/wast/WastParserKt {
+	public static final fun getParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
+}
+

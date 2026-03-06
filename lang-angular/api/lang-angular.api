@@ -1,0 +1,5 @@
+public final class com/monkopedia/kodemirror/lang/angular/AngularKt {
+	public static final fun angular ()Lcom/monkopedia/kodemirror/language/LanguageSupport;
+	public static final fun getAngularLanguage ()Lcom/monkopedia/kodemirror/language/LRLanguage;
+}
+

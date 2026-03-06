@@ -1,0 +1,130 @@
+public final class com/monkopedia/kodemirror/search/ComposableSingletons$SearchKt {
+	public static final field INSTANCE Lcom/monkopedia/kodemirror/search/ComposableSingletons$SearchKt;
+	public fun <init> ()V
+	public final fun getLambda$2132847180$search ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$692970211$search ()Lkotlin/jvm/functions/Function2;
+}
+
+public final class com/monkopedia/kodemirror/search/GotoLineKt {
+	public static final fun getGotoLine ()Lkotlin/jvm/functions/Function1;
+}
+
+public final class com/monkopedia/kodemirror/search/HighlightSelectionMatchConfig {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (IIZ)V
+	public synthetic fun <init> (IIZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()Z
+	public final fun copy (IIZ)Lcom/monkopedia/kodemirror/search/HighlightSelectionMatchConfig;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/search/HighlightSelectionMatchConfig;IIZILjava/lang/Object;)Lcom/monkopedia/kodemirror/search/HighlightSelectionMatchConfig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMaxMatches ()I
+	public final fun getMinSelectionLength ()I
+	public final fun getWholeWords ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/search/RegExpCursor : java/util/Iterator, kotlin/jvm/internal/markers/KMappedMarker {
+	public static final field $stable I
+	public fun <init> (Lcom/monkopedia/kodemirror/state/Text;Ljava/lang/String;Ljava/util/Set;II)V
+	public synthetic fun <init> (Lcom/monkopedia/kodemirror/state/Text;Ljava/lang/String;Ljava/util/Set;IIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getDone ()Z
+	public final fun getMatchGroups ()Ljava/util/List;
+	public final fun getValue ()Lcom/monkopedia/kodemirror/search/SearchMatch;
+	public fun hasNext ()Z
+	public fun next ()Lcom/monkopedia/kodemirror/search/SearchMatch;
+	public synthetic fun next ()Ljava/lang/Object;
+	public final fun nextMatch ()Lcom/monkopedia/kodemirror/search/SearchMatch;
+	public fun remove ()V
+}
+
+public final class com/monkopedia/kodemirror/search/SearchCommandsKt {
+	public static final fun getCloseSearchPanel ()Lkotlin/jvm/functions/Function1;
+	public static final fun getFindNext ()Lkotlin/jvm/functions/Function1;
+	public static final fun getFindPrevious ()Lkotlin/jvm/functions/Function1;
+	public static final fun getOpenSearchPanel ()Lkotlin/jvm/functions/Function1;
+	public static final fun getReplaceAll ()Lkotlin/jvm/functions/Function1;
+	public static final fun getReplaceNext ()Lkotlin/jvm/functions/Function1;
+	public static final fun getSearchKeymap ()Ljava/util/List;
+	public static final fun getSelectMatches ()Lkotlin/jvm/functions/Function1;
+}
+
+public final class com/monkopedia/kodemirror/search/SearchCursor : java/util/Iterator, kotlin/jvm/internal/markers/KMappedMarker {
+	public static final field $stable I
+	public fun <init> (Lcom/monkopedia/kodemirror/state/Text;Ljava/lang/String;IILkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Lcom/monkopedia/kodemirror/state/Text;Ljava/lang/String;IILkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getDone ()Z
+	public final fun getValue ()Lcom/monkopedia/kodemirror/search/SearchMatch;
+	public fun hasNext ()Z
+	public fun next ()Lcom/monkopedia/kodemirror/search/SearchMatch;
+	public synthetic fun next ()Ljava/lang/Object;
+	public final fun nextMatch ()Lcom/monkopedia/kodemirror/search/SearchMatch;
+	public fun remove ()V
+}
+
+public final class com/monkopedia/kodemirror/search/SearchKt {
+	public static final fun search ()Lcom/monkopedia/kodemirror/state/Extension;
+}
+
+public final class com/monkopedia/kodemirror/search/SearchMatch {
+	public static final field $stable I
+	public fun <init> (II)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun copy (II)Lcom/monkopedia/kodemirror/search/SearchMatch;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/search/SearchMatch;IIILjava/lang/Object;)Lcom/monkopedia/kodemirror/search/SearchMatch;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFrom ()I
+	public final fun getTo ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/search/SearchQuery {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;ZZZLjava/lang/String;ZLkotlin/jvm/functions/Function3;)V
+	public synthetic fun <init> (Ljava/lang/String;ZZZLjava/lang/String;ZLkotlin/jvm/functions/Function3;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Z
+	public final fun component3 ()Z
+	public final fun component4 ()Z
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Z
+	public final fun component7 ()Lkotlin/jvm/functions/Function3;
+	public final fun copy (Ljava/lang/String;ZZZLjava/lang/String;ZLkotlin/jvm/functions/Function3;)Lcom/monkopedia/kodemirror/search/SearchQuery;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/search/SearchQuery;Ljava/lang/String;ZZZLjava/lang/String;ZLkotlin/jvm/functions/Function3;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/search/SearchQuery;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun expandReplace ()Ljava/lang/String;
+	public final fun expandReplace (Lcom/monkopedia/kodemirror/search/RegExpCursor;)Ljava/lang/String;
+	public final fun getCaseSensitive ()Z
+	public final fun getCursor (Lcom/monkopedia/kodemirror/state/EditorState;II)Ljava/util/Iterator;
+	public static synthetic fun getCursor$default (Lcom/monkopedia/kodemirror/search/SearchQuery;Lcom/monkopedia/kodemirror/state/EditorState;IIILjava/lang/Object;)Ljava/util/Iterator;
+	public final fun getLiteral ()Z
+	public final fun getRegexp ()Z
+	public final fun getReplace ()Ljava/lang/String;
+	public final fun getSearch ()Ljava/lang/String;
+	public final fun getTest ()Lkotlin/jvm/functions/Function3;
+	public final fun getValid ()Z
+	public final fun getWholeWord ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/search/SearchStateKt {
+	public static final fun getSearchPanelOpenField ()Lcom/monkopedia/kodemirror/state/StateField;
+	public static final fun getSearchQuery (Lcom/monkopedia/kodemirror/state/EditorState;)Lcom/monkopedia/kodemirror/search/SearchQuery;
+	public static final fun getSearchQueryField ()Lcom/monkopedia/kodemirror/state/StateField;
+	public static final fun getSetSearchQuery ()Lcom/monkopedia/kodemirror/state/StateEffectType;
+	public static final fun getToggleSearchPanel ()Lcom/monkopedia/kodemirror/state/StateEffectType;
+	public static final fun searchPanelOpen (Lcom/monkopedia/kodemirror/state/EditorState;)Z
+}
+
+public final class com/monkopedia/kodemirror/search/SelectionMatchKt {
+	public static final fun highlightSelectionMatches (Lcom/monkopedia/kodemirror/search/HighlightSelectionMatchConfig;)Lcom/monkopedia/kodemirror/state/Extension;
+	public static synthetic fun highlightSelectionMatches$default (Lcom/monkopedia/kodemirror/search/HighlightSelectionMatchConfig;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/Extension;
+}
+

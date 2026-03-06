@@ -1,0 +1,304 @@
+public final class com/monkopedia/kodemirror/language/BracketMatchingConfig {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (ZLjava/lang/String;ILkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (ZLjava/lang/String;ILkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()I
+	public final fun component4 ()Lkotlin/jvm/functions/Function1;
+	public final fun copy (ZLjava/lang/String;ILkotlin/jvm/functions/Function1;)Lcom/monkopedia/kodemirror/language/BracketMatchingConfig;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/language/BracketMatchingConfig;ZLjava/lang/String;ILkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/language/BracketMatchingConfig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAfterCursor ()Z
+	public final fun getBrackets ()Ljava/lang/String;
+	public final fun getMaxScanDistance ()I
+	public final fun getRenderMatch ()Lkotlin/jvm/functions/Function1;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/language/CommentTokens {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Lcom/monkopedia/kodemirror/language/CommentTokens$BlockComment;)V
+	public synthetic fun <init> (Ljava/lang/String;Lcom/monkopedia/kodemirror/language/CommentTokens$BlockComment;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lcom/monkopedia/kodemirror/language/CommentTokens$BlockComment;
+	public final fun copy (Ljava/lang/String;Lcom/monkopedia/kodemirror/language/CommentTokens$BlockComment;)Lcom/monkopedia/kodemirror/language/CommentTokens;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/language/CommentTokens;Ljava/lang/String;Lcom/monkopedia/kodemirror/language/CommentTokens$BlockComment;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/language/CommentTokens;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBlock ()Lcom/monkopedia/kodemirror/language/CommentTokens$BlockComment;
+	public final fun getLine ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/language/CommentTokens$BlockComment {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lcom/monkopedia/kodemirror/language/CommentTokens$BlockComment;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/language/CommentTokens$BlockComment;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/language/CommentTokens$BlockComment;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getClose ()Ljava/lang/String;
+	public final fun getOpen ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/language/DocInput : com/monkopedia/kodemirror/lezer/common/Input {
+	public static final field $stable I
+	public fun <init> (Lcom/monkopedia/kodemirror/state/Text;)V
+	public fun chunk (I)Ljava/lang/String;
+	public fun getLength ()I
+	public fun getLineChunks ()Z
+	public fun read (II)Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/language/FoldKt {
+	public static final fun codeFolding ()Lcom/monkopedia/kodemirror/state/Extension;
+	public static final fun foldGutter ()Lcom/monkopedia/kodemirror/state/Extension;
+	public static final fun foldInside (Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;)Lcom/monkopedia/kodemirror/language/FoldRange;
+	public static final fun foldable (Lcom/monkopedia/kodemirror/state/EditorState;I)Lcom/monkopedia/kodemirror/language/FoldRange;
+	public static final fun foldedRanges (Lcom/monkopedia/kodemirror/state/EditorState;)Lcom/monkopedia/kodemirror/state/RangeSet;
+	public static final fun getFoldAll ()Lkotlin/jvm/functions/Function1;
+	public static final fun getFoldCode ()Lkotlin/jvm/functions/Function1;
+	public static final fun getFoldEffect ()Lcom/monkopedia/kodemirror/state/StateEffectType;
+	public static final fun getFoldKeymap ()Ljava/util/List;
+	public static final fun getFoldNodeProp ()Lcom/monkopedia/kodemirror/lezer/common/NodeProp;
+	public static final fun getFoldService ()Lcom/monkopedia/kodemirror/state/Facet;
+	public static final fun getFoldState ()Lcom/monkopedia/kodemirror/state/StateField;
+	public static final fun getToggleFold ()Lkotlin/jvm/functions/Function1;
+	public static final fun getUnfoldAll ()Lkotlin/jvm/functions/Function1;
+	public static final fun getUnfoldCode ()Lkotlin/jvm/functions/Function1;
+	public static final fun getUnfoldEffect ()Lcom/monkopedia/kodemirror/state/StateEffectType;
+}
+
+public final class com/monkopedia/kodemirror/language/FoldRange {
+	public static final field $stable I
+	public fun <init> (II)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun copy (II)Lcom/monkopedia/kodemirror/language/FoldRange;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/language/FoldRange;IIILjava/lang/Object;)Lcom/monkopedia/kodemirror/language/FoldRange;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFrom ()I
+	public final fun getTo ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/language/HighlightStyle : com/monkopedia/kodemirror/lezer/highlight/Highlighter {
+	public static final field $stable I
+	public static final field Companion Lcom/monkopedia/kodemirror/language/HighlightStyle$Companion;
+	public synthetic fun <init> (Ljava/util/List;Lcom/monkopedia/kodemirror/lezer/highlight/Highlighter;Ljava/util/Map;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getSpecs ()Ljava/util/List;
+	public fun scope (Lcom/monkopedia/kodemirror/lezer/common/NodeType;)Z
+	public final fun spanStyleFor (Ljava/lang/String;)Landroidx/compose/ui/text/SpanStyle;
+	public fun style (Ljava/util/List;)Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/language/HighlightStyle$Companion {
+	public final fun define (Ljava/util/List;Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/kodemirror/language/HighlightStyle;
+	public static synthetic fun define$default (Lcom/monkopedia/kodemirror/language/HighlightStyle$Companion;Ljava/util/List;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/language/HighlightStyle;
+}
+
+public class com/monkopedia/kodemirror/language/IndentContext {
+	public static final field $stable I
+	public fun <init> (Lcom/monkopedia/kodemirror/state/EditorState;Ljava/lang/Integer;Z)V
+	public synthetic fun <init> (Lcom/monkopedia/kodemirror/state/EditorState;Ljava/lang/Integer;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getSimulateBreak ()Ljava/lang/Integer;
+	public final fun getSimulateDoubleBreak ()Z
+	public final fun getState ()Lcom/monkopedia/kodemirror/state/EditorState;
+	public final fun getTextAfterPos ()Ljava/lang/String;
+	public final fun getUnit ()I
+	public final fun lineAt (II)Lcom/monkopedia/kodemirror/state/Line;
+	public static synthetic fun lineAt$default (Lcom/monkopedia/kodemirror/language/IndentContext;IIILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/Line;
+	public final fun lineIndent (II)I
+	public static synthetic fun lineIndent$default (Lcom/monkopedia/kodemirror/language/IndentContext;IIILjava/lang/Object;)I
+}
+
+public final class com/monkopedia/kodemirror/language/IndentKt {
+	public static final fun continuedIndent (ILkotlin/text/Regex;)Lkotlin/jvm/functions/Function1;
+	public static synthetic fun continuedIndent$default (ILkotlin/text/Regex;ILjava/lang/Object;)Lkotlin/jvm/functions/Function1;
+	public static final fun delimitedIndent (Ljava/lang/String;ZI)Lkotlin/jvm/functions/Function1;
+	public static synthetic fun delimitedIndent$default (Ljava/lang/String;ZIILjava/lang/Object;)Lkotlin/jvm/functions/Function1;
+	public static final fun getFlatIndent ()Lkotlin/jvm/functions/Function1;
+	public static final fun getIndentNodeProp ()Lcom/monkopedia/kodemirror/lezer/common/NodeProp;
+	public static final fun getIndentOnInput ()Lcom/monkopedia/kodemirror/state/Extension;
+	public static final fun getIndentService ()Lcom/monkopedia/kodemirror/state/Facet;
+	public static final fun getIndentUnit ()Lcom/monkopedia/kodemirror/state/Facet;
+	public static final fun getIndentUnit (Lcom/monkopedia/kodemirror/state/EditorState;)I
+	public static final fun getIndentation (Lcom/monkopedia/kodemirror/state/EditorState;I)Ljava/lang/Integer;
+	public static final fun indentRange (Lcom/monkopedia/kodemirror/state/EditorState;II)Lcom/monkopedia/kodemirror/state/ChangeSpec;
+	public static final fun indentString (Lcom/monkopedia/kodemirror/state/EditorState;I)Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/language/LRLanguage : com/monkopedia/kodemirror/language/Language {
+	public static final field $stable I
+	public static final field Companion Lcom/monkopedia/kodemirror/language/LRLanguage$Companion;
+	public fun <init> (Lcom/monkopedia/kodemirror/lezer/common/Parser;Ljava/lang/String;)V
+	public synthetic fun <init> (Lcom/monkopedia/kodemirror/lezer/common/Parser;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class com/monkopedia/kodemirror/language/LRLanguage$Companion {
+	public final fun define (Lcom/monkopedia/kodemirror/lezer/common/Parser;Ljava/lang/String;)Lcom/monkopedia/kodemirror/language/LRLanguage;
+	public static synthetic fun define$default (Lcom/monkopedia/kodemirror/language/LRLanguage$Companion;Lcom/monkopedia/kodemirror/lezer/common/Parser;Ljava/lang/String;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/language/LRLanguage;
+}
+
+public class com/monkopedia/kodemirror/language/Language {
+	public static final field $stable I
+	public fun <init> (Lcom/monkopedia/kodemirror/lezer/common/Parser;Ljava/lang/String;)V
+	public synthetic fun <init> (Lcom/monkopedia/kodemirror/lezer/common/Parser;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun getAllowsNesting ()Z
+	public final fun getExtension ()Lcom/monkopedia/kodemirror/state/Extension;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getParser ()Lcom/monkopedia/kodemirror/lezer/common/Parser;
+}
+
+public final class com/monkopedia/kodemirror/language/LanguageKt {
+	public static final fun defineLanguageFacet (Ljava/util/List;)Lcom/monkopedia/kodemirror/state/Facet;
+	public static synthetic fun defineLanguageFacet$default (Ljava/util/List;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/Facet;
+	public static final fun getCommentTokens ()Lcom/monkopedia/kodemirror/state/Facet;
+	public static final fun getLanguage ()Lcom/monkopedia/kodemirror/state/Facet;
+	public static final fun getLanguageDataProp ()Lcom/monkopedia/kodemirror/lezer/common/NodeProp;
+	public static final fun languageDataAt (Lcom/monkopedia/kodemirror/state/EditorState;Lcom/monkopedia/kodemirror/state/Facet;I)Ljava/lang/Object;
+	public static final fun syntaxTree (Lcom/monkopedia/kodemirror/state/EditorState;)Lcom/monkopedia/kodemirror/lezer/common/Tree;
+}
+
+public final class com/monkopedia/kodemirror/language/LanguageSupport {
+	public static final field $stable I
+	public fun <init> (Lcom/monkopedia/kodemirror/language/Language;Lcom/monkopedia/kodemirror/state/Extension;)V
+	public synthetic fun <init> (Lcom/monkopedia/kodemirror/language/Language;Lcom/monkopedia/kodemirror/state/Extension;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getExtension ()Lcom/monkopedia/kodemirror/state/Extension;
+	public final fun getLanguage ()Lcom/monkopedia/kodemirror/language/Language;
+	public final fun getSupport ()Lcom/monkopedia/kodemirror/state/Extension;
+}
+
+public final class com/monkopedia/kodemirror/language/MatchBracketsKt {
+	public static final fun bracketMatching (Lcom/monkopedia/kodemirror/language/BracketMatchingConfig;)Lcom/monkopedia/kodemirror/state/Extension;
+	public static synthetic fun bracketMatching$default (Lcom/monkopedia/kodemirror/language/BracketMatchingConfig;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/Extension;
+	public static final fun matchBrackets (Lcom/monkopedia/kodemirror/state/EditorState;IILcom/monkopedia/kodemirror/language/BracketMatchingConfig;)Lcom/monkopedia/kodemirror/language/MatchResult;
+	public static synthetic fun matchBrackets$default (Lcom/monkopedia/kodemirror/state/EditorState;IILcom/monkopedia/kodemirror/language/BracketMatchingConfig;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/language/MatchResult;
+}
+
+public final class com/monkopedia/kodemirror/language/MatchResult {
+	public static final field $stable I
+	public fun <init> (Lcom/monkopedia/kodemirror/state/SelectionRange;Lcom/monkopedia/kodemirror/state/SelectionRange;Z)V
+	public final fun component1 ()Lcom/monkopedia/kodemirror/state/SelectionRange;
+	public final fun component2 ()Lcom/monkopedia/kodemirror/state/SelectionRange;
+	public final fun component3 ()Z
+	public final fun copy (Lcom/monkopedia/kodemirror/state/SelectionRange;Lcom/monkopedia/kodemirror/state/SelectionRange;Z)Lcom/monkopedia/kodemirror/language/MatchResult;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/language/MatchResult;Lcom/monkopedia/kodemirror/state/SelectionRange;Lcom/monkopedia/kodemirror/state/SelectionRange;ZILjava/lang/Object;)Lcom/monkopedia/kodemirror/language/MatchResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEnd ()Lcom/monkopedia/kodemirror/state/SelectionRange;
+	public final fun getMatched ()Z
+	public final fun getStart ()Lcom/monkopedia/kodemirror/state/SelectionRange;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/language/StandardHighlightStylesKt {
+	public static final fun getDefaultHighlightStyle ()Lcom/monkopedia/kodemirror/language/HighlightStyle;
+	public static final fun getOneDarkHighlightStyle ()Lcom/monkopedia/kodemirror/language/HighlightStyle;
+}
+
+public final class com/monkopedia/kodemirror/language/StreamLanguage : com/monkopedia/kodemirror/language/Language {
+	public static final field $stable I
+	public static final field Companion Lcom/monkopedia/kodemirror/language/StreamLanguage$Companion;
+	public synthetic fun <init> (Lcom/monkopedia/kodemirror/lezer/common/Parser;Ljava/lang/String;Lcom/monkopedia/kodemirror/language/StreamParser;Lcom/monkopedia/kodemirror/lezer/common/NodeProp;Lcom/monkopedia/kodemirror/language/TokenTable;Lcom/monkopedia/kodemirror/lezer/common/NodeType;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun getAllowsNesting ()Z
+}
+
+public final class com/monkopedia/kodemirror/language/StreamLanguage$Companion {
+	public final fun define (Lcom/monkopedia/kodemirror/language/StreamParser;)Lcom/monkopedia/kodemirror/language/StreamLanguage;
+}
+
+public abstract interface class com/monkopedia/kodemirror/language/StreamParser {
+	public fun blankLine (Ljava/lang/Object;I)V
+	public abstract fun copyState (Ljava/lang/Object;)Ljava/lang/Object;
+	public fun getLanguageData ()Ljava/util/Map;
+	public fun getMergeTokens ()Z
+	public fun getName ()Ljava/lang/String;
+	public fun getTokenTable ()Ljava/util/Map;
+	public fun indent (Ljava/lang/Object;Ljava/lang/String;Lcom/monkopedia/kodemirror/language/IndentContext;)Ljava/lang/Integer;
+	public abstract fun startState (I)Ljava/lang/Object;
+	public abstract fun token (Lcom/monkopedia/kodemirror/language/StringStream;Ljava/lang/Object;)Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/language/StreamParser$DefaultImpls {
+	public static fun blankLine (Lcom/monkopedia/kodemirror/language/StreamParser;Ljava/lang/Object;I)V
+	public static fun getLanguageData (Lcom/monkopedia/kodemirror/language/StreamParser;)Ljava/util/Map;
+	public static fun getMergeTokens (Lcom/monkopedia/kodemirror/language/StreamParser;)Z
+	public static fun getName (Lcom/monkopedia/kodemirror/language/StreamParser;)Ljava/lang/String;
+	public static fun getTokenTable (Lcom/monkopedia/kodemirror/language/StreamParser;)Ljava/util/Map;
+	public static fun indent (Lcom/monkopedia/kodemirror/language/StreamParser;Ljava/lang/Object;Ljava/lang/String;Lcom/monkopedia/kodemirror/language/IndentContext;)Ljava/lang/Integer;
+}
+
+public final class com/monkopedia/kodemirror/language/StringStream {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;IILjava/lang/Integer;)V
+	public synthetic fun <init> (Ljava/lang/String;IILjava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun backUp (I)V
+	public final fun column ()I
+	public final fun current ()Ljava/lang/String;
+	public final fun eat (Ljava/lang/String;)Ljava/lang/String;
+	public final fun eat (Lkotlin/jvm/functions/Function1;)Ljava/lang/String;
+	public final fun eat (Lkotlin/text/Regex;)Ljava/lang/String;
+	public final fun eatSpace ()Z
+	public final fun eatWhile (Ljava/lang/String;)Z
+	public final fun eatWhile (Lkotlin/jvm/functions/Function1;)Z
+	public final fun eatWhile (Lkotlin/text/Regex;)Z
+	public final fun eol ()Z
+	public final fun getIndentUnit ()I
+	public final fun getPos ()I
+	public final fun getStart ()I
+	public final fun getString ()Ljava/lang/String;
+	public final fun indentation ()I
+	public final fun match (Ljava/lang/String;ZZ)Z
+	public final fun match (Lkotlin/text/Regex;Z)Lkotlin/text/MatchResult;
+	public static synthetic fun match$default (Lcom/monkopedia/kodemirror/language/StringStream;Ljava/lang/String;ZZILjava/lang/Object;)Z
+	public static synthetic fun match$default (Lcom/monkopedia/kodemirror/language/StringStream;Lkotlin/text/Regex;ZILjava/lang/Object;)Lkotlin/text/MatchResult;
+	public final fun next ()Ljava/lang/String;
+	public final fun peek ()Ljava/lang/String;
+	public final fun setPos (I)V
+	public final fun setStart (I)V
+	public final fun skipTo (Ljava/lang/String;)Z
+	public final fun skipToEnd ()V
+	public final fun sol ()Z
+}
+
+public final class com/monkopedia/kodemirror/language/SyntaxHighlightingKt {
+	public static final fun syntaxHighlighting (Lcom/monkopedia/kodemirror/lezer/highlight/Highlighter;)Lcom/monkopedia/kodemirror/state/Extension;
+}
+
+public final class com/monkopedia/kodemirror/language/TagStyleSpec {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/Object;Landroidx/compose/ui/text/SpanStyle;)V
+	public final fun component1 ()Ljava/lang/Object;
+	public final fun component2 ()Landroidx/compose/ui/text/SpanStyle;
+	public final fun copy (Ljava/lang/Object;Landroidx/compose/ui/text/SpanStyle;)Lcom/monkopedia/kodemirror/language/TagStyleSpec;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/language/TagStyleSpec;Ljava/lang/Object;Landroidx/compose/ui/text/SpanStyle;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/language/TagStyleSpec;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getStyle ()Landroidx/compose/ui/text/SpanStyle;
+	public final fun getTag ()Ljava/lang/Object;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/language/TreeIndentContext : com/monkopedia/kodemirror/language/IndentContext {
+	public static final field $stable I
+	public fun <init> (Lcom/monkopedia/kodemirror/state/EditorState;ILjava/lang/Integer;Z)V
+	public synthetic fun <init> (Lcom/monkopedia/kodemirror/state/EditorState;ILjava/lang/Integer;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun column (II)I
+	public static synthetic fun column$default (Lcom/monkopedia/kodemirror/language/TreeIndentContext;IIILjava/lang/Object;)I
+	public final fun continueAt ()Ljava/lang/Integer;
+	public final fun getBaseIndent ()I
+	public final fun getBaseIndentFor ()Lkotlin/jvm/functions/Function1;
+	public final fun getNode ()Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;
+	public final fun getPos ()I
+	public final fun getTextAfter ()Ljava/lang/String;
+}
+

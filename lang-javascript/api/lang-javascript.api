@@ -1,0 +1,17 @@
+public final class com/monkopedia/kodemirror/lang/javascript/JavascriptKt {
+	public static final fun getJavascriptLanguage ()Lcom/monkopedia/kodemirror/language/LRLanguage;
+	public static final fun getJsxLanguage ()Lcom/monkopedia/kodemirror/language/LRLanguage;
+	public static final fun getTsxLanguage ()Lcom/monkopedia/kodemirror/language/LRLanguage;
+	public static final fun getTypescriptLanguage ()Lcom/monkopedia/kodemirror/language/LRLanguage;
+	public static final fun javascript (ZZ)Lcom/monkopedia/kodemirror/language/LanguageSupport;
+	public static synthetic fun javascript$default (ZZILjava/lang/Object;)Lcom/monkopedia/kodemirror/language/LanguageSupport;
+}
+
+public final class com/monkopedia/kodemirror/lang/javascript/JsHighlightKt {
+	public static final fun getJsHighlight ()Lcom/monkopedia/kodemirror/lezer/common/NodePropSource;
+}
+
+public final class com/monkopedia/kodemirror/lang/javascript/JsParserKt {
+	public static final fun getParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
+}
+

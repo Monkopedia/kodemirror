@@ -1,0 +1,13 @@
+public final class com/monkopedia/kodemirror/lang/python/PythonHighlightKt {
+	public static final fun getPythonHighlighting ()Lcom/monkopedia/kodemirror/lezer/common/NodePropSource;
+}
+
+public final class com/monkopedia/kodemirror/lang/python/PythonKt {
+	public static final fun getPythonLanguage ()Lcom/monkopedia/kodemirror/language/LRLanguage;
+	public static final fun python ()Lcom/monkopedia/kodemirror/language/LanguageSupport;
+}
+
+public final class com/monkopedia/kodemirror/lang/python/PythonParserKt {
+	public static final fun getParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
+}
+

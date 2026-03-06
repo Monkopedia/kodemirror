@@ -1,0 +1,13 @@
+public final class com/monkopedia/kodemirror/lang/html/HtmlHighlightKt {
+	public static final fun getHtmlHighlighting ()Lcom/monkopedia/kodemirror/lezer/common/NodePropSource;
+}
+
+public final class com/monkopedia/kodemirror/lang/html/HtmlKt {
+	public static final fun getHtmlLanguage ()Lcom/monkopedia/kodemirror/language/LRLanguage;
+	public static final fun html ()Lcom/monkopedia/kodemirror/language/LanguageSupport;
+}
+
+public final class com/monkopedia/kodemirror/lang/html/HtmlParserKt {
+	public static final fun getParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
+}
+

@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.spotless) apply false
     alias(libs.plugins.roborazzi) apply false
     alias(libs.plugins.kover)
+    alias(libs.plugins.bcv) apply false
     alias(libs.plugins.dokka)
 }
 

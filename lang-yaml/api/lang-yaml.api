@@ -1,0 +1,13 @@
+public final class com/monkopedia/kodemirror/lang/yaml/YamlHighlightKt {
+	public static final fun getYamlHighlighting ()Lcom/monkopedia/kodemirror/lezer/common/NodePropSource;
+}
+
+public final class com/monkopedia/kodemirror/lang/yaml/YamlKt {
+	public static final fun getYamlLanguage ()Lcom/monkopedia/kodemirror/language/LRLanguage;
+	public static final fun yaml ()Lcom/monkopedia/kodemirror/language/LanguageSupport;
+}
+
+public final class com/monkopedia/kodemirror/lang/yaml/YamlParserKt {
+	public static final fun getParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
+}
+

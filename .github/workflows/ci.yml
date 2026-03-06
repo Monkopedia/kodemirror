@@ -18,7 +18,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Lint and test
         run: >-
-          ./gradlew jvmTest
+          ./gradlew apiCheck jvmTest
           -x :collab:jvmTest
           :state:wasmJsTest
           :collab:wasmJsTest

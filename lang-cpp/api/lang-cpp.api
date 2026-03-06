@@ -1,0 +1,13 @@
+public final class com/monkopedia/kodemirror/lang/cpp/CppHighlightKt {
+	public static final fun getCppHighlighting ()Lcom/monkopedia/kodemirror/lezer/common/NodePropSource;
+}
+
+public final class com/monkopedia/kodemirror/lang/cpp/CppKt {
+	public static final fun cpp ()Lcom/monkopedia/kodemirror/language/LanguageSupport;
+	public static final fun getCppLanguage ()Lcom/monkopedia/kodemirror/language/LRLanguage;
+}
+
+public final class com/monkopedia/kodemirror/lang/cpp/CppParserKt {
+	public static final fun getParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
+}
+

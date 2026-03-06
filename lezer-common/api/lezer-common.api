@@ -1,0 +1,421 @@
+public final class com/monkopedia/kodemirror/lezer/common/BalanceConfig {
+	public fun <init> ()V
+	public fun <init> (Lkotlin/jvm/functions/Function3;)V
+	public synthetic fun <init> (Lkotlin/jvm/functions/Function3;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lkotlin/jvm/functions/Function3;
+	public final fun copy (Lkotlin/jvm/functions/Function3;)Lcom/monkopedia/kodemirror/lezer/common/BalanceConfig;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/lezer/common/BalanceConfig;Lkotlin/jvm/functions/Function3;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/common/BalanceConfig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMakeTree ()Lkotlin/jvm/functions/Function3;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class com/monkopedia/kodemirror/lezer/common/BufferCursor {
+	public abstract fun fork ()Lcom/monkopedia/kodemirror/lezer/common/BufferCursor;
+	public abstract fun getEnd ()I
+	public abstract fun getId ()I
+	public abstract fun getPos ()I
+	public abstract fun getSize ()I
+	public abstract fun getStart ()I
+	public abstract fun next ()V
+}
+
+public final class com/monkopedia/kodemirror/lezer/common/ChangedRange {
+	public fun <init> (IIII)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun component4 ()I
+	public final fun copy (IIII)Lcom/monkopedia/kodemirror/lezer/common/ChangedRange;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/lezer/common/ChangedRange;IIIIILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/common/ChangedRange;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFromA ()I
+	public final fun getFromB ()I
+	public final fun getToA ()I
+	public final fun getToB ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/lezer/common/FlatBufferCursor : com/monkopedia/kodemirror/lezer/common/BufferCursor {
+	public fun <init> (Ljava/util/List;I)V
+	public fun fork ()Lcom/monkopedia/kodemirror/lezer/common/BufferCursor;
+	public final fun getBuffer ()Ljava/util/List;
+	public fun getEnd ()I
+	public fun getId ()I
+	public final fun getIndex ()I
+	public fun getPos ()I
+	public fun getSize ()I
+	public fun getStart ()I
+	public fun next ()V
+	public final fun setIndex (I)V
+}
+
+public abstract interface class com/monkopedia/kodemirror/lezer/common/Input {
+	public abstract fun chunk (I)Ljava/lang/String;
+	public abstract fun getLength ()I
+	public fun getLineChunks ()Z
+	public abstract fun read (II)Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/lezer/common/Input$DefaultImpls {
+	public static fun getLineChunks (Lcom/monkopedia/kodemirror/lezer/common/Input;)Z
+}
+
+public final class com/monkopedia/kodemirror/lezer/common/IterMode {
+	public static final field ENTER_BRACKETED I
+	public static final field EXCLUDE_BUFFERS I
+	public static final field IGNORE_MOUNTS I
+	public static final field IGNORE_OVERLAYS I
+	public static final field INCLUDE_ANONYMOUS I
+	public static final field INSTANCE Lcom/monkopedia/kodemirror/lezer/common/IterMode;
+}
+
+public final class com/monkopedia/kodemirror/lezer/common/IterateSpec {
+	public fun <init> (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;)V
+	public synthetic fun <init> (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lkotlin/jvm/functions/Function1;
+	public final fun component2 ()Lkotlin/jvm/functions/Function1;
+	public final fun component3 ()Ljava/lang/Integer;
+	public final fun component4 ()Ljava/lang/Integer;
+	public final fun component5 ()Ljava/lang/Integer;
+	public final fun copy (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;)Lcom/monkopedia/kodemirror/lezer/common/IterateSpec;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/lezer/common/IterateSpec;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/common/IterateSpec;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEnter ()Lkotlin/jvm/functions/Function1;
+	public final fun getFrom ()Ljava/lang/Integer;
+	public final fun getLeave ()Lkotlin/jvm/functions/Function1;
+	public final fun getMode ()Ljava/lang/Integer;
+	public final fun getTo ()Ljava/lang/Integer;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/lezer/common/MixKt {
+	public static final fun parseMixed (Lkotlin/jvm/functions/Function2;)Lkotlin/jvm/functions/Function4;
+}
+
+public final class com/monkopedia/kodemirror/lezer/common/MountedTree {
+	public fun <init> (Lcom/monkopedia/kodemirror/lezer/common/Tree;Ljava/util/List;Lcom/monkopedia/kodemirror/lezer/common/Parser;)V
+	public final fun component1 ()Lcom/monkopedia/kodemirror/lezer/common/Tree;
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Lcom/monkopedia/kodemirror/lezer/common/Parser;
+	public final fun copy (Lcom/monkopedia/kodemirror/lezer/common/Tree;Ljava/util/List;Lcom/monkopedia/kodemirror/lezer/common/Parser;)Lcom/monkopedia/kodemirror/lezer/common/MountedTree;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/lezer/common/MountedTree;Lcom/monkopedia/kodemirror/lezer/common/Tree;Ljava/util/List;Lcom/monkopedia/kodemirror/lezer/common/Parser;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/common/MountedTree;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getOverlay ()Ljava/util/List;
+	public final fun getParser ()Lcom/monkopedia/kodemirror/lezer/common/Parser;
+	public final fun getTree ()Lcom/monkopedia/kodemirror/lezer/common/Tree;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/lezer/common/NestedParse {
+	public fun <init> (Lcom/monkopedia/kodemirror/lezer/common/Parser;Ljava/lang/Object;Z)V
+	public synthetic fun <init> (Lcom/monkopedia/kodemirror/lezer/common/Parser;Ljava/lang/Object;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getBracketed ()Z
+	public final fun getOverlay ()Ljava/lang/Object;
+	public final fun getParser ()Lcom/monkopedia/kodemirror/lezer/common/Parser;
+}
+
+public final class com/monkopedia/kodemirror/lezer/common/NodeIterator {
+	public fun <init> (Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;Lcom/monkopedia/kodemirror/lezer/common/NodeIterator;)V
+	public final fun component1 ()Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;
+	public final fun component2 ()Lcom/monkopedia/kodemirror/lezer/common/NodeIterator;
+	public final fun copy (Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;Lcom/monkopedia/kodemirror/lezer/common/NodeIterator;)Lcom/monkopedia/kodemirror/lezer/common/NodeIterator;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/lezer/common/NodeIterator;Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;Lcom/monkopedia/kodemirror/lezer/common/NodeIterator;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/common/NodeIterator;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getNext ()Lcom/monkopedia/kodemirror/lezer/common/NodeIterator;
+	public final fun getNode ()Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/lezer/common/NodeProp {
+	public static final field Companion Lcom/monkopedia/kodemirror/lezer/common/NodeProp$Companion;
+	public fun <init> ()V
+	public fun <init> (ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)V
+	public synthetic fun <init> (ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun add (Ljava/util/Map;)Lcom/monkopedia/kodemirror/lezer/common/NodePropSource;
+	public final fun add (Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/kodemirror/lezer/common/NodePropSource;
+	public final fun getCombine ()Lkotlin/jvm/functions/Function2;
+	public final fun getDeserialize ()Lkotlin/jvm/functions/Function1;
+	public final fun getId ()I
+	public final fun getPerNode ()Z
+}
+
+public final class com/monkopedia/kodemirror/lezer/common/NodeProp$Companion {
+	public final fun getClosedBy ()Lcom/monkopedia/kodemirror/lezer/common/NodeProp;
+	public final fun getContextHash ()Lcom/monkopedia/kodemirror/lezer/common/NodeProp;
+	public final fun getGroup ()Lcom/monkopedia/kodemirror/lezer/common/NodeProp;
+	public final fun getIsolate ()Lcom/monkopedia/kodemirror/lezer/common/NodeProp;
+	public final fun getLookAhead ()Lcom/monkopedia/kodemirror/lezer/common/NodeProp;
+	public final fun getMounted ()Lcom/monkopedia/kodemirror/lezer/common/NodeProp;
+	public final fun getOpenedBy ()Lcom/monkopedia/kodemirror/lezer/common/NodeProp;
+	public final fun getSkipped ()Lcom/monkopedia/kodemirror/lezer/common/NodeProp;
+	public final fun getTop ()Lcom/monkopedia/kodemirror/lezer/common/NodeProp;
+}
+
+public final class com/monkopedia/kodemirror/lezer/common/NodePropSource {
+	public fun <init> (Lcom/monkopedia/kodemirror/lezer/common/NodeProp;Lkotlin/jvm/functions/Function1;)V
+	public final fun getF ()Lkotlin/jvm/functions/Function1;
+	public final fun getProp ()Lcom/monkopedia/kodemirror/lezer/common/NodeProp;
+}
+
+public final class com/monkopedia/kodemirror/lezer/common/NodeSet {
+	public fun <init> (Ljava/util/List;)V
+	public final fun extend ([Lcom/monkopedia/kodemirror/lezer/common/NodePropSource;)Lcom/monkopedia/kodemirror/lezer/common/NodeSet;
+	public final fun getTypes ()Ljava/util/List;
+}
+
+public final class com/monkopedia/kodemirror/lezer/common/NodeType {
+	public static final field Companion Lcom/monkopedia/kodemirror/lezer/common/NodeType$Companion;
+	public final fun getId ()I
+	public final fun getName ()Ljava/lang/String;
+	public final fun is (Ljava/lang/String;)Z
+	public final fun isError ()Z
+	public final fun isSkipped ()Z
+	public final fun isTop ()Z
+	public final fun prop (Lcom/monkopedia/kodemirror/lezer/common/NodeProp;)Ljava/lang/Object;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/lezer/common/NodeType$Companion {
+	public final fun define (Lcom/monkopedia/kodemirror/lezer/common/NodeTypeSpec;)Lcom/monkopedia/kodemirror/lezer/common/NodeType;
+	public final fun getNone ()Lcom/monkopedia/kodemirror/lezer/common/NodeType;
+	public final fun match (Ljava/util/Map;)Lkotlin/jvm/functions/Function1;
+}
+
+public final class com/monkopedia/kodemirror/lezer/common/NodeTypeSpec {
+	public fun <init> (Ljava/lang/String;ILjava/util/List;ZZZ)V
+	public synthetic fun <init> (Ljava/lang/String;ILjava/util/List;ZZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()I
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()Z
+	public final fun component5 ()Z
+	public final fun component6 ()Z
+	public final fun copy (Ljava/lang/String;ILjava/util/List;ZZZ)Lcom/monkopedia/kodemirror/lezer/common/NodeTypeSpec;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/lezer/common/NodeTypeSpec;Ljava/lang/String;ILjava/util/List;ZZZILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/common/NodeTypeSpec;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getError ()Z
+	public final fun getId ()I
+	public final fun getName ()Ljava/lang/String;
+	public final fun getProps ()Ljava/util/List;
+	public final fun getSkipped ()Z
+	public final fun getTop ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/lezer/common/NodeWeakMap {
+	public fun <init> ()V
+	public final fun cursorGet (Lcom/monkopedia/kodemirror/lezer/common/TreeCursor;)Ljava/lang/Object;
+	public final fun cursorSet (Lcom/monkopedia/kodemirror/lezer/common/TreeCursor;Ljava/lang/Object;)V
+	public final fun get (Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;)Ljava/lang/Object;
+	public final fun set (Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;Ljava/lang/Object;)V
+}
+
+public abstract class com/monkopedia/kodemirror/lezer/common/Parser {
+	public fun <init> ()V
+	public abstract fun createParse (Lcom/monkopedia/kodemirror/lezer/common/Input;Ljava/util/List;Ljava/util/List;)Lcom/monkopedia/kodemirror/lezer/common/PartialParse;
+	public final fun parse (Lcom/monkopedia/kodemirror/lezer/common/Input;Ljava/util/List;Ljava/util/List;)Lcom/monkopedia/kodemirror/lezer/common/Tree;
+	public final fun parse (Ljava/lang/String;Ljava/util/List;Ljava/util/List;)Lcom/monkopedia/kodemirror/lezer/common/Tree;
+	public static synthetic fun parse$default (Lcom/monkopedia/kodemirror/lezer/common/Parser;Lcom/monkopedia/kodemirror/lezer/common/Input;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/common/Tree;
+	public static synthetic fun parse$default (Lcom/monkopedia/kodemirror/lezer/common/Parser;Ljava/lang/String;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/common/Tree;
+	public final fun startParse (Lcom/monkopedia/kodemirror/lezer/common/Input;Ljava/util/List;Ljava/util/List;)Lcom/monkopedia/kodemirror/lezer/common/PartialParse;
+	public final fun startParse (Ljava/lang/String;Ljava/util/List;Ljava/util/List;)Lcom/monkopedia/kodemirror/lezer/common/PartialParse;
+	public static synthetic fun startParse$default (Lcom/monkopedia/kodemirror/lezer/common/Parser;Lcom/monkopedia/kodemirror/lezer/common/Input;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/common/PartialParse;
+	public static synthetic fun startParse$default (Lcom/monkopedia/kodemirror/lezer/common/Parser;Ljava/lang/String;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/common/PartialParse;
+}
+
+public abstract interface class com/monkopedia/kodemirror/lezer/common/PartialParse {
+	public abstract fun advance ()Lcom/monkopedia/kodemirror/lezer/common/Tree;
+	public abstract fun getParsedPos ()I
+	public abstract fun getStoppedAt ()Ljava/lang/Integer;
+	public abstract fun stopAt (I)V
+}
+
+public final class com/monkopedia/kodemirror/lezer/common/StringInput : com/monkopedia/kodemirror/lezer/common/Input {
+	public fun <init> (Ljava/lang/String;)V
+	public fun chunk (I)Ljava/lang/String;
+	public fun getLength ()I
+	public fun getLineChunks ()Z
+	public fun read (II)Ljava/lang/String;
+}
+
+public abstract interface class com/monkopedia/kodemirror/lezer/common/SyntaxNode : com/monkopedia/kodemirror/lezer/common/SyntaxNodeRef {
+	public abstract fun childAfter (I)Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;
+	public abstract fun childBefore (I)Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;
+	public abstract fun cursor ()Lcom/monkopedia/kodemirror/lezer/common/TreeCursor;
+	public abstract fun enter (III)Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;
+	public static synthetic fun enter$default (Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;IIIILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;
+	public abstract fun enterUnfinishedNodesBefore (I)Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;
+	public abstract fun getChild (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;
+	public static synthetic fun getChild$default (Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;
+	public abstract fun getChildren (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/util/List;
+	public static synthetic fun getChildren$default (Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ljava/util/List;
+	public abstract fun getFirstChild ()Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;
+	public abstract fun getLastChild ()Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;
+	public abstract fun getNextSibling ()Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;
+	public abstract fun getParent ()Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;
+	public abstract fun getPrevSibling ()Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;
+	public abstract fun getTree ()Lcom/monkopedia/kodemirror/lezer/common/Tree;
+	public abstract fun resolve (II)Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;
+	public static synthetic fun resolve$default (Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;IIILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;
+	public abstract fun resolveInner (II)Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;
+	public static synthetic fun resolveInner$default (Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;IIILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;
+	public abstract fun toTree ()Lcom/monkopedia/kodemirror/lezer/common/Tree;
+}
+
+public final class com/monkopedia/kodemirror/lezer/common/SyntaxNode$DefaultImpls {
+	public static synthetic fun enter$default (Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;IIIILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;
+	public static synthetic fun getChild$default (Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;
+	public static synthetic fun getChildren$default (Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ljava/util/List;
+	public static fun getName (Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;)Ljava/lang/String;
+	public static synthetic fun resolve$default (Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;IIILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;
+	public static synthetic fun resolveInner$default (Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;IIILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;
+}
+
+public abstract interface class com/monkopedia/kodemirror/lezer/common/SyntaxNodeRef {
+	public abstract fun getFrom ()I
+	public fun getName ()Ljava/lang/String;
+	public abstract fun getTo ()I
+	public abstract fun getType ()Lcom/monkopedia/kodemirror/lezer/common/NodeType;
+	public abstract fun matchContext (Ljava/util/List;)Z
+}
+
+public final class com/monkopedia/kodemirror/lezer/common/SyntaxNodeRef$DefaultImpls {
+	public static fun getName (Lcom/monkopedia/kodemirror/lezer/common/SyntaxNodeRef;)Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/lezer/common/TextRange {
+	public fun <init> (II)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun copy (II)Lcom/monkopedia/kodemirror/lezer/common/TextRange;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/lezer/common/TextRange;IIILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/common/TextRange;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFrom ()I
+	public final fun getTo ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/lezer/common/Tree {
+	public static final field Companion Lcom/monkopedia/kodemirror/lezer/common/Tree$Companion;
+	public fun <init> (Lcom/monkopedia/kodemirror/lezer/common/NodeType;Ljava/util/List;Ljava/util/List;ILjava/util/Map;)V
+	public synthetic fun <init> (Lcom/monkopedia/kodemirror/lezer/common/NodeType;Ljava/util/List;Ljava/util/List;ILjava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun balance (Lcom/monkopedia/kodemirror/lezer/common/BalanceConfig;)Lcom/monkopedia/kodemirror/lezer/common/Tree;
+	public static synthetic fun balance$default (Lcom/monkopedia/kodemirror/lezer/common/Tree;Lcom/monkopedia/kodemirror/lezer/common/BalanceConfig;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/common/Tree;
+	public final fun cursor (I)Lcom/monkopedia/kodemirror/lezer/common/TreeCursor;
+	public static synthetic fun cursor$default (Lcom/monkopedia/kodemirror/lezer/common/Tree;IILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/common/TreeCursor;
+	public final fun cursorAt (III)Lcom/monkopedia/kodemirror/lezer/common/TreeCursor;
+	public static synthetic fun cursorAt$default (Lcom/monkopedia/kodemirror/lezer/common/Tree;IIIILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/common/TreeCursor;
+	public final fun getChildren ()Ljava/util/List;
+	public final fun getLength ()I
+	public final fun getPositions ()Ljava/util/List;
+	public final fun getTopNode ()Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;
+	public final fun getType ()Lcom/monkopedia/kodemirror/lezer/common/NodeType;
+	public final fun iterate (Lcom/monkopedia/kodemirror/lezer/common/IterateSpec;)V
+	public final fun prop (Lcom/monkopedia/kodemirror/lezer/common/NodeProp;)Ljava/lang/Object;
+	public final fun resolve (II)Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;
+	public static synthetic fun resolve$default (Lcom/monkopedia/kodemirror/lezer/common/Tree;IIILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;
+	public final fun resolveInner (II)Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;
+	public static synthetic fun resolveInner$default (Lcom/monkopedia/kodemirror/lezer/common/Tree;IIILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;
+	public final fun resolveStack (II)Lcom/monkopedia/kodemirror/lezer/common/NodeIterator;
+	public static synthetic fun resolveStack$default (Lcom/monkopedia/kodemirror/lezer/common/Tree;IIILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/common/NodeIterator;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/lezer/common/Tree$Companion {
+	public final fun build (Lcom/monkopedia/kodemirror/lezer/common/TreeBuildSpec;)Lcom/monkopedia/kodemirror/lezer/common/Tree;
+	public final fun getEmpty ()Lcom/monkopedia/kodemirror/lezer/common/Tree;
+}
+
+public final class com/monkopedia/kodemirror/lezer/common/TreeBuffer {
+	public fun <init> ([IILcom/monkopedia/kodemirror/lezer/common/NodeSet;)V
+	public final fun getBuffer ()[I
+	public final fun getLength ()I
+	public final fun getSet ()Lcom/monkopedia/kodemirror/lezer/common/NodeSet;
+	public final fun getType ()Lcom/monkopedia/kodemirror/lezer/common/NodeType;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/lezer/common/TreeBufferKt {
+	public static final field DEFAULT_BUFFER_LENGTH I
+}
+
+public final class com/monkopedia/kodemirror/lezer/common/TreeBuildSpec {
+	public fun <init> (Ljava/lang/Object;Lcom/monkopedia/kodemirror/lezer/common/NodeSet;IIILjava/lang/Integer;ILjava/util/List;I)V
+	public synthetic fun <init> (Ljava/lang/Object;Lcom/monkopedia/kodemirror/lezer/common/NodeSet;IIILjava/lang/Integer;ILjava/util/List;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/Object;
+	public final fun component2 ()Lcom/monkopedia/kodemirror/lezer/common/NodeSet;
+	public final fun component3 ()I
+	public final fun component4 ()I
+	public final fun component5 ()I
+	public final fun component6 ()Ljava/lang/Integer;
+	public final fun component7 ()I
+	public final fun component8 ()Ljava/util/List;
+	public final fun component9 ()I
+	public final fun copy (Ljava/lang/Object;Lcom/monkopedia/kodemirror/lezer/common/NodeSet;IIILjava/lang/Integer;ILjava/util/List;I)Lcom/monkopedia/kodemirror/lezer/common/TreeBuildSpec;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/lezer/common/TreeBuildSpec;Ljava/lang/Object;Lcom/monkopedia/kodemirror/lezer/common/NodeSet;IIILjava/lang/Integer;ILjava/util/List;IILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/common/TreeBuildSpec;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBuffer ()Ljava/lang/Object;
+	public final fun getBufferStart ()I
+	public final fun getLength ()Ljava/lang/Integer;
+	public final fun getMaxBufferLength ()I
+	public final fun getMinRepeatType ()I
+	public final fun getNodeSet ()Lcom/monkopedia/kodemirror/lezer/common/NodeSet;
+	public final fun getReused ()Ljava/util/List;
+	public final fun getStart ()I
+	public final fun getTopID ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/lezer/common/TreeCursor : com/monkopedia/kodemirror/lezer/common/SyntaxNodeRef {
+	public final fun childAfter (I)Z
+	public final fun childBefore (I)Z
+	public final fun enter (III)Z
+	public static synthetic fun enter$default (Lcom/monkopedia/kodemirror/lezer/common/TreeCursor;IIIILjava/lang/Object;)Z
+	public final fun firstChild ()Z
+	public fun getFrom ()I
+	public fun getName ()Ljava/lang/String;
+	public final fun getNode ()Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;
+	public fun getTo ()I
+	public final fun getTree ()Lcom/monkopedia/kodemirror/lezer/common/Tree;
+	public fun getType ()Lcom/monkopedia/kodemirror/lezer/common/NodeType;
+	public final fun lastChild ()Z
+	public fun matchContext (Ljava/util/List;)Z
+	public final fun moveTo (II)Lcom/monkopedia/kodemirror/lezer/common/TreeCursor;
+	public static synthetic fun moveTo$default (Lcom/monkopedia/kodemirror/lezer/common/TreeCursor;IIILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/common/TreeCursor;
+	public final fun next (Z)Z
+	public static synthetic fun next$default (Lcom/monkopedia/kodemirror/lezer/common/TreeCursor;ZILjava/lang/Object;)Z
+	public final fun nextSibling ()Z
+	public final fun parent ()Z
+	public final fun prev (Z)Z
+	public static synthetic fun prev$default (Lcom/monkopedia/kodemirror/lezer/common/TreeCursor;ZILjava/lang/Object;)Z
+	public final fun prevSibling ()Z
+}
+
+public final class com/monkopedia/kodemirror/lezer/common/TreeFragment {
+	public static final field Companion Lcom/monkopedia/kodemirror/lezer/common/TreeFragment$Companion;
+	public fun <init> (IILcom/monkopedia/kodemirror/lezer/common/Tree;IZZ)V
+	public synthetic fun <init> (IILcom/monkopedia/kodemirror/lezer/common/Tree;IZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getFrom ()I
+	public final fun getOffset ()I
+	public final fun getOpenEnd ()Z
+	public final fun getOpenStart ()Z
+	public final fun getTo ()I
+	public final fun getTree ()Lcom/monkopedia/kodemirror/lezer/common/Tree;
+}
+
+public final class com/monkopedia/kodemirror/lezer/common/TreeFragment$Companion {
+	public final fun addTree (Lcom/monkopedia/kodemirror/lezer/common/Tree;Ljava/util/List;Z)Ljava/util/List;
+	public static synthetic fun addTree$default (Lcom/monkopedia/kodemirror/lezer/common/TreeFragment$Companion;Lcom/monkopedia/kodemirror/lezer/common/Tree;Ljava/util/List;ZILjava/lang/Object;)Ljava/util/List;
+	public final fun applyChanges (Ljava/util/List;Ljava/util/List;I)Ljava/util/List;
+	public static synthetic fun applyChanges$default (Lcom/monkopedia/kodemirror/lezer/common/TreeFragment$Companion;Ljava/util/List;Ljava/util/List;IILjava/lang/Object;)Ljava/util/List;
+}
+

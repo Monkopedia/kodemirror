@@ -1,0 +1,169 @@
+public final class com/monkopedia/kodemirror/lang/sql/CompletionLevel {
+	public fun <init> (Ljava/lang/String;Z)V
+	public final fun addCompletion (Lcom/monkopedia/kodemirror/autocomplete/Completion;)V
+	public final fun addCompletions (Ljava/util/List;)V
+	public final fun addNamespace (Ljava/lang/Object;)V
+	public final fun child (Ljava/lang/String;)Lcom/monkopedia/kodemirror/lang/sql/CompletionLevel;
+	public final fun getChildren ()Ljava/util/Map;
+	public final fun getList ()Ljava/util/List;
+	public final fun maybeChild (Ljava/lang/String;)Lcom/monkopedia/kodemirror/lang/sql/CompletionLevel;
+	public final fun setChildren (Ljava/util/Map;)V
+}
+
+public final class com/monkopedia/kodemirror/lang/sql/DialectSpec {
+	public fun <init> ()V
+	public fun <init> (ZZZZZZZZZZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/util/Map;)V
+	public synthetic fun <init> (ZZZZZZZZZZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component10 ()Z
+	public final fun component11 ()Ljava/lang/String;
+	public final fun component12 ()Ljava/lang/String;
+	public final fun component13 ()Ljava/lang/String;
+	public final fun component14 ()Z
+	public final fun component15 ()Ljava/util/Map;
+	public final fun component2 ()Z
+	public final fun component3 ()Z
+	public final fun component4 ()Z
+	public final fun component5 ()Z
+	public final fun component6 ()Z
+	public final fun component7 ()Z
+	public final fun component8 ()Z
+	public final fun component9 ()Z
+	public final fun copy (ZZZZZZZZZZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/util/Map;)Lcom/monkopedia/kodemirror/lang/sql/DialectSpec;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/lang/sql/DialectSpec;ZZZZZZZZZZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/util/Map;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/lang/sql/DialectSpec;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBackslashEscapes ()Z
+	public final fun getCaseInsensitiveIdentifiers ()Z
+	public final fun getCharSetCasts ()Z
+	public final fun getDoubleDollarQuotedStrings ()Z
+	public final fun getDoubleQuotedStrings ()Z
+	public final fun getHashComments ()Z
+	public final fun getIdentifierQuotes ()Ljava/lang/String;
+	public final fun getOperatorChars ()Ljava/lang/String;
+	public final fun getPlsqlQuotingMechanism ()Z
+	public final fun getSlashComments ()Z
+	public final fun getSpaceAfterDashes ()Z
+	public final fun getSpecialVar ()Ljava/lang/String;
+	public final fun getTreatBitsAsBytes ()Z
+	public final fun getUnquotedBitLiterals ()Z
+	public final fun getWords ()Ljava/util/Map;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/lang/sql/SQLDialect {
+	public static final field Companion Lcom/monkopedia/kodemirror/lang/sql/SQLDialect$Companion;
+	public fun <init> (Lcom/monkopedia/kodemirror/lang/sql/DialectSpec;Lcom/monkopedia/kodemirror/language/LRLanguage;Lcom/monkopedia/kodemirror/lang/sql/SqlDialectDef;)V
+	public final fun getExtension ()Lcom/monkopedia/kodemirror/state/Extension;
+	public final fun getLanguage ()Lcom/monkopedia/kodemirror/language/LRLanguage;
+	public final fun getSpec ()Lcom/monkopedia/kodemirror/lang/sql/SqlDialectDef;
+}
+
+public final class com/monkopedia/kodemirror/lang/sql/SQLDialect$Companion {
+	public final fun define (Lcom/monkopedia/kodemirror/lang/sql/SqlDialectDef;)Lcom/monkopedia/kodemirror/lang/sql/SQLDialect;
+}
+
+public final class com/monkopedia/kodemirror/lang/sql/SqlCompleteKt {
+	public static final fun completeFromSchema (Ljava/util/Map;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Lcom/monkopedia/kodemirror/lang/sql/SQLDialect;)Lkotlin/jvm/functions/Function1;
+	public static synthetic fun completeFromSchema$default (Ljava/util/Map;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Lcom/monkopedia/kodemirror/lang/sql/SQLDialect;ILjava/lang/Object;)Lkotlin/jvm/functions/Function1;
+	public static final fun keywordCompletionSource (Lcom/monkopedia/kodemirror/lang/sql/SQLDialect;ZLkotlin/jvm/functions/Function2;)Lkotlin/jvm/functions/Function1;
+	public static synthetic fun keywordCompletionSource$default (Lcom/monkopedia/kodemirror/lang/sql/SQLDialect;ZLkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlin/jvm/functions/Function1;
+	public static final fun schemaCompletionSource (Lcom/monkopedia/kodemirror/lang/sql/SqlCompletionConfig;)Lkotlin/jvm/functions/Function1;
+}
+
+public final class com/monkopedia/kodemirror/lang/sql/SqlCompletionConfig {
+	public fun <init> ()V
+	public fun <init> (Lcom/monkopedia/kodemirror/lang/sql/SQLDialect;Ljava/util/Map;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;ZLkotlin/jvm/functions/Function2;)V
+	public synthetic fun <init> (Lcom/monkopedia/kodemirror/lang/sql/SQLDialect;Ljava/util/Map;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;ZLkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/monkopedia/kodemirror/lang/sql/SQLDialect;
+	public final fun component2 ()Ljava/util/Map;
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()Ljava/util/List;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Z
+	public final fun component8 ()Lkotlin/jvm/functions/Function2;
+	public final fun copy (Lcom/monkopedia/kodemirror/lang/sql/SQLDialect;Ljava/util/Map;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;ZLkotlin/jvm/functions/Function2;)Lcom/monkopedia/kodemirror/lang/sql/SqlCompletionConfig;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/lang/sql/SqlCompletionConfig;Lcom/monkopedia/kodemirror/lang/sql/SQLDialect;Ljava/util/Map;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;ZLkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/lang/sql/SqlCompletionConfig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDefaultSchema ()Ljava/lang/String;
+	public final fun getDefaultTable ()Ljava/lang/String;
+	public final fun getDialect ()Lcom/monkopedia/kodemirror/lang/sql/SQLDialect;
+	public final fun getKeywordCompletion ()Lkotlin/jvm/functions/Function2;
+	public final fun getSchema ()Ljava/util/Map;
+	public final fun getSchemas ()Ljava/util/List;
+	public final fun getTables ()Ljava/util/List;
+	public final fun getUpperCaseKeywords ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/lang/sql/SqlDialectDef {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/Boolean;
+	public final fun component10 ()Ljava/lang/Boolean;
+	public final fun component11 ()Ljava/lang/String;
+	public final fun component12 ()Ljava/lang/String;
+	public final fun component13 ()Ljava/lang/String;
+	public final fun component14 ()Ljava/lang/Boolean;
+	public final fun component15 ()Ljava/lang/String;
+	public final fun component16 ()Ljava/lang/String;
+	public final fun component17 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/Boolean;
+	public final fun component3 ()Ljava/lang/Boolean;
+	public final fun component4 ()Ljava/lang/Boolean;
+	public final fun component5 ()Ljava/lang/Boolean;
+	public final fun component6 ()Ljava/lang/Boolean;
+	public final fun component7 ()Ljava/lang/Boolean;
+	public final fun component8 ()Ljava/lang/Boolean;
+	public final fun component9 ()Ljava/lang/Boolean;
+	public final fun copy (Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lcom/monkopedia/kodemirror/lang/sql/SqlDialectDef;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/lang/sql/SqlDialectDef;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/lang/sql/SqlDialectDef;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBackslashEscapes ()Ljava/lang/Boolean;
+	public final fun getBuiltin ()Ljava/lang/String;
+	public final fun getCaseInsensitiveIdentifiers ()Ljava/lang/Boolean;
+	public final fun getCharSetCasts ()Ljava/lang/Boolean;
+	public final fun getDoubleDollarQuotedStrings ()Ljava/lang/Boolean;
+	public final fun getDoubleQuotedStrings ()Ljava/lang/Boolean;
+	public final fun getHashComments ()Ljava/lang/Boolean;
+	public final fun getIdentifierQuotes ()Ljava/lang/String;
+	public final fun getKeywords ()Ljava/lang/String;
+	public final fun getOperatorChars ()Ljava/lang/String;
+	public final fun getPlsqlQuotingMechanism ()Ljava/lang/Boolean;
+	public final fun getSlashComments ()Ljava/lang/Boolean;
+	public final fun getSpaceAfterDashes ()Ljava/lang/Boolean;
+	public final fun getSpecialVar ()Ljava/lang/String;
+	public final fun getTreatBitsAsBytes ()Ljava/lang/Boolean;
+	public final fun getTypes ()Ljava/lang/String;
+	public final fun getUnquotedBitLiterals ()Ljava/lang/Boolean;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/lang/sql/SqlHighlightKt {
+	public static final fun getSqlHighlighting ()Lcom/monkopedia/kodemirror/lezer/common/NodePropSource;
+}
+
+public final class com/monkopedia/kodemirror/lang/sql/SqlKt {
+	public static final fun getCassandra ()Lcom/monkopedia/kodemirror/lang/sql/SQLDialect;
+	public static final fun getMSSQL ()Lcom/monkopedia/kodemirror/lang/sql/SQLDialect;
+	public static final fun getMariaSQL ()Lcom/monkopedia/kodemirror/lang/sql/SQLDialect;
+	public static final fun getMySQL ()Lcom/monkopedia/kodemirror/lang/sql/SQLDialect;
+	public static final fun getPLSQL ()Lcom/monkopedia/kodemirror/lang/sql/SQLDialect;
+	public static final fun getPostgreSQL ()Lcom/monkopedia/kodemirror/lang/sql/SQLDialect;
+	public static final fun getSQLite ()Lcom/monkopedia/kodemirror/lang/sql/SQLDialect;
+	public static final fun getStandardSQL ()Lcom/monkopedia/kodemirror/lang/sql/SQLDialect;
+	public static final fun sql (Lcom/monkopedia/kodemirror/lang/sql/SqlCompletionConfig;)Lcom/monkopedia/kodemirror/language/LanguageSupport;
+	public static synthetic fun sql$default (Lcom/monkopedia/kodemirror/lang/sql/SqlCompletionConfig;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/language/LanguageSupport;
+}
+
+public final class com/monkopedia/kodemirror/lang/sql/SqlTokensKt {
+	public static final fun buildKeywords (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/util/Map;
+	public static synthetic fun buildKeywords$default (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ljava/util/Map;
+	public static final fun getTokens ()Lcom/monkopedia/kodemirror/lezer/lr/ExternalTokenizer;
+	public static final fun tokensFor (Lcom/monkopedia/kodemirror/lang/sql/DialectSpec;)Lcom/monkopedia/kodemirror/lezer/lr/ExternalTokenizer;
+}
+

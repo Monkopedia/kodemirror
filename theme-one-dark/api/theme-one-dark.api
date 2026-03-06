@@ -1,0 +1,26 @@
+public final class com/monkopedia/kodemirror/themonedark/OneDarkColors {
+	public static final field $stable I
+	public static final field INSTANCE Lcom/monkopedia/kodemirror/themonedark/OneDarkColors;
+	public final fun getBackground-0d7_KjU ()J
+	public final fun getChalky-0d7_KjU ()J
+	public final fun getCoral-0d7_KjU ()J
+	public final fun getCursor-0d7_KjU ()J
+	public final fun getCyan-0d7_KjU ()J
+	public final fun getDarkBackground-0d7_KjU ()J
+	public final fun getHighlightBackground-0d7_KjU ()J
+	public final fun getInvalid-0d7_KjU ()J
+	public final fun getIvory-0d7_KjU ()J
+	public final fun getMalibu-0d7_KjU ()J
+	public final fun getSage-0d7_KjU ()J
+	public final fun getSelection-0d7_KjU ()J
+	public final fun getStone-0d7_KjU ()J
+	public final fun getTooltipBackground-0d7_KjU ()J
+	public final fun getViolet-0d7_KjU ()J
+	public final fun getWhiskey-0d7_KjU ()J
+}
+
+public final class com/monkopedia/kodemirror/themonedark/OneDarkKt {
+	public static final fun getOneDark ()Lcom/monkopedia/kodemirror/state/Extension;
+	public static final fun getOneDarkTheme ()Lcom/monkopedia/kodemirror/view/EditorTheme;
+}
+

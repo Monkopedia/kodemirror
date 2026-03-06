@@ -1,0 +1,13 @@
+public final class com/monkopedia/kodemirror/lang/go/GoHighlightKt {
+	public static final fun getGoHighlighting ()Lcom/monkopedia/kodemirror/lezer/common/NodePropSource;
+}
+
+public final class com/monkopedia/kodemirror/lang/go/GoKt {
+	public static final fun getGoLanguage ()Lcom/monkopedia/kodemirror/language/LRLanguage;
+	public static final fun go ()Lcom/monkopedia/kodemirror/language/LanguageSupport;
+}
+
+public final class com/monkopedia/kodemirror/lang/go/GoParserKt {
+	public static final fun getParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
+}
+

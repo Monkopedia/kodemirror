@@ -1,0 +1,285 @@
+public final class com/monkopedia/kodemirror/merge/Change {
+	public static final field $stable I
+	public fun <init> (IIII)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun component4 ()I
+	public final fun copy (IIII)Lcom/monkopedia/kodemirror/merge/Change;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/merge/Change;IIIIILjava/lang/Object;)Lcom/monkopedia/kodemirror/merge/Change;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFromA ()I
+	public final fun getFromB ()I
+	public final fun getToA ()I
+	public final fun getToB ()I
+	public fun hashCode ()I
+	public final fun offset (II)Lcom/monkopedia/kodemirror/merge/Change;
+	public static synthetic fun offset$default (Lcom/monkopedia/kodemirror/merge/Change;IIILjava/lang/Object;)Lcom/monkopedia/kodemirror/merge/Change;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/merge/Chunk {
+	public static final field $stable I
+	public static final field Companion Lcom/monkopedia/kodemirror/merge/Chunk$Companion;
+	public fun <init> (Ljava/util/List;IIIIZ)V
+	public synthetic fun <init> (Ljava/util/List;IIIIZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getChanges ()Ljava/util/List;
+	public final fun getEndA ()I
+	public final fun getEndB ()I
+	public final fun getFromA ()I
+	public final fun getFromB ()I
+	public final fun getPrecise ()Z
+	public final fun getToA ()I
+	public final fun getToB ()I
+	public final fun offset (II)Lcom/monkopedia/kodemirror/merge/Chunk;
+}
+
+public final class com/monkopedia/kodemirror/merge/Chunk$Companion {
+	public final fun build (Lcom/monkopedia/kodemirror/state/Text;Lcom/monkopedia/kodemirror/state/Text;Lcom/monkopedia/kodemirror/merge/DiffConfig;)Ljava/util/List;
+	public static synthetic fun build$default (Lcom/monkopedia/kodemirror/merge/Chunk$Companion;Lcom/monkopedia/kodemirror/state/Text;Lcom/monkopedia/kodemirror/state/Text;Lcom/monkopedia/kodemirror/merge/DiffConfig;ILjava/lang/Object;)Ljava/util/List;
+	public final fun updateA (Ljava/util/List;Lcom/monkopedia/kodemirror/state/Text;Lcom/monkopedia/kodemirror/state/Text;Lcom/monkopedia/kodemirror/state/ChangeDesc;Lcom/monkopedia/kodemirror/merge/DiffConfig;)Ljava/util/List;
+	public static synthetic fun updateA$default (Lcom/monkopedia/kodemirror/merge/Chunk$Companion;Ljava/util/List;Lcom/monkopedia/kodemirror/state/Text;Lcom/monkopedia/kodemirror/state/Text;Lcom/monkopedia/kodemirror/state/ChangeDesc;Lcom/monkopedia/kodemirror/merge/DiffConfig;ILjava/lang/Object;)Ljava/util/List;
+	public final fun updateB (Ljava/util/List;Lcom/monkopedia/kodemirror/state/Text;Lcom/monkopedia/kodemirror/state/Text;Lcom/monkopedia/kodemirror/state/ChangeDesc;Lcom/monkopedia/kodemirror/merge/DiffConfig;)Ljava/util/List;
+	public static synthetic fun updateB$default (Lcom/monkopedia/kodemirror/merge/Chunk$Companion;Ljava/util/List;Lcom/monkopedia/kodemirror/state/Text;Lcom/monkopedia/kodemirror/state/Text;Lcom/monkopedia/kodemirror/state/ChangeDesc;Lcom/monkopedia/kodemirror/merge/DiffConfig;ILjava/lang/Object;)Ljava/util/List;
+}
+
+public final class com/monkopedia/kodemirror/merge/ChunkKt {
+	public static final fun getDefaultDiffConfig ()Lcom/monkopedia/kodemirror/merge/DiffConfig;
+}
+
+public final class com/monkopedia/kodemirror/merge/ChunkResult {
+	public static final field $stable I
+	public fun <init> (Ljava/util/List;Lcom/monkopedia/kodemirror/merge/MergeSide;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Lcom/monkopedia/kodemirror/merge/MergeSide;
+	public final fun copy (Ljava/util/List;Lcom/monkopedia/kodemirror/merge/MergeSide;)Lcom/monkopedia/kodemirror/merge/ChunkResult;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/merge/ChunkResult;Ljava/util/List;Lcom/monkopedia/kodemirror/merge/MergeSide;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/merge/ChunkResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getChunks ()Ljava/util/List;
+	public final fun getSide ()Lcom/monkopedia/kodemirror/merge/MergeSide;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/merge/CollapseConfig {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (II)V
+	public synthetic fun <init> (IIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun copy (II)Lcom/monkopedia/kodemirror/merge/CollapseConfig;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/merge/CollapseConfig;IIILjava/lang/Object;)Lcom/monkopedia/kodemirror/merge/CollapseConfig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMargin ()I
+	public final fun getMinSize ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/merge/DecoKt {
+	public static final fun collapseUnchanged (II)Lcom/monkopedia/kodemirror/state/Extension;
+	public static synthetic fun collapseUnchanged$default (IIILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/Extension;
+	public static final fun getAdjustSpacers ()Lcom/monkopedia/kodemirror/state/StateEffectType;
+	public static final fun getChangeGutter ()Lcom/monkopedia/kodemirror/state/Extension;
+	public static final fun getChangedText ()Lcom/monkopedia/kodemirror/view/Decoration;
+	public static final fun getDecorateChunks ()Lcom/monkopedia/kodemirror/view/ViewPlugin;
+	public static final fun getSpacers ()Lcom/monkopedia/kodemirror/state/StateField;
+	public static final fun getUncollapseUnchanged ()Lcom/monkopedia/kodemirror/state/StateEffectType;
+}
+
+public final class com/monkopedia/kodemirror/merge/DiffConfig {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (IJLkotlin/jvm/functions/Function2;)V
+	public synthetic fun <init> (IJLkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()J
+	public final fun component3 ()Lkotlin/jvm/functions/Function2;
+	public final fun copy (IJLkotlin/jvm/functions/Function2;)Lcom/monkopedia/kodemirror/merge/DiffConfig;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/merge/DiffConfig;IJLkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/merge/DiffConfig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getOverride ()Lkotlin/jvm/functions/Function2;
+	public final fun getScanLimit ()I
+	public final fun getTimeout ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/merge/DiffKt {
+	public static final fun diff (Ljava/lang/String;Ljava/lang/String;Lcom/monkopedia/kodemirror/merge/DiffConfig;)Ljava/util/List;
+	public static synthetic fun diff$default (Ljava/lang/String;Ljava/lang/String;Lcom/monkopedia/kodemirror/merge/DiffConfig;ILjava/lang/Object;)Ljava/util/List;
+	public static final fun presentableDiff (Ljava/lang/String;Ljava/lang/String;Lcom/monkopedia/kodemirror/merge/DiffConfig;)Ljava/util/List;
+	public static synthetic fun presentableDiff$default (Ljava/lang/String;Ljava/lang/String;Lcom/monkopedia/kodemirror/merge/DiffConfig;ILjava/lang/Object;)Ljava/util/List;
+}
+
+public final class com/monkopedia/kodemirror/merge/MergeColors {
+	public static final field $stable I
+	public static final field INSTANCE Lcom/monkopedia/kodemirror/merge/MergeColors;
+	public final fun getChangedLineA-0d7_KjU ()J
+	public final fun getChangedLineB-0d7_KjU ()J
+	public final fun getChangedLineGutter-0d7_KjU ()J
+	public final fun getChangedTextA-0d7_KjU ()J
+	public final fun getChangedTextB-0d7_KjU ()J
+	public final fun getCollapsedBackground-0d7_KjU ()J
+	public final fun getCollapsedBorder-0d7_KjU ()J
+	public final fun getDeletedChunkBackground-0d7_KjU ()J
+	public final fun getDeletedLineGutter-0d7_KjU ()J
+	public final fun getDeletedText-0d7_KjU ()J
+	public final fun getSpacerBackground-0d7_KjU ()J
+}
+
+public final class com/monkopedia/kodemirror/merge/MergeConfigValue {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (Lkotlin/jvm/functions/Function0;ZZZIZLkotlin/jvm/functions/Function4;Lcom/monkopedia/kodemirror/merge/MergeSide;)V
+	public synthetic fun <init> (Lkotlin/jvm/functions/Function0;ZZZIZLkotlin/jvm/functions/Function4;Lcom/monkopedia/kodemirror/merge/MergeSide;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lkotlin/jvm/functions/Function0;
+	public final fun component2 ()Z
+	public final fun component3 ()Z
+	public final fun component4 ()Z
+	public final fun component5 ()I
+	public final fun component6 ()Z
+	public final fun component7 ()Lkotlin/jvm/functions/Function4;
+	public final fun component8 ()Lcom/monkopedia/kodemirror/merge/MergeSide;
+	public final fun copy (Lkotlin/jvm/functions/Function0;ZZZIZLkotlin/jvm/functions/Function4;Lcom/monkopedia/kodemirror/merge/MergeSide;)Lcom/monkopedia/kodemirror/merge/MergeConfigValue;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/merge/MergeConfigValue;Lkotlin/jvm/functions/Function0;ZZZIZLkotlin/jvm/functions/Function4;Lcom/monkopedia/kodemirror/merge/MergeSide;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/merge/MergeConfigValue;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getHighlightChanges ()Z
+	public final fun getMarkGutter ()Z
+	public final fun getMergeControls ()Z
+	public final fun getOverrideChunk ()Lkotlin/jvm/functions/Function4;
+	public final fun getSibling ()Lkotlin/jvm/functions/Function0;
+	public final fun getSide ()Lcom/monkopedia/kodemirror/merge/MergeSide;
+	public final fun getSyntaxHighlightDeletions ()Z
+	public final fun getSyntaxHighlightDeletionsMaxLength ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/merge/MergeKt {
+	public static final fun getChunkField ()Lcom/monkopedia/kodemirror/state/StateField;
+	public static final fun getChunks (Lcom/monkopedia/kodemirror/state/EditorState;)Lcom/monkopedia/kodemirror/merge/ChunkResult;
+	public static final fun getComputeChunks ()Lcom/monkopedia/kodemirror/state/Facet;
+	public static final fun getGoToNextChunk ()Lkotlin/jvm/functions/Function1;
+	public static final fun getGoToPreviousChunk ()Lkotlin/jvm/functions/Function1;
+	public static final fun getMergeConfig ()Lcom/monkopedia/kodemirror/state/Facet;
+	public static final fun getSetChunks ()Lcom/monkopedia/kodemirror/state/StateEffectType;
+}
+
+public final class com/monkopedia/kodemirror/merge/MergeSide : java/lang/Enum {
+	public static final field A Lcom/monkopedia/kodemirror/merge/MergeSide;
+	public static final field B Lcom/monkopedia/kodemirror/merge/MergeSide;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/monkopedia/kodemirror/merge/MergeSide;
+	public static fun values ()[Lcom/monkopedia/kodemirror/merge/MergeSide;
+}
+
+public final class com/monkopedia/kodemirror/merge/MergeView {
+	public static final field $stable I
+	public fun <init> (Lcom/monkopedia/kodemirror/merge/MergeViewConfig;)V
+	public final fun dispatch (Lcom/monkopedia/kodemirror/state/Transaction;Lcom/monkopedia/kodemirror/view/EditorView;)V
+	public final fun dispose ()V
+	public final fun getA ()Lcom/monkopedia/kodemirror/view/EditorView;
+	public final fun getB ()Lcom/monkopedia/kodemirror/view/EditorView;
+	public final fun getChunks ()Ljava/util/List;
+	public final fun revertChunk (Lcom/monkopedia/kodemirror/merge/Chunk;)V
+}
+
+public final class com/monkopedia/kodemirror/merge/MergeViewConfig {
+	public static final field $stable I
+	public fun <init> (Lcom/monkopedia/kodemirror/state/EditorStateConfig;Lcom/monkopedia/kodemirror/state/EditorStateConfig;Lcom/monkopedia/kodemirror/merge/Orientation;Lcom/monkopedia/kodemirror/merge/RevertDirection;ZZLcom/monkopedia/kodemirror/merge/CollapseConfig;Lcom/monkopedia/kodemirror/merge/DiffConfig;)V
+	public synthetic fun <init> (Lcom/monkopedia/kodemirror/state/EditorStateConfig;Lcom/monkopedia/kodemirror/state/EditorStateConfig;Lcom/monkopedia/kodemirror/merge/Orientation;Lcom/monkopedia/kodemirror/merge/RevertDirection;ZZLcom/monkopedia/kodemirror/merge/CollapseConfig;Lcom/monkopedia/kodemirror/merge/DiffConfig;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/monkopedia/kodemirror/state/EditorStateConfig;
+	public final fun component2 ()Lcom/monkopedia/kodemirror/state/EditorStateConfig;
+	public final fun component3 ()Lcom/monkopedia/kodemirror/merge/Orientation;
+	public final fun component4 ()Lcom/monkopedia/kodemirror/merge/RevertDirection;
+	public final fun component5 ()Z
+	public final fun component6 ()Z
+	public final fun component7 ()Lcom/monkopedia/kodemirror/merge/CollapseConfig;
+	public final fun component8 ()Lcom/monkopedia/kodemirror/merge/DiffConfig;
+	public final fun copy (Lcom/monkopedia/kodemirror/state/EditorStateConfig;Lcom/monkopedia/kodemirror/state/EditorStateConfig;Lcom/monkopedia/kodemirror/merge/Orientation;Lcom/monkopedia/kodemirror/merge/RevertDirection;ZZLcom/monkopedia/kodemirror/merge/CollapseConfig;Lcom/monkopedia/kodemirror/merge/DiffConfig;)Lcom/monkopedia/kodemirror/merge/MergeViewConfig;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/merge/MergeViewConfig;Lcom/monkopedia/kodemirror/state/EditorStateConfig;Lcom/monkopedia/kodemirror/state/EditorStateConfig;Lcom/monkopedia/kodemirror/merge/Orientation;Lcom/monkopedia/kodemirror/merge/RevertDirection;ZZLcom/monkopedia/kodemirror/merge/CollapseConfig;Lcom/monkopedia/kodemirror/merge/DiffConfig;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/merge/MergeViewConfig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getA ()Lcom/monkopedia/kodemirror/state/EditorStateConfig;
+	public final fun getB ()Lcom/monkopedia/kodemirror/state/EditorStateConfig;
+	public final fun getCollapseUnchanged ()Lcom/monkopedia/kodemirror/merge/CollapseConfig;
+	public final fun getDiffConfig ()Lcom/monkopedia/kodemirror/merge/DiffConfig;
+	public final fun getGutter ()Z
+	public final fun getHighlightChanges ()Z
+	public final fun getOrientation ()Lcom/monkopedia/kodemirror/merge/Orientation;
+	public final fun getRevertControls ()Lcom/monkopedia/kodemirror/merge/RevertDirection;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/merge/Orientation : java/lang/Enum {
+	public static final field A_B Lcom/monkopedia/kodemirror/merge/Orientation;
+	public static final field B_A Lcom/monkopedia/kodemirror/merge/Orientation;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/monkopedia/kodemirror/merge/Orientation;
+	public static fun values ()[Lcom/monkopedia/kodemirror/merge/Orientation;
+}
+
+public final class com/monkopedia/kodemirror/merge/OriginalDocUpdate {
+	public static final field $stable I
+	public fun <init> (Lcom/monkopedia/kodemirror/state/Text;Lcom/monkopedia/kodemirror/state/ChangeSet;)V
+	public final fun component1 ()Lcom/monkopedia/kodemirror/state/Text;
+	public final fun component2 ()Lcom/monkopedia/kodemirror/state/ChangeSet;
+	public final fun copy (Lcom/monkopedia/kodemirror/state/Text;Lcom/monkopedia/kodemirror/state/ChangeSet;)Lcom/monkopedia/kodemirror/merge/OriginalDocUpdate;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/merge/OriginalDocUpdate;Lcom/monkopedia/kodemirror/state/Text;Lcom/monkopedia/kodemirror/state/ChangeSet;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/merge/OriginalDocUpdate;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getChanges ()Lcom/monkopedia/kodemirror/state/ChangeSet;
+	public final fun getDoc ()Lcom/monkopedia/kodemirror/state/Text;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/merge/RevertDirection : java/lang/Enum {
+	public static final field A_TO_B Lcom/monkopedia/kodemirror/merge/RevertDirection;
+	public static final field B_TO_A Lcom/monkopedia/kodemirror/merge/RevertDirection;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/monkopedia/kodemirror/merge/RevertDirection;
+	public static fun values ()[Lcom/monkopedia/kodemirror/merge/RevertDirection;
+}
+
+public final class com/monkopedia/kodemirror/merge/UnifiedKt {
+	public static final fun acceptChunk (Lcom/monkopedia/kodemirror/view/EditorView;Ljava/lang/Integer;)Z
+	public static synthetic fun acceptChunk$default (Lcom/monkopedia/kodemirror/view/EditorView;Ljava/lang/Integer;ILjava/lang/Object;)Z
+	public static final fun getOriginalDoc (Lcom/monkopedia/kodemirror/state/EditorState;)Lcom/monkopedia/kodemirror/state/Text;
+	public static final fun getUpdateOriginalDoc ()Lcom/monkopedia/kodemirror/state/StateEffectType;
+	public static final fun originalDocChangeEffect (Lcom/monkopedia/kodemirror/state/EditorState;Lcom/monkopedia/kodemirror/state/ChangeSet;)Lcom/monkopedia/kodemirror/state/StateEffect;
+	public static final fun rejectChunk (Lcom/monkopedia/kodemirror/view/EditorView;Ljava/lang/Integer;)Z
+	public static synthetic fun rejectChunk$default (Lcom/monkopedia/kodemirror/view/EditorView;Ljava/lang/Integer;ILjava/lang/Object;)Z
+	public static final fun unifiedMergeView (Lcom/monkopedia/kodemirror/merge/UnifiedMergeConfig;)Lcom/monkopedia/kodemirror/state/Extension;
+}
+
+public final class com/monkopedia/kodemirror/merge/UnifiedMergeConfig {
+	public static final field $stable I
+	public fun <init> (Lcom/monkopedia/kodemirror/state/Text;ZZZZIZLcom/monkopedia/kodemirror/merge/DiffConfig;Lcom/monkopedia/kodemirror/merge/CollapseConfig;)V
+	public synthetic fun <init> (Lcom/monkopedia/kodemirror/state/Text;ZZZZIZLcom/monkopedia/kodemirror/merge/DiffConfig;Lcom/monkopedia/kodemirror/merge/CollapseConfig;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/monkopedia/kodemirror/state/Text;
+	public final fun component2 ()Z
+	public final fun component3 ()Z
+	public final fun component4 ()Z
+	public final fun component5 ()Z
+	public final fun component6 ()I
+	public final fun component7 ()Z
+	public final fun component8 ()Lcom/monkopedia/kodemirror/merge/DiffConfig;
+	public final fun component9 ()Lcom/monkopedia/kodemirror/merge/CollapseConfig;
+	public final fun copy (Lcom/monkopedia/kodemirror/state/Text;ZZZZIZLcom/monkopedia/kodemirror/merge/DiffConfig;Lcom/monkopedia/kodemirror/merge/CollapseConfig;)Lcom/monkopedia/kodemirror/merge/UnifiedMergeConfig;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/merge/UnifiedMergeConfig;Lcom/monkopedia/kodemirror/state/Text;ZZZZIZLcom/monkopedia/kodemirror/merge/DiffConfig;Lcom/monkopedia/kodemirror/merge/CollapseConfig;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/merge/UnifiedMergeConfig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAllowInlineDiffs ()Z
+	public final fun getCollapseUnchanged ()Lcom/monkopedia/kodemirror/merge/CollapseConfig;
+	public final fun getDiffConfig ()Lcom/monkopedia/kodemirror/merge/DiffConfig;
+	public final fun getGutter ()Z
+	public final fun getHighlightChanges ()Z
+	public final fun getMergeControls ()Z
+	public final fun getOriginal ()Lcom/monkopedia/kodemirror/state/Text;
+	public final fun getSyntaxHighlightDeletions ()Z
+	public final fun getSyntaxHighlightDeletionsMaxLength ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+

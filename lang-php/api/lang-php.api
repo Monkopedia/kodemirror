@@ -1,0 +1,9 @@
+public final class com/monkopedia/kodemirror/lang/php/PhpKt {
+	public static final fun getPhpLanguage ()Lcom/monkopedia/kodemirror/language/LRLanguage;
+	public static final fun php ()Lcom/monkopedia/kodemirror/language/LanguageSupport;
+}
+
+public final class com/monkopedia/kodemirror/lang/php/PhpParserKt {
+	public static final fun getParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
+}
+

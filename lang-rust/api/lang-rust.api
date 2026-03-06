@@ -1,0 +1,13 @@
+public final class com/monkopedia/kodemirror/lang/rust/RustHighlightKt {
+	public static final fun getRustHighlighting ()Lcom/monkopedia/kodemirror/lezer/common/NodePropSource;
+}
+
+public final class com/monkopedia/kodemirror/lang/rust/RustKt {
+	public static final fun getRustLanguage ()Lcom/monkopedia/kodemirror/language/LRLanguage;
+	public static final fun rust ()Lcom/monkopedia/kodemirror/language/LanguageSupport;
+}
+
+public final class com/monkopedia/kodemirror/lang/rust/RustParserKt {
+	public static final fun getParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
+}
+
