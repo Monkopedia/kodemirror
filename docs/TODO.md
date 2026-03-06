@@ -220,7 +220,8 @@ Each item has a status prefix on its heading line:
 - No path from guides to generated API reference. Add link to `docs-site/docs/guide/index.md`
   and `docs-site/docs/examples/index.md`.
 
-### 27. Add API cross-links from example pages to API reference
+### 27. [DONE] Add API cross-links from example pages to API reference
+> Added "Related API" sections to 10 example pages: autocompletion, lint, decoration, gutter, tooltip, styling, selection, change, config, lang-package, tab.
 - **Effort:** 1 day | **Source:** Documentation
 - Examples reference types like `RangeSetBuilder`, `Completion`, `Diagnostic` without linking to
   API docs. Add inline links or a "Related API" section to each example page.
@@ -450,7 +451,8 @@ Each item has a status prefix on its heading line:
 - As a pre-1.0 project at version `0.1.0-SNAPSHOT`, there is no changelog documenting breaking
   changes between versions. Start a `CHANGELOG.md` to track changes as the API stabilizes.
 
-### 70. Create a "Migrating from CodeMirror" guide
+### 70. [DONE] Create a "Migrating from CodeMirror" guide
+> Created `docs-site/docs/guide/migration.md` with module mapping, porting cheat sheet, before/after code comparisons for widgets, themes, decorations, state creation, etc.
 - **Effort:** 1 day | **Source:** Documentation
 - Comparison tables exist inline across multiple guides. Consolidate into a dedicated migration
   reference for JavaScript developers familiar with CM6 upstream.

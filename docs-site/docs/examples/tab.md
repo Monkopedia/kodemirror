@@ -54,6 +54,12 @@ Capturing Tab prevents keyboard-only users from tabbing out of the
 editor. Consider providing an alternative escape mechanism (e.g., Escape
 to release focus) if your editor is part of a larger form.
 
+## Related API
+
+- [`KeyBinding`](/api/view/com.monkopedia.kodemirror.view/-key-binding/) — key binding data class
+- [`keymapOf`](/api/view/com.monkopedia.kodemirror.view/keymap-of.html) — create keymap extension
+- [`indentWithTab`](/api/commands/com.monkopedia.kodemirror.commands/indent-with-tab.html) — tab indentation binding
+
 ---
 
 *Based on the [CodeMirror Tab Handling example](https://codemirror.net/examples/tab/).*

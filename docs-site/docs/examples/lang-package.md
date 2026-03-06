@@ -179,6 +179,14 @@ import com.monkopedia.kodemirror.legacy.modes.python
 val pythonLanguage = StreamLanguage.define(python)
 ```
 
+## Related API
+
+- [`LRLanguage`](/api/language/com.monkopedia.kodemirror.language/-l-r-language/) — LR-parser-based language
+- [`LanguageSupport`](/api/language/com.monkopedia.kodemirror.language/-language-support/) — language extension bundle
+- [`HighlightStyle`](/api/language/com.monkopedia.kodemirror.language/-highlight-style/) — syntax highlighting style
+- [`syntaxHighlighting`](/api/language/com.monkopedia.kodemirror.language/syntax-highlighting.html) — highlighting extension
+- [`StreamParser`](/api/language/com.monkopedia.kodemirror.language/-stream-parser/) — stream-based parser interface
+
 ---
 
 *Based on the [CodeMirror Language Package example](https://codemirror.net/examples/lang-package/).*

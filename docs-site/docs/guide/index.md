@@ -13,6 +13,8 @@ Multiplatform port of CodeMirror 6.
   compartments, decorations, and precedence
 - [Extension Index](extensions-index.md) — Which module provides each
   common extension
+- [Migrating from CodeMirror 6](migration.md) — Porting patterns,
+  module mapping, and key API differences for JS developers
 - [Troubleshooting](troubleshooting.md) — Common issues and solutions
 
 See also the [API Reference](../reference/index.md) for generated
