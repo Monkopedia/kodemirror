@@ -236,10 +236,14 @@ Key bindings are registered through the `keymap` facet:
 ```kotlin
 data class KeyBinding(
     val key: String? = null,       // e.g. "Ctrl-s", "Mod-z"
+    val mac: String? = null,       // macOS-specific binding
+    val win: String? = null,       // Windows-specific binding
+    val linux: String? = null,     // Linux-specific binding
     val run: ((EditorView) -> Boolean)? = null,
     val shift: ((EditorView) -> Boolean)? = null,
     val any: ((EditorView, KeyEvent) -> Boolean)? = null,
-    val preventDefault: Boolean = true
+    val preventDefault: Boolean = false,
+    val stopPropagation: Boolean = false
 )
 
 keymap.of(listOf(

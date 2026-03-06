@@ -10,7 +10,7 @@ principles that run through the system.
 
 ## Modules
 
-The project is split into 35 Gradle modules. They fall into six layers,
+The project is split into 36 Gradle modules. They fall into six layers,
 each building on the one below.
 
 ### Layer 1 — Foundation
@@ -31,15 +31,7 @@ These two modules have no dependency on each other or on Compose.
 
 Both depend only on `:lezer-common`.
 
-### Layer 3 — Language infrastructure
-
-| Module | Package | Purpose |
-|--------|---------|---------|
-| `:language` | `com.monkopedia.kodemirror.language` | `Language`, `LanguageSupport`, `StreamParser`, indentation, folding, bracket matching |
-
-Depends on `:state`, `:view`, `:lezer-common`, and `:lezer-highlight`.
-
-### Layer 4 — View
+### Layer 3 — View
 
 | Module | Package | Purpose |
 |--------|---------|---------|
@@ -47,6 +39,14 @@ Depends on `:state`, `:view`, `:lezer-common`, and `:lezer-highlight`.
 
 Depends on `:state` and Compose (foundation, ui, runtime).
 This is the main Compose integration layer.
+
+### Layer 4 — Language infrastructure
+
+| Module | Package | Purpose |
+|--------|---------|---------|
+| `:language` | `com.monkopedia.kodemirror.language` | `Language`, `LanguageSupport`, `StreamParser`, indentation, folding, bracket matching |
+
+Depends on `:state`, `:view`, `:lezer-common`, and `:lezer-highlight`.
 
 ### Layer 5 — Features
 
@@ -63,8 +63,8 @@ This is the main Compose integration layer.
 
 | Module | Purpose |
 |--------|---------|
-| `:lang-javascript`, `:lang-python`, `:lang-java`, etc. | Language support packages (24 total) |
-| `:legacy-modes` | 103 ported CodeMirror 5 stream-based modes |
+| `:lang-javascript`, `:lang-python`, `:lang-java`, etc. | Language support packages (22 total) |
+| `:legacy-modes` | Ported CodeMirror 5 stream-based modes |
 | `:theme-one-dark` | One Dark color theme |
 
 Each language module exports a factory function (e.g. `javascript()`) that
