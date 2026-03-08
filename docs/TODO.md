@@ -268,7 +268,7 @@ Each item has a status prefix on its heading line:
   dependencies, writing a minimal editor composable, running it. Distinct from the existing
   `basic.md` example which shows code but not the full project setup process.
 
-### 31. Create a complete sample project
+### 31. [DONE] Create a complete sample project
 > **Decision:** Desktop + wasm targets in-repo `samples/` directory. Will add other platforms later.
 - **Effort:** 2–3 days | **Source:** Documentation, Frontend DX
 - No runnable examples. Create a minimal Android or Desktop app in `samples/` that users can clone
