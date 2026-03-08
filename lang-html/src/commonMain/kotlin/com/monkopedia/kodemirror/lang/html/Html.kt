@@ -36,7 +36,7 @@ import com.monkopedia.kodemirror.state.ExtensionList
  * highlighting and indentation information.
  */
 val htmlLanguage: LRLanguage = LRLanguage.define(
-    parser = parser.configure(
+    parser = htmlParser.configure(
         ParserConfig(
             props = listOf(
                 indentNodeProp.add { type ->

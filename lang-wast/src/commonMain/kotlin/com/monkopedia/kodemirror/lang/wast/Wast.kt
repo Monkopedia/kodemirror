@@ -33,7 +33,7 @@ import com.monkopedia.kodemirror.lezer.lr.ParserConfig
  * A language provider for WebAssembly Text format.
  */
 val wastLanguage: LRLanguage = LRLanguage.define(
-    parser = parser.configure(
+    parser = wastParser.configure(
         ParserConfig(
             props = listOf(
                 indentNodeProp.add(

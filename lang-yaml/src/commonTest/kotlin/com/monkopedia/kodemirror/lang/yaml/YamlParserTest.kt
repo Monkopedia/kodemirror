@@ -44,7 +44,7 @@ import kotlin.test.assertEquals
 
 class YamlParserTest {
 
-    private fun parse(input: String): String = treeToString(parser.parse(input))
+    private fun parse(input: String): String = treeToString(yamlParser.parse(input))
 
     // === basics.txt tests ===
 

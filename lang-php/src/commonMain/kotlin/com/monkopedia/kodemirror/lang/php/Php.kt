@@ -36,7 +36,7 @@ import com.monkopedia.kodemirror.lezer.lr.ParserConfig
  * highlighting and indentation information.
  */
 val phpLanguage: LRLanguage = LRLanguage.define(
-    parser = parser.configure(
+    parser = phpParser.configure(
         ParserConfig(
             props = listOf(
                 indentNodeProp.add { type ->

@@ -25,7 +25,7 @@ import com.monkopedia.kodemirror.language.LanguageSupport
  * A language provider for Lezer grammar files.
  */
 val lezerGrammarLanguage: LRLanguage = LRLanguage.define(
-    parser = parser,
+    parser = lezerParser,
     name = "lezer"
 )
 

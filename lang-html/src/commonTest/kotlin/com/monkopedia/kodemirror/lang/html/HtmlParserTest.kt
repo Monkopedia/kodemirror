@@ -23,7 +23,7 @@ import kotlin.test.assertEquals
 
 class HtmlParserTest {
 
-    private fun parse(input: String): String = treeToString(parser.parse(input))
+    private fun parse(input: String): String = treeToString(htmlParser.parse(input))
 
     // === Tags.txt tests ===
 

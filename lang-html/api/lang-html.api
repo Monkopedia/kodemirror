@@ -34,7 +34,7 @@ public final class com/monkopedia/kodemirror/lang/html/HtmlKt {
 }
 
 public final class com/monkopedia/kodemirror/lang/html/HtmlParserKt {
-	public static final fun getParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
+	public static final fun getHtmlParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
 }
 
 public final class com/monkopedia/kodemirror/lang/html/HtmlSchema {

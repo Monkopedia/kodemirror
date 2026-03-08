@@ -33,11 +33,11 @@ public final class com/monkopedia/kodemirror/lang/javascript/JsCompleteKt {
 }
 
 public final class com/monkopedia/kodemirror/lang/javascript/JsHighlightKt {
-	public static final fun getJsHighlighting ()Lcom/monkopedia/kodemirror/lezer/common/NodePropSource;
+	public static final fun getJavascriptHighlighting ()Lcom/monkopedia/kodemirror/lezer/common/NodePropSource;
 }
 
 public final class com/monkopedia/kodemirror/lang/javascript/JsParserKt {
-	public static final fun getParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
+	public static final fun getJsParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
 }
 
 public final class com/monkopedia/kodemirror/lang/javascript/JsSnippetsKt {

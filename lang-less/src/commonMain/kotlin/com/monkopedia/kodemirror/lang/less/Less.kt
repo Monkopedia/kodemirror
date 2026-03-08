@@ -32,7 +32,7 @@ import com.monkopedia.kodemirror.lezer.lr.ParserConfig
  * A language provider for Less style sheets.
  */
 val lessLanguage: LRLanguage = LRLanguage.define(
-    parser = parser.configure(
+    parser = lessParser.configure(
         ParserConfig(
             props = listOf(
                 indentNodeProp.add(

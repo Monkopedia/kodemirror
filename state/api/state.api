@@ -287,10 +287,11 @@ public final class com/monkopedia/kodemirror/state/EditorSelection {
 	public static synthetic fun addRange$default (Lcom/monkopedia/kodemirror/state/EditorSelection;Lcom/monkopedia/kodemirror/state/SelectionRange;ZILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/EditorSelection;
 	public final fun asSingle ()Lcom/monkopedia/kodemirror/state/EditorSelection;
 	public final fun eq (Lcom/monkopedia/kodemirror/state/EditorSelection;Z)Z
-	public static synthetic fun eq$default (Lcom/monkopedia/kodemirror/state/EditorSelection;Lcom/monkopedia/kodemirror/state/EditorSelection;ZILjava/lang/Object;)Z
+	public fun equals (Ljava/lang/Object;)Z
 	public final fun getMain ()Lcom/monkopedia/kodemirror/state/SelectionRange;
 	public final fun getMainIndex ()I
 	public final fun getRanges ()Ljava/util/List;
+	public fun hashCode ()I
 	public final fun map (Lcom/monkopedia/kodemirror/state/ChangeDesc;I)Lcom/monkopedia/kodemirror/state/EditorSelection;
 	public static synthetic fun map$default (Lcom/monkopedia/kodemirror/state/EditorSelection;Lcom/monkopedia/kodemirror/state/ChangeDesc;IILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/EditorSelection;
 	public final fun replaceRange (Lcom/monkopedia/kodemirror/state/SelectionRange;I)Lcom/monkopedia/kodemirror/state/EditorSelection;
@@ -330,7 +331,9 @@ public final class com/monkopedia/kodemirror/state/EditorState {
 	public final fun getSelectedText ()Ljava/lang/String;
 	public final fun getSelection ()Lcom/monkopedia/kodemirror/state/EditorSelection;
 	public final fun getTabSize ()I
+	public final fun languageDataAt (Lcom/monkopedia/kodemirror/state/LanguageDataKey;II)Ljava/util/List;
 	public final fun languageDataAt (Ljava/lang/String;II)Ljava/util/List;
+	public static synthetic fun languageDataAt$default (Lcom/monkopedia/kodemirror/state/EditorState;Lcom/monkopedia/kodemirror/state/LanguageDataKey;IIILjava/lang/Object;)Ljava/util/List;
 	public static synthetic fun languageDataAt$default (Lcom/monkopedia/kodemirror/state/EditorState;Ljava/lang/String;IIILjava/lang/Object;)Ljava/util/List;
 	public final fun phrase (Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
 	public final fun replaceSelection (Lcom/monkopedia/kodemirror/state/Text;)Lcom/monkopedia/kodemirror/state/TransactionSpec;
@@ -362,6 +365,18 @@ public final class com/monkopedia/kodemirror/state/EditorState$Companion {
 	public final fun getTransactionFilter ()Lcom/monkopedia/kodemirror/state/Facet;
 }
 
+public final class com/monkopedia/kodemirror/state/EditorStateBuilder {
+	public fun <init> ()V
+	public final fun build ()Lcom/monkopedia/kodemirror/state/EditorStateConfig;
+	public final fun doc (Lcom/monkopedia/kodemirror/state/Text;)V
+	public final fun doc (Ljava/lang/String;)V
+	public final fun extension (Lcom/monkopedia/kodemirror/state/Extension;)V
+	public final fun extensions (Lkotlin/jvm/functions/Function1;)V
+	public final fun selection (I)V
+	public final fun selection (II)V
+	public final fun selection (Lcom/monkopedia/kodemirror/state/EditorSelection;)V
+}
+
 public final class com/monkopedia/kodemirror/state/EditorStateConfig {
 	public fun <init> ()V
 	public fun <init> (Lcom/monkopedia/kodemirror/state/DocSpec;Lcom/monkopedia/kodemirror/state/SelectionSpec;Lcom/monkopedia/kodemirror/state/Extension;)V
@@ -377,6 +392,13 @@ public final class com/monkopedia/kodemirror/state/EditorStateConfig {
 	public final fun getSelection ()Lcom/monkopedia/kodemirror/state/SelectionSpec;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface annotation class com/monkopedia/kodemirror/state/EditorStateDsl : java/lang/annotation/Annotation {
+}
+
+public final class com/monkopedia/kodemirror/state/EditorStateDslKt {
+	public static final fun editorState (Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/kodemirror/state/EditorState;
 }
 
 public abstract interface class com/monkopedia/kodemirror/state/Extension {
@@ -401,6 +423,13 @@ public final class com/monkopedia/kodemirror/state/ExtensionKt {
 public final class com/monkopedia/kodemirror/state/ExtensionList : com/monkopedia/kodemirror/state/Extension {
 	public fun <init> (Ljava/util/List;)V
 	public final fun getExtensions ()Ljava/util/List;
+}
+
+public final class com/monkopedia/kodemirror/state/ExtensionListBuilder {
+	public fun <init> ()V
+	public final fun build ()Lcom/monkopedia/kodemirror/state/Extension;
+	public final fun getList ()Ljava/util/List;
+	public final fun unaryPlus (Lcom/monkopedia/kodemirror/state/Extension;)V
 }
 
 public final class com/monkopedia/kodemirror/state/Facet : com/monkopedia/kodemirror/state/Extension {
@@ -502,6 +531,24 @@ public final class com/monkopedia/kodemirror/state/InsertContent$TextContent : c
 	public final fun getValue ()Lcom/monkopedia/kodemirror/state/Text;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/state/LanguageDataKey {
+	public static final field Companion Lcom/monkopedia/kodemirror/state/LanguageDataKey$Companion;
+	public fun <init> (Ljava/lang/String;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getName ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/state/LanguageDataKey$Companion {
+	public final fun getAUTOCOMPLETE ()Lcom/monkopedia/kodemirror/state/LanguageDataKey;
+	public final fun getCLOSE_BRACKETS ()Lcom/monkopedia/kodemirror/state/LanguageDataKey;
+	public final fun getCOMMENT_TOKENS ()Lcom/monkopedia/kodemirror/state/LanguageDataKey;
+	public final fun getDONT_INDENT_STATES ()Lcom/monkopedia/kodemirror/state/LanguageDataKey;
+	public final fun getINDENT_ON_INPUT ()Lcom/monkopedia/kodemirror/state/LanguageDataKey;
+	public final fun getWORD_CHARS ()Lcom/monkopedia/kodemirror/state/LanguageDataKey;
 }
 
 public final class com/monkopedia/kodemirror/state/Line {
@@ -617,7 +664,7 @@ public final class com/monkopedia/kodemirror/state/RangeSetUpdate {
 
 public abstract class com/monkopedia/kodemirror/state/RangeValue {
 	public fun <init> ()V
-	public fun eq (Lcom/monkopedia/kodemirror/state/RangeValue;)Z
+	public fun equals (Ljava/lang/Object;)Z
 	public fun getEndSide ()I
 	public fun getMapMode ()Lcom/monkopedia/kodemirror/state/MapMode;
 	public fun getPoint ()Z
@@ -634,7 +681,7 @@ public final class com/monkopedia/kodemirror/state/SelectionRange {
 	public static final field Companion Lcom/monkopedia/kodemirror/state/SelectionRange$Companion;
 	public synthetic fun <init> (IIILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun eq (Lcom/monkopedia/kodemirror/state/SelectionRange;Z)Z
-	public static synthetic fun eq$default (Lcom/monkopedia/kodemirror/state/SelectionRange;Lcom/monkopedia/kodemirror/state/SelectionRange;ZILjava/lang/Object;)Z
+	public fun equals (Ljava/lang/Object;)Z
 	public final fun extend (II)Lcom/monkopedia/kodemirror/state/SelectionRange;
 	public static synthetic fun extend$default (Lcom/monkopedia/kodemirror/state/SelectionRange;IIILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/SelectionRange;
 	public final fun getAnchor ()I
@@ -645,6 +692,7 @@ public final class com/monkopedia/kodemirror/state/SelectionRange {
 	public final fun getGoalColumn ()Ljava/lang/Integer;
 	public final fun getHead ()I
 	public final fun getTo ()I
+	public fun hashCode ()I
 	public final fun map (Lcom/monkopedia/kodemirror/state/ChangeDesc;I)Lcom/monkopedia/kodemirror/state/SelectionRange;
 	public static synthetic fun map$default (Lcom/monkopedia/kodemirror/state/SelectionRange;Lcom/monkopedia/kodemirror/state/ChangeDesc;IILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/SelectionRange;
 	public final fun toJSON ()Ljava/util/Map;
@@ -833,11 +881,12 @@ public abstract class com/monkopedia/kodemirror/state/Text {
 	public static final field Companion Lcom/monkopedia/kodemirror/state/Text$Companion;
 	public fun <init> ()V
 	public final fun append (Lcom/monkopedia/kodemirror/state/Text;)Lcom/monkopedia/kodemirror/state/Text;
-	public final fun eq (Lcom/monkopedia/kodemirror/state/Text;)Z
+	public fun equals (Ljava/lang/Object;)Z
 	public final fun get (Lkotlin/ranges/IntRange;)Ljava/lang/String;
 	public abstract fun getChildren ()Ljava/util/List;
 	public abstract fun getLength ()I
 	public abstract fun getLines ()I
+	public fun hashCode ()I
 	public final fun isEmpty ()Z
 	public final fun isNotEmpty ()Z
 	public final fun iter (I)Lcom/monkopedia/kodemirror/state/TextIterator;
@@ -910,6 +959,13 @@ public final class com/monkopedia/kodemirror/state/Transaction$Companion {
 	public final fun getUserEvent ()Lcom/monkopedia/kodemirror/state/AnnotationType;
 }
 
+public abstract interface annotation class com/monkopedia/kodemirror/state/TransactionDsl : java/lang/annotation/Annotation {
+}
+
+public final class com/monkopedia/kodemirror/state/TransactionDslKt {
+	public static final fun transactionSpec (Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/kodemirror/state/TransactionSpec;
+}
+
 public final class com/monkopedia/kodemirror/state/TransactionExtenderResult {
 	public fun <init> ()V
 	public fun <init> (Ljava/util/List;Ljava/util/List;)V
@@ -980,5 +1036,24 @@ public final class com/monkopedia/kodemirror/state/TransactionSpec {
 	public final fun getUserEvent ()Ljava/lang/String;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/state/TransactionSpecBuilder {
+	public fun <init> ()V
+	public final fun annotate (Lcom/monkopedia/kodemirror/state/Annotation;)V
+	public final fun build ()Lcom/monkopedia/kodemirror/state/TransactionSpec;
+	public final fun delete (II)V
+	public final fun effect (Lcom/monkopedia/kodemirror/state/StateEffect;)V
+	public final fun filter (Z)V
+	public final fun insert (ILcom/monkopedia/kodemirror/state/Text;)V
+	public final fun insert (ILjava/lang/String;)V
+	public final fun replace (IILcom/monkopedia/kodemirror/state/Text;)V
+	public final fun replace (IILjava/lang/String;)V
+	public final fun scrollIntoView ()V
+	public final fun selection (I)V
+	public final fun selection (II)V
+	public final fun selection (Lcom/monkopedia/kodemirror/state/EditorSelection;)V
+	public final fun sequential ()V
+	public final fun userEvent (Ljava/lang/String;)V
 }
 

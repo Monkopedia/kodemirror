@@ -24,7 +24,7 @@ import kotlin.test.assertTrue
 
 class SassParserTest {
 
-    private fun parse(input: String): String = treeToString(parser.parse(input))
+    private fun parse(input: String): String = treeToString(sassParser.parse(input))
 
     // --- selector.txt tests ---
 

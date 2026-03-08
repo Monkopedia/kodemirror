@@ -36,7 +36,7 @@ import com.monkopedia.kodemirror.lezer.lr.ParserConfig
  * highlighting and indentation information.
  */
 val cppLanguage: LRLanguage = LRLanguage.define(
-    parser = parser.configure(
+    parser = cppParser.configure(
         ParserConfig(
             props = listOf(
                 indentNodeProp.add { type ->

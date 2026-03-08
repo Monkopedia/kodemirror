@@ -288,7 +288,7 @@ public final class com/monkopedia/kodemirror/lezer/markdown/MarkdownExtension$Si
 
 public final class com/monkopedia/kodemirror/lezer/markdown/MarkdownHighlightKt {
 	public static final fun getMarkdownHighlighting ()Lcom/monkopedia/kodemirror/lezer/common/NodePropSource;
-	public static final fun getParser ()Lcom/monkopedia/kodemirror/lezer/markdown/MarkdownParser;
+	public static final fun getMarkdownParser ()Lcom/monkopedia/kodemirror/lezer/markdown/MarkdownParser;
 }
 
 public final class com/monkopedia/kodemirror/lezer/markdown/MarkdownParser : com/monkopedia/kodemirror/lezer/common/Parser {

@@ -22,7 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.sp
-import com.monkopedia.kodemirror.lang.javascript.parser
+import com.monkopedia.kodemirror.lang.javascript.jsParser
 import com.monkopedia.kodemirror.language.FoldRange
 import com.monkopedia.kodemirror.language.HighlightStyle
 import com.monkopedia.kodemirror.language.Language
@@ -83,7 +83,7 @@ object TestScenarios {
         }
     }
 
-    private val configuredParser = parser.configure(
+    private val configuredParser = jsParser.configure(
         ParserConfig(props = listOf(foldPropSource))
     )
 

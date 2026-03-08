@@ -23,7 +23,7 @@ import kotlin.test.assertTrue
 
 class ExtensionTest {
 
-    private val gfmParser = parser.configure(GFM)
+    private val gfmParser = markdownParser.configure(GFM)
 
     private fun parse(input: String): String = treeToString(gfmParser.parse(input))
 
@@ -106,7 +106,7 @@ class ExtensionTest {
 
     @Test
     fun parsesSubscript() {
-        val subParser = parser.configure(
+        val subParser = markdownParser.configure(
             markdownExtensionOf(Subscript)
         )
         val result = treeToString(subParser.parse("H~2~O"))
@@ -120,7 +120,7 @@ class ExtensionTest {
 
     @Test
     fun parsesSuperscript() {
-        val supParser = parser.configure(
+        val supParser = markdownParser.configure(
             markdownExtensionOf(Superscript)
         )
         val result = treeToString(supParser.parse("x^2^"))
@@ -134,7 +134,7 @@ class ExtensionTest {
 
     @Test
     fun parsesEmoji() {
-        val emojiParser = parser.configure(
+        val emojiParser = markdownParser.configure(
             markdownExtensionOf(Emoji)
         )
         val result = treeToString(emojiParser.parse(":smile:"))

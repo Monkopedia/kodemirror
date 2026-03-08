@@ -115,7 +115,7 @@ private val jsProps = listOf(jsIndentProp, jsFoldProp)
  * highlighting and indentation information.
  */
 val javascriptLanguage: LRLanguage = LRLanguage.define(
-    parser = parser.configure(ParserConfig(props = jsProps)),
+    parser = jsParser.configure(ParserConfig(props = jsProps)),
     name = "javascript"
 )
 
@@ -123,7 +123,7 @@ val javascriptLanguage: LRLanguage = LRLanguage.define(
  * A language provider for TypeScript.
  */
 val typescriptLanguage: LRLanguage = LRLanguage.define(
-    parser = parser.configure(ParserConfig(props = jsProps, dialect = "ts")),
+    parser = jsParser.configure(ParserConfig(props = jsProps, dialect = "ts")),
     name = "typescript"
 )
 
@@ -131,7 +131,7 @@ val typescriptLanguage: LRLanguage = LRLanguage.define(
  * Language provider for JSX.
  */
 val jsxLanguage: LRLanguage = LRLanguage.define(
-    parser = parser.configure(ParserConfig(props = jsProps, dialect = "jsx")),
+    parser = jsParser.configure(ParserConfig(props = jsProps, dialect = "jsx")),
     name = "jsx"
 )
 
@@ -139,7 +139,7 @@ val jsxLanguage: LRLanguage = LRLanguage.define(
  * Language provider for JSX + TypeScript.
  */
 val tsxLanguage: LRLanguage = LRLanguage.define(
-    parser = parser.configure(ParserConfig(props = jsProps, dialect = "jsx ts")),
+    parser = jsParser.configure(ParserConfig(props = jsProps, dialect = "jsx ts")),
     name = "tsx"
 )
 

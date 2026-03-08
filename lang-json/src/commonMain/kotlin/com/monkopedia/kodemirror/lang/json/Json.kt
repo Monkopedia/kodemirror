@@ -30,7 +30,7 @@ import com.monkopedia.kodemirror.lezer.lr.ParserConfig
  * A language provider that provides JSON parsing.
  */
 val jsonLanguage: LRLanguage = LRLanguage.define(
-    parser = parser.configure(
+    parser = jsonParser.configure(
         ParserConfig(
             props = listOf(
                 indentNodeProp.add(

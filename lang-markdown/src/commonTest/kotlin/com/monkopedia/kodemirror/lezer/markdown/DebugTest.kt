@@ -24,7 +24,7 @@ import kotlin.test.assertNotNull
 class DebugTest {
     @Test
     fun parseBasic() {
-        val tree = parser.parse("hello")
+        val tree = markdownParser.parse("hello")
         assertNotNull(tree)
     }
 }

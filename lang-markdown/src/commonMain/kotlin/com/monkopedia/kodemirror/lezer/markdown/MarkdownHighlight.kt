@@ -98,7 +98,7 @@ private fun buildNodeTypes(): List<NodeType> {
     return types
 }
 
-val parser: MarkdownParser = run {
+val markdownParser: MarkdownParser = run {
     val nodeTypes = buildNodeTypes()
     val keys = DefaultBlockParsers.keys.toList()
     MarkdownParser(

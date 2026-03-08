@@ -86,7 +86,7 @@ private fun indentBody(context: TreeIndentContext, node: SyntaxNode): Int? {
  * highlighting and indentation information.
  */
 val pythonLanguage: LRLanguage = LRLanguage.define(
-    parser = parser.configure(
+    parser = pythonParser.configure(
         ParserConfig(
             props = listOf(
                 indentNodeProp.add { type ->

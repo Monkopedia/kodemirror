@@ -35,7 +35,7 @@ import com.monkopedia.kodemirror.lezer.markdown.MarkdownParser
 import com.monkopedia.kodemirror.lezer.markdown.Subscript
 import com.monkopedia.kodemirror.lezer.markdown.Superscript
 import com.monkopedia.kodemirror.lezer.markdown.markdownExtensionOf
-import com.monkopedia.kodemirror.lezer.markdown.parser as baseParser
+import com.monkopedia.kodemirror.lezer.markdown.markdownParser as baseParser
 import com.monkopedia.kodemirror.state.Extension
 
 private val data = defineLanguageFacet()

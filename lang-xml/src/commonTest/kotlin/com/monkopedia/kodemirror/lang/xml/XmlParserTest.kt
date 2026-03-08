@@ -23,7 +23,7 @@ import kotlin.test.assertEquals
 
 class XmlParserTest {
 
-    private fun parse(input: String): String = treeToString(parser.parse(input))
+    private fun parse(input: String): String = treeToString(xmlParser.parse(input))
 
     @Test
     fun parsesSelfClosingTag() = assertEquals(

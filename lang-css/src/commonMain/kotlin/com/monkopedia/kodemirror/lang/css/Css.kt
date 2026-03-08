@@ -33,7 +33,7 @@ import com.monkopedia.kodemirror.lezer.lr.ParserConfig
  * highlighting and indentation information.
  */
 val cssLanguage: LRLanguage = LRLanguage.define(
-    parser = parser.configure(
+    parser = cssParser.configure(
         ParserConfig(
             props = listOf(
                 indentNodeProp.add(

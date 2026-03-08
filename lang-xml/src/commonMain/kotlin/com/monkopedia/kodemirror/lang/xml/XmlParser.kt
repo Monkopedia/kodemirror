@@ -147,7 +147,7 @@ private val commentContent = scanTo(COMMENT_CONTENT, "-->")
 private val piContent = scanTo(PI_CONTENT, "?>")
 private val cdataContent = scanTo(CDATA_CONTENT, "]]>")
 
-val parser: LRParser = LRParser.deserialize(
+val xmlParser: LRParser = LRParser.deserialize(
     ParserSpec(
         version = 14,
         states = ",lOQOaOOOrOxO'#CfOzOpO'#CiO!tOaO'#CgOOOP'#Cg'#CgO!{OrO'#CrO#TOtO'#CsO#]OpO'#CtOOOP'#DT'#DTOOOP'#Cv'#CvQQOaOOOOOW'#Cw'#CwO#eOxO,59QOOOP,59Q,59QOOOO'#Cx'#CxO#mOpO,59TO#uO!bO,59TOOOP'#C|'#C|O\$TOaO,59RO\$[OpO'#CoOOOP,59R,59ROOOQ'#C}'#C}O\$dOrO,59^OOOP,59^,59^OOOS'#DO'#DOO\$lOtO,59_OOOP,59_,59_O\$tOpO,59`O\$|OpO,59`OOOP-E6t-E6tOOOW-E6u-E6uOOOP1G.l1G.lOOOO-E6v-E6vO%UO!bO1G.oO%UO!bO1G.oO%dOpO'#CkO%lO!bO'#CyO%zO!bO1G.oOOOP1G.o1G.oOOOP1G.w1G.wOOOP-E6z-E6zOOOP1G.m1G.mO&VOpO,59ZO&_OpO,59ZOOOQ-E6{-E6{OOOP1G.x1G.xOOOS-E6|-E6|OOOP1G.y1G.yO&gOpO1G.zO&gOpO1G.zOOOP1G.z1G.zO&oO!bO7+\$ZO&}O!bO7+\$ZOOOP7+\$Z7+\$ZOOOP7+\$c7+\$cO'YOpO,59VO'bOpO,59VO'mO!bO,59eOOOO-E6w-E6wO'{OpO1G.uO'{OpO1G.uOOOP1G.u1G.uO(TOpO7+\$fOOOP7+\$f7+\$fO(]O!bO<<GuOOOP<<Gu<<GuOOOP<<G}<<G}O'bOpO1G.qO'bOpO1G.qO(hO#tO'#CnO(vO&jO'#CnOOOO1G.q1G.qO)UOpO7+\$aOOOP7+\$a7+\$aOOOP<<HQ<<HQOOOPAN=aAN=aOOOPAN=iAN=iO'bOpO7+\$]OOOO7+\$]7+\$]OOOO'#Cz'#CzO)^O#tO,59YOOOO,59Y,59YOOOO'#C{'#C{O)lO&jO,59YOOOP<<G{<<G{OOOO<<Gw<<GwOOOO-E6x-E6xOOOO1G.t1G.tOOOO-E6y-E6y",

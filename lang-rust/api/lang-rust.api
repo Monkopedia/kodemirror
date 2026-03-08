@@ -8,6 +8,6 @@ public final class com/monkopedia/kodemirror/lang/rust/RustKt {
 }
 
 public final class com/monkopedia/kodemirror/lang/rust/RustParserKt {
-	public static final fun getParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
+	public static final fun getRustParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
 }
 

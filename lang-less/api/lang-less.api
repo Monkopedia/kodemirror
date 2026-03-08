@@ -8,6 +8,6 @@ public final class com/monkopedia/kodemirror/lang/less/LessKt {
 }
 
 public final class com/monkopedia/kodemirror/lang/less/LessParserKt {
-	public static final fun getParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
+	public static final fun getLessParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
 }
 

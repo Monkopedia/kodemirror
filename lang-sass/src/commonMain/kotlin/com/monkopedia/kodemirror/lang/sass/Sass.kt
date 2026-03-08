@@ -34,7 +34,7 @@ import com.monkopedia.kodemirror.lezer.lr.ParserConfig
  * highlighting and indentation information.
  */
 val sassLanguage: LRLanguage = LRLanguage.define(
-    parser = parser.configure(
+    parser = sassParser.configure(
         ParserConfig(
             props = listOf(
                 foldNodeProp.add { type ->

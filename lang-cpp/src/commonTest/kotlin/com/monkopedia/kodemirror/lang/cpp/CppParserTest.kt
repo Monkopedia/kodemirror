@@ -26,7 +26,7 @@ import kotlin.test.assertTrue
 
 class CppParserTest {
 
-    private fun parse(input: String): String = treeToString(parser.parse(input))
+    private fun parse(input: String): String = treeToString(cppParser.parse(input))
 
     // --- declarations.txt ---
 

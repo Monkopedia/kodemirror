@@ -8,6 +8,6 @@ public final class com/monkopedia/kodemirror/lang/python/PythonKt {
 }
 
 public final class com/monkopedia/kodemirror/lang/python/PythonParserKt {
-	public static final fun getParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
+	public static final fun getPythonParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
 }
 

@@ -8,6 +8,6 @@ public final class com/monkopedia/kodemirror/lang/json/JsonKt {
 }
 
 public final class com/monkopedia/kodemirror/lang/json/JsonParserKt {
-	public static final fun getParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
+	public static final fun getJsonParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
 }
 

@@ -53,7 +53,7 @@ private val allStatements = setOf(
  * The Jinja tag language (without HTML wrapping).
  */
 val jinjaTagLanguage: LRLanguage = LRLanguage.define(
-    parser = parser.configure(
+    parser = jinjaParser.configure(
         ParserConfig(
             props = listOf(
                 jinjaHighlighting,

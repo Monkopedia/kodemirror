@@ -28,7 +28,7 @@ private val specKeyword = mapOf(
     "i32" to 34, "i64" to 34, "f32" to 34, "f64" to 34
 )
 
-val parser: LRParser = LRParser.deserialize(
+val wastParser: LRParser = LRParser.deserialize(
     ParserSpec(
         version = 14,
         states = "!^Q]QPOOOqQPO'#CbOOQO'#Cd'#CdOOQO'#Cl'#ClOOQO'#Ch'#Ch" +

@@ -41,7 +41,7 @@ class JsonHighlightTest {
     )
 
     private fun highlight(input: String): List<Triple<Int, Int, String>> {
-        val tree = parser.parse(input)
+        val tree = jsonParser.parse(input)
         val spans = mutableListOf<Triple<Int, Int, String>>()
         highlightTree(tree, highlighter, { from, to, cls -> spans.add(Triple(from, to, cls)) })
         return spans

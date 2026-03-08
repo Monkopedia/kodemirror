@@ -8,6 +8,6 @@ public final class com/monkopedia/kodemirror/lang/xml/XmlKt {
 }
 
 public final class com/monkopedia/kodemirror/lang/xml/XmlParserKt {
-	public static final fun getParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
+	public static final fun getXmlParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
 }
 

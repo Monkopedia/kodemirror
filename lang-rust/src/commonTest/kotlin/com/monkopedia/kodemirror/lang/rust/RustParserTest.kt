@@ -44,7 +44,7 @@ import kotlin.test.assertEquals
 
 class RustParserTest {
 
-    private fun parse(input: String): String = treeToString(parser.parse(input))
+    private fun parse(input: String): String = treeToString(rustParser.parse(input))
 
     // === async.txt ===
 

@@ -25,7 +25,7 @@ import kotlin.test.assertEquals
 
 class PhpParserTest {
 
-    private fun parse(input: String): String = treeToString(parser.parse(input))
+    private fun parse(input: String): String = treeToString(phpParser.parse(input))
 
     // === Literals ===
 

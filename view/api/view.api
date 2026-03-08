@@ -187,6 +187,7 @@ public final class com/monkopedia/kodemirror/view/EditorSession$DefaultImpls {
 public final class com/monkopedia/kodemirror/view/EditorSessionKt {
 	public static final fun EditorSession (Lcom/monkopedia/kodemirror/state/EditorState;Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/kodemirror/view/EditorSession;
 	public static synthetic fun EditorSession$default (Lcom/monkopedia/kodemirror/state/EditorState;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/view/EditorSession;
+	public static final fun dispatch (Lcom/monkopedia/kodemirror/view/EditorSession;Lkotlin/jvm/functions/Function1;)V
 	public static final fun getLocalEditorSession ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 }
 
@@ -266,22 +267,22 @@ public final class com/monkopedia/kodemirror/view/EditorThemeKt {
 public final class com/monkopedia/kodemirror/view/GutterConfig {
 	public static final field $stable I
 	public fun <init> ()V
-	public fun <init> (Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)V
-	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Ljava/lang/String;
+	public fun <init> (Lcom/monkopedia/kodemirror/view/GutterType;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)V
+	public synthetic fun <init> (Lcom/monkopedia/kodemirror/view/GutterType;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/monkopedia/kodemirror/view/GutterType;
 	public final fun component2 ()Lkotlin/jvm/functions/Function2;
 	public final fun component3 ()Lkotlin/jvm/functions/Function1;
 	public final fun component4 ()Z
 	public final fun component5 ()Lkotlin/jvm/functions/Function1;
 	public final fun component6 ()Lkotlin/jvm/functions/Function2;
-	public final fun copy (Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Lcom/monkopedia/kodemirror/view/GutterConfig;
-	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/view/GutterConfig;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/view/GutterConfig;
+	public final fun copy (Lcom/monkopedia/kodemirror/view/GutterType;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Lcom/monkopedia/kodemirror/view/GutterConfig;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/view/GutterConfig;Lcom/monkopedia/kodemirror/view/GutterType;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/view/GutterConfig;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getCssClass ()Ljava/lang/String;
 	public final fun getInitialSpacer ()Lkotlin/jvm/functions/Function1;
 	public final fun getLineMarker ()Lkotlin/jvm/functions/Function2;
 	public final fun getLineMarkerChange ()Lkotlin/jvm/functions/Function1;
 	public final fun getRenderEmptyElements ()Z
+	public final fun getType ()Lcom/monkopedia/kodemirror/view/GutterType;
 	public final fun getUpdateSpacer ()Lkotlin/jvm/functions/Function2;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -300,8 +301,38 @@ public abstract class com/monkopedia/kodemirror/view/GutterMarker : com/monkoped
 	public static final field $stable I
 	public fun <init> ()V
 	public abstract fun Content (Lcom/monkopedia/kodemirror/view/EditorTheme;Landroidx/compose/runtime/Composer;I)V
-	public fun eq (Lcom/monkopedia/kodemirror/state/RangeValue;)Z
-	public fun getElementClass ()Ljava/lang/String;
+}
+
+public abstract class com/monkopedia/kodemirror/view/GutterType {
+	public static final field $stable I
+}
+
+public final class com/monkopedia/kodemirror/view/GutterType$ActiveLineGutter : com/monkopedia/kodemirror/view/GutterType {
+	public static final field $stable I
+	public static final field INSTANCE Lcom/monkopedia/kodemirror/view/GutterType$ActiveLineGutter;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/view/GutterType$Custom : com/monkopedia/kodemirror/view/GutterType {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lcom/monkopedia/kodemirror/view/GutterType$Custom;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/view/GutterType$Custom;Ljava/lang/String;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/view/GutterType$Custom;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getName ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/view/GutterType$LineNumbers : com/monkopedia/kodemirror/view/GutterType {
+	public static final field $stable I
+	public static final field INSTANCE Lcom/monkopedia/kodemirror/view/GutterType$LineNumbers;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class com/monkopedia/kodemirror/view/HighlightWhitespaceKt {
@@ -395,24 +426,23 @@ public final class com/monkopedia/kodemirror/view/KodeMirrorKt {
 public final class com/monkopedia/kodemirror/view/LineDecoration : com/monkopedia/kodemirror/view/Decoration {
 	public static final field $stable I
 	public fun <init> (Lcom/monkopedia/kodemirror/view/LineDecorationSpec;)V
-	public fun eq (Lcom/monkopedia/kodemirror/state/RangeValue;)Z
+	public fun equals (Ljava/lang/Object;)Z
 	public fun getEndSide ()I
 	public final fun getSpec ()Lcom/monkopedia/kodemirror/view/LineDecorationSpec;
 	public fun getStartSide ()I
+	public fun hashCode ()I
 }
 
 public final class com/monkopedia/kodemirror/view/LineDecorationSpec {
 	public static final field $stable I
 	public fun <init> ()V
-	public fun <init> (Ljava/util/Map;Ljava/lang/String;Landroidx/compose/ui/text/SpanStyle;)V
-	public synthetic fun <init> (Ljava/util/Map;Ljava/lang/String;Landroidx/compose/ui/text/SpanStyle;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Ljava/util/Map;
-	public final fun component2 ()Ljava/lang/String;
-	public final fun component3 ()Landroidx/compose/ui/text/SpanStyle;
-	public final fun copy (Ljava/util/Map;Ljava/lang/String;Landroidx/compose/ui/text/SpanStyle;)Lcom/monkopedia/kodemirror/view/LineDecorationSpec;
-	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/view/LineDecorationSpec;Ljava/util/Map;Ljava/lang/String;Landroidx/compose/ui/text/SpanStyle;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/view/LineDecorationSpec;
+	public fun <init> (Ljava/lang/String;Landroidx/compose/ui/text/SpanStyle;)V
+	public synthetic fun <init> (Ljava/lang/String;Landroidx/compose/ui/text/SpanStyle;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Landroidx/compose/ui/text/SpanStyle;
+	public final fun copy (Ljava/lang/String;Landroidx/compose/ui/text/SpanStyle;)Lcom/monkopedia/kodemirror/view/LineDecorationSpec;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/view/LineDecorationSpec;Ljava/lang/String;Landroidx/compose/ui/text/SpanStyle;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/view/LineDecorationSpec;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getAttributes ()Ljava/util/Map;
 	public final fun getCssClass ()Ljava/lang/String;
 	public final fun getStyle ()Landroidx/compose/ui/text/SpanStyle;
 	public fun hashCode ()I
@@ -470,17 +500,18 @@ public final class com/monkopedia/kodemirror/view/LineLayoutCache {
 public final class com/monkopedia/kodemirror/view/MarkDecoration : com/monkopedia/kodemirror/view/Decoration {
 	public static final field $stable I
 	public fun <init> (Lcom/monkopedia/kodemirror/view/MarkDecorationSpec;)V
-	public fun eq (Lcom/monkopedia/kodemirror/state/RangeValue;)Z
+	public fun equals (Ljava/lang/Object;)Z
 	public fun getEndSide ()I
 	public final fun getSpec ()Lcom/monkopedia/kodemirror/view/MarkDecorationSpec;
 	public fun getStartSide ()I
+	public fun hashCode ()I
 }
 
 public final class com/monkopedia/kodemirror/view/MarkDecorationSpec {
 	public static final field $stable I
 	public fun <init> ()V
-	public fun <init> (ZZZLandroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/ParagraphStyle;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;)V
-	public synthetic fun <init> (ZZZLandroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/ParagraphStyle;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (ZZZLandroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/ParagraphStyle;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (ZZZLandroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/ParagraphStyle;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Z
 	public final fun component2 ()Z
 	public final fun component3 ()Z
@@ -488,11 +519,9 @@ public final class com/monkopedia/kodemirror/view/MarkDecorationSpec {
 	public final fun component5 ()Landroidx/compose/ui/text/ParagraphStyle;
 	public final fun component6 ()Ljava/lang/String;
 	public final fun component7 ()Ljava/lang/String;
-	public final fun component8 ()Ljava/util/Map;
-	public final fun copy (ZZZLandroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/ParagraphStyle;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;)Lcom/monkopedia/kodemirror/view/MarkDecorationSpec;
-	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/view/MarkDecorationSpec;ZZZLandroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/ParagraphStyle;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/view/MarkDecorationSpec;
+	public final fun copy (ZZZLandroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/ParagraphStyle;Ljava/lang/String;Ljava/lang/String;)Lcom/monkopedia/kodemirror/view/MarkDecorationSpec;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/view/MarkDecorationSpec;ZZZLandroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/ParagraphStyle;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/view/MarkDecorationSpec;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getAttributes ()Ljava/util/Map;
 	public final fun getCssClass ()Ljava/lang/String;
 	public final fun getInclusive ()Z
 	public final fun getInclusiveEnd ()Z
@@ -597,11 +626,12 @@ public final class com/monkopedia/kodemirror/view/RectangularSelectionKt {
 public final class com/monkopedia/kodemirror/view/ReplaceDecoration : com/monkopedia/kodemirror/view/Decoration {
 	public static final field $stable I
 	public fun <init> (Lcom/monkopedia/kodemirror/view/ReplaceDecorationSpec;)V
-	public fun eq (Lcom/monkopedia/kodemirror/state/RangeValue;)Z
+	public fun equals (Ljava/lang/Object;)Z
 	public fun getEndSide ()I
 	public fun getPoint ()Z
 	public final fun getSpec ()Lcom/monkopedia/kodemirror/view/ReplaceDecorationSpec;
 	public fun getStartSide ()I
+	public fun hashCode ()I
 }
 
 public final class com/monkopedia/kodemirror/view/ReplaceDecorationSpec {
@@ -823,11 +853,12 @@ public final class com/monkopedia/kodemirror/view/Viewport {
 public final class com/monkopedia/kodemirror/view/WidgetDecoration : com/monkopedia/kodemirror/view/Decoration {
 	public static final field $stable I
 	public fun <init> (Lcom/monkopedia/kodemirror/view/WidgetDecorationSpec;)V
-	public fun eq (Lcom/monkopedia/kodemirror/state/RangeValue;)Z
+	public fun equals (Ljava/lang/Object;)Z
 	public fun getEndSide ()I
 	public fun getPoint ()Z
 	public final fun getSpec ()Lcom/monkopedia/kodemirror/view/WidgetDecorationSpec;
 	public fun getStartSide ()I
+	public fun hashCode ()I
 }
 
 public final class com/monkopedia/kodemirror/view/WidgetDecorationSpec {
@@ -854,7 +885,7 @@ public abstract class com/monkopedia/kodemirror/view/WidgetType {
 	public fun <init> ()V
 	public abstract fun Content (Landroidx/compose/runtime/Composer;I)V
 	public fun destroy ()V
-	public fun eq (Lcom/monkopedia/kodemirror/view/WidgetType;)Z
+	public fun equals (Ljava/lang/Object;)Z
 	public fun getEstimatedHeight ()I
 	public fun getIgnoreEvents ()Z
 	public fun getLineBreaks ()I

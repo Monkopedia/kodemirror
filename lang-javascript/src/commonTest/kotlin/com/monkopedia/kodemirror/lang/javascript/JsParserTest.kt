@@ -24,7 +24,7 @@ import kotlin.test.assertTrue
 
 class JsParserTest {
 
-    private fun parse(input: String): String = treeToString(parser.parse(input))
+    private fun parse(input: String): String = treeToString(jsParser.parse(input))
 
     @Test
     fun parsesVariableDeclaration() {

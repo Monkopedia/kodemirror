@@ -34,7 +34,7 @@ import com.monkopedia.kodemirror.lezer.lr.ParserConfig
  * highlighting and indentation information.
  */
 val yamlLanguage: LRLanguage = LRLanguage.define(
-    parser = parser.configure(
+    parser = yamlParser.configure(
         ParserConfig(
             props = listOf(
                 indentNodeProp.add { type ->

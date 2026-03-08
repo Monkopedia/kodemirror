@@ -8,6 +8,6 @@ public final class com/monkopedia/kodemirror/lang/go/GoKt {
 }
 
 public final class com/monkopedia/kodemirror/lang/go/GoParserKt {
-	public static final fun getParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
+	public static final fun getGoParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
 }
 

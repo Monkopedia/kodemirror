@@ -8,6 +8,6 @@ public final class com/monkopedia/kodemirror/lang/grammar/LezerHighlightKt {
 }
 
 public final class com/monkopedia/kodemirror/lang/grammar/LezerParserKt {
-	public static final fun getParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
+	public static final fun getLezerParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
 }
 

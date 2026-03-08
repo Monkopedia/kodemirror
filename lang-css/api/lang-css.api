@@ -8,6 +8,6 @@ public final class com/monkopedia/kodemirror/lang/css/CssKt {
 }
 
 public final class com/monkopedia/kodemirror/lang/css/CssParserKt {
-	public static final fun getParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
+	public static final fun getCssParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
 }
 

@@ -46,7 +46,7 @@ private fun directiveIndent(except: Regex): (TreeIndentContext) -> Int? = { cont
  * The Liquid tag language (without HTML wrapping).
  */
 val liquidTagLanguage: LRLanguage = LRLanguage.define(
-    parser = parser.configure(
+    parser = liquidParser.configure(
         ParserConfig(
             props = listOf(
                 liquidHighlighting,

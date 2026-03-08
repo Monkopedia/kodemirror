@@ -24,7 +24,7 @@ import kotlin.test.assertTrue
 
 class MarkdownParserTest {
 
-    private fun parse(input: String): String = treeToString(parser.parse(input))
+    private fun parse(input: String): String = treeToString(markdownParser.parse(input))
 
     // === Paragraphs ===
 

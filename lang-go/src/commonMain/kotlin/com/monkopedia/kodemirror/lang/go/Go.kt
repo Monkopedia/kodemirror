@@ -36,7 +36,7 @@ import com.monkopedia.kodemirror.lezer.lr.ParserConfig
  * folding and indentation information.
  */
 val goLanguage: LRLanguage = LRLanguage.define(
-    parser = parser.configure(
+    parser = goParser.configure(
         ParserConfig(
             props = listOf(
                 indentNodeProp.add { type ->

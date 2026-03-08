@@ -215,7 +215,7 @@ private val specLessThan = mapOf(
     "<" to 193
 )
 
-val parser: LRParser = LRParser.deserialize(
+val jsParser: LRParser = LRParser.deserialize(
     ParserSpec(
         version = 14,
         states = "\$F|Q%TQlOOO%[QlOOO'_QpOOP(lO`OOO*zQ!0MxO'#CiO+RO#tO'#CjO+aO&jO'#CjO+oO#@ItO'#Da" +
@@ -926,7 +926,7 @@ val parser: LRParser = LRParser.deserialize(
                 "JSXEndTag"
             )
         ),
-        propSources = listOf(jsHighlighting),
+        propSources = listOf(javascriptHighlighting),
         skippedNodes = listOf(0, 5, 6, 278),
         repeatNodeCount = 37,
         tokenData = "\$Fq07[R!bOX%ZXY+gYZ-yZ[+g[]%Z]^.c^p%Zpq+gqr/mrs3cst:_tuEruvJSvwLkwx! Yxy!'iyz!(" +

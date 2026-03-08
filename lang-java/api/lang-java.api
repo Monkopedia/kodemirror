@@ -8,6 +8,6 @@ public final class com/monkopedia/kodemirror/lang/java/JavaKt {
 }
 
 public final class com/monkopedia/kodemirror/lang/java/JavaParserKt {
-	public static final fun getParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
+	public static final fun getJavaParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
 }
 

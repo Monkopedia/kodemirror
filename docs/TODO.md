@@ -148,13 +148,14 @@ Each item has a status prefix on its heading line:
   Replace with sealed class or enum; remove or replace DOM attribute fields.
 - **Files:** `view/.../Gutter.kt`, `view/.../Decoration.kt`, `lint/.../Lint.kt`
 
-### 16. Add `suspend` overloads for linter and completion sources
+### 16. [BLOCKED] Add `suspend` overloads for linter and completion sources
+- **Blocked:** Requires adding kotlinx.coroutines as a new project dependency and significant infrastructure (CoroutineScope facets, adapter plugins). Needs architectural decision on coroutine integration approach.
 > **Decision:** CoroutineScope parameter for explicit control, plus a composable option/default that auto-remembers a scope.
 - **Effort:** 2–3 days | **Source:** Kotlin Ergonomics
 - Zero `suspend fun` or `Flow` usage in core modules. Async linting and network-backed completions
   need coroutine support. This is essential for a coroutine-native Kotlin API.
 
-### 17. Prefix `parser` properties across language modules
+### 17. [DONE] Prefix `parser` properties across language modules
 > **Decision:** Rename all now — breaking change. `javaParser`, `pythonParser`, `cppParser`, etc.
 - **Effort:** < 1 day | **Source:** Architecture
 - `jsHighlight` is the only language module not matching `{lang}Highlighting` pattern.

@@ -24,7 +24,7 @@ import kotlin.test.assertTrue
 
 class CssParserTest {
 
-    private fun parse(input: String): String = treeToString(parser.parse(input))
+    private fun parse(input: String): String = treeToString(cssParser.parse(input))
 
     @Test
     fun parsesSimpleRule() {

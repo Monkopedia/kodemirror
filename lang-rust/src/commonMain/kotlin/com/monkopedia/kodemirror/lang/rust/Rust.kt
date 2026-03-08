@@ -36,7 +36,7 @@ private val blockFoldRegex = Regex("""(Block|edTokens|List)$""")
  * highlighting and indentation information.
  */
 val rustLanguage: LRLanguage = LRLanguage.define(
-    parser = parser.configure(
+    parser = rustParser.configure(
         ParserConfig(
             props = listOf(
                 indentNodeProp.add { type ->

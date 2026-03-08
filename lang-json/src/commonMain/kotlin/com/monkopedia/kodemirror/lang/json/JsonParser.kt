@@ -21,7 +21,7 @@ package com.monkopedia.kodemirror.lang.json
 import com.monkopedia.kodemirror.lezer.lr.LRParser
 import com.monkopedia.kodemirror.lezer.lr.ParserSpec
 
-val parser: LRParser = LRParser.deserialize(
+val jsonParser: LRParser = LRParser.deserialize(
     ParserSpec(
         version = 14,
         states = "\$bOVQPOOOOQO'#Cb'#CbOnQPO'#CeOvQPO'#ClOOQO'#Cr'#CrQOQPOO" +

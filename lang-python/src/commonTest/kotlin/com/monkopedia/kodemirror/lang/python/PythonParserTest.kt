@@ -24,7 +24,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class PythonParserTest {
-    private fun parse(input: String): String = treeToString(parser.parse(input))
+    private fun parse(input: String): String = treeToString(pythonParser.parse(input))
 
     @Test
     fun testOperatorPrecedence() = assertEquals(
