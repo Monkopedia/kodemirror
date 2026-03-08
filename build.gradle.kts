@@ -25,6 +25,31 @@ tasks.register<Copy>("copyApiDocs") {
     into(layout.projectDirectory.dir("docs-site/docs/api"))
 }
 
+tasks.register("stripStableFromApiDumps") {
+    description = "Strip Compose compiler \$stable fields from .api dump files"
+    group = "verification"
+    doLast {
+        fileTree(rootDir) {
+            include("*/api/*.api")
+        }.forEach { file ->
+            val original = file.readText()
+            val filtered = original.lineSequence()
+                .filter { !it.contains("\$stable") }
+                .joinToString("\n")
+            if (filtered != original) {
+                file.writeText(filtered)
+                logger.lifecycle("Stripped \$stable from ${file.relativeTo(rootDir)}")
+            }
+        }
+    }
+}
+
+subprojects {
+    tasks.matching { it.name == "apiDump" }.configureEach {
+        finalizedBy(rootProject.tasks.named("stripStableFromApiDumps"))
+    }
+}
+
 tasks.register<Exec>("captureReferenceScreenshots") {
     description = "Capture CodeMirror 6 reference screenshots using Playwright"
     group = "verification"

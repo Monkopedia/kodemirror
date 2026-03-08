@@ -282,8 +282,9 @@ Each item has a status prefix on its heading line:
 
 ## Priority 6 — Lower Impact, Polish
 
-### 33. Restrict legacy-mode state class mutability
+### 33. [BLOCKED] Restrict legacy-mode state class mutability
 > **Decision:** Make setters `internal` on all state classes. They stay in the same module.
+- **Blocked:** 852 mutable properties across 96 data classes. Constructor-declared `var` properties don't support `internal set` in Kotlin. Would need to either (a) make constructors `internal` on all state classes, or (b) convert all 96 data classes to regular classes with body-declared properties and manual `copy()`. Both approaches require verifying the `StreamParser<State>` generic interface doesn't need external state construction. Needs design decision on approach.
 - **Effort:** 3+ days | **Source:** Architecture
 - All 100+ stream-parser state classes (`AplState`, `AsciiArmorState`, etc.) have public mutable
   setters. The `StreamParser<State>` generic interface may need revisiting to enable `internal`
@@ -328,8 +329,9 @@ Each item has a status prefix on its heading line:
 - `Prec.highest`, `.high`, `.default`, `.low`, `.lowest` are stored as lambda properties (JS pattern).
   Should be `fun highest(ext: Extension): Extension`.
 
-### 42. Add `kotlinx.serialization` support alongside `toJSON`/`fromJSON`
+### 42. [BLOCKED] Add `kotlinx.serialization` support alongside `toJSON`/`fromJSON`
 > **Decision:** Add `@Serializable` to core types (`EditorState`, `EditorSelection`, `SelectionRange`, `Text`). Adds kotlinx.serialization dependency to `:state` module.
+- **Blocked:** Core types (`EditorState`, `Text`, `EditorSelection`) are not simple data classes — they have complex internal state requiring custom `KSerializer` implementations. Existing `toJSON`/`fromJSON` methods use `Map<String, Any?>`. Adding kotlinx.serialization requires: adding plugin+dependency to `:state`, writing custom serializers for 4+ types, and deciding whether to replace or supplement `toJSON`/`fromJSON`. Needs design decision on serialization strategy.
 - **Effort:** 2–3 days | **Source:** Kotlin Ergonomics
 - `toJSON()`/`fromJSON()` use `Map<String, Any?>`. Add `@Serializable` data classes or serializers.
   Also consider renaming to `serialize()`/`deserialize()`.
@@ -340,8 +342,9 @@ Each item has a status prefix on its heading line:
 - Currently `String?` ("keyword", "function", "variable", etc.) with no discoverability.
   An enum would provide exhaustive matching and prevent typos.
 
-### 44. Consider inline value classes for positions
+### 44. [BLOCKED] Consider inline value classes for positions
 > **Decision:** Introduce `@JvmInline value class DocPosition(val value: Int)` and `LineNumber(val value: Int)` now. Major breaking change touching all modules.
+- **Blocked:** Major breaking change affecting virtually every file across all modules. Every `pos: Int` parameter and `lineNumber: Int` in the entire codebase would need updating. Requires careful migration strategy to determine which `Int` parameters represent document positions vs line numbers vs arbitrary ints (hundreds of call sites). Should be done as a dedicated focused effort.
 - **Effort:** 2–3 days | **Source:** Kotlin Ergonomics
 - `@JvmInline value class DocPosition(val value: Int)` and `LineNumber(val value: Int)` would
   prevent mixing up positions and line numbers at zero runtime cost.
@@ -366,8 +369,9 @@ Each item has a status prefix on its heading line:
 - **Effort:** 1 day | **Source:** Frontend DX
 - No automatic bridging between `MaterialTheme.colorScheme` and `EditorTheme`.
 
-### 49. Consider a `lang-kotlin` module
+### 49. [BLOCKED] Consider a `lang-kotlin` module
 > **Decision:** New Lezer grammar from scratch. Significant effort but cleaner than extending Java grammar.
+- **Blocked:** Requires writing a complete Lezer grammar for Kotlin from scratch (3+ days minimum). Kotlin has complex syntax (property delegates, `when` expressions, coroutines, nullable types, extension functions) that goes well beyond Java grammar extensions. Needs dedicated focused effort.
 - **Effort:** 3+ days | **Source:** Frontend DX
 - Ironic absence for a Kotlin-first library. Even a Java grammar with Kotlin extensions would be
   high value.
@@ -383,7 +387,7 @@ Each item has a status prefix on its heading line:
 - Both `lang-jinja` and `lang-liquid` export a top-level `tagLanguage` property. Rename to
   `jinjaTagLanguage` and `liquidTagLanguage` to prevent confusion.
 
-### 52. Filter `$stable` fields from API dumps
+### 52. [DONE] Filter `$stable` fields from API dumps
 > **Decision:** Post-processing Gradle task that strips `$stable` lines from `.api` files after `apiDump` runs.
 - **Effort:** < 1 hour | **Source:** Architecture
 - 82 classes expose Compose compiler `$stable` field. Cosmetic but adds noise.

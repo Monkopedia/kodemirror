@@ -1,5 +1,4 @@
 public final class com/monkopedia/kodemirror/autocomplete/ActiveSnippet {
-	public static final field $stable I
 	public fun <init> (Ljava/util/List;I)V
 	public final fun component1 ()Ljava/util/List;
 	public final fun component2 ()I
@@ -14,7 +13,6 @@ public final class com/monkopedia/kodemirror/autocomplete/ActiveSnippet {
 }
 
 public final class com/monkopedia/kodemirror/autocomplete/CloseBracketsConfig {
-	public static final field $stable I
 	public fun <init> ()V
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -38,7 +36,6 @@ public final class com/monkopedia/kodemirror/autocomplete/CloseBracketsKt {
 }
 
 public final class com/monkopedia/kodemirror/autocomplete/Completion {
-	public static final field $stable I
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;Lkotlin/jvm/functions/Function4;Lcom/monkopedia/kodemirror/autocomplete/CompletionSection;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;Lkotlin/jvm/functions/Function4;Lcom/monkopedia/kodemirror/autocomplete/CompletionSection;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
@@ -67,7 +64,6 @@ public final class com/monkopedia/kodemirror/autocomplete/Completion {
 }
 
 public final class com/monkopedia/kodemirror/autocomplete/CompletionConfig {
-	public static final field $stable I
 	public fun <init> ()V
 	public fun <init> (ZZZIZLjava/util/List;)V
 	public synthetic fun <init> (ZZZIZLjava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -91,7 +87,6 @@ public final class com/monkopedia/kodemirror/autocomplete/CompletionConfig {
 }
 
 public final class com/monkopedia/kodemirror/autocomplete/CompletionContext {
-	public static final field $stable I
 	public fun <init> (Lcom/monkopedia/kodemirror/state/EditorState;IZ)V
 	public final fun getExplicit ()Z
 	public final fun getPos ()I
@@ -101,7 +96,6 @@ public final class com/monkopedia/kodemirror/autocomplete/CompletionContext {
 }
 
 public final class com/monkopedia/kodemirror/autocomplete/CompletionResult {
-	public static final field $stable I
 	public fun <init> (ILjava/lang/Integer;Ljava/util/List;Lkotlin/text/Regex;Z)V
 	public synthetic fun <init> (ILjava/lang/Integer;Ljava/util/List;Lkotlin/text/Regex;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()I
@@ -122,7 +116,6 @@ public final class com/monkopedia/kodemirror/autocomplete/CompletionResult {
 }
 
 public final class com/monkopedia/kodemirror/autocomplete/CompletionSection {
-	public static final field $stable I
 	public fun <init> (Ljava/lang/String;I)V
 	public synthetic fun <init> (Ljava/lang/String;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
@@ -160,7 +153,6 @@ public final class com/monkopedia/kodemirror/autocomplete/ConfigKt {
 }
 
 public final class com/monkopedia/kodemirror/autocomplete/MatchBeforeResult {
-	public static final field $stable I
 	public fun <init> (IILjava/lang/String;)V
 	public final fun component1 ()I
 	public final fun component2 ()I
@@ -176,7 +168,6 @@ public final class com/monkopedia/kodemirror/autocomplete/MatchBeforeResult {
 }
 
 public final class com/monkopedia/kodemirror/autocomplete/SnippetField {
-	public static final field $stable I
 	public fun <init> (Ljava/lang/String;II)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()I

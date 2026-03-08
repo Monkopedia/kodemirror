@@ -95,7 +95,6 @@ public final class com/monkopedia/kodemirror/commands/CommentCommandsKt {
 }
 
 public final class com/monkopedia/kodemirror/commands/HistoryConfig {
-	public static final field $stable I
 	public fun <init> ()V
 	public fun <init> (JI)V
 	public synthetic fun <init> (JIILkotlin/jvm/internal/DefaultConstructorMarker;)V

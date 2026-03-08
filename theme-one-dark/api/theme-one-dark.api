@@ -1,5 +1,4 @@
 public final class com/monkopedia/kodemirror/themonedark/OneDarkColors {
-	public static final field $stable I
 	public static final field INSTANCE Lcom/monkopedia/kodemirror/themonedark/OneDarkColors;
 	public final fun getBackground-0d7_KjU ()J
 	public final fun getChalky-0d7_KjU ()J
