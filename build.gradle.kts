@@ -48,6 +48,22 @@ subprojects {
     tasks.matching { it.name == "apiDump" }.configureEach {
         finalizedBy(rootProject.tasks.named("stripStableFromApiDumps"))
     }
+    // Strip $stable from build API output before apiCheck compares against committed files
+    tasks.matching { it.name == "jvmApiCheck" }.configureEach {
+        doFirst {
+            project.fileTree(project.layout.buildDirectory.dir("api")) {
+                include("*.api")
+            }.forEach { file ->
+                val original = file.readText()
+                val filtered = original.lineSequence()
+                    .filter { !it.contains("\$stable") }
+                    .joinToString("\n")
+                if (filtered != original) {
+                    file.writeText(filtered)
+                }
+            }
+        }
+    }
 }
 
 tasks.register<Exec>("captureReferenceScreenshots") {
