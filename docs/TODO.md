@@ -176,7 +176,7 @@ Each item has a status prefix on its heading line:
 - `operator fun get` on `EditorState`: `state[myField]` instead of `state.field(myField)`
 - `invoke` operator on `Facet`: `editable(false)` instead of `editable.of(false)`
 
-### 20. Add simple `onChange: (String) -> Unit` convenience
+### 20. [DONE] Add simple `onChange: (String) -> Unit` convenience
 > **Decision:** Standalone extension — `EditorSession.onChange(callback: (String) -> Unit): Extension` that can be added to any editor setup, independent of #13.
 - **Effort:** < 1 day | **Source:** Frontend DX
 - Many developers just want document text changes. The transaction model is powerful but overkill

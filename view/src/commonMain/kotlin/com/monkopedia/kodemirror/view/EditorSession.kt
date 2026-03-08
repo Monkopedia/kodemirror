@@ -20,6 +20,7 @@ package com.monkopedia.kodemirror.view
 
 import androidx.compose.runtime.compositionLocalOf
 import com.monkopedia.kodemirror.state.EditorState
+import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.Facet
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
@@ -104,6 +105,23 @@ fun EditorSession.dispatch(
     block: com.monkopedia.kodemirror.state.TransactionSpecBuilder.() -> Unit
 ) {
     dispatch(transactionSpec(block))
+}
+
+/**
+ * Create an extension that calls [callback] with the full document text
+ * whenever the document changes.
+ *
+ * ```kotlin
+ * val session = rememberEditorSession(
+ *     doc = "Hello",
+ *     extensions = onChange { text -> println("New text: $text") }
+ * )
+ * ```
+ */
+fun onChange(callback: (String) -> Unit): Extension = EditorSession.updateListener.of { update ->
+    if (update.docChanged) {
+        callback(update.state.doc.toString())
+    }
 }
 
 /** A simple axis-aligned rectangle used for coordinate results. */

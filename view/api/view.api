@@ -189,6 +189,7 @@ public final class com/monkopedia/kodemirror/view/EditorSessionKt {
 	public static synthetic fun EditorSession$default (Lcom/monkopedia/kodemirror/state/EditorState;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/view/EditorSession;
 	public static final fun dispatch (Lcom/monkopedia/kodemirror/view/EditorSession;Lkotlin/jvm/functions/Function1;)V
 	public static final fun getLocalEditorSession ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+	public static final fun onChange (Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/kodemirror/state/Extension;
 }
 
 public final class com/monkopedia/kodemirror/view/EditorTheme {
