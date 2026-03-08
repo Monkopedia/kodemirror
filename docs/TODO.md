@@ -77,7 +77,7 @@ Each item has a status prefix on its heading line:
   `EditorStateConfig.extensions` accept `List<Extension>` directly.
 - **File:** `state/src/commonMain/kotlin/.../state/Extension.kt`
 
-### 7. Add DSL builders for `EditorState` and `TransactionSpec`
+### 7. [DONE] Add DSL builders for `EditorState` and `TransactionSpec`
 > **Decision:** Operator overloading DSL style (`+lineNumbers`). Use `@DslMarker`.
 - **Effort:** 2–3 days | **Source:** Kotlin Ergonomics
 - The two most common API entry points have significant ceremony:

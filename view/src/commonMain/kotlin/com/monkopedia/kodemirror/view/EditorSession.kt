@@ -23,6 +23,7 @@ import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Facet
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
+import com.monkopedia.kodemirror.state.transactionSpec
 
 /**
  * An editor session holds the editor state and dispatches transactions.
@@ -87,6 +88,23 @@ val LocalEditorSession = compositionLocalOf<EditorSession> {
 /** Create an [EditorSession] with the given initial state and optional update callback. */
 fun EditorSession(initialState: EditorState, onUpdate: (Transaction) -> Unit = {}): EditorSession =
     EditorSessionImpl(initialState, onUpdate)
+
+/**
+ * Dispatch a transaction built via DSL.
+ *
+ * ```kotlin
+ * session.dispatch {
+ *     insert(0, "Hello")
+ *     selection(5)
+ *     scrollIntoView()
+ * }
+ * ```
+ */
+fun EditorSession.dispatch(
+    block: com.monkopedia.kodemirror.state.TransactionSpecBuilder.() -> Unit
+) {
+    dispatch(transactionSpec(block))
+}
 
 /** A simple axis-aligned rectangle used for coordinate results. */
 data class Rect(
