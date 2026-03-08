@@ -37,7 +37,7 @@ If you've built CodeMirror 6 extensions, the same mental model applies.
 | `@lezer/common` | `:lezer-common` | Internal |
 | `@lezer/lr` | `:lezer-lr` | Internal |
 | `@lezer/highlight` | `:lezer-highlight` | `Tags` object |
-| `@codemirror/basic-setup` | *(not yet ported)* | Assemble manually |
+| `@codemirror/basic-setup` | `:basic-setup` | `basicSetup` extension |
 
 ## Key differences
 
@@ -163,10 +163,11 @@ const state = EditorState.create({
 
 **Kodemirror:**
 ```kotlin
-val state = EditorState.create(
+val session = rememberEditorSession(
     doc = "Hello",
-    extensions = extensionListOf(lineNumbers(), history(), javascript())
+    extensions = basicSetup + javascript()
 )
+KodeMirror(session = session)
 ```
 
 ### Dependencies
@@ -198,14 +199,11 @@ dependencies {
 | `keymap.of([...])` | `keymapOf { "Ctrl-s" { ... } }` |
 | `new ChangeSet(...)` | `ChangeSpec.Single(from, to, insert)` |
 | `state.doc.sliceString(a, b)` | `state.doc[a..b]` |
-| `basicSetup` | `extensionListOf(lineNumbers(), ...)` |
+| `basicSetup` | `basicSetup` (`:basic-setup` module) |
 
 ## What's not yet ported
 
-- `basicSetup` / `minimalSetup` convenience bundles
 - `@codemirror/language-data` (language metadata for dynamic loading)
-- Some `@codemirror/view` utilities (`highlightWhitespace`, `layer`, etc.)
-- Some cursor/selection command variants (~30 missing)
 - LSP client integration
 
 See the [Extension Index](extensions-index.md) for a complete list of

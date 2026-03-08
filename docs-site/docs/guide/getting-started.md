@@ -32,6 +32,9 @@ dependencies {
 
     // Optional: theme
     implementation("com.monkopedia.kodemirror:theme-one-dark:<version>")
+
+    // Optional: all-in-one setup bundle
+    // implementation("com.monkopedia.kodemirror:basic-setup:<version>")
 }
 ```
 
@@ -41,32 +44,25 @@ Replace `<version>` with the current release version.
 
 ```kotlin
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.monkopedia.kodemirror.commands.*
 import com.monkopedia.kodemirror.lang.javascript.javascript
-import com.monkopedia.kodemirror.state.*
+import com.monkopedia.kodemirror.state.plus
 import com.monkopedia.kodemirror.view.*
 
 @Composable
 fun MyEditor() {
-    var editorState by remember {
-        mutableStateOf(
-            EditorState.create(
-                doc = "console.log(\"Hello, Kodemirror!\")",
-                extensions = extensionListOf(
-                    lineNumbers(),
-                    history(),
-                    javascript(),
-                    keymapOf(defaultKeymap + historyKeymap)
-                )
-            )
-        )
-    }
+    val session = rememberEditorSession(
+        doc = "console.log(\"Hello, Kodemirror!\")",
+        extensions = lineNumbers() +
+            history() +
+            javascript() +
+            keymapOf(defaultKeymap + historyKeymap)
+    )
 
-    EditorSession(
-        state = editorState,
-        onUpdate = { tr -> editorState = tr.state },
+    KodeMirror(
+        session = session,
         modifier = Modifier.fillMaxSize()
     )
 }
@@ -78,20 +74,42 @@ This gives you:
 - Undo/redo with Ctrl-Z / Ctrl-Shift-Z
 - Standard cursor movement and selection commands
 
+Or use `basicSetup` for a batteries-included experience:
+
+```kotlin
+import com.monkopedia.kodemirror.basicsetup.basicSetup
+import com.monkopedia.kodemirror.lang.javascript.javascript
+import com.monkopedia.kodemirror.state.plus
+import com.monkopedia.kodemirror.view.*
+
+@Composable
+fun MyEditor() {
+    val session = rememberEditorSession(
+        doc = "console.log(\"Hello!\")",
+        extensions = basicSetup + javascript()
+    )
+    KodeMirror(session = session, modifier = Modifier.fillMaxSize())
+}
+```
+
 ## 4. Understanding the pattern
 
-Kodemirror follows the standard Compose state-hoisting pattern:
+Kodemirror uses `rememberEditorSession` to manage editor state internally:
 
-1. **State** — `EditorState` holds the document, selection, and all
-   extension state. It's immutable.
-2. **View** — `EditorSession` renders the state as a Compose UI.
-3. **Transactions** — when the user types or triggers a command, a
-   `Transaction` is created with the changes.
-4. **Update** — the `onUpdate` callback receives the transaction.
-   You apply the new state, Compose recomposes, and the editor updates.
+1. **Session** — `rememberEditorSession` creates an `EditorSession` that holds the
+   `EditorState` (document, selection, extension state) and handles updates.
+2. **View** — `KodeMirror` renders the session as a Compose UI.
+3. **Transactions** — when the user types or triggers a command, a `Transaction`
+   is created with the changes and applied automatically.
 
 ```
-User action → Transaction → onUpdate callback → new EditorState → recomposition
+User action → Transaction → EditorSession updates state → recomposition
+```
+
+Extensions are combined using the `+` operator:
+
+```kotlin
+val extensions = lineNumbers() + history() + javascript()
 ```
 
 ## 5. Adding more features
@@ -101,10 +119,8 @@ User action → Transaction → onUpdate callback → new EditorState → recomp
 ```kotlin
 import com.monkopedia.kodemirror.language.bracketMatching
 
-extensionListOf(
-    // ... other extensions
-    bracketMatching()
-)
+// Add to your extensions:
+basicSetup + javascript() + bracketMatching()
 ```
 
 ### Autocompletion
@@ -112,18 +128,15 @@ extensionListOf(
 ```kotlin
 import com.monkopedia.kodemirror.autocomplete.*
 
-extensionListOf(
-    // ... other extensions
-    autocompletion(CompletionConfig(
-        override = listOf(
-            completeFromList(listOf(
-                Completion(label = "console", type = "variable"),
-                Completion(label = "document", type = "variable"),
-                Completion(label = "window", type = "variable")
-            ))
-        )
-    ))
-)
+basicSetup + autocompletion(CompletionConfig(
+    override = listOf(
+        completeFromList(listOf(
+            Completion(label = "console", type = "variable"),
+            Completion(label = "document", type = "variable"),
+            Completion(label = "window", type = "variable")
+        ))
+    )
+))
 ```
 
 ### Search
@@ -131,10 +144,7 @@ extensionListOf(
 ```kotlin
 import com.monkopedia.kodemirror.search.*
 
-extensionListOf(
-    // ... other extensions
-    search()
-)
+basicSetup + search()
 ```
 
 ### Custom theme
@@ -150,67 +160,107 @@ val myTheme = EditorTheme(
     dark = true
 )
 
-extensionListOf(
-    // ... other extensions
-    editorTheme.of(myTheme)
-)
+basicSetup + editorTheme.of(myTheme)
 ```
 
-Or use the Material Design bridge:
+Or use the Material Design bridge for automatic theme integration:
 
 ```kotlin
-val colors = MaterialTheme.colorScheme
-val theme = editorThemeFromColors(
-    background = colors.surface,
-    foreground = colors.onSurface,
-    primary = colors.primary,
-    surface = colors.surfaceVariant,
-    outline = colors.outline,
-    dark = true
-)
+import com.monkopedia.kodemirror.materialtheme.rememberMaterialEditorTheme
+
+@Composable
+fun MyEditor() {
+    val materialTheme = rememberMaterialEditorTheme()
+    val session = rememberEditorSession(
+        doc = "Hello",
+        extensions = basicSetup + materialTheme
+    )
+    KodeMirror(session = session)
+}
 ```
+
+This reads colors from `MaterialTheme.colorScheme` automatically and
+adapts when switching between light and dark mode. Requires the
+`com.monkopedia.kodemirror:material-theme` dependency.
 
 ### Read-only mode
 
 ```kotlin
-extensionListOf(
-    // ... other extensions
-    EditorState.readOnly.of(true)
-)
+basicSetup + EditorState.readOnly.of(true)
 ```
+
+### `readOnly` vs `editable`
+
+| | `EditorState.readOnly.of(true)` | `EditorSession.editable` (set to `false`) |
+|---|---|---|
+| **Editing** | Blocked | Blocked |
+| **Selection** | Allowed | Blocked |
+| **Copy** | Allowed | Blocked |
+| **Use case** | Display code that users can select/copy | Fully inert display |
 
 ## 6. Reacting to changes
 
-To get notified when the document text changes:
+Use the `onChange` convenience to get notified when the document changes:
 
 ```kotlin
-EditorSession(
-    state = editorState,
-    onUpdate = { tr ->
-        editorState = tr.state
-        if (tr.docChanged) {
-            val newText = tr.state.doc.toString()
-            onTextChanged(newText)
-        }
+val session = rememberEditorSession(
+    doc = "Hello",
+    extensions = basicSetup + onChange { newText ->
+        println("Document changed: $newText")
+    }
+)
+```
+
+For selection changes:
+
+```kotlin
+val session = rememberEditorSession(
+    doc = "Hello",
+    extensions = basicSetup + onSelection { selection ->
+        println("Cursor at: ${selection.main.head}")
     }
 )
 ```
 
 ## 7. Programmatic changes
 
-To update the document from outside the editor:
+Use the convenience methods on `EditorSession`:
 
 ```kotlin
-fun insertText(view: EditorSession, text: String) {
-    val pos = view.state.selection.main.head
-    view.dispatch(TransactionSpec(
-        changes = ChangeSpec.Single(
-            from = pos,
-            insert = text.asInsert()
-        )
-    ))
+// Replace entire document
+session.setDoc("new content")
+
+// Insert text at a position
+session.insertAt(0, "// Header\n")
+
+// Delete a range
+session.deleteRange(from = 0, to = 10)
+
+// Set cursor position
+session.select(anchor = 5)
+
+// Set selection range
+session.select(anchor = 0, head = 10)
+
+// Select all
+session.selectAll()
+```
+
+For more complex changes, use `dispatch` with a transaction spec:
+
+```kotlin
+session.dispatch {
+    insert(0, "Hello")
+    selection(5)
+    scrollIntoView()
 }
 ```
+
+## 8. Sample project
+
+A complete working sample editor is available at
+[`samples/editor/`](https://github.com/nicemonk/kodemirror/tree/main/samples/editor)
+with tab switching between languages and themes.
 
 ## Next steps
 

@@ -10,13 +10,10 @@ Install the `collab()` extension with your starting document version:
 ```kotlin
 import com.monkopedia.kodemirror.collab.*
 
-val state = EditorState.create(EditorStateConfig(
-    doc = initialDoc.asDoc(),
-    extensions = ExtensionList(listOf(
-        collab(CollabConfig(startVersion = serverVersion)),
-        // ...
-    ))
-))
+val session = rememberEditorSession(
+    doc = initialDoc,
+    extensions = collab(CollabConfig(startVersion = serverVersion)) + // ...
+)
 ```
 
 ## CollabConfig

@@ -4,47 +4,40 @@ The `:view` module (`com.monkopedia.kodemirror.view`) renders the editor
 using Jetpack Compose. This is the layer that diverges most from
 upstream CodeMirror, which uses the browser DOM.
 
-## The EditorSession composable
+## The KodeMirror composable
 
-The entry point for embedding an editor is the `EditorSession` composable
+The entry point for embedding an editor is the `KodeMirror` composable
 function:
 
 ```kotlin
 @Composable
-fun EditorSession(
-    state: EditorState,
-    onUpdate: (Transaction) -> Unit,
+fun KodeMirror(
+    session: EditorSession,
     modifier: Modifier = Modifier
 )
 ```
 
-Usage follows the standard Compose state-hoisting pattern:
+Create a session with `rememberEditorSession` and pass it to `KodeMirror`:
 
 ```kotlin
-var editorState by remember {
-    mutableStateOf(
-        EditorState.create(EditorStateConfig(
-            doc = "fun main() {}".asDoc(),
-            extensions = ExtensionList(listOf(javascript(), oneDark))
-        ))
-    )
-}
+val session = rememberEditorSession(
+    doc = "fun main() {}",
+    extensions = javascript() + oneDark
+)
 
-EditorSession(
-    state = editorState,
-    onUpdate = { tr -> editorState = tr.state },
+KodeMirror(
+    session = session,
     modifier = Modifier.fillMaxSize()
 )
 ```
 
-When a user types, clicks, or triggers a command, the composable
-dispatches a `Transaction` through the `onUpdate` callback. Your code
-applies the new state, Compose recomposes, and the editor reflects the
-change.
+When a user types, clicks, or triggers a command, the session
+dispatches a `Transaction` internally. The state updates, Compose
+recomposes, and the editor reflects the change.
 
 ## Inside the composable
 
-The `EditorSession` composable manages several internal pieces:
+The `KodeMirror` composable manages several internal pieces:
 
 1. **EditorSession instance** — a non-Composable class that holds state,
    coordinates plugins, and exposes APIs like `dispatch()` and
@@ -71,17 +64,14 @@ The `EditorSession` composable manages several internal pieces:
 6. **Selection drawing** — a `drawWithContent` modifier that paints
    selection highlights and cursors onto a Canvas overlay per line.
 
-## The EditorSession class
+## The EditorSession interface
 
-The `EditorSession` class (not a composable) is the stateful data holder
-that plugins and commands interact with:
+The `EditorSession` interface is the stateful API that plugins and
+commands interact with:
 
 ```kotlin
-class EditorSession(
-    initialState: EditorState,
-    val onUpdate: (Transaction) -> Unit = {}
-) {
-    var state: EditorState   // current state (updated internally)
+interface EditorSession {
+    val state: EditorState
 
     fun dispatch(vararg specs: TransactionSpec)
     fun <V : PluginValue> plugin(plugin: ViewPlugin<V>): V?
@@ -89,6 +79,16 @@ class EditorSession(
     fun posAtCoords(x: Float, y: Float): Int?
     val editable: Boolean
 }
+```
+
+Create instances with the factory function or `rememberEditorSession`:
+
+```kotlin
+// Non-composable factory:
+val session = EditorSession(initialState)
+
+// Composable (preferred):
+val session = rememberEditorSession(doc = "Hello", extensions = basicSetup)
 ```
 
 It is available to nested composables (panels, tooltips, widgets) via a

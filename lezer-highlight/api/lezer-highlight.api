@@ -32,8 +32,6 @@ public final class com/monkopedia/kodemirror/lezer/highlight/Rule {
 	public final fun getNext ()Lcom/monkopedia/kodemirror/lezer/highlight/Rule;
 	public final fun getOpaque ()Z
 	public final fun getTags ()Ljava/util/List;
-	public final fun setNext (Lcom/monkopedia/kodemirror/lezer/highlight/Rule;)V
-	public final fun sort (Lcom/monkopedia/kodemirror/lezer/highlight/Rule;)Lcom/monkopedia/kodemirror/lezer/highlight/Rule;
 }
 
 public final class com/monkopedia/kodemirror/lezer/highlight/Rule$Companion {

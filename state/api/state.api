@@ -495,6 +495,13 @@ public final class com/monkopedia/kodemirror/state/FacetReader {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/monkopedia/kodemirror/state/FieldHelpersKt {
+	public static final fun setField (Ljava/util/Set;)Lcom/monkopedia/kodemirror/state/SetFieldHandle;
+	public static synthetic fun setField$default (Ljava/util/Set;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/SetFieldHandle;
+	public static final fun toggleField (Z)Lcom/monkopedia/kodemirror/state/ToggleFieldHandle;
+	public static synthetic fun toggleField$default (ZILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/ToggleFieldHandle;
+}
+
 public final class com/monkopedia/kodemirror/state/FilterResult {
 	public fun <init> (Lcom/monkopedia/kodemirror/state/ChangeSet;Lcom/monkopedia/kodemirror/state/ChangeDesc;)V
 	public final fun component1 ()Lcom/monkopedia/kodemirror/state/ChangeSet;
@@ -652,6 +659,9 @@ public final class com/monkopedia/kodemirror/state/RangeSetBuilder {
 }
 
 public final class com/monkopedia/kodemirror/state/RangeSetKt {
+	public static final fun asSequence (Lcom/monkopedia/kodemirror/state/RangeSet;)Lkotlin/sequences/Sequence;
+	public static final fun filter (Lcom/monkopedia/kodemirror/state/RangeSet;Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/kodemirror/state/RangeSet;
+	public static final fun forEach (Lcom/monkopedia/kodemirror/state/RangeSet;Lkotlin/jvm/functions/Function1;)V
 	public static final fun rangeSetOf (Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/kodemirror/state/RangeSet;
 }
 
@@ -730,6 +740,23 @@ public final class com/monkopedia/kodemirror/state/SelectionSpec$EditorSelection
 	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/state/SelectionSpec$EditorSelectionSpec;Lcom/monkopedia/kodemirror/state/EditorSelection;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/SelectionSpec$EditorSelectionSpec;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getSelection ()Lcom/monkopedia/kodemirror/state/EditorSelection;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/state/SetFieldHandle {
+	public fun <init> (Lcom/monkopedia/kodemirror/state/StateField;Lcom/monkopedia/kodemirror/state/StateEffectType;Lcom/monkopedia/kodemirror/state/StateEffectType;Lcom/monkopedia/kodemirror/state/StateEffectType;)V
+	public final fun component1 ()Lcom/monkopedia/kodemirror/state/StateField;
+	public final fun component2 ()Lcom/monkopedia/kodemirror/state/StateEffectType;
+	public final fun component3 ()Lcom/monkopedia/kodemirror/state/StateEffectType;
+	public final fun component4 ()Lcom/monkopedia/kodemirror/state/StateEffectType;
+	public final fun copy (Lcom/monkopedia/kodemirror/state/StateField;Lcom/monkopedia/kodemirror/state/StateEffectType;Lcom/monkopedia/kodemirror/state/StateEffectType;Lcom/monkopedia/kodemirror/state/StateEffectType;)Lcom/monkopedia/kodemirror/state/SetFieldHandle;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/state/SetFieldHandle;Lcom/monkopedia/kodemirror/state/StateField;Lcom/monkopedia/kodemirror/state/StateEffectType;Lcom/monkopedia/kodemirror/state/StateEffectType;Lcom/monkopedia/kodemirror/state/StateEffectType;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/SetFieldHandle;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAdd ()Lcom/monkopedia/kodemirror/state/StateEffectType;
+	public final fun getClear ()Lcom/monkopedia/kodemirror/state/StateEffectType;
+	public final fun getField ()Lcom/monkopedia/kodemirror/state/StateField;
+	public final fun getRemove ()Lcom/monkopedia/kodemirror/state/StateEffectType;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -926,6 +953,21 @@ public abstract interface class com/monkopedia/kodemirror/state/TextIterator {
 
 public final class com/monkopedia/kodemirror/state/TextIterator$DefaultImpls {
 	public static synthetic fun next$default (Lcom/monkopedia/kodemirror/state/TextIterator;IILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/TextIterator;
+}
+
+public final class com/monkopedia/kodemirror/state/ToggleFieldHandle {
+	public fun <init> (Lcom/monkopedia/kodemirror/state/StateField;Lcom/monkopedia/kodemirror/state/StateEffectType;Lcom/monkopedia/kodemirror/state/StateEffectType;)V
+	public final fun component1 ()Lcom/monkopedia/kodemirror/state/StateField;
+	public final fun component2 ()Lcom/monkopedia/kodemirror/state/StateEffectType;
+	public final fun component3 ()Lcom/monkopedia/kodemirror/state/StateEffectType;
+	public final fun copy (Lcom/monkopedia/kodemirror/state/StateField;Lcom/monkopedia/kodemirror/state/StateEffectType;Lcom/monkopedia/kodemirror/state/StateEffectType;)Lcom/monkopedia/kodemirror/state/ToggleFieldHandle;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/state/ToggleFieldHandle;Lcom/monkopedia/kodemirror/state/StateField;Lcom/monkopedia/kodemirror/state/StateEffectType;Lcom/monkopedia/kodemirror/state/StateEffectType;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/ToggleFieldHandle;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getField ()Lcom/monkopedia/kodemirror/state/StateField;
+	public final fun getSet ()Lcom/monkopedia/kodemirror/state/StateEffectType;
+	public final fun getToggle ()Lcom/monkopedia/kodemirror/state/StateEffectType;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class com/monkopedia/kodemirror/state/TouchesResult : java/lang/Enum {

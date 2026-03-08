@@ -1,0 +1,4 @@
+public final class com/monkopedia/kodemirror/materialtheme/MaterialEditorThemeKt {
+	public static final fun rememberMaterialEditorTheme (Landroidx/compose/runtime/Composer;I)Lcom/monkopedia/kodemirror/state/Extension;
+}
+

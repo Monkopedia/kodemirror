@@ -16,13 +16,10 @@ import com.monkopedia.kodemirror.lang.python.python
 
 val languageCompartment = Compartment()
 
-val state = EditorState.create(EditorStateConfig(
-    doc = "print('hello')".asDoc(),
-    extensions = ExtensionList(listOf(
-        languageCompartment.of(python()),
-        // ... other extensions
-    ))
-))
+val session = rememberEditorSession(
+    doc = "print('hello')",
+    extensions = languageCompartment.of(python()) + // ... other extensions
+)
 ```
 
 ## Switching configuration
@@ -32,7 +29,7 @@ To reconfigure at runtime, dispatch a transaction with the compartment's
 
 ```kotlin
 // Switch from Python to JavaScript
-view.dispatch(TransactionSpec(
+session.dispatch(TransactionSpec(
     effects = listOf(
         languageCompartment.reconfigure(javascript())
     )
@@ -50,16 +47,14 @@ A compartment can also wrap a feature you want to enable/disable:
 val lineNumberCompartment = Compartment()
 
 // Start with line numbers on
-val state = EditorState.create(EditorStateConfig(
-    extensions = ExtensionList(listOf(
-        lineNumberCompartment.of(lineNumbers),
-        // ...
-    ))
-))
+val session = rememberEditorSession(
+    doc = "...",
+    extensions = lineNumberCompartment.of(lineNumbers) + // ...
+)
 
 // Toggle off — replace with an empty extension list
-fun toggleLineNumbers(view: EditorSession, enabled: Boolean) {
-    view.dispatch(TransactionSpec(
+fun toggleLineNumbers(session: EditorSession, enabled: Boolean) {
+    session.dispatch(TransactionSpec(
         effects = listOf(
             lineNumberCompartment.reconfigure(
                 if (enabled) lineNumbers
@@ -80,16 +75,14 @@ import com.monkopedia.kodemirror.themonedark.oneDark
 
 val themeCompartment = Compartment()
 
-val state = EditorState.create(EditorStateConfig(
-    extensions = ExtensionList(listOf(
-        themeCompartment.of(oneDark),
-        // ...
-    ))
-))
+val session = rememberEditorSession(
+    doc = "...",
+    extensions = themeCompartment.of(oneDark) + // ...
+)
 
 // Switch to light theme
-fun switchToLight(view: EditorSession) {
-    view.dispatch(TransactionSpec(
+fun switchToLight(session: EditorSession) {
+    session.dispatch(TransactionSpec(
         effects = listOf(
             themeCompartment.reconfigure(editorTheme.of(lightEditorTheme))
         )

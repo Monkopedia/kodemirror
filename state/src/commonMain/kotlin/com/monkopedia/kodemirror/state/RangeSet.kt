@@ -1471,6 +1471,43 @@ private fun findMinIndex(value: List<RangeValue>, array: List<Int>): Int {
 }
 
 /**
+ * Iterate over all ranges in this set in order, calling [action] for each.
+ */
+fun <T : RangeValue> RangeSet<T>.forEach(action: (Range<T>) -> Unit) {
+    val cursor = iter()
+    while (cursor.value != null) {
+        action(Range.create(cursor.from, cursor.to, cursor.value!!))
+        cursor.next()
+    }
+}
+
+/**
+ * Return a [Sequence] of all [Range]s in this set, in order.
+ */
+fun <T : RangeValue> RangeSet<T>.asSequence(): Sequence<Range<T>> = sequence {
+    val cursor = iter()
+    while (cursor.value != null) {
+        yield(Range.create(cursor.from, cursor.to, cursor.value!!))
+        cursor.next()
+    }
+}
+
+/**
+ * Return a new [RangeSet] containing only the ranges that match [predicate].
+ */
+fun <T : RangeValue> RangeSet<T>.filter(
+    predicate: (Range<T>) -> Boolean
+): RangeSet<T> {
+    val builder = RangeSetBuilder<T>()
+    forEach { range ->
+        if (predicate(range)) {
+            builder.add(range.from, range.to, range.value)
+        }
+    }
+    return builder.finish()
+}
+
+/**
  * Build a [RangeSet] using the [RangeSetBuilder] DSL.
  *
  * ```kotlin
@@ -1482,6 +1519,5 @@ private fun findMinIndex(value: List<RangeValue>, array: List<Int>): Int {
  *
  * Ranges must be added in sorted order (by `from` position).
  */
-inline fun <T : RangeValue> rangeSetOf(
-    block: RangeSetBuilder<T>.() -> Unit
-): RangeSet<T> = RangeSetBuilder<T>().apply(block).finish()
+inline fun <T : RangeValue> rangeSetOf(block: RangeSetBuilder<T>.() -> Unit): RangeSet<T> =
+    RangeSetBuilder<T>().apply(block).finish()

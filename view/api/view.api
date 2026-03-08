@@ -753,7 +753,9 @@ public final class com/monkopedia/kodemirror/view/ViewPlugin {
 public final class com/monkopedia/kodemirror/view/ViewPlugin$Companion {
 	public final fun define (Lcom/monkopedia/kodemirror/view/PluginSpec;)Lcom/monkopedia/kodemirror/view/ViewPlugin;
 	public final fun define (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/kodemirror/view/ViewPlugin;
+	public final fun define (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/kodemirror/view/ViewPlugin;
 	public static synthetic fun define$default (Lcom/monkopedia/kodemirror/view/ViewPlugin$Companion;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/view/ViewPlugin;
+	public static synthetic fun define$default (Lcom/monkopedia/kodemirror/view/ViewPlugin$Companion;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/view/ViewPlugin;
 	public final fun fromClass (Lkotlin/jvm/functions/Function0;)Lcom/monkopedia/kodemirror/view/ViewPlugin;
 }
 

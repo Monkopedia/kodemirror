@@ -45,13 +45,17 @@ class Rule internal constructor(
     val tags: List<Tag>,
     internal val mode: Mode,
     val context: List<String>?,
-    var next: Rule? = null
+    next: Rule? = null
 ) {
+    /** The next rule in the chain, or null if this is the last rule. */
+    var next: Rule? = next
+        internal set
+
     val opaque: Boolean get() = mode == Mode.Opaque
     val inherit: Boolean get() = mode == Mode.Inherit
     val depth: Int get() = context?.size ?: 0
 
-    fun sort(other: Rule?): Rule {
+    internal fun sort(other: Rule?): Rule {
         if (other == null || other.depth < this.depth) {
             this.next = other
             return this

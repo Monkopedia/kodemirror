@@ -10,12 +10,8 @@ The simplest gutter is the built-in line number gutter:
 ```kotlin
 import com.monkopedia.kodemirror.view.lineNumbers
 
-val state = EditorState.create(EditorStateConfig(
-    extensions = ExtensionList(listOf(
-        lineNumbers,
-        // ...
-    ))
-))
+// Add to your extensions:
+basicSetup + lineNumbers
 ```
 
 `lineNumbers` is a top-level `Extension` property — just add it to your
@@ -124,11 +120,7 @@ Highlight the gutter for the current line:
 ```kotlin
 import com.monkopedia.kodemirror.view.highlightActiveLineGutter
 
-val extensions = ExtensionList(listOf(
-    lineNumbers,
-    highlightActiveLineGutter,
-    // ...
-))
+lineNumbers + highlightActiveLineGutter + // ...
 ```
 
 ## Related API

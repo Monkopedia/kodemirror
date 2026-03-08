@@ -91,6 +91,25 @@ class ViewPlugin<V : PluginValue>(val spec: PluginSpec<V>) {
             configure: PluginSpec<V>.() -> PluginSpec<V> = { this }
         ): ViewPlugin<V> = ViewPlugin(PluginSpec(create = create).configure())
 
+        /**
+         * Define a plugin with direct parameter overloads, avoiding the
+         * `configure = { copy(...) }` pattern.
+         *
+         * ```kotlin
+         * val myPlugin = ViewPlugin.define(
+         *     create = { session -> MyPlugin(session) },
+         *     decorations = { plugin -> plugin.decorations }
+         * )
+         * ```
+         */
+        fun <V : PluginValue> define(
+            create: (EditorSession) -> V,
+            provide: ((ViewPlugin<V>) -> Extension)? = null,
+            decorations: ((V) -> DecorationSet)? = null
+        ): ViewPlugin<V> = ViewPlugin(
+            PluginSpec(create = create, provide = provide, decorations = decorations)
+        )
+
         /** Define a plugin from a spec. */
         fun <V : PluginValue> define(spec: PluginSpec<V>): ViewPlugin<V> = ViewPlugin(spec)
 

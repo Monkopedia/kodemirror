@@ -36,13 +36,8 @@ Enable multi-cursor support with the `allowMultipleSelections` facet,
 then create selections with `EditorSelection.create()`:
 
 ```kotlin
-// Enable in state config
-val state = EditorState.create(EditorStateConfig(
-    extensions = ExtensionList(listOf(
-        allowMultipleSelections.of(true),
-        // ...
-    ))
-))
+// Add to your extensions:
+basicSetup + allowMultipleSelections.of(true)
 
 // Set multiple cursors
 view.dispatch(TransactionSpec(

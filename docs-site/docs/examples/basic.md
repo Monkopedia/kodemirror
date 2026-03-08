@@ -4,30 +4,18 @@ A minimal Kodemirror editor with common features enabled.
 
 ## Minimal editor
 
-The simplest possible editor needs an `EditorState` and the `EditorSession`
-composable:
+The simplest possible editor needs `rememberEditorSession` and the
+`KodeMirror` composable:
 
 ```kotlin
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.monkopedia.kodemirror.state.*
-import com.monkopedia.kodemirror.view.EditorSession
+import com.monkopedia.kodemirror.view.*
 
 @Composable
 fun MinimalEditor() {
-    var state by remember {
-        mutableStateOf(
-            EditorState.create(EditorStateConfig(
-                doc = "Hello, world!".asDoc()
-            ))
-        )
-    }
-
-    EditorSession(
-        state = state,
-        onUpdate = { tr -> state = tr.state },
-        modifier = Modifier.fillMaxSize()
-    )
+    val session = rememberEditorSession(doc = "Hello, world!")
+    KodeMirror(session = session, modifier = Modifier.fillMaxSize())
 }
 ```
 
@@ -44,33 +32,27 @@ import com.monkopedia.kodemirror.commands.*
 import com.monkopedia.kodemirror.language.*
 import com.monkopedia.kodemirror.lang.javascript.javascript
 import com.monkopedia.kodemirror.search.highlightSelectionMatches
+import com.monkopedia.kodemirror.state.plus
 import com.monkopedia.kodemirror.view.*
 
 @Composable
 fun FullEditor() {
-    var state by remember {
-        mutableStateOf(
-            EditorState.create(EditorStateConfig(
-                doc = "function hello() {\n  return \"world\"\n}\n".asDoc(),
-                extensions = ExtensionList(listOf(
-                    lineNumbers,
-                    highlightActiveLine,
-                    highlightSpecialChars,
-                    history(),
-                    bracketMatching(),
-                    highlightSelectionMatches(),
-                    defaultKeymapExtension(),
-                    keymapOf(*indentWithTab.toTypedArray()),
-                    javascript(),
-                    syntaxHighlighting(defaultHighlightStyle)
-                ))
-            ))
-        )
-    }
+    val session = rememberEditorSession(
+        doc = "function hello() {\n  return \"world\"\n}\n",
+        extensions = lineNumbers +
+            highlightActiveLine +
+            highlightSpecialChars +
+            history() +
+            bracketMatching() +
+            highlightSelectionMatches() +
+            defaultKeymapExtension() +
+            keymapOf(*indentWithTab.toTypedArray()) +
+            javascript() +
+            syntaxHighlighting(defaultHighlightStyle)
+    )
 
-    EditorSession(
-        state = state,
-        onUpdate = { tr -> state = tr.state },
+    KodeMirror(
+        session = session,
         modifier = Modifier.fillMaxSize()
     )
 }

@@ -12,17 +12,15 @@ plugins, compartments, and wrapper types. You pass extensions to
 `EditorStateConfig` when creating state:
 
 ```kotlin
-val state = EditorState.create(EditorStateConfig(
-    doc = "hello".asDoc(),
-    extensions = ExtensionList(listOf(
-        EditorState.tabSize.of(2),
-        myStateField,
+val session = rememberEditorSession(
+    doc = "hello",
+    extensions = EditorState.tabSize.of(2) +
+        myStateField +
         myViewPlugin.asExtension()
-    ))
-))
+)
 ```
 
-`ExtensionList` wraps a list of extensions. Extensions can be nested
+Extensions compose using the `+` operator. They can be nested
 arbitrarily — the system flattens them.
 
 ## Facets
@@ -402,11 +400,8 @@ Here is how the search extension composes these primitives:
 
 ```kotlin
 fun search(): Extension {
-    return ExtensionList(listOf(
-        // State fields to track panel and query state
-        searchQueryField,
-        searchPanelOpenField,
-
+    return searchQueryField +
+        searchPanelOpenField +
         // Computed facet — show/hide the search panel
         showPanels.compute(
             listOf(Slot.FieldSlot(searchPanelOpenField))
@@ -414,8 +409,7 @@ fun search(): Extension {
             if (state.field(searchPanelOpenField))
                 listOf(Panel(top = true, content = @Composable { SearchPanel() }))
             else emptyList()
-        },
-
+        } +
         // View plugin with decorations for match highlighting
         ViewPlugin.define(
             create = { view -> SearchHighlightPlugin(view.state) },
@@ -425,11 +419,9 @@ fun search(): Extension {
                         ?: RangeSet.empty()
                 })
             }
-        ).asExtension(),
-
+        ).asExtension() +
         // Keybindings
         keymap.of(searchKeymap)
-    ))
 }
 ```
 

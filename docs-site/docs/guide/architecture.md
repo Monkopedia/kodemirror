@@ -117,15 +117,10 @@ Behavior is added to the editor through `Extension` values passed to
 of extensions, and the system flattens them during configuration:
 
 ```kotlin
-val state = EditorState.create(EditorStateConfig(
-    doc = "fun main() {}".asDoc(),
-    extensions = ExtensionList(listOf(
-        javascript(),
-        oneDark,
-        search(),
-        keymap.of(defaultKeymap)
-    ))
-))
+val session = rememberEditorSession(
+    doc = "fun main() {}",
+    extensions = javascript() + oneDark + search() + keymap.of(defaultKeymap)
+)
 ```
 
 The four main extension primitives are:

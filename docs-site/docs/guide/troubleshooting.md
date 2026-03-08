@@ -57,9 +57,10 @@ val myField = StateField.define(StateFieldSpec(
 ))
 
 // Include the field in extensions
-val state = EditorState.create(EditorStateConfig(
-    extensions = ExtensionList(listOf(myField))
-))
+val session = rememberEditorSession(
+    doc = "...",
+    extensions = myField + // ... other extensions
+)
 
 // Now this works
 state.field(myField)

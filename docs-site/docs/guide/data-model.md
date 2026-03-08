@@ -331,11 +331,7 @@ and all extension-provided values.
 val state = EditorState.create(EditorStateConfig(
     doc = "fun main() {}".asDoc(),
     selection = SelectionSpec.CursorSpec(0),
-    extensions = ExtensionList(listOf(
-        EditorState.tabSize.of(2),
-        javascript(),
-        oneDark
-    ))
+    extensions = EditorState.tabSize.of(2) + javascript() + oneDark
 ))
 ```
 

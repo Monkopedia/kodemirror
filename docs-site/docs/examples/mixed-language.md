@@ -95,9 +95,7 @@ val htmlLanguage = LRLanguage.define(
 
 fun html(): LanguageSupport = LanguageSupport(
     language = htmlLanguage,
-    support = ExtensionList(listOf(
-        // supporting extensions for JS, CSS, etc.
-    ))
+    // supporting extensions for JS, CSS, etc.
 )
 ```
 

@@ -38,8 +38,7 @@ Now register an inverted-effects provider so that undoing a transaction
 that added +1 will add -1:
 
 ```kotlin
-val counterExtension = ExtensionList(listOf(
-    counterField,
+val counterExtension = counterField +
     invertedEffects.of { tr ->
         val inverted = mutableListOf<StateEffect<*>>()
         for (effect in tr.effects) {
@@ -50,7 +49,6 @@ val counterExtension = ExtensionList(listOf(
         }
         inverted
     }
-))
 ```
 
 When the history undoes a transaction that carried `addToCounter.of(1)`,

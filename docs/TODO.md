@@ -150,7 +150,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
 - These wrap `dispatch(TransactionSpec(...))` internally.
 - **File:** `view/src/commonMain/kotlin/.../view/EditorSession.kt`
 
-### 2. Add `rememberMaterialEditorTheme()` composable
+### 2. [DONE] Add `rememberMaterialEditorTheme()` composable
 - **Effort:** < 1 day | **Source:** Frontend DX
 - The existing `editorThemeFromColors()` requires manually extracting Material colors.
   Add a `@Composable` function that reads `MaterialTheme.colorScheme` automatically:
@@ -179,7 +179,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
 - Uses `EditorSession.updateListener` with `update.selectionSet` check.
 - **File:** `view/src/commonMain/kotlin/.../view/EditorSession.kt`
 
-### 5. Modernize docs: extension composition and API patterns
+### 5. [DONE] Modernize docs: extension composition and API patterns
 - **Effort:** < 1 day | **Source:** Frontend DX, Documentation
 - **Extension composition:** Three ways to combine extensions exist (`+` operator,
   `extensionListOf()`, `ExtensionList(listOf(...))`). Examples mix all three, causing confusion.
@@ -194,7 +194,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
 - **Files:** `docs-site/docs/examples/*.md`, `docs-site/docs/guide/getting-started.md`,
   `docs-site/docs/examples/index.md`, `samples/README.md`
 
-### 6. Fix `Rule.setNext()` mutability
+### 6. [DONE] Fix `Rule.setNext()` mutability
 - **Effort:** < 1 day | **Source:** Architecture
 - `Rule.next` has a public setter in `lezer-highlight`. Rule objects are used in highlighting
   chains and should be immutable after creation. Mutation could cause thread-safety issues
@@ -202,7 +202,11 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
 - Make `Rule.next` immutable. If internal mutation is needed, use a builder or factory pattern.
 - **File:** `lezer-highlight/src/commonMain/kotlin/.../highlight/Highlight.kt`
 
-### 7. Add validation/warnings for common configuration mistakes
+### 7. [BLOCKED] Add validation/warnings for common configuration mistakes
+- **Blocked:** The most useful checks (no language, no keymap, conflicting extensions) require
+  access to facets from `:language` and `:commands` modules. No natural module exists for a
+  cross-cutting diagnostic extension. Could go in `:basic-setup` but that's a batteries-included
+  bundle, not a diagnostic tool. Needs architectural decision on where to place it.
 - **Effort:** 1 day | **Source:** Frontend DX
 - Silent failures make debugging hard. Add optional development-mode warnings for:
   - No language extension added (editor works but no syntax highlighting — not obvious why)
@@ -211,7 +215,12 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
 - Could be a `developmentChecks()` extension that logs warnings, disabled in production.
 - Consider: `logException` / `exceptionSink` facet already exists — use it for warnings.
 
-### 8. Add `@Immutable` annotations for Compose skip optimizations
+### 8. [BLOCKED] Add `@Immutable` annotations for Compose skip optimizations
+- **Blocked:** The key types (`EditorState`, `EditorSelection`, `Text`, `ChangeSet`) are in
+  `:state` which has no Compose dependency. Adding `compose.runtime` just for `@Immutable`
+  annotations would break the pure-Kotlin architecture. Only `EditorTheme` in `:view` could
+  be annotated directly. Alternative: use a Compose compiler stability configuration file.
+  Needs design decision.
 - **Effort:** < 1 day | **Source:** Architecture, Kotlin Ergonomics
 - Annotate `EditorState`, `EditorSelection`, `EditorTheme`, `Text`, `ChangeSet` etc.
   with `@Immutable` to enable Compose recomposition skipping.
@@ -222,7 +231,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
 
 ## Priority 2 — Medium Impact, Ergonomics
 
-### 9. Simplify `StateField`/`StateEffect` boilerplate for common patterns
+### 9. [DONE] Simplify `StateField`/`StateEffect` boilerplate for common patterns
 - **Effort:** 1 day | **Source:** Kotlin Ergonomics, Frontend DX
 - Common patterns like "toggle a boolean", "maintain a set of values by effect", or "count
   occurrences" require 10+ lines of StateField + StateEffect wiring. Add helpers:
@@ -236,7 +245,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
   ```
 - **File:** `state/src/commonMain/kotlin/.../state/Facet.kt` or new `FieldHelpers.kt`
 
-### 10. Add `ViewPlugin` convenience factory overloads
+### 10. [DONE] Add `ViewPlugin` convenience factory overloads
 - **Effort:** < 1 day | **Source:** Kotlin Ergonomics
 - The current `ViewPlugin.define(PluginSpec(...))` pattern requires wrapping in a spec.
   Add direct parameter overloads:

@@ -9,13 +9,10 @@ Enable autocompletion by adding the `autocompletion()` extension:
 
 ```kotlin
 import com.monkopedia.kodemirror.autocomplete.*
+import com.monkopedia.kodemirror.state.plus
 
-val state = EditorState.create(EditorStateConfig(
-    extensions = ExtensionList(listOf(
-        autocompletion(),
-        // ...
-    ))
-))
+// Add to your extensions:
+basicSetup + autocompletion()
 ```
 
 ## Custom completion source

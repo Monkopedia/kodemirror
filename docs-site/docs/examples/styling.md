@@ -84,10 +84,7 @@ syntaxHighlighting(myHighlighting)
 A complete theme extension bundles both:
 
 ```kotlin
-val catppuccin = ExtensionList(listOf(
-    editorTheme.of(myTheme),
-    syntaxHighlighting(myHighlighting)
-))
+val catppuccin = editorTheme.of(myTheme) + syntaxHighlighting(myHighlighting)
 ```
 
 This is the same pattern the `oneDark` extension uses.

@@ -42,5 +42,11 @@ complete Kotlin snippets adapted from the upstream
 - [Inverted Effects](inverted-effect.md) — Undo/redo with state effects
 - [Internationalization](translate.md) — Translating UI strings
 
+## Complete sample
+
+- [Sample Editor](https://github.com/nicemonk/kodemirror/tree/main/samples/editor) —
+  A full working Compose Desktop application with language switching,
+  theme selection, and Material Design integration
+
 See also the [API Reference](../reference/index.md) for generated
 KDoc documentation of every module.

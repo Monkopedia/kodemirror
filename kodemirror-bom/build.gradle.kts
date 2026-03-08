@@ -49,6 +49,7 @@ dependencies {
 
         // Themes
         api(project(":theme-one-dark"))
+        api(project(":material-theme"))
 
         // Convenience bundles
         api(project(":basic-setup"))

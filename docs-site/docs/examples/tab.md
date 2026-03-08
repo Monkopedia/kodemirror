@@ -12,12 +12,8 @@ that maps Tab to `indentMore` and Shift-Tab to `indentLess`:
 import com.monkopedia.kodemirror.commands.indentWithTab
 import com.monkopedia.kodemirror.view.keymapOf
 
-val state = EditorState.create(EditorStateConfig(
-    extensions = ExtensionList(listOf(
-        keymapOf(*indentWithTab.toTypedArray()),
-        // ...
-    ))
-))
+// Add to your extensions:
+basicSetup + keymapOf(*indentWithTab.toTypedArray())
 ```
 
 ## What indentWithTab does

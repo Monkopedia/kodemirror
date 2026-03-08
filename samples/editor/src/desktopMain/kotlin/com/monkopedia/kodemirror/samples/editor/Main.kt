@@ -40,6 +40,7 @@ import com.monkopedia.kodemirror.lang.javascript.javascript
 import com.monkopedia.kodemirror.lang.markdown.markdown
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.plus
+import com.monkopedia.kodemirror.materialtheme.rememberMaterialEditorTheme
 import com.monkopedia.kodemirror.themonedark.oneDark
 import com.monkopedia.kodemirror.view.KodeMirror
 import com.monkopedia.kodemirror.view.onChange
@@ -109,6 +110,14 @@ fun main() = application {
                             doc = SAMPLE_JS,
                             extensions = basicSetup + javascript().extension + oneDark
                         )
+                        Tab.MATERIAL -> {
+                            val materialTheme = rememberMaterialEditorTheme()
+                            EditorPane(
+                                doc = SAMPLE_JS,
+                                extensions = basicSetup + javascript().extension +
+                                    materialTheme
+                            )
+                        }
                     }
                 }
             }
@@ -119,7 +128,8 @@ fun main() = application {
 enum class Tab(val label: String) {
     JAVASCRIPT("JavaScript"),
     MARKDOWN("Markdown"),
-    DARK("Dark Theme")
+    DARK("Dark Theme"),
+    MATERIAL("Material Theme")
 }
 
 @Composable

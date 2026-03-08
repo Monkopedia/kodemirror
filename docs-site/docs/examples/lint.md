@@ -30,12 +30,8 @@ val myLinter = linter { view ->
     diagnostics
 }
 
-val state = EditorState.create(EditorStateConfig(
-    extensions = ExtensionList(listOf(
-        myLinter,
-        // ...
-    ))
-))
+// Add to your extensions:
+basicSetup + myLinter
 ```
 
 ## Diagnostic properties

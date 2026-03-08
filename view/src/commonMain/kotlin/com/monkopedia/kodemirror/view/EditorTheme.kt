@@ -20,6 +20,7 @@
 
 package com.monkopedia.kodemirror.view
 
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.ExperimentalTextApi
@@ -36,6 +37,7 @@ private val editorFontFamily = FontFamily(SystemFont("DejaVu Sans Mono"))
  * Color/style tokens for the editor.  Passed through a [CompositionLocal] so
  * every composable in the editor tree can read them without prop-drilling.
  */
+@Immutable
 data class EditorTheme(
     /** Background color of the editor container. */
     val background: Color = Color(0xFF282C34),

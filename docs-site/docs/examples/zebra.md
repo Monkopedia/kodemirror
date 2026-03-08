@@ -53,13 +53,11 @@ val zebraStripes: Extension = ViewPlugin.fromClass(::ZebraPlugin)
 ## Using it
 
 ```kotlin
-val state = EditorState.create(EditorStateConfig(
-    doc = "Line 1\nLine 2\nLine 3\nLine 4\nLine 5\nLine 6".asDoc(),
-    extensions = ExtensionList(listOf(
-        zebraStripes,
-        // ...
-    ))
-))
+val session = rememberEditorSession(
+    doc = "Line 1\nLine 2\nLine 3\nLine 4\nLine 5\nLine 6",
+    extensions = basicSetup + zebraStripes
+)
+KodeMirror(session = session)
 ```
 
 Even-numbered lines get a subtle gray background.
@@ -73,10 +71,8 @@ val stripeFacet = Facet.define(
     combine = { values: List<Int> -> values.firstOrNull() ?: 2 }
 )
 
-fun zebraStripes(step: Int = 2): Extension = ExtensionList(listOf(
-    stripeFacet.of(step),
-    ViewPlugin.fromClass(::ConfigurableZebraPlugin).asExtension()
-))
+fun zebraStripes(step: Int = 2): Extension =
+    stripeFacet.of(step) + ViewPlugin.fromClass(::ConfigurableZebraPlugin).asExtension()
 
 class ConfigurableZebraPlugin(view: EditorSession) : PluginValue, DecorationSource {
     private var step = view.state.facet(stripeFacet)
