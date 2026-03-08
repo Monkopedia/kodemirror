@@ -17,10 +17,18 @@ Multiplatform port of CodeMirror 6.
   common extension
 - [Migrating from CodeMirror 6](migration.md) — Porting patterns,
   module mapping, and key API differences for JS developers
+- [Extension Architecture](extension-architecture.md) — When to use
+  StateField vs Facet vs ViewPlugin, ordering, and composition
 - [Collaborative Editing](collaboration.md) — Real-time collaboration
   with operational transformation
 - [Merge and Diff Views](merge.md) — Side-by-side and unified diff
   views for comparing documents
+- [Performance](performance.md) — Virtualization, decorations, parser
+  performance, and large document tips
+- [Testing](testing.md) — Patterns for testing commands, state fields,
+  completions, and linters
+- [Language Module Guide](lang-module-guide.md) — How to create a
+  `:lang-*` module for a new language
 - [Troubleshooting](troubleshooting.md) — Common issues and solutions
 
 See also the [API Reference](../reference/index.md) for generated

@@ -190,12 +190,14 @@ class EditorStateTest {
             StateFieldSpec<Wrapper>(
                 create = { Wrapper(0) },
                 update = { v, _ -> Wrapper(v.n + 1) },
-                toJSON = { v, _ -> mapOf("number" to v.n) },
-                fromJSON = { j, _ ->
-                    @Suppress("UNCHECKED_CAST")
-                    val map = j as Map<String, Any?>
-                    Wrapper((map["number"] as Number).toInt())
-                }
+                serialization = FieldSerialization.Custom(
+                    toJSON = { v, _ -> mapOf("number" to v.n) },
+                    fromJSON = { j, _ ->
+                        @Suppress("UNCHECKED_CAST")
+                        val map = j as Map<String, Any?>
+                        Wrapper((map["number"] as Number).toInt())
+                    }
+                )
             )
         )
         val fields = mapOf("f" to field)

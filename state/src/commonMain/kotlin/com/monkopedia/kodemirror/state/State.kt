@@ -327,9 +327,10 @@ class EditorState private constructor(
                 if (config.address[value.id] != null) {
                     @Suppress("UNCHECKED_CAST")
                     val sf = value as StateField<Any?>
-                    result[prop] = sf.spec.toJSON?.invoke(
-                        field(sf), this
-                    )
+                    val ser = sf.spec.serialization
+                    if (ser is FieldSerialization.Custom) {
+                        result[prop] = ser.toJSON(field(sf), this)
+                    }
                 }
             }
         }
@@ -482,12 +483,14 @@ class EditorState private constructor(
                         val value = json[prop]
                         val sf =
                             field as StateField<Any?>
-                        fieldInit.add(
-                            sf.init { state ->
-                                sf.spec.fromJSON!!
-                                    .invoke(value, state)
-                            }
-                        )
+                        val ser = sf.spec.serialization
+                        if (ser is FieldSerialization.Custom) {
+                            fieldInit.add(
+                                sf.init { state ->
+                                    ser.fromJSON(value, state)
+                                }
+                            )
+                        }
                     }
                 }
             }

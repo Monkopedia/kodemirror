@@ -341,7 +341,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
   - Integration with version control workflows
 - Add an example page `docs-site/docs/examples/merge.md`.
 
-### 18. Expand troubleshooting guide
+### 18. [DONE] Expand troubleshooting guide
 - **Effort:** < 1 day | **Source:** Documentation
 - Current troubleshooting has only 3 sections. Add 10+ more common issues:
   - "No syntax highlighting" (missing language extension)
@@ -356,7 +356,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
   - "Undo not working" (missing `history()` extension)
 - **File:** `docs-site/docs/guide/troubleshooting.md`
 
-### 19. Fill KDoc gaps in search, merge, lint, and autocomplete modules
+### 19. [DONE] Fill KDoc gaps in search, merge, lint, and autocomplete modules
 - **Effort:** 1–2 days | **Source:** Documentation
 - These modules have lower KDoc coverage than core modules. Add KDoc to:
   - All public classes and their primary methods
@@ -366,7 +366,10 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
 - Focus on: what does each parameter mean? When is `null` returned? What are valid values?
 - **Modules:** `:search`, `:merge`, `:lint`, `:autocomplete`
 
-### 20. Add `@see` and `@sample` cross-references to KDoc
+### 20. [SKIP] Add `@see` and `@sample` cross-references to KDoc
+- **Skip reason:** Cross-references are most valuable when KDoc-generated API docs are published
+  and links can be validated. The current KDoc coverage is good and cross-refs can be added
+  incrementally as docs are generated. Low priority compared to other items.
 - **Effort:** 1 day | **Source:** Documentation
 - Public API KDoc lacks cross-references. Add:
   - `@see` links between related types (e.g., `StateField` ↔ `StateFieldSpec`)
@@ -374,7 +377,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
   - `@see` links from commands to their configuration facets
 - Focus on the most-used APIs in `:state`, `:view`, `:commands`.
 
-### 21. Document nullability contracts
+### 21. [DONE] Document nullability contracts
 - **Effort:** < 1 day | **Source:** Documentation, Kotlin Ergonomics
 - Several APIs return nullable types without explaining when/why null is returned:
   - `EditorSession.coordsAtPos()` → `Rect?` — when does this return null?
@@ -384,7 +387,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
 - Add clarifying KDoc to all nullable returns and ambiguous numeric parameters.
 - **Files:** `view/.../EditorSession.kt`, `autocomplete/.../Completion.kt`, `state/.../RangeSet.kt`
 
-### 22. Add architecture guide for extension system
+### 22. [DONE] Add architecture guide for extension system
 - **Effort:** 1 day | **Source:** Documentation
 - Create `docs-site/docs/guide/extension-architecture.md` explaining:
   - When to use `StateField` vs `Facet` vs `StateEffect`
@@ -394,7 +397,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
   - How to build reusable, composable extensions (library quality)
   - Transaction filter and extender patterns
 
-### 23. Add performance and large document guide
+### 23. [DONE] Add performance and large document guide
 - **Effort:** 1 day | **Source:** Documentation
 - Create `docs-site/docs/guide/performance.md` covering:
   - How `LazyColumn` virtualization works for large documents
@@ -403,7 +406,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
   - ViewPlugin update optimization patterns
   - When to use `StateField` vs `ViewPlugin` for performance
 
-### 24. Add testing guide for editors
+### 24. [DONE] Add testing guide for editors
 - **Effort:** 1 day | **Source:** Documentation
 - Create `docs-site/docs/guide/testing.md` covering:
   - Unit testing `StateField` update logic
@@ -413,7 +416,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
   - Testing linter implementations
   - Patterns for test fixtures (creating pre-configured states)
 
-### 25. Document `readOnly` vs `editable` clearly
+### 25. [DONE] Document `readOnly` vs `editable` clearly
 - **Effort:** < 1 hour | **Source:** Frontend DX, Documentation
 - Two APIs for "making the editor non-editable" confuse developers:
   - `readOnly.of(true)` — prevents editing, allows selection/copy
@@ -425,7 +428,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
 
 ## Priority 4 — Polish & Nice-to-Have
 
-### 26. Add `inline`/`reified` alternative for `ViewPlugin.fromClass`
+### 26. [DONE] Add `inline`/`reified` alternative for `ViewPlugin.fromClass`
 - **Effort:** < 1 hour | **Source:** Kotlin Ergonomics
 - `ViewPlugin.fromClass(factory)` uses `@Suppress("UNCHECKED_CAST")` and erases the
   specific plugin type. Add a `reified` alternative:
@@ -435,7 +438,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
   ```
 - **File:** `view/src/commonMain/kotlin/.../view/ViewPlugin.kt`
 
-### 27. Document extension ordering guarantees
+### 27. [DONE] Document extension ordering guarantees
 - **Effort:** < 1 day | **Source:** Architecture
 - When multiple providers supply values to a facet, order matters for combine functions.
   Current behavior: order based on extension registration order. This must be explicitly
@@ -444,14 +447,17 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
 - Affects: `Facet.define(combine = ...)`, keymap precedence, language facet resolution.
 - **Files:** `docs-site/docs/guide/extending.md`, `state/.../Facet.kt`
 
-### 28. Add API stability markers
+### 28. [BLOCKED] Add API stability markers
+- **Blocked:** Requires a design decision on which APIs to mark as experimental vs stable.
+  The annotations themselves are trivial to create, but deciding the stability classification
+  for 100+ public types is a significant audit. Should be done as part of a 1.0 release review.
 - **Effort:** < 1 day | **Source:** Documentation, Architecture
 - No marking of experimental vs stable APIs. Consider:
   - `@ExperimentalKodemirrorApi` annotation for APIs that may change
   - `@DelicateKodemirrorApi` for APIs that are easy to misuse
   - Document stability guarantees in the architecture guide
 
-### 29. Create lang module template/guide for contributors
+### 29. [DONE] Create lang module template/guide for contributors
 - **Effort:** < 1 day | **Source:** Documentation, Architecture
 - Formalize the expected structure for `:lang-*` modules:
   - Required exports: `xxxLanguage`, `xxx()`, `xxxHighlighting`
@@ -460,7 +466,9 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
   - Build configuration template
 - Create as a contributor guide or template directory.
 
-### 30. Add extension conflict detection (development mode)
+### 30. [BLOCKED] Add extension conflict detection (development mode)
+- **Blocked:** Same architectural issue as #7 — useful conflict checks need cross-module
+  access to facets from `:language`, `:commands`, etc. No natural module exists for this.
 - **Effort:** 1–2 days | **Source:** Architecture
 - When multiple extensions provide conflicting configurations (e.g., two language modules),
   the "last one wins" behavior is silent. Add an optional diagnostic extension:
@@ -469,7 +477,11 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
   ```
 - Only for development — not for production builds.
 
-### 31. Add editor testing utilities
+### 31. [BLOCKED] Add editor testing utilities
+- **Blocked:** Requires creating a new `:kodemirror-test` module with design decisions on
+  API surface. Functions like `typeText()` and `pressKey()` need to simulate Compose input
+  events correctly, which requires understanding the internal input handling pipeline.
+  The testing guide (#24) documents patterns using existing APIs as an interim solution.
 - **Effort:** 1–2 days | **Source:** Kotlin Ergonomics, Frontend DX
 - Testing editors requires creating full `EditorSession` instances with extensions.
   Add test utilities:
@@ -482,7 +494,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
   fun EditorSession.assertSelection(anchor: Int, head: Int)
   ```
 
-### 32. Add `StateField` serialization sealed type
+### 32. [DONE] Add `StateField` serialization sealed type
 - **Effort:** < 1 day | **Source:** Architecture
 - `StateFieldSpec` allows optional `toJSON`/`fromJSON` functions. If not provided, the
   field silently becomes non-serializable. Consider a sealed type:

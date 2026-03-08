@@ -45,12 +45,18 @@ import com.monkopedia.kodemirror.view.keymap
 
 // ── Snippet field representation ──
 
+/** A named field within an active snippet, spanning [from] to [to] in the document. */
 data class SnippetField(val name: String, val from: Int, val to: Int)
 
+/**
+ * Tracks the currently active snippet insertion — the list of tab-stop
+ * [fields] and the index of the field the cursor is at.
+ */
 data class ActiveSnippet(
     val fields: List<SnippetField>,
     val fieldIndex: Int
 ) {
+    /** The field the cursor is currently on, or `null` if [fieldIndex] is out of bounds. */
     val currentField: SnippetField? get() = fields.getOrNull(fieldIndex)
 }
 
@@ -60,6 +66,7 @@ private val setActiveSnippet: StateEffectType<ActiveSnippet?> = StateEffect.defi
 
 // ── State field ──
 
+/** State field that holds the currently active snippet, or `null` when no snippet is active. */
 val snippetState: StateField<ActiveSnippet?> = StateField.define(
     StateFieldSpec(
         create = { null },
@@ -273,6 +280,7 @@ val clearSnippet: (EditorSession) -> Boolean = { view ->
 
 // ── Keymap ──
 
+/** Default keymap for snippet field navigation: Tab, Shift-Tab, and Escape. */
 val snippetKeymap: List<KeyBinding> = listOf(
     KeyBinding(key = "Tab", run = nextSnippetField),
     KeyBinding(key = "Shift-Tab", run = prevSnippetField),

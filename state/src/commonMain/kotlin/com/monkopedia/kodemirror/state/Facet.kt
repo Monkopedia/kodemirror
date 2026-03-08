@@ -529,13 +529,41 @@ class StateField<Value> private constructor(
     )
 }
 
+/**
+ * Describes how a [StateField]'s value is serialized to/from JSON.
+ *
+ * Use [FieldSerialization.none] (the default) when the field does not need serialization,
+ * or [FieldSerialization.Custom] to provide conversion functions.
+ */
+sealed interface FieldSerialization<V> {
+    /**
+     * Custom serialization with explicit [toJSON] and [fromJSON] conversion functions.
+     *
+     * Both functions receive the [EditorState] for context (e.g. to resolve facets).
+     */
+    data class Custom<V>(
+        val toJSON: (V, EditorState) -> Any?,
+        val fromJSON: (Any?, EditorState) -> V
+    ) : FieldSerialization<V>
+
+    /** The field is not serializable. This is the default. */
+    class None<V> internal constructor() : FieldSerialization<V>
+
+    companion object {
+        private val NONE = None<Any?>()
+
+        /** Returns a [FieldSerialization] indicating the field is not serializable. */
+        @Suppress("UNCHECKED_CAST")
+        fun <V> none(): FieldSerialization<V> = NONE as FieldSerialization<V>
+    }
+}
+
 data class StateFieldSpec<Value>(
     val create: (EditorState) -> Value,
     val update: (Value, Transaction) -> Value,
     val compare: ((Value, Value) -> Boolean)? = null,
     val provide: ((StateField<Value>) -> Extension)? = null,
-    val toJSON: ((Value, EditorState) -> Any?)? = null,
-    val fromJSON: ((Any?, EditorState) -> Value)? = null
+    val serialization: FieldSerialization<Value> = FieldSerialization.none()
 )
 
 /**
@@ -555,6 +583,7 @@ class StateFieldBuilder<Value> @PublishedApi internal constructor() {
     private var updateFn: ((Value, Transaction) -> Value)? = null
     private var compareFn: ((Value, Value) -> Boolean)? = null
     private var provideFn: ((StateField<Value>) -> Extension)? = null
+    private var serializationVal: FieldSerialization<Value> = FieldSerialization.none()
 
     /** Set the function that creates the initial value for this field. */
     fun create(block: (EditorState) -> Value) {
@@ -576,13 +605,22 @@ class StateFieldBuilder<Value> @PublishedApi internal constructor() {
         provideFn = block
     }
 
+    /** Set custom JSON serialization for this field. */
+    fun serialization(
+        toJSON: (Value, EditorState) -> Any?,
+        fromJSON: (Any?, EditorState) -> Value
+    ) {
+        serializationVal = FieldSerialization.Custom(toJSON, fromJSON)
+    }
+
     @PublishedApi
     internal fun build(): StateFieldSpec<Value> {
         return StateFieldSpec(
             create = requireNotNull(createFn) { "StateField requires a create {} block" },
             update = requireNotNull(updateFn) { "StateField requires an update {} block" },
             compare = compareFn,
-            provide = provideFn
+            provide = provideFn,
+            serialization = serializationVal
         )
     }
 }

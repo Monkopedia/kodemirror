@@ -24,7 +24,8 @@ import kotlin.math.max
 import kotlin.math.min
 
 /**
- * A changed range.
+ * A single changed range between two documents, spanning [fromA]..[toA] in
+ * document A and [fromB]..[toB] in document B.
  */
 data class Change(
     val fromA: Int,
@@ -32,12 +33,18 @@ data class Change(
     val fromB: Int,
     val toB: Int
 ) {
+    /** Return a new [Change] with both ranges shifted by the given offsets. */
     fun offset(offA: Int, offB: Int = offA): Change =
         Change(fromA + offA, toA + offA, fromB + offB, toB + offB)
 }
 
 /**
- * Options passed to diffing functions.
+ * Configuration for the diff algorithm.
+ *
+ * @param scanLimit Controls how many comparisons the algorithm makes before
+ *   falling back to a crude (less precise) match. Default is effectively unlimited.
+ * @param timeout Maximum time in milliseconds to spend diffing (0 = unlimited).
+ * @param override Optional custom diff function that replaces the built-in algorithm.
  */
 data class DiffConfig(
     val scanLimit: Int = 1_000_000_000,

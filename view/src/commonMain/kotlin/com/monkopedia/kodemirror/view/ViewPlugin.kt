@@ -125,5 +125,18 @@ class ViewPlugin<V : PluginValue>(val spec: PluginSpec<V>) {
                 }
             )
         )
+
+        /**
+         * Define a plugin whose value also implements [DecorationSource],
+         * preserving the concrete type [V] in the returned [ViewPlugin].
+         */
+        inline fun <reified V> fromDecorationSource(
+            noinline factory: (EditorSession) -> V
+        ): ViewPlugin<V> where V : PluginValue, V : DecorationSource = ViewPlugin(
+            PluginSpec(
+                create = factory,
+                decorations = { v -> v.decorations }
+            )
+        )
     }
 }

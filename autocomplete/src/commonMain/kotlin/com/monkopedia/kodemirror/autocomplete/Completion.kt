@@ -73,7 +73,7 @@ data class CompletionSection(
  * The result of a completion source query.
  *
  * @param from Start of the text range that completions apply to.
- * @param to End of the text range (defaults to cursor position).
+ * @param to End of the text range. When `null`, defaults to the cursor position.
  * @param options The list of completion options.
  * @param validFor A regex or predicate that, when matching the updated text
  *                 between [from] and the cursor, allows the result to be reused.

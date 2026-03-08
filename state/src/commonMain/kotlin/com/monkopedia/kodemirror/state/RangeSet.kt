@@ -35,12 +35,16 @@ abstract class RangeValue {
     override fun equals(other: Any?): Boolean = this === other
 
     /**
-     * The bias value at the start of the range. Defaults to 0.
+     * The bias value at the start of the range. Determines ordering when
+     * multiple ranges start at the same position: negative values sort
+     * before, positive values sort after. Defaults to 0.
      */
     open val startSide: Int = 0
 
     /**
-     * The bias value at the end of the range. Defaults to 0.
+     * The bias value at the end of the range. Determines ordering when
+     * multiple ranges end at the same position: negative values sort
+     * before, positive values sort after. Defaults to 0.
      */
     open val endSide: Int = 0
 
