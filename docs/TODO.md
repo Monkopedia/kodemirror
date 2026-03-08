@@ -64,7 +64,7 @@ Each item has a status prefix on its heading line:
   CodeMirror upstream provides `basicSetup` as the standard entry point. Bundle: line numbers,
   history, bracket matching, folding, autocompletion, search, default keymap, syntax highlighting.
 
-### 5. Add `kodemirror-bom` Gradle BOM
+### 5. [DONE] Add `kodemirror-bom` Gradle BOM
 > **Decision:** Create BOM now.
 - **Effort:** 1 day | **Source:** Frontend DX
 - Users must manage 6+ separate dependency versions for a basic editor. A Bill of Materials
