@@ -19,24 +19,24 @@
 package com.monkopedia.kodemirror.lang.yaml
 
 import com.monkopedia.kodemirror.lezer.highlight.Tags as t
-import com.monkopedia.kodemirror.lezer.highlight.styleTags
+import com.monkopedia.kodemirror.lezer.highlight.styleTagsList
 
-val yamlHighlighting = styleTags(
+val yamlHighlighting = styleTagsList(
     mapOf(
-        "DirectiveName" to t.keyword,
-        "DirectiveContent" to t.attributeValue,
-        "DirectiveEnd DocEnd" to t.meta,
-        "QuotedLiteral" to t.string,
-        "BlockLiteralHeader" to t.special(t.string),
-        "BlockLiteralContent" to t.content,
-        "Literal" to t.content,
+        "DirectiveName" to listOf(t.keyword),
+        "DirectiveContent" to listOf(t.attributeValue),
+        "DirectiveEnd DocEnd" to listOf(t.meta),
+        "QuotedLiteral" to listOf(t.string),
+        "BlockLiteralHeader" to listOf(t.special(t.string)),
+        "BlockLiteralContent" to listOf(t.content),
+        "Literal" to listOf(t.content),
         "Key/Literal Key/QuotedLiteral" to listOf(t.definition(t.propertyName)),
-        "Anchor Alias" to t.labelName,
-        "Tag" to t.typeName,
-        "Comment" to t.lineComment,
-        ": , -" to t.separator,
-        "?" to t.punctuation,
-        "[ ]" to t.squareBracket,
-        "{ }" to t.brace
+        "Anchor Alias" to listOf(t.labelName),
+        "Tag" to listOf(t.typeName),
+        "Comment" to listOf(t.lineComment),
+        ": , -" to listOf(t.separator),
+        "?" to listOf(t.punctuation),
+        "[ ]" to listOf(t.squareBracket),
+        "{ }" to listOf(t.brace)
     )
 )

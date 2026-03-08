@@ -102,19 +102,22 @@ val ruleNodeProp = NodeProp<Rule>(
  * Associates highlighting [Tag]s with node types via a selector spec.
  *
  * The spec maps node selectors (space-separated names, with optional
- * `/` path syntax) to [Tag]s or lists of [Tag]s.
+ * `/` path syntax) to [Tag]s.
  */
-fun styleTags(spec: Map<String, Any>): NodePropSource<Rule> {
+fun styleTags(spec: Map<String, Tag>): NodePropSource<Rule> =
+    styleTagsImpl(spec.mapValues { (_, v) -> listOf(v) })
+
+/**
+ * Associates highlighting [Tag]s with node types via a selector spec, where each entry maps a
+ * node selector to a list of [Tag]s.
+ *
+ * Prefer the single-tag overload [styleTags] when each selector maps to exactly one tag.
+ */
+fun styleTagsList(spec: Map<String, List<Tag>>): NodePropSource<Rule> = styleTagsImpl(spec)
+
+private fun styleTagsImpl(spec: Map<String, List<Tag>>): NodePropSource<Rule> {
     val byName = mutableMapOf<String, Rule>()
-    for ((prop, value) in spec) {
-        val tagList: List<Tag> = when (value) {
-            is Tag -> listOf(value)
-            is List<*> -> {
-                @Suppress("UNCHECKED_CAST")
-                value as List<Tag>
-            }
-            else -> error("styleTags value must be Tag or List<Tag>")
-        }
+    for ((prop, tagList) in spec) {
         for (part in prop.split(" ")) {
             if (part.isEmpty()) continue
             val pieces = mutableListOf<String>()
@@ -185,10 +188,11 @@ fun getStyleTags(node: SyntaxNodeRef): Rule? {
 // ---- tagHighlighter ----
 
 data class TagStyleRule(
-    // tag: Tag or List<Tag>
-    val tag: Any,
+    val tags: List<Tag>,
     val `class`: String
 )
+
+fun TagStyleRule(tag: Tag, `class`: String): TagStyleRule = TagStyleRule(listOf(tag), `class`)
 
 /**
  * Define a [Highlighter] from an array of tag/class pairs.
@@ -200,13 +204,8 @@ fun tagHighlighter(
 ): Highlighter {
     val map = mutableMapOf<Int, String>()
     for (style in tagRules) {
-        when (val tag = style.tag) {
-            is Tag -> map[tag.id] = style.`class`
-            is List<*> -> {
-                for (t in tag) {
-                    if (t is Tag) map[t.id] = style.`class`
-                }
-            }
+        for (tag in style.tags) {
+            map[tag.id] = style.`class`
         }
     }
     return object : Highlighter {

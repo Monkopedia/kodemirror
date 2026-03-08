@@ -29,10 +29,11 @@ import com.monkopedia.kodemirror.lezer.highlight.tagHighlighter
  * Specification for a tag-to-style mapping in [HighlightStyle.define].
  */
 data class TagStyleSpec(
-    // tag: Tag or List<Tag>
-    val tag: Any,
+    val tags: List<Tag>,
     val style: SpanStyle
 )
+
+fun TagStyleSpec(tag: Tag, style: SpanStyle): TagStyleSpec = TagStyleSpec(listOf(tag), style)
 
 /**
  * A highlight style maps [Tag]s to [SpanStyle]s.
@@ -67,7 +68,7 @@ class HighlightStyle private constructor(
             val tagRules = specs.mapIndexed { index, spec ->
                 val cls = "hl-$index"
                 styleMap[cls] = spec.style
-                TagStyleRule(tag = spec.tag, `class` = cls)
+                TagStyleRule(tags = spec.tags, `class` = cls)
             }
             val delegate = tagHighlighter(tagRules, scope = scope)
             return HighlightStyle(specs, delegate, styleMap)
@@ -104,12 +105,12 @@ class HighlightStyleBuilder @PublishedApi internal constructor() {
 
     /** Map a single [Tag] to a [SpanStyle]. */
     infix fun Tag.styles(style: SpanStyle) {
-        specs.add(TagStyleSpec(tag = this, style = style))
+        specs.add(TagStyleSpec(tags = listOf(this), style = style))
     }
 
     /** Map multiple [Tag]s to the same [SpanStyle]. */
     infix fun List<Tag>.styles(style: SpanStyle) {
-        specs.add(TagStyleSpec(tag = this, style = style))
+        specs.add(TagStyleSpec(tags = this, style = style))
     }
 }
 

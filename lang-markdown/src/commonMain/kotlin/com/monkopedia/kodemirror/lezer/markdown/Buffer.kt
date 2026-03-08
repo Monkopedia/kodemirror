@@ -20,6 +20,7 @@ package com.monkopedia.kodemirror.lezer.markdown
 
 import com.monkopedia.kodemirror.lezer.common.NodeSet
 import com.monkopedia.kodemirror.lezer.common.Tree
+import com.monkopedia.kodemirror.lezer.common.TreeBuildBuffer
 import com.monkopedia.kodemirror.lezer.common.TreeBuildSpec
 
 class Buffer(val nodeSet: NodeSet) {
@@ -42,7 +43,7 @@ class Buffer(val nodeSet: NodeSet) {
     fun finish(type: Int, length: Int): Tree {
         return Tree.build(
             TreeBuildSpec(
-                buffer = content.toList(),
+                buffer = TreeBuildBuffer.ListBuffer(content.toList()),
                 nodeSet = nodeSet,
                 reused = nodes,
                 topID = type,

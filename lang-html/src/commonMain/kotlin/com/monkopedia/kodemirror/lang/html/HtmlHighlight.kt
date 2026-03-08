@@ -19,20 +19,20 @@
 package com.monkopedia.kodemirror.lang.html
 
 import com.monkopedia.kodemirror.lezer.highlight.Tags as t
-import com.monkopedia.kodemirror.lezer.highlight.styleTags
+import com.monkopedia.kodemirror.lezer.highlight.styleTagsList
 
-val htmlHighlighting = styleTags(
+val htmlHighlighting = styleTagsList(
     mapOf(
-        "Text RawText IncompleteTag IncompleteCloseTag" to t.content,
-        "StartTag StartCloseTag SelfClosingEndTag EndTag" to t.angleBracket,
-        "TagName" to t.tagName,
+        "Text RawText IncompleteTag IncompleteCloseTag" to listOf(t.content),
+        "StartTag StartCloseTag SelfClosingEndTag EndTag" to listOf(t.angleBracket),
+        "TagName" to listOf(t.tagName),
         "MismatchedCloseTag/TagName" to listOf(t.tagName, t.invalid),
-        "AttributeName" to t.attributeName,
-        "AttributeValue UnquotedAttributeValue" to t.attributeValue,
-        "Is" to t.definitionOperator,
-        "EntityReference CharacterReference" to t.character,
-        "Comment" to t.blockComment,
-        "ProcessingInst" to t.processingInstruction,
-        "DoctypeDecl" to t.documentMeta
+        "AttributeName" to listOf(t.attributeName),
+        "AttributeValue UnquotedAttributeValue" to listOf(t.attributeValue),
+        "Is" to listOf(t.definitionOperator),
+        "EntityReference CharacterReference" to listOf(t.character),
+        "Comment" to listOf(t.blockComment),
+        "ProcessingInst" to listOf(t.processingInstruction),
+        "DoctypeDecl" to listOf(t.documentMeta)
     )
 )

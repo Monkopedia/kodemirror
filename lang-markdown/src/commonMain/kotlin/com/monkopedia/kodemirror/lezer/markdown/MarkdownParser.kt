@@ -30,7 +30,7 @@ import com.monkopedia.kodemirror.lezer.common.PartialParse
 import com.monkopedia.kodemirror.lezer.common.TextRange
 import com.monkopedia.kodemirror.lezer.common.TreeFragment
 import com.monkopedia.kodemirror.lezer.highlight.Tag
-import com.monkopedia.kodemirror.lezer.highlight.styleTags
+import com.monkopedia.kodemirror.lezer.highlight.styleTagsList
 
 class MarkdownParser(
     val nodeSet: NodeSet,
@@ -74,7 +74,7 @@ class MarkdownParser(
         if (!config.defineNodes.isNullOrEmpty()) {
             val mutableSkip = skipContextMarkup.toMutableMap()
             val nodeTypes = nodeSet.types.toMutableList()
-            var styles: MutableMap<String, Any>? = null
+            var styles: MutableMap<String, List<Tag>>? = null
             for (s in config.defineNodes) {
                 val spec = when (s) {
                     is String -> SimpleNodeSpec(name = s)
@@ -114,17 +114,29 @@ class MarkdownParser(
                 if (style != null) {
                     if (styles == null) styles = mutableMapOf()
                     when (style) {
-                        is Tag -> styles[spec.name] = style
-                        is List<*> -> styles[spec.name] = style
+                        is Tag -> styles[spec.name] = listOf(style)
+                        is List<*> -> {
+                            @Suppress("UNCHECKED_CAST")
+                            styles[spec.name] = style as List<Tag>
+                        }
                         is Map<*, *> -> {
                             @Suppress("UNCHECKED_CAST")
-                            styles.putAll(style as Map<String, Any>)
+                            (style as Map<String, Any>).forEach { (k, v) ->
+                                styles[k] = when (v) {
+                                    is Tag -> listOf(v)
+                                    is List<*> -> {
+                                        @Suppress("UNCHECKED_CAST")
+                                        v as List<Tag>
+                                    }
+                                    else -> emptyList()
+                                }
+                            }
                         }
                     }
                 }
             }
             nodeSet = NodeSet(nodeTypes)
-            if (styles != null) nodeSet = nodeSet.extend(styleTags(styles))
+            if (styles != null) nodeSet = nodeSet.extend(styleTagsList(styles))
             skipContextMarkup = mutableSkip
         }
 

@@ -30,6 +30,8 @@ import com.monkopedia.kodemirror.language.delimitedIndent
 import com.monkopedia.kodemirror.language.foldNodeProp
 import com.monkopedia.kodemirror.language.indentNodeProp
 import com.monkopedia.kodemirror.lezer.common.NestedParse
+import com.monkopedia.kodemirror.lezer.common.ParseOverlay
+import com.monkopedia.kodemirror.lezer.common.ParseOverlayMatch
 import com.monkopedia.kodemirror.lezer.common.SyntaxNodeRef
 import com.monkopedia.kodemirror.lezer.common.parseMixed
 import com.monkopedia.kodemirror.lezer.lr.LRParser
@@ -102,8 +104,12 @@ fun makeJinja(baseLanguage: Language): LRLanguage {
         if (node.type.isTop) {
             NestedParse(
                 parser = baseLanguage.parser,
-                overlay = { child: SyntaxNodeRef ->
-                    if (child.name == "Text" || child.name == "RawText") true else null
+                overlay = ParseOverlay.Predicate { child: SyntaxNodeRef ->
+                    if (child.name == "Text" || child.name == "RawText") {
+                        ParseOverlayMatch.FullNode
+                    } else {
+                        null
+                    }
                 }
             )
         } else {

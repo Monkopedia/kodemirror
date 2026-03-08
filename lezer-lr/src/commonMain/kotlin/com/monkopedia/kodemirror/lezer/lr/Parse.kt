@@ -22,6 +22,7 @@ import com.monkopedia.kodemirror.lezer.common.Input
 import com.monkopedia.kodemirror.lezer.common.PartialParse
 import com.monkopedia.kodemirror.lezer.common.TextRange
 import com.monkopedia.kodemirror.lezer.common.Tree
+import com.monkopedia.kodemirror.lezer.common.TreeBuildBuffer
 import com.monkopedia.kodemirror.lezer.common.TreeBuildSpec
 import com.monkopedia.kodemirror.lezer.common.TreeFragment
 import kotlin.math.max
@@ -550,7 +551,7 @@ internal class Parse(
         stack.close()
         return Tree.build(
             TreeBuildSpec(
-                buffer = StackBufferCursor.create(stack),
+                buffer = TreeBuildBuffer.CursorBuffer(StackBufferCursor.create(stack)),
                 nodeSet = parser.nodeSet,
                 topID = topTerm,
                 start = ranges[0].from,

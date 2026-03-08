@@ -27,11 +27,12 @@ import com.monkopedia.kodemirror.lezer.common.Parser
 import com.monkopedia.kodemirror.lezer.common.PartialParse
 import com.monkopedia.kodemirror.lezer.common.TextRange
 import com.monkopedia.kodemirror.lezer.common.Tree
+import com.monkopedia.kodemirror.lezer.common.TreeBuildBuffer
 import com.monkopedia.kodemirror.lezer.common.TreeBuildSpec
 import com.monkopedia.kodemirror.lezer.common.TreeFragment
 import com.monkopedia.kodemirror.lezer.highlight.Tag
 import com.monkopedia.kodemirror.lezer.highlight.Tags as highlightTags
-import com.monkopedia.kodemirror.lezer.highlight.styleTags
+import com.monkopedia.kodemirror.lezer.highlight.styleTagsList
 import com.monkopedia.kodemirror.state.Facet
 
 /**
@@ -286,7 +287,7 @@ private class StreamParse<State>(
     private fun finishChunk() {
         val tree = Tree.build(
             TreeBuildSpec(
-                buffer = chunk.toList(),
+                buffer = TreeBuildBuffer.ListBuffer(chunk.toList()),
                 start = chunkStart,
                 length = parsedPos - chunkStart,
                 nodeSet = streamNodeSet,
@@ -410,9 +411,8 @@ private fun createTokenType(extra: Map<String, Any>, tagStr: String): Int {
     val bareType = NodeType.define(
         NodeTypeSpec(id = typeArray.size, name = typeName)
     )
-    val tagValue: Any = if (resultTags.size == 1) resultTags[0] else resultTags
     val extended = NodeSet(listOf(bareType))
-        .extend(styleTags(mapOf(typeName to tagValue)))
+        .extend(styleTagsList(mapOf(typeName to resultTags)))
     val type = extended.types[0]
     byTag[key] = type
     typeArray.add(type)

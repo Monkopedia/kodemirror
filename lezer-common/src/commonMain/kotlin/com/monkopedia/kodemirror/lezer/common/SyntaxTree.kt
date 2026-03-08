@@ -297,11 +297,19 @@ interface SyntaxNode : SyntaxNodeRef {
 }
 
 /**
+ * Type-safe representation of a tree buffer source — either a flat [List] of
+ * ints or a [BufferCursor] for streaming construction.
+ */
+sealed interface TreeBuildBuffer {
+    data class ListBuffer(val data: List<Int>) : TreeBuildBuffer
+    data class CursorBuffer(val cursor: BufferCursor) : TreeBuildBuffer
+}
+
+/**
  * Build specification for tree construction from a buffer cursor or flat buffer.
  */
 data class TreeBuildSpec(
-    // List<Int> or BufferCursor
-    val buffer: Any,
+    val buffer: TreeBuildBuffer,
     val nodeSet: NodeSet,
     val topID: Int,
     val start: Int = 0,
@@ -1298,12 +1306,8 @@ private fun buildTree(spec: TreeBuildSpec): Tree {
     }
 
     val cursor: BufferCursor = when (val buf = spec.buffer) {
-        is List<*> -> {
-            @Suppress("UNCHECKED_CAST")
-            FlatBufferCursor(buf as List<Int>, buf.size)
-        }
-        is BufferCursor -> buf
-        else -> error("Buffer must be List<Int> or BufferCursor")
+        is TreeBuildBuffer.ListBuffer -> FlatBufferCursor(buf.data, buf.data.size)
+        is TreeBuildBuffer.CursorBuffer -> buf.cursor
     }
 
     val types = nodeSet.types

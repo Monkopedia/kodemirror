@@ -1,4 +1,5 @@
 public final class com/monkopedia/kodemirror/lezer/highlight/HighlightKt {
+	public static final fun TagStyleRule (Lcom/monkopedia/kodemirror/lezer/highlight/Tag;Ljava/lang/String;)Lcom/monkopedia/kodemirror/lezer/highlight/TagStyleRule;
 	public static final fun getClassHighlighter ()Lcom/monkopedia/kodemirror/lezer/highlight/Highlighter;
 	public static final fun getRuleNodeProp ()Lcom/monkopedia/kodemirror/lezer/common/NodeProp;
 	public static final fun getStyleTags (Lcom/monkopedia/kodemirror/lezer/common/SyntaxNodeRef;)Lcom/monkopedia/kodemirror/lezer/highlight/Rule;
@@ -9,6 +10,7 @@ public final class com/monkopedia/kodemirror/lezer/highlight/HighlightKt {
 	public static synthetic fun highlightTree$default (Lcom/monkopedia/kodemirror/lezer/common/Tree;Lcom/monkopedia/kodemirror/lezer/highlight/Highlighter;Lkotlin/jvm/functions/Function3;IIILjava/lang/Object;)V
 	public static synthetic fun highlightTree$default (Lcom/monkopedia/kodemirror/lezer/common/Tree;Ljava/util/List;Lkotlin/jvm/functions/Function3;IIILjava/lang/Object;)V
 	public static final fun styleTags (Ljava/util/Map;)Lcom/monkopedia/kodemirror/lezer/common/NodePropSource;
+	public static final fun styleTagsList (Ljava/util/Map;)Lcom/monkopedia/kodemirror/lezer/common/NodePropSource;
 	public static final fun tagHighlighter (Ljava/util/List;Lkotlin/jvm/functions/Function1;Ljava/lang/String;)Lcom/monkopedia/kodemirror/lezer/highlight/Highlighter;
 	public static synthetic fun tagHighlighter$default (Ljava/util/List;Lkotlin/jvm/functions/Function1;Ljava/lang/String;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/highlight/Highlighter;
 }
@@ -55,14 +57,14 @@ public final class com/monkopedia/kodemirror/lezer/highlight/Tag$Companion {
 }
 
 public final class com/monkopedia/kodemirror/lezer/highlight/TagStyleRule {
-	public fun <init> (Ljava/lang/Object;Ljava/lang/String;)V
-	public final fun component1 ()Ljava/lang/Object;
+	public fun <init> (Ljava/util/List;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/util/List;
 	public final fun component2 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/Object;Ljava/lang/String;)Lcom/monkopedia/kodemirror/lezer/highlight/TagStyleRule;
-	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/lezer/highlight/TagStyleRule;Ljava/lang/Object;Ljava/lang/String;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/highlight/TagStyleRule;
+	public final fun copy (Ljava/util/List;Ljava/lang/String;)Lcom/monkopedia/kodemirror/lezer/highlight/TagStyleRule;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/lezer/highlight/TagStyleRule;Ljava/util/List;Ljava/lang/String;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/highlight/TagStyleRule;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getClass ()Ljava/lang/String;
-	public final fun getTag ()Ljava/lang/Object;
+	public final fun getTags ()Ljava/util/List;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }

@@ -596,7 +596,7 @@ class TreeTest {
         )
         val tree = Tree.build(
             TreeBuildSpec(
-                buffer = buffer,
+                buffer = TreeBuildBuffer.ListBuffer(buffer),
                 nodeSet = nodeSet,
                 topID = 0,
                 length = 3

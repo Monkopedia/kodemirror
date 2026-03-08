@@ -162,7 +162,7 @@ Each item has a status prefix on its heading line:
 - Top-level `parser` property across ~15 modules causes star-import collisions. Rename to
   `javaParser`, `pythonParser`, `cppParser`, etc.
 
-### 18. Type the `tag` field in `TagStyleSpec`, `TagStyleRule`, and `NodeSpec`
+### 18. [DONE] Type the `tag` field in `TagStyleSpec`, `TagStyleRule`, and `NodeSpec`
 > **Decision:** Sealed interface `TagInput { data class Single(val tag: Tag); data class Modified(val modifier: (Tag) -> Tag) }`. Also type `TreeBuildSpec.buffer` and `NestedParse.overlay`.
 - **Effort:** 1 day | **Source:** Architecture
 - `TagStyleSpec.tag`, `TagStyleRule.tag`, and `NodeSpec.style` are currently `Any` (from JS dynamic

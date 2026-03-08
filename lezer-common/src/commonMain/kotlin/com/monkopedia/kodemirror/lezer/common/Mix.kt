@@ -19,12 +19,35 @@
 package com.monkopedia.kodemirror.lezer.common
 
 /**
+ * Type-safe representation of a [NestedParse] overlay.
+ *
+ * An overlay specifies which regions of a node contain the nested language:
+ * - [Ranges] provides explicit [TextRange]s
+ * - [Predicate] evaluates child nodes, returning a [TextRange] for matching children
+ *   (or the child's full range when the predicate returns `true`)
+ */
+sealed interface ParseOverlay {
+    data class Ranges(val ranges: List<TextRange>) : ParseOverlay
+    data class Predicate(val match: (SyntaxNodeRef) -> ParseOverlayMatch?) : ParseOverlay
+}
+
+/**
+ * Result returned by a [ParseOverlay.Predicate] match function.
+ * - [FullNode] means the entire child node range matches
+ * - [CustomRange] provides an explicit range within the node
+ */
+sealed interface ParseOverlayMatch {
+    data object FullNode : ParseOverlayMatch
+    data class CustomRange(val range: TextRange) : ParseOverlayMatch
+}
+
+/**
  * Objects returned by the function passed to [parseMixed] should
  * conform to this interface.
  */
 class NestedParse(
     val parser: Parser,
-    val overlay: Any? = null,
+    val overlay: ParseOverlay? = null,
     val bracketed: Boolean = false
 )
 
@@ -53,7 +76,7 @@ private class InnerParse(
 
 private class ActiveOverlay(
     val parser: Parser,
-    val predicate: (SyntaxNodeRef) -> Any?,
+    val predicate: (SyntaxNodeRef) -> ParseOverlayMatch?,
     val mounts: List<ReusableMount>,
     val index: Int,
     val start: Int,
@@ -196,12 +219,10 @@ private class MixedParse(
                             nestResult.parser
                         )
                         val ov = nestResult.overlay
-                        if (ov is Function1<*, *>) {
-                            @Suppress("UNCHECKED_CAST")
-                            val pred = ov as (SyntaxNodeRef) -> Any?
+                        if (ov is ParseOverlay.Predicate) {
                             overlay = ActiveOverlay(
                                 nestResult.parser,
-                                pred,
+                                ov.match,
                                 oldMounts,
                                 inner.size,
                                 cursor.from,
@@ -210,8 +231,8 @@ private class MixedParse(
                                 overlay
                             )
                         } else {
-                            @Suppress("UNCHECKED_CAST")
-                            val overlayRanges = ov as? List<TextRange>
+                            val overlayRanges =
+                                (ov as? ParseOverlay.Ranges)?.ranges
                             val parseRanges = punchRanges(
                                 ranges,
                                 overlayRanges ?: if (cursor.from < cursor.to) {
@@ -261,10 +282,11 @@ private class MixedParse(
                     if (ov != null) {
                         val range = ov.predicate(cursor)
                         if (range != null) {
-                            val r = if (range == true) {
-                                TextRange(cursor.from, cursor.to)
-                            } else {
-                                range as TextRange
+                            val r = when (range) {
+                                is ParseOverlayMatch.FullNode ->
+                                    TextRange(cursor.from, cursor.to)
+                                is ParseOverlayMatch.CustomRange ->
+                                    range.range
                             }
                             if (r.from < r.to) {
                                 val last = ov.ranges.size - 1

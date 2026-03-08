@@ -19,6 +19,8 @@
 package com.monkopedia.kodemirror.lezer.markdown
 
 import com.monkopedia.kodemirror.lezer.common.NestedParse
+import com.monkopedia.kodemirror.lezer.common.ParseOverlay
+import com.monkopedia.kodemirror.lezer.common.ParseOverlayMatch
 import com.monkopedia.kodemirror.lezer.common.Parser
 import com.monkopedia.kodemirror.lezer.common.SyntaxNode
 import com.monkopedia.kodemirror.lezer.common.SyntaxNodeRef
@@ -61,7 +63,13 @@ fun parseCode(config: ParseCodeConfig): MarkdownExtension {
             if (p != null) {
                 NestedParse(
                     parser = p,
-                    overlay = { child: SyntaxNodeRef -> child.type.id == Type.CodeText },
+                    overlay = ParseOverlay.Predicate { child: SyntaxNodeRef ->
+                        if (child.type.id == Type.CodeText) {
+                            ParseOverlayMatch.FullNode
+                        } else {
+                            null
+                        }
+                    },
                     bracketed = id == Type.FencedCode
                 )
             } else {
@@ -73,7 +81,9 @@ fun parseCode(config: ParseCodeConfig): MarkdownExtension {
             if (syntaxNode != null) {
                 NestedParse(
                     parser = htmlParser,
-                    overlay = leftOverSpace(syntaxNode, nodeRef.from, nodeRef.to)
+                    overlay = ParseOverlay.Ranges(
+                        leftOverSpace(syntaxNode, nodeRef.from, nodeRef.to)
+                    )
                 )
             } else {
                 NestedParse(parser = htmlParser)

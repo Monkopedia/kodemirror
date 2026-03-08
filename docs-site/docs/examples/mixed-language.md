@@ -32,29 +32,43 @@ val mixedParser = parseMixed { nodeRef, input ->
 ```kotlin
 class NestedParse(
     val parser: Parser,
-    val overlay: Any? = null,
+    val overlay: ParseOverlay? = null,
     val bracketed: Boolean = false
 )
+
+sealed interface ParseOverlay {
+    data class Ranges(val ranges: List<TextRange>) : ParseOverlay
+    data class Predicate(val match: (SyntaxNodeRef) -> ParseOverlayMatch?) : ParseOverlay
+}
+
+sealed interface ParseOverlayMatch {
+    data object FullNode : ParseOverlayMatch
+    data class CustomRange(val range: TextRange) : ParseOverlayMatch
+}
 ```
 
 | Property | Description |
 |----------|-------------|
 | `parser` | The parser for the nested language |
-| `overlay` | `null` to parse the full node; a `List<TextRange>` for specific ranges; or a predicate function |
+| `overlay` | `null` to parse the full node; `ParseOverlay.Ranges` for specific ranges; or `ParseOverlay.Predicate` for dynamic matching |
 | `bracketed` | Whether the nested region is bracket-delimited |
 
 ## Overlay mode
 
 Use overlay mode when the nested language appears in scattered regions
-within a node. Pass a predicate function as `overlay`:
+within a node. Pass a `ParseOverlay.Predicate` as `overlay`:
 
 ```kotlin
 parseMixed { nodeRef, input ->
     if (nodeRef.type.name == "TemplateString") {
         NestedParse(
             parser = expressionParser,
-            overlay = { child: SyntaxNodeRef ->
-                if (child.type.name == "Interpolation") child else null
+            overlay = ParseOverlay.Predicate { child: SyntaxNodeRef ->
+                if (child.type.name == "Interpolation") {
+                    ParseOverlayMatch.FullNode
+                } else {
+                    null
+                }
             }
         )
     } else null
