@@ -423,8 +423,9 @@ Each item has a status prefix on its heading line:
 - `SearchQuery.valid` is a computed property but invalid queries can still be constructed and used.
   Consider a validated factory method or builder that returns `null`/throws on invalid input.
 
-### 59. Address Java interop type erasure
+### 59. [BLOCKED] Address Java interop type erasure
 > **Decision:** Add `@JvmName` variants for key APIs to improve Java caller experience.
+- **Blocked:** `@JvmName` doesn't solve type erasure — it only resolves JVM method signature clashes between overloads. The actual problem (Java callers seeing `Object` return types from `facet()`, `field()`, etc.) is inherent to JVM generics erasure. Reified inline functions can't be called from Java either. Real solutions (non-generic typed helper methods) would add significant API surface complexity for a secondary use case (this is a Compose Multiplatform / Kotlin-first library). Needs design decision on whether the Java interop API surface is worth maintaining.
 - **Effort:** 1–2 days | **Source:** Architecture
 - `Facet`, `StateField`, `StateEffect`, `EditorState.facet()`, `EditorState.field()` lose generic
   type parameters at the JVM boundary due to type erasure. Java callers see raw `Object` types.
@@ -448,8 +449,9 @@ Each item has a status prefix on its heading line:
 - **Effort:** < 1 day | **Source:** Documentation
 - Show complete Android and Desktop `build.gradle.kts` snippets.
 
-### 63. Add visual screenshots to example pages
+### 63. [BLOCKED] Add visual screenshots to example pages
 > **Note:** Depends on #31 (sample project) being completed first. Unblocked once #31 is done.
+- **Blocked:** Requires capturing Compose Desktop renders in a GUI environment. Need to set up a screenshot capture pipeline (possibly using Roborazzi or a headless Compose test runner). Needs design decision on screenshot capture approach.
 - **Effort:** 1–2 days | **Source:** Documentation
 - At least for `basic.md`, `decoration.md`, `styling.md`.
 
