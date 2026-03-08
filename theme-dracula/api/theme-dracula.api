@@ -1,0 +1,23 @@
+public final class com/monkopedia/kodemirror/themedracula/DraculaColors {
+	public static final field INSTANCE Lcom/monkopedia/kodemirror/themedracula/DraculaColors;
+	public final fun getBackground-0d7_KjU ()J
+	public final fun getComment-0d7_KjU ()J
+	public final fun getCurrentLine-0d7_KjU ()J
+	public final fun getCyan-0d7_KjU ()J
+	public final fun getDarkBackground-0d7_KjU ()J
+	public final fun getForeground-0d7_KjU ()J
+	public final fun getGreen-0d7_KjU ()J
+	public final fun getOrange-0d7_KjU ()J
+	public final fun getPink-0d7_KjU ()J
+	public final fun getPurple-0d7_KjU ()J
+	public final fun getRed-0d7_KjU ()J
+	public final fun getSelection-0d7_KjU ()J
+	public final fun getYellow-0d7_KjU ()J
+}
+
+public final class com/monkopedia/kodemirror/themedracula/DraculaKt {
+	public static final fun getDracula ()Lcom/monkopedia/kodemirror/state/Extension;
+	public static final fun getDraculaHighlightStyle ()Lcom/monkopedia/kodemirror/language/HighlightStyle;
+	public static final fun getDraculaTheme ()Lcom/monkopedia/kodemirror/view/EditorTheme;
+}
+

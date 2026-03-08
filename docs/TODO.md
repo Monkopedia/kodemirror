@@ -258,7 +258,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
   ```
 - **File:** `view/src/commonMain/kotlin/.../view/ViewPlugin.kt`
 
-### 11. Add more built-in themes
+### 11. [DONE] Add more built-in themes
 - **Effort:** 2–3 days | **Source:** Frontend DX
 - Only `oneDark` exists as a complete theme (editor theme + syntax highlighting).
   Port or create 2–3 additional popular themes:
@@ -268,7 +268,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
 - Each theme should be a separate module (`:theme-github-light`, etc.) following the
   `:theme-one-dark` pattern.
 
-### 12. Add `RangeSet` functional operators
+### 12. [DONE] Add `RangeSet` functional operators
 - **Effort:** < 1 day | **Source:** Kotlin Ergonomics
 - `RangeSet` lacks standard collection-like operations. Add:
   - `fun <T : RangeValue> RangeSet<T>.forEach(action: (Range<T>) -> Unit)`
@@ -276,7 +276,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
   - `fun <T : RangeValue> RangeSet<T>.filter(predicate: (Range<T>) -> Boolean): RangeSet<T>`
 - **File:** `state/src/commonMain/kotlin/.../state/RangeSet.kt`
 
-### 13. Use dedicated data class for `Completion.applyFn` parameters
+### 13. [DONE] Use dedicated data class for `Completion.applyFn` parameters
 - **Effort:** < 1 hour | **Source:** Architecture
 - `Completion.applyFn` accepts `(EditorSession, Completion, Int, Int) -> Unit` where the two
   `Int` parameters are `from` and `to` positions but this isn't clear from the signature.
@@ -292,7 +292,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
   ```
 - **Files:** `autocomplete/src/commonMain/kotlin/.../autocomplete/Completion.kt`
 
-### 14. Typed `LanguageData` wrapper
+### 14. [DONE] Typed `LanguageData` wrapper
 - **Effort:** 1 day | **Source:** Kotlin Ergonomics
 - The `languageData` facet still uses `Map<String, Any?>` internally even though
   `LanguageDataKey<T>` exists. Add a type-safe wrapper:
@@ -304,7 +304,11 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
 - Update `EditorState.languageDataAt` to return `LanguageDataMap` instead of raw map.
 - **File:** `state/src/commonMain/kotlin/.../state/State.kt`
 
-### 15. Add Android-specific guidance and sample
+### 15. [BLOCKED] Add Android-specific guidance and sample
+- **Blocked:** Creating an Android sample requires platform-specific testing (emulator or device)
+  and knowledge of actual IME/touch behavior that can only be verified by running on Android.
+  The documentation (IME integration, keyboard handling, touch behavior) should be written based
+  on real testing, not speculation. Needs someone to run KodeMirror on Android first.
 - **Effort:** 1 day | **Source:** Frontend DX, Documentation
 - No Android-specific documentation exists. Multiple evaluation reviewers flagged this as
   important for mobile adoption. Cover:
@@ -319,7 +323,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
 
 ## Priority 3 — Documentation
 
-### 16. Document the `:collab` module
+### 16. [DONE] Document the `:collab` module
 - **Effort:** 1 day | **Source:** Documentation
 - The collab module exists and has examples but no dedicated guide. Create
   `docs-site/docs/guide/collaboration.md` covering:
@@ -329,7 +333,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
   - Error handling and conflict resolution
 - Also add a "Related API" section to the existing `collab.md` example.
 
-### 17. Document the `:merge` module
+### 17. [DONE] Document the `:merge` module
 - **Effort:** 1 day | **Source:** Documentation
 - The merge module is undocumented. Create `docs-site/docs/guide/merge.md` covering:
   - `MergeView` configuration and usage

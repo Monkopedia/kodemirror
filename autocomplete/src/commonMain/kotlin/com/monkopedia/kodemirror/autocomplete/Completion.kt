@@ -59,7 +59,7 @@ data class Completion(
     val type: String? = null,
     val boost: Int = 0,
     val apply: String? = null,
-    val applyFn: ((EditorSession, Completion, Int, Int) -> Unit)? = null,
+    val applyFn: ((CompletionApplyContext) -> Unit)? = null,
     val section: CompletionSection? = null
 )
 
@@ -85,6 +85,21 @@ data class CompletionResult(
     val options: List<Completion>,
     val validFor: Regex? = null,
     val filter: Boolean = true
+)
+
+/**
+ * Context passed to [Completion.applyFn] when a completion is accepted.
+ *
+ * @param session The editor session to apply the completion to.
+ * @param completion The completion being applied.
+ * @param from Start of the text range being replaced.
+ * @param to End of the text range being replaced.
+ */
+data class CompletionApplyContext(
+    val session: EditorSession,
+    val completion: Completion,
+    val from: Int,
+    val to: Int
 )
 
 /** A function that provides completions for a given context. */

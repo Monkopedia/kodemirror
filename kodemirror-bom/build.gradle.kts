@@ -49,6 +49,8 @@ dependencies {
 
         // Themes
         api(project(":theme-one-dark"))
+        api(project(":theme-github-light"))
+        api(project(":theme-dracula"))
         api(project(":material-theme"))
 
         // Convenience bundles

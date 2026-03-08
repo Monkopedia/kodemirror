@@ -41,6 +41,8 @@ import com.monkopedia.kodemirror.lang.markdown.markdown
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.plus
 import com.monkopedia.kodemirror.materialtheme.rememberMaterialEditorTheme
+import com.monkopedia.kodemirror.themedracula.dracula
+import com.monkopedia.kodemirror.themegithublight.gitHubLight
 import com.monkopedia.kodemirror.themonedark.oneDark
 import com.monkopedia.kodemirror.view.KodeMirror
 import com.monkopedia.kodemirror.view.onChange
@@ -86,7 +88,7 @@ fun main() = application {
         title = "KodeMirror Sample Editor"
     ) {
         var selectedTab by remember { mutableStateOf(Tab.JAVASCRIPT) }
-        val isDark = selectedTab == Tab.DARK
+        val isDark = selectedTab == Tab.DARK || selectedTab == Tab.DRACULA
 
         MaterialTheme(colorScheme = if (isDark) darkColorScheme() else lightColorScheme()) {
             Surface(modifier = Modifier.fillMaxSize()) {
@@ -110,6 +112,15 @@ fun main() = application {
                             doc = SAMPLE_JS,
                             extensions = basicSetup + javascript().extension + oneDark
                         )
+                        Tab.GITHUB_LIGHT -> EditorPane(
+                            doc = SAMPLE_JS,
+                            extensions = basicSetup + javascript().extension +
+                                gitHubLight
+                        )
+                        Tab.DRACULA -> EditorPane(
+                            doc = SAMPLE_JS,
+                            extensions = basicSetup + javascript().extension + dracula
+                        )
                         Tab.MATERIAL -> {
                             val materialTheme = rememberMaterialEditorTheme()
                             EditorPane(
@@ -128,7 +139,9 @@ fun main() = application {
 enum class Tab(val label: String) {
     JAVASCRIPT("JavaScript"),
     MARKDOWN("Markdown"),
-    DARK("Dark Theme"),
+    DARK("One Dark"),
+    GITHUB_LIGHT("GitHub Light"),
+    DRACULA("Dracula"),
     MATERIAL("Material Theme")
 }
 

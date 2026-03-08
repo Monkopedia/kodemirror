@@ -37,6 +37,9 @@ class LanguageDataKey<T>(val name: String) {
     override fun hashCode(): Int = name.hashCode()
     override fun toString(): String = "LanguageDataKey($name)"
 
+    /** A type-safe entry pairing a [LanguageDataKey] with its value. */
+    infix fun of(value: T): LanguageDataEntry<T> = LanguageDataEntry(this, value)
+
     companion object {
         /** Extra characters to include in word detection (e.g. `"$"` for Perl). */
         val WORD_CHARS: LanguageDataKey<String> = LanguageDataKey("wordChars")
@@ -60,3 +63,45 @@ class LanguageDataKey<T>(val name: String) {
             LanguageDataKey("dontIndentStates")
     }
 }
+
+/** A type-safe entry pairing a [LanguageDataKey] with its value. */
+data class LanguageDataEntry<T>(val key: LanguageDataKey<T>, val value: T)
+
+/**
+ * A type-safe wrapper around language data maps.
+ *
+ * Provides typed access to language data values that are normally stored
+ * as `Map<String, Any?>`. Use [languageDataMapOf] to construct instances.
+ *
+ * ```kotlin
+ * val data = languageDataMapOf(
+ *     LanguageDataKey.COMMENT_TOKENS of mapOf("line" to "//"),
+ *     LanguageDataKey.WORD_CHARS of "$"
+ * )
+ * val tokens = data[LanguageDataKey.COMMENT_TOKENS] // Map<String, Any>?
+ * ```
+ */
+class LanguageDataMap(private val data: Map<String, Any?>) {
+    /** Look up a value by its type-safe key. Returns `null` if the key is absent. */
+    @Suppress("UNCHECKED_CAST")
+    operator fun <T> get(key: LanguageDataKey<T>): T? = data[key.name] as T?
+
+    /** Check whether the map contains a given key. */
+    fun <T> contains(key: LanguageDataKey<T>): Boolean = data.containsKey(key.name)
+
+    /** Convert back to a raw map for interop with the [languageData] facet. */
+    fun toMap(): Map<String, Any?> = data
+}
+
+/**
+ * Build a [LanguageDataMap] from type-safe entries.
+ *
+ * ```kotlin
+ * val data = languageDataMapOf(
+ *     LanguageDataKey.COMMENT_TOKENS of mapOf("line" to "//"),
+ *     LanguageDataKey.INDENT_ON_INPUT of Regex("^\\s*\\}$")
+ * )
+ * ```
+ */
+fun languageDataMapOf(vararg entries: LanguageDataEntry<*>): LanguageDataMap =
+    LanguageDataMap(entries.associate { it.key.name to it.value })

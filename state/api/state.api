@@ -540,12 +540,26 @@ public final class com/monkopedia/kodemirror/state/InsertContent$TextContent : c
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/monkopedia/kodemirror/state/LanguageDataEntry {
+	public fun <init> (Lcom/monkopedia/kodemirror/state/LanguageDataKey;Ljava/lang/Object;)V
+	public final fun component1 ()Lcom/monkopedia/kodemirror/state/LanguageDataKey;
+	public final fun component2 ()Ljava/lang/Object;
+	public final fun copy (Lcom/monkopedia/kodemirror/state/LanguageDataKey;Ljava/lang/Object;)Lcom/monkopedia/kodemirror/state/LanguageDataEntry;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/state/LanguageDataEntry;Lcom/monkopedia/kodemirror/state/LanguageDataKey;Ljava/lang/Object;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/LanguageDataEntry;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getKey ()Lcom/monkopedia/kodemirror/state/LanguageDataKey;
+	public final fun getValue ()Ljava/lang/Object;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class com/monkopedia/kodemirror/state/LanguageDataKey {
 	public static final field Companion Lcom/monkopedia/kodemirror/state/LanguageDataKey$Companion;
 	public fun <init> (Ljava/lang/String;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getName ()Ljava/lang/String;
 	public fun hashCode ()I
+	public final fun of (Ljava/lang/Object;)Lcom/monkopedia/kodemirror/state/LanguageDataEntry;
 	public fun toString ()Ljava/lang/String;
 }
 
@@ -556,6 +570,17 @@ public final class com/monkopedia/kodemirror/state/LanguageDataKey$Companion {
 	public final fun getDONT_INDENT_STATES ()Lcom/monkopedia/kodemirror/state/LanguageDataKey;
 	public final fun getINDENT_ON_INPUT ()Lcom/monkopedia/kodemirror/state/LanguageDataKey;
 	public final fun getWORD_CHARS ()Lcom/monkopedia/kodemirror/state/LanguageDataKey;
+}
+
+public final class com/monkopedia/kodemirror/state/LanguageDataKeyKt {
+	public static final fun languageDataMapOf ([Lcom/monkopedia/kodemirror/state/LanguageDataEntry;)Lcom/monkopedia/kodemirror/state/LanguageDataMap;
+}
+
+public final class com/monkopedia/kodemirror/state/LanguageDataMap {
+	public fun <init> (Ljava/util/Map;)V
+	public final fun contains (Lcom/monkopedia/kodemirror/state/LanguageDataKey;)Z
+	public final fun get (Lcom/monkopedia/kodemirror/state/LanguageDataKey;)Ljava/lang/Object;
+	public final fun toMap ()Ljava/util/Map;
 }
 
 public final class com/monkopedia/kodemirror/state/Line {

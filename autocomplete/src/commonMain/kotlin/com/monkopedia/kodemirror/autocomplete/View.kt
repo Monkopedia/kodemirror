@@ -150,7 +150,14 @@ private fun triggerCompletion(view: EditorSession, explicit: Boolean) {
 private fun applyCompletion(view: EditorSession, completion: Completion, result: CompletionResult) {
     val fn = completion.applyFn
     if (fn != null) {
-        fn(view, completion, result.from, result.to ?: view.state.selection.main.head)
+        fn(
+            CompletionApplyContext(
+                view,
+                completion,
+                result.from,
+                result.to ?: view.state.selection.main.head
+            )
+        )
         return
     }
     val text = completion.apply ?: completion.label

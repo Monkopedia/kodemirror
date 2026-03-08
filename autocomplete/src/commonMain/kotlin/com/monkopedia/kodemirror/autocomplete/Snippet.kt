@@ -132,9 +132,12 @@ private fun parseTemplate(template: String): ParsedSnippet {
  * Template syntax: `${name}` for named fields that the user can
  * tab through. `${}` marks the final cursor position.
  */
-fun snippet(template: String): (EditorSession, Completion, Int, Int) -> Unit {
+fun snippet(template: String): (CompletionApplyContext) -> Unit {
     val parsed = parseTemplate(template)
-    return { view, _, from, to ->
+    return { ctx ->
+        val view = ctx.session
+        val from = ctx.from
+        val to = ctx.to
         val text = StringBuilder()
         val snippetFields = mutableListOf<SnippetField>()
         var offset = from

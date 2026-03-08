@@ -17,6 +17,10 @@ Multiplatform port of CodeMirror 6.
   common extension
 - [Migrating from CodeMirror 6](migration.md) — Porting patterns,
   module mapping, and key API differences for JS developers
+- [Collaborative Editing](collaboration.md) — Real-time collaboration
+  with operational transformation
+- [Merge and Diff Views](merge.md) — Side-by-side and unified diff
+  views for comparing documents
 - [Troubleshooting](troubleshooting.md) — Common issues and solutions
 
 See also the [API Reference](../reference/index.md) for generated

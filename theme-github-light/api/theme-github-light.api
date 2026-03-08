@@ -1,0 +1,29 @@
+public final class com/monkopedia/kodemirror/themegithublight/GitHubLightColors {
+	public static final field INSTANCE Lcom/monkopedia/kodemirror/themegithublight/GitHubLightColors;
+	public final fun getActiveLineBackground-0d7_KjU ()J
+	public final fun getAttribute-0d7_KjU ()J
+	public final fun getBackground-0d7_KjU ()J
+	public final fun getComment-0d7_KjU ()J
+	public final fun getConstant-0d7_KjU ()J
+	public final fun getCursor-0d7_KjU ()J
+	public final fun getForeground-0d7_KjU ()J
+	public final fun getFunction-0d7_KjU ()J
+	public final fun getGutterActiveForeground-0d7_KjU ()J
+	public final fun getGutterBackground-0d7_KjU ()J
+	public final fun getGutterBorder-0d7_KjU ()J
+	public final fun getGutterForeground-0d7_KjU ()J
+	public final fun getKeyword-0d7_KjU ()J
+	public final fun getNumber-0d7_KjU ()J
+	public final fun getSelection-0d7_KjU ()J
+	public final fun getString-0d7_KjU ()J
+	public final fun getTag-0d7_KjU ()J
+	public final fun getTypeName-0d7_KjU ()J
+	public final fun getVariable-0d7_KjU ()J
+}
+
+public final class com/monkopedia/kodemirror/themegithublight/GitHubLightKt {
+	public static final fun getGitHubLight ()Lcom/monkopedia/kodemirror/state/Extension;
+	public static final fun getGitHubLightHighlightStyle ()Lcom/monkopedia/kodemirror/language/HighlightStyle;
+	public static final fun getGitHubLightTheme ()Lcom/monkopedia/kodemirror/view/EditorTheme;
+}
+

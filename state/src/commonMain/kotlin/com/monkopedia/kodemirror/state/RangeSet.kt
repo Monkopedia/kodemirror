@@ -1495,9 +1495,7 @@ fun <T : RangeValue> RangeSet<T>.asSequence(): Sequence<Range<T>> = sequence {
 /**
  * Return a new [RangeSet] containing only the ranges that match [predicate].
  */
-fun <T : RangeValue> RangeSet<T>.filter(
-    predicate: (Range<T>) -> Boolean
-): RangeSet<T> {
+fun <T : RangeValue> RangeSet<T>.filter(predicate: (Range<T>) -> Boolean): RangeSet<T> {
     val builder = RangeSetBuilder<T>()
     forEach { range ->
         if (predicate(range)) {
