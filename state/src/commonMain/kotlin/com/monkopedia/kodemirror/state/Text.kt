@@ -165,9 +165,9 @@ abstract class Text {
 
     internal abstract fun scanIdentical(other: Text, dir: Int): Int
 
-    /** Test whether this text is equal to another instance. */
-    fun eq(other: Text): Boolean {
+    override fun equals(other: Any?): Boolean {
         if (other === this) return true
+        if (other !is Text) return false
         if (other.length != length || other.lines != lines) {
             return false
         }
@@ -190,6 +190,12 @@ abstract class Text {
             pos += a.value.length
             if (a.done || pos >= end) return true
         }
+    }
+
+    override fun hashCode(): Int {
+        var result = length
+        result = 31 * result + lines
+        return result
     }
 
     /**

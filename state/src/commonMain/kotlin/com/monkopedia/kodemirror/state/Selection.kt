@@ -136,13 +136,27 @@ class SelectionRange private constructor(
     }
 
     /**
-     * Compare this range to another range.
+     * Compare this range to another range, optionally including
+     * cursor association.
      */
-    fun eq(other: SelectionRange, includeAssoc: Boolean = false): Boolean {
+    fun eq(other: SelectionRange, includeAssoc: Boolean): Boolean {
         return anchor == other.anchor &&
             head == other.head &&
             goalColumn == other.goalColumn &&
             (!includeAssoc || empty || assoc == other.assoc)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is SelectionRange) return false
+        return eq(other, includeAssoc = false)
+    }
+
+    override fun hashCode(): Int {
+        var result = anchor
+        result = 31 * result + head
+        result = 31 * result + (goalColumn ?: 0)
+        return result
     }
 
     /**
@@ -204,9 +218,10 @@ class EditorSelection private constructor(
     }
 
     /**
-     * Compare this selection to another selection.
+     * Compare this selection to another selection, optionally including
+     * cursor association.
      */
-    fun eq(other: EditorSelection, includeAssoc: Boolean = false): Boolean {
+    fun eq(other: EditorSelection, includeAssoc: Boolean): Boolean {
         if (ranges.size != other.ranges.size ||
             mainIndex != other.mainIndex
         ) {
@@ -218,6 +233,18 @@ class EditorSelection private constructor(
             }
         }
         return true
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is EditorSelection) return false
+        return eq(other, includeAssoc = false)
+    }
+
+    override fun hashCode(): Int {
+        var result = ranges.hashCode()
+        result = 31 * result + mainIndex
+        return result
     }
 
     /** Get the primary selection range. */

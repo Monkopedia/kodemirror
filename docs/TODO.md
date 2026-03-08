@@ -87,7 +87,7 @@ Each item has a status prefix on its heading line:
   `view.dispatch { insert(0, "Hello") }`
 - Use `@DslMarker` annotation on builder scopes to prevent accidental scope leaking.
 
-### 8. Replace `eq()` methods with `equals()` / `hashCode()`
+### 8. [DONE] Replace `eq()` methods with `equals()` / `hashCode()`
 > **Decision:** `equals()` uses `includeAssoc=false`. Keep `eq(other, includeAssoc)` as secondary method for the `includeAssoc=true` case.
 - **Effort:** 1–2 days | **Source:** Kotlin Ergonomics
 - `SelectionRange`, `EditorSelection`, `Text`, `RangeValue`, `WidgetType` define `eq()` instead of

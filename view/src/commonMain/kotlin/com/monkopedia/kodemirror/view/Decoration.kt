@@ -74,8 +74,7 @@ abstract class WidgetType {
     @Composable
     abstract fun Content()
 
-    /** Compare this widget to another for equality. */
-    open fun eq(other: WidgetType): Boolean = this === other
+    override fun equals(other: Any?): Boolean = this === other
 
     /** Estimated height in pixels, or -1 if unknown. */
     open val estimatedHeight: Int get() = -1
@@ -155,7 +154,9 @@ class MarkDecoration(val spec: MarkDecorationSpec) : Decoration() {
     override val endSide: Int
         get() = if (spec.inclusiveEnd || spec.inclusive) 1 else 0
 
-    override fun eq(other: RangeValue): Boolean = other is MarkDecoration && spec == other.spec
+    override fun equals(other: Any?): Boolean = other is MarkDecoration && spec == other.spec
+
+    override fun hashCode(): Int = spec.hashCode()
 }
 
 /** A widget decoration places a composable inside the text flow. */
@@ -164,10 +165,17 @@ class WidgetDecoration(val spec: WidgetDecorationSpec) : Decoration() {
     override val startSide: Int get() = if (spec.block) -200 else spec.side
     override val endSide: Int get() = if (spec.block) 200 else spec.side
 
-    override fun eq(other: RangeValue): Boolean = other is WidgetDecoration &&
-        spec.widget.eq(other.spec.widget) &&
+    override fun equals(other: Any?): Boolean = other is WidgetDecoration &&
+        spec.widget == other.spec.widget &&
         spec.side == other.spec.side &&
         spec.block == other.spec.block
+
+    override fun hashCode(): Int {
+        var result = spec.widget.hashCode()
+        result = 31 * result + spec.side
+        result = 31 * result + spec.block.hashCode()
+        return result
+    }
 }
 
 /** A line decoration adds attributes to the containing line element. */
@@ -175,7 +183,9 @@ class LineDecoration(val spec: LineDecorationSpec) : Decoration() {
     override val startSide: Int get() = -1
     override val endSide: Int get() = -1
 
-    override fun eq(other: RangeValue): Boolean = other is LineDecoration && spec == other.spec
+    override fun equals(other: Any?): Boolean = other is LineDecoration && spec == other.spec
+
+    override fun hashCode(): Int = spec.hashCode()
 }
 
 /** A replace decoration hides a range of text, optionally showing a widget. */
@@ -184,17 +194,17 @@ class ReplaceDecoration(val spec: ReplaceDecorationSpec) : Decoration() {
     override val startSide: Int get() = if (spec.inclusiveStart || spec.inclusive) -1 else -100
     override val endSide: Int get() = if (spec.inclusiveEnd || spec.inclusive) 1 else 100
 
-    override fun eq(other: RangeValue): Boolean {
+    override fun equals(other: Any?): Boolean {
         if (other !is ReplaceDecoration) return false
-        val ow = spec.widget
-        val tw = other.spec.widget
-        val widgetEq = when {
-            ow == null && tw == null -> true
-            ow != null && tw != null -> ow.eq(tw)
-            else -> false
-        }
-        return widgetEq &&
+        return spec.widget == other.spec.widget &&
             spec.inclusive == other.spec.inclusive &&
             spec.block == other.spec.block
+    }
+
+    override fun hashCode(): Int {
+        var result = spec.widget?.hashCode() ?: 0
+        result = 31 * result + spec.inclusive.hashCode()
+        result = 31 * result + spec.block.hashCode()
+        return result
     }
 }

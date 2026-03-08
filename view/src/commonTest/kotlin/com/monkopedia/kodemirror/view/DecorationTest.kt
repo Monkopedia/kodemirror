@@ -23,6 +23,7 @@ import com.monkopedia.kodemirror.state.RangeSetBuilder
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 class DecorationTest {
@@ -58,11 +59,11 @@ class DecorationTest {
         val spec = MarkDecorationSpec()
         val a = Decoration.mark(spec)
         val b = Decoration.mark(spec)
-        assertTrue(a.eq(b))
-        assertTrue(b.eq(a))
+        assertEquals(a, b)
+        assertEquals(b, a)
 
         val c = Decoration.mark(MarkDecorationSpec(inclusive = true))
-        assertFalse(a.eq(c))
+        assertNotEquals(a, c)
     }
 
     @Test
@@ -96,10 +97,10 @@ class DecorationTest {
         val spec = LineDecorationSpec(cssClass = "test")
         val a = Decoration.line(spec)
         val b = Decoration.line(spec)
-        assertTrue(a.eq(b))
+        assertEquals(a, b)
 
         val c = Decoration.line(LineDecorationSpec(cssClass = "other"))
-        assertFalse(a.eq(c))
+        assertNotEquals(a, c)
     }
 
     @Test
@@ -157,9 +158,9 @@ class DecorationTest {
     fun widgetTypeEquality() {
         val w1 = SimpleWidget()
         val w2 = SimpleWidget()
-        // Default eq uses identity
-        assertFalse(w1.eq(w2))
-        assertTrue(w1.eq(w1))
+        // Default equals uses identity
+        assertNotEquals(w1, w2)
+        assertEquals(w1, w1)
     }
 }
 

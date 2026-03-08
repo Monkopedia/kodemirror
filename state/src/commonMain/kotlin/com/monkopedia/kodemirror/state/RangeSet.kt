@@ -32,11 +32,7 @@ private const val FAR = 1_000_000_000
  * this class.
  */
 abstract class RangeValue {
-    /**
-     * Compare this value with another value. Used when comparing
-     * rangesets. The default implementation compares by identity.
-     */
-    open fun eq(other: RangeValue): Boolean = this === other
+    override fun equals(other: Any?): Boolean = this === other
 
     /**
      * The bias value at the start of the range. Defaults to 0.
@@ -69,8 +65,7 @@ abstract class RangeValue {
     }
 }
 
-private fun cmpVal(a: RangeValue, b: RangeValue): Boolean =
-    a === b || a::class == b::class && a.eq(b)
+private fun cmpVal(a: RangeValue, b: RangeValue): Boolean = a == b
 
 /**
  * A range associates a value with a range of positions.

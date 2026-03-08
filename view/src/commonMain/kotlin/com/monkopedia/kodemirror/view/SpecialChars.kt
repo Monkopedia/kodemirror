@@ -91,8 +91,14 @@ private class SpecialCharWidget(val label: String, val codePoint: Int) : WidgetT
         )
     }
 
-    override fun eq(other: WidgetType): Boolean =
+    override fun equals(other: Any?): Boolean =
         other is SpecialCharWidget && label == other.label && codePoint == other.codePoint
+
+    override fun hashCode(): Int {
+        var result = label.hashCode()
+        result = 31 * result + codePoint
+        return result
+    }
 }
 
 private class SpecialCharsPlugin(view: EditorSession, private val decorator: MatchDecorator) :

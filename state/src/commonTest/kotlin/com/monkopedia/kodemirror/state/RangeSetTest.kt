@@ -33,9 +33,11 @@ private class Value(
     val name: String? = null,
     val pos: Int? = null
 ) : RangeValue() {
-    override fun eq(other: RangeValue): Boolean {
+    override fun equals(other: Any?): Boolean {
         return other is Value && other.name == name
     }
+
+    override fun hashCode(): Int = name?.hashCode() ?: 0
 
     companion object {
         fun names(v: List<Value>): String {

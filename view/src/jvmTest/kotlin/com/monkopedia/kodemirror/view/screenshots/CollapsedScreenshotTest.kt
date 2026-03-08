@@ -100,5 +100,7 @@ private class FoldPlaceholderWidget : WidgetType() {
         )
     }
 
-    override fun eq(other: WidgetType): Boolean = other is FoldPlaceholderWidget
+    override fun equals(other: Any?): Boolean = other is FoldPlaceholderWidget
+
+    override fun hashCode(): Int = this::class.hashCode()
 }

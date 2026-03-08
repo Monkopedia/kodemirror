@@ -23,7 +23,7 @@ import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 class TextTest {
@@ -176,27 +176,27 @@ class TextTest {
     fun canBeCompared() {
         val doc = doc0
         val doc2 = Text.of(lines)
-        assertTrue(doc.eq(doc))
-        assertTrue(doc.eq(doc2))
-        assertTrue(doc2.eq(doc))
-        assertFalse(doc.eq(doc2.replace(5000, 5000, Text.of(listOf("y")))))
-        assertFalse(doc.eq(doc2.replace(5000, 5001, Text.of(listOf("y")))))
-        assertTrue(doc.eq(doc.replace(5000, 5001, doc.slice(5000, 5001))))
-        assertFalse(doc.eq(doc.replace(5000, 5001, Text.of(listOf("y")))))
+        assertEquals(doc, doc)
+        assertEquals(doc, doc2)
+        assertEquals(doc2, doc)
+        assertNotEquals(doc, doc2.replace(5000, 5000, Text.of(listOf("y"))))
+        assertNotEquals(doc, doc2.replace(5000, 5001, Text.of(listOf("y"))))
+        assertEquals(doc, doc.replace(5000, 5001, doc.slice(5000, 5001)))
+        assertNotEquals(doc, doc.replace(5000, 5001, Text.of(listOf("y"))))
     }
 
     @Test
     fun canBeComparedDespiteDifferentTreeShape() {
-        assertTrue(
-            doc0.replace(100, 201, Text.of(listOf("abc")))
-                .eq(Text.of(listOf(line + "abc") + lines.subList(2, lines.size)))
+        assertEquals(
+            doc0.replace(100, 201, Text.of(listOf("abc"))),
+            Text.of(listOf(line + "abc") + lines.subList(2, lines.size))
         )
     }
 
     @Test
     fun canCompareSmallDocuments() {
-        assertTrue(Text.of(listOf("foo", "bar")).eq(Text.of(listOf("foo", "bar"))))
-        assertFalse(Text.of(listOf("foo", "bar")).eq(Text.of(listOf("foo", "baz"))))
+        assertEquals(Text.of(listOf("foo", "bar")), Text.of(listOf("foo", "bar")))
+        assertNotEquals(Text.of(listOf("foo", "bar")), Text.of(listOf("foo", "baz")))
     }
 
     @Test
@@ -288,7 +288,7 @@ class TextTest {
         val extendedLines = lines.toMutableList()
         for (i in 0 until 200) extendedLines.add("line $i")
         val text = Text.of(extendedLines)
-        assertTrue(Text.of(text.toJSON()).eq(text))
+        assertEquals(Text.of(text.toJSON()), text)
     }
 
     @Test

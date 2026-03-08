@@ -74,5 +74,7 @@ private class SpacerWidget(val height: Dp) : WidgetType() {
         Spacer(modifier = Modifier.height(height))
     }
 
-    override fun eq(other: WidgetType): Boolean = other is SpacerWidget && height == other.height
+    override fun equals(other: Any?): Boolean = other is SpacerWidget && height == other.height
+
+    override fun hashCode(): Int = height.hashCode()
 }

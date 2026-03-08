@@ -163,8 +163,10 @@ private class DeletionWidget(
     private val chunk: Chunk,
     private val state: EditorState
 ) : WidgetType() {
-    override fun eq(other: WidgetType): Boolean =
+    override fun equals(other: Any?): Boolean =
         other is DeletionWidget && other.chunk.changes === chunk.changes
+
+    override fun hashCode(): Int = chunk.changes.hashCode()
 
     override val estimatedHeight: Int get() = 30
 
@@ -192,8 +194,9 @@ private class DeletionWidget(
 // -- Inline diff support --
 
 private class InlineDeletionWidget(private val text: String) : WidgetType() {
-    override fun eq(other: WidgetType): Boolean =
-        other is InlineDeletionWidget && other.text == text
+    override fun equals(other: Any?): Boolean = other is InlineDeletionWidget && other.text == text
+
+    override fun hashCode(): Int = text.hashCode()
 
     @Composable
     override fun Content() {

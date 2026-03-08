@@ -119,5 +119,7 @@ private class ContrastFoldWidget : WidgetType() {
         }
     }
 
-    override fun eq(other: WidgetType): Boolean = other is ContrastFoldWidget
+    override fun equals(other: Any?): Boolean = other is ContrastFoldWidget
+
+    override fun hashCode(): Int = this::class.hashCode()
 }

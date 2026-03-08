@@ -192,7 +192,7 @@ private fun addSelection(
         val sels = lastEvent.selectionsAfter
             .subList(startIdx, lastEvent.selectionsAfter.size)
             .toMutableList()
-        if (sels.isNotEmpty() && sels[sels.size - 1].eq(selection)) {
+        if (sels.isNotEmpty() && sels[sels.size - 1] == selection) {
             return branch
         }
         sels.add(selection)
@@ -220,7 +220,7 @@ private fun <T> conc(a: List<T>, b: List<T>): List<T> =
 private fun eqSelectionShape(a: EditorSelection, b: EditorSelection): Boolean {
     if (a.ranges.size != b.ranges.size) return false
     for (i in a.ranges.indices) {
-        if (!a.ranges[i].eq(b.ranges[i])) return false
+        if (a.ranges[i] != b.ranges[i]) return false
     }
     return true
 }

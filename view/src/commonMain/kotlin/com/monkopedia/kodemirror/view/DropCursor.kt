@@ -94,5 +94,7 @@ private class DropCursorWidget : WidgetType() {
         }
     }
 
-    override fun eq(other: WidgetType): Boolean = other is DropCursorWidget
+    override fun equals(other: Any?): Boolean = other is DropCursorWidget
+
+    override fun hashCode(): Int = this::class.hashCode()
 }

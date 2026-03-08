@@ -35,8 +35,6 @@ import com.monkopedia.kodemirror.state.RangeValue
 
 /** A gutter marker contributes to a specific line's gutter column. */
 abstract class GutterMarker : RangeValue() {
-    /** Whether this marker is equivalent to another. */
-    override fun eq(other: RangeValue): Boolean = this === other
 
     /** Render the marker content. */
     @Composable

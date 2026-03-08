@@ -255,7 +255,9 @@ val uncollapseUnchanged: StateEffectType<Int> = StateEffect.define { v, m ->
 }
 
 private class CollapseWidget(val lines: Int) : WidgetType() {
-    override fun eq(other: WidgetType): Boolean = other is CollapseWidget && other.lines == lines
+    override fun equals(other: Any?): Boolean = other is CollapseWidget && other.lines == lines
+
+    override fun hashCode(): Int = lines
 
     @Composable
     override fun Content() {

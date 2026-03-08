@@ -116,7 +116,9 @@ private class FoldWidget : WidgetType() {
         }
     }
 
-    override fun eq(other: WidgetType): Boolean = other is FoldWidget
+    override fun equals(other: Any?): Boolean = other is FoldWidget
+
+    override fun hashCode(): Int = this::class.hashCode()
 }
 
 /**
@@ -382,6 +384,7 @@ private class FoldGutterMarker(val folded: Boolean) :
         )
     }
 
-    override fun eq(other: com.monkopedia.kodemirror.state.RangeValue): Boolean =
-        other is FoldGutterMarker && folded == other.folded
+    override fun equals(other: Any?): Boolean = other is FoldGutterMarker && folded == other.folded
+
+    override fun hashCode(): Int = folded.hashCode()
 }

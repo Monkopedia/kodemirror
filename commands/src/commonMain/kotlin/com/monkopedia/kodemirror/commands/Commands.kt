@@ -50,7 +50,7 @@ private fun updateSel(
     val state = view.state
     val newRanges = state.selection.ranges.map { how(it, view) }
     val newSel = EditorSelection.create(newRanges, state.selection.mainIndex)
-    if (newSel.eq(state.selection)) return false
+    if (newSel == state.selection) return false
     view.dispatch(
         TransactionSpec(
             selection = SelectionSpec.EditorSelectionSpec(newSel),

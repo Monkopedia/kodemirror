@@ -72,7 +72,7 @@ private class PlaceholderPlugin(
         val widget = object : WidgetType() {
             @Composable
             override fun Content() = content()
-            override fun eq(other: WidgetType): Boolean = other === this
+            override fun equals(other: Any?): Boolean = other === this
         }
         builder.add(0, 0, Decoration.widget(WidgetDecorationSpec(widget = widget, side = 1)))
         return builder.finish()
