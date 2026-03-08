@@ -43,7 +43,7 @@ import com.monkopedia.kodemirror.state.Text
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.view.Decoration
 import com.monkopedia.kodemirror.view.DecorationSet
-import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.GutterConfig
 import com.monkopedia.kodemirror.view.GutterMarker
 import com.monkopedia.kodemirror.view.LineDecorationSpec
@@ -321,7 +321,7 @@ private val deletedChunks: StateField<DecorationSet> = StateField.define(
  * or the cursor. This chunk will no longer be highlighted unless it
  * is edited again.
  */
-fun acceptChunk(view: EditorView, pos: Int? = null): Boolean {
+fun acceptChunk(view: EditorSession, pos: Int? = null): Boolean {
     val state = view.state
     val at = pos ?: state.selection.main.head
     val chunk = state.field(ChunkField).find { it.fromB <= at && it.endB >= at }
@@ -357,7 +357,7 @@ fun acceptChunk(view: EditorView, pos: Int? = null): Boolean {
  * or the cursor. Reverts that range to the content it has in the
  * original document.
  */
-fun rejectChunk(view: EditorView, pos: Int? = null): Boolean {
+fun rejectChunk(view: EditorSession, pos: Int? = null): Boolean {
     val state = view.state
     val at = pos ?: state.selection.main.head
     val chunk = state.field(ChunkField).find { it.fromB <= at && it.endB >= at }

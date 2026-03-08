@@ -95,7 +95,7 @@ private class SpecialCharWidget(val label: String, val codePoint: Int) : WidgetT
         other is SpecialCharWidget && label == other.label && codePoint == other.codePoint
 }
 
-private class SpecialCharsPlugin(view: EditorView, private val decorator: MatchDecorator) :
+private class SpecialCharsPlugin(view: EditorSession, private val decorator: MatchDecorator) :
     PluginValue {
     var decos: DecorationSet = decorator.createDeco(view)
 

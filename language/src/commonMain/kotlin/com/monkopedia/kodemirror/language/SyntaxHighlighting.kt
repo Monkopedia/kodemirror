@@ -27,7 +27,7 @@ import com.monkopedia.kodemirror.state.RangeSet
 import com.monkopedia.kodemirror.state.RangeSetBuilder
 import com.monkopedia.kodemirror.view.Decoration
 import com.monkopedia.kodemirror.view.DecorationSet
-import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.MarkDecoration
 import com.monkopedia.kodemirror.view.MarkDecorationSpec
 import com.monkopedia.kodemirror.view.PluginSpec
@@ -50,7 +50,7 @@ fun syntaxHighlighting(highlighter: Highlighter): Extension {
 }
 
 private class TreeHighlighter(
-    view: EditorView,
+    view: EditorSession,
     private val highlighter: Highlighter
 ) : PluginValue {
     private val markCache = mutableMapOf<String, MarkDecoration>()
@@ -62,11 +62,11 @@ private class TreeHighlighter(
         val tree = syntaxTree(update.state)
         val oldTree = syntaxTree(update.startState)
         if (tree !== oldTree || update.docChanged) {
-            decorations = buildDeco(update.view)
+            decorations = buildDeco(update.session)
         }
     }
 
-    private fun buildDeco(view: EditorView): DecorationSet {
+    private fun buildDeco(view: EditorSession): DecorationSet {
         val tree = syntaxTree(view.state)
         if (tree.length == 0) return RangeSet.empty()
 

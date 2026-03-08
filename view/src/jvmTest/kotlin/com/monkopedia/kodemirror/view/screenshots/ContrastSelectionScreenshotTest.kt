@@ -30,7 +30,8 @@ import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.asDoc
-import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.EditorSession
+import com.monkopedia.kodemirror.view.KodeMirror
 import com.monkopedia.kodemirror.view.highlightActiveLine
 import com.monkopedia.kodemirror.view.highlightActiveLineGutter
 import com.monkopedia.kodemirror.view.lineNumbers
@@ -68,7 +69,8 @@ class ContrastSelectionScreenshotTest {
                     )
                 )
             }
-            EditorView(state = state, onUpdate = {})
+            val session = remember(state) { EditorSession(state) }
+            KodeMirror(session = session)
         }
         onRoot().captureRoboImage("screenshots/compose/contrast-selection.png")
     }

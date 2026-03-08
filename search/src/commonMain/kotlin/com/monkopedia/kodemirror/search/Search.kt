@@ -28,7 +28,7 @@ import com.monkopedia.kodemirror.state.Slot
 import com.monkopedia.kodemirror.view.Decoration
 import com.monkopedia.kodemirror.view.DecorationSet
 import com.monkopedia.kodemirror.view.KeyBinding
-import com.monkopedia.kodemirror.view.LocalEditorView
+import com.monkopedia.kodemirror.view.LocalEditorSession
 import com.monkopedia.kodemirror.view.MarkDecorationSpec
 import com.monkopedia.kodemirror.view.Panel
 import com.monkopedia.kodemirror.view.PluginValue
@@ -55,7 +55,7 @@ fun search(): Extension {
             if (state.field(searchPanelOpenField, require = false) == true) {
                 add(
                     Panel(top = false) {
-                        val view = LocalEditorView.current
+                        val view = LocalEditorSession.current
                         SearchPanel(view)
                     }
                 )
@@ -63,7 +63,7 @@ fun search(): Extension {
             if (state.field(gotoLinePanelOpenField, require = false) == true) {
                 add(
                     Panel(top = true) {
-                        val view = LocalEditorView.current
+                        val view = LocalEditorSession.current
                         GoToLinePanel(view)
                     }
                 )

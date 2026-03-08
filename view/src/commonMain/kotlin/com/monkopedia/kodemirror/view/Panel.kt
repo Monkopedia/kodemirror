@@ -59,7 +59,7 @@ val panels: Facet<List<Panel>, List<Panel>> = showPanels
 /**
  * Get all active panels in the given state.
  */
-fun getPanel(view: EditorView): List<Panel> {
+fun getPanel(view: EditorSession): List<Panel> {
     val state = view.state
     return buildList {
         state.facet(showPanel)?.let { add(it) }
@@ -73,12 +73,16 @@ fun getPanel(view: EditorView): List<Panel> {
  * Usage:
  * ```kotlin
  * PanelLayout(view) {
- *     EditorView(state, onUpdate, modifier = Modifier.weight(1f))
+ *     EditorSession(state, onUpdate, modifier = Modifier.weight(1f))
  * }
  * ```
  */
 @Composable
-fun PanelLayout(view: EditorView, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+fun PanelLayout(
+    view: EditorSession,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
     val state = view.state
     val single = state.facet(showPanel)
     val multi = state.facet(showPanels)

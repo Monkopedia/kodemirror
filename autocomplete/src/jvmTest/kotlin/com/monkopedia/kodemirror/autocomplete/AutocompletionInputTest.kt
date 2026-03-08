@@ -26,7 +26,7 @@ import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asDoc
-import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.EditorSession
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -50,7 +50,7 @@ class AutocompletionInputTest {
         )
     }
 
-    private fun createView(doc: String = "", cursor: Int = doc.length): EditorView {
+    private fun createView(doc: String = "", cursor: Int = doc.length): EditorSession {
         val config = CompletionConfig(override = listOf(testSource))
         val state = EditorState.create(
             EditorStateConfig(
@@ -64,11 +64,11 @@ class AutocompletionInputTest {
                 )
             )
         )
-        return EditorView(state)
+        return EditorSession(state)
     }
 
     /** Simulate typing a character at the current cursor position. */
-    private fun typeChar(view: EditorView, ch: String) {
+    private fun typeChar(view: EditorSession, ch: String) {
         val pos = view.state.selection.main.head
         view.dispatch(
             TransactionSpec(
@@ -80,7 +80,7 @@ class AutocompletionInputTest {
     }
 
     /** Simulate deleting the character before the cursor. */
-    private fun deleteBack(view: EditorView) {
+    private fun deleteBack(view: EditorSession) {
         val pos = view.state.selection.main.head
         if (pos > 0) {
             view.dispatch(

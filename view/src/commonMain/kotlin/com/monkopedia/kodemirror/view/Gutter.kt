@@ -51,13 +51,13 @@ data class GutterConfig(
     /** CSS class applied to the gutter container. */
     val cssClass: String? = null,
     /** Called for each visible line to get the marker, or null. */
-    val lineMarker: ((EditorView, Int) -> GutterMarker?)? = null,
+    val lineMarker: ((EditorSession, Int) -> GutterMarker?)? = null,
     /** Called when the gutter is clicked. */
     val lineMarkerChange: ((ViewUpdate) -> Boolean)? = null,
     /** Padding on the right of gutter content. */
     val renderEmptyElements: Boolean = false,
     /** Initial marker for the gutter (shown before any lines). */
-    val initialSpacer: ((EditorView) -> GutterMarker)? = null,
+    val initialSpacer: ((EditorSession) -> GutterMarker)? = null,
     /** Marker shown when the gutter is active (cursor on line). */
     val updateSpacer: ((GutterMarker, ViewUpdate) -> GutterMarker)? = null
 )
@@ -72,14 +72,14 @@ fun gutter(config: GutterConfig): Extension = gutters.of(config)
  * A composable that renders all registered gutter columns alongside the
  * editor content.
  *
- * Place this to the left of the [EditorView] composable in a [Row].
+ * Place this to the left of the [EditorSession] composable in a [Row].
  */
 @Composable
-fun GutterView(view: EditorView, lineNumber: Int, modifier: Modifier = Modifier) {
+fun GutterView(session: EditorSession, lineNumber: Int, modifier: Modifier = Modifier) {
     val theme = LocalEditorTheme.current
-    val isActive = view.state.doc.lineAt(view.state.selection.main.head).number == lineNumber
-    val line = view.state.doc.line(lineNumber)
-    val configs = view.state.facet(gutters)
+    val isActive = session.state.doc.lineAt(session.state.selection.main.head).number == lineNumber
+    val line = session.state.doc.line(lineNumber)
+    val configs = session.state.facet(gutters)
     val hasActiveLineGutter = isActive &&
         configs.any { it.cssClass == "cm-activeLineGutter" }
 
@@ -116,7 +116,7 @@ fun GutterView(view: EditorView, lineNumber: Int, modifier: Modifier = Modifier)
                     modifier = Modifier.width(14.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    val marker = config.lineMarker.invoke(view, line.from)
+                    val marker = config.lineMarker.invoke(session, line.from)
                     if (marker != null) {
                         marker.Content(theme)
                     }
@@ -133,10 +133,10 @@ fun GutterView(view: EditorView, lineNumber: Int, modifier: Modifier = Modifier)
  */
 val lineNumberMarkers: Facet<
     (
-        view: EditorView,
+        view: EditorSession,
         lineFrom: Int
     ) -> GutterMarker?,
-    List<(view: EditorView, lineFrom: Int) -> GutterMarker?>
+    List<(view: EditorSession, lineFrom: Int) -> GutterMarker?>
     > =
     Facet.define()
 

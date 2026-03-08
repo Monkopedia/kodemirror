@@ -88,7 +88,7 @@ val state = EditorState.create(EditorStateConfig(
 ))
 ```
 
-`hoverTooltip` takes a function `(EditorView, Int) -> Tooltip?` that
+`hoverTooltip` takes a function `(EditorSession, Int) -> Tooltip?` that
 receives the view and the document position under the pointer. Return
 `null` for no tooltip.
 

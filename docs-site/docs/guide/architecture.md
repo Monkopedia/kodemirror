@@ -35,7 +35,7 @@ Both depend only on `:lezer-common`.
 
 | Module | Package | Purpose |
 |--------|---------|---------|
-| `:view` | `com.monkopedia.kodemirror.view` | Compose rendering, `EditorView`, `ViewPlugin`, decorations, gutters, panels, tooltips |
+| `:view` | `com.monkopedia.kodemirror.view` | Compose rendering, `EditorSession`, `ViewPlugin`, decorations, gutters, panels, tooltips |
 
 Depends on `:state` and Compose (foundation, ui, runtime).
 This is the main Compose integration layer.
@@ -141,7 +141,7 @@ The state layer (`:state`) is pure Kotlin with no UI dependency.
 Transactions flow in, new states come out. The view layer (`:view`)
 wraps this in a `@Composable` function that:
 
-1. Holds the `EditorView` instance across recompositions
+1. Holds the `EditorSession` instance across recompositions
 2. Syncs plugin lifecycle via `ViewPluginHost`
 3. Renders the document using `LazyColumn` + `BasicText`
 4. Draws selections and cursors on a Canvas overlay

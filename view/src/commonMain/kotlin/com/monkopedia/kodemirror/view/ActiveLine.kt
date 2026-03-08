@@ -39,16 +39,16 @@ val highlightActiveLine: Extension = ViewPlugin.define(
     }
 ).asExtension()
 
-private class ActiveLinePlugin(view: EditorView) : PluginValue {
+private class ActiveLinePlugin(view: EditorSession) : PluginValue {
     var decos: DecorationSet = buildDecos(view)
 
     override fun update(update: ViewUpdate) {
         if (update.docChanged || update.selectionSet) {
-            decos = buildDecos(update.view)
+            decos = buildDecos(update.session)
         }
     }
 
-    private fun buildDecos(view: EditorView): DecorationSet {
+    private fun buildDecos(view: EditorSession): DecorationSet {
         val state = view.state
         val theme = state.facet(editorTheme)
         val builder = RangeSetBuilder<Decoration>()

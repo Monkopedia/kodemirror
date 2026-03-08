@@ -14,7 +14,7 @@ The core conceptual model is identical:
 - **State fields** — `StateField.define` with `create` and `update`
 - **View plugins** — `ViewPlugin.define` with `create` and `update`
 - **Decorations** — mark, widget, line, replace (same four types)
-- **Commands** — `(EditorView) -> Boolean`
+- **Commands** — `(EditorSession) -> Boolean`
 - **Key bindings** — `KeyBinding(key = "Ctrl-s", run = ...)` (same shape)
 - **Syntax trees** — Lezer parser infrastructure, `Tree`, `SyntaxNode`, `Tag`
 
@@ -78,7 +78,7 @@ class MyWidget : WidgetType() {
 
 **CodeMirror 6:**
 ```javascript
-const myTheme = EditorView.theme({
+const myTheme = EditorSession.theme({
   "&": { backgroundColor: "#1e1e1e" },
   ".cm-content": { color: "#d4d4d4" },
   ".cm-cursor": { borderLeftColor: "#ffffff" }
@@ -188,7 +188,7 @@ dependencies {
 
 | JavaScript pattern | Kotlin equivalent |
 |---|---|
-| `EditorView.theme({...})` | `EditorTheme(...)` |
+| `EditorSession.theme({...})` | `EditorTheme(...)` |
 | `WidgetType.toDOM()` | `WidgetType.Content()` (composable) |
 | `Decoration.mark({class: "..."})` | `Decoration.mark(style = SpanStyle(...))` |
 | `tags.keyword` | `Tags.keyword` |

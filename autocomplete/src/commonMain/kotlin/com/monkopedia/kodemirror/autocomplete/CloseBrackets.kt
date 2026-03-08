@@ -27,7 +27,7 @@ import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.TransactionFilterResult
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.transactionFilter
-import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.KeyBinding
 import com.monkopedia.kodemirror.view.keymap
 
@@ -144,7 +144,7 @@ fun closeBrackets(config: CloseBracketsConfig = CloseBracketsConfig()): Extensio
 }
 
 /** Delete bracket pair command: when cursor is between a pair, delete both. */
-val deleteBracketPair: (EditorView) -> Boolean = { view ->
+val deleteBracketPair: (EditorSession) -> Boolean = { view ->
     val state = view.state
     val pos = state.selection.main.head
     val result = if (pos > 0 && pos < state.doc.length) {

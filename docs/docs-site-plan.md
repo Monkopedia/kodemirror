@@ -126,7 +126,7 @@ Each section is a lightweight rewrite of the upstream guide, replacing TypeScrip
 |---------|----------------|
 | **Architecture** | Same module structure. "Composable Shell" replaces "Imperative Shell". Gradle coordinates. KMP targets. |
 | **Data Model** | Nearly identical to upstream. Kotlin code examples for `Text`, `ChangeSet`, `EditorSelection`, `Facet`, `Transaction`. |
-| **The View** | Most divergent. `EditorViewComposable` as `@Composable` entry point. `SpanStyle`/`EditorTheme` instead of CSS. |
+| **The View** | Most divergent. `KodeMirror` as `@Composable` entry point. `SpanStyle`/`EditorTheme` instead of CSS. |
 | **Extending** | `StateField.define()`, `ViewPlugin.define()`, decorations via facets. Extension composition. |
 
 ## Example Porting Strategy

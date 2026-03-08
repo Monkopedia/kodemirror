@@ -55,18 +55,18 @@ fun placeholder(content: @Composable () -> Unit): Extension = ViewPlugin.define(
 ).asExtension()
 
 private class PlaceholderPlugin(
-    view: EditorView,
+    view: EditorSession,
     private val content: @Composable () -> Unit
 ) : PluginValue {
     var decos: DecorationSet = buildDecos(view)
 
     override fun update(update: ViewUpdate) {
         if (update.docChanged) {
-            decos = buildDecos(update.view)
+            decos = buildDecos(update.session)
         }
     }
 
-    private fun buildDecos(view: EditorView): DecorationSet {
+    private fun buildDecos(view: EditorSession): DecorationSet {
         if (view.state.doc.length > 0) return RangeSet.empty()
         val builder = RangeSetBuilder<Decoration>()
         val widget = object : WidgetType() {

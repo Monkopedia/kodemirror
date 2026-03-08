@@ -26,13 +26,13 @@ import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asDoc
-import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.EditorSession
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class HistoryTest {
 
-    private fun createView(doc: String, cursor: Int = 0): EditorView {
+    private fun createView(doc: String, cursor: Int = 0): EditorSession {
         val state = EditorState.create(
             EditorStateConfig(
                 doc = doc.asDoc(),
@@ -40,7 +40,7 @@ class HistoryTest {
                 extensions = history()
             )
         )
-        return EditorView(state)
+        return EditorSession(state)
     }
 
     @Test

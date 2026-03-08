@@ -96,7 +96,7 @@ val highlightTrailingWhitespace: Extension = run {
 }
 
 private class WhitespacePlugin(
-    view: EditorView,
+    view: EditorSession,
     private val decorator: MatchDecorator
 ) : PluginValue {
     var decos: DecorationSet = decorator.createDeco(view)

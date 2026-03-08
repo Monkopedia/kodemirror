@@ -48,7 +48,7 @@ val state = EditorState.create(EditorStateConfig(
 ))
 
 // Make read-only
-fun setReadOnly(view: EditorView, isReadOnly: Boolean) {
+fun setReadOnly(view: EditorSession, isReadOnly: Boolean) {
     view.dispatch(TransactionSpec(
         effects = listOf(
             readOnlyCompartment.reconfigure(readOnly.of(isReadOnly))

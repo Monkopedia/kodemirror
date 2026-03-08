@@ -4,14 +4,14 @@ A minimal Kodemirror editor with common features enabled.
 
 ## Minimal editor
 
-The simplest possible editor needs an `EditorState` and the `EditorView`
+The simplest possible editor needs an `EditorState` and the `EditorSession`
 composable:
 
 ```kotlin
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import com.monkopedia.kodemirror.state.*
-import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.EditorSession
 
 @Composable
 fun MinimalEditor() {
@@ -23,7 +23,7 @@ fun MinimalEditor() {
         )
     }
 
-    EditorView(
+    EditorSession(
         state = state,
         onUpdate = { tr -> state = tr.state },
         modifier = Modifier.fillMaxSize()
@@ -68,7 +68,7 @@ fun FullEditor() {
         )
     }
 
-    EditorView(
+    EditorSession(
         state = state,
         onUpdate = { tr -> state = tr.state },
         modifier = Modifier.fillMaxSize()

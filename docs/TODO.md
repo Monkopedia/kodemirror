@@ -42,15 +42,30 @@ Each item has a status prefix on its heading line:
 
 ## Priority 2 — High Impact, Core DX
 
-### 4. [BLOCKED] Add `basicSetup` / `minimalSetup` convenience bundle
-> **Blocked:** Needs design decision — should this be a new `:basic-setup` module or added to an existing one? Which extensions to include? Depends on which upstream `basicSetup` extensions exist in this project.
+### 3b. [DONE] Rename `EditorView` to `EditorSession` + `KodeMirror` composable
+> **Decision:** Extract `EditorSession` class into `EditorSession` interface (state holder + dispatcher for commands/plugins). Rename `EditorSession` composable to `KodeMirror`. Add `rememberEditorSession(doc, extensions)` and `rememberEditorSession(config)` composable factories. Hard rename (no deprecated aliases — pre-1.0). Subsumes #12 (rememberEditorState) and #13 (simple EditorSession overload).
+- **Effort:** 3+ days | **Source:** Architecture, Kotlin Ergonomics
+- **Scope:**
+  - Extract `EditorSession` interface from `EditorSession` class (state, dispatch, plugin, editable, coords)
+  - Internal `EditorSessionImpl` class
+  - Rename composable `EditorSession` → `KodeMirror`
+  - Add `rememberEditorSession(doc, extensions)` and `rememberEditorSession(config)` composables
+  - Update all command signatures `(EditorSession) -> Boolean` → `(EditorSession) -> Boolean`
+  - Update all plugin APIs (`ViewPlugin.create`, `ViewUpdate.view`, etc.)
+  - Update all modules: commands, autocomplete, search, lint, language, lang-* modules
+  - Update `LocalEditorSession` → `LocalEditorSession`
+  - Update companion object facets (`EditorSession.updateListener` → `EditorSession.updateListener`)
+  - Update docs and examples
+
+### 4. Add `basicSetup` / `minimalSetup` convenience bundle
+> **Decision:** New `:basic-setup` module. Bundle standard extensions matching upstream CodeMirror basicSetup.
 - **Effort:** 1–2 days | **Source:** Completeness, Frontend DX
 - Biggest onboarding friction. Every new editor requires manually assembling 10+ extensions.
   CodeMirror upstream provides `basicSetup` as the standard entry point. Bundle: line numbers,
   history, bracket matching, folding, autocompletion, search, default keymap, syntax highlighting.
 
-### 5. [BLOCKED] Add `kodemirror-bom` Gradle BOM
-> **Blocked:** Needs design decision — BOM module setup and version management strategy. Should wait until module list is stabilized.
+### 5. Add `kodemirror-bom` Gradle BOM
+> **Decision:** Create BOM now.
 - **Effort:** 1 day | **Source:** Frontend DX
 - Users must manage 6+ separate dependency versions for a basic editor. A Bill of Materials
   (`kodemirror-bom`) would let users align all module versions with a single entry.
@@ -62,8 +77,8 @@ Each item has a status prefix on its heading line:
   `EditorStateConfig.extensions` accept `List<Extension>` directly.
 - **File:** `state/src/commonMain/kotlin/.../state/Extension.kt`
 
-### 7. [BLOCKED] Add DSL builders for `EditorState` and `TransactionSpec`
-> **Blocked:** Needs design decision — what should the DSL API look like? Should the builder scope use operator overloading (`+lineNumbers`) or named methods? Should `TransactionSpec` builder support both `changes` and `annotations`? Need to review `EditorStateConfig`, `TransactionSpec`, and `ChangeSpec` APIs before designing.
+### 7. Add DSL builders for `EditorState` and `TransactionSpec`
+> **Decision:** Operator overloading DSL style (`+lineNumbers`). Use `@DslMarker`.
 - **Effort:** 2–3 days | **Source:** Kotlin Ergonomics
 - The two most common API entry points have significant ceremony:
   - `EditorState.create(EditorStateConfig(..., extensions = ExtensionList(listOf(...))))`
@@ -72,8 +87,8 @@ Each item has a status prefix on its heading line:
   `view.dispatch { insert(0, "Hello") }`
 - Use `@DslMarker` annotation on builder scopes to prevent accidental scope leaking.
 
-### 8. [BLOCKED] Replace `eq()` methods with `equals()` / `hashCode()`
-> **Blocked:** Needs design decision — `SelectionRange.eq(other, includeAssoc)` has an extra parameter; should `equals()` use `includeAssoc=true` or `false` by default? Also `eq()` is used extensively in internal comparison logic — need to audit all call sites to ensure `equals()` semantics are correct. Breaking change that needs a clear migration strategy.
+### 8. Replace `eq()` methods with `equals()` / `hashCode()`
+> **Decision:** `equals()` uses `includeAssoc=false`. Keep `eq(other, includeAssoc)` as secondary method for the `includeAssoc=true` case.
 - **Effort:** 1–2 days | **Source:** Kotlin Ergonomics
 - `SelectionRange`, `EditorSelection`, `Text`, `RangeValue`, `WidgetType` define `eq()` instead of
   Kotlin's `equals()`. Breaks `==`, collections, and surprises every Kotlin developer.
@@ -101,31 +116,31 @@ Each item has a status prefix on its heading line:
 
 ## Priority 3 — Medium Impact, Ergonomics & Compose Integration
 
-### 12. [BLOCKED] Add `rememberEditorState` composable + `@Immutable` annotations
-> **Blocked:** Needs design decision — should `rememberEditorState` take `EditorStateConfig` or individual params? Which types should get `@Immutable` and does that affect hashCode contracts? Need to review Compose stability semantics.
+### 12. [SKIP] Add `rememberEditorState` composable + `@Immutable` annotations
+> **Skip reason:** Subsumed by #3b — `rememberEditorSession` provides this functionality as part of the EditorSession refactor. `@Immutable` annotations can be added as part of #3b or separately.
 - **Effort:** 1–2 days | **Source:** Frontend DX, Kotlin Ergonomics
 - Every editor repeats: `var state by remember { mutableStateOf(EditorState.create(config)) }` +
   `onUpdate = { tr -> state = tr.state }`. A `rememberEditorState` composable eliminates this.
   Also annotate `EditorState`, `EditorTheme`, etc. with `@Immutable` to enable Compose skip
   optimizations.
 
-### 13. [BLOCKED] Add simple `EditorView` overload with `initialDoc` and `onChange`
-> **Blocked:** Needs design decision — API shape for the simplified editor composable. Should it manage state internally or expose it? How does it interact with extensions?
+### 13. [SKIP] Add simple `EditorSession` overload with `initialDoc` and `onChange`
+> **Skip reason:** Subsumed by #3b — `rememberEditorSession(doc, extensions)` + `KodeMirror(session)` provides the simple API. #20 (standalone onChange extension) handles text change callbacks.
 - **Effort:** 1 day | **Source:** Frontend DX
-- Provide a convenience `EditorView` overload that accepts `initialDoc: String`,
+- Provide a convenience `EditorSession` overload that accepts `initialDoc: String`,
   `extensions: List<Extension>`, and `onChange: (String) -> Unit`, managing its own state internally.
   Covers the 80% use case where developers just want text in/text out without understanding the
   full transaction model.
 
-### 14. [BLOCKED] Add type-safe `LanguageDataKey<T>`
-> **Blocked:** Needs design decision — how to integrate typed keys with the existing `languageDataAt` API without breaking backward compatibility. Similar to `AnnotationType<T>` pattern but applied to a different mechanism.
+### 14. Add type-safe `LanguageDataKey<T>`
+> **Decision:** Replace string-based `languageDataAt` entirely. Define standard keys like `LanguageDataKey.AUTOCOMPLETE`, `LanguageDataKey.FOLD`, etc.
 - **Effort:** 1–2 days | **Source:** Kotlin Ergonomics
 - `EditorState.languageDataAt(name: String, pos: Int)` uses `Map<String, Any?>` + unchecked cast.
   Replace with typed key class similar to `AnnotationType<T>`.
 - **File:** `state/src/commonMain/kotlin/.../state/State.kt`
 
-### 15. [BLOCKED] Replace CSS class strings with sealed class/enum identifiers
-> **Blocked:** Needs design decision — significant API change affecting gutter, decoration, and lint modules. Need to decide replacement type (sealed class vs enum vs type alias) and migration strategy.
+### 15. Replace CSS class strings with sealed class/enum identifiers
+> **Decision:** Sealed class everywhere — `GutterType`, `DecorationClass`, `DiagnosticSeverity`. Breaking change across view/lint modules.
 - **Effort:** 1–2 days | **Source:** Kotlin Ergonomics, Architecture
 - `GutterConfig.cssClass`, `Diagnostic.markClass`, `MarkDecorationSpec.cssClass`, and
   `MarkDecorationSpec.attributes` all reference CSS/DOM concepts meaningless in Compose.
@@ -133,21 +148,21 @@ Each item has a status prefix on its heading line:
   Replace with sealed class or enum; remove or replace DOM attribute fields.
 - **Files:** `view/.../Gutter.kt`, `view/.../Decoration.kt`, `lint/.../Lint.kt`
 
-### 16. [BLOCKED] Add `suspend` overloads for linter and completion sources
-> **Blocked:** Needs design decision — how should coroutine scope be provided? Via parameter, CoroutineScope extension, or ViewPlugin lifecycle? Affects the entire async interaction model.
+### 16. Add `suspend` overloads for linter and completion sources
+> **Decision:** CoroutineScope parameter for explicit control, plus a composable option/default that auto-remembers a scope.
 - **Effort:** 2–3 days | **Source:** Kotlin Ergonomics
 - Zero `suspend fun` or `Flow` usage in core modules. Async linting and network-backed completions
   need coroutine support. This is essential for a coroutine-native Kotlin API.
 
-### 17. [BLOCKED] Prefix `parser` properties across language modules
-> **Blocked:** Renaming ~16 top-level `parser` properties (e.g. `parser` → `javaParser`) is a large breaking change affecting every lang-* module. The `jsHighlight` → `jsHighlighting` rename is done.
+### 17. Prefix `parser` properties across language modules
+> **Decision:** Rename all now — breaking change. `javaParser`, `pythonParser`, `cppParser`, etc.
 - **Effort:** < 1 day | **Source:** Architecture
 - `jsHighlight` is the only language module not matching `{lang}Highlighting` pattern.
 - Top-level `parser` property across ~15 modules causes star-import collisions. Rename to
   `javaParser`, `pythonParser`, `cppParser`, etc.
 
-### 18. [BLOCKED] Type the `tag` field in `TagStyleSpec`, `TagStyleRule`, and `NodeSpec`
-> **Blocked:** Needs design decision — tag currently accepts both `Tag` and modifier functions `(Tag) -> Tag`. Need a union type or sealed interface to represent both cases. Also affects `TreeBuildSpec.buffer` and `NestedParse.overlay`.
+### 18. Type the `tag` field in `TagStyleSpec`, `TagStyleRule`, and `NodeSpec`
+> **Decision:** Sealed interface `TagInput { data class Single(val tag: Tag); data class Modified(val modifier: (Tag) -> Tag) }`. Also type `TreeBuildSpec.buffer` and `NestedParse.overlay`.
 - **Effort:** 1 day | **Source:** Architecture
 - `TagStyleSpec.tag`, `TagStyleRule.tag`, and `NodeSpec.style` are currently `Any` (from JS dynamic
   typing). Should accept `Tag` or `(Tag) -> Tag` for modifiers.
@@ -160,8 +175,8 @@ Each item has a status prefix on its heading line:
 - `operator fun get` on `EditorState`: `state[myField]` instead of `state.field(myField)`
 - `invoke` operator on `Facet`: `editable(false)` instead of `editable.of(false)`
 
-### 20. [BLOCKED] Add simple `onChange: (String) -> Unit` convenience
-> **Blocked:** Overlaps with #13 (simple EditorView overload). Should be designed together to avoid redundant APIs.
+### 20. Add simple `onChange: (String) -> Unit` convenience
+> **Decision:** Standalone extension — `EditorSession.onChange(callback: (String) -> Unit): Extension` that can be added to any editor setup, independent of #13.
 - **Effort:** < 1 day | **Source:** Frontend DX
 - Many developers just want document text changes. The transaction model is powerful but overkill
   for simple cases. Provide an `UpdateListener` extension or helper that extracts document text
@@ -252,8 +267,8 @@ Each item has a status prefix on its heading line:
   dependencies, writing a minimal editor composable, running it. Distinct from the existing
   `basic.md` example which shows code but not the full project setup process.
 
-### 31. [BLOCKED] Create a complete sample project
-> **Blocked:** Needs design decision — should this be Android, Desktop (JVM), or both? Should it be a separate repository or a `samples/` directory in this repo? What Gradle setup (version catalog, convention plugins, standalone)?
+### 31. Create a complete sample project
+> **Decision:** Desktop + wasm targets in-repo `samples/` directory. Will add other platforms later.
 - **Effort:** 2–3 days | **Source:** Documentation, Frontend DX
 - No runnable examples. Create a minimal Android or Desktop app in `samples/` that users can clone
   and run. Include platform-specific `build.gradle.kts` setup.
@@ -266,8 +281,8 @@ Each item has a status prefix on its heading line:
 
 ## Priority 6 — Lower Impact, Polish
 
-### 33. [BLOCKED] Restrict legacy-mode state class mutability
-> **Blocked:** Affects 100+ state classes across 99 files. The `StreamParser<State>` generic interface requires `State` to be `public` since it's exposed via the public `StreamParser.startState` return type. Making setters `internal` would require either: (a) splitting into public interfaces + internal implementations for each state, or (b) a module-level approach where state types are package-private. Both are significant refactoring efforts needing architectural decision.
+### 33. Restrict legacy-mode state class mutability
+> **Decision:** Make setters `internal` on all state classes. They stay in the same module.
 - **Effort:** 3+ days | **Source:** Architecture
 - All 100+ stream-parser state classes (`AplState`, `AsciiArmorState`, etc.) have public mutable
   setters. The `StreamParser<State>` generic interface may need revisiting to enable `internal`
@@ -312,8 +327,8 @@ Each item has a status prefix on its heading line:
 - `Prec.highest`, `.high`, `.default`, `.low`, `.lowest` are stored as lambda properties (JS pattern).
   Should be `fun highest(ext: Extension): Extension`.
 
-### 42. [BLOCKED] Add `kotlinx.serialization` support alongside `toJSON`/`fromJSON`
-> **Blocked:** Needs design decision — should `@Serializable` be added to core types? This would add a `kotlinx.serialization` dependency to the state module. Also need to decide on serializer shape for `EditorState` (which has computed fields).
+### 42. Add `kotlinx.serialization` support alongside `toJSON`/`fromJSON`
+> **Decision:** Add `@Serializable` to core types (`EditorState`, `EditorSelection`, `SelectionRange`, `Text`). Adds kotlinx.serialization dependency to `:state` module.
 - **Effort:** 2–3 days | **Source:** Kotlin Ergonomics
 - `toJSON()`/`fromJSON()` use `Map<String, Any?>`. Add `@Serializable` data classes or serializers.
   Also consider renaming to `serialize()`/`deserialize()`.
@@ -324,8 +339,8 @@ Each item has a status prefix on its heading line:
 - Currently `String?` ("keyword", "function", "variable", etc.) with no discoverability.
   An enum would provide exhaustive matching and prevent typos.
 
-### 44. [BLOCKED] Consider inline value classes for positions
-> **Blocked:** Major breaking change affecting virtually every API surface. Would need to change every `Int` position parameter across all modules. Should wait for 1.0 planning.
+### 44. Consider inline value classes for positions
+> **Decision:** Introduce `@JvmInline value class DocPosition(val value: Int)` and `LineNumber(val value: Int)` now. Major breaking change touching all modules.
 - **Effort:** 2–3 days | **Source:** Kotlin Ergonomics
 - `@JvmInline value class DocPosition(val value: Int)` and `LineNumber(val value: Int)` would
   prevent mixing up positions and line numbers at zero runtime cost.
@@ -350,8 +365,8 @@ Each item has a status prefix on its heading line:
 - **Effort:** 1 day | **Source:** Frontend DX
 - No automatic bridging between `MaterialTheme.colorScheme` and `EditorTheme`.
 
-### 49. [BLOCKED] Consider a `lang-kotlin` module
-> **Blocked:** Requires creating a new Lezer grammar or porting an existing grammar. No upstream CodeMirror Kotlin grammar exists. Would need to either create one from scratch or adapt the Java grammar with Kotlin-specific extensions. Significant effort requiring language grammar expertise.
+### 49. Consider a `lang-kotlin` module
+> **Decision:** New Lezer grammar from scratch. Significant effort but cleaner than extending Java grammar.
 - **Effort:** 3+ days | **Source:** Frontend DX
 - Ironic absence for a Kotlin-first library. Even a Java grammar with Kotlin extensions would be
   high value.
@@ -367,8 +382,8 @@ Each item has a status prefix on its heading line:
 - Both `lang-jinja` and `lang-liquid` export a top-level `tagLanguage` property. Rename to
   `jinjaTagLanguage` and `liquidTagLanguage` to prevent confusion.
 
-### 52. [BLOCKED] Filter `$stable` fields from API dumps
-> **Blocked:** BCV doesn't support filtering individual synthetic fields by name pattern. The `$stable` fields are Compose compiler-generated and cannot be suppressed via `nonPublicMarkers` or `ignoredClasses`. Would need a custom post-processing step or upstream BCV feature.
+### 52. Filter `$stable` fields from API dumps
+> **Decision:** Post-processing Gradle task that strips `$stable` lines from `.api` files after `apiDump` runs.
 - **Effort:** < 1 hour | **Source:** Architecture
 - 82 classes expose Compose compiler `$stable` field. Cosmetic but adds noise.
 
@@ -403,8 +418,8 @@ Each item has a status prefix on its heading line:
 - `SearchQuery.valid` is a computed property but invalid queries can still be constructed and used.
   Consider a validated factory method or builder that returns `null`/throws on invalid input.
 
-### 59. [BLOCKED] Address Java interop type erasure
-> **Blocked:** Needs design decision — KMP targets (Android, Desktop, wasmJs) all use Kotlin callers. Java interop is low priority for a Compose Multiplatform library. May just need documentation rather than code changes.
+### 59. Address Java interop type erasure
+> **Decision:** Add `@JvmName` variants for key APIs to improve Java caller experience.
 - **Effort:** 1–2 days | **Source:** Architecture
 - `Facet`, `StateField`, `StateEffect`, `EditorState.facet()`, `EditorState.field()` lose generic
   type parameters at the JVM boundary due to type erasure. Java callers see raw `Object` types.
@@ -428,8 +443,8 @@ Each item has a status prefix on its heading line:
 - **Effort:** < 1 day | **Source:** Documentation
 - Show complete Android and Desktop `build.gradle.kts` snippets.
 
-### 63. [BLOCKED] Add visual screenshots to example pages
-> **Blocked:** Requires a running sample application to capture screenshots. Depends on #31 (sample project) being unblocked first.
+### 63. Add visual screenshots to example pages
+> **Note:** Depends on #31 (sample project) being completed first. Unblocked once #31 is done.
 - **Effort:** 1–2 days | **Source:** Documentation
 - At least for `basic.md`, `decoration.md`, `styling.md`.
 

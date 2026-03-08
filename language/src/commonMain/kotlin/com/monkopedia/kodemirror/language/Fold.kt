@@ -38,7 +38,7 @@ import com.monkopedia.kodemirror.state.StateFieldSpec
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.view.Decoration
 import com.monkopedia.kodemirror.view.DecorationSet
-import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.KeyBinding
 import com.monkopedia.kodemirror.view.ReplaceDecorationSpec
 import com.monkopedia.kodemirror.view.WidgetType
@@ -233,7 +233,7 @@ private fun syntaxFolding(
 // --- Fold commands ---
 
 /** Fold the code at the current cursor line. */
-val foldCode: (EditorView) -> Boolean = { view ->
+val foldCode: (EditorSession) -> Boolean = { view ->
     val state = view.state
     val line = state.doc.lineAt(state.selection.main.head)
     val range = foldable(state, line.from)
@@ -250,7 +250,7 @@ val foldCode: (EditorView) -> Boolean = { view ->
 }
 
 /** Unfold the code at the current cursor position. */
-val unfoldCode: (EditorView) -> Boolean = { view ->
+val unfoldCode: (EditorSession) -> Boolean = { view ->
     val state = view.state
     val pos = state.selection.main.head
     val folded = foldedRanges(state)
@@ -268,7 +268,7 @@ val unfoldCode: (EditorView) -> Boolean = { view ->
 }
 
 /** Toggle fold at the current cursor line. */
-val toggleFold: (EditorView) -> Boolean = { view ->
+val toggleFold: (EditorSession) -> Boolean = { view ->
     val state = view.state
     val pos = state.selection.main.head
     val folded = foldedRanges(state)
@@ -281,7 +281,7 @@ val toggleFold: (EditorView) -> Boolean = { view ->
 }
 
 /** Fold all foldable ranges in the document. */
-val foldAll: (EditorView) -> Boolean = { view ->
+val foldAll: (EditorSession) -> Boolean = { view ->
     val state = view.state
     val effects = mutableListOf<StateEffect<*>>()
     for (lineNum in 1..state.doc.lines) {
@@ -300,7 +300,7 @@ val foldAll: (EditorView) -> Boolean = { view ->
 }
 
 /** Unfold all folded ranges. */
-val unfoldAll: (EditorView) -> Boolean = { view ->
+val unfoldAll: (EditorSession) -> Boolean = { view ->
     val state = view.state
     val folded = foldedRanges(state)
     val effects = mutableListOf<StateEffect<*>>()

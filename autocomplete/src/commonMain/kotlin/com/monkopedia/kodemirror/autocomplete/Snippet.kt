@@ -35,7 +35,7 @@ import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.view.Decoration
 import com.monkopedia.kodemirror.view.DecorationSet
 import com.monkopedia.kodemirror.view.DecorationSource
-import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.KeyBinding
 import com.monkopedia.kodemirror.view.MarkDecorationSpec
 import com.monkopedia.kodemirror.view.PluginValue
@@ -132,7 +132,7 @@ private fun parseTemplate(template: String): ParsedSnippet {
  * Template syntax: `${name}` for named fields that the user can
  * tab through. `${}` marks the final cursor position.
  */
-fun snippet(template: String): (EditorView, Completion, Int, Int) -> Unit {
+fun snippet(template: String): (EditorSession, Completion, Int, Int) -> Unit {
     val parsed = parseTemplate(template)
     return { view, _, from, to ->
         val text = StringBuilder()
@@ -211,7 +211,7 @@ fun hasPrevSnippetField(state: com.monkopedia.kodemirror.state.EditorState): Boo
 // ── Commands ──
 
 /** Move to the next snippet field, or clear the snippet if at the last field. */
-val nextSnippetField: (EditorView) -> Boolean = { view ->
+val nextSnippetField: (EditorSession) -> Boolean = { view ->
     val active = view.state.field(snippetState, require = false)
     if (active != null && active.fieldIndex < active.fields.size - 1) {
         val next = active.fieldIndex + 1
@@ -236,7 +236,7 @@ val nextSnippetField: (EditorView) -> Boolean = { view ->
 }
 
 /** Move to the previous snippet field. */
-val prevSnippetField: (EditorView) -> Boolean = { view ->
+val prevSnippetField: (EditorSession) -> Boolean = { view ->
     val active = view.state.field(snippetState, require = false)
     if (active != null && active.fieldIndex > 0) {
         val prev = active.fieldIndex - 1
@@ -254,7 +254,7 @@ val prevSnippetField: (EditorView) -> Boolean = { view ->
 }
 
 /** Clear the active snippet. */
-val clearSnippet: (EditorView) -> Boolean = { view ->
+val clearSnippet: (EditorSession) -> Boolean = { view ->
     val active = view.state.field(snippetState, require = false)
     if (active != null) {
         view.dispatch(
@@ -297,7 +297,7 @@ private val snippetFieldActiveDecoration = Decoration.mark(
 )
 
 private class SnippetDecorationPlugin(
-    private val view: EditorView
+    private val view: EditorSession
 ) : PluginValue, DecorationSource {
     override var decorations: DecorationSet = buildDecorations()
         private set

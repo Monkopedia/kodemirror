@@ -109,7 +109,7 @@ fun MyPanel() {
 
 | Upstream (CSS) | Kodemirror (Compose) |
 |----------------|---------------------|
-| `EditorView.theme({...})` with CSS selectors | `editorTheme.of(EditorTheme(...))` |
+| `EditorSession.theme({...})` with CSS selectors | `editorTheme.of(EditorTheme(...))` |
 | `HighlightStyle.define([{tag, color}])` | `HighlightStyle.define(listOf(TagStyleSpec(...)))` |
 | CSS class names | `SpanStyle` values |
 | `--cm-editor-background` | `EditorTheme.background: Color` |

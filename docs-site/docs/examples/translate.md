@@ -54,9 +54,9 @@ val msg = state.phrase("Change from $1 to $2", "tabs", "spaces")
 
 Use `$$` to produce a literal dollar sign in translated text.
 
-## EditorView.phrase
+## EditorSession.phrase
 
-For convenience, `EditorView` exposes the same method, delegating to the
+For convenience, `EditorSession` exposes the same method, delegating to the
 current state:
 
 ```kotlin
@@ -72,7 +72,7 @@ view but not directly to the state.
 import com.monkopedia.kodemirror.state.*
 import com.monkopedia.kodemirror.view.*
 
-fun frenchEditor(): EditorView {
+fun frenchEditor(): EditorSession {
     val french = EditorState.phrases.of(mapOf(
         "Find" to "Chercher",
         "Replace" to "Remplacer",
@@ -90,7 +90,7 @@ fun frenchEditor(): EditorView {
         extensions = french
     ))
 
-    return EditorView(state)
+    return EditorSession(state)
 }
 ```
 

@@ -28,7 +28,7 @@ For decorations and analysis, only process visible content. The
 to the view's viewport:
 
 ```kotlin
-class LargeDocPlugin(view: EditorView) : PluginValue, DecorationSource {
+class LargeDocPlugin(view: EditorSession) : PluginValue, DecorationSource {
     override var decorations: DecorationSet = buildDecorations(view)
         private set
 
@@ -38,7 +38,7 @@ class LargeDocPlugin(view: EditorView) : PluginValue, DecorationSource {
         }
     }
 
-    private fun buildDecorations(view: EditorView): DecorationSet {
+    private fun buildDecorations(view: EditorSession): DecorationSet {
         val builder = RangeSetBuilder<Decoration>()
         // Only process lines in the visible viewport
         val startLine = view.state.doc.lineAt(view.viewport.from)
@@ -56,7 +56,7 @@ class LargeDocPlugin(view: EditorView) : PluginValue, DecorationSource {
 
 ## Compose virtual scrolling
 
-The `EditorView` composable uses a `LazyColumn` internally for virtual
+The `EditorSession` composable uses a `LazyColumn` internally for virtual
 scrolling. Only visible lines are composed and rendered, so memory usage
 stays constant regardless of document size.
 

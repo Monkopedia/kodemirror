@@ -18,7 +18,7 @@
  */
 package com.monkopedia.kodemirror.autocomplete
 
-import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.EditorSession
 
 /**
  * Standard completion type indicators. Use [value] as the [Completion.type]
@@ -59,7 +59,7 @@ data class Completion(
     val type: String? = null,
     val boost: Int = 0,
     val apply: String? = null,
-    val applyFn: ((EditorView, Completion, Int, Int) -> Unit)? = null,
+    val applyFn: ((EditorSession, Completion, Int, Int) -> Unit)? = null,
     val section: CompletionSection? = null
 )
 

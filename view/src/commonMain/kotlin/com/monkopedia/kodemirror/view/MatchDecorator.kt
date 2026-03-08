@@ -38,7 +38,7 @@ class MatchDecorator(
     private val decorate: (
         add: (from: Int, to: Int, deco: Decoration) -> Unit,
         match: MatchResult,
-        view: EditorView
+        view: EditorSession
     ) -> Unit,
     private val maxLength: Int = 1_000_000
 ) {
@@ -46,7 +46,7 @@ class MatchDecorator(
      * Scan the viewport of [view] for matches and return a fresh
      * [DecorationSet].
      */
-    fun createDeco(view: EditorView): DecorationSet {
+    fun createDeco(view: EditorSession): DecorationSet {
         val builder = RangeSetBuilder<Decoration>()
         val state = view.state
         val viewport = Viewport(0, state.doc.length) // full doc for simplicity
@@ -60,14 +60,14 @@ class MatchDecorator(
      */
     fun updateDeco(update: ViewUpdate, deco: DecorationSet): DecorationSet {
         if (!update.docChanged && !update.viewportChanged) return deco
-        return createDeco(update.view)
+        return createDeco(update.session)
     }
 
     private fun addDecos(
         builder: RangeSetBuilder<Decoration>,
         state: EditorState,
         viewport: Viewport,
-        view: EditorView
+        view: EditorSession
     ) {
         val doc = state.doc
         val text = doc.sliceString(viewport.from, viewport.to.coerceAtMost(doc.length))

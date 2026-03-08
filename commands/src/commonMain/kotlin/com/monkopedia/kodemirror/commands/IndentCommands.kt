@@ -23,23 +23,23 @@ import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
-import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.EditorSession
 
 /**
  * Add one level of indentation to each line in the selection.
  */
-val indentMore: (EditorView) -> Boolean = { view ->
+val indentMore: (EditorSession) -> Boolean = { view ->
     changeIndent(view, add = true)
 }
 
 /**
  * Remove one level of indentation from each line in the selection.
  */
-val indentLess: (EditorView) -> Boolean = { view ->
+val indentLess: (EditorSession) -> Boolean = { view ->
     changeIndent(view, add = false)
 }
 
-private fun changeIndent(view: EditorView, add: Boolean): Boolean {
+private fun changeIndent(view: EditorSession, add: Boolean): Boolean {
     val state = view.state
     if (state.readOnly) return false
 

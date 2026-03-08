@@ -178,10 +178,10 @@ public final class com/monkopedia/kodemirror/merge/MergeSide : java/lang/Enum {
 public final class com/monkopedia/kodemirror/merge/MergeView {
 	public static final field $stable I
 	public fun <init> (Lcom/monkopedia/kodemirror/merge/MergeViewConfig;)V
-	public final fun dispatch (Lcom/monkopedia/kodemirror/state/Transaction;Lcom/monkopedia/kodemirror/view/EditorView;)V
+	public final fun dispatch (Lcom/monkopedia/kodemirror/state/Transaction;Lcom/monkopedia/kodemirror/view/EditorSession;)V
 	public final fun dispose ()V
-	public final fun getA ()Lcom/monkopedia/kodemirror/view/EditorView;
-	public final fun getB ()Lcom/monkopedia/kodemirror/view/EditorView;
+	public final fun getA ()Lcom/monkopedia/kodemirror/view/EditorSession;
+	public final fun getB ()Lcom/monkopedia/kodemirror/view/EditorSession;
 	public final fun getChunks ()Ljava/util/List;
 	public final fun revertChunk (Lcom/monkopedia/kodemirror/merge/Chunk;)V
 }
@@ -244,13 +244,13 @@ public final class com/monkopedia/kodemirror/merge/RevertDirection : java/lang/E
 }
 
 public final class com/monkopedia/kodemirror/merge/UnifiedKt {
-	public static final fun acceptChunk (Lcom/monkopedia/kodemirror/view/EditorView;Ljava/lang/Integer;)Z
-	public static synthetic fun acceptChunk$default (Lcom/monkopedia/kodemirror/view/EditorView;Ljava/lang/Integer;ILjava/lang/Object;)Z
+	public static final fun acceptChunk (Lcom/monkopedia/kodemirror/view/EditorSession;Ljava/lang/Integer;)Z
+	public static synthetic fun acceptChunk$default (Lcom/monkopedia/kodemirror/view/EditorSession;Ljava/lang/Integer;ILjava/lang/Object;)Z
 	public static final fun getOriginalDoc (Lcom/monkopedia/kodemirror/state/EditorState;)Lcom/monkopedia/kodemirror/state/Text;
 	public static final fun getUpdateOriginalDoc ()Lcom/monkopedia/kodemirror/state/StateEffectType;
 	public static final fun originalDocChangeEffect (Lcom/monkopedia/kodemirror/state/EditorState;Lcom/monkopedia/kodemirror/state/ChangeSet;)Lcom/monkopedia/kodemirror/state/StateEffect;
-	public static final fun rejectChunk (Lcom/monkopedia/kodemirror/view/EditorView;Ljava/lang/Integer;)Z
-	public static synthetic fun rejectChunk$default (Lcom/monkopedia/kodemirror/view/EditorView;Ljava/lang/Integer;ILjava/lang/Object;)Z
+	public static final fun rejectChunk (Lcom/monkopedia/kodemirror/view/EditorSession;Ljava/lang/Integer;)Z
+	public static synthetic fun rejectChunk$default (Lcom/monkopedia/kodemirror/view/EditorSession;Ljava/lang/Integer;ILjava/lang/Object;)Z
 	public static final fun unifiedMergeView (Lcom/monkopedia/kodemirror/merge/UnifiedMergeConfig;)Lcom/monkopedia/kodemirror/state/Extension;
 }
 

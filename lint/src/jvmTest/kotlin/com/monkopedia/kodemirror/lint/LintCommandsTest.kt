@@ -24,7 +24,7 @@ import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asDoc
-import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.EditorSession
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -36,7 +36,7 @@ class LintCommandsTest {
         doc: String,
         diagnostics: List<Diagnostic>,
         cursor: Int = 0
-    ): EditorView {
+    ): EditorSession {
         val state = EditorState.create(
             EditorStateConfig(
                 doc = doc.asDoc(),
@@ -44,7 +44,7 @@ class LintCommandsTest {
                 extensions = ExtensionList(listOf(lintState, lintPanelOpen))
             )
         )
-        val view = EditorView(state)
+        val view = EditorSession(state)
         view.dispatch(
             TransactionSpec(
                 effects = listOf(setDiagnosticsEffect.of(diagnostics))

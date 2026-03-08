@@ -45,7 +45,7 @@ val breakpointGutter = gutter(GutterConfig(
 ))
 ```
 
-The `lineMarker` callback receives the `EditorView` and the **character
+The `lineMarker` callback receives the `EditorSession` and the **character
 offset** of the line start (`line.from`), not the line number. Return a
 `GutterMarker` to display something, or `null` for no marker.
 
@@ -68,10 +68,10 @@ abstract class GutterMarker : RangeValue() {
 | Property | Type | Description |
 |----------|------|-------------|
 | `cssClass` | `String?` | CSS class for the gutter column |
-| `lineMarker` | `(EditorView, Int) -> GutterMarker?` | Called per line with `(view, lineFrom)` |
+| `lineMarker` | `(EditorSession, Int) -> GutterMarker?` | Called per line with `(view, lineFrom)` |
 | `lineMarkerChange` | `(ViewUpdate) -> Boolean` | When to re-call `lineMarker` |
 | `renderEmptyElements` | `Boolean` | Render markers even when `null` |
-| `initialSpacer` | `(EditorView) -> GutterMarker` | Spacer for initial width measurement |
+| `initialSpacer` | `(EditorSession) -> GutterMarker` | Spacer for initial width measurement |
 | `updateSpacer` | `(GutterMarker, ViewUpdate) -> GutterMarker` | Update the spacer |
 
 ## Tracking breakpoints with a StateField

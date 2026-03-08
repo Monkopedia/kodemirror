@@ -38,7 +38,7 @@ import com.monkopedia.kodemirror.state.StateEffectType
 import com.monkopedia.kodemirror.state.StateField
 import com.monkopedia.kodemirror.state.StateFieldSpec
 import com.monkopedia.kodemirror.state.TransactionSpec
-import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.EditorSession
 
 internal val openPanelEffect: StateEffectType<Boolean> = StateEffect.define()
 internal val closePanelEffect: StateEffectType<Boolean> = StateEffect.define()
@@ -60,7 +60,7 @@ internal val lintPanelOpen: StateField<Boolean> = StateField.define(
 
 /** Composable diagnostics panel content. */
 @Composable
-internal fun LintPanelContent(view: EditorView) {
+internal fun LintPanelContent(view: EditorSession) {
     val diagnostics = view.state.field(lintState, require = false)?.diagnostics ?: emptyList()
 
     Column(modifier = Modifier.padding(4.dp)) {
@@ -84,7 +84,7 @@ internal fun LintPanelContent(view: EditorView) {
 }
 
 @Composable
-private fun DiagnosticRow(diag: Diagnostic, view: EditorView) {
+private fun DiagnosticRow(diag: Diagnostic, view: EditorSession) {
     val severityColor = when (diag.severity) {
         Severity.HINT -> Color(0xFF2196F3)
         Severity.INFO -> Color(0xFF4CAF50)

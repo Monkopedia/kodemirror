@@ -40,7 +40,7 @@ data class CollabConfig(
 After each transaction, check for updates to send to the server:
 
 ```kotlin
-fun onTransaction(view: EditorView, tr: Transaction) {
+fun onTransaction(view: EditorSession, tr: Transaction) {
     view.dispatch(tr)
     val updates = sendableUpdates(view.state)
     if (updates.isNotEmpty()) {
@@ -65,7 +65,7 @@ data class SendableUpdate(
 When the server sends updates from other clients, apply them:
 
 ```kotlin
-fun onServerUpdate(view: EditorView, updates: List<Update>) {
+fun onServerUpdate(view: EditorSession, updates: List<Update>) {
     val spec = receiveUpdates(view.state, updates)
     view.dispatch(spec)
 }
@@ -106,7 +106,7 @@ A simple polling-based collaboration setup:
 
 ```kotlin
 class CollabClient(
-    private val view: EditorView,
+    private val view: EditorSession,
     private val serverUrl: String
 ) {
     suspend fun push() {

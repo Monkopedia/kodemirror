@@ -18,7 +18,7 @@
  */
 package com.monkopedia.kodemirror.lint
 
-import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.EditorSession
 
 /** Severity levels for diagnostics. */
 enum class Severity { HINT, INFO, WARNING, ERROR }
@@ -47,7 +47,7 @@ data class Diagnostic(
 /** A quick-fix action that can be applied to resolve a diagnostic. */
 data class Action(
     val name: String,
-    val apply: (EditorView) -> Unit
+    val apply: (EditorSession) -> Unit
 )
 
 /** Configuration for the linter. */
@@ -66,4 +66,4 @@ data class LintGutterConfig(
 )
 
 /** A lint source function that produces diagnostics for the current editor state. */
-typealias LintSource = (EditorView) -> List<Diagnostic>
+typealias LintSource = (EditorSession) -> List<Diagnostic>

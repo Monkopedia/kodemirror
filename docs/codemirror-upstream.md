@@ -97,7 +97,7 @@ All active packages are **MIT licensed** unless noted otherwise.
 | Repo | npm Package | Description |
 |------|-------------|-------------|
 | [`state`](https://github.com/codemirror/state) | `@codemirror/state` | Immutable editor state (EditorState, Transaction, Selection, Facets, StateFields) |
-| [`view`](https://github.com/codemirror/view) | `@codemirror/view` | DOM view component (EditorView, decorations, DOM sync) |
+| [`view`](https://github.com/codemirror/view) | `@codemirror/view` | DOM view component (EditorSession, decorations, DOM sync) |
 | [`commands`](https://github.com/codemirror/commands) | `@codemirror/commands` | Editing commands and key bindings (defaultKeymap, history, commenting) |
 | [`language`](https://github.com/codemirror/language) | `@codemirror/language` | Language support infrastructure (syntax trees, highlighting, folding, indentation) |
 | [`autocomplete`](https://github.com/codemirror/autocomplete) | `@codemirror/autocomplete` | Autocompletion system |

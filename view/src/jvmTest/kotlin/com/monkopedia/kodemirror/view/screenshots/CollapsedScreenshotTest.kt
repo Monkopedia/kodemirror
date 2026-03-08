@@ -30,7 +30,8 @@ import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.RangeSetBuilder
 import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.view.Decoration
-import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.EditorSession
+import com.monkopedia.kodemirror.view.KodeMirror
 import com.monkopedia.kodemirror.view.ReplaceDecorationSpec
 import com.monkopedia.kodemirror.view.WidgetType
 import com.monkopedia.kodemirror.view.highlightActiveLine
@@ -80,7 +81,8 @@ class CollapsedScreenshotTest {
                     )
                 )
             }
-            EditorView(state = state, onUpdate = {})
+            val session = remember(state) { EditorSession(state) }
+            KodeMirror(session = session)
         }
         onRoot().captureRoboImage("screenshots/compose/collapsed.png")
     }

@@ -31,7 +31,7 @@ import com.monkopedia.kodemirror.state.StateFieldSpec
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.view.Decoration
-import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.GutterMarker
 
 /**
@@ -43,7 +43,7 @@ enum class MergeSide { A, B }
  * Internal merge configuration.
  */
 data class MergeConfigValue(
-    val sibling: (() -> EditorView)? = null,
+    val sibling: (() -> EditorSession)? = null,
     val highlightChanges: Boolean = true,
     val markGutter: Boolean = true,
     val syntaxHighlightDeletions: Boolean = true,

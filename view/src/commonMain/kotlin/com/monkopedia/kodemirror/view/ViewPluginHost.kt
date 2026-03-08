@@ -21,11 +21,11 @@ package com.monkopedia.kodemirror.view
 import com.monkopedia.kodemirror.state.EditorState
 
 /**
- * Manages the lifecycle of [ViewPlugin] instances for an [EditorView].
+ * Manages the lifecycle of [ViewPlugin] instances for an [EditorSession].
  *
- * Created once per view instance and kept alive across recompositions.
+ * Created once per session instance and kept alive across recompositions.
  */
-class ViewPluginHost(private val view: EditorView) {
+class ViewPluginHost(private val session: EditorSession) {
     /**
      * Map from [ViewPlugin] identity to the live plugin value instance.
      */
@@ -47,7 +47,7 @@ class ViewPluginHost(private val view: EditorView) {
             for (plugin in activePlugins) {
                 if (!instances.containsKey(plugin)) {
                     @Suppress("UNCHECKED_CAST")
-                    val inst = (plugin as ViewPlugin<PluginValue>).spec.create(view)
+                    val inst = (plugin as ViewPlugin<PluginValue>).spec.create(session)
                     instances[plugin] = inst
                 }
                 keep.add(plugin)

@@ -23,11 +23,11 @@ import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.TransactionSpec
-import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.KeyBinding
 
 /** Open the search panel. */
-val openSearchPanel: (EditorView) -> Boolean = { view ->
+val openSearchPanel: (EditorSession) -> Boolean = { view ->
     view.dispatch(
         TransactionSpec(
             effects = listOf(toggleSearchPanel.of(true))
@@ -37,7 +37,7 @@ val openSearchPanel: (EditorView) -> Boolean = { view ->
 }
 
 /** Close the search panel. */
-val closeSearchPanel: (EditorView) -> Boolean = { view ->
+val closeSearchPanel: (EditorSession) -> Boolean = { view ->
     if (searchPanelOpen(view.state)) {
         view.dispatch(
             TransactionSpec(
@@ -51,16 +51,16 @@ val closeSearchPanel: (EditorView) -> Boolean = { view ->
 }
 
 /** Move the selection to the next match. */
-val findNext: (EditorView) -> Boolean = { view ->
+val findNext: (EditorSession) -> Boolean = { view ->
     findMatch(view, forward = true)
 }
 
 /** Move the selection to the previous match. */
-val findPrevious: (EditorView) -> Boolean = { view ->
+val findPrevious: (EditorSession) -> Boolean = { view ->
     findMatch(view, forward = false)
 }
 
-private fun findMatch(view: EditorView, forward: Boolean): Boolean {
+private fun findMatch(view: EditorSession, forward: Boolean): Boolean {
     val query = getSearchQuery(view.state)
     if (!query.valid) return false
 
@@ -113,7 +113,7 @@ private fun findMatch(view: EditorView, forward: Boolean): Boolean {
 }
 
 /** Replace the current match (if any) and move to the next one. */
-val replaceNext: (EditorView) -> Boolean = { view ->
+val replaceNext: (EditorSession) -> Boolean = { view ->
     val state = view.state
     if (state.readOnly) {
         false
@@ -152,7 +152,7 @@ val replaceNext: (EditorView) -> Boolean = { view ->
 }
 
 /** Replace all matches in the document. */
-val replaceAll: (EditorView) -> Boolean = { view ->
+val replaceAll: (EditorSession) -> Boolean = { view ->
     val state = view.state
     if (state.readOnly) {
         false
@@ -186,7 +186,7 @@ val replaceAll: (EditorView) -> Boolean = { view ->
 }
 
 /** Select all matches as a multi-selection. */
-val selectMatches: (EditorView) -> Boolean = { view ->
+val selectMatches: (EditorSession) -> Boolean = { view ->
     val query = getSearchQuery(view.state)
     if (!query.valid) {
         false
@@ -214,7 +214,7 @@ val selectMatches: (EditorView) -> Boolean = { view ->
 }
 
 /** Select all instances of the currently selected text. */
-val selectSelectionMatches: (EditorView) -> Boolean = { view ->
+val selectSelectionMatches: (EditorSession) -> Boolean = { view ->
     val state = view.state
     val sel = state.selection.main
     val selectedText = state.doc.sliceString(sel.from, sel.to)

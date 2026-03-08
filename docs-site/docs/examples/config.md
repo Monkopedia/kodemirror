@@ -58,7 +58,7 @@ val state = EditorState.create(EditorStateConfig(
 ))
 
 // Toggle off — replace with an empty extension list
-fun toggleLineNumbers(view: EditorView, enabled: Boolean) {
+fun toggleLineNumbers(view: EditorSession, enabled: Boolean) {
     view.dispatch(TransactionSpec(
         effects = listOf(
             lineNumberCompartment.reconfigure(
@@ -88,7 +88,7 @@ val state = EditorState.create(EditorStateConfig(
 ))
 
 // Switch to light theme
-fun switchToLight(view: EditorView) {
+fun switchToLight(view: EditorSession) {
     view.dispatch(TransactionSpec(
         effects = listOf(
             themeCompartment.reconfigure(editorTheme.of(lightEditorTheme))

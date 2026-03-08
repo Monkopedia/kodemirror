@@ -25,7 +25,7 @@ import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.allowMultipleSelections
 import com.monkopedia.kodemirror.state.asDoc
-import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.EditorSession
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -33,7 +33,7 @@ import kotlin.test.assertTrue
 
 class SelectNextOccurrenceTest {
 
-    private fun createView(doc: String, cursor: Int = 0): EditorView {
+    private fun createView(doc: String, cursor: Int = 0): EditorSession {
         val state = EditorState.create(
             EditorStateConfig(
                 doc = doc.asDoc(),
@@ -43,10 +43,10 @@ class SelectNextOccurrenceTest {
                 )
             )
         )
-        return EditorView(state)
+        return EditorSession(state)
     }
 
-    private fun createViewWithSelection(doc: String, anchor: Int, head: Int): EditorView {
+    private fun createViewWithSelection(doc: String, anchor: Int, head: Int): EditorSession {
         val state = EditorState.create(
             EditorStateConfig(
                 doc = doc.asDoc(),
@@ -58,7 +58,7 @@ class SelectNextOccurrenceTest {
                 )
             )
         )
-        return EditorView(state)
+        return EditorSession(state)
     }
 
     @Test
@@ -113,7 +113,7 @@ class SelectNextOccurrenceTest {
                 )
             )
         )
-        val view = EditorView(state)
+        val view = EditorSession(state)
         assertTrue(selectNextOccurrence(view))
         assertEquals(3, view.state.selection.ranges.size)
         val last = view.state.selection.ranges[2]

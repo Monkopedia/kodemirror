@@ -26,7 +26,7 @@ import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
-import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.KeyBinding
 
 /**
@@ -35,7 +35,7 @@ import com.monkopedia.kodemirror.view.KeyBinding
  * Adds or removes line comment markers (e.g. `//`) at the start of each
  * selected line. If all lines are commented, uncomments; otherwise comments.
  */
-val toggleComment: (EditorView) -> Boolean = { view ->
+val toggleComment: (EditorSession) -> Boolean = { view ->
     val tokens = getCommentTokens(view.state)
     val line = tokens?.line
     val block = tokens?.block
@@ -51,7 +51,7 @@ val toggleComment: (EditorView) -> Boolean = { view ->
 /**
  * Add line comments to selected lines.
  */
-val lineComment: (EditorView) -> Boolean = { view ->
+val lineComment: (EditorSession) -> Boolean = { view ->
     val line = getCommentTokens(view.state)?.line
     if (line != null) {
         applyLineComment(view, line, add = true)
@@ -63,7 +63,7 @@ val lineComment: (EditorView) -> Boolean = { view ->
 /**
  * Remove line comments from selected lines.
  */
-val lineUncomment: (EditorView) -> Boolean = { view ->
+val lineUncomment: (EditorSession) -> Boolean = { view ->
     val line = getCommentTokens(view.state)?.line
     if (line != null) {
         applyLineComment(view, line, add = false)
@@ -75,7 +75,7 @@ val lineUncomment: (EditorView) -> Boolean = { view ->
 /**
  * Toggle block comments around the selection.
  */
-val toggleBlockComment: (EditorView) -> Boolean = { view ->
+val toggleBlockComment: (EditorSession) -> Boolean = { view ->
     val block = getCommentTokens(view.state)?.block
     if (block != null) {
         toggleBlockCommentCommand(view, block)
@@ -87,7 +87,7 @@ val toggleBlockComment: (EditorView) -> Boolean = { view ->
 /**
  * Add a block comment around the selection.
  */
-val blockComment: (EditorView) -> Boolean = { view ->
+val blockComment: (EditorSession) -> Boolean = { view ->
     val block = getCommentTokens(view.state)?.block
     if (block != null) {
         applyBlockComment(view, block, add = true)
@@ -99,7 +99,7 @@ val blockComment: (EditorView) -> Boolean = { view ->
 /**
  * Remove a block comment around the selection.
  */
-val blockUncomment: (EditorView) -> Boolean = { view ->
+val blockUncomment: (EditorSession) -> Boolean = { view ->
     val block = getCommentTokens(view.state)?.block
     if (block != null) {
         applyBlockComment(view, block, add = false)
@@ -118,7 +118,7 @@ private fun getCommentTokens(state: EditorState): CommentTokens? {
     return state.facet(commentTokens)
 }
 
-private fun toggleLineComment(view: EditorView, lineToken: String): Boolean {
+private fun toggleLineComment(view: EditorSession, lineToken: String): Boolean {
     val state = view.state
     if (state.readOnly) return false
 
@@ -140,7 +140,7 @@ private fun toggleLineComment(view: EditorView, lineToken: String): Boolean {
     return applyLineComment(view, lineToken, add = !allCommented)
 }
 
-private fun applyLineComment(view: EditorView, lineToken: String, add: Boolean): Boolean {
+private fun applyLineComment(view: EditorSession, lineToken: String, add: Boolean): Boolean {
     val state = view.state
     if (state.readOnly) return false
 
@@ -194,7 +194,7 @@ private fun applyLineComment(view: EditorView, lineToken: String, add: Boolean):
 }
 
 private fun toggleBlockCommentCommand(
-    view: EditorView,
+    view: EditorSession,
     block: CommentTokens.BlockComment
 ): Boolean {
     val state = view.state
@@ -210,7 +210,7 @@ private fun toggleBlockCommentCommand(
 }
 
 private fun applyBlockComment(
-    view: EditorView,
+    view: EditorSession,
     block: CommentTokens.BlockComment,
     add: Boolean
 ): Boolean {

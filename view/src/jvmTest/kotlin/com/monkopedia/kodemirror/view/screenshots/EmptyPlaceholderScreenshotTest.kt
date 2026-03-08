@@ -26,7 +26,8 @@ import com.monkopedia.kodemirror.language.foldGutter
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.ExtensionList
-import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.EditorSession
+import com.monkopedia.kodemirror.view.KodeMirror
 import com.monkopedia.kodemirror.view.highlightActiveLine
 import com.monkopedia.kodemirror.view.lineNumbers
 import com.monkopedia.kodemirror.view.placeholder
@@ -53,7 +54,8 @@ class EmptyPlaceholderScreenshotTest {
                     )
                 )
             }
-            EditorView(state = state, onUpdate = {})
+            val session = remember(state) { EditorSession(state) }
+            KodeMirror(session = session)
         }
         onRoot().captureRoboImage("screenshots/compose/empty-placeholder.png")
     }

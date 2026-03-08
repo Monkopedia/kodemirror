@@ -57,21 +57,22 @@ val showTooltips: Facet<List<Tooltip>, List<Tooltip>> = Facet.define(
  * the content. Also renders hover tooltips from active [HoverTooltipPlugin]s.
  */
 @Composable
-fun TooltipLayer(view: EditorView) {
-    val state = view.state
+fun TooltipLayer(session: EditorSession) {
+    val impl = session as EditorSessionImpl
+    val state = session.state
     val single = state.facet(showTooltip)
     val multi = state.facet(showTooltips)
     val all = buildList {
         if (single != null) add(single)
         addAll(multi)
         // Collect hover tooltips from active plugins
-        val hoverPlugins = view.pluginHost
+        val hoverPlugins = impl.pluginHost
             ?.collectHoverTooltips() ?: emptyList()
         addAll(hoverPlugins)
     }
 
     for (tooltip in all) {
-        val coords = view.coordsAtPos(tooltip.pos) ?: continue
+        val coords = session.coordsAtPos(tooltip.pos) ?: continue
         Popup(
             alignment = androidx.compose.ui.Alignment.TopStart,
             offset = androidx.compose.ui.unit.IntOffset(
@@ -91,12 +92,12 @@ fun TooltipLayer(view: EditorView) {
 /**
  * Show a hover tooltip when the user points at text matching [source].
  *
- * @param source Function that, given a view and position, returns a tooltip
+ * @param source Function that, given a session and position, returns a tooltip
  *               or null.
  */
-fun hoverTooltip(source: (EditorView, Int) -> Tooltip?): Extension {
+fun hoverTooltip(source: (EditorSession, Int) -> Tooltip?): Extension {
     return ViewPlugin.define(
-        create = { view -> HoverTooltipPlugin(view, source) },
+        create = { session -> HoverTooltipPlugin(session, source) },
         configure = {
             copy(
                 decorations = { _ -> RangeSet.empty() }
@@ -107,30 +108,33 @@ fun hoverTooltip(source: (EditorView, Int) -> Tooltip?): Extension {
 
 /**
  * Check whether any hover tooltips are currently active in the
- * given [view].
+ * given [session].
  */
-fun hasHoverTooltips(view: EditorView): Boolean {
-    return view.pluginHost?.collectHoverPlugins()
+fun hasHoverTooltips(session: EditorSession): Boolean {
+    val impl = session as EditorSessionImpl
+    return impl.pluginHost?.collectHoverPlugins()
         ?.any { it.currentTooltip != null } == true
 }
 
 /**
- * Programmatically close all hover tooltips in the given [view].
+ * Programmatically close all hover tooltips in the given [session].
  */
-fun closeHoverTooltips(view: EditorView) {
-    view.pluginHost?.collectHoverPlugins()?.forEach { it.clearHover() }
+fun closeHoverTooltips(session: EditorSession) {
+    val impl = session as EditorSessionImpl
+    impl.pluginHost?.collectHoverPlugins()?.forEach { it.clearHover() }
 }
 
 /**
  * Get all active tooltips in the given state, including both
  * facet-provided tooltips and hover tooltips.
  */
-fun getTooltips(view: EditorView): List<Tooltip> {
-    val state = view.state
+fun getTooltips(session: EditorSession): List<Tooltip> {
+    val impl = session as EditorSessionImpl
+    val state = session.state
     return buildList {
         state.facet(showTooltip)?.let { add(it) }
         addAll(state.facet(showTooltips))
-        view.pluginHost?.collectHoverTooltips()?.let { addAll(it) }
+        impl.pluginHost?.collectHoverTooltips()?.let { addAll(it) }
     }
 }
 
@@ -141,21 +145,21 @@ fun getTooltips(view: EditorView): List<Tooltip> {
  * upstream CodeMirror.
  */
 @Suppress("UNUSED_PARAMETER")
-fun repositionTooltips(view: EditorView) {
+fun repositionTooltips(session: EditorSession) {
     // In Compose, tooltips reposition automatically via recomposition
 }
 
 internal class HoverTooltipPlugin(
-    private val view: EditorView,
-    private val source: (EditorView, Int) -> Tooltip?
+    private val session: EditorSession,
+    private val source: (EditorSession, Int) -> Tooltip?
 ) : PluginValue {
     private val _currentTooltip = mutableStateOf<Tooltip?>(null)
 
     val currentTooltip: Tooltip? get() = _currentTooltip.value
 
     fun updateHover(x: Float, y: Float) {
-        val pos = view.posAtCoords(x, y)
-        _currentTooltip.value = if (pos != null) source(view, pos) else null
+        val pos = session.posAtCoords(x, y)
+        _currentTooltip.value = if (pos != null) source(session, pos) else null
     }
 
     fun clearHover() {

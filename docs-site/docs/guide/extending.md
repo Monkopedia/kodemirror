@@ -206,7 +206,7 @@ responding to focus changes, etc.
 ### Defining a view plugin
 
 ```kotlin
-class MyPlugin(private val view: EditorView) : PluginValue {
+class MyPlugin(private val view: EditorSession) : PluginValue {
     override fun update(update: ViewUpdate) {
         if (update.docChanged) {
             // react to document changes

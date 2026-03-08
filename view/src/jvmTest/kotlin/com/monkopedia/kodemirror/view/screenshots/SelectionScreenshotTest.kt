@@ -29,7 +29,8 @@ import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.asDoc
-import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.EditorSession
+import com.monkopedia.kodemirror.view.KodeMirror
 import com.monkopedia.kodemirror.view.highlightActiveLine
 import com.monkopedia.kodemirror.view.lineNumbers
 import io.github.takahirom.roborazzi.captureRoboImage
@@ -64,7 +65,8 @@ class SelectionScreenshotTest {
                     )
                 )
             }
-            EditorView(state = state, onUpdate = {})
+            val session = remember(state) { EditorSession(state) }
+            KodeMirror(session = session)
         }
         onRoot().captureRoboImage("screenshots/compose/selection.png")
     }

@@ -33,7 +33,7 @@ import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.findClusterBreak
-import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.groupAt
 import com.monkopedia.kodemirror.view.moveByChar
 import com.monkopedia.kodemirror.view.moveByGroup
@@ -44,8 +44,8 @@ import com.monkopedia.kodemirror.view.moveVertically
  * Map over all selection ranges, dispatch the new selection.
  */
 private fun updateSel(
-    view: EditorView,
-    how: (SelectionRange, EditorView) -> SelectionRange
+    view: EditorSession,
+    how: (SelectionRange, EditorSession) -> SelectionRange
 ): Boolean {
     val state = view.state
     val newRanges = state.selection.ranges.map { how(it, view) }
@@ -64,12 +64,12 @@ private fun updateSel(
 // --- Cursor movement commands ---
 
 /** Move cursor one character to the left. */
-val cursorCharLeft: (EditorView) -> Boolean = { view ->
+val cursorCharLeft: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ -> moveByChar(view.state, sel, forward = false) }
 }
 
 /** Move cursor one character to the right. */
-val cursorCharRight: (EditorView) -> Boolean = { view ->
+val cursorCharRight: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ -> moveByChar(view.state, sel, forward = true) }
 }
 
@@ -80,7 +80,7 @@ val cursorCharRight: (EditorView) -> Boolean = { view ->
  * The distinction matters in bidirectional text where forward
  * follows document order rather than visual order.
  */
-val cursorCharForward: (EditorView) -> Boolean = { view ->
+val cursorCharForward: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ -> moveByChar(view.state, sel, forward = true) }
 }
 
@@ -89,7 +89,7 @@ val cursorCharForward: (EditorView) -> Boolean = { view ->
  *
  * @see cursorCharForward
  */
-val cursorCharBackward: (EditorView) -> Boolean = { view ->
+val cursorCharBackward: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ -> moveByChar(view.state, sel, forward = false) }
 }
 
@@ -97,7 +97,7 @@ val cursorCharBackward: (EditorView) -> Boolean = { view ->
  * Move cursor one character forward by logical string index,
  * using grapheme cluster breaks for boundary detection.
  */
-val cursorCharForwardLogical: (EditorView) -> Boolean = { view ->
+val cursorCharForwardLogical: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         byCharLogical(view.state, sel, forward = true, extend = false)
     }
@@ -107,19 +107,19 @@ val cursorCharForwardLogical: (EditorView) -> Boolean = { view ->
  * Move cursor one character backward by logical string index,
  * using grapheme cluster breaks for boundary detection.
  */
-val cursorCharBackwardLogical: (EditorView) -> Boolean = { view ->
+val cursorCharBackwardLogical: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         byCharLogical(view.state, sel, forward = false, extend = false)
     }
 }
 
 /** Move cursor one word group to the left. */
-val cursorGroupLeft: (EditorView) -> Boolean = { view ->
+val cursorGroupLeft: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ -> moveByGroup(view.state, sel, forward = false) }
 }
 
 /** Move cursor one word group to the right. */
-val cursorGroupRight: (EditorView) -> Boolean = { view ->
+val cursorGroupRight: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ -> moveByGroup(view.state, sel, forward = true) }
 }
 
@@ -128,7 +128,7 @@ val cursorGroupRight: (EditorView) -> Boolean = { view ->
  *
  * @see cursorGroupLeft
  */
-val cursorGroupForward: (EditorView) -> Boolean = { view ->
+val cursorGroupForward: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ -> moveByGroup(view.state, sel, forward = true) }
 }
 
@@ -137,7 +137,7 @@ val cursorGroupForward: (EditorView) -> Boolean = { view ->
  *
  * @see cursorGroupLeft
  */
-val cursorGroupBackward: (EditorView) -> Boolean = { view ->
+val cursorGroupBackward: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ -> moveByGroup(view.state, sel, forward = false) }
 }
 
@@ -147,7 +147,7 @@ val cursorGroupBackward: (EditorView) -> Boolean = { view ->
  * end of the current group, this skips past trailing whitespace
  * and stops at the beginning of the next word.
  */
-val cursorGroupForwardWin: (EditorView) -> Boolean = { view ->
+val cursorGroupForwardWin: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         moveToGroupStart(view.state, sel, forward = true, extend = false)
     }
@@ -159,7 +159,7 @@ val cursorGroupForwardWin: (EditorView) -> Boolean = { view ->
  * match is found, walks the syntax tree to find the nearest
  * enclosing node boundary.
  */
-val cursorSyntaxLeft: (EditorView) -> Boolean = { view ->
+val cursorSyntaxLeft: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         moveBySyntax(view.state, sel, forward = false)
     }
@@ -171,24 +171,24 @@ val cursorSyntaxLeft: (EditorView) -> Boolean = { view ->
  *
  * @see cursorSyntaxLeft
  */
-val cursorSyntaxRight: (EditorView) -> Boolean = { view ->
+val cursorSyntaxRight: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         moveBySyntax(view.state, sel, forward = true)
     }
 }
 
 /** Move cursor one line up. */
-val cursorLineUp: (EditorView) -> Boolean = { view ->
+val cursorLineUp: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, v -> moveVertically(v, sel, forward = false) }
 }
 
 /** Move cursor one line down. */
-val cursorLineDown: (EditorView) -> Boolean = { view ->
+val cursorLineDown: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, v -> moveVertically(v, sel, forward = true) }
 }
 
 /** Move cursor to the start of the current line. */
-val cursorLineStart: (EditorView) -> Boolean = { view ->
+val cursorLineStart: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         val line = view.state.doc.lineAt(sel.head)
         EditorSelection.cursor(line.from)
@@ -196,7 +196,7 @@ val cursorLineStart: (EditorView) -> Boolean = { view ->
 }
 
 /** Move cursor to the end of the current line. */
-val cursorLineEnd: (EditorView) -> Boolean = { view ->
+val cursorLineEnd: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         val line = view.state.doc.lineAt(sel.head)
         EditorSelection.cursor(line.to)
@@ -208,7 +208,7 @@ val cursorLineEnd: (EditorView) -> Boolean = { view ->
  * In the absence of soft line wrapping, this is equivalent to
  * [cursorLineEnd].
  */
-val cursorLineBoundaryForward: (EditorView) -> Boolean = { view ->
+val cursorLineBoundaryForward: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         val line = view.state.doc.lineAt(sel.head)
         EditorSelection.cursor(line.to)
@@ -220,7 +220,7 @@ val cursorLineBoundaryForward: (EditorView) -> Boolean = { view ->
  * In the absence of soft line wrapping, this is equivalent to
  * [cursorLineStart].
  */
-val cursorLineBoundaryBackward: (EditorView) -> Boolean = { view ->
+val cursorLineBoundaryBackward: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         val line = view.state.doc.lineAt(sel.head)
         EditorSelection.cursor(line.from)
@@ -232,7 +232,7 @@ val cursorLineBoundaryBackward: (EditorView) -> Boolean = { view ->
  * direction). Same as [cursorLineBoundaryBackward] in
  * left-to-right text.
  */
-val cursorLineBoundaryLeft: (EditorView) -> Boolean = { view ->
+val cursorLineBoundaryLeft: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         val line = view.state.doc.lineAt(sel.head)
         EditorSelection.cursor(line.from)
@@ -244,7 +244,7 @@ val cursorLineBoundaryLeft: (EditorView) -> Boolean = { view ->
  * direction). Same as [cursorLineBoundaryForward] in
  * left-to-right text.
  */
-val cursorLineBoundaryRight: (EditorView) -> Boolean = { view ->
+val cursorLineBoundaryRight: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         val line = view.state.doc.lineAt(sel.head)
         EditorSelection.cursor(line.to)
@@ -252,17 +252,17 @@ val cursorLineBoundaryRight: (EditorView) -> Boolean = { view ->
 }
 
 /** Move cursor to the start of the document. */
-val cursorDocStart: (EditorView) -> Boolean = { view ->
+val cursorDocStart: (EditorSession) -> Boolean = { view ->
     updateSel(view) { _, _ -> EditorSelection.cursor(0) }
 }
 
 /** Move cursor to the end of the document. */
-val cursorDocEnd: (EditorView) -> Boolean = { view ->
+val cursorDocEnd: (EditorSession) -> Boolean = { view ->
     updateSel(view) { _, _ -> EditorSelection.cursor(view.state.doc.length) }
 }
 
 /** Move cursor one page up (approximately 20 lines). */
-val cursorPageUp: (EditorView) -> Boolean = { view ->
+val cursorPageUp: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, v ->
         var result = sel
         repeat(PAGE_SIZE) {
@@ -273,7 +273,7 @@ val cursorPageUp: (EditorView) -> Boolean = { view ->
 }
 
 /** Move cursor one page down (approximately 20 lines). */
-val cursorPageDown: (EditorView) -> Boolean = { view ->
+val cursorPageDown: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, v ->
         var result = sel
         repeat(PAGE_SIZE) {
@@ -288,28 +288,28 @@ private const val PAGE_SIZE = 20
 // --- Selection commands ---
 
 /** Extend selection one character to the left. */
-val selectCharLeft: (EditorView) -> Boolean = { view ->
+val selectCharLeft: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         moveByChar(view.state, sel, forward = false, extend = true)
     }
 }
 
 /** Extend selection one character to the right. */
-val selectCharRight: (EditorView) -> Boolean = { view ->
+val selectCharRight: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         moveByChar(view.state, sel, forward = true, extend = true)
     }
 }
 
 /** Extend selection one character forward (logical direction). */
-val selectCharForward: (EditorView) -> Boolean = { view ->
+val selectCharForward: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         moveByChar(view.state, sel, forward = true, extend = true)
     }
 }
 
 /** Extend selection one character backward (logical direction). */
-val selectCharBackward: (EditorView) -> Boolean = { view ->
+val selectCharBackward: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         moveByChar(view.state, sel, forward = false, extend = true)
     }
@@ -319,7 +319,7 @@ val selectCharBackward: (EditorView) -> Boolean = { view ->
  * Extend selection one character forward by logical string
  * index, using grapheme cluster breaks.
  */
-val selectCharForwardLogical: (EditorView) -> Boolean = { view ->
+val selectCharForwardLogical: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         byCharLogical(view.state, sel, forward = true, extend = true)
     }
@@ -329,35 +329,35 @@ val selectCharForwardLogical: (EditorView) -> Boolean = { view ->
  * Extend selection one character backward by logical string
  * index, using grapheme cluster breaks.
  */
-val selectCharBackwardLogical: (EditorView) -> Boolean = { view ->
+val selectCharBackwardLogical: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         byCharLogical(view.state, sel, forward = false, extend = true)
     }
 }
 
 /** Extend selection one word group to the left. */
-val selectGroupLeft: (EditorView) -> Boolean = { view ->
+val selectGroupLeft: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         moveByGroup(view.state, sel, forward = false, extend = true)
     }
 }
 
 /** Extend selection one word group to the right. */
-val selectGroupRight: (EditorView) -> Boolean = { view ->
+val selectGroupRight: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         moveByGroup(view.state, sel, forward = true, extend = true)
     }
 }
 
 /** Extend selection one word group forward (logical direction). */
-val selectGroupForward: (EditorView) -> Boolean = { view ->
+val selectGroupForward: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         moveByGroup(view.state, sel, forward = true, extend = true)
     }
 }
 
 /** Extend selection one word group backward (logical direction). */
-val selectGroupBackward: (EditorView) -> Boolean = { view ->
+val selectGroupBackward: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         moveByGroup(view.state, sel, forward = false, extend = true)
     }
@@ -369,42 +369,42 @@ val selectGroupBackward: (EditorView) -> Boolean = { view ->
  *
  * @see cursorGroupForwardWin
  */
-val selectGroupForwardWin: (EditorView) -> Boolean = { view ->
+val selectGroupForwardWin: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         moveToGroupStart(view.state, sel, forward = true, extend = true)
     }
 }
 
 /** Extend selection to the nearest syntax boundary on the left. */
-val selectSyntaxLeft: (EditorView) -> Boolean = { view ->
+val selectSyntaxLeft: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         moveBySyntax(view.state, sel, forward = false, extend = true)
     }
 }
 
 /** Extend selection to the nearest syntax boundary on the right. */
-val selectSyntaxRight: (EditorView) -> Boolean = { view ->
+val selectSyntaxRight: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         moveBySyntax(view.state, sel, forward = true, extend = true)
     }
 }
 
 /** Extend selection one line up. */
-val selectLineUp: (EditorView) -> Boolean = { view ->
+val selectLineUp: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, v ->
         moveVertically(v, sel, forward = false, extend = true)
     }
 }
 
 /** Extend selection one line down. */
-val selectLineDown: (EditorView) -> Boolean = { view ->
+val selectLineDown: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, v ->
         moveVertically(v, sel, forward = true, extend = true)
     }
 }
 
 /** Extend selection to the start of the current line. */
-val selectLineStart: (EditorView) -> Boolean = { view ->
+val selectLineStart: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         val line = view.state.doc.lineAt(sel.head)
         EditorSelection.range(sel.anchor, line.from)
@@ -412,7 +412,7 @@ val selectLineStart: (EditorView) -> Boolean = { view ->
 }
 
 /** Extend selection to the end of the current line. */
-val selectLineEnd: (EditorView) -> Boolean = { view ->
+val selectLineEnd: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         val line = view.state.doc.lineAt(sel.head)
         EditorSelection.range(sel.anchor, line.to)
@@ -420,7 +420,7 @@ val selectLineEnd: (EditorView) -> Boolean = { view ->
 }
 
 /** Extend selection to the line boundary in the forward direction. */
-val selectLineBoundaryForward: (EditorView) -> Boolean = { view ->
+val selectLineBoundaryForward: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         val line = view.state.doc.lineAt(sel.head)
         EditorSelection.range(sel.anchor, line.to)
@@ -428,7 +428,7 @@ val selectLineBoundaryForward: (EditorView) -> Boolean = { view ->
 }
 
 /** Extend selection to the line boundary in the backward direction. */
-val selectLineBoundaryBackward: (EditorView) -> Boolean = { view ->
+val selectLineBoundaryBackward: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         val line = view.state.doc.lineAt(sel.head)
         EditorSelection.range(sel.anchor, line.from)
@@ -436,7 +436,7 @@ val selectLineBoundaryBackward: (EditorView) -> Boolean = { view ->
 }
 
 /** Extend selection to the line boundary on the left side (visual). */
-val selectLineBoundaryLeft: (EditorView) -> Boolean = { view ->
+val selectLineBoundaryLeft: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         val line = view.state.doc.lineAt(sel.head)
         EditorSelection.range(sel.anchor, line.from)
@@ -444,7 +444,7 @@ val selectLineBoundaryLeft: (EditorView) -> Boolean = { view ->
 }
 
 /** Extend selection to the line boundary on the right side (visual). */
-val selectLineBoundaryRight: (EditorView) -> Boolean = { view ->
+val selectLineBoundaryRight: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         val line = view.state.doc.lineAt(sel.head)
         EditorSelection.range(sel.anchor, line.to)
@@ -452,7 +452,7 @@ val selectLineBoundaryRight: (EditorView) -> Boolean = { view ->
 }
 
 /** Extend selection one page up. */
-val selectPageUp: (EditorView) -> Boolean = { view ->
+val selectPageUp: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, v ->
         var result = sel
         repeat(PAGE_SIZE) {
@@ -463,7 +463,7 @@ val selectPageUp: (EditorView) -> Boolean = { view ->
 }
 
 /** Extend selection one page down. */
-val selectPageDown: (EditorView) -> Boolean = { view ->
+val selectPageDown: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, v ->
         var result = sel
         repeat(PAGE_SIZE) {
@@ -474,21 +474,21 @@ val selectPageDown: (EditorView) -> Boolean = { view ->
 }
 
 /** Extend selection to the start of the document. */
-val selectDocStart: (EditorView) -> Boolean = { view ->
+val selectDocStart: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         EditorSelection.range(sel.anchor, 0)
     }
 }
 
 /** Extend selection to the end of the document. */
-val selectDocEnd: (EditorView) -> Boolean = { view ->
+val selectDocEnd: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         EditorSelection.range(sel.anchor, view.state.doc.length)
     }
 }
 
 /** Select the entire document. */
-val selectAll: (EditorView) -> Boolean = { view ->
+val selectAll: (EditorSession) -> Boolean = { view ->
     view.dispatch(
         TransactionSpec(
             selection = SelectionSpec.EditorSelectionSpec(
@@ -501,7 +501,7 @@ val selectAll: (EditorView) -> Boolean = { view ->
 }
 
 /** Expand selection to cover full lines. */
-val selectLine: (EditorView) -> Boolean = { view ->
+val selectLine: (EditorSession) -> Boolean = { view ->
     val state = view.state
     val newRanges = state.selection.ranges.map { sel ->
         val startLine = state.doc.lineAt(sel.from)
@@ -527,7 +527,7 @@ val selectLine: (EditorView) -> Boolean = { view ->
 // --- Deletion commands ---
 
 /** Delete one character backward (Backspace). */
-val deleteCharBackward: (EditorView) -> Boolean = { view ->
+val deleteCharBackward: (EditorSession) -> Boolean = { view ->
     deleteBy(view, forward = false) { state, sel ->
         val line = state.doc.lineAt(sel.head)
         val lineOffset = sel.head - line.from
@@ -537,7 +537,7 @@ val deleteCharBackward: (EditorView) -> Boolean = { view ->
 }
 
 /** Delete one character forward (Delete key). */
-val deleteCharForward: (EditorView) -> Boolean = { view ->
+val deleteCharForward: (EditorSession) -> Boolean = { view ->
     deleteBy(view, forward = true) { state, sel ->
         val line = state.doc.lineAt(sel.head)
         val lineOffset = sel.head - line.from
@@ -558,7 +558,7 @@ val deleteCharForward: (EditorView) -> Boolean = { view ->
  * unit of whitespace, this always deletes exactly one grapheme
  * cluster.
  */
-val deleteCharBackwardStrict: (EditorView) -> Boolean = { view ->
+val deleteCharBackwardStrict: (EditorSession) -> Boolean = { view ->
     deleteBy(view, forward = false) { state, sel ->
         val line = state.doc.lineAt(sel.head)
         val lineOffset = sel.head - line.from
@@ -568,7 +568,7 @@ val deleteCharBackwardStrict: (EditorView) -> Boolean = { view ->
 }
 
 /** Delete one word group backward. */
-val deleteGroupBackward: (EditorView) -> Boolean = { view ->
+val deleteGroupBackward: (EditorSession) -> Boolean = { view ->
     deleteBy(view, forward = false) { state, sel ->
         var pos = sel.head
         val startGroup = groupAt(state, pos, -1)
@@ -583,7 +583,7 @@ val deleteGroupBackward: (EditorView) -> Boolean = { view ->
 }
 
 /** Delete one word group forward. */
-val deleteGroupForward: (EditorView) -> Boolean = { view ->
+val deleteGroupForward: (EditorSession) -> Boolean = { view ->
     deleteBy(view, forward = true) { state, sel ->
         var pos = sel.head
         val len = state.doc.length
@@ -605,7 +605,7 @@ val deleteGroupForward: (EditorView) -> Boolean = { view ->
  *
  * @see cursorGroupForwardWin
  */
-val deleteGroupForwardWin: (EditorView) -> Boolean = { view ->
+val deleteGroupForwardWin: (EditorSession) -> Boolean = { view ->
     deleteBy(view, forward = true) { state, sel ->
         moveToGroupStart(state, sel, forward = true, extend = false).head
     }
@@ -616,7 +616,7 @@ val deleteGroupForwardWin: (EditorView) -> Boolean = { view ->
  * In the absence of soft line wrapping, this is equivalent
  * to [deleteToLineStart].
  */
-val deleteLineBoundaryBackward: (EditorView) -> Boolean = { view ->
+val deleteLineBoundaryBackward: (EditorSession) -> Boolean = { view ->
     deleteBy(view, forward = false) { state, sel ->
         state.doc.lineAt(sel.head).from
     }
@@ -627,28 +627,28 @@ val deleteLineBoundaryBackward: (EditorView) -> Boolean = { view ->
  * In the absence of soft line wrapping, this is equivalent
  * to [deleteToLineEnd].
  */
-val deleteLineBoundaryForward: (EditorView) -> Boolean = { view ->
+val deleteLineBoundaryForward: (EditorSession) -> Boolean = { view ->
     deleteBy(view, forward = true) { state, sel ->
         state.doc.lineAt(sel.head).to
     }
 }
 
 /** Delete from cursor to the start of the line. */
-val deleteToLineStart: (EditorView) -> Boolean = { view ->
+val deleteToLineStart: (EditorSession) -> Boolean = { view ->
     deleteBy(view, forward = false) { state, sel ->
         state.doc.lineAt(sel.head).from
     }
 }
 
 /** Delete from cursor to the end of the line. */
-val deleteToLineEnd: (EditorView) -> Boolean = { view ->
+val deleteToLineEnd: (EditorSession) -> Boolean = { view ->
     deleteBy(view, forward = true) { state, sel ->
         state.doc.lineAt(sel.head).to
     }
 }
 
 /** Delete the entire current line (including line break). */
-val deleteLine: (EditorView) -> Boolean = { view ->
+val deleteLine: (EditorSession) -> Boolean = { view ->
     val state = view.state
     if (state.readOnly) {
         false
@@ -686,7 +686,7 @@ val deleteLine: (EditorView) -> Boolean = { view ->
  * This command does not require a selection — it operates on the
  * entire document.
  */
-val deleteTrailingWhitespace: (EditorView) -> Boolean = { view ->
+val deleteTrailingWhitespace: (EditorSession) -> Boolean = { view ->
     val state = view.state
     if (state.readOnly) {
         false
@@ -721,7 +721,7 @@ val deleteTrailingWhitespace: (EditorView) -> Boolean = { view ->
  * selection. Otherwise, calls [target] to find the deletion boundary.
  */
 private fun deleteBy(
-    view: EditorView,
+    view: EditorSession,
     forward: Boolean,
     target: (EditorState, SelectionRange) -> Int
 ): Boolean {
@@ -776,7 +776,7 @@ private fun deleteBy(
 // --- Text insertion commands ---
 
 /** Insert a newline. */
-val insertNewline: (EditorView) -> Boolean = { view ->
+val insertNewline: (EditorSession) -> Boolean = { view ->
     if (view.state.readOnly) {
         false
     } else {
@@ -794,7 +794,7 @@ val insertNewline: (EditorView) -> Boolean = { view ->
  * Insert a newline and indent using language-aware indentation when
  * available, falling back to copying leading whitespace.
  */
-val insertNewlineAndIndent: (EditorView) -> Boolean = { view ->
+val insertNewlineAndIndent: (EditorSession) -> Boolean = { view ->
     if (view.state.readOnly) {
         false
     } else {
@@ -832,10 +832,10 @@ val insertNewlineAndIndent: (EditorView) -> Boolean = { view ->
  * [insertNewlineAndIndent], exported as a separate name to match
  * the upstream CodeMirror API.
  */
-val newlineAndIndent: (EditorView) -> Boolean = insertNewlineAndIndent
+val newlineAndIndent: (EditorSession) -> Boolean = insertNewlineAndIndent
 
 /** Insert a tab character or indent unit. */
-val insertTab: (EditorView) -> Boolean = { view ->
+val insertTab: (EditorSession) -> Boolean = { view ->
     if (view.state.readOnly) {
         false
     } else {
@@ -853,7 +853,7 @@ val insertTab: (EditorView) -> Boolean = { view ->
  * Insert a newline, but keep the cursor before it
  * (splits the line without moving cursor down).
  */
-val splitLine: (EditorView) -> Boolean = { view ->
+val splitLine: (EditorSession) -> Boolean = { view ->
     if (view.state.readOnly) {
         false
     } else {
@@ -879,7 +879,7 @@ val splitLine: (EditorView) -> Boolean = { view ->
 }
 
 /** Swap the characters before and after the cursor. */
-val transposeChars: (EditorView) -> Boolean = { view ->
+val transposeChars: (EditorSession) -> Boolean = { view ->
     val state = view.state
     if (state.readOnly) {
         false
@@ -914,7 +914,7 @@ val transposeChars: (EditorView) -> Boolean = { view ->
 // --- Simplify / collapse selection ---
 
 /** Collapse each non-empty selection range to a cursor at its anchor. */
-val simplifySelection: (EditorView) -> Boolean = { view ->
+val simplifySelection: (EditorSession) -> Boolean = { view ->
     val state = view.state
     val hasNonEmpty = state.selection.ranges.any { !it.empty }
     if (!hasNonEmpty) {
@@ -943,7 +943,7 @@ val simplifySelection: (EditorView) -> Boolean = { view ->
  * Creates a new selection range at the vertically projected
  * position, keeping all existing selections.
  */
-val addCursorAbove: (EditorView) -> Boolean = { view ->
+val addCursorAbove: (EditorSession) -> Boolean = { view ->
     addCursorVertically(view, forward = false)
 }
 
@@ -952,14 +952,14 @@ val addCursorAbove: (EditorView) -> Boolean = { view ->
  *
  * @see addCursorAbove
  */
-val addCursorBelow: (EditorView) -> Boolean = { view ->
+val addCursorBelow: (EditorSession) -> Boolean = { view ->
     addCursorVertically(view, forward = true)
 }
 
 // --- Blank line insertion ---
 
 /** Insert an empty line below the current line. */
-val insertBlankLine: (EditorView) -> Boolean = { view ->
+val insertBlankLine: (EditorSession) -> Boolean = { view ->
     if (view.state.readOnly) {
         false
     } else {
@@ -991,7 +991,7 @@ val insertBlankLine: (EditorView) -> Boolean = { view ->
  * Insert a newline and copy the leading whitespace from the current line
  * without any smart indentation logic.
  */
-val insertNewlineKeepIndent: (EditorView) -> Boolean = { view ->
+val insertNewlineKeepIndent: (EditorSession) -> Boolean = { view ->
     if (view.state.readOnly) {
         false
     } else {
@@ -1022,28 +1022,28 @@ val insertNewlineKeepIndent: (EditorView) -> Boolean = { view ->
 // --- Subword movement commands ---
 
 /** Move cursor one subword forward (camelCase-aware). */
-val cursorSubwordForward: (EditorView) -> Boolean = { view ->
+val cursorSubwordForward: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         moveBySubword(view.state, sel, forward = true)
     }
 }
 
 /** Move cursor one subword backward (camelCase-aware). */
-val cursorSubwordBackward: (EditorView) -> Boolean = { view ->
+val cursorSubwordBackward: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         moveBySubword(view.state, sel, forward = false)
     }
 }
 
 /** Extend selection one subword forward (camelCase-aware). */
-val selectSubwordForward: (EditorView) -> Boolean = { view ->
+val selectSubwordForward: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         moveBySubword(view.state, sel, forward = true, extend = true)
     }
 }
 
 /** Extend selection one subword backward (camelCase-aware). */
-val selectSubwordBackward: (EditorView) -> Boolean = { view ->
+val selectSubwordBackward: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         moveBySubword(view.state, sel, forward = false, extend = true)
     }
@@ -1052,7 +1052,7 @@ val selectSubwordBackward: (EditorView) -> Boolean = { view ->
 // --- Bracket matching commands ---
 
 /** Move cursor to the matching bracket. */
-val cursorMatchingBracket: (EditorView) -> Boolean = { view ->
+val cursorMatchingBracket: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         val pos = sel.head
         val state = view.state
@@ -1070,7 +1070,7 @@ val cursorMatchingBracket: (EditorView) -> Boolean = { view ->
 }
 
 /** Extend selection to the matching bracket. */
-val selectMatchingBracket: (EditorView) -> Boolean = { view ->
+val selectMatchingBracket: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         val pos = sel.head
         val state = view.state
@@ -1090,7 +1090,7 @@ val selectMatchingBracket: (EditorView) -> Boolean = { view ->
  * Select the enclosing syntax node (parent) of the current selection.
  * Repeatedly invoking expands the selection to larger and larger nodes.
  */
-val selectParentSyntax: (EditorView) -> Boolean = { view ->
+val selectParentSyntax: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         val state = view.state
         val tree = syntaxTree(state)
@@ -1113,7 +1113,7 @@ val selectParentSyntax: (EditorView) -> Boolean = { view ->
  * If the cursor has a selection, finds and adds the next occurrence
  * of the selected text as an additional selection range.
  */
-val selectNextOccurrence: (EditorView) -> Boolean = { view ->
+val selectNextOccurrence: (EditorSession) -> Boolean = { view ->
     val state = view.state
     val sel = state.selection.main
     if (sel.empty) {
@@ -1337,7 +1337,7 @@ private fun moveBySyntax(
 /**
  * Add a new cursor above or below each existing cursor head.
  */
-private fun addCursorVertically(view: EditorView, forward: Boolean): Boolean {
+private fun addCursorVertically(view: EditorSession, forward: Boolean): Boolean {
     val state = view.state
     val newRanges = mutableListOf<SelectionRange>()
     newRanges.addAll(state.selection.ranges)

@@ -147,7 +147,7 @@ var currentOs: String = platformOsName()
  * Checks platform-specific key overrides (mac/linux/win), the shift
  * variant, and the any handler.
  */
-fun handleKeyEvent(view: EditorView, event: KeyEvent): Boolean {
+fun handleKeyEvent(view: EditorSession, event: KeyEvent): Boolean {
     if (event.type != KeyEventType.KeyDown) return false
     val name = keyEventToName(event)
     val isShift = event.isShiftPressed
@@ -207,7 +207,7 @@ private fun keyEventToNameWithoutShift(event: KeyEvent): String {
  * Moves the cursor to the tapped position by dispatching a transaction that
  * sets the selection.
  */
-fun handleTap(view: EditorView, offset: Offset) {
+fun handleTap(view: EditorSession, offset: Offset) {
     val pos = view.posAtCoords(offset.x, offset.y) ?: return
     view.dispatch(
         com.monkopedia.kodemirror.state.TransactionSpec(
@@ -223,7 +223,7 @@ fun handleTap(view: EditorView, offset: Offset) {
  * @param start  The document-space coordinate where the drag started.
  * @param current The current drag position.
  */
-fun handleDrag(view: EditorView, start: Offset, current: Offset) {
+fun handleDrag(view: EditorSession, start: Offset, current: Offset) {
     val anchor = view.posAtCoords(start.x, start.y) ?: return
     val head = view.posAtCoords(current.x, current.y) ?: return
     view.dispatch(
@@ -245,7 +245,7 @@ fun handleDrag(view: EditorView, start: Offset, current: Offset) {
  * @param start   The document-space coordinate where the drag started.
  * @param current The current drag position.
  */
-fun handleRectangularDrag(view: EditorView, start: Offset, current: Offset) {
+fun handleRectangularDrag(view: EditorSession, start: Offset, current: Offset) {
     val doc = view.state.doc
     val startPos = view.posAtCoords(start.x, start.y) ?: return
     val currentPos = view.posAtCoords(current.x, current.y) ?: return

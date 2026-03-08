@@ -22,7 +22,7 @@ import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.asDoc
-import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.EditorSession
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -37,8 +37,8 @@ class CloseBracketsTest {
         )
     )
 
-    private fun createView(doc: String, cursor: Int = 0): EditorView =
-        EditorView(createState(doc, cursor))
+    private fun createView(doc: String, cursor: Int = 0): EditorSession =
+        EditorSession(createState(doc, cursor))
 
     @Test
     fun insertBracketInsertsPair() {

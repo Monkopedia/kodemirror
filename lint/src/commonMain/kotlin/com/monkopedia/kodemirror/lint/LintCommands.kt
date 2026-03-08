@@ -20,11 +20,11 @@ package com.monkopedia.kodemirror.lint
 
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.TransactionSpec
-import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.KeyBinding
 
 /** Open the lint diagnostics panel. */
-val openLintPanel: (EditorView) -> Boolean = { view ->
+val openLintPanel: (EditorSession) -> Boolean = { view ->
     view.dispatch(
         TransactionSpec(
             effects = listOf(openPanelEffect.of(true))
@@ -34,7 +34,7 @@ val openLintPanel: (EditorView) -> Boolean = { view ->
 }
 
 /** Close the lint diagnostics panel. */
-val closeLintPanel: (EditorView) -> Boolean = { view ->
+val closeLintPanel: (EditorSession) -> Boolean = { view ->
     val open = view.state.field(lintPanelOpen, require = false) ?: false
     if (open) {
         view.dispatch(
@@ -49,7 +49,7 @@ val closeLintPanel: (EditorView) -> Boolean = { view ->
 }
 
 /** Jump to the next diagnostic after the cursor. */
-val nextDiagnostic: (EditorView) -> Boolean = { view ->
+val nextDiagnostic: (EditorSession) -> Boolean = { view ->
     val state = view.state
     val diags = state.field(lintState, require = false)?.diagnostics ?: emptyList()
     val pos = state.selection.main.head
@@ -69,7 +69,7 @@ val nextDiagnostic: (EditorView) -> Boolean = { view ->
 }
 
 /** Jump to the previous diagnostic before the cursor. */
-val previousDiagnostic: (EditorView) -> Boolean = { view ->
+val previousDiagnostic: (EditorSession) -> Boolean = { view ->
     val state = view.state
     val diags = state.field(lintState, require = false)?.diagnostics ?: emptyList()
     val pos = state.selection.main.head

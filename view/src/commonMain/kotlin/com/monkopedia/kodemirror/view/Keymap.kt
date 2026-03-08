@@ -40,9 +40,9 @@ data class KeyBinding(
     val mac: String? = null,
     val win: String? = null,
     val linux: String? = null,
-    val run: ((EditorView) -> Boolean)? = null,
-    val shift: ((EditorView) -> Boolean)? = null,
-    val any: ((EditorView, KeyEvent) -> Boolean)? = null,
+    val run: ((EditorSession) -> Boolean)? = null,
+    val shift: ((EditorSession) -> Boolean)? = null,
+    val any: ((EditorSession, KeyEvent) -> Boolean)? = null,
     val preventDefault: Boolean = false,
     val stopPropagation: Boolean = false
 )
@@ -76,7 +76,7 @@ class KeymapBuilder @PublishedApi internal constructor() {
     internal val bindings = mutableListOf<KeyBinding>()
 
     /** Bind a key to a command. */
-    operator fun String.invoke(run: (EditorView) -> Boolean) {
+    operator fun String.invoke(run: (EditorSession) -> Boolean) {
         bindings.add(KeyBinding(key = this, run = run))
     }
 
@@ -86,7 +86,7 @@ class KeymapBuilder @PublishedApi internal constructor() {
         mac: String? = null,
         win: String? = null,
         linux: String? = null,
-        run: (EditorView) -> Boolean
+        run: (EditorSession) -> Boolean
     ) {
         bindings.add(KeyBinding(key = key, mac = mac, win = win, linux = linux, run = run))
     }

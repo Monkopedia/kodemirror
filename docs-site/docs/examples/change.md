@@ -130,7 +130,7 @@ val newPos = changes.mapPos(oldPos, assoc = 1) // after insertion
 - [`TransactionSpec`](/api/state/com.monkopedia.kodemirror.state/-transaction-spec/) — transaction specification
 - [`ChangeSpec`](/api/state/com.monkopedia.kodemirror.state/-change-spec/) — change specification
 - [`ChangeSet`](/api/state/com.monkopedia.kodemirror.state/-change-set/) — immutable change set
-- [`EditorView.dispatch`](/api/view/com.monkopedia.kodemirror.view/-editor-view/dispatch.html) — apply transactions
+- [`EditorSession.dispatch`](/api/view/com.monkopedia.kodemirror.view/-editor-view/dispatch.html) — apply transactions
 
 ---
 

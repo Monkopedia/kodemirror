@@ -46,12 +46,12 @@ interface DecorationSource : PluginValue {
 /**
  * Specification for a [ViewPlugin].
  *
- * @param create Factory that builds the plugin value for a given view.
+ * @param create Factory that builds the plugin value for a given session.
  * @param provide Allows the plugin to contribute additional [Extension]s.
  * @param decorations Extract a [DecorationSet] from the plugin value.
  */
 data class PluginSpec<V : PluginValue>(
-    val create: (EditorView) -> V,
+    val create: (EditorSession) -> V,
     val provide: ((ViewPlugin<V>) -> Extension)? = null,
     val decorations: ((V) -> DecorationSet)? = null
 )
@@ -63,7 +63,7 @@ data class PluginSpec<V : PluginValue>(
  * the state's extension configuration.
  *
  * ```kotlin
- * val myPlugin = ViewPlugin.define(create = { view -> MyPluginValue(view) })
+ * val myPlugin = ViewPlugin.define(create = { session -> MyPluginValue(session) })
  *
  * EditorState.create(EditorStateConfig(extensions = myPlugin.asExtension()))
  * ```
@@ -72,7 +72,7 @@ class ViewPlugin<V : PluginValue>(val spec: PluginSpec<V>) {
 
     /**
      * Returns an [Extension] that, when included in an [EditorState]'s
-     * configuration, registers this plugin with the [EditorView].
+     * configuration, registers this plugin with the [EditorSession].
      */
     fun asExtension(): Extension {
         val registrationExt: Extension = viewPluginRegistry.of(this)
@@ -87,7 +87,7 @@ class ViewPlugin<V : PluginValue>(val spec: PluginSpec<V>) {
     companion object {
         /** Define a plugin from a factory function. */
         fun <V : PluginValue> define(
-            create: (EditorView) -> V,
+            create: (EditorSession) -> V,
             configure: PluginSpec<V>.() -> PluginSpec<V> = { this }
         ): ViewPlugin<V> = ViewPlugin(PluginSpec(create = create).configure())
 

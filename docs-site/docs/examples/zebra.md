@@ -21,7 +21,7 @@ val stripeDecoration = Decoration.line(LineDecorationSpec(
     style = SpanStyle(background = Color(0x10808080))
 ))
 
-class ZebraPlugin(view: EditorView) : PluginValue, DecorationSource {
+class ZebraPlugin(view: EditorSession) : PluginValue, DecorationSource {
     override var decorations: DecorationSet = computeDecorations(view)
         private set
 
@@ -31,7 +31,7 @@ class ZebraPlugin(view: EditorView) : PluginValue, DecorationSource {
         }
     }
 
-    private fun computeDecorations(view: EditorView): DecorationSet {
+    private fun computeDecorations(view: EditorSession): DecorationSet {
         val builder = RangeSetBuilder<Decoration>()
         val doc = view.state.doc
 
@@ -78,7 +78,7 @@ fun zebraStripes(step: Int = 2): Extension = ExtensionList(listOf(
     ViewPlugin.fromClass(::ConfigurableZebraPlugin).asExtension()
 ))
 
-class ConfigurableZebraPlugin(view: EditorView) : PluginValue, DecorationSource {
+class ConfigurableZebraPlugin(view: EditorSession) : PluginValue, DecorationSource {
     private var step = view.state.facet(stripeFacet)
     override var decorations: DecorationSet = computeDecorations(view)
         private set
@@ -91,7 +91,7 @@ class ConfigurableZebraPlugin(view: EditorView) : PluginValue, DecorationSource 
         }
     }
 
-    private fun computeDecorations(view: EditorView): DecorationSet {
+    private fun computeDecorations(view: EditorSession): DecorationSet {
         val builder = RangeSetBuilder<Decoration>()
         val doc = view.state.doc
 

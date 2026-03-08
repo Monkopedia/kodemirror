@@ -43,7 +43,7 @@ data class LineLayout(
 /**
  * Cache of [TextLayoutResult] objects for every currently-rendered line.
  *
- * The composable stores results here via [store]; the [EditorView] uses
+ * The composable stores results here via [store]; the [EditorSession] uses
  * [coordsAtPos] and [posAtCoords] for coordinate queries.
  */
 class LineLayoutCache {

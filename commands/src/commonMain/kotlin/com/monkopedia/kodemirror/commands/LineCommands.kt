@@ -23,37 +23,37 @@ import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
-import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.EditorSession
 
 /**
  * Move the selected line(s) up by one line.
  */
-val moveLineUp: (EditorView) -> Boolean = { view ->
+val moveLineUp: (EditorSession) -> Boolean = { view ->
     moveLines(view, forward = false)
 }
 
 /**
  * Move the selected line(s) down by one line.
  */
-val moveLineDown: (EditorView) -> Boolean = { view ->
+val moveLineDown: (EditorSession) -> Boolean = { view ->
     moveLines(view, forward = true)
 }
 
 /**
  * Copy the selected line(s) upward (duplicate above).
  */
-val copyLineUp: (EditorView) -> Boolean = { view ->
+val copyLineUp: (EditorSession) -> Boolean = { view ->
     copyLines(view, forward = false)
 }
 
 /**
  * Copy the selected line(s) downward (duplicate below).
  */
-val copyLineDown: (EditorView) -> Boolean = { view ->
+val copyLineDown: (EditorSession) -> Boolean = { view ->
     copyLines(view, forward = true)
 }
 
-private fun moveLines(view: EditorView, forward: Boolean): Boolean {
+private fun moveLines(view: EditorSession, forward: Boolean): Boolean {
     val state = view.state
     if (state.readOnly) return false
 
@@ -121,7 +121,7 @@ private fun moveLines(view: EditorView, forward: Boolean): Boolean {
     return true
 }
 
-private fun copyLines(view: EditorView, forward: Boolean): Boolean {
+private fun copyLines(view: EditorSession, forward: Boolean): Boolean {
     val state = view.state
     if (state.readOnly) return false
 

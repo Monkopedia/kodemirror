@@ -22,7 +22,7 @@ import androidx.compose.foundation.text.BasicText
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.Slot
-import com.monkopedia.kodemirror.view.LocalEditorView
+import com.monkopedia.kodemirror.view.LocalEditorSession
 import com.monkopedia.kodemirror.view.Panel
 import com.monkopedia.kodemirror.view.Tooltip
 import com.monkopedia.kodemirror.view.hoverTooltip
@@ -45,7 +45,7 @@ fun linter(source: LintSource, config: LintConfig = LintConfig()): Extension {
         if (open) {
             listOf(
                 Panel(top = false) {
-                    val view = LocalEditorView.current
+                    val view = LocalEditorSession.current
                     LintPanelContent(view)
                 }
             )

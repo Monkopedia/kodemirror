@@ -1,7 +1,7 @@
 # Split View
 
 A split editor shows the same document in two side-by-side panes. Each
-pane is an independent `EditorView` composable sharing the same
+pane is an independent `EditorSession` composable sharing the same
 `EditorState`.
 
 ## Basic split view
@@ -10,7 +10,7 @@ pane is an independent `EditorView` composable sharing the same
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import com.monkopedia.kodemirror.state.*
-import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.EditorSession
 
 @Composable
 fun SplitEditor(initialDoc: String) {
@@ -28,12 +28,12 @@ fun SplitEditor(initialDoc: String) {
     }
 
     Row(Modifier.fillMaxSize()) {
-        EditorView(
+        EditorSession(
             state = state,
             onUpdate = onUpdate,
             modifier = Modifier.weight(1f)
         )
-        EditorView(
+        EditorSession(
             state = state,
             onUpdate = onUpdate,
             modifier = Modifier.weight(1f)
@@ -48,18 +48,18 @@ views through recomposition.
 
 ## How it works
 
-The `EditorView` composable signature:
+The `EditorSession` composable signature:
 
 ```kotlin
 @Composable
-fun EditorView(
+fun EditorSession(
     state: EditorState,
     onUpdate: (Transaction) -> Unit,
     modifier: Modifier = Modifier
 )
 ```
 
-Each composable call creates its own internal `EditorView` instance
+Each composable call creates its own internal `EditorSession` instance
 with independent scroll position, cursor, and selection. The shared
 `EditorState` keeps the document content synchronized.
 
@@ -93,14 +93,14 @@ fun SplitEditorWithDifferentConfigs(doc: String) {
     }
 
     Row(Modifier.fillMaxSize()) {
-        EditorView(
+        EditorSession(
             state = leftState,
             onUpdate = { tr ->
                 if (tr.docChanged) sharedDoc = tr.newDoc
             },
             modifier = Modifier.weight(1f)
         )
-        EditorView(
+        EditorSession(
             state = rightState,
             onUpdate = { tr ->
                 if (tr.docChanged) sharedDoc = tr.newDoc

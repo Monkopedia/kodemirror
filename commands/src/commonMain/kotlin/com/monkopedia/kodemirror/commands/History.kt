@@ -34,7 +34,7 @@ import com.monkopedia.kodemirror.state.StateFieldSpec
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.invertedEffects
-import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.KeyBinding
 import com.monkopedia.kodemirror.view.keymapOf
 
@@ -456,12 +456,12 @@ private val _historyField: StateField<HistoryState> = StateField.define(
 val historyField: StateField<*> = _historyField
 
 /** Undo the last change. */
-val undo: (EditorView) -> Boolean = { view ->
+val undo: (EditorSession) -> Boolean = { view ->
     applyHistory(view, isUndo = true, onlySelection = false)
 }
 
 /** Redo the last undone change. */
-val redo: (EditorView) -> Boolean = { view ->
+val redo: (EditorSession) -> Boolean = { view ->
     applyHistory(view, isUndo = false, onlySelection = false)
 }
 
@@ -470,7 +470,7 @@ val redo: (EditorView) -> Boolean = { view ->
  * also restore selection-only changes (cursor movements) that
  * occurred between edits, stepping through selection history.
  */
-val undoSelection: (EditorView) -> Boolean = { view ->
+val undoSelection: (EditorSession) -> Boolean = { view ->
     applyHistory(view, isUndo = true, onlySelection = true)
 }
 
@@ -479,11 +479,11 @@ val undoSelection: (EditorView) -> Boolean = { view ->
  *
  * @see undoSelection
  */
-val redoSelection: (EditorView) -> Boolean = { view ->
+val redoSelection: (EditorSession) -> Boolean = { view ->
     applyHistory(view, isUndo = false, onlySelection = true)
 }
 
-private fun applyHistory(view: EditorView, isUndo: Boolean, onlySelection: Boolean): Boolean {
+private fun applyHistory(view: EditorSession, isUndo: Boolean, onlySelection: Boolean): Boolean {
     val state = view.state
     val histState = state.field(_historyField, false) ?: return false
     val side = if (isUndo) BranchName.Done else BranchName.Undone

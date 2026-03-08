@@ -47,7 +47,7 @@ import com.monkopedia.kodemirror.state.StateEffectType
 import com.monkopedia.kodemirror.state.StateField
 import com.monkopedia.kodemirror.state.StateFieldSpec
 import com.monkopedia.kodemirror.state.TransactionSpec
-import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.LocalEditorTheme
 
 private val toggleGotoLinePanel: StateEffectType<Boolean> =
@@ -72,7 +72,7 @@ internal val gotoLinePanelOpenField: StateField<Boolean> =
     )
 
 /** Command that opens the go-to-line dialog. */
-val gotoLine: (EditorView) -> Boolean = { view ->
+val gotoLine: (EditorSession) -> Boolean = { view ->
     view.dispatch(
         TransactionSpec(
             effects = listOf(toggleGotoLinePanel.of(true))
@@ -83,7 +83,7 @@ val gotoLine: (EditorView) -> Boolean = { view ->
 
 /** Composable panel for the go-to-line dialog. */
 @Composable
-internal fun GoToLinePanel(view: EditorView) {
+internal fun GoToLinePanel(view: EditorSession) {
     val theme = LocalEditorTheme.current
     val panelTextStyle = theme.contentTextStyle.copy(
         color = theme.foreground,

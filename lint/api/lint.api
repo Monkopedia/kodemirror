@@ -96,9 +96,9 @@ public final class com/monkopedia/kodemirror/lint/LintKt {
 public final class com/monkopedia/kodemirror/lint/LintStateKt {
 	public static final fun diagnosticCount (Lcom/monkopedia/kodemirror/state/EditorState;)I
 	public static final fun forEachDiagnostic (Lcom/monkopedia/kodemirror/state/EditorState;Lkotlin/jvm/functions/Function1;)V
-	public static final fun forceLinting (Lcom/monkopedia/kodemirror/view/EditorView;)V
+	public static final fun forceLinting (Lcom/monkopedia/kodemirror/view/EditorSession;)V
 	public static final fun getSetDiagnosticsEffect ()Lcom/monkopedia/kodemirror/state/StateEffectType;
-	public static final fun setDiagnostics (Lcom/monkopedia/kodemirror/view/EditorView;Ljava/util/List;)V
+	public static final fun setDiagnostics (Lcom/monkopedia/kodemirror/view/EditorSession;Ljava/util/List;)V
 }
 
 public final class com/monkopedia/kodemirror/lint/Severity : java/lang/Enum {

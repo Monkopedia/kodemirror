@@ -30,7 +30,7 @@ import com.monkopedia.kodemirror.state.StateFieldSpec
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.view.Decoration
 import com.monkopedia.kodemirror.view.DecorationSet
-import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.MarkDecorationSpec
 import com.monkopedia.kodemirror.view.PluginValue
 import com.monkopedia.kodemirror.view.ViewPlugin
@@ -129,7 +129,7 @@ internal val lintState: StateField<LintStateValue> = StateField.define(
 )
 
 /** Set diagnostics on an editor view. */
-fun setDiagnostics(view: EditorView, diagnostics: List<Diagnostic>) {
+fun setDiagnostics(view: EditorSession, diagnostics: List<Diagnostic>) {
     view.dispatch(
         TransactionSpec(
             effects = listOf(setDiagnosticsEffect.of(diagnostics))
@@ -147,7 +147,7 @@ fun forEachDiagnostic(state: EditorState, callback: (Diagnostic) -> Unit) {
 }
 
 /** Force the linter to re-run immediately. */
-fun forceLinting(view: EditorView) {
+fun forceLinting(view: EditorSession) {
     view.dispatch(
         TransactionSpec(effects = listOf(forceLintEffect.of(Unit)))
     )
@@ -155,7 +155,7 @@ fun forceLinting(view: EditorView) {
 
 /** Internal linter plugin that debounces and runs the lint source. */
 internal class LinterPlugin(
-    private val view: EditorView,
+    private val view: EditorSession,
     private val source: LintSource,
     private val config: LintConfig
 ) : PluginValue {

@@ -25,7 +25,7 @@ import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.Text
 import com.monkopedia.kodemirror.state.TransactionSpec
-import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.EditorSession
 
 private class Context(
     val node: SyntaxNode,
@@ -119,71 +119,72 @@ private fun blankLine(cx: Context, state: EditorState): Boolean {
         Regex("^[-*+]\$").matches(content)
 }
 
-fun insertNewlineContinueMarkupCommand(continueOnBlank: Boolean = false): (EditorView) -> Boolean =
-    { view ->
-        val state = view.state
-        val tree = syntaxTree(state)
-        val specs = mutableListOf<ChangeSpec.Single>()
-        var canHandle = true
+fun insertNewlineContinueMarkupCommand(
+    continueOnBlank: Boolean = false
+): (EditorSession) -> Boolean = { view ->
+    val state = view.state
+    val tree = syntaxTree(state)
+    val specs = mutableListOf<ChangeSpec.Single>()
+    var canHandle = true
 
-        for (range in state.selection.ranges) {
-            val pos = range.from
-            val line = state.doc.lineAt(pos)
-            if (pos < line.to || !range.empty) {
-                canHandle = false
-                break
-            }
-
-            val node = tree.resolveInner(pos, -1)
-            val context = getContext(node, state.doc)
-            if (context.isEmpty()) {
-                canHandle = false
-                break
-            }
-
-            val isBlank = blankLine(context.last(), state)
-            if (isBlank && !continueOnBlank) {
-                val lineFrom = line.from
-                specs.add(
-                    ChangeSpec.Single(
-                        from = lineFrom,
-                        to = line.to,
-                        insert = InsertContent.StringContent("")
-                    )
-                )
-            } else {
-                val insert = buildString {
-                    append("\n")
-                    for (cx in context) {
-                        append(cx.blank())
-                    }
-                }
-                specs.add(
-                    ChangeSpec.Single(
-                        from = pos,
-                        insert = InsertContent.StringContent(insert)
-                    )
-                )
-            }
+    for (range in state.selection.ranges) {
+        val pos = range.from
+        val line = state.doc.lineAt(pos)
+        if (pos < line.to || !range.empty) {
+            canHandle = false
+            break
         }
 
-        if (canHandle && specs.isNotEmpty()) {
-            val changes: ChangeSpec = if (specs.size == 1) {
-                specs[0]
-            } else {
-                ChangeSpec.Multi(specs)
-            }
-            view.dispatch(TransactionSpec(changes = changes))
-            true
+        val node = tree.resolveInner(pos, -1)
+        val context = getContext(node, state.doc)
+        if (context.isEmpty()) {
+            canHandle = false
+            break
+        }
+
+        val isBlank = blankLine(context.last(), state)
+        if (isBlank && !continueOnBlank) {
+            val lineFrom = line.from
+            specs.add(
+                ChangeSpec.Single(
+                    from = lineFrom,
+                    to = line.to,
+                    insert = InsertContent.StringContent("")
+                )
+            )
         } else {
-            false
+            val insert = buildString {
+                append("\n")
+                for (cx in context) {
+                    append(cx.blank())
+                }
+            }
+            specs.add(
+                ChangeSpec.Single(
+                    from = pos,
+                    insert = InsertContent.StringContent(insert)
+                )
+            )
         }
     }
 
-val insertNewlineContinueMarkup: (EditorView) -> Boolean =
+    if (canHandle && specs.isNotEmpty()) {
+        val changes: ChangeSpec = if (specs.size == 1) {
+            specs[0]
+        } else {
+            ChangeSpec.Multi(specs)
+        }
+        view.dispatch(TransactionSpec(changes = changes))
+        true
+    } else {
+        false
+    }
+}
+
+val insertNewlineContinueMarkup: (EditorSession) -> Boolean =
     insertNewlineContinueMarkupCommand()
 
-val deleteMarkupBackward: (EditorView) -> Boolean = { view ->
+val deleteMarkupBackward: (EditorSession) -> Boolean = { view ->
     val state = view.state
     val tree = syntaxTree(state)
     val specs = mutableListOf<ChangeSpec.Single>()

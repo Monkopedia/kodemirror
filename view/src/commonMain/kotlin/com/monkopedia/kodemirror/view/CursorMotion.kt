@@ -152,8 +152,8 @@ fun moveBySubword(
  * Move a selection range vertically by one line, keeping an approximate
  * horizontal position.
  *
- * Uses [EditorView.coordsAtPos] to find current coordinates and
- * [EditorView.posAtCoords] to project to the target line.
+ * Uses [EditorSession.coordsAtPos] to find current coordinates and
+ * [EditorSession.posAtCoords] to project to the target line.
  *
  * @param view    The editor view (for coordinate queries).
  * @param sel     The current selection range.
@@ -161,7 +161,7 @@ fun moveBySubword(
  * @param extend  If true, extend the selection rather than move the cursor.
  */
 fun moveVertically(
-    view: EditorView,
+    view: EditorSession,
     sel: SelectionRange,
     forward: Boolean,
     extend: Boolean = false

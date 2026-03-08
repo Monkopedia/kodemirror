@@ -43,7 +43,7 @@ import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.Slot
 import com.monkopedia.kodemirror.state.TransactionSpec
-import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.KeyBinding
 import com.monkopedia.kodemirror.view.PluginValue
 import com.monkopedia.kodemirror.view.Tooltip
@@ -55,13 +55,13 @@ import com.monkopedia.kodemirror.view.showTooltip
 // ── Commands ──
 
 /** Explicitly start completion (Ctrl-Space). */
-val startCompletion: (EditorView) -> Boolean = { view ->
+val startCompletion: (EditorSession) -> Boolean = { view ->
     triggerCompletion(view, explicit = true)
     true
 }
 
 /** Close the completion list. */
-val closeCompletion: (EditorView) -> Boolean = { view ->
+val closeCompletion: (EditorSession) -> Boolean = { view ->
     val cs = view.state.field(completionStateField, require = false)
     if (cs != null && cs.open) {
         view.dispatch(
@@ -74,7 +74,7 @@ val closeCompletion: (EditorView) -> Boolean = { view ->
 }
 
 /** Accept the currently selected completion. */
-val acceptCompletion: (EditorView) -> Boolean = { view ->
+val acceptCompletion: (EditorSession) -> Boolean = { view ->
     val cs = view.state.field(completionStateField, require = false)
     if (cs != null && cs.open && cs.filtered.isNotEmpty()) {
         val completion = cs.filtered[cs.selected].completion
@@ -86,7 +86,7 @@ val acceptCompletion: (EditorView) -> Boolean = { view ->
 }
 
 /** Move the completion selection. */
-fun moveCompletionSelection(forward: Boolean, by: String = "option"): (EditorView) -> Boolean =
+fun moveCompletionSelection(forward: Boolean, by: String = "option"): (EditorSession) -> Boolean =
     { view ->
         val cs = view.state.field(completionStateField, require = false)
         if (cs != null && cs.open && cs.filtered.isNotEmpty()) {
@@ -121,7 +121,7 @@ val completionKeymap: List<KeyBinding> = listOf(
 
 // ── Internal helpers ──
 
-private fun triggerCompletion(view: EditorView, explicit: Boolean) {
+private fun triggerCompletion(view: EditorSession, explicit: Boolean) {
     val state = view.state
     val config = state.facet(completionConfig)
     val pos = state.selection.main.head
@@ -147,7 +147,7 @@ private fun triggerCompletion(view: EditorView, explicit: Boolean) {
     }
 }
 
-private fun applyCompletion(view: EditorView, completion: Completion, result: CompletionResult) {
+private fun applyCompletion(view: EditorSession, completion: Completion, result: CompletionResult) {
     val fn = completion.applyFn
     if (fn != null) {
         fn(view, completion, result.from, result.to ?: view.state.selection.main.head)
@@ -178,7 +178,7 @@ fun insertCompletionText(state: EditorState, text: String, from: Int, to: Int): 
 // ── ViewPlugin ──
 
 private class CompletionPlugin(
-    private val view: EditorView
+    private val view: EditorSession
 ) : PluginValue {
     override fun update(update: ViewUpdate) {
         val config = update.state.facet(completionConfig)
@@ -201,7 +201,7 @@ private class CompletionPlugin(
 @Suppress("ktlint:standard:function-naming")
 @Composable
 private fun CompletionList(
-    view: EditorView,
+    view: EditorSession,
     completionState: CompletionState,
     config: CompletionConfig
 ) {
@@ -351,7 +351,7 @@ fun autocompletion(config: CompletionConfig = CompletionConfig()): Extension {
         val cs = state.field(completionStateField, require = false)
         if (cs != null && cs.open && cs.filtered.isNotEmpty() && cs.result != null) {
             Tooltip(pos = cs.result.from) {
-                val editorView = com.monkopedia.kodemirror.view.LocalEditorView.current
+                val editorView = com.monkopedia.kodemirror.view.LocalEditorSession.current
                 val currentConfig = editorView.state.facet(completionConfig)
                 val currentCs = editorView.state.field(completionStateField, require = false)
                     ?: cs

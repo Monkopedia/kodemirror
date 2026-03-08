@@ -44,12 +44,12 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.monkopedia.kodemirror.state.TransactionSpec
-import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.LocalEditorTheme
 
 /** Composable search/replace panel UI. */
 @Composable
-internal fun SearchPanel(view: EditorView) {
+internal fun SearchPanel(view: EditorSession) {
     val theme = LocalEditorTheme.current
     val panelTextStyle = theme.contentTextStyle.copy(
         color = theme.foreground,

@@ -25,12 +25,12 @@ import com.monkopedia.kodemirror.state.Transaction
 /**
  * Describes an update to the editor.
  *
- * Created for every [Transaction] dispatched to [EditorView]. Plugins receive
+ * Created for every [Transaction] dispatched to [EditorSession]. Plugins receive
  * this via [PluginValue.update].
  */
 class ViewUpdate(
-    /** The view that was updated. */
-    val view: EditorView,
+    /** The session that was updated. */
+    val session: EditorSession,
     /** The new editor state (after the transactions). */
     val state: EditorState,
     /** The transactions applied in this update (may be empty for view-only changes). */
@@ -43,7 +43,7 @@ class ViewUpdate(
     val focusChanged: Boolean = false
 ) {
     /** The state before the transactions. */
-    val startState: EditorState = view.state
+    val startState: EditorState = session.state
 
     /** Whether any transaction changed the document. */
     val docChanged: Boolean

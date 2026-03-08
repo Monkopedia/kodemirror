@@ -36,12 +36,12 @@ import com.monkopedia.kodemirror.state.StateFieldSpec
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asDoc
-import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.EditorSession
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * DummyServer variant that uses EditorView + history() for undo/redo tests.
+ * DummyServer variant that uses EditorSession + history() for undo/redo tests.
  * All state mutations go through the views to keep history consistent.
  */
 private class UndoServer(
@@ -50,7 +50,7 @@ private class UndoServer(
     extensions: List<Extension> = emptyList(),
     collabConf: CollabConfig = CollabConfig()
 ) {
-    val views: MutableList<EditorView> = mutableListOf()
+    val views: MutableList<EditorSession> = mutableListOf()
     val updates: MutableList<Update> = mutableListOf()
     val delayed: MutableList<Int> = mutableListOf()
 
@@ -70,7 +70,7 @@ private class UndoServer(
                     )
                 )
             )
-            views.add(EditorView(state))
+            views.add(EditorSession(state))
         }
     }
 

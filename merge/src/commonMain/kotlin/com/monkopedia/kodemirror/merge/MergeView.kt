@@ -28,7 +28,7 @@ import com.monkopedia.kodemirror.state.Prec
 import com.monkopedia.kodemirror.state.StateEffect
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
-import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.editorAttributes
 import kotlin.math.max
 import kotlin.math.min
@@ -71,11 +71,11 @@ data class MergeViewConfig(
  */
 class MergeView(config: MergeViewConfig) {
     /** The first editor view. */
-    var a: EditorView
+    var a: EditorSession
         private set
 
     /** The second editor view. */
-    var b: EditorView
+    var b: EditorSession
         private set
 
     /** The current set of changed chunks. */
@@ -167,15 +167,15 @@ class MergeView(config: MergeViewConfig) {
             )
         ).state
 
-        a = EditorView(finalStateA)
-        b = EditorView(finalStateB)
+        a = EditorSession(finalStateA)
+        b = EditorSession(finalStateB)
     }
 
     /**
      * Dispatch a transaction to one of the editors, updating chunks
      * if the document changed.
      */
-    fun dispatch(tr: Transaction, target: EditorView) {
+    fun dispatch(tr: Transaction, target: EditorSession) {
         if (tr.docChanged) {
             val changes = tr.changes
             chunks = if (target === a) {

@@ -23,7 +23,7 @@ import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.asDoc
-import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.EditorSession
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -46,7 +46,7 @@ class AutocompletionCommandsTest {
         )
     }
 
-    private fun createView(doc: String, cursor: Int = doc.length): EditorView {
+    private fun createView(doc: String, cursor: Int = doc.length): EditorSession {
         val config = CompletionConfig(override = listOf(testSource))
         val state = EditorState.create(
             EditorStateConfig(
@@ -60,7 +60,7 @@ class AutocompletionCommandsTest {
                 )
             )
         )
-        return EditorView(state)
+        return EditorSession(state)
     }
 
     @Test
@@ -117,7 +117,7 @@ class AutocompletionCommandsTest {
                 )
             )
         )
-        val view = EditorView(state)
+        val view = EditorSession(state)
         startCompletion(view)
         val completions = currentCompletions(view.state)
         assertEquals(2, completions.size)

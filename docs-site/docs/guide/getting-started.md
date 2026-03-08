@@ -64,7 +64,7 @@ fun MyEditor() {
         )
     }
 
-    EditorView(
+    EditorSession(
         state = editorState,
         onUpdate = { tr -> editorState = tr.state },
         modifier = Modifier.fillMaxSize()
@@ -84,7 +84,7 @@ Kodemirror follows the standard Compose state-hoisting pattern:
 
 1. **State** — `EditorState` holds the document, selection, and all
    extension state. It's immutable.
-2. **View** — `EditorView` renders the state as a Compose UI.
+2. **View** — `EditorSession` renders the state as a Compose UI.
 3. **Transactions** — when the user types or triggers a command, a
    `Transaction` is created with the changes.
 4. **Update** — the `onUpdate` callback receives the transaction.
@@ -184,7 +184,7 @@ extensionListOf(
 To get notified when the document text changes:
 
 ```kotlin
-EditorView(
+EditorSession(
     state = editorState,
     onUpdate = { tr ->
         editorState = tr.state
@@ -201,7 +201,7 @@ EditorView(
 To update the document from outside the editor:
 
 ```kotlin
-fun insertText(view: EditorView, text: String) {
+fun insertText(view: EditorSession, text: String) {
     val pos = view.state.selection.main.head
     view.dispatch(TransactionSpec(
         changes = ChangeSpec.Single(

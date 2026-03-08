@@ -4,14 +4,14 @@ The `:view` module (`com.monkopedia.kodemirror.view`) renders the editor
 using Jetpack Compose. This is the layer that diverges most from
 upstream CodeMirror, which uses the browser DOM.
 
-## The EditorView composable
+## The EditorSession composable
 
-The entry point for embedding an editor is the `EditorView` composable
+The entry point for embedding an editor is the `EditorSession` composable
 function:
 
 ```kotlin
 @Composable
-fun EditorView(
+fun EditorSession(
     state: EditorState,
     onUpdate: (Transaction) -> Unit,
     modifier: Modifier = Modifier
@@ -30,7 +30,7 @@ var editorState by remember {
     )
 }
 
-EditorView(
+EditorSession(
     state = editorState,
     onUpdate = { tr -> editorState = tr.state },
     modifier = Modifier.fillMaxSize()
@@ -44,9 +44,9 @@ change.
 
 ## Inside the composable
 
-The `EditorView` composable manages several internal pieces:
+The `EditorSession` composable manages several internal pieces:
 
-1. **EditorView instance** — a non-Composable class that holds state,
+1. **EditorSession instance** — a non-Composable class that holds state,
    coordinates plugins, and exposes APIs like `dispatch()` and
    `coordsAtPos()`. It is created once via `remember` and retained
    across recompositions.
@@ -71,13 +71,13 @@ The `EditorView` composable manages several internal pieces:
 6. **Selection drawing** — a `drawWithContent` modifier that paints
    selection highlights and cursors onto a Canvas overlay per line.
 
-## The EditorView class
+## The EditorSession class
 
-The `EditorView` class (not a composable) is the stateful data holder
+The `EditorSession` class (not a composable) is the stateful data holder
 that plugins and commands interact with:
 
 ```kotlin
-class EditorView(
+class EditorSession(
     initialState: EditorState,
     val onUpdate: (Transaction) -> Unit = {}
 ) {
@@ -95,7 +95,7 @@ It is available to nested composables (panels, tooltips, widgets) via a
 `CompositionLocal`:
 
 ```kotlin
-val view = LocalEditorView.current
+val view = LocalEditorSession.current
 ```
 
 ## Theming
@@ -214,10 +214,10 @@ common gutter is line numbers. Custom gutters are registered via the
 ```kotlin
 data class GutterConfig(
     val cssClass: String? = null,
-    val lineMarker: ((EditorView, Int) -> GutterMarker?)? = null,
+    val lineMarker: ((EditorSession, Int) -> GutterMarker?)? = null,
     val lineMarkerChange: ((ViewUpdate) -> Boolean)? = null,
     val renderEmptyElements: Boolean = false,
-    val initialSpacer: ((EditorView) -> GutterMarker)? = null,
+    val initialSpacer: ((EditorSession) -> GutterMarker)? = null,
     val updateSpacer: ((GutterMarker, ViewUpdate) -> GutterMarker)? = null
 )
 ```
@@ -227,7 +227,7 @@ Custom gutter markers implement `GutterMarker` and provide a
 
 ## Commands and key handling
 
-Commands are functions with the signature `(EditorView) -> Boolean`.
+Commands are functions with the signature `(EditorSession) -> Boolean`.
 They return `true` if they handled the event, `false` to let it
 propagate.
 
@@ -239,9 +239,9 @@ data class KeyBinding(
     val mac: String? = null,       // macOS-specific binding
     val win: String? = null,       // Windows-specific binding
     val linux: String? = null,     // Linux-specific binding
-    val run: ((EditorView) -> Boolean)? = null,
-    val shift: ((EditorView) -> Boolean)? = null,
-    val any: ((EditorView, KeyEvent) -> Boolean)? = null,
+    val run: ((EditorSession) -> Boolean)? = null,
+    val shift: ((EditorSession) -> Boolean)? = null,
+    val any: ((EditorSession, KeyEvent) -> Boolean)? = null,
     val preventDefault: Boolean = false,
     val stopPropagation: Boolean = false
 )
@@ -260,7 +260,7 @@ Kodemirror commands only dispatch transactions. All UI updates happen
 through Compose recomposition:
 
 ```kotlin
-val cursorCharLeft: (EditorView) -> Boolean = { view ->
+val cursorCharLeft: (EditorSession) -> Boolean = { view ->
     val newSel = view.state.selection.ranges.map { range ->
         moveByChar(view.state, range, forward = false)
     }
@@ -327,7 +327,7 @@ and syntax highlighting.
 
 ### Viewport and visible range
 
-The `EditorView` tracks which document positions are visible. View
+The `EditorSession` tracks which document positions are visible. View
 plugins can react to viewport changes through `ViewUpdate.viewportChanged`.
 This is important for plugins that compute decorations only for the
 visible range (e.g. syntax highlighting, code folding markers).
@@ -358,7 +358,7 @@ For multi-cursor support, each `SelectionRange` in the
 
 ## Coordinate queries
 
-The `EditorView` class provides methods for mapping between document
+The `EditorSession` class provides methods for mapping between document
 positions and pixel coordinates:
 
 ```kotlin
@@ -377,7 +377,7 @@ When state changes, every view plugin receives a `ViewUpdate`:
 
 ```kotlin
 class ViewUpdate(
-    val view: EditorView,
+    val view: EditorSession,
     val state: EditorState,
     val transactions: List<Transaction>,
     val viewportChanged: Boolean,

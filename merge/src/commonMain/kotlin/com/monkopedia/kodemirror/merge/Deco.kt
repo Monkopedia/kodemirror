@@ -34,8 +34,8 @@ import com.monkopedia.kodemirror.state.Text
 import com.monkopedia.kodemirror.view.Decoration
 import com.monkopedia.kodemirror.view.DecorationSet
 import com.monkopedia.kodemirror.view.DecorationSource
+import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.EditorTheme
-import com.monkopedia.kodemirror.view.EditorView
 import com.monkopedia.kodemirror.view.GutterConfig
 import com.monkopedia.kodemirror.view.GutterMarker
 import com.monkopedia.kodemirror.view.LineDecorationSpec
@@ -86,7 +86,7 @@ private val changedLineGutterMarker = object : GutterMarker() {
 
 // -- Chunk decoration plugin --
 
-private class ChunkDecoPlugin(view: EditorView) : PluginValue, DecorationSource {
+private class ChunkDecoPlugin(view: EditorSession) : PluginValue, DecorationSource {
     override var decorations: DecorationSet = RangeSet.empty()
         private set
     var gutterDecos: RangeSet<GutterMarker> = RangeSet.empty()
@@ -101,11 +101,11 @@ private class ChunkDecoPlugin(view: EditorView) : PluginValue, DecorationSource 
             chunksChanged(update.startState, update.state) ||
             configChanged(update.startState, update.state)
         ) {
-            rebuild(update.view)
+            rebuild(update.session)
         }
     }
 
-    private fun rebuild(view: EditorView) {
+    private fun rebuild(view: EditorSession) {
         val result = getChunkDeco(view)
         decorations = result.first
         gutterDecos = result.second
@@ -188,7 +188,7 @@ private fun buildChunkDeco(
     }
 }
 
-private fun getChunkDeco(view: EditorView): Pair<DecorationSet, RangeSet<GutterMarker>> {
+private fun getChunkDeco(view: EditorSession): Pair<DecorationSet, RangeSet<GutterMarker>> {
     val chunks = view.state.field(ChunkField)
     val conf = view.state.facet(mergeConfig)
     val isA = conf.side == MergeSide.A

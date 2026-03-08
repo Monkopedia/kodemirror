@@ -23,23 +23,23 @@ import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.asDoc
-import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.EditorSession
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class CommandsTest {
 
-    private fun createView(doc: String, cursor: Int = 0): EditorView {
+    private fun createView(doc: String, cursor: Int = 0): EditorSession {
         val state = EditorState.create(
             EditorStateConfig(
                 doc = doc.asDoc(),
                 selection = SelectionSpec.CursorSpec(cursor)
             )
         )
-        return EditorView(state)
+        return EditorSession(state)
     }
 
-    private fun createViewWithSelection(doc: String, anchor: Int, head: Int): EditorView {
+    private fun createViewWithSelection(doc: String, anchor: Int, head: Int): EditorSession {
         val state = EditorState.create(
             EditorStateConfig(
                 doc = doc.asDoc(),
@@ -48,7 +48,7 @@ class CommandsTest {
                 )
             )
         )
-        return EditorView(state)
+        return EditorSession(state)
     }
 
     @Test

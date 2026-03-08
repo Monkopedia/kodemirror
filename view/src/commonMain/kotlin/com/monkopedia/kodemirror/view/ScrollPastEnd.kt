@@ -48,14 +48,14 @@ fun scrollPastEnd(padding: Dp = 200.dp): Extension = ViewPlugin.define(
     }
 ).asExtension()
 
-private class ScrollPastEndPlugin(view: EditorView, private val padding: Dp) : PluginValue {
+private class ScrollPastEndPlugin(view: EditorSession, private val padding: Dp) : PluginValue {
     var decos: DecorationSet = buildDecos(view)
 
     override fun update(update: ViewUpdate) {
-        if (update.docChanged) decos = buildDecos(update.view)
+        if (update.docChanged) decos = buildDecos(update.session)
     }
 
-    private fun buildDecos(view: EditorView): DecorationSet {
+    private fun buildDecos(view: EditorSession): DecorationSet {
         val docLength = view.state.doc.length
         val builder = RangeSetBuilder<Decoration>()
         val widget = SpacerWidget(padding)

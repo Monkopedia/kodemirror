@@ -24,7 +24,7 @@ import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asDoc
-import com.monkopedia.kodemirror.view.EditorView
+import com.monkopedia.kodemirror.view.EditorSession
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -32,7 +32,7 @@ import kotlin.test.assertTrue
 
 class SearchCommandsTest {
 
-    private fun createView(doc: String, query: SearchQuery, cursor: Int = 0): EditorView {
+    private fun createView(doc: String, query: SearchQuery, cursor: Int = 0): EditorSession {
         val state = EditorState.create(
             EditorStateConfig(
                 doc = doc.asDoc(),
@@ -42,7 +42,7 @@ class SearchCommandsTest {
                 )
             )
         )
-        val view = EditorView(state)
+        val view = EditorSession(state)
         view.dispatch(
             TransactionSpec(
                 effects = listOf(setSearchQuery.of(query))
