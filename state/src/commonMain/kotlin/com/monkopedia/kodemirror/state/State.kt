@@ -372,9 +372,29 @@ class EditorState private constructor(
     }
 
     /**
-     * Find the values for a given language data field.
+     * Find the values for a given language data field using a type-safe key.
      */
     @Suppress("UNCHECKED_CAST")
+    fun <T> languageDataAt(key: LanguageDataKey<T>, pos: Int, side: Int = -1): List<T> {
+        val values = mutableListOf<T>()
+        for (provider in facet(languageData)) {
+            for (result in provider(this, pos, side)) {
+                if (result.containsKey(key.name)) {
+                    values.add(result[key.name] as T)
+                }
+            }
+        }
+        return values
+    }
+
+    /**
+     * Find the values for a given language data field by string name.
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Deprecated(
+        "Use the type-safe LanguageDataKey overload instead.",
+        ReplaceWith("languageDataAt(LanguageDataKey(name), pos, side)")
+    )
     fun <T> languageDataAt(name: String, pos: Int, side: Int = -1): List<T> {
         val values = mutableListOf<T>()
         for (provider in facet(languageData)) {
@@ -393,7 +413,7 @@ class EditorState private constructor(
      */
     fun charCategorizer(at: Int): (String) -> CharCategory {
         val chars =
-            languageDataAt<String>("wordChars", at)
+            languageDataAt(LanguageDataKey.WORD_CHARS, at)
         return makeCategorizer(
             if (chars.isNotEmpty()) chars[0] else ""
         )

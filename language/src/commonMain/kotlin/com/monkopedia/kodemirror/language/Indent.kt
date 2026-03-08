@@ -25,6 +25,7 @@ import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.Facet
 import com.monkopedia.kodemirror.state.InsertContent
+import com.monkopedia.kodemirror.state.LanguageDataKey
 import com.monkopedia.kodemirror.state.Line
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.TransactionFilterResult
@@ -381,7 +382,7 @@ val indentOnInput: Extension = transactionFilter.of { tr ->
         val lineText = line.text
         val upToCursor = lineText.substring(0, minOf(col, lineText.length))
 
-        val triggers = state.languageDataAt<Regex>("indentOnInput", pos)
+        val triggers = state.languageDataAt(LanguageDataKey.INDENT_ON_INPUT, pos)
         val matches = triggers.any { it.containsMatchIn(upToCursor) }
         if (!matches) continue
 

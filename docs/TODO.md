@@ -132,7 +132,7 @@ Each item has a status prefix on its heading line:
   Covers the 80% use case where developers just want text in/text out without understanding the
   full transaction model.
 
-### 14. Add type-safe `LanguageDataKey<T>`
+### 14. [DONE] Add type-safe `LanguageDataKey<T>`
 > **Decision:** Replace string-based `languageDataAt` entirely. Define standard keys like `LanguageDataKey.AUTOCOMPLETE`, `LanguageDataKey.FOLD`, etc.
 - **Effort:** 1–2 days | **Source:** Kotlin Ergonomics
 - `EditorState.languageDataAt(name: String, pos: Int)` uses `Map<String, Any?>` + unchecked cast.
