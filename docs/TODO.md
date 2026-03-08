@@ -57,7 +57,7 @@ Each item has a status prefix on its heading line:
   - Update companion object facets (`EditorSession.updateListener` → `EditorSession.updateListener`)
   - Update docs and examples
 
-### 4. Add `basicSetup` / `minimalSetup` convenience bundle
+### 4. [DONE] Add `basicSetup` / `minimalSetup` convenience bundle
 > **Decision:** New `:basic-setup` module. Bundle standard extensions matching upstream CodeMirror basicSetup.
 - **Effort:** 1–2 days | **Source:** Completeness, Frontend DX
 - Biggest onboarding friction. Every new editor requires manually assembling 10+ extensions.

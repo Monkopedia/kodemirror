@@ -1,0 +1,5 @@
+public final class com/monkopedia/kodemirror/basicsetup/BasicSetupKt {
+	public static final fun getBasicSetup ()Lcom/monkopedia/kodemirror/state/Extension;
+	public static final fun getMinimalSetup ()Lcom/monkopedia/kodemirror/state/Extension;
+}
+
