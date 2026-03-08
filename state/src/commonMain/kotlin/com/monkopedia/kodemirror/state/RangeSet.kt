@@ -1469,3 +1469,19 @@ private fun findMinIndex(value: List<RangeValue>, array: List<Int>): Int {
     }
     return found
 }
+
+/**
+ * Build a [RangeSet] using the [RangeSetBuilder] DSL.
+ *
+ * ```kotlin
+ * val decorations = rangeSetOf<Decoration> {
+ *     add(5, 10, highlightDeco)
+ *     add(20, 20, widgetDeco)
+ * }
+ * ```
+ *
+ * Ranges must be added in sorted order (by `from` position).
+ */
+inline fun <T : RangeValue> rangeSetOf(
+    block: RangeSetBuilder<T>.() -> Unit
+): RangeSet<T> = RangeSetBuilder<T>().apply(block).finish()

@@ -139,7 +139,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
 
 ## Priority 1 — High Impact, Core DX
 
-### 1. Add convenience methods on `EditorSession`
+### 1. [DONE] Add convenience methods on `EditorSession`
 - **Effort:** < 1 day | **Source:** Frontend DX, Kotlin Ergonomics
 - Common operations require understanding the full transaction model. Add direct methods:
   - `setDoc(text: String)` — replace entire document
@@ -162,7 +162,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
   since the view module shouldn't hard-depend on Material3.
 - Consider also: `isSystemInDarkTheme()` awareness for automatic dark/light switching.
 
-### 3. Add `rangeSetOf { }` DSL builder
+### 3. [DONE] Add `rangeSetOf { }` DSL builder
 - **Effort:** < 1 hour | **Source:** Kotlin Ergonomics
 - RangeSet construction is verbose. Add:
   ```kotlin
@@ -170,7 +170,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
   ```
 - **File:** `state/src/commonMain/kotlin/.../state/RangeSet.kt`
 
-### 4. Add `onSelection` callback convenience
+### 4. [DONE] Add `onSelection` callback convenience
 - **Effort:** < 1 hour | **Source:** Kotlin Ergonomics, Frontend DX
 - Parallel to the existing `onChange(callback: (String) -> Unit)`:
   ```kotlin

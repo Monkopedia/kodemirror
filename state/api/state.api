@@ -651,6 +651,10 @@ public final class com/monkopedia/kodemirror/state/RangeSetBuilder {
 	public final fun finish ()Lcom/monkopedia/kodemirror/state/RangeSet;
 }
 
+public final class com/monkopedia/kodemirror/state/RangeSetKt {
+	public static final fun rangeSetOf (Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/kodemirror/state/RangeSet;
+}
+
 public final class com/monkopedia/kodemirror/state/RangeSetUpdate {
 	public fun <init> ()V
 	public fun <init> (Ljava/util/List;ZLkotlin/jvm/functions/Function3;II)V

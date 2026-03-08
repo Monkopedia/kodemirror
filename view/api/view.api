@@ -181,9 +181,16 @@ public final class com/monkopedia/kodemirror/view/EditorSession$DefaultImpls {
 public final class com/monkopedia/kodemirror/view/EditorSessionKt {
 	public static final fun EditorSession (Lcom/monkopedia/kodemirror/state/EditorState;Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/kodemirror/view/EditorSession;
 	public static synthetic fun EditorSession$default (Lcom/monkopedia/kodemirror/state/EditorState;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/view/EditorSession;
+	public static final fun deleteRange (Lcom/monkopedia/kodemirror/view/EditorSession;II)V
 	public static final fun dispatch (Lcom/monkopedia/kodemirror/view/EditorSession;Lkotlin/jvm/functions/Function1;)V
 	public static final fun getLocalEditorSession ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+	public static final fun insertAt (Lcom/monkopedia/kodemirror/view/EditorSession;ILjava/lang/String;)V
 	public static final fun onChange (Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/kodemirror/state/Extension;
+	public static final fun onSelection (Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/kodemirror/state/Extension;
+	public static final fun select (Lcom/monkopedia/kodemirror/view/EditorSession;II)V
+	public static synthetic fun select$default (Lcom/monkopedia/kodemirror/view/EditorSession;IIILjava/lang/Object;)V
+	public static final fun selectAll (Lcom/monkopedia/kodemirror/view/EditorSession;)V
+	public static final fun setDoc (Lcom/monkopedia/kodemirror/view/EditorSession;Ljava/lang/String;)V
 }
 
 public final class com/monkopedia/kodemirror/view/EditorTheme {

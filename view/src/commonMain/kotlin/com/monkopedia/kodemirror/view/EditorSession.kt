@@ -19,11 +19,15 @@
 package com.monkopedia.kodemirror.view
 
 import androidx.compose.runtime.compositionLocalOf
+import com.monkopedia.kodemirror.state.ChangeSpec
+import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.Facet
+import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
+import com.monkopedia.kodemirror.state.asInsert
 import com.monkopedia.kodemirror.state.transactionSpec
 
 /**
@@ -108,6 +112,64 @@ fun EditorSession.dispatch(
 }
 
 /**
+ * Replace the entire document content with [text].
+ */
+fun EditorSession.setDoc(text: String) {
+    dispatch(
+        TransactionSpec(
+            changes = ChangeSpec.Single(
+                from = 0,
+                to = state.doc.length,
+                insert = text.asInsert()
+            )
+        )
+    )
+}
+
+/**
+ * Insert [text] at the given [pos] in the document.
+ */
+fun EditorSession.insertAt(pos: Int, text: String) {
+    dispatch(
+        TransactionSpec(
+            changes = ChangeSpec.Single(from = pos, insert = text.asInsert())
+        )
+    )
+}
+
+/**
+ * Delete the text between [from] and [to].
+ */
+fun EditorSession.deleteRange(from: Int, to: Int) {
+    dispatch(TransactionSpec(changes = ChangeSpec.Single(from = from, to = to)))
+}
+
+/**
+ * Set the selection to a range from [anchor] to [head].
+ * If [head] is not provided, creates a cursor at [anchor].
+ */
+fun EditorSession.select(anchor: Int, head: Int = anchor) {
+    dispatch(
+        TransactionSpec(
+            selection = SelectionSpec.CursorSpec(anchor = anchor, head = head)
+        )
+    )
+}
+
+/**
+ * Select the entire document.
+ */
+fun EditorSession.selectAll() {
+    dispatch(
+        TransactionSpec(
+            selection = SelectionSpec.EditorSelectionSpec(
+                EditorSelection.single(anchor = 0, head = state.doc.length)
+            )
+        )
+    )
+}
+
+/**
  * Create an extension that calls [callback] with the full document text
  * whenever the document changes.
  *
@@ -123,6 +185,24 @@ fun onChange(callback: (String) -> Unit): Extension = EditorSession.updateListen
         callback(update.state.doc.toString())
     }
 }
+
+/**
+ * Create an extension that calls [callback] with the current selection
+ * whenever the selection changes.
+ *
+ * ```kotlin
+ * val session = rememberEditorSession(
+ *     doc = "Hello",
+ *     extensions = onSelection { selection -> println("Cursor at: ${selection.main.head}") }
+ * )
+ * ```
+ */
+fun onSelection(callback: (EditorSelection) -> Unit): Extension =
+    EditorSession.updateListener.of { update ->
+        if (update.selectionSet) {
+            callback(update.state.selection)
+        }
+    }
 
 /** A simple axis-aligned rectangle used for coordinate results. */
 data class Rect(
