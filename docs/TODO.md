@@ -179,14 +179,20 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
 - Uses `EditorSession.updateListener` with `update.selectionSet` check.
 - **File:** `view/src/commonMain/kotlin/.../view/EditorSession.kt`
 
-### 5. Standardize extension composition in docs and examples
+### 5. Modernize docs: extension composition and API patterns
 - **Effort:** < 1 day | **Source:** Frontend DX, Documentation
-- Three ways to combine extensions exist (`+` operator, `extensionListOf()`,
-  `ExtensionList(listOf(...))`). Examples mix all three, causing confusion.
-- Make `+` operator the canonical documented pattern.
-- Update all example pages and guides to use `+` consistently.
-- Add a note in the getting-started guide explaining the other forms exist but `+` is preferred.
-- **Files:** `docs-site/docs/examples/*.md`, `docs-site/docs/guide/getting-started.md`
+- **Extension composition:** Three ways to combine extensions exist (`+` operator,
+  `extensionListOf()`, `ExtensionList(listOf(...))`). Examples mix all three, causing confusion.
+  Make `+` operator the canonical documented pattern. Update all example pages and guides
+  to use `+` consistently. Add a note explaining other forms exist but `+` is preferred.
+- **API pattern modernization:** The getting-started guide still shows the old API pattern
+  (`var editorState by remember { mutableStateOf(...) }` + `EditorSession(state=..., onUpdate=...)`)
+  instead of the modern `rememberEditorSession(doc, extensions)` + `KodeMirror(session)` pattern.
+  Update all guides and examples to use the modern API as the primary recommended approach.
+- **Link sample project:** Add a README to `samples/` and reference the sample project from
+  the getting-started guide and examples index. The sample exists but isn't discoverable.
+- **Files:** `docs-site/docs/examples/*.md`, `docs-site/docs/guide/getting-started.md`,
+  `docs-site/docs/examples/index.md`, `samples/README.md`
 
 ### 6. Fix `Rule.setNext()` mutability
 - **Effort:** < 1 day | **Source:** Architecture
@@ -289,11 +295,22 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
 - Update `EditorState.languageDataAt` to return `LanguageDataMap` instead of raw map.
 - **File:** `state/src/commonMain/kotlin/.../state/State.kt`
 
+### 15. Add Android-specific guidance and sample
+- **Effort:** 1 day | **Source:** Frontend DX, Documentation
+- No Android-specific documentation exists. Multiple evaluation reviewers flagged this as
+  important for mobile adoption. Cover:
+  - IME (Input Method Editor) integration behavior
+  - Keyboard handling differences from Desktop
+  - Touch interaction (tap-to-place cursor, drag selection)
+  - Performance considerations on mobile
+  - Sample Android project in `samples/` directory
+- Create `docs-site/docs/guide/android.md` and add `samples/android/` project.
+
 ---
 
 ## Priority 3 — Documentation
 
-### 15. Document the `:collab` module
+### 16. Document the `:collab` module
 - **Effort:** 1 day | **Source:** Documentation
 - The collab module exists and has examples but no dedicated guide. Create
   `docs-site/docs/guide/collaboration.md` covering:
@@ -303,7 +320,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
   - Error handling and conflict resolution
 - Also add a "Related API" section to the existing `collab.md` example.
 
-### 16. Document the `:merge` module
+### 17. Document the `:merge` module
 - **Effort:** 1 day | **Source:** Documentation
 - The merge module is undocumented. Create `docs-site/docs/guide/merge.md` covering:
   - `MergeView` configuration and usage
@@ -311,7 +328,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
   - Integration with version control workflows
 - Add an example page `docs-site/docs/examples/merge.md`.
 
-### 17. Expand troubleshooting guide
+### 18. Expand troubleshooting guide
 - **Effort:** < 1 day | **Source:** Documentation
 - Current troubleshooting has only 3 sections. Add 10+ more common issues:
   - "No syntax highlighting" (missing language extension)
@@ -326,7 +343,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
   - "Undo not working" (missing `history()` extension)
 - **File:** `docs-site/docs/guide/troubleshooting.md`
 
-### 18. Fill KDoc gaps in search, merge, lint, and autocomplete modules
+### 19. Fill KDoc gaps in search, merge, lint, and autocomplete modules
 - **Effort:** 1–2 days | **Source:** Documentation
 - These modules have lower KDoc coverage than core modules. Add KDoc to:
   - All public classes and their primary methods
@@ -336,7 +353,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
 - Focus on: what does each parameter mean? When is `null` returned? What are valid values?
 - **Modules:** `:search`, `:merge`, `:lint`, `:autocomplete`
 
-### 19. Add `@see` and `@sample` cross-references to KDoc
+### 20. Add `@see` and `@sample` cross-references to KDoc
 - **Effort:** 1 day | **Source:** Documentation
 - Public API KDoc lacks cross-references. Add:
   - `@see` links between related types (e.g., `StateField` ↔ `StateFieldSpec`)
@@ -344,7 +361,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
   - `@see` links from commands to their configuration facets
 - Focus on the most-used APIs in `:state`, `:view`, `:commands`.
 
-### 20. Document nullability contracts
+### 21. Document nullability contracts
 - **Effort:** < 1 day | **Source:** Documentation, Kotlin Ergonomics
 - Several APIs return nullable types without explaining when/why null is returned:
   - `EditorSession.coordsAtPos()` → `Rect?` — when does this return null?
@@ -354,7 +371,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
 - Add clarifying KDoc to all nullable returns and ambiguous numeric parameters.
 - **Files:** `view/.../EditorSession.kt`, `autocomplete/.../Completion.kt`, `state/.../RangeSet.kt`
 
-### 21. Add architecture guide for extension system
+### 22. Add architecture guide for extension system
 - **Effort:** 1 day | **Source:** Documentation
 - Create `docs-site/docs/guide/extension-architecture.md` explaining:
   - When to use `StateField` vs `Facet` vs `StateEffect`
@@ -364,7 +381,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
   - How to build reusable, composable extensions (library quality)
   - Transaction filter and extender patterns
 
-### 22. Add performance and large document guide
+### 23. Add performance and large document guide
 - **Effort:** 1 day | **Source:** Documentation
 - Create `docs-site/docs/guide/performance.md` covering:
   - How `LazyColumn` virtualization works for large documents
@@ -373,7 +390,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
   - ViewPlugin update optimization patterns
   - When to use `StateField` vs `ViewPlugin` for performance
 
-### 23. Add testing guide for editors
+### 24. Add testing guide for editors
 - **Effort:** 1 day | **Source:** Documentation
 - Create `docs-site/docs/guide/testing.md` covering:
   - Unit testing `StateField` update logic
@@ -383,7 +400,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
   - Testing linter implementations
   - Patterns for test fixtures (creating pre-configured states)
 
-### 24. Document `readOnly` vs `editable` clearly
+### 25. Document `readOnly` vs `editable` clearly
 - **Effort:** < 1 hour | **Source:** Frontend DX, Documentation
 - Two APIs for "making the editor non-editable" confuse developers:
   - `readOnly.of(true)` — prevents editing, allows selection/copy
@@ -395,7 +412,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
 
 ## Priority 4 — Polish & Nice-to-Have
 
-### 25. Add `inline`/`reified` alternative for `ViewPlugin.fromClass`
+### 26. Add `inline`/`reified` alternative for `ViewPlugin.fromClass`
 - **Effort:** < 1 hour | **Source:** Kotlin Ergonomics
 - `ViewPlugin.fromClass(factory)` uses `@Suppress("UNCHECKED_CAST")` and erases the
   specific plugin type. Add a `reified` alternative:
@@ -405,21 +422,23 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
   ```
 - **File:** `view/src/commonMain/kotlin/.../view/ViewPlugin.kt`
 
-### 26. Document extension ordering guarantees
+### 27. Document extension ordering guarantees
 - **Effort:** < 1 day | **Source:** Architecture
 - When multiple providers supply values to a facet, order matters for combine functions.
-  Current behavior: order based on extension registration order. This needs to be
-  explicitly documented as a guarantee or explicitly noted as undefined.
-- Add to extending guide and KDoc on `Facet.define()`.
+  Current behavior: order based on extension registration order. This must be explicitly
+  documented: **is registration order a guaranteed contract, or is it undefined behavior?**
+  Make a decision and document it in both the extending guide and KDoc on `Facet.define()`.
+- Affects: `Facet.define(combine = ...)`, keymap precedence, language facet resolution.
+- **Files:** `docs-site/docs/guide/extending.md`, `state/.../Facet.kt`
 
-### 27. Add API stability markers
+### 28. Add API stability markers
 - **Effort:** < 1 day | **Source:** Documentation, Architecture
 - No marking of experimental vs stable APIs. Consider:
   - `@ExperimentalKodemirrorApi` annotation for APIs that may change
   - `@DelicateKodemirrorApi` for APIs that are easy to misuse
   - Document stability guarantees in the architecture guide
 
-### 28. Create lang module template/guide for contributors
+### 29. Create lang module template/guide for contributors
 - **Effort:** < 1 day | **Source:** Documentation, Architecture
 - Formalize the expected structure for `:lang-*` modules:
   - Required exports: `xxxLanguage`, `xxx()`, `xxxHighlighting`
@@ -428,7 +447,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
   - Build configuration template
 - Create as a contributor guide or template directory.
 
-### 29. Add extension conflict detection (development mode)
+### 30. Add extension conflict detection (development mode)
 - **Effort:** 1–2 days | **Source:** Architecture
 - When multiple extensions provide conflicting configurations (e.g., two language modules),
   the "last one wins" behavior is silent. Add an optional diagnostic extension:
@@ -436,15 +455,6 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
   val extensionDiagnostics: Extension  // Logs conflicts and warnings
   ```
 - Only for development — not for production builds.
-
-### 30. Consider Android-specific guidance
-- **Effort:** 1 day | **Source:** Frontend DX, Documentation
-- No Android-specific documentation exists. Cover:
-  - IME (Input Method Editor) integration behavior
-  - Keyboard handling differences from Desktop
-  - Touch interaction (tap-to-place cursor, drag selection)
-  - Performance considerations on mobile
-  - Sample Android project in `samples/` directory
 
 ### 31. Add editor testing utilities
 - **Effort:** 1–2 days | **Source:** Kotlin Ergonomics, Frontend DX
@@ -478,8 +488,8 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
 | Priority | Pending | Blocked | Description |
 |----------|---------|---------|-------------|
 | 1 | 8 | — | High impact core DX improvements |
-| 2 | 6 | — | Medium impact ergonomics |
+| 2 | 7 | — | Medium impact ergonomics (includes Android guidance) |
 | 3 | 10 | — | Documentation gaps |
-| 4 | 8 | — | Polish and nice-to-have |
+| 4 | 7 | — | Polish and nice-to-have |
 | Blocked | — | 9 | Carried over, need design decisions |
 | **Total** | **32** | **9** | |
