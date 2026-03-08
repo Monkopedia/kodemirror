@@ -1,7 +1,7 @@
 # Kodemirror TODO List
 
-*Generated from API Evaluation — 2026-03-06*
-*Source: [docs/api-evaluation/](api-evaluation/README.md)*
+*Generated from API Evaluation — 2026-03-08 (Round 2)*
+*Source: Five-perspective deep evaluation (completeness, Kotlin ergonomics, frontend/mobile DX, documentation, architecture)*
 
 ## Status Key
 
@@ -14,515 +14,472 @@ Each item has a status prefix on its heading line:
 
 ---
 
-## Priority 1 — Critical / Pre-1.0 Blockers
+## Previously Completed (Round 1)
 
-### 1. [DONE] Convert `Text.kt` comments to KDoc
-- **Effort:** < 1 hour | **Source:** Documentation
-- `Text`, `TextIterator`, and `Line` use `// /` (JS-style) instead of `/** */` KDoc. Dokka generates
-  empty pages; IDE shows no quick-docs. Mechanical find-and-replace in one file.
-- **File:** `state/src/commonMain/kotlin/.../state/Text.kt`
+<details>
+<summary>53 items completed in Round 1 (click to expand)</summary>
 
-### 2. [DONE] Filter `ComposableSingletons` from public API
-- **Effort:** < 1 day | **Source:** Architecture
-- `ComposableSingletons$SearchKt` and `ComposableSingletons$LintKt` appear in `.api` dumps with
-  hash-based method names that change with any code edit. Must be excluded from the public API surface
-  via `internal` visibility, `@PublishedApi`, or API dump exclusion.
-- **Files:** `search/api/search.api`, `lint/api/lint.api`
+- #1 Convert `Text.kt` comments to KDoc
+- #2 Filter `ComposableSingletons` from public API
+- #3 Make lezer-lr internal state `internal`
+- #3b Rename `EditorView` to `EditorSession` + `KodeMirror` composable
+- #4 Add `basicSetup` / `minimalSetup` convenience bundle
+- #5 Add `kodemirror-bom` Gradle BOM
+- #6 Add `extensionListOf(vararg Extension)` factory
+- #7 Add DSL builders for `EditorState` and `TransactionSpec`
+- #8 Replace `eq()` methods with `equals()` / `hashCode()`
+- #9 Add `String.asInsert()` extension
+- #10 Remove `StateEffect.is()` method
+- #11 Add `keymapOf(List<KeyBinding>)` overload
+- #14 Add type-safe `LanguageDataKey<T>`
+- #15 Replace CSS class strings with sealed class/enum identifiers
+- #17 Prefix `parser` properties across language modules
+- #18 Type the `tag` field in `TagStyleSpec`, `TagStyleRule`, and `NodeSpec`
+- #19 Add operator overloads where natural
+- #20 Add simple `onChange` convenience
+- #21 Port `lang-javascript` completion, snippets, and autoCloseTags
+- #22 Port `lang-html` autoCloseTags and completion
+- #23 Add missing ~30 command variants
+- #24 Add missing language parsing context APIs
+- #25 Add missing view utilities
+- #26 Add API docs link to guide index
+- #27 Add API cross-links from example pages to API reference
+- #28 Add KDoc to top-level facets in `Extension.kt`
+- #29 Expand the-view guide with missing topics
+- #30 Create a "Getting Started" step-by-step tutorial
+- #31 Create a complete sample project
+- #32 Scan for other files with `// /` comment style
+- #34 Rename `tags` object to `Tags`
+- #35 Make `Rule.next` and `LeafBlock.content`/`parsers` visibility restricted
+- #36 Add `StateFieldSpec` DSL builder
+- #37 Add Keymap DSL builder
+- #38 Add Decoration building DSL
+- #39 Add `EditorState` convenience extensions
+- #40 Add `SelectionSpec` convenience constructors
+- #41 Convert `Prec` lambda properties to functions
+- #43 Consider `Completion.type` as enum/sealed class
+- #45 Add missing autocomplete minor APIs
+- #46 Add `selectSelectionMatches` to search module
+- #47 Add `DocSpec` String overload for `EditorStateConfig`
+- #48 Add `MaterialTheme` to `EditorTheme` bridge
+- #50 Add missing highlighting exports and fix placement
+- #51 Fix `getTagLanguage` name collision
+- #52 Filter `$stable` fields from API dumps
+- #54 Add `Text` convenience extensions
+- #55 Add `HighlightStyle` DSL builder
+- #56 Add property delegates for `StateField` access
+- #58 Add validated factory for `SearchQuery`
+- #60 Verify `:state` minor completeness gaps
+- #61 Fix known minor parser test issues
+- #62 Add platform-specific setup to bundle.md
+- #64 Add KDoc to legacy mode entry points
+- #65 Document cross-module extension discoverability
+- #66 Add missing docs to extending guide
+- #67 Add `Text.of()` nuance and iterator docs to data-model guide
+- #68 Add troubleshooting section to docs
+- #69 Add changelog / version history
+- #70 Create a "Migrating from CodeMirror" guide
 
-### 3. [DONE] Make lezer-lr internal state `internal`
-- **Effort:** 3+ days | **Source:** Architecture
-- `Stack` (10 setters), `Parse` (7), `CachedToken` (7), `InputStream` (6), `SimulatedStack` (3),
-  `TokenCache` (3), `StackBufferCursor` (4) all expose public mutable setters. External code can
-  corrupt the parser. Also applies to constant objects: `Action`, `Encode`, `Rec`, `Recover`, `Seq`,
-  `ParseState`, `StateFlag`, `Term`, `File`, `Lookahead`, `Specialize`.
-- May require a `-internal` module split.
-- **Directory:** `lezer-lr/src/commonMain/kotlin/...`
+Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas sufficient)
+
+</details>
 
 ---
 
-## Priority 2 — High Impact, Core DX
+## Previously Blocked (Carried Over)
 
-### 3b. [DONE] Rename `EditorView` to `EditorSession` + `KodeMirror` composable
-> **Decision:** Extract `EditorSession` class into `EditorSession` interface (state holder + dispatcher for commands/plugins). Rename `EditorSession` composable to `KodeMirror`. Add `rememberEditorSession(doc, extensions)` and `rememberEditorSession(config)` composable factories. Hard rename (no deprecated aliases — pre-1.0). Subsumes #12 (rememberEditorState) and #13 (simple EditorSession overload).
-- **Effort:** 3+ days | **Source:** Architecture, Kotlin Ergonomics
-- **Scope:**
-  - Extract `EditorSession` interface from `EditorSession` class (state, dispatch, plugin, editable, coords)
-  - Internal `EditorSessionImpl` class
-  - Rename composable `EditorSession` → `KodeMirror`
-  - Add `rememberEditorSession(doc, extensions)` and `rememberEditorSession(config)` composables
-  - Update all command signatures `(EditorSession) -> Boolean` → `(EditorSession) -> Boolean`
-  - Update all plugin APIs (`ViewPlugin.create`, `ViewUpdate.view`, etc.)
-  - Update all modules: commands, autocomplete, search, lint, language, lang-* modules
-  - Update `LocalEditorSession` → `LocalEditorSession`
-  - Update companion object facets (`EditorSession.updateListener` → `EditorSession.updateListener`)
-  - Update docs and examples
-
-### 4. [DONE] Add `basicSetup` / `minimalSetup` convenience bundle
-> **Decision:** New `:basic-setup` module. Bundle standard extensions matching upstream CodeMirror basicSetup.
-- **Effort:** 1–2 days | **Source:** Completeness, Frontend DX
-- Biggest onboarding friction. Every new editor requires manually assembling 10+ extensions.
-  CodeMirror upstream provides `basicSetup` as the standard entry point. Bundle: line numbers,
-  history, bracket matching, folding, autocompletion, search, default keymap, syntax highlighting.
-
-### 5. [DONE] Add `kodemirror-bom` Gradle BOM
-> **Decision:** Create BOM now.
-- **Effort:** 1 day | **Source:** Frontend DX
-- Users must manage 6+ separate dependency versions for a basic editor. A Bill of Materials
-  (`kodemirror-bom`) would let users align all module versions with a single entry.
-
-### 6. [DONE] Add `extensionListOf(vararg Extension)` factory
-- **Effort:** < 1 hour | **Source:** Frontend DX, Kotlin Ergonomics
-- `ExtensionList(listOf(...))` double-wrapping appears in every editor, every compartment
-  reconfiguration, every theme bundle. Add `extensionListOf(vararg)` or make
-  `EditorStateConfig.extensions` accept `List<Extension>` directly.
-- **File:** `state/src/commonMain/kotlin/.../state/Extension.kt`
-
-### 7. [DONE] Add DSL builders for `EditorState` and `TransactionSpec`
-> **Decision:** Operator overloading DSL style (`+lineNumbers`). Use `@DslMarker`.
+### B1. [BLOCKED] Add `suspend` overloads for linter and completion sources
+- **Blocked:** Requires adding kotlinx.coroutines as a new project dependency and significant
+  infrastructure (CoroutineScope facets, adapter plugins). Needs architectural decision on
+  coroutine integration approach.
 - **Effort:** 2–3 days | **Source:** Kotlin Ergonomics
-- The two most common API entry points have significant ceremony:
-  - `EditorState.create(EditorStateConfig(..., extensions = ExtensionList(listOf(...))))`
-  - `view.dispatch(TransactionSpec(changes = ChangeSpec.Single(from = 0, insert = InsertContent.StringContent("..."))))`
-- Target: `editorState { doc("..."); extensions { +lineNumbers } }` and
-  `view.dispatch { insert(0, "Hello") }`
-- Use `@DslMarker` annotation on builder scopes to prevent accidental scope leaking.
 
-### 8. [DONE] Replace `eq()` methods with `equals()` / `hashCode()`
-> **Decision:** `equals()` uses `includeAssoc=false`. Keep `eq(other, includeAssoc)` as secondary method for the `includeAssoc=true` case.
-- **Effort:** 1–2 days | **Source:** Kotlin Ergonomics
-- `SelectionRange`, `EditorSelection`, `Text`, `RangeValue`, `WidgetType` define `eq()` instead of
-  Kotlin's `equals()`. Breaks `==`, collections, and surprises every Kotlin developer.
-- For `SelectionRange.eq(other, includeAssoc)`, keep as secondary method; `equals()` for common case.
-- **Files:** `state/.../Selection.kt`, `Text.kt`, `RangeSet.kt`; `view/.../Decoration.kt`
+### B2. [BLOCKED] Restrict legacy-mode state class mutability
+- **Blocked:** 852 mutable properties across 96 data classes. Constructor-declared `var` properties
+  don't support `internal set` in Kotlin. Needs design decision on approach (internal constructors
+  vs regular classes with manual `copy()`).
+- **Effort:** 3+ days | **Source:** Architecture
 
-### 9. [DONE] Add `String.asInsert()` extension / String overload for `ChangeSpec.Single.insert`
-- **Effort:** < 1 hour | **Source:** Kotlin Ergonomics, Frontend DX
-- Every programmatic text change requires `InsertContent.StringContent("...")`. Add implicit
-  `String` to `InsertContent` conversion.
-- **File:** `state/src/commonMain/kotlin/.../state/Change.kt`
+### B3. [BLOCKED] Add `kotlinx.serialization` support alongside `toJSON`/`fromJSON`
+- **Blocked:** Core types need custom `KSerializer` implementations. Needs design decision on
+  serialization strategy (replace vs supplement `toJSON`/`fromJSON`).
+- **Effort:** 2–3 days | **Source:** Kotlin Ergonomics
 
-### 10. [DONE] Remove `StateEffect.is()` method
-- **Effort:** < 1 hour | **Source:** Kotlin Ergonomics
-- `is` is a reserved keyword requiring backtick-escaping. Has `@Suppress("ktlint:standard:function-naming")`.
-  Replace all call sites with the existing `asType()` method.
-- **File:** `state/src/commonMain/kotlin/.../state/Transaction.kt`
+### B4. [BLOCKED] Consider inline value classes for positions
+- **Blocked:** Major breaking change affecting virtually every file. Requires careful migration
+  strategy to distinguish document positions vs line numbers vs arbitrary ints.
+- **Effort:** 2–3 days | **Source:** Kotlin Ergonomics
 
-### 11. [DONE] Add `keymapOf(List<KeyBinding>)` overload
-- **Effort:** < 1 hour | **Source:** Frontend DX
-- Eliminates `keymapOf(*indentWithTab.toTypedArray())` spread pattern in almost every editor setup.
-- **File:** `view/src/commonMain/kotlin/.../view/Keymap.kt`
+### B5. [BLOCKED] Consider a `lang-kotlin` module
+- **Blocked:** Requires writing a complete Lezer grammar for Kotlin from scratch (3+ days minimum).
+  Kotlin has complex syntax that goes well beyond Java grammar extensions.
+- **Effort:** 3+ days | **Source:** Frontend DX
+
+### B6. [BLOCKED] Address Java interop type erasure
+- **Blocked:** `@JvmName` doesn't solve type erasure. Real solutions add significant API surface
+  complexity for a secondary use case (Kotlin-first library).
+- **Effort:** 1–2 days | **Source:** Architecture
+
+### B7. [BLOCKED] Add visual screenshots to example pages
+- **Blocked:** Requires Compose Desktop GUI environment and screenshot capture pipeline setup
+  (Roborazzi or headless Compose test runner).
+- **Effort:** 1–2 days | **Source:** Documentation
+
+### B8. [BLOCKED] Consider `@codemirror/language-data` port
+- **Blocked:** Lower priority — KMP apps typically know their language at compile time. The
+  `LanguageDescription` data class provides the building blocks.
+- **Effort:** 2–3 days | **Source:** Completeness
+
+### B9. [BLOCKED] Consider `@codemirror/lsp-client` port
+- **Blocked:** Significant effort requiring KMP-compatible transport layer. No upstream KMP LSP
+  client exists. Needs design decision on transport abstraction.
+- **Effort:** 5+ days | **Source:** Completeness
 
 ---
 
-## Priority 3 — Medium Impact, Ergonomics & Compose Integration
+## Priority 1 — High Impact, Core DX
 
-### 12. [SKIP] Add `rememberEditorState` composable + `@Immutable` annotations
-> **Skip reason:** Subsumed by #3b — `rememberEditorSession` provides this functionality as part of the EditorSession refactor. `@Immutable` annotations can be added as part of #3b or separately.
-- **Effort:** 1–2 days | **Source:** Frontend DX, Kotlin Ergonomics
-- Every editor repeats: `var state by remember { mutableStateOf(EditorState.create(config)) }` +
-  `onUpdate = { tr -> state = tr.state }`. A `rememberEditorState` composable eliminates this.
-  Also annotate `EditorState`, `EditorTheme`, etc. with `@Immutable` to enable Compose skip
-  optimizations.
+### 1. Add convenience methods on `EditorSession`
+- **Effort:** < 1 day | **Source:** Frontend DX, Kotlin Ergonomics
+- Common operations require understanding the full transaction model. Add direct methods:
+  - `setDoc(text: String)` — replace entire document
+  - `insertAt(pos: Int, text: String)` — insert text at position
+  - `deleteRange(from: Int, to: Int)` — delete a range
+  - `select(from: Int, to: Int)` — set selection
+  - `selectAll()` — select entire document
+- These wrap `dispatch(TransactionSpec(...))` internally.
+- **File:** `view/src/commonMain/kotlin/.../view/EditorSession.kt`
 
-### 13. [SKIP] Add simple `EditorSession` overload with `initialDoc` and `onChange`
-> **Skip reason:** Subsumed by #3b — `rememberEditorSession(doc, extensions)` + `KodeMirror(session)` provides the simple API. #20 (standalone onChange extension) handles text change callbacks.
+### 2. Add `rememberMaterialEditorTheme()` composable
+- **Effort:** < 1 day | **Source:** Frontend DX
+- The existing `editorThemeFromColors()` requires manually extracting Material colors.
+  Add a `@Composable` function that reads `MaterialTheme.colorScheme` automatically:
+  ```kotlin
+  @Composable
+  fun rememberMaterialEditorTheme(): EditorTheme
+  ```
+- Must be in a separate module or the view module with an optional Material3 dependency,
+  since the view module shouldn't hard-depend on Material3.
+- Consider also: `isSystemInDarkTheme()` awareness for automatic dark/light switching.
+
+### 3. Add `rangeSetOf { }` DSL builder
+- **Effort:** < 1 hour | **Source:** Kotlin Ergonomics
+- RangeSet construction is verbose. Add:
+  ```kotlin
+  inline fun <T : RangeValue> rangeSetOf(block: RangeSetBuilder<T>.() -> Unit): RangeSet<T>
+  ```
+- **File:** `state/src/commonMain/kotlin/.../state/RangeSet.kt`
+
+### 4. Add `onSelection` callback convenience
+- **Effort:** < 1 hour | **Source:** Kotlin Ergonomics, Frontend DX
+- Parallel to the existing `onChange(callback: (String) -> Unit)`:
+  ```kotlin
+  fun onSelection(callback: (EditorSelection) -> Unit): Extension
+  ```
+- Uses `EditorSession.updateListener` with `update.selectionSet` check.
+- **File:** `view/src/commonMain/kotlin/.../view/EditorSession.kt`
+
+### 5. Standardize extension composition in docs and examples
+- **Effort:** < 1 day | **Source:** Frontend DX, Documentation
+- Three ways to combine extensions exist (`+` operator, `extensionListOf()`,
+  `ExtensionList(listOf(...))`). Examples mix all three, causing confusion.
+- Make `+` operator the canonical documented pattern.
+- Update all example pages and guides to use `+` consistently.
+- Add a note in the getting-started guide explaining the other forms exist but `+` is preferred.
+- **Files:** `docs-site/docs/examples/*.md`, `docs-site/docs/guide/getting-started.md`
+
+### 6. Fix `Rule.setNext()` mutability
+- **Effort:** < 1 day | **Source:** Architecture
+- `Rule.next` has a public setter in `lezer-highlight`. Rule objects are used in highlighting
+  chains and should be immutable after creation. Mutation could cause thread-safety issues
+  or subtle bugs when rules are shared across sessions.
+- Make `Rule.next` immutable. If internal mutation is needed, use a builder or factory pattern.
+- **File:** `lezer-highlight/src/commonMain/kotlin/.../highlight/Highlight.kt`
+
+### 7. Add validation/warnings for common configuration mistakes
 - **Effort:** 1 day | **Source:** Frontend DX
-- Provide a convenience `EditorSession` overload that accepts `initialDoc: String`,
-  `extensions: List<Extension>`, and `onChange: (String) -> Unit`, managing its own state internally.
-  Covers the 80% use case where developers just want text in/text out without understanding the
-  full transaction model.
+- Silent failures make debugging hard. Add optional development-mode warnings for:
+  - No language extension added (editor works but no syntax highlighting — not obvious why)
+  - Conflicting extensions (e.g., two language facets)
+  - Missing required facets accessed via `CompositionLocal`
+- Could be a `developmentChecks()` extension that logs warnings, disabled in production.
+- Consider: `logException` / `exceptionSink` facet already exists — use it for warnings.
 
-### 14. [DONE] Add type-safe `LanguageDataKey<T>`
-> **Decision:** Replace string-based `languageDataAt` entirely. Define standard keys like `LanguageDataKey.AUTOCOMPLETE`, `LanguageDataKey.FOLD`, etc.
-- **Effort:** 1–2 days | **Source:** Kotlin Ergonomics
-- `EditorState.languageDataAt(name: String, pos: Int)` uses `Map<String, Any?>` + unchecked cast.
-  Replace with typed key class similar to `AnnotationType<T>`.
+### 8. Add `@Immutable` annotations for Compose skip optimizations
+- **Effort:** < 1 day | **Source:** Architecture, Kotlin Ergonomics
+- Annotate `EditorState`, `EditorSelection`, `EditorTheme`, `Text`, `ChangeSet` etc.
+  with `@Immutable` to enable Compose recomposition skipping.
+- These are all immutable persistent data structures — the annotation is truthful.
+- **Files:** `state/src/commonMain/kotlin/.../state/`, `view/src/commonMain/kotlin/.../view/`
+
+---
+
+## Priority 2 — Medium Impact, Ergonomics
+
+### 9. Simplify `StateField`/`StateEffect` boilerplate for common patterns
+- **Effort:** 1 day | **Source:** Kotlin Ergonomics, Frontend DX
+- Common patterns like "toggle a boolean", "maintain a set of values by effect", or "count
+  occurrences" require 10+ lines of StateField + StateEffect wiring. Add helpers:
+  ```kotlin
+  // Toggle field driven by effect
+  fun toggleField(default: Boolean = false): Pair<StateField<Boolean>, StateEffectType<Unit>>
+
+  // Set field driven by add/remove effects
+  fun <T> setField(default: Set<T> = emptySet()): SetFieldHandle<T>
+  // where SetFieldHandle has .field, .add, .remove, .clear effect types
+  ```
+- **File:** `state/src/commonMain/kotlin/.../state/Facet.kt` or new `FieldHelpers.kt`
+
+### 10. Add `ViewPlugin` convenience factory overloads
+- **Effort:** < 1 day | **Source:** Kotlin Ergonomics
+- The current `ViewPlugin.define(PluginSpec(...))` pattern requires wrapping in a spec.
+  Add direct parameter overloads:
+  ```kotlin
+  fun <V : PluginValue> ViewPlugin.define(
+      create: (EditorSession) -> V,
+      provide: ((ViewPlugin<V>) -> Extension)? = null,
+      decorations: ((V) -> DecorationSet)? = null
+  ): ViewPlugin<V>
+  ```
+- **File:** `view/src/commonMain/kotlin/.../view/ViewPlugin.kt`
+
+### 11. Add more built-in themes
+- **Effort:** 2–3 days | **Source:** Frontend DX
+- Only `oneDark` exists as a complete theme (editor theme + syntax highlighting).
+  Port or create 2–3 additional popular themes:
+  - GitHub Light — popular light theme
+  - Dracula — popular dark theme
+  - Material — matches Material Design colors
+- Each theme should be a separate module (`:theme-github-light`, etc.) following the
+  `:theme-one-dark` pattern.
+
+### 12. Add `RangeSet` functional operators
+- **Effort:** < 1 day | **Source:** Kotlin Ergonomics
+- `RangeSet` lacks standard collection-like operations. Add:
+  - `fun <T : RangeValue> RangeSet<T>.forEach(action: (Range<T>) -> Unit)`
+  - `fun <T : RangeValue> RangeSet<T>.asSequence(): Sequence<Range<T>>`
+  - `fun <T : RangeValue> RangeSet<T>.filter(predicate: (Range<T>) -> Boolean): RangeSet<T>`
+- **File:** `state/src/commonMain/kotlin/.../state/RangeSet.kt`
+
+### 13. Use dedicated data class for `Completion.applyFn` parameters
+- **Effort:** < 1 hour | **Source:** Architecture
+- `Completion.applyFn` accepts `(EditorSession, Completion, Int, Int) -> Unit` where the two
+  `Int` parameters are `from` and `to` positions but this isn't clear from the signature.
+  Replace with:
+  ```kotlin
+  data class CompletionApplyContext(
+      val session: EditorSession,
+      val completion: Completion,
+      val from: Int,
+      val to: Int
+  )
+  typealias CompletionApplyFn = (CompletionApplyContext) -> Unit
+  ```
+- **Files:** `autocomplete/src/commonMain/kotlin/.../autocomplete/Completion.kt`
+
+### 14. Typed `LanguageData` wrapper
+- **Effort:** 1 day | **Source:** Kotlin Ergonomics
+- The `languageData` facet still uses `Map<String, Any?>` internally even though
+  `LanguageDataKey<T>` exists. Add a type-safe wrapper:
+  ```kotlin
+  class LanguageDataMap(private val data: Map<String, Any?>) {
+      operator fun <T> get(key: LanguageDataKey<T>): T?
+  }
+  ```
+- Update `EditorState.languageDataAt` to return `LanguageDataMap` instead of raw map.
 - **File:** `state/src/commonMain/kotlin/.../state/State.kt`
 
-### 15. [DONE] Replace CSS class strings with sealed class/enum identifiers
-> **Decision:** Sealed class everywhere — `GutterType`, `DecorationClass`, `DiagnosticSeverity`. Breaking change across view/lint modules.
-- **Effort:** 1–2 days | **Source:** Kotlin Ergonomics, Architecture
-- `GutterConfig.cssClass`, `Diagnostic.markClass`, `MarkDecorationSpec.cssClass`, and
-  `MarkDecorationSpec.attributes` all reference CSS/DOM concepts meaningless in Compose.
-  Gutter types use string comparison (`"cm-lineNumbers"`, `"cm-activeLineGutter"`).
-  Replace with sealed class or enum; remove or replace DOM attribute fields.
-- **Files:** `view/.../Gutter.kt`, `view/.../Decoration.kt`, `lint/.../Lint.kt`
-
-### 16. [BLOCKED] Add `suspend` overloads for linter and completion sources
-- **Blocked:** Requires adding kotlinx.coroutines as a new project dependency and significant infrastructure (CoroutineScope facets, adapter plugins). Needs architectural decision on coroutine integration approach.
-> **Decision:** CoroutineScope parameter for explicit control, plus a composable option/default that auto-remembers a scope.
-- **Effort:** 2–3 days | **Source:** Kotlin Ergonomics
-- Zero `suspend fun` or `Flow` usage in core modules. Async linting and network-backed completions
-  need coroutine support. This is essential for a coroutine-native Kotlin API.
-
-### 17. [DONE] Prefix `parser` properties across language modules
-> **Decision:** Rename all now — breaking change. `javaParser`, `pythonParser`, `cppParser`, etc.
-- **Effort:** < 1 day | **Source:** Architecture
-- `jsHighlight` is the only language module not matching `{lang}Highlighting` pattern.
-- Top-level `parser` property across ~15 modules causes star-import collisions. Rename to
-  `javaParser`, `pythonParser`, `cppParser`, etc.
-
-### 18. [DONE] Type the `tag` field in `TagStyleSpec`, `TagStyleRule`, and `NodeSpec`
-> **Decision:** Sealed interface `TagInput { data class Single(val tag: Tag); data class Modified(val modifier: (Tag) -> Tag) }`. Also type `TreeBuildSpec.buffer` and `NestedParse.overlay`.
-- **Effort:** 1 day | **Source:** Architecture
-- `TagStyleSpec.tag`, `TagStyleRule.tag`, and `NodeSpec.style` are currently `Any` (from JS dynamic
-  typing). Should accept `Tag` or `(Tag) -> Tag` for modifiers.
-  Also type `TreeBuildSpec.buffer` as `List<Int>`/`IntArray` and `NestedParse.overlay`.
-
-### 19. [DONE] Add operator overloads where natural
-- **Effort:** < 1 day | **Source:** Kotlin Ergonomics
-- `operator fun plus` on `Extension`: `ext1 + ext2 + ext3` instead of `ExtensionList(listOf(...))`
-- `operator fun get` on `Text`: `doc[from..to]` instead of `doc.sliceString(from, to)`
-- `operator fun get` on `EditorState`: `state[myField]` instead of `state.field(myField)`
-- `invoke` operator on `Facet`: `editable(false)` instead of `editable.of(false)`
-
-### 20. [DONE] Add simple `onChange: (String) -> Unit` convenience
-> **Decision:** Standalone extension — `EditorSession.onChange(callback: (String) -> Unit): Extension` that can be added to any editor setup, independent of #13.
-- **Effort:** < 1 day | **Source:** Frontend DX
-- Many developers just want document text changes. The transaction model is powerful but overkill
-  for simple cases. Provide an `UpdateListener` extension or helper that extracts document text
-  on change.
-
 ---
 
-## Priority 4 — Medium Impact, Completeness Gaps
+## Priority 3 — Documentation
 
-### 21. [DONE] Port `lang-javascript` completion, snippets, and autoCloseTags
-> Added `localCompletionSource`, `scopeCompletionSource`, `completionPath`, `snippets`, `typescriptSnippets`, and `autoCloseTags`. Wired into `javascript()` function with autocompletion config.
-- **Effort:** 2–3 days | **Source:** Completeness
-- Missing: `localCompletionSource`, `scopeCompletionSource`, `completionPath`, `snippets`,
-  `typescriptSnippets`, `autoCloseTags`. JS is the most commonly used language in code editors.
-
-### 22. [DONE] Port `lang-html` autoCloseTags and completion
-> Added `autoCloseTags`, `htmlCompletionSource`, `htmlCompletionSourceWith()`, `HtmlSchema` with full tag/attribute data, `HtmlCompletionConfig`, and `TagSpec`. Wired into `html()` function.
-- **Effort:** 1–2 days | **Source:** Completeness
-- Missing: `autoCloseTags`, `htmlCompletion`, `htmlCompletionSourceWith()`.
-  Auto-close HTML tags on `>` is one of the most expected editor behaviors.
-
-### 23. [DONE] Add missing ~30 command variants
-> Added 30+ commands: cursor forward/backward/logical/syntax/lineBoundary variants, group forward/backward/win, selection equivalents, selectPageUp/Down, deleteCharBackwardStrict, deleteGroupForwardWin, deleteLineBoundaryBackward/Forward, deleteTrailingWhitespace, addCursorAbove/Below, newlineAndIndent alias, undoSelection/redoSelection, public historyField. `toggleTabFocusMode`/`temporarilySetTabFocusMode` omitted (DOM-specific, no Compose equivalent).
-- **Effort:** 2 days | **Source:** Completeness
-- Missing cursor commands: `cursorCharForward/Backward`, `cursorCharForwardLogical/BackwardLogical`,
-  `cursorGroupForward/Backward`, `cursorGroupForwardWin`, `cursorSyntaxLeft/Right`,
-  `cursorLineBoundaryForward/Backward`, `cursorLineBoundaryLeft/Right`
-- Missing selection commands: `selectCharForward/Backward`, `selectCharForwardLogical/BackwardLogical`,
-  `selectGroupForward/Backward`, `selectGroupForwardWin`, `selectSyntaxLeft/Right`,
-  `selectLineBoundaryForward/Backward`, `selectLineBoundaryLeft/Right`, `selectPageUp/Down`
-- Missing editing commands: `deleteCharBackwardStrict`, `deleteGroupForwardWin`,
-  `deleteLineBoundaryBackward/Forward`, `deleteTrailingWhitespace`, `newlineAndIndent` (distinct export),
-  `addCursorAbove/Below`, `toggleTabFocusMode`, `temporarilySetTabFocusMode`
-- Missing history: `undoSelection`, `redoSelection`, `historyField` (make public)
-- **File:** `commands/src/commonMain/kotlin/.../commands/Commands.kt`
-
-### 24. [DONE] Add missing language parsing context APIs
-> Added `ensureSyntaxTree`, `syntaxTreeAvailable`, `syntaxParserRunning`, `forceParsing`, `LanguageDescription`, `highlightingFor`, `bracketMatchingHandle`. Note: `ParseContext` omitted (sync model makes it redundant), `bidiIsolates` omitted (DOM/CSS-specific concept), `Sublanguage`/`sublanguageProp` omitted (significant nesting infrastructure needing design decision).
-- **Effort:** 2–3 days | **Source:** Completeness
-- Missing: `ensureSyntaxTree`, `ParseContext`, `LanguageDescription`, `syntaxTreeAvailable`,
-  `syntaxParserRunning`, `forceParsing`, `highlightingFor`, `bracketMatchingHandle`,
-  `bidiIsolates`, `Sublanguage`/`sublanguageProp`
-- **Module:** `:language`
-
-### 25. [DONE] Add missing view utilities
-> Added `highlightWhitespace`, `highlightTrailingWhitespace`, `hasHoverTooltips`, `closeHoverTooltips`, `getTooltips`, `repositionTooltips`, `panels` facet, `getPanel`, `lineNumberMarkers` facet, `exceptionSink` facet, `logException`. Omitted: `layer`/`LayerMarker`/`RectangleMarker` (need Compose rendering layer design), `showDialog`/`getDialog` (new dialog infrastructure), `runScopeHandlers` (DOM scope concept), `getDrawSelectionConfig` (low value), `gutterWidgetClass`/`lineNumberWidgetMarker` (CSS-specific).
-- **Effort:** 2–3 days | **Source:** Completeness
-- Missing: `highlightWhitespace`, `highlightTrailingWhitespace`, `layer`/`LayerMarker`,
-  `RectangleMarker`, `getDrawSelectionConfig`, `getTooltip`, `repositionTooltips`,
-  `hasHoverTooltips`, `closeHoverTooltips`, `showDialog`/`getDialog`, `getPanel`, `panels` facet,
-  `gutterWidgetClass`, `lineNumberMarkers`, `lineNumberWidgetMarker`, `logException`,
-  `runScopeHandlers`
-- **Module:** `:view`
-
----
-
-## Priority 5 — Medium Impact, Documentation
-
-### 26. [DONE] Add API docs link to guide index
-- **Effort:** < 1 hour | **Source:** Documentation
-- No path from guides to generated API reference. Add link to `docs-site/docs/guide/index.md`
-  and `docs-site/docs/examples/index.md`.
-
-### 27. [DONE] Add API cross-links from example pages to API reference
-> Added "Related API" sections to 10 example pages: autocompletion, lint, decoration, gutter, tooltip, styling, selection, change, config, lang-package, tab.
+### 15. Document the `:collab` module
 - **Effort:** 1 day | **Source:** Documentation
-- Examples reference types like `RangeSetBuilder`, `Completion`, `Diagnostic` without linking to
-  API docs. Add inline links or a "Related API" section to each example page.
+- The collab module exists and has examples but no dedicated guide. Create
+  `docs-site/docs/guide/collaboration.md` covering:
+  - Protocol overview (operational transformation)
+  - `receiveUpdates()` / `sendableUpdates()` API
+  - Server integration patterns
+  - Error handling and conflict resolution
+- Also add a "Related API" section to the existing `collab.md` example.
 
-### 28. [DONE] Add KDoc to top-level facets in `Extension.kt`
-- **Effort:** < 1 hour | **Source:** Documentation
-- `languageData`, `allowMultipleSelections`, `lineSeparator`, `changeFilter`, `transactionFilter`,
-  `transactionExtender`, `invertedEffects`, `readOnly` all lack documentation.
-- **File:** `state/src/commonMain/kotlin/.../state/Extension.kt`
+### 16. Document the `:merge` module
+- **Effort:** 1 day | **Source:** Documentation
+- The merge module is undocumented. Create `docs-site/docs/guide/merge.md` covering:
+  - `MergeView` configuration and usage
+  - Unified vs side-by-side diff view
+  - Integration with version control workflows
+- Add an example page `docs-site/docs/examples/merge.md`.
 
-### 29. [DONE] Expand the-view guide with missing topics
-> Added three sections: Text input pipeline (keyEventToName → keymap → command → dispatch), Document rendering and large documents (LazyColumn virtualization), Selection and cursor drawing (drawWithContent overlay).
+### 17. Expand troubleshooting guide
+- **Effort:** < 1 day | **Source:** Documentation
+- Current troubleshooting has only 3 sections. Add 10+ more common issues:
+  - "No syntax highlighting" (missing language extension)
+  - "Editor not responding to key events" (missing keymap)
+  - "Theme colors not applying" (EditorTheme vs HighlightStyle confusion)
+  - "Completion not showing" (missing completion source)
+  - "Read-only vs non-editable" (which to use when)
+  - "Extensions not taking effect" (precedence issues)
+  - "State not updating after dispatch" (immutable state pattern)
+  - "Memory usage growing" (decoration/plugin lifecycle)
+  - "Editor blank on first render" (timing/layout issues)
+  - "Undo not working" (missing `history()` extension)
+- **File:** `docs-site/docs/guide/troubleshooting.md`
+
+### 18. Fill KDoc gaps in search, merge, lint, and autocomplete modules
 - **Effort:** 1–2 days | **Source:** Documentation
-- Text input pipeline (Compose `onKeyEvent` -> command dispatch -> Transaction -> state update) is
-  undocumented. This is where Kodemirror differs most from upstream (Compose vs DOM ContentEditable).
-- Also missing: discussion of `LazyColumn` virtualization and its implications for large documents,
-  and the selection/cursor drawing mechanism (`drawWithContent` overlay).
+- These modules have lower KDoc coverage than core modules. Add KDoc to:
+  - All public classes and their primary methods
+  - All public configuration data classes and their fields
+  - All public facets and state fields
+  - Key callback/lambda parameter semantics
+- Focus on: what does each parameter mean? When is `null` returned? What are valid values?
+- **Modules:** `:search`, `:merge`, `:lint`, `:autocomplete`
 
-### 30. [DONE] Create a "Getting Started" step-by-step tutorial
-> Created `docs-site/docs/guide/getting-started.md` — covers project setup, dependencies, minimal editor, state pattern, adding features (completion, search, themes, read-only), programmatic changes.
-- **Effort:** 1–2 days | **Source:** Documentation
-- No step-by-step tutorial walks through creating a project from scratch: project setup, adding
-  dependencies, writing a minimal editor composable, running it. Distinct from the existing
-  `basic.md` example which shows code but not the full project setup process.
+### 19. Add `@see` and `@sample` cross-references to KDoc
+- **Effort:** 1 day | **Source:** Documentation
+- Public API KDoc lacks cross-references. Add:
+  - `@see` links between related types (e.g., `StateField` ↔ `StateFieldSpec`)
+  - `@sample` references to example code in tests or samples
+  - `@see` links from commands to their configuration facets
+- Focus on the most-used APIs in `:state`, `:view`, `:commands`.
 
-### 31. [DONE] Create a complete sample project
-> **Decision:** Desktop + wasm targets in-repo `samples/` directory. Will add other platforms later.
-- **Effort:** 2–3 days | **Source:** Documentation, Frontend DX
-- No runnable examples. Create a minimal Android or Desktop app in `samples/` that users can clone
-  and run. Include platform-specific `build.gradle.kts` setup.
+### 20. Document nullability contracts
+- **Effort:** < 1 day | **Source:** Documentation, Kotlin Ergonomics
+- Several APIs return nullable types without explaining when/why null is returned:
+  - `EditorSession.coordsAtPos()` → `Rect?` — when does this return null?
+  - `EditorSession.posAtCoords()` → `Int?` — when?
+  - `CompletionResult.to: Int?` — defaults to cursor position when null
+  - `RangeValue.startSide` / `endSide` — what do the integer values mean?
+- Add clarifying KDoc to all nullable returns and ambiguous numeric parameters.
+- **Files:** `view/.../EditorSession.kt`, `autocomplete/.../Completion.kt`, `state/.../RangeSet.kt`
 
-### 32. [DONE] Scan for other files with `// /` comment style
-- **Effort:** < 1 hour | **Source:** Documentation
-- `Text.kt` is the most critical, but other files from the upstream port may have the same issue.
+### 21. Add architecture guide for extension system
+- **Effort:** 1 day | **Source:** Documentation
+- Create `docs-site/docs/guide/extension-architecture.md` explaining:
+  - When to use `StateField` vs `Facet` vs `StateEffect`
+  - Extension ordering guarantees and precedence
+  - How facet combine functions work and their requirements
+  - Extension conflict detection strategies
+  - How to build reusable, composable extensions (library quality)
+  - Transaction filter and extender patterns
+
+### 22. Add performance and large document guide
+- **Effort:** 1 day | **Source:** Documentation
+- Create `docs-site/docs/guide/performance.md` covering:
+  - How `LazyColumn` virtualization works for large documents
+  - Decoration performance (many decorations vs few)
+  - Parser performance and `ensureSyntaxTree` / `forceParsing`
+  - ViewPlugin update optimization patterns
+  - When to use `StateField` vs `ViewPlugin` for performance
+
+### 23. Add testing guide for editors
+- **Effort:** 1 day | **Source:** Documentation
+- Create `docs-site/docs/guide/testing.md` covering:
+  - Unit testing `StateField` update logic
+  - Testing commands with `EditorSession`
+  - Integration testing with `KodeMirror` composable
+  - Testing custom completion sources
+  - Testing linter implementations
+  - Patterns for test fixtures (creating pre-configured states)
+
+### 24. Document `readOnly` vs `editable` clearly
+- **Effort:** < 1 hour | **Source:** Frontend DX, Documentation
+- Two APIs for "making the editor non-editable" confuse developers:
+  - `readOnly.of(true)` — prevents editing, allows selection/copy
+  - `editable.of(false)` — blocks all interaction
+- Add a clear comparison table in the getting-started guide and troubleshooting guide.
+- **File:** `docs-site/docs/guide/getting-started.md`, `docs-site/docs/guide/troubleshooting.md`
 
 ---
 
-## Priority 6 — Lower Impact, Polish
+## Priority 4 — Polish & Nice-to-Have
 
-### 33. [BLOCKED] Restrict legacy-mode state class mutability
-> **Decision:** Make setters `internal` on all state classes. They stay in the same module.
-- **Blocked:** 852 mutable properties across 96 data classes. Constructor-declared `var` properties don't support `internal set` in Kotlin. Would need to either (a) make constructors `internal` on all state classes, or (b) convert all 96 data classes to regular classes with body-declared properties and manual `copy()`. Both approaches require verifying the `StreamParser<State>` generic interface doesn't need external state construction. Needs design decision on approach.
-- **Effort:** 3+ days | **Source:** Architecture
-- All 100+ stream-parser state classes (`AplState`, `AsciiArmorState`, etc.) have public mutable
-  setters. The `StreamParser<State>` generic interface may need revisiting to enable `internal`
-  visibility. Consider making just the setters `internal` while keeping the types public.
-- **Directory:** `legacy-modes/src/commonMain/kotlin/.../modes/`
+### 25. Add `inline`/`reified` alternative for `ViewPlugin.fromClass`
+- **Effort:** < 1 hour | **Source:** Kotlin Ergonomics
+- `ViewPlugin.fromClass(factory)` uses `@Suppress("UNCHECKED_CAST")` and erases the
+  specific plugin type. Add a `reified` alternative:
+  ```kotlin
+  inline fun <reified V> fromClass(noinline factory: () -> V): ViewPlugin<V>
+      where V : PluginValue, V : DecorationSource
+  ```
+- **File:** `view/src/commonMain/kotlin/.../view/ViewPlugin.kt`
 
-### 34. [DONE] Rename `tags` object to `Tags`
-- **Effort:** < 1 hour (+ migration) | **Source:** Architecture
-- `tags` uses lowercase class name, violating Kotlin PascalCase convention. IDE warnings.
-- **File:** `lezer-highlight/src/commonMain/kotlin/.../highlight/Tags.kt`
-
-### 35. [DONE] Make `Rule.next` and `LeafBlock.content`/`parsers` visibility restricted
+### 26. Document extension ordering guarantees
 - **Effort:** < 1 day | **Source:** Architecture
-- Mutable linked-list pointer and markdown parser internals exposed publicly.
+- When multiple providers supply values to a facet, order matters for combine functions.
+  Current behavior: order based on extension registration order. This needs to be
+  explicitly documented as a guarantee or explicitly noted as undefined.
+- Add to extending guide and KDoc on `Facet.define()`.
 
-### 36. [DONE] Add `StateFieldSpec` DSL builder
-- **Effort:** 1 day | **Source:** Kotlin Ergonomics
-- Six function-type parameters in a data class is hard to read. Target:
-  `StateField.define<Int> { create { 0 }; update { v, tr -> v + 1 } }`
+### 27. Add API stability markers
+- **Effort:** < 1 day | **Source:** Documentation, Architecture
+- No marking of experimental vs stable APIs. Consider:
+  - `@ExperimentalKodemirrorApi` annotation for APIs that may change
+  - `@DelicateKodemirrorApi` for APIs that are easy to misuse
+  - Document stability guarantees in the architecture guide
 
-### 37. [DONE] Add Keymap DSL builder
-- **Effort:** 1 day | **Source:** Kotlin Ergonomics
-- Target: `keymap { "Ctrl-s" { save(it); true }; "Ctrl-z" { undo(it); true } }`
-- More ergonomic than constructing `KeyBinding` data classes manually.
+### 28. Create lang module template/guide for contributors
+- **Effort:** < 1 day | **Source:** Documentation, Architecture
+- Formalize the expected structure for `:lang-*` modules:
+  - Required exports: `xxxLanguage`, `xxx()`, `xxxHighlighting`
+  - Optional exports: completion sources, folding, autoCloseTags
+  - Test structure: parser tests, highlighting tests
+  - Build configuration template
+- Create as a contributor guide or template directory.
 
-### 38. [DONE] Add Decoration building DSL
-> Added `Decoration.mark(style, ...)` and `Decoration.line(style, ...)` convenience overloads that accept parameters directly, eliminating the spec wrapper.
-- **Effort:** 1 day | **Source:** Kotlin Ergonomics
-- Target: `Decoration.mark { style { background = Color(...); fontWeight = FontWeight.Bold } }`
-- Eliminates `MarkDecorationSpec(style = SpanStyle(...))` ceremony.
-
-### 39. [DONE] Add `EditorState` convenience extensions
-- **Effort:** < 1 day | **Source:** Kotlin Ergonomics
-- `val EditorState.currentLine`, `.selectedText`, `.cursorPosition`, `.isEmpty`
-
-### 40. [DONE] Add `SelectionSpec` convenience constructors
-- **Effort:** < 1 hour | **Source:** Kotlin Ergonomics
-- `EditorSelection.asSpec()`, `Int.asCursor()` to reduce `SelectionSpec.EditorSelectionSpec(...)` verbosity.
-
-### 41. [DONE] Convert `Prec` lambda properties to functions
-- **Effort:** < 1 hour | **Source:** Kotlin Ergonomics
-- `Prec.highest`, `.high`, `.default`, `.low`, `.lowest` are stored as lambda properties (JS pattern).
-  Should be `fun highest(ext: Extension): Extension`.
-
-### 42. [BLOCKED] Add `kotlinx.serialization` support alongside `toJSON`/`fromJSON`
-> **Decision:** Add `@Serializable` to core types (`EditorState`, `EditorSelection`, `SelectionRange`, `Text`). Adds kotlinx.serialization dependency to `:state` module.
-- **Blocked:** Core types (`EditorState`, `Text`, `EditorSelection`) are not simple data classes — they have complex internal state requiring custom `KSerializer` implementations. Existing `toJSON`/`fromJSON` methods use `Map<String, Any?>`. Adding kotlinx.serialization requires: adding plugin+dependency to `:state`, writing custom serializers for 4+ types, and deciding whether to replace or supplement `toJSON`/`fromJSON`. Needs design decision on serialization strategy.
-- **Effort:** 2–3 days | **Source:** Kotlin Ergonomics
-- `toJSON()`/`fromJSON()` use `Map<String, Any?>`. Add `@Serializable` data classes or serializers.
-  Also consider renaming to `serialize()`/`deserialize()`.
-
-### 43. [DONE] Consider `Completion.type` as enum/sealed class
-> Added `CompletionType` enum with standard type values. `Completion.type` remains `String?` for compatibility; use `CompletionType.FUNCTION.value` etc.
-- **Effort:** 1 day | **Source:** Kotlin Ergonomics, Frontend DX
-- Currently `String?` ("keyword", "function", "variable", etc.) with no discoverability.
-  An enum would provide exhaustive matching and prevent typos.
-
-### 44. [BLOCKED] Consider inline value classes for positions
-> **Decision:** Introduce `@JvmInline value class DocPosition(val value: Int)` and `LineNumber(val value: Int)` now. Major breaking change touching all modules.
-- **Blocked:** Major breaking change affecting virtually every file across all modules. Every `pos: Int` parameter and `lineNumber: Int` in the entire codebase would need updating. Requires careful migration strategy to determine which `Int` parameters represent document positions vs line numbers vs arbitrary ints (hundreds of call sites). Should be done as a dedicated focused effort.
-- **Effort:** 2–3 days | **Source:** Kotlin Ergonomics
-- `@JvmInline value class DocPosition(val value: Int)` and `LineNumber(val value: Int)` would
-  prevent mixing up positions and line numbers at zero runtime cost.
-
-### 45. [DONE] Add missing autocomplete minor APIs
-> Added `pickedCompletion` annotation, `ifIn`/`ifNotIn` wrappers, `hasNextSnippetField`/`hasPrevSnippetField` predicates. `CompletionSource` type alias already existed.
-- **Effort:** < 1 day | **Source:** Completeness
-- Missing: `pickedCompletion`, `ifIn`/`ifNotIn`, `hasNextSnippetField`/`hasPrevSnippetField`,
-  `CompletionInfo` type, `CompletionSource` type alias.
-
-### 46. [DONE] Add `selectSelectionMatches` to search module
-- **Effort:** < 1 hour | **Source:** Completeness
-- Select all instances of current selection text. Single missing command.
-
-### 47. [DONE] Add `DocSpec` String overload for `EditorStateConfig`
-- **Effort:** < 1 hour | **Source:** Frontend DX
-- Accept `String` directly: `EditorState.create(doc = "Hello", extensions = ...)` instead of
-  requiring `.asDoc()`.
-
-### 48. [DONE] Add `MaterialTheme` to `EditorTheme` bridge
-> Added `editorThemeFromColors(background, foreground, primary, surface, outline, dark)` factory function that maps semantic colors to all EditorTheme fields. Works with Material3 ColorScheme without requiring it as a dependency.
-- **Effort:** 1 day | **Source:** Frontend DX
-- No automatic bridging between `MaterialTheme.colorScheme` and `EditorTheme`.
-
-### 49. [BLOCKED] Consider a `lang-kotlin` module
-> **Decision:** New Lezer grammar from scratch. Significant effort but cleaner than extending Java grammar.
-- **Blocked:** Requires writing a complete Lezer grammar for Kotlin from scratch (3+ days minimum). Kotlin has complex syntax (property delegates, `when` expressions, coroutines, nullable types, extension functions) that goes well beyond Java grammar extensions. Needs dedicated focused effort.
-- **Effort:** 3+ days | **Source:** Frontend DX
-- Ironic absence for a Kotlin-first library. Even a Java grammar with Kotlin extensions would be
-  high value.
-
-### 50. [DONE] Add missing highlighting exports and fix placement
-- **Effort:** < 1 day | **Source:** Architecture
-- `lang-php`: No `phpHighlighting` export. `lang-angular`: No `angularHighlighting` or `parser`.
-- `lang-vue`: Move highlighting from `VueParserKt` to a separate `VueHighlightKt` for consistency
-  with all other language modules.
-
-### 51. [DONE] Fix `getTagLanguage` name collision
-- **Effort:** < 1 hour | **Source:** Architecture
-- Both `lang-jinja` and `lang-liquid` export a top-level `tagLanguage` property. Rename to
-  `jinjaTagLanguage` and `liquidTagLanguage` to prevent confusion.
-
-### 52. [DONE] Filter `$stable` fields from API dumps
-> **Decision:** Post-processing Gradle task that strips `$stable` lines from `.api` files after `apiDump` runs.
-- **Effort:** < 1 hour | **Source:** Architecture
-- 82 classes expose Compose compiler `$stable` field. Cosmetic but adds noise.
-
-### 53. [SKIP] Consider `IterMode` as `EnumSet` instead of bit flags
-> **Skipped:** Deeply integrated with bitwise operations throughout tree traversal code (15+ call sites). Bit flags are idiomatic for parser internals and the conversion would add overhead without meaningful API improvement.
-- **Effort:** 1 day | **Source:** Architecture
-- `IterMode.INCLUDE_ANONYMOUS`, `.EXCLUDE_BUFFERS`, etc. are integer bit flags. Kotlin idiom is
-  `EnumSet` or sealed class.
-
-### 54. [DONE] Add `Text` convenience extensions
-- **Effort:** < 1 hour | **Source:** Kotlin Ergonomics
-- `Text.isEmpty`, `.isNotEmpty`, `.lineSequence()`, `operator fun get(range: IntRange)`
-
-### 55. [DONE] Add `HighlightStyle` DSL builder
-> Added `HighlightStyle.define { Tags.keyword styles SpanStyle(...) }` DSL with `HighlightStyleBuilder`.
-- **Effort:** 1 day | **Source:** Kotlin Ergonomics
-- Target: `highlightStyle { tags.keyword { color = Color(...) } }`
-
-### 56. [DONE] Add property delegates for `StateField` access
-> Added `operator fun StateField<T>.getValue(EditorState, KProperty<*>)` enabling `val EditorState.counter by counterField`.
-- **Effort:** 1 day | **Source:** Kotlin Ergonomics
-- `val EditorState.counter by counterField` via `ReadOnlyProperty` delegate.
-
-### 57. [SKIP] Use named `fun interface` for `GutterConfig` function parameters
-> **Skipped:** Kotlin lambda syntax already works well at call sites. Named `fun interface` types would add API surface without clear benefit — SAM conversion is only needed for Java interop.
-- **Effort:** < 1 day | **Source:** Kotlin Ergonomics
-- `lineMarker`, `lineMarkerChange`, etc. are generic function types. Named functional interfaces
-  would improve readability at call sites and allow SAM conversion.
-
-### 58. [DONE] Add validated factory for `SearchQuery`
-- **Effort:** < 1 day | **Source:** Kotlin Ergonomics
-- `SearchQuery.valid` is a computed property but invalid queries can still be constructed and used.
-  Consider a validated factory method or builder that returns `null`/throws on invalid input.
-
-### 59. [BLOCKED] Address Java interop type erasure
-> **Decision:** Add `@JvmName` variants for key APIs to improve Java caller experience.
-- **Blocked:** `@JvmName` doesn't solve type erasure — it only resolves JVM method signature clashes between overloads. The actual problem (Java callers seeing `Object` return types from `facet()`, `field()`, etc.) is inherent to JVM generics erasure. Reified inline functions can't be called from Java either. Real solutions (non-generic typed helper methods) would add significant API surface complexity for a secondary use case (this is a Compose Multiplatform / Kotlin-first library). Needs design decision on whether the Java interop API surface is worth maintaining.
+### 29. Add extension conflict detection (development mode)
 - **Effort:** 1–2 days | **Source:** Architecture
-- `Facet`, `StateField`, `StateEffect`, `EditorState.facet()`, `EditorState.field()` lose generic
-  type parameters at the JVM boundary due to type erasure. Java callers see raw `Object` types.
-  Consider adding `@JvmName` variants or documenting the Java interop story.
+- When multiple extensions provide conflicting configurations (e.g., two language modules),
+  the "last one wins" behavior is silent. Add an optional diagnostic extension:
+  ```kotlin
+  val extensionDiagnostics: Extension  // Logs conflicts and warnings
+  ```
+- Only for development — not for production builds.
 
-### 60. [DONE] Verify `:state` minor completeness gaps
-> All verified present: `TextIterator` interface, `wordAt` on `EditorState`, all 5 `Prec` methods.
-- **Effort:** < 1 day | **Source:** Completeness
-- Verify presence/absence of: `TextIterator` interface (may be handled differently in Kotlin),
-  `wordAt` on `EditorState`, full coverage of `Prec` methods (`highest`, `high`, `default`,
-  `low`, `lowest`).
+### 30. Consider Android-specific guidance
+- **Effort:** 1 day | **Source:** Frontend DX, Documentation
+- No Android-specific documentation exists. Cover:
+  - IME (Input Method Editor) integration behavior
+  - Keyboard handling differences from Desktop
+  - Touch interaction (tap-to-place cursor, drag selection)
+  - Performance considerations on mobile
+  - Sample Android project in `samples/` directory
 
-### 61. [DONE] Fix known minor parser test issues
-> Both tests already pass. The error nodes (`⚠`) are included in expected test output — these are upstream parser fidelity issues, not Kodemirror bugs.
-- **Effort:** < 1 day | **Source:** Completeness
-- `lang-yaml/src/commonTest/.../YamlParserTest.kt:111` — TODO: parser produces minor error node.
-- `lang-python/src/commonTest/.../PythonParserTest.kt:59` — TODO: parser produces minor error node.
-- Investigate whether these are upstream fidelity issues or Kodemirror-specific.
+### 31. Add editor testing utilities
+- **Effort:** 1–2 days | **Source:** Kotlin Ergonomics, Frontend DX
+- Testing editors requires creating full `EditorSession` instances with extensions.
+  Add test utilities:
+  ```kotlin
+  // kodemirror-test module
+  fun testEditorSession(doc: String = "", extensions: Extension = Extension.empty): EditorSession
+  fun EditorSession.typeText(text: String)
+  fun EditorSession.pressKey(key: String)
+  fun EditorSession.assertDoc(expected: String)
+  fun EditorSession.assertSelection(anchor: Int, head: Int)
+  ```
 
-### 62. [DONE] Add platform-specific setup to bundle.md
-- **Effort:** < 1 day | **Source:** Documentation
-- Show complete Android and Desktop `build.gradle.kts` snippets.
-
-### 63. [BLOCKED] Add visual screenshots to example pages
-> **Note:** Depends on #31 (sample project) being completed first. Unblocked once #31 is done.
-- **Blocked:** Requires capturing Compose Desktop renders in a GUI environment. Need to set up a screenshot capture pipeline (possibly using Roborazzi or a headless Compose test runner). Needs design decision on screenshot capture approach.
-- **Effort:** 1–2 days | **Source:** Documentation
-- At least for `basic.md`, `decoration.md`, `styling.md`.
-
-### 64. [DONE] Add KDoc to legacy mode entry points
-> Added KDoc to all 137 StreamParser entry points across 99 files.
-- **Effort:** 1 day | **Source:** Documentation
-- 103 files, one-line KDoc each for the top-level `StreamParser` val.
-
-### 65. [DONE] Document cross-module extension discoverability
-- **Effort:** < 1 day | **Source:** Frontend DX, Documentation
-- Finding where `lineNumbers` lives (`:view`), `history()` (`:commands`), `bracketMatching()`
-  (`:language`) is non-obvious. Add a module-to-extension index page or table in the docs.
-
-### 66. [DONE] Add missing docs to extending guide
-- **Effort:** < 1 day | **Source:** Documentation
-- No discussion of `FacetReader` and when to use it vs. direct `Facet`.
-- No mention of `PluginSpec.configure` pattern (used in code but not explained).
-
-### 67. [DONE] Add `Text.of()` nuance and iterator docs to data-model guide
-- **Effort:** < 1 hour | **Source:** Documentation
-- Guide doesn't mention that `Text.of()` expects split lines (no embedded newlines).
-- Missing coverage of `Text.iter()` variants and `RawTextCursor`.
-
-### 68. [DONE] Add troubleshooting section to docs
-- **Effort:** < 1 day | **Source:** Documentation
-- Common issues like Java version requirements (project needs Java 11+), wasmJs test environment
-  setup, and common build errors are not documented for users.
-
-### 69. [DONE] Add changelog / version history
-- **Effort:** < 1 day | **Source:** Documentation
-- As a pre-1.0 project at version `0.1.0-SNAPSHOT`, there is no changelog documenting breaking
-  changes between versions. Start a `CHANGELOG.md` to track changes as the API stabilizes.
-
-### 70. [DONE] Create a "Migrating from CodeMirror" guide
-> Created `docs-site/docs/guide/migration.md` with module mapping, porting cheat sheet, before/after code comparisons for widgets, themes, decorations, state creation, etc.
-- **Effort:** 1 day | **Source:** Documentation
-- Comparison tables exist inline across multiple guides. Consolidate into a dedicated migration
-  reference for JavaScript developers familiar with CM6 upstream.
-
-### 71. [BLOCKED] Consider `@codemirror/language-data` port
-> **Blocked:** Lower priority — KMP apps typically know their language at compile time. The `LanguageDescription` data class was added in #24 which provides the building blocks. A full port would require registering descriptions for all ~30 language modules.
-- **Effort:** 2–3 days | **Source:** Completeness
-- Language metadata for dynamic loading. Lower priority since KMP apps typically know language at
-  compile time.
-
-### 72. [BLOCKED] Consider `@codemirror/lsp-client` port
-> **Blocked:** Significant effort requiring KMP-compatible transport layer (WebSocket, stdio). No upstream KMP LSP client exists. Needs design decision on transport abstraction and coroutine integration.
-- **Effort:** 5+ days | **Source:** Completeness
-- LSP client for autocompletion, hover, go-to-definition. New upstream addition; would need
-  KMP-compatible transport.
+### 32. Add `StateField` serialization sealed type
+- **Effort:** < 1 day | **Source:** Architecture
+- `StateFieldSpec` allows optional `toJSON`/`fromJSON` functions. If not provided, the
+  field silently becomes non-serializable. Consider a sealed type:
+  ```kotlin
+  sealed interface FieldSerialization<V> {
+      data object None : FieldSerialization<Nothing>
+      data class Custom<V>(val toJSON: (V) -> Any?, val fromJSON: (Any?) -> V) : FieldSerialization<V>
+  }
+  ```
+- Makes the serialization contract explicit.
 
 ---
 
-## Summary by Effort
+## Summary
 
-| Effort | Count | Items |
-|--------|-------|-------|
-| < 1 hour | 15 | #1, #6, #9, #10, #11, #26, #28, #32, #34, #40, #41, #46, #47, #51, #52, #54, #67 |
-| < 1 day | 17 | #2, #5, #17, #19, #20, #35, #39, #45, #50, #57, #58, #60, #61, #62, #65, #66, #68, #69 |
-| 1–2 days | 17 | #4, #8, #12, #13, #14, #15, #18, #22, #27, #29, #30, #36, #37, #38, #43, #48, #55, #56, #59, #63, #70 |
-| 2–3 days | 9 | #7, #16, #21, #24, #25, #31, #42, #44, #53, #71 |
-| 3+ days | 4 | #3, #33, #49, #72 |
-| Varies | 2 | #23, #64 |
-
-## Summary by Source
-
-| Source | Items |
-|--------|-------|
-| Architecture | #2, #3, #15, #17, #18, #33, #34, #35, #50, #51, #52, #53, #59 |
-| Completeness | #4, #21, #22, #23, #24, #25, #45, #46, #60, #61, #71, #72 |
-| Documentation | #1, #26, #27, #28, #29, #30, #31, #32, #62, #63, #64, #65, #66, #67, #68, #69, #70 |
-| Frontend DX | #5, #6, #11, #12, #13, #20, #47, #48, #49, #65 |
-| Kotlin Ergonomics | #7, #8, #9, #10, #14, #16, #19, #36, #37, #38, #39, #40, #41, #42, #43, #44, #54, #55, #56, #57, #58 |
-| Multiple | #4, #6, #8, #12, #13, #15, #18, #19, #31, #43, #45, #50 |
+| Priority | Pending | Blocked | Description |
+|----------|---------|---------|-------------|
+| 1 | 8 | — | High impact core DX improvements |
+| 2 | 6 | — | Medium impact ergonomics |
+| 3 | 10 | — | Documentation gaps |
+| 4 | 8 | — | Polish and nice-to-have |
+| Blocked | — | 9 | Carried over, need design decisions |
+| **Total** | **32** | **9** | |
