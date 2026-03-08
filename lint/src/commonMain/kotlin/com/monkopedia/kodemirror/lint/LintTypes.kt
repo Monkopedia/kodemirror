@@ -32,7 +32,6 @@ enum class Severity { HINT, INFO, WARNING, ERROR }
  * @param message Human-readable description of the issue.
  * @param source Optional name of the lint source (e.g. "eslint").
  * @param actions Optional quick-fix actions.
- * @param markClass Optional CSS class for the mark decoration.
  */
 data class Diagnostic(
     val from: Int,
@@ -40,8 +39,7 @@ data class Diagnostic(
     val severity: Severity,
     val message: String,
     val source: String? = null,
-    val actions: List<Action> = emptyList(),
-    val markClass: String? = null
+    val actions: List<Action> = emptyList()
 )
 
 /** A quick-fix action that can be applied to resolve a diagnostic. */

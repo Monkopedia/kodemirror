@@ -46,6 +46,7 @@ import com.monkopedia.kodemirror.view.DecorationSet
 import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.GutterConfig
 import com.monkopedia.kodemirror.view.GutterMarker
+import com.monkopedia.kodemirror.view.GutterType
 import com.monkopedia.kodemirror.view.LineDecorationSpec
 import com.monkopedia.kodemirror.view.WidgetDecorationSpec
 import com.monkopedia.kodemirror.view.WidgetType
@@ -94,8 +95,6 @@ data class CollapseConfig(
 // -- Gutter marker for deleted chunks --
 
 private val deletedChunkGutterMarker = object : GutterMarker() {
-    override val elementClass: String = "cm-deletedLineGutter"
-
     @Composable
     override fun Content(theme: com.monkopedia.kodemirror.view.EditorTheme) {
     }
@@ -104,7 +103,7 @@ private val deletedChunkGutterMarker = object : GutterMarker() {
 private val unifiedChangeGutter: Extension = Prec.low(
     gutter(
         GutterConfig(
-            cssClass = "cm-changeGutter"
+            type = GutterType.Custom("change")
         )
     )
 )
@@ -208,8 +207,6 @@ private class InlineDeletionWidget(private val text: String) : WidgetType() {
 }
 
 private val inlineChangedLineGutterMarker = object : GutterMarker() {
-    override val elementClass: String = "cm-inlineChangedLineGutter"
-
     @Composable
     override fun Content(theme: com.monkopedia.kodemirror.view.EditorTheme) {
     }

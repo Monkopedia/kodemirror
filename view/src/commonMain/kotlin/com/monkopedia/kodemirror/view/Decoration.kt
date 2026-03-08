@@ -35,8 +35,7 @@ data class MarkDecorationSpec(
     val style: SpanStyle? = null,
     val paragraphStyle: ParagraphStyle? = null,
     val tagName: String? = null,
-    val cssClass: String? = null,
-    val attributes: Map<String, String>? = null
+    val cssClass: String? = null
 )
 
 /** Spec for a widget decoration (inline widget). */
@@ -49,7 +48,6 @@ data class WidgetDecorationSpec(
 
 /** Spec for a line decoration (whole-line styling). */
 data class LineDecorationSpec(
-    val attributes: Map<String, String>? = null,
     val cssClass: String? = null,
     val style: SpanStyle? = null
 )

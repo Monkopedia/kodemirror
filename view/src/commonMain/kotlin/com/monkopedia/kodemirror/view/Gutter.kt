@@ -39,15 +39,29 @@ abstract class GutterMarker : RangeValue() {
     /** Render the marker content. */
     @Composable
     abstract fun Content(theme: EditorTheme)
+}
 
-    /** True if this marker produces DOM-visible content. */
-    open val elementClass: String? get() = null
+/**
+ * Identifies the type of a gutter column.
+ *
+ * Standard types like [LineNumbers] and [ActiveLineGutter] are used for
+ * built-in gutter functionality. Use [Custom] for user-defined gutters.
+ */
+sealed class GutterType {
+    /** The line numbers gutter column. */
+    data object LineNumbers : GutterType()
+
+    /** Marker-only column that highlights the active line's gutter. */
+    data object ActiveLineGutter : GutterType()
+
+    /** A custom gutter identified by a name. */
+    data class Custom(val name: String) : GutterType()
 }
 
 /** Configuration for a gutter column. */
 data class GutterConfig(
-    /** CSS class applied to the gutter container. */
-    val cssClass: String? = null,
+    /** Identifies this gutter column's type. */
+    val type: GutterType? = null,
     /** Called for each visible line to get the marker, or null. */
     val lineMarker: ((EditorSession, Int) -> GutterMarker?)? = null,
     /** Called when the gutter is clicked. */
@@ -79,7 +93,7 @@ fun GutterView(session: EditorSession, lineNumber: Int, modifier: Modifier = Mod
     val line = session.state.doc.line(lineNumber)
     val configs = session.state.facet(gutters)
     val hasActiveLineGutter = isActive &&
-        configs.any { it.cssClass == "cm-activeLineGutter" }
+        configs.any { it.type == GutterType.ActiveLineGutter }
 
     Row(
         modifier = if (hasActiveLineGutter) {
@@ -90,7 +104,7 @@ fun GutterView(session: EditorSession, lineNumber: Int, modifier: Modifier = Mod
         verticalAlignment = Alignment.CenterVertically
     ) {
         for (config in configs) {
-            if (config.cssClass == "cm-lineNumbers") {
+            if (config.type == GutterType.LineNumbers) {
                 // Line number column
                 Box(
                     modifier = Modifier.weight(1f).padding(start = 5.dp, end = 3.dp),
@@ -143,7 +157,7 @@ val lineNumberMarkers: Facet<
  */
 val lineNumbers: Extension = gutter(
     GutterConfig(
-        cssClass = "cm-lineNumbers",
+        type = GutterType.LineNumbers,
         // line numbers rendered by GutterView composable
         lineMarker = { _, _ -> null }
     )
@@ -155,6 +169,6 @@ val lineNumbers: Extension = gutter(
  */
 val highlightActiveLineGutter: Extension = gutter(
     GutterConfig(
-        cssClass = "cm-activeLineGutter"
+        type = GutterType.ActiveLineGutter
     )
 )

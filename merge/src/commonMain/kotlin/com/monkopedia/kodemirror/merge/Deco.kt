@@ -38,6 +38,7 @@ import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.EditorTheme
 import com.monkopedia.kodemirror.view.GutterConfig
 import com.monkopedia.kodemirror.view.GutterMarker
+import com.monkopedia.kodemirror.view.GutterType
 import com.monkopedia.kodemirror.view.LineDecorationSpec
 import com.monkopedia.kodemirror.view.MarkDecorationSpec
 import com.monkopedia.kodemirror.view.PluginSpec
@@ -76,11 +77,9 @@ private val deleted = Decoration.mark(
 // -- Gutter marker --
 
 private val changedLineGutterMarker = object : GutterMarker() {
-    override val elementClass: String = "cm-changedLineGutter"
-
     @Composable
     override fun Content(theme: EditorTheme) {
-        // Rendered via CSS class
+        // Rendered via gutter styling
     }
 }
 
@@ -122,7 +121,7 @@ val decorateChunks: ViewPlugin<PluginValue> = ViewPlugin.define(
 val changeGutter: Extension = Prec.low(
     gutter(
         GutterConfig(
-            cssClass = "cm-changeGutter",
+            type = GutterType.Custom("change"),
             lineMarker = { _, _ ->
                 // Simplified: would need plugin access for full implementation
                 null

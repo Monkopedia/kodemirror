@@ -139,7 +139,7 @@ Each item has a status prefix on its heading line:
   Replace with typed key class similar to `AnnotationType<T>`.
 - **File:** `state/src/commonMain/kotlin/.../state/State.kt`
 
-### 15. Replace CSS class strings with sealed class/enum identifiers
+### 15. [DONE] Replace CSS class strings with sealed class/enum identifiers
 > **Decision:** Sealed class everywhere — `GutterType`, `DecorationClass`, `DiagnosticSeverity`. Breaking change across view/lint modules.
 - **Effort:** 1–2 days | **Source:** Kotlin Ergonomics, Architecture
 - `GutterConfig.cssClass`, `Diagnostic.markClass`, `MarkDecorationSpec.cssClass`, and

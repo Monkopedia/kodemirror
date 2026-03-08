@@ -82,11 +82,10 @@ internal class LintStateValue(
                         Severity.WARNING -> warningStyle
                         Severity.ERROR -> errorStyle
                     }
-                    val cssClass = diag.markClass ?: "cm-lint-${diag.severity.name.lowercase()}"
                     builder.add(
                         from,
                         to,
-                        Decoration.mark(MarkDecorationSpec(style = style, cssClass = cssClass))
+                        Decoration.mark(MarkDecorationSpec(style = style))
                     )
                 }
             }

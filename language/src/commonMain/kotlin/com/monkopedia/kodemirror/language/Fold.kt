@@ -338,7 +338,7 @@ fun foldGutter(): Extension {
             codeFolding(),
             com.monkopedia.kodemirror.view.gutter(
                 com.monkopedia.kodemirror.view.GutterConfig(
-                    cssClass = "cm-foldGutter",
+                    type = com.monkopedia.kodemirror.view.GutterType.Custom("fold"),
                     lineMarker = { view, lineFrom ->
                         val state = view.state
                         val line = state.doc.lineAt(lineFrom)

@@ -127,7 +127,7 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
         }
         val lineNumberWidth = charWidthDp * maxDigits + 8.dp
         val extraGutterWidth =
-            14.dp * configs.count { it.cssClass != "cm-lineNumbers" && it.lineMarker != null }
+            14.dp * configs.count { it.type != GutterType.LineNumbers && it.lineMarker != null }
         lineNumberWidth + extraGutterWidth
     } else {
         0.dp

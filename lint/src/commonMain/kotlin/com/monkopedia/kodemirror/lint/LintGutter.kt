@@ -32,6 +32,7 @@ import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.view.EditorTheme
 import com.monkopedia.kodemirror.view.GutterConfig
 import com.monkopedia.kodemirror.view.GutterMarker
+import com.monkopedia.kodemirror.view.GutterType
 import com.monkopedia.kodemirror.view.Tooltip
 import com.monkopedia.kodemirror.view.gutter
 import com.monkopedia.kodemirror.view.hoverTooltip
@@ -64,7 +65,7 @@ internal class LintGutterMarker(val severity: Severity) : GutterMarker() {
 fun lintGutter(config: LintGutterConfig = LintGutterConfig()): Extension {
     val gutterExt = gutter(
         GutterConfig(
-            cssClass = "cm-lint-gutter",
+            type = GutterType.Custom("lint"),
             lineMarker = { view, linePos ->
                 val diagnostics = view.state.field(lintState, require = false)
                     ?.diagnostics ?: emptyList()
