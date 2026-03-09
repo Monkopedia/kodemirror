@@ -508,11 +508,11 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
 
 ## Summary
 
-| Priority | Pending | Blocked | Description |
-|----------|---------|---------|-------------|
-| 1 | 8 | — | High impact core DX improvements |
-| 2 | 7 | — | Medium impact ergonomics (includes Android guidance) |
-| 3 | 10 | — | Documentation gaps |
-| 4 | 7 | — | Polish and nice-to-have |
-| Blocked | — | 9 | Carried over, need design decisions |
-| **Total** | **32** | **9** | |
+| Priority | Done | Blocked | Skipped | Description |
+|----------|------|---------|---------|-------------|
+| 1 | 6 | 2 | — | High impact core DX improvements |
+| 2 | 6 | 1 | — | Medium impact ergonomics |
+| 3 | 9 | — | 1 | Documentation gaps |
+| 4 | 4 | 3 | — | Polish and nice-to-have |
+| Blocked | 1 | 8 | — | Carried over, need design decisions |
+| **Total** | **26** | **14** | **1** | |
