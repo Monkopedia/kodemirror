@@ -204,7 +204,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
 - Make `Rule.next` immutable. If internal mutation is needed, use a builder or factory pattern.
 - **File:** `lezer-highlight/src/commonMain/kotlin/.../highlight/Highlight.kt`
 
-### 7. Throw on invalid configuration
+### 7. [DONE] Throw on invalid configuration
 - **Effort:** 1 day | **Source:** Frontend DX
 - Pre-1.0, no one is using the library yet — throw exceptions on invalid config rather than
   silently failing. Validate at the point where config is consumed (`:basic-setup` or `:view`):
@@ -214,7 +214,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
 - Throwing is simpler than a diagnostics module and gives better developer experience.
 - Consider: `logException` / `exceptionSink` facet already exists — use it for warnings.
 
-### 8. Add Compose compiler stability configuration file
+### 8. [DONE] Add Compose compiler stability configuration file
 - **Effort:** < 1 day | **Source:** Architecture, Kotlin Ergonomics
 - Add a Compose compiler stability configuration file listing the immutable types
   (`EditorState`, `EditorSelection`, `Text`, `ChangeSet`, etc.) as stable.
@@ -460,7 +460,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
   - Build configuration template
 - Create as a contributor guide or template directory.
 
-### 30. Add extension conflict detection (throw on conflicts)
+### 30. [DONE] Add extension conflict detection (throw on conflicts)
 - **Effort:** 1–2 days | **Source:** Architecture
 - When multiple extensions provide conflicting configurations (e.g., two language modules),
   the "last one wins" behavior is silent. Pre-1.0, throw on conflicts rather than silently

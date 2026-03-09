@@ -45,6 +45,13 @@ tasks.register("stripStableFromApiDumps") {
 }
 
 subprojects {
+    pluginManager.withPlugin("org.jetbrains.kotlin.plugin.compose") {
+        extensions.configure<org.jetbrains.kotlin.compose.compiler.gradle.ComposeCompilerGradlePluginExtension> {
+            stabilityConfigurationFile.set(
+                rootProject.layout.projectDirectory.file("compose-stability.conf")
+            )
+        }
+    }
     tasks.matching { it.name == "apiDump" }.configureEach {
         finalizedBy(rootProject.tasks.named("stripStableFromApiDumps"))
     }
