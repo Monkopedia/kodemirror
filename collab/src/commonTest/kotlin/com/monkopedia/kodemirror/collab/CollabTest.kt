@@ -19,6 +19,7 @@
 package com.monkopedia.kodemirror.collab
 
 import com.monkopedia.kodemirror.state.ChangeSpec
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.Extension
@@ -99,7 +100,7 @@ open class DummyServer(
         broadcast(client)
     }
 
-    fun type(client: Int, text: String, pos: Int = states[client].selection.main.head) {
+    fun type(client: Int, text: String, pos: DocPos = states[client].selection.main.head) {
         update(client) { s ->
             s.update(
                 TransactionSpec(
@@ -133,9 +134,9 @@ class CollabTest {
     fun convergesForSimpleChanges() {
         val s = DummyServer()
         s.type(0, "hi")
-        s.type(1, "ok", 2)
-        s.type(0, "!", 4)
-        s.type(1, "...", 0)
+        s.type(1, "ok", DocPos(2))
+        s.type(0, "!", DocPos(4))
+        s.type(1, "...", DocPos.ZERO)
         s.conv("...hiok!")
     }
 
@@ -145,7 +146,7 @@ class CollabTest {
         s.type(0, "hi")
         s.delay(0) {
             s.type(0, "A")
-            s.type(1, "X", 2)
+            s.type(1, "X", DocPos(2))
             s.type(0, "B")
             s.type(1, "Y")
         }
@@ -196,7 +197,7 @@ class CollabTest {
         val tr = state.update(
             TransactionSpec(
                 changes = ChangeSpec.Single(
-                    from = 0,
+                    from = DocPos.ZERO,
                     insert = InsertContent.StringContent("hi")
                 )
             )
