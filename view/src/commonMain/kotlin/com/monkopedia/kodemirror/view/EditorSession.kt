@@ -31,6 +31,11 @@ import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asInsert
 import com.monkopedia.kodemirror.state.endPos
 import com.monkopedia.kodemirror.state.transactionSpec
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
 /**
  * An editor session holds the editor state and dispatches transactions.
@@ -205,6 +210,67 @@ fun onSelection(callback: (EditorSelection) -> Unit): Extension =
             callback(update.state.selection)
         }
     }
+
+/**
+ * Create an extension that launches [callback] in a coroutine whenever the
+ * document changes.
+ *
+ * The coroutine scope is tied to the plugin lifecycle and is cancelled when
+ * the editor is destroyed. Previous coroutines are NOT cancelled when new
+ * changes arrive — use your own [Job] tracking if you need cancellation.
+ *
+ * ```kotlin
+ * val session = rememberEditorSession(
+ *     extensions = onChangeAsync { text -> saveToServer(text) }
+ * )
+ * ```
+ */
+fun onChangeAsync(callback: suspend CoroutineScope.(String) -> Unit): Extension = ViewPlugin.define(
+    create = { _ -> AsyncChangePlugin(callback) }
+).asExtension()
+
+/**
+ * Create an extension that launches [callback] in a coroutine whenever the
+ * selection changes.
+ */
+fun onSelectionAsync(callback: suspend CoroutineScope.(EditorSelection) -> Unit): Extension =
+    ViewPlugin.define(
+        create = { _ -> AsyncSelectionPlugin(callback) }
+    ).asExtension()
+
+private class AsyncChangePlugin(
+    private val callback: suspend CoroutineScope.(String) -> Unit
+) : PluginValue {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    override fun update(update: ViewUpdate) {
+        if (update.docChanged) {
+            val text = update.state.doc.toString()
+            scope.launch { callback(text) }
+        }
+    }
+
+    override fun destroy() {
+        scope.cancel()
+    }
+}
+
+private class AsyncSelectionPlugin(
+    private val callback: suspend CoroutineScope.(EditorSelection) -> Unit
+) : PluginValue {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    override fun update(update: ViewUpdate) {
+        if (update.selectionSet) {
+            val selection = update.state.selection
+            scope.launch { callback(selection) }
+        }
+    }
+
+    override fun destroy() {
+        scope.cancel()
+    }
+}
 
 /** A simple axis-aligned rectangle used for coordinate results. */
 data class Rect(

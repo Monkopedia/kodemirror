@@ -105,3 +105,23 @@ data class CompletionApplyContext(
 
 /** A function that provides completions for a given context. */
 typealias CompletionSource = (CompletionContext) -> CompletionResult?
+
+/**
+ * A suspend function that provides completions for a given context.
+ *
+ * Use with [asyncCompletionSource] to create a [CompletionSource] that
+ * runs in a coroutine. The coroutine is cancelled if the user types
+ * while completion is pending.
+ */
+typealias SuspendCompletionSource = suspend (CompletionContext) -> CompletionResult?
+
+/**
+ * Wrap a [SuspendCompletionSource] into a [CompletionSource] that runs
+ * the suspend function using [kotlinx.coroutines.runBlocking].
+ *
+ * For truly non-blocking async completions (e.g., LSP servers), consider
+ * using a [ViewPlugin] with its own [CoroutineScope] instead.
+ */
+fun asyncCompletionSource(source: SuspendCompletionSource): CompletionSource = { ctx ->
+    kotlinx.coroutines.runBlocking { source(ctx) }
+}

@@ -37,6 +37,13 @@ import com.monkopedia.kodemirror.view.PluginValue
 import com.monkopedia.kodemirror.view.ViewPlugin
 import com.monkopedia.kodemirror.view.ViewUpdate
 import com.monkopedia.kodemirror.view.decorations
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /** Effect used to update the set of diagnostics. */
 val setDiagnosticsEffect: StateEffectType<List<Diagnostic>> = StateEffect.define()
@@ -206,5 +213,57 @@ internal fun createLinterPlugin(source: LintSource, config: LintConfig): ViewPlu
     ViewPlugin.define(
         create = { view -> LinterPlugin(view, source, config) }
     )
+
+/** Async linter plugin that uses coroutines for debouncing and source execution. */
+internal class AsyncLinterPlugin(
+    private val view: EditorSession,
+    private val source: SuspendLintSource,
+    private val config: LintConfig
+) : PluginValue {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private var lintJob: Job? = null
+
+    init {
+        launchLint()
+    }
+
+    override fun update(update: ViewUpdate) {
+        for (tr in update.transactions) {
+            for (effect in tr.effects) {
+                if (effect.asType(forceLintEffect) != null) {
+                    launchLint()
+                    return
+                }
+            }
+        }
+        if (update.docChanged) {
+            launchLint()
+        }
+    }
+
+    private fun launchLint() {
+        lintJob?.cancel()
+        lintJob = scope.launch {
+            delay(config.delay)
+            val diagnostics = source(view)
+            view.dispatch(
+                TransactionSpec(
+                    effects = listOf(setDiagnosticsEffect.of(diagnostics))
+                )
+            )
+        }
+    }
+
+    override fun destroy() {
+        scope.cancel()
+    }
+}
+
+internal fun createAsyncLinterPlugin(
+    source: SuspendLintSource,
+    config: LintConfig
+): ViewPlugin<AsyncLinterPlugin> = ViewPlugin.define(
+    create = { view -> AsyncLinterPlugin(view, source, config) }
+)
 
 internal fun currentTimeMillis(): Long = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()

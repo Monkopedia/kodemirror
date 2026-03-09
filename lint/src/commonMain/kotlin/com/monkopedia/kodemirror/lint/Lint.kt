@@ -25,10 +25,25 @@ import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.Slot
 import com.monkopedia.kodemirror.view.LocalEditorSession
 import com.monkopedia.kodemirror.view.Panel
+import com.monkopedia.kodemirror.view.PluginValue
 import com.monkopedia.kodemirror.view.Tooltip
+import com.monkopedia.kodemirror.view.ViewPlugin
 import com.monkopedia.kodemirror.view.hoverTooltip
 import com.monkopedia.kodemirror.view.keymap
 import com.monkopedia.kodemirror.view.showPanels
+
+/**
+ * Create a linter extension with a suspend source.
+ *
+ * The source is invoked in a coroutine scope tied to the linter's lifecycle.
+ * It is automatically debounced (by [LintConfig.delay]) and cancelled when
+ * the document changes or the editor is destroyed.
+ *
+ * @param source Suspend function that produces diagnostics.
+ * @param config Linter configuration.
+ */
+fun linter(source: SuspendLintSource, config: LintConfig = LintConfig()): Extension =
+    createLinterExtension(createAsyncLinterPlugin(source, config), config)
 
 /**
  * Create a linter extension.
@@ -36,9 +51,13 @@ import com.monkopedia.kodemirror.view.showPanels
  * @param source Function that produces diagnostics for the current view.
  * @param config Linter configuration.
  */
-fun linter(source: LintSource, config: LintConfig = LintConfig()): Extension {
-    val linterPlugin = createLinterPlugin(source, config)
+fun linter(source: LintSource, config: LintConfig = LintConfig()): Extension =
+    createLinterExtension(createLinterPlugin(source, config), config)
 
+private fun <V : PluginValue> createLinterExtension(
+    linterPlugin: ViewPlugin<V>,
+    config: LintConfig
+): Extension {
     val panelProvider = showPanels.compute(
         listOf(Slot.FieldSlot(lintPanelOpen))
     ) { state ->

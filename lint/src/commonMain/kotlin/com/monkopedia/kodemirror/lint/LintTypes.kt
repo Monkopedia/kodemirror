@@ -66,3 +66,11 @@ data class LintGutterConfig(
 
 /** A lint source function that produces diagnostics for the current editor state. */
 typealias LintSource = (EditorSession) -> List<Diagnostic>
+
+/**
+ * A suspend lint source function for asynchronous linting.
+ *
+ * Use with [linter] to run linting in a coroutine. The function is
+ * automatically debounced and cancelled when the document changes.
+ */
+typealias SuspendLintSource = suspend (EditorSession) -> List<Diagnostic>

@@ -88,7 +88,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
 
 ## Previously Blocked (Carried Over)
 
-### B1. Adopt `kotlinx.coroutines` across the board
+### B1. [DONE] Adopt `kotlinx.coroutines` across the board
 - **Effort:** 2–3 days | **Source:** Kotlin Ergonomics
 - Coroutines are the Kotlin standard. Adopt them as a core dependency and use them anywhere
   necessary: linter sources, completion sources, async operations.
@@ -502,5 +502,5 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
 | 2 | 6 | — | 1 | — | Medium impact ergonomics |
 | 3 | 9 | — | — | 1 | Documentation gaps |
 | 4 | 6 | — | — | 1 | Polish and nice-to-have |
-| Carried | 1 | 2 | 4 | 2 | Carried over from round 1 |
-| **Total** | **30** | **2** | **5** | **4** | |
+| Carried | 2 | 1 | 4 | 2 | Carried over from round 1 |
+| **Total** | **31** | **1** | **5** | **4** | |

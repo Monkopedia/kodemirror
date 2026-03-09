@@ -9,6 +9,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(project(":state"))
+            implementation(libs.kotlinx.coroutines.core)
             implementation(compose.ui)
             implementation(compose.foundation)
             implementation(compose.runtime)
