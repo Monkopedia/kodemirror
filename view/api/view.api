@@ -186,7 +186,9 @@ public final class com/monkopedia/kodemirror/view/EditorSessionKt {
 	public static final fun getLocalEditorSession ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 	public static final fun insertAt-FsPidVE (Lcom/monkopedia/kodemirror/view/EditorSession;ILjava/lang/String;)V
 	public static final fun onChange (Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/kodemirror/state/Extension;
+	public static final fun onChangeAsync (Lkotlin/jvm/functions/Function3;)Lcom/monkopedia/kodemirror/state/Extension;
 	public static final fun onSelection (Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/kodemirror/state/Extension;
+	public static final fun onSelectionAsync (Lkotlin/jvm/functions/Function3;)Lcom/monkopedia/kodemirror/state/Extension;
 	public static final fun select-sX5c8NE (Lcom/monkopedia/kodemirror/view/EditorSession;II)V
 	public static synthetic fun select-sX5c8NE$default (Lcom/monkopedia/kodemirror/view/EditorSession;IIILjava/lang/Object;)V
 	public static final fun selectAll (Lcom/monkopedia/kodemirror/view/EditorSession;)V
@@ -699,6 +701,17 @@ public final class com/monkopedia/kodemirror/view/SelectionDrawingKt {
 public final class com/monkopedia/kodemirror/view/SpecialCharsKt {
 	public static final fun getHighlightSpecialChars ()Lcom/monkopedia/kodemirror/state/Extension;
 	public static final fun getSpecialCharRegex ()Lkotlin/text/Regex;
+}
+
+public final class com/monkopedia/kodemirror/view/StateSaversKt {
+	public static final fun EditorSessionSaver (Lcom/monkopedia/kodemirror/state/Extension;Ljava/util/Map;Lkotlin/jvm/functions/Function1;)Landroidx/compose/runtime/saveable/Saver;
+	public static synthetic fun EditorSessionSaver$default (Lcom/monkopedia/kodemirror/state/Extension;Ljava/util/Map;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Landroidx/compose/runtime/saveable/Saver;
+	public static final fun EditorStateSaver (Lcom/monkopedia/kodemirror/state/Extension;Ljava/util/Map;)Landroidx/compose/runtime/saveable/Saver;
+	public static synthetic fun EditorStateSaver$default (Lcom/monkopedia/kodemirror/state/Extension;Ljava/util/Map;ILjava/lang/Object;)Landroidx/compose/runtime/saveable/Saver;
+	public static final fun getEditorSelectionSaver ()Landroidx/compose/runtime/saveable/Saver;
+	public static final fun getSelectionRangeSaver ()Landroidx/compose/runtime/saveable/Saver;
+	public static final fun getTextSaver ()Landroidx/compose/runtime/saveable/Saver;
+	public static final fun rememberSaveableEditorSession (Ljava/lang/String;Lcom/monkopedia/kodemirror/state/Extension;Ljava/util/Map;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)Lcom/monkopedia/kodemirror/view/EditorSession;
 }
 
 public final class com/monkopedia/kodemirror/view/Tooltip {

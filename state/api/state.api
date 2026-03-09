@@ -340,6 +340,35 @@ public final class com/monkopedia/kodemirror/state/EditorSelection$Companion {
 	public static synthetic fun single-5k5VDMc$default (Lcom/monkopedia/kodemirror/state/EditorSelection$Companion;IIILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/EditorSelection;
 }
 
+public final class com/monkopedia/kodemirror/state/EditorSelectionData {
+	public static final field Companion Lcom/monkopedia/kodemirror/state/EditorSelectionData$Companion;
+	public fun <init> (Ljava/util/List;I)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()I
+	public final fun copy (Ljava/util/List;I)Lcom/monkopedia/kodemirror/state/EditorSelectionData;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/state/EditorSelectionData;Ljava/util/List;IILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/EditorSelectionData;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMain ()I
+	public final fun getRanges ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/monkopedia/kodemirror/state/EditorSelectionData$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/monkopedia/kodemirror/state/EditorSelectionData$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/monkopedia/kodemirror/state/EditorSelectionData;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/monkopedia/kodemirror/state/EditorSelectionData;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/monkopedia/kodemirror/state/EditorSelectionData$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
 public final class com/monkopedia/kodemirror/state/EditorState {
 	public static final field Companion Lcom/monkopedia/kodemirror/state/EditorState$Companion;
 	public synthetic fun <init> (Lcom/monkopedia/kodemirror/state/Configuration;Lcom/monkopedia/kodemirror/state/Text;Lcom/monkopedia/kodemirror/state/EditorSelection;[Ljava/lang/Object;Lkotlin/jvm/functions/Function2;Lcom/monkopedia/kodemirror/state/Transaction;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -421,6 +450,38 @@ public final class com/monkopedia/kodemirror/state/EditorStateConfig {
 	public final fun getSelection ()Lcom/monkopedia/kodemirror/state/SelectionSpec;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/state/EditorStateData {
+	public static final field Companion Lcom/monkopedia/kodemirror/state/EditorStateData$Companion;
+	public fun <init> (Ljava/lang/String;Lcom/monkopedia/kodemirror/state/EditorSelectionData;Ljava/util/Map;)V
+	public synthetic fun <init> (Ljava/lang/String;Lcom/monkopedia/kodemirror/state/EditorSelectionData;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lcom/monkopedia/kodemirror/state/EditorSelectionData;
+	public final fun component3 ()Ljava/util/Map;
+	public final fun copy (Ljava/lang/String;Lcom/monkopedia/kodemirror/state/EditorSelectionData;Ljava/util/Map;)Lcom/monkopedia/kodemirror/state/EditorStateData;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/state/EditorStateData;Ljava/lang/String;Lcom/monkopedia/kodemirror/state/EditorSelectionData;Ljava/util/Map;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/EditorStateData;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDoc ()Ljava/lang/String;
+	public final fun getFields ()Ljava/util/Map;
+	public final fun getSelection ()Lcom/monkopedia/kodemirror/state/EditorSelectionData;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/monkopedia/kodemirror/state/EditorStateData$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/monkopedia/kodemirror/state/EditorStateData$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/monkopedia/kodemirror/state/EditorStateData;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/monkopedia/kodemirror/state/EditorStateData;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/monkopedia/kodemirror/state/EditorStateData$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
 public abstract interface annotation class com/monkopedia/kodemirror/state/EditorStateDsl : java/lang/annotation/Annotation {
@@ -553,6 +614,17 @@ public final class com/monkopedia/kodemirror/state/FieldSerialization$Custom : c
 }
 
 public final class com/monkopedia/kodemirror/state/FieldSerialization$None : com/monkopedia/kodemirror/state/FieldSerialization {
+}
+
+public final class com/monkopedia/kodemirror/state/FieldSerialization$Serializer : com/monkopedia/kodemirror/state/FieldSerialization {
+	public fun <init> (Lkotlinx/serialization/KSerializer;)V
+	public final fun component1 ()Lkotlinx/serialization/KSerializer;
+	public final fun copy (Lkotlinx/serialization/KSerializer;)Lcom/monkopedia/kodemirror/state/FieldSerialization$Serializer;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/state/FieldSerialization$Serializer;Lkotlinx/serialization/KSerializer;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/FieldSerialization$Serializer;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class com/monkopedia/kodemirror/state/FilterResult {
@@ -819,6 +891,35 @@ public final class com/monkopedia/kodemirror/state/SelectionRange$Companion {
 	public final fun fromJSON (Ljava/util/Map;)Lcom/monkopedia/kodemirror/state/SelectionRange;
 }
 
+public final class com/monkopedia/kodemirror/state/SelectionRangeData {
+	public static final field Companion Lcom/monkopedia/kodemirror/state/SelectionRangeData$Companion;
+	public fun <init> (II)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun copy (II)Lcom/monkopedia/kodemirror/state/SelectionRangeData;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/state/SelectionRangeData;IIILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/SelectionRangeData;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAnchor ()I
+	public final fun getHead ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/monkopedia/kodemirror/state/SelectionRangeData$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/monkopedia/kodemirror/state/SelectionRangeData$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/monkopedia/kodemirror/state/SelectionRangeData;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/monkopedia/kodemirror/state/SelectionRangeData;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/monkopedia/kodemirror/state/SelectionRangeData$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
 public abstract interface class com/monkopedia/kodemirror/state/SelectionSpec {
 }
 
@@ -979,6 +1080,7 @@ public final class com/monkopedia/kodemirror/state/StateFieldBuilder {
 	public final fun create (Lkotlin/jvm/functions/Function1;)V
 	public final fun provide (Lkotlin/jvm/functions/Function1;)V
 	public final fun serialization (Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;)V
+	public final fun serialization (Lkotlinx/serialization/KSerializer;)V
 	public final fun update (Lkotlin/jvm/functions/Function2;)V
 }
 
@@ -1008,6 +1110,18 @@ public final class com/monkopedia/kodemirror/state/StateFieldSpec {
 public final class com/monkopedia/kodemirror/state/StateKt {
 	public static final fun asDoc (Ljava/lang/String;)Lcom/monkopedia/kodemirror/state/DocSpec;
 	public static final fun getValue (Lcom/monkopedia/kodemirror/state/StateField;Lcom/monkopedia/kodemirror/state/EditorState;Lkotlin/reflect/KProperty;)Ljava/lang/Object;
+}
+
+public final class com/monkopedia/kodemirror/state/StateSerializationKt {
+	public static final fun fromData (Lcom/monkopedia/kodemirror/state/EditorState$Companion;Lcom/monkopedia/kodemirror/state/EditorStateData;Lcom/monkopedia/kodemirror/state/EditorStateConfig;Ljava/util/Map;)Lcom/monkopedia/kodemirror/state/EditorState;
+	public static synthetic fun fromData$default (Lcom/monkopedia/kodemirror/state/EditorState$Companion;Lcom/monkopedia/kodemirror/state/EditorStateData;Lcom/monkopedia/kodemirror/state/EditorStateConfig;Ljava/util/Map;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/EditorState;
+	public static final fun getStateJson ()Lkotlinx/serialization/json/Json;
+	public static final fun toData (Lcom/monkopedia/kodemirror/state/EditorSelection;)Lcom/monkopedia/kodemirror/state/EditorSelectionData;
+	public static final fun toData (Lcom/monkopedia/kodemirror/state/EditorState;Ljava/util/Map;)Lcom/monkopedia/kodemirror/state/EditorStateData;
+	public static final fun toData (Lcom/monkopedia/kodemirror/state/SelectionRange;)Lcom/monkopedia/kodemirror/state/SelectionRangeData;
+	public static synthetic fun toData$default (Lcom/monkopedia/kodemirror/state/EditorState;Ljava/util/Map;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/EditorStateData;
+	public static final fun toEditorSelection (Lcom/monkopedia/kodemirror/state/EditorSelectionData;)Lcom/monkopedia/kodemirror/state/EditorSelection;
+	public static final fun toSelectionRange (Lcom/monkopedia/kodemirror/state/SelectionRangeData;)Lcom/monkopedia/kodemirror/state/SelectionRange;
 }
 
 public abstract class com/monkopedia/kodemirror/state/Text {

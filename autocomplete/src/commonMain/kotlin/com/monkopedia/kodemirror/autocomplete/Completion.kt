@@ -117,11 +117,10 @@ typealias SuspendCompletionSource = suspend (CompletionContext) -> CompletionRes
 
 /**
  * Wrap a [SuspendCompletionSource] into a [CompletionSource] that runs
- * the suspend function using [kotlinx.coroutines.runBlocking].
+ * the suspend function in a blocking context.
  *
- * For truly non-blocking async completions (e.g., LSP servers), consider
- * using a [ViewPlugin] with its own [CoroutineScope] instead.
+ * **Note:** This blocks the calling thread. For truly non-blocking async
+ * completions (e.g., LSP servers), consider using a [ViewPlugin] with its
+ * own [CoroutineScope] instead.
  */
-fun asyncCompletionSource(source: SuspendCompletionSource): CompletionSource = { ctx ->
-    kotlinx.coroutines.runBlocking { source(ctx) }
-}
+expect fun asyncCompletionSource(source: SuspendCompletionSource): CompletionSource
