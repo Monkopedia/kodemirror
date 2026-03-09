@@ -15,7 +15,14 @@ plugins {
 dependencies {
     subprojects.forEach { subproject ->
         kover(subproject)
-        dokka(subproject)
+    }
+}
+
+// Add Dokka aggregation only for subprojects that apply the Dokka plugin
+// (excludes :kodemirror-bom, :samples:editor, :kodemirror-test, etc.)
+subprojects {
+    pluginManager.withPlugin("org.jetbrains.dokka") {
+        rootProject.dependencies.add("dokka", this@subprojects)
     }
 }
 
