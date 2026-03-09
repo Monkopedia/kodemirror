@@ -88,22 +88,26 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
 
 ## Previously Blocked (Carried Over)
 
-### B1. [BLOCKED] Add `suspend` overloads for linter and completion sources
-- **Blocked:** Requires adding kotlinx.coroutines as a new project dependency and significant
-  infrastructure (CoroutineScope facets, adapter plugins). Needs architectural decision on
-  coroutine integration approach.
+### B1. Adopt `kotlinx.coroutines` across the board
 - **Effort:** 2–3 days | **Source:** Kotlin Ergonomics
+- Coroutines are the Kotlin standard. Adopt them as a core dependency and use them anywhere
+  necessary: linter sources, completion sources, async operations.
+- Provide `suspend` overloads and convenience functions that automatically
+  `rememberCoroutineScope` where possible.
+- Integration points: linter callbacks, completion sources, extension lifecycle.
 
-### B2. [BLOCKED] Restrict legacy-mode state class mutability
-- **Blocked:** 852 mutable properties across 96 data classes. Constructor-declared `var` properties
-  don't support `internal set` in Kotlin. Needs design decision on approach (internal constructors
-  vs regular classes with manual `copy()`).
+### B2. [SKIP] Restrict legacy-mode state class mutability
+- **Skip reason:** 852 mutable vars across 96 data classes. These are internal to StreamParser
+  implementations and match the upstream JS closely. Massive churn for no user-facing benefit.
+  Add a code comment noting this is known and maintained to match upstream.
 - **Effort:** 3+ days | **Source:** Architecture
 
-### B3. [BLOCKED] Add `kotlinx.serialization` support alongside `toJSON`/`fromJSON`
-- **Blocked:** Core types need custom `KSerializer` implementations. Needs design decision on
-  serialization strategy (replace vs supplement `toJSON`/`fromJSON`).
+### B3. Adopt `Saveable` API surface with `kotlinx.serialization` internally
 - **Effort:** 2–3 days | **Source:** Kotlin Ergonomics
+- Public API: adopt Compose `Saveable`/`Saver` interface for state persistence — this is the
+  Compose-idiomatic pattern for save/restore.
+- Internal implementation: use `kotlinx.serialization` for the actual serialization logic.
+- Replace existing `toJSON`/`fromJSON` with `Saver` implementations on core types.
 
 ### B4. [DONE] Consider inline value classes for positions
 - **Effort:** 2–3 days | **Source:** Kotlin Ergonomics
@@ -113,15 +117,15 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
   Kotlin has complex syntax that goes well beyond Java grammar extensions.
 - **Effort:** 3+ days | **Source:** Frontend DX
 
-### B6. [BLOCKED] Address Java interop type erasure
-- **Blocked:** `@JvmName` doesn't solve type erasure. Real solutions add significant API surface
-  complexity for a secondary use case (Kotlin-first library).
+### B6. [SKIP] Address Java interop type erasure
+- **Skip reason:** Kotlin-first library. `@JvmName` doesn't solve erasure and real fixes add
+  significant API complexity for a secondary use case. Java callers can work around it.
 - **Effort:** 1–2 days | **Source:** Architecture
 
-### B7. [BLOCKED] Add visual screenshots to example pages
-- **Blocked:** Requires Compose Desktop GUI environment and screenshot capture pipeline setup
-  (Roborazzi or headless Compose test runner).
-- **Effort:** 1–2 days | **Source:** Documentation
+### B7. [BLOCKED] Add inline live examples to documentation
+- **Blocked:** Requires setting up a Compose for Web (wasmJs) build pipeline to embed live
+  running editor instances in the documentation site. Needs infrastructure work.
+- **Effort:** 2–3 days | **Source:** Documentation
 
 ### B8. [BLOCKED] Consider `@codemirror/language-data` port
 - **Blocked:** Lower priority — KMP apps typically know their language at compile time. The
@@ -200,30 +204,23 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
 - Make `Rule.next` immutable. If internal mutation is needed, use a builder or factory pattern.
 - **File:** `lezer-highlight/src/commonMain/kotlin/.../highlight/Highlight.kt`
 
-### 7. [BLOCKED] Add validation/warnings for common configuration mistakes
-- **Blocked:** The most useful checks (no language, no keymap, conflicting extensions) require
-  access to facets from `:language` and `:commands` modules. No natural module exists for a
-  cross-cutting diagnostic extension. Could go in `:basic-setup` but that's a batteries-included
-  bundle, not a diagnostic tool. Needs architectural decision on where to place it.
+### 7. Throw on invalid configuration
 - **Effort:** 1 day | **Source:** Frontend DX
-- Silent failures make debugging hard. Add optional development-mode warnings for:
+- Pre-1.0, no one is using the library yet — throw exceptions on invalid config rather than
+  silently failing. Validate at the point where config is consumed (`:basic-setup` or `:view`):
   - No language extension added (editor works but no syntax highlighting — not obvious why)
   - Conflicting extensions (e.g., two language facets)
   - Missing required facets accessed via `CompositionLocal`
-- Could be a `developmentChecks()` extension that logs warnings, disabled in production.
+- Throwing is simpler than a diagnostics module and gives better developer experience.
 - Consider: `logException` / `exceptionSink` facet already exists — use it for warnings.
 
-### 8. [BLOCKED] Add `@Immutable` annotations for Compose skip optimizations
-- **Blocked:** The key types (`EditorState`, `EditorSelection`, `Text`, `ChangeSet`) are in
-  `:state` which has no Compose dependency. Adding `compose.runtime` just for `@Immutable`
-  annotations would break the pure-Kotlin architecture. Only `EditorTheme` in `:view` could
-  be annotated directly. Alternative: use a Compose compiler stability configuration file.
-  Needs design decision.
+### 8. Add Compose compiler stability configuration file
 - **Effort:** < 1 day | **Source:** Architecture, Kotlin Ergonomics
-- Annotate `EditorState`, `EditorSelection`, `EditorTheme`, `Text`, `ChangeSet` etc.
-  with `@Immutable` to enable Compose recomposition skipping.
-- These are all immutable persistent data structures — the annotation is truthful.
-- **Files:** `state/src/commonMain/kotlin/.../state/`, `view/src/commonMain/kotlin/.../view/`
+- Add a Compose compiler stability configuration file listing the immutable types
+  (`EditorState`, `EditorSelection`, `Text`, `ChangeSet`, etc.) as stable.
+- Zero code changes — just a config file. No need to add Compose dependencies to `:state`.
+- These are all immutable persistent data structures — the stability declaration is truthful.
+- **Files:** Compose compiler plugin configuration in build scripts
 
 ---
 
@@ -445,10 +442,9 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
 - Affects: `Facet.define(combine = ...)`, keymap precedence, language facet resolution.
 - **Files:** `docs-site/docs/guide/extending.md`, `state/.../Facet.kt`
 
-### 28. [BLOCKED] Add API stability markers
-- **Blocked:** Requires a design decision on which APIs to mark as experimental vs stable.
-  The annotations themselves are trivial to create, but deciding the stability classification
-  for 100+ public types is a significant audit. Should be done as part of a 1.0 release review.
+### 28. [SKIP] Add API stability markers
+- **Skip reason:** Deferred to 1.0 release prep. Classifying 100+ public types while the API
+  is still evolving is premature. Do the stability audit as part of the 1.0 release review.
 - **Effort:** < 1 day | **Source:** Documentation, Architecture
 - No marking of experimental vs stable APIs. Consider:
   - `@ExperimentalKodemirrorApi` annotation for APIs that may change
@@ -464,32 +460,24 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
   - Build configuration template
 - Create as a contributor guide or template directory.
 
-### 30. [BLOCKED] Add extension conflict detection (development mode)
-- **Blocked:** Same architectural issue as #7 — useful conflict checks need cross-module
-  access to facets from `:language`, `:commands`, etc. No natural module exists for this.
+### 30. Add extension conflict detection (throw on conflicts)
 - **Effort:** 1–2 days | **Source:** Architecture
 - When multiple extensions provide conflicting configurations (e.g., two language modules),
-  the "last one wins" behavior is silent. Add an optional diagnostic extension:
-  ```kotlin
-  val extensionDiagnostics: Extension  // Logs conflicts and warnings
-  ```
-- Only for development — not for production builds.
+  the "last one wins" behavior is silent. Pre-1.0, throw on conflicts rather than silently
+  accepting them. Same approach as #7 — fail fast during development.
+- Detect: multiple language facets, conflicting keymaps, duplicate extensions.
 
-### 31. [BLOCKED] Add editor testing utilities
-- **Blocked:** Requires creating a new `:kodemirror-test` module with design decisions on
-  API surface. Functions like `typeText()` and `pressKey()` need to simulate Compose input
-  events correctly, which requires understanding the internal input handling pipeline.
-  The testing guide (#24) documents patterns using existing APIs as an interim solution.
+### 31. Add editor testing utilities
 - **Effort:** 1–2 days | **Source:** Kotlin Ergonomics, Frontend DX
-- Testing editors requires creating full `EditorSession` instances with extensions.
-  Add test utilities:
+- Create a `:kodemirror-test` module with test helpers. `testEditorSession` is a factory,
+  `typeText`/`pressKey` dispatch transactions (no Compose event simulation needed).
   ```kotlin
   // kodemirror-test module
   fun testEditorSession(doc: String = "", extensions: Extension = Extension.empty): EditorSession
   fun EditorSession.typeText(text: String)
   fun EditorSession.pressKey(key: String)
   fun EditorSession.assertDoc(expected: String)
-  fun EditorSession.assertSelection(anchor: Int, head: Int)
+  fun EditorSession.assertSelection(anchor: DocPos, head: DocPos)
   ```
 
 ### 32. [DONE] Add `StateField` serialization sealed type
@@ -508,11 +496,11 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
 
 ## Summary
 
-| Priority | Done | Blocked | Skipped | Description |
-|----------|------|---------|---------|-------------|
-| 1 | 6 | 2 | — | High impact core DX improvements |
-| 2 | 6 | 1 | — | Medium impact ergonomics |
-| 3 | 9 | — | 1 | Documentation gaps |
-| 4 | 4 | 3 | — | Polish and nice-to-have |
-| Blocked | 1 | 8 | — | Carried over, need design decisions |
-| **Total** | **26** | **14** | **1** | |
+| Priority | Done | Pending | Blocked | Skipped | Description |
+|----------|------|---------|---------|---------|-------------|
+| 1 | 6 | 2 | — | — | High impact core DX improvements |
+| 2 | 6 | — | 1 | — | Medium impact ergonomics |
+| 3 | 9 | — | — | 1 | Documentation gaps |
+| 4 | 4 | 2 | — | 1 | Polish and nice-to-have |
+| Carried | 1 | 2 | 4 | 2 | Carried over from round 1 |
+| **Total** | **26** | **6** | **5** | **4** | |
