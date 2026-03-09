@@ -467,7 +467,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
   accepting them. Same approach as #7 — fail fast during development.
 - Detect: multiple language facets, conflicting keymaps, duplicate extensions.
 
-### 31. Add editor testing utilities
+### 31. [DONE] Add editor testing utilities
 - **Effort:** 1–2 days | **Source:** Kotlin Ergonomics, Frontend DX
 - Create a `:kodemirror-test` module with test helpers. `testEditorSession` is a factory,
   `typeText`/`pressKey` dispatch transactions (no Compose event simulation needed).
@@ -501,6 +501,6 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
 | 1 | 8 | — | — | — | High impact core DX improvements |
 | 2 | 6 | — | 1 | — | Medium impact ergonomics |
 | 3 | 9 | — | — | 1 | Documentation gaps |
-| 4 | 5 | 1 | — | 1 | Polish and nice-to-have |
+| 4 | 6 | — | — | 1 | Polish and nice-to-have |
 | Carried | 1 | 2 | 4 | 2 | Carried over from round 1 |
-| **Total** | **29** | **3** | **5** | **4** | |
+| **Total** | **30** | **2** | **5** | **4** | |

@@ -1,0 +1,17 @@
+public final class com/monkopedia/kodemirror/test/TestAssertionsKt {
+	public static final fun assertCursorAt-FCwYIAs (Lcom/monkopedia/kodemirror/view/EditorSession;I)V
+	public static final fun assertDoc (Lcom/monkopedia/kodemirror/view/EditorSession;Ljava/lang/String;)V
+	public static final fun assertSelection-sX5c8NE (Lcom/monkopedia/kodemirror/view/EditorSession;II)V
+	public static final fun assertSelectionRange-sX5c8NE (Lcom/monkopedia/kodemirror/view/EditorSession;II)V
+}
+
+public final class com/monkopedia/kodemirror/test/TestEditorSessionKt {
+	public static final fun testEditorSession-FsPidVE (Ljava/lang/String;ILcom/monkopedia/kodemirror/state/Extension;)Lcom/monkopedia/kodemirror/view/EditorSession;
+	public static synthetic fun testEditorSession-FsPidVE$default (Ljava/lang/String;ILcom/monkopedia/kodemirror/state/Extension;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/view/EditorSession;
+}
+
+public final class com/monkopedia/kodemirror/test/TestInputKt {
+	public static final fun pressKey (Lcom/monkopedia/kodemirror/view/EditorSession;Ljava/lang/String;)V
+	public static final fun typeText (Lcom/monkopedia/kodemirror/view/EditorSession;Ljava/lang/String;)V
+}
+
