@@ -35,6 +35,7 @@ data class LineLayout(
     val lineNumber: Int,
     val lineFrom: Int,
     val topPx: Float,
+    val leftPx: Float,
     val result: TextLayoutResult
 ) {
     val heightPx: Float get() = result.size.height.toFloat()
@@ -51,8 +52,14 @@ class LineLayoutCache {
     private val cache = mutableMapOf<Int, LineLayout>()
 
     /** Store (or replace) the layout result for a line. */
-    fun store(lineNumber: Int, lineFrom: Int, topPx: Float, result: TextLayoutResult) {
-        cache[lineNumber] = LineLayout(lineNumber, lineFrom, topPx, result)
+    fun store(
+        lineNumber: Int,
+        lineFrom: Int,
+        topPx: Float,
+        leftPx: Float,
+        result: TextLayoutResult
+    ) {
+        cache[lineNumber] = LineLayout(lineNumber, lineFrom, topPx, leftPx, result)
     }
 
     /** Return the layout for a given 1-based line number, or null. */
@@ -82,7 +89,8 @@ class LineLayoutCache {
         val cursorRect = layout.result.getCursorRect(clampedOffset)
         val top = layout.topPx + cursorRect.top
         val bottom = layout.topPx + cursorRect.bottom
-        val xOffset = if (side >= 0) cursorRect.right else cursorRect.left
+        val xRaw = if (side >= 0) cursorRect.right else cursorRect.left
+        val xOffset = xRaw + layout.leftPx
         return Rect(xOffset, top, xOffset, bottom)
     }
 
@@ -93,8 +101,9 @@ class LineLayoutCache {
         // Find the line whose vertical range contains y
         for (layout in cache.values.sortedBy { it.topPx }) {
             if (y >= layout.topPx && y <= layout.bottomPx) {
+                val localX = (x - layout.leftPx).coerceAtLeast(0f)
                 val offsetInLine = layout.result.getOffsetForPosition(
-                    Offset(x, y - layout.topPx)
+                    Offset(localX, y - layout.topPx)
                 )
                 return layout.lineFrom +
                     offsetInLine.coerceIn(0, layout.result.layoutInput.text.length)

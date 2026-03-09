@@ -29,11 +29,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -44,23 +46,32 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.isAltPressed
-import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.Extension
+import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asDoc
+import com.monkopedia.kodemirror.state.asInsert
 
 /**
  * The main editor composable.
@@ -115,6 +126,15 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
     // Track Alt key state for rectangular selection
     var altPressed by remember { mutableStateOf(false) }
 
+    // Track editor layout coordinates for position mapping
+    var editorCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
+
+    // Focus management
+    val focusRequester = remember { FocusRequester() }
+
+    // Prevent tap from overriding drag selection
+    var recentlyDragged by remember { mutableStateOf(false) }
+
     val density = LocalDensity.current
     val lineHeightDp = with(density) { theme.contentTextStyle.lineHeight.toDp() }
 
@@ -154,8 +174,10 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
             }
             Box(
                 modifier = Modifier
+                    .testTag("KodeMirror")
                     .weight(1f)
                     .fillMaxWidth()
+                    .onGloballyPositioned { editorCoordinates = it }
                     .drawWithContent {
                         // Editor background
                         drawRect(theme.background)
@@ -188,18 +210,17 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                         }
                         drawContent()
                     }
-                    .onFocusChanged { focusState ->
-                        impl.hasFocus = focusState.isFocused
-                    }
                     .onPreviewKeyEvent { event ->
                         altPressed = event.isAltPressed
                         false
                     }
-                    .onKeyEvent { event ->
-                        handleKeyEvent(session, event)
-                    }
                     .pointerInput(session) {
                         detectTapGestures { offset ->
+                            if (recentlyDragged) {
+                                recentlyDragged = false
+                                return@detectTapGestures
+                            }
+                            focusRequester.requestFocus()
                             handleTap(session, offset)
                         }
                     }
@@ -208,6 +229,7 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                         var dragCurrent = androidx.compose.ui.geometry.Offset.Zero
                         detectDragGestures(
                             onDragStart = { offset ->
+                                recentlyDragged = true
                                 dragStart = offset
                                 dragCurrent = offset
                             },
@@ -238,6 +260,7 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                                     ?.moveTo(null)
                             },
                             onDragCancel = {
+                                recentlyDragged = false
                                 session.plugin(dropCursorViewPlugin)
                                     ?.moveTo(null)
                             }
@@ -264,7 +287,44 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                         }
                     }
             ) {
-                var lineTopPx = 0f
+                // Hidden text field for receiving IME/text input and key events
+                var hiddenTextValue by remember {
+                    mutableStateOf(TextFieldValue(""))
+                }
+                BasicTextField(
+                    value = hiddenTextValue,
+                    onValueChange = { newValue ->
+                        val inserted = newValue.text
+                        if (inserted.isNotEmpty()) {
+                            val sel = session.state.selection.main
+                            val from = sel.from
+                            val to = sel.to
+                            session.dispatch(
+                                TransactionSpec(
+                                    changes = ChangeSpec.Single(
+                                        from = from,
+                                        to = to,
+                                        insert = inserted.asInsert()
+                                    )
+                                )
+                            )
+                        }
+                        // Reset to empty for next input
+                        hiddenTextValue = TextFieldValue("")
+                    },
+                    modifier = Modifier
+                        .testTag("KodeMirror_input")
+                        .size(1.dp)
+                        .alpha(0f)
+                        .focusRequester(focusRequester)
+                        .onFocusChanged { focusState ->
+                            impl.hasFocus = focusState.isFocused
+                        }
+                        .onPreviewKeyEvent { event ->
+                            // Try key bindings first; if handled, consume
+                            handleKeyEvent(session, event)
+                        }
+                )
 
                 LazyColumn(
                     state = lazyState,
@@ -283,7 +343,6 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                     ) { item ->
                         when (item) {
                             is ColumnItem.TextLine -> {
-                                val capturedTop = lineTopPx
                                 val capturedLineNum = item.lineNumber
                                 val capturedFrom = item.from
                                 var textLayout by remember {
@@ -325,18 +384,43 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                                                 theme,
                                                 textLayout
                                             )
+                                            .onGloballyPositioned { contentCoords ->
+                                                val editorCoords =
+                                                    editorCoordinates ?: return@onGloballyPositioned
+                                                val pos = editorCoords.localPositionOf(
+                                                    contentCoords,
+                                                    Offset.Zero
+                                                )
+                                                val layout = textLayout
+                                                if (layout != null) {
+                                                    lineLayoutCache.store(
+                                                        capturedLineNum.value,
+                                                        capturedFrom.value,
+                                                        pos.y,
+                                                        pos.x,
+                                                        layout
+                                                    )
+                                                }
+                                            }
                                     ) {
                                         BasicText(
                                             text = item.content,
                                             style = theme.contentTextStyle,
                                             onTextLayout = { result: TextLayoutResult ->
                                                 textLayout = result
-                                                lineLayoutCache.store(
-                                                    capturedLineNum.value,
-                                                    capturedFrom.value,
-                                                    capturedTop,
-                                                    result
-                                                )
+                                                val editorCoords =
+                                                    editorCoordinates
+                                                if (editorCoords != null) {
+                                                    // Will be updated with real position
+                                                    // from onGloballyPositioned
+                                                    lineLayoutCache.store(
+                                                        capturedLineNum.value,
+                                                        capturedFrom.value,
+                                                        0f,
+                                                        0f,
+                                                        result
+                                                    )
+                                                }
                                             }
                                         )
                                         for (widget in item.inlineWidgets) {
@@ -354,9 +438,20 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                 }
 
                 // Sync viewport/height tracking for ViewUpdate flags
+                // Evict stale cache entries for scrolled-off lines
                 val firstVisible = lazyState.firstVisibleItemIndex
-                LaunchedEffect(firstVisible) {
+                val visibleCount = lazyState.layoutInfo.visibleItemsInfo.size
+                LaunchedEffect(firstVisible, visibleCount) {
                     impl.lastFirstVisibleItem = firstVisible
+                    val visibleLineNumbers = columnItems
+                        .drop(firstVisible)
+                        .take(visibleCount.coerceAtLeast(1))
+                        .filterIsInstance<ColumnItem.TextLine>()
+                        .map { it.lineNumber.value }
+                        .toSet()
+                    if (visibleLineNumbers.isNotEmpty()) {
+                        lineLayoutCache.evict(visibleLineNumbers)
+                    }
                 }
 
                 // Tooltip layer
