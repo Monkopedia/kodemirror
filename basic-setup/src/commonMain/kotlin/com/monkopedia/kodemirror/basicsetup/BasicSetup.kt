@@ -29,11 +29,14 @@ import com.monkopedia.kodemirror.language.defaultHighlightStyle
 import com.monkopedia.kodemirror.language.foldGutter
 import com.monkopedia.kodemirror.language.foldKeymap
 import com.monkopedia.kodemirror.language.indentOnInput
+import com.monkopedia.kodemirror.language.language
 import com.monkopedia.kodemirror.language.syntaxHighlighting
 import com.monkopedia.kodemirror.lint.lintKeymap
 import com.monkopedia.kodemirror.search.highlightSelectionMatches
 import com.monkopedia.kodemirror.search.searchKeymap
 import com.monkopedia.kodemirror.state.Extension
+import com.monkopedia.kodemirror.state.StateField
+import com.monkopedia.kodemirror.state.StateFieldSpec
 import com.monkopedia.kodemirror.state.allowMultipleSelections
 import com.monkopedia.kodemirror.state.extensionListOf
 import com.monkopedia.kodemirror.view.crosshairCursor
@@ -46,6 +49,24 @@ import com.monkopedia.kodemirror.view.keymapOf
 import com.monkopedia.kodemirror.view.lineNumbers
 import com.monkopedia.kodemirror.view.rectangularSelection
 
+// Validates that a language extension is configured when using basicSetup/minimalSetup.
+// This catches the common mistake of setting up an editor without a language, which
+// silently results in no syntax highlighting.
+private val setupValidation: StateField<Unit> = StateField.define(
+    StateFieldSpec(
+        create = { state ->
+            if (state.facet(language) == null) {
+                error(
+                    "No language extension configured. " +
+                        "Add a language (e.g., python(), javascript()) " +
+                        "alongside basicSetup/minimalSetup."
+                )
+            }
+        },
+        update = { _, _ -> }
+    )
+)
+
 /**
  * A minimal set of extensions to get a functional editor.
  *
@@ -53,8 +74,12 @@ import com.monkopedia.kodemirror.view.rectangularSelection
  * selection drawing, default syntax highlighting, and the default keymap.
  *
  * Use [basicSetup] for a more fully-featured configuration.
+ *
+ * A language extension must also be provided (e.g., `minimalSetup + python().extension`).
+ * An [IllegalStateException] is thrown if no language is configured.
  */
 val minimalSetup: Extension = extensionListOf(
+    setupValidation,
     highlightSpecialChars,
     history(),
     drawSelection,
@@ -72,8 +97,12 @@ val minimalSetup: Extension = extensionListOf(
  * Individual extensions can be overridden by providing your own configuration
  * after `basicSetup` in the extensions list, or you can start from
  * [minimalSetup] and add only what you need.
+ *
+ * A language extension must also be provided (e.g., `basicSetup + python().extension`).
+ * An [IllegalStateException] is thrown if no language is configured.
  */
 val basicSetup: Extension = extensionListOf(
+    setupValidation,
     lineNumbers,
     highlightActiveLineGutter,
     highlightSpecialChars,

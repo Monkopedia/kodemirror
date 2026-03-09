@@ -51,9 +51,19 @@ private val languageStateField: StateField<LanguageState> = StateField.define(
 
 /**
  * The facet used to associate a language with an editor state.
+ *
+ * Only one language can be active at a time. Providing multiple language
+ * extensions will throw [IllegalStateException].
  */
 val language: Facet<Language, Language?> = Facet.define(
-    combine = { languages -> languages.firstOrNull() },
+    combine = { languages ->
+        require(languages.size <= 1) {
+            "Multiple language extensions configured: " +
+                "${languages.map { it.name }.filter { it.isNotEmpty() }}. " +
+                "Only one language can be active at a time."
+        }
+        languages.firstOrNull()
+    },
     enables = FacetEnabler.StaticExtension(languageStateField)
 )
 

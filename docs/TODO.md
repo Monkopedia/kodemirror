@@ -498,9 +498,9 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
 
 | Priority | Done | Pending | Blocked | Skipped | Description |
 |----------|------|---------|---------|---------|-------------|
-| 1 | 6 | 2 | — | — | High impact core DX improvements |
+| 1 | 8 | — | — | — | High impact core DX improvements |
 | 2 | 6 | — | 1 | — | Medium impact ergonomics |
 | 3 | 9 | — | — | 1 | Documentation gaps |
-| 4 | 4 | 2 | — | 1 | Polish and nice-to-have |
+| 4 | 5 | 1 | — | 1 | Polish and nice-to-have |
 | Carried | 1 | 2 | 4 | 2 | Carried over from round 1 |
-| **Total** | **26** | **6** | **5** | **4** | |
+| **Total** | **29** | **3** | **5** | **4** | |
