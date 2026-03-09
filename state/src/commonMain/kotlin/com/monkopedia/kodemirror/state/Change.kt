@@ -521,6 +521,7 @@ class ChangeSet private constructor(
     /**
      * Serialize this change set to a JSON-representable value.
      */
+    @Suppress("DEPRECATION")
     fun toChangeSetJSON(): List<ChangeSetJsonPart> {
         val parts = mutableListOf<ChangeSetJsonPart>()
         var i = 0

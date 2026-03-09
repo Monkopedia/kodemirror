@@ -161,12 +161,20 @@ class SelectionRange private constructor(
     /**
      * Return a JSON-serializable object representing the range.
      */
+    @Deprecated(
+        "Use toData() with kotlinx.serialization instead.",
+        ReplaceWith("toData()")
+    )
     fun toJSON(): Map<String, Int> = mapOf("anchor" to anchor.value, "head" to head.value)
 
     companion object {
         /**
          * Convert a JSON representation of a range to an instance.
          */
+        @Deprecated(
+            "Use SelectionRangeData.toSelectionRange() instead.",
+            ReplaceWith("data.toSelectionRange()")
+        )
         fun fromJSON(json: Map<String, Any?>): SelectionRange {
             val anchor = json["anchor"] as? Number
                 ?: throw IllegalArgumentException(
@@ -273,6 +281,11 @@ class EditorSelection private constructor(
     }
 
     /** Convert this selection to a JSON object. */
+    @Deprecated(
+        "Use toData() with kotlinx.serialization instead.",
+        ReplaceWith("toData()")
+    )
+    @Suppress("DEPRECATION")
     fun toJSON(): Map<String, Any> = mapOf(
         "ranges" to ranges.map { it.toJSON() },
         "main" to mainIndex
@@ -282,7 +295,11 @@ class EditorSelection private constructor(
         /**
          * Create a selection from a JSON representation.
          */
-        @Suppress("UNCHECKED_CAST")
+        @Deprecated(
+            "Use EditorSelectionData.toEditorSelection() instead.",
+            ReplaceWith("data.toEditorSelection()")
+        )
+        @Suppress("UNCHECKED_CAST", "DEPRECATION")
         fun fromJSON(json: Map<String, Any?>): EditorSelection {
             val rangesJson = json["ranges"] as? List<*>
                 ?: throw IllegalArgumentException(

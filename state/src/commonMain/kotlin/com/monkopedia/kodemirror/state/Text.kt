@@ -255,6 +255,10 @@ abstract class Text {
      * Convert the document to an array of lines (which can be
      * deserialized again via [Text.of]).
      */
+    @Deprecated(
+        "Use toString() and Text.of() for serialization.",
+        ReplaceWith("toString()")
+    )
     fun toJSON(): List<String> {
         val lines = mutableListOf<String>()
         flatten(lines)

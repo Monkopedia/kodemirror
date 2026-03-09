@@ -307,6 +307,7 @@ class TextTest {
         assertEquals("\n\nf\n\ng", get(LineNumber(3)))
     }
 
+    @Suppress("DEPRECATION")
     @Test
     fun canConvertToJSON() {
         val extendedLines = lines.toMutableList()

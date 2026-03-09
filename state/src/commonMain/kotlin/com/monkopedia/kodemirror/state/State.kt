@@ -318,6 +318,11 @@ class EditorState private constructor(
     /**
      * Convert this state to a JSON-serializable object.
      */
+    @Deprecated(
+        "Use toData() with kotlinx.serialization instead.",
+        ReplaceWith("toData(fields)")
+    )
+    @Suppress("DEPRECATION")
     fun toJSON(fields: Map<String, StateField<*>>? = null): Map<String, Any?> {
         val result = mutableMapOf<String, Any?>(
             "doc" to sliceDoc(),
@@ -466,7 +471,11 @@ class EditorState private constructor(
         /**
          * Deserialize a state from its JSON representation.
          */
-        @Suppress("UNCHECKED_CAST")
+        @Deprecated(
+            "Use EditorState.fromData() with kotlinx.serialization instead.",
+            ReplaceWith("EditorState.fromData(data, config, fields)")
+        )
+        @Suppress("UNCHECKED_CAST", "DEPRECATION")
         fun fromJSON(
             json: Map<String, Any?>,
             config: EditorStateConfig = EditorStateConfig(),

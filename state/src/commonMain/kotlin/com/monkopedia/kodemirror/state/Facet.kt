@@ -541,9 +541,33 @@ sealed interface FieldSerialization<V> {
      *
      * Both functions receive the [EditorState] for context (e.g. to resolve facets).
      */
+    @Deprecated(
+        "Use FieldSerialization.Serializer with a KSerializer instead.",
+        ReplaceWith("FieldSerialization.Serializer(serializer)")
+    )
     data class Custom<V>(
         val toJSON: (V, EditorState) -> Any?,
         val fromJSON: (Any?, EditorState) -> V
+    ) : FieldSerialization<V>
+
+    /**
+     * Type-safe serialization using a [kotlinx.serialization.KSerializer].
+     *
+     * This is the preferred way to make a [StateField] serializable.
+     *
+     * ```kotlin
+     * @Serializable
+     * data class MyData(val count: Int)
+     *
+     * val field = StateField.define<MyData> {
+     *     create { MyData(0) }
+     *     update { v, _ -> v }
+     *     serialization(MyData.serializer())
+     * }
+     * ```
+     */
+    data class Serializer<V>(
+        val serializer: kotlinx.serialization.KSerializer<V>
     ) : FieldSerialization<V>
 
     /** The field is not serializable. This is the default. */
@@ -605,11 +629,25 @@ class StateFieldBuilder<Value> @PublishedApi internal constructor() {
         provideFn = block
     }
 
+    /**
+     * Set type-safe serialization using a [kotlinx.serialization.KSerializer].
+     *
+     * This is the preferred way to make a field serializable.
+     */
+    fun serialization(serializer: kotlinx.serialization.KSerializer<Value>) {
+        serializationVal = FieldSerialization.Serializer(serializer)
+    }
+
     /** Set custom JSON serialization for this field. */
+    @Deprecated(
+        "Use serialization(KSerializer) instead.",
+        ReplaceWith("serialization(serializer)")
+    )
     fun serialization(
         toJSON: (Value, EditorState) -> Any?,
         fromJSON: (Any?, EditorState) -> Value
     ) {
+        @Suppress("DEPRECATION")
         serializationVal = FieldSerialization.Custom(toJSON, fromJSON)
     }
 

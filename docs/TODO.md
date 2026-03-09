@@ -102,7 +102,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
   Add a code comment noting this is known and maintained to match upstream.
 - **Effort:** 3+ days | **Source:** Architecture
 
-### B3. Adopt `Saveable` API surface with `kotlinx.serialization` internally
+### B3. [DONE] Adopt `Saveable` API surface with `kotlinx.serialization` internally
 - **Effort:** 2–3 days | **Source:** Kotlin Ergonomics
 - Public API: adopt Compose `Saveable`/`Saver` interface for state persistence — this is the
   Compose-idiomatic pattern for save/restore.
@@ -502,5 +502,5 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
 | 2 | 6 | — | 1 | — | Medium impact ergonomics |
 | 3 | 9 | — | — | 1 | Documentation gaps |
 | 4 | 6 | — | — | 1 | Polish and nice-to-have |
-| Carried | 2 | 1 | 4 | 2 | Carried over from round 1 |
-| **Total** | **31** | **1** | **5** | **4** | |
+| Carried | 3 | 0 | 4 | 2 | Carried over from round 1 |
+| **Total** | **32** | **0** | **5** | **4** | |

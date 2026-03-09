@@ -189,6 +189,7 @@ class EditorStateTest {
         assertEquals(11, state.update(TransactionSpec()).state.field(field))
     }
 
+    @Suppress("DEPRECATION")
     @Test
     fun canBeSerializedToJSON() {
         data class Wrapper(val n: Int)
@@ -218,6 +219,37 @@ class EditorStateTest {
         assertEquals(1, fJson["number"])
         val state2 = EditorState.fromJSON(json, EditorStateConfig(), fields)
         assertEquals(1, (state2.field(field)).n)
+    }
+
+    @Test
+    fun canSerializeWithKotlinxSerialization() {
+        @kotlinx.serialization.Serializable
+        data class Counter(val n: Int)
+
+        val field = StateField.define(
+            StateFieldSpec<Counter>(
+                create = { Counter(0) },
+                update = { v, _ -> Counter(v.n + 1) },
+                serialization = FieldSerialization.Serializer(Counter.serializer())
+            )
+        )
+        val fields = mapOf("counter" to field)
+        val state = EditorState.create(
+            EditorStateConfig(
+                doc = "Hello\nWorld".asDoc(),
+                selection = SelectionSpec.CursorSpec(anchor = DocPos(5)),
+                extensions = field
+            )
+        ).update(TransactionSpec()).state
+
+        val data = state.toData(fields)
+        assertEquals("Hello\nWorld", data.doc)
+        assertEquals(5, data.selection.ranges[0].anchor)
+
+        val state2 = EditorState.fromData(data, EditorStateConfig(), fields)
+        assertEquals("Hello\nWorld", state2.sliceDoc())
+        assertEquals(DocPos(5), state2.selection.main.head)
+        assertEquals(1, state2.field(field).n)
     }
 
     @Test

@@ -2,6 +2,7 @@ plugins {
     id("kodemirror.library")
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.serialization)
     alias(libs.plugins.roborazzi)
 }
 
@@ -10,6 +11,7 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":state"))
             implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.kotlinx.serialization.json)
             implementation(compose.ui)
             implementation(compose.foundation)
             implementation(compose.runtime)
