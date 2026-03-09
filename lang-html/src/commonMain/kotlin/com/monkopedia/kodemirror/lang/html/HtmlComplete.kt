@@ -24,7 +24,9 @@ import com.monkopedia.kodemirror.autocomplete.CompletionResult
 import com.monkopedia.kodemirror.autocomplete.CompletionSource
 import com.monkopedia.kodemirror.language.syntaxTree
 import com.monkopedia.kodemirror.lezer.common.SyntaxNode
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.Text
+import com.monkopedia.kodemirror.state.endPos
 
 /**
  * Specification for a single HTML tag's attributes. Attribute values
@@ -250,7 +252,7 @@ private fun elementName(doc: Text, tree: SyntaxNode?, max: Int = doc.length): St
     if (tree == null) return ""
     val tag = tree.firstChild ?: return ""
     val name = tag.getChild("TagName") ?: return ""
-    return doc.sliceString(name.from, minOf(name.to, max))
+    return doc.sliceString(DocPos(name.from), DocPos(minOf(name.to, max)))
 }
 
 private fun findParentElement(tree: SyntaxNode?, skip: Boolean = false): SyntaxNode? {
@@ -294,12 +296,14 @@ private fun completeTag(
     state: com.monkopedia.kodemirror.state.EditorState,
     schema: HtmlSchema,
     tree: SyntaxNode,
-    from: Int,
-    to: Int
+    from: DocPos,
+    to: DocPos
 ): CompletionResult {
     val end = if (Regex(
             "\\s*>"
-        ).containsMatchIn(state.doc.sliceString(to, minOf(to + 5, state.doc.length)))
+        ).containsMatchIn(
+            state.doc.sliceString(to, minOf(to + 5, state.doc.endPos))
+        )
     ) {
         ""
     } else {
@@ -323,12 +327,14 @@ private fun completeTag(
 private fun completeCloseTag(
     state: com.monkopedia.kodemirror.state.EditorState,
     tree: SyntaxNode,
-    from: Int,
-    to: Int
+    from: DocPos,
+    to: DocPos
 ): CompletionResult {
     val end = if (Regex(
             "\\s*>"
-        ).containsMatchIn(state.doc.sliceString(to, minOf(to + 5, state.doc.length)))
+        ).containsMatchIn(
+            state.doc.sliceString(to, minOf(to + 5, state.doc.endPos))
+        )
     ) {
         ""
     } else {
@@ -348,7 +354,7 @@ private fun completeStartTag(
     state: com.monkopedia.kodemirror.state.EditorState,
     schema: HtmlSchema,
     tree: SyntaxNode,
-    pos: Int
+    pos: DocPos
 ): CompletionResult {
     val options = mutableListOf<Completion>()
     for (tagName in allowedChildren(state.doc, tree, schema)) {
@@ -370,8 +376,8 @@ private fun completeAttrName(
     state: com.monkopedia.kodemirror.state.EditorState,
     schema: HtmlSchema,
     tree: SyntaxNode,
-    from: Int,
-    to: Int
+    from: DocPos,
+    to: DocPos
 ): CompletionResult {
     val elt = findParentElement(tree)
     val info = if (elt != null) schema.tags[elementName(state.doc, elt)] else null
@@ -395,15 +401,15 @@ private fun completeAttrValue(
     state: com.monkopedia.kodemirror.state.EditorState,
     schema: HtmlSchema,
     tree: SyntaxNode,
-    from: Int,
-    to: Int
+    from: DocPos,
+    to: DocPos
 ): CompletionResult {
     val nameNode = tree.parent?.getChild("AttributeName")
     val options = mutableListOf<Completion>()
     var token: Regex? = null
     var adjustedFrom = from
     if (nameNode != null) {
-        val attrName = state.doc.sliceString(nameNode.from, nameNode.to)
+        val attrName = state.doc.sliceString(DocPos(nameNode.from), DocPos(nameNode.to))
         var attrs = schema.globalAttrs[attrName]
         if (attrs == null) {
             val elt = findParentElement(tree)
@@ -414,14 +420,17 @@ private fun completeAttrValue(
             val base = state.doc.sliceString(from, to).lowercase()
             var quoteStart = "\""
             var quoteEnd = "\""
+
+            @Suppress("UNUSED_VARIABLE")
             var textBase = base
             if (base.isNotEmpty() && (base[0] == '\'' || base[0] == '"')) {
                 token = if (base[0] == '"') Regex("^[^\"]*$") else Regex("^[^']*$")
                 quoteStart = ""
-                val afterTo = if (to < state.doc.length) state.doc.sliceString(to, to + 1) else ""
+                val afterTo =
+                    if (to < state.doc.endPos) state.doc.sliceString(to, to + 1) else ""
                 quoteEnd = if (afterTo == base[0].toString()) "" else base[0].toString()
                 textBase = base.substring(1)
-                adjustedFrom++
+                adjustedFrom += 1
             } else {
                 token = Regex("^[^\\s<>='\"]*$")
             }
@@ -447,11 +456,11 @@ private fun completeAttrValue(
 private fun htmlCompletionFor(schema: HtmlSchema, context: CompletionContext): CompletionResult? {
     val state = context.state
     val pos = context.pos
-    var tree = syntaxTree(state).resolveInner(pos, -1)
-    var around = tree.resolve(pos)
+    var tree = syntaxTree(state).resolveInner(pos.value, -1)
+    var around = tree.resolve(pos.value)
 
     // Walk back through error nodes to find the real context
-    var scan = pos
+    var scan = pos.value
     while (around.from == tree.from && around.to == tree.to) {
         val before = tree.childBefore(scan) ?: break
         val last = before.lastChild
@@ -464,9 +473,9 @@ private fun htmlCompletionFor(schema: HtmlSchema, context: CompletionContext): C
     return when (tree.name) {
         "TagName" -> {
             if (tree.parent != null && Regex("CloseTag$").containsMatchIn(tree.parent!!.name)) {
-                completeCloseTag(state, tree, tree.from, pos)
+                completeCloseTag(state, tree, DocPos(tree.from), pos)
             } else {
-                completeTag(state, schema, tree, tree.from, pos)
+                completeTag(state, schema, tree, DocPos(tree.from), pos)
             }
         }
         "StartTag", "IncompleteTag" -> {
@@ -480,7 +489,7 @@ private fun htmlCompletionFor(schema: HtmlSchema, context: CompletionContext): C
                 state,
                 schema,
                 tree,
-                if (tree.name == "AttributeName") tree.from else pos,
+                if (tree.name == "AttributeName") DocPos(tree.from) else pos,
                 pos
             )
         }
@@ -489,7 +498,7 @@ private fun htmlCompletionFor(schema: HtmlSchema, context: CompletionContext): C
                 state,
                 schema,
                 tree,
-                if (tree.name == "Is") pos else tree.from,
+                if (tree.name == "Is") pos else DocPos(tree.from),
                 pos
             )
         }

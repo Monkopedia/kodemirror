@@ -25,8 +25,8 @@ package com.monkopedia.kodemirror.state
  * rules) at that position.
  */
 val languageData: Facet<
-    (EditorState, Int, Int) -> List<Map<String, Any?>>,
-    List<(EditorState, Int, Int) -> List<Map<String, Any?>>>
+    (EditorState, DocPos, Int) -> List<Map<String, Any?>>,
+    List<(EditorState, DocPos, Int) -> List<Map<String, Any?>>>
     > = Facet.define()
 
 /**

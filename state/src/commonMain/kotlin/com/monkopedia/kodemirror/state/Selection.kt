@@ -19,7 +19,6 @@
 package com.monkopedia.kodemirror.state
 
 import kotlin.math.abs
-import kotlin.math.max
 import kotlin.math.min
 
 // A range's flags field is used like this:
@@ -44,18 +43,18 @@ private object RangeFlag {
  */
 class SelectionRange private constructor(
     /** The lower boundary of the range. */
-    val from: Int,
+    val from: DocPos,
     /** The upper boundary of the range. */
-    val to: Int,
+    val to: DocPos,
     private val flags: Int
 ) {
     /** The anchor of the range—the side that doesn't move. */
-    val anchor: Int
+    val anchor: DocPos
         get() =
             if (flags and RangeFlag.INVERTED != 0) to else from
 
     /** The head of the range, which is moved when extended. */
-    val head: Int
+    val head: DocPos
         get() =
             if (flags and RangeFlag.INVERTED != 0) from else to
 
@@ -103,8 +102,8 @@ class SelectionRange private constructor(
      * the updated document.
      */
     fun map(change: ChangeDesc, assoc: Int = -1): SelectionRange {
-        val newFrom: Int
-        val newTo: Int
+        val newFrom: DocPos
+        val newTo: DocPos
         if (empty) {
             val mapped = change.mapPos(from, assoc)
             newFrom = mapped
@@ -123,11 +122,11 @@ class SelectionRange private constructor(
     /**
      * Extend this range to cover at least [from] to [to].
      */
-    fun extend(from: Int, to: Int = from): SelectionRange {
+    fun extend(from: DocPos, to: DocPos = from): SelectionRange {
         if (from <= anchor && to >= anchor) {
             return EditorSelection.range(from, to)
         }
-        val head = if (abs(from - anchor) > abs(to - anchor)) {
+        val head = if (abs(from.value - anchor.value) > abs(to.value - anchor.value)) {
             from
         } else {
             to
@@ -153,8 +152,8 @@ class SelectionRange private constructor(
     }
 
     override fun hashCode(): Int {
-        var result = anchor
-        result = 31 * result + head
+        var result = anchor.value
+        result = 31 * result + head.value
         result = 31 * result + (goalColumn ?: 0)
         return result
     }
@@ -162,7 +161,7 @@ class SelectionRange private constructor(
     /**
      * Return a JSON-serializable object representing the range.
      */
-    fun toJSON(): Map<String, Int> = mapOf("anchor" to anchor, "head" to head)
+    fun toJSON(): Map<String, Int> = mapOf("anchor" to anchor.value, "head" to head.value)
 
     companion object {
         /**
@@ -180,12 +179,12 @@ class SelectionRange private constructor(
                         "for SelectionRange"
                 )
             return EditorSelection.range(
-                anchor.toInt(),
-                head.toInt()
+                DocPos(anchor.toInt()),
+                DocPos(head.toInt())
             )
         }
 
-        internal fun create(from: Int, to: Int, flags: Int): SelectionRange =
+        internal fun create(from: DocPos, to: DocPos, flags: Int): SelectionRange =
             SelectionRange(from, to, flags)
     }
 }
@@ -312,7 +311,7 @@ class EditorSelection private constructor(
         }
 
         /** Create a selection holding a single range. */
-        fun single(anchor: Int, head: Int = anchor): EditorSelection =
+        fun single(anchor: DocPos, head: DocPos = anchor): EditorSelection =
             EditorSelection(listOf(range(anchor, head)), 0)
 
         /**
@@ -325,7 +324,7 @@ class EditorSelection private constructor(
                     "A selection needs at least one range"
                 )
             }
-            var pos = 0
+            var pos = DocPos.ZERO
             for (i in ranges.indices) {
                 val range = ranges[i]
                 if (if (range.empty) {
@@ -346,7 +345,7 @@ class EditorSelection private constructor(
 
         /** Create a cursor selection range at the given position. */
         fun cursor(
-            pos: Int,
+            pos: DocPos,
             assoc: Int = 0,
             bidiLevel: Int? = null,
             goalColumn: Int? = null
@@ -377,8 +376,8 @@ class EditorSelection private constructor(
 
         /** Create a selection range. */
         fun range(
-            anchor: Int,
-            head: Int,
+            anchor: DocPos,
+            head: DocPos,
             goalColumn: Int? = null,
             bidiLevel: Int? = null
         ): SelectionRange {
@@ -432,7 +431,7 @@ class EditorSelection private constructor(
                     }
                 ) {
                     val from = prev.from
-                    val to = max(range.to, prev.to)
+                    val to = maxOf(range.to, prev.to)
                     if (i <= newMainIndex) newMainIndex--
                     ranges.removeAt(i)
                     ranges.removeAt(i - 1)
@@ -455,7 +454,7 @@ class EditorSelection private constructor(
 
 fun checkSelection(selection: EditorSelection, docLength: Int) {
     for (range in selection.ranges) {
-        if (range.to > docLength) {
+        if (range.to.value > docLength) {
             throw IllegalArgumentException(
                 "Selection points outside of document"
             )

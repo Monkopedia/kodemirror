@@ -19,12 +19,15 @@
 package com.monkopedia.kodemirror.merge
 
 import com.monkopedia.kodemirror.state.ChangeSpec
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.InsertContent
+import com.monkopedia.kodemirror.state.LineNumber
 import com.monkopedia.kodemirror.state.Text
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asDoc
+import com.monkopedia.kodemirror.state.endPos
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -48,21 +51,21 @@ class ChunkTest {
         assertEquals(2, chunks.size)
 
         val (ch1, ch2) = chunks
-        assertEquals(docA.line(500).from, ch1.fromA)
-        assertEquals(docA.line(501).from, ch1.toA)
-        assertEquals(docB.line(500).from, ch1.fromB)
-        assertEquals(docB.line(501).from, ch1.toB)
+        assertEquals(docA.line(LineNumber(500)).from, ch1.fromA)
+        assertEquals(docA.line(LineNumber(501)).from, ch1.toA)
+        assertEquals(docB.line(LineNumber(500)).from, ch1.fromB)
+        assertEquals(docB.line(LineNumber(501)).from, ch1.toB)
 
-        assertEquals(docA.line(700).from, ch2.fromA)
-        assertEquals(docA.line(750).from, ch2.toA)
-        assertEquals(docB.line(700).from, ch2.fromB)
-        assertEquals(docB.line(702).from, ch2.toB)
+        assertEquals(docA.line(LineNumber(700)).from, ch2.fromA)
+        assertEquals(docA.line(LineNumber(750)).from, ch2.toA)
+        assertEquals(docB.line(LineNumber(700)).from, ch2.fromB)
+        assertEquals(docB.line(LineNumber(702)).from, ch2.toB)
 
         assertEquals(2, ch2.changes.size)
         val (c1, c2) = ch2.changes
         assertEquals(listOf(5, 5, 7), listOf(c1.fromA, c1.fromB, c1.toB))
         assertEquals(
-            listOf(docA.line(749).to - ch2.fromA, 13, 15),
+            listOf(docA.line(LineNumber(749)).to - ch2.fromA, 13, 15),
             listOf(c2.toA, c2.fromB, c2.toB)
         )
     }
@@ -71,8 +74,14 @@ class ChunkTest {
     fun handlesChangesAtEndOfDocument() {
         val chunks = Chunk.build(Text.of(listOf("one", "")), Text.of(listOf("one", "", "")))
         val ch1 = chunks[0]
-        assertEquals(listOf(4, 4), listOf(ch1.fromA, ch1.toA))
-        assertEquals(listOf(4, 5), listOf(ch1.fromB, ch1.toB))
+        assertEquals(
+            listOf(DocPos(4), DocPos(4)),
+            listOf(ch1.fromA, ch1.toA)
+        )
+        assertEquals(
+            listOf(DocPos(4), DocPos(5)),
+            listOf(ch1.fromB, ch1.toB)
+        )
     }
 
     @Test
@@ -84,7 +93,7 @@ class ChunkTest {
         val tr1 = stateA.update(
             TransactionSpec(
                 changes = ChangeSpec.Single(
-                    from = 0,
+                    from = DocPos.ZERO,
                     insert = InsertContent.StringContent("line NULL\n")
                 )
             )
@@ -93,9 +102,12 @@ class ChunkTest {
         assertEquals(3, chunks1.size)
         val ch1 = chunks1[0]
         val ch2 = chunks1[1]
-        assertEquals(listOf(0, 10, 0, 0), listOf(ch1.fromA, ch1.toA, ch1.fromB, ch1.toB))
-        assertEquals(tr1.newDoc.line(501).from, ch2.fromA)
-        assertEquals(stateB.doc.line(500).from, ch2.fromB)
+        assertEquals(
+            listOf(DocPos.ZERO, DocPos(10), DocPos.ZERO, DocPos.ZERO),
+            listOf(ch1.fromA, ch1.toA, ch1.fromB, ch1.toB)
+        )
+        assertEquals(tr1.newDoc.line(LineNumber(501)).from, ch2.fromA)
+        assertEquals(stateB.doc.line(LineNumber(500)).from, ch2.fromB)
         stateA = tr1.state
 
         val tr2 = stateB.update(
@@ -103,11 +115,11 @@ class ChunkTest {
                 changes = ChangeSpec.Multi(
                     listOf(
                         ChangeSpec.Single(
-                            from = stateB.doc.line(600).from + 1,
+                            from = stateB.doc.line(LineNumber(600)).from + 1,
                             insert = InsertContent.StringContent("---")
                         ),
                         ChangeSpec.Single(
-                            from = stateB.doc.length,
+                            from = stateB.doc.endPos,
                             insert = InsertContent.StringContent("\n???")
                         )
                     )
@@ -118,14 +130,14 @@ class ChunkTest {
         assertEquals(5, chunks2.size)
         val ch3 = chunks2[2]
         val ch5 = chunks2[4]
-        assertEquals(stateA.doc.line(601).from, ch3.fromA)
-        assertEquals(stateA.doc.line(602).from, ch3.toA)
-        assertEquals(tr2.newDoc.line(600).from, ch3.fromB)
-        assertEquals(tr2.newDoc.line(601).from, ch3.toB)
-        assertEquals(stateA.doc.length - 9, ch5.fromA)
-        assertEquals(stateA.doc.length + 1, ch5.toA)
-        assertEquals(tr2.newDoc.length - 13, ch5.fromB)
-        assertEquals(tr2.newDoc.length + 1, ch5.toB)
+        assertEquals(stateA.doc.line(LineNumber(601)).from, ch3.fromA)
+        assertEquals(stateA.doc.line(LineNumber(602)).from, ch3.toA)
+        assertEquals(tr2.newDoc.line(LineNumber(600)).from, ch3.fromB)
+        assertEquals(tr2.newDoc.line(LineNumber(601)).from, ch3.toB)
+        assertEquals(stateA.doc.endPos - 9, ch5.fromA)
+        assertEquals(stateA.doc.endPos + 1, ch5.toA)
+        assertEquals(tr2.newDoc.endPos - 13, ch5.fromB)
+        assertEquals(tr2.newDoc.endPos + 1, ch5.toB)
     }
 
     @Test
@@ -134,12 +146,18 @@ class ChunkTest {
         val chunks = Chunk.build(stateA.doc, docB)
 
         val tr = stateA.update(
-            TransactionSpec(changes = ChangeSpec.Single(from = 0, to = 100))
+            TransactionSpec(changes = ChangeSpec.Single(from = DocPos.ZERO, to = DocPos(100)))
         )
         val chunks1 = Chunk.updateA(chunks, tr.newDoc, docB, tr.changes)
         assertEquals(3, chunks1.size)
-        assertEquals(listOf(0, 4283, 6083), chunks1.map { it.fromA })
-        assertEquals(listOf(0, 4383, 6181), chunks1.map { it.fromB })
+        assertEquals(
+            listOf(DocPos.ZERO, DocPos(4283), DocPos(6083)),
+            chunks1.map { it.fromA }
+        )
+        assertEquals(
+            listOf(DocPos.ZERO, DocPos(4383), DocPos(6181)),
+            chunks1.map { it.fromB }
+        )
     }
 
     @Test
@@ -150,7 +168,7 @@ class ChunkTest {
         val tr = sA.update(
             TransactionSpec(
                 changes = ChangeSpec.Single(
-                    from = 0,
+                    from = DocPos.ZERO,
                     insert = InsertContent.StringContent(sB.doc.toString())
                 )
             )
@@ -164,11 +182,13 @@ class ChunkTest {
         val sB = EditorState.create(EditorStateConfig(doc = "a\nb\nc\nd\ne".asDoc()))
         val chs = Chunk.build(sA.doc, sB.doc)
         val tr = sA.update(
-            TransactionSpec(changes = ChangeSpec.Single(from = 0, to = sA.doc.length))
+            TransactionSpec(
+                changes = ChangeSpec.Single(from = DocPos.ZERO, to = sA.doc.endPos)
+            )
         )
         val updated = Chunk.updateA(chs, tr.newDoc, sB.doc, tr.changes)
         assertEquals(1, updated.size)
-        assertEquals(sB.doc.length + 1, updated[0].toB)
+        assertEquals(sB.doc.endPos + 1, updated[0].toB)
     }
 
     @Test
@@ -179,8 +199,8 @@ class ChunkTest {
         val tr = sA.update(
             TransactionSpec(
                 changes = ChangeSpec.Single(
-                    from = 3,
-                    to = 3,
+                    from = DocPos(3),
+                    to = DocPos(3),
                     insert = InsertContent.StringContent("!")
                 )
             )
@@ -188,7 +208,9 @@ class ChunkTest {
         val updated = Chunk.updateA(chs, tr.newDoc, sB.doc, tr.changes)
         assertEquals(
             "2-7/2-2",
-            updated.joinToString(" ") { "${it.fromA}-${it.toA}/${it.fromB}-${it.toB}" }
+            updated.joinToString(
+                " "
+            ) { "${it.fromA.value}-${it.toA.value}/${it.fromB.value}-${it.toB.value}" }
         )
     }
 
@@ -207,8 +229,8 @@ class ChunkTest {
         val tr = sB.update(
             TransactionSpec(
                 changes = ChangeSpec.Single(
-                    from = 2,
-                    to = 2,
+                    from = DocPos(2),
+                    to = DocPos(2),
                     insert = InsertContent.StringContent("2\n3\n")
                 )
             )
@@ -216,7 +238,9 @@ class ChunkTest {
         val updated = Chunk.updateB(chs, sA.doc, tr.newDoc, tr.changes)
         assertEquals(
             "1109-1113/1109-1109",
-            updated.joinToString(" ") { "${it.fromA}-${it.toA}/${it.fromB}-${it.toB}" }
+            updated.joinToString(
+                " "
+            ) { "${it.fromA.value}-${it.toA.value}/${it.fromB.value}-${it.toB.value}" }
         )
     }
 
@@ -235,7 +259,7 @@ class ChunkTest {
         val tr = sB.update(
             TransactionSpec(
                 changes = ChangeSpec.Single(
-                    from = sB.doc.length,
+                    from = sB.doc.endPos,
                     insert = InsertContent.StringContent("b\n".repeat(999))
                 )
             )
@@ -264,8 +288,8 @@ class ChunkTest {
         val tr = sA.update(
             TransactionSpec(
                 changes = ChangeSpec.Single(
-                    from = 1,
-                    to = 1,
+                    from = DocPos(1),
+                    to = DocPos(1),
                     insert = InsertContent.StringContent("!")
                 )
             )
@@ -281,7 +305,9 @@ class ChunkTest {
         val chs = Chunk.build(sA.doc, sB.doc)
         assertEquals(1, chs.size)
         val tr = sB.update(
-            TransactionSpec(changes = ChangeSpec.Single(from = 0, to = 1))
+            TransactionSpec(
+                changes = ChangeSpec.Single(from = DocPos.ZERO, to = DocPos(1))
+            )
         )
         val updated = Chunk.updateB(chs, sA.doc, tr.newDoc, tr.changes)
         assertEquals(0, updated.size)

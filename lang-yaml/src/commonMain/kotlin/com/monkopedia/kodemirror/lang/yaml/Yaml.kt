@@ -28,6 +28,7 @@ import com.monkopedia.kodemirror.language.foldInside
 import com.monkopedia.kodemirror.language.foldNodeProp
 import com.monkopedia.kodemirror.language.indentNodeProp
 import com.monkopedia.kodemirror.lezer.lr.ParserConfig
+import com.monkopedia.kodemirror.state.DocPos
 
 /**
  * A language provider based on the Lezer YAML parser, extended with
@@ -40,8 +41,8 @@ val yamlLanguage: LRLanguage = LRLanguage.define(
                 indentNodeProp.add { type ->
                     when (type.name) {
                         "Stream" -> { cx ->
-                            var before = cx.node.resolve(cx.pos, -1)
-                            while (before.to >= cx.pos) {
+                            var before = cx.node.resolve(cx.pos.value, -1)
+                            while (before.to >= cx.pos.value) {
                                 when (before.name) {
                                     "BlockLiteralContent" ->
                                         if (before.from < before.to) {
@@ -54,10 +55,10 @@ val yamlLanguage: LRLanguage = LRLanguage.define(
                                     "QuotedLiteral" -> return@add null
                                     "Literal" -> {
                                         val col = cx.column(before.from, 1)
-                                        if (col == cx.lineIndent(before.from, 1)) {
+                                        if (col == cx.lineIndent(DocPos(before.from), 1)) {
                                             return@add col
                                         }
-                                        if (before.to > cx.pos) return@add null
+                                        if (before.to > cx.pos.value) return@add null
                                     }
                                 }
                                 before = before.parent ?: break
@@ -75,8 +76,8 @@ val yamlLanguage: LRLanguage = LRLanguage.define(
                             { node, _ -> foldInside(node) }
                         "Item", "Pair", "BlockLiteral" -> { node, state ->
                             FoldRange(
-                                state.doc.lineAt(node.from).to,
-                                node.to
+                                state.doc.lineAt(DocPos(node.from)).to,
+                                DocPos(node.to)
                             )
                         }
                         else -> null

@@ -18,6 +18,7 @@
  */
 package com.monkopedia.kodemirror.commands
 
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
@@ -37,7 +38,7 @@ class SelectNextOccurrenceTest {
         val state = EditorState.create(
             EditorStateConfig(
                 doc = doc.asDoc(),
-                selection = SelectionSpec.CursorSpec(cursor),
+                selection = SelectionSpec.CursorSpec(DocPos(cursor)),
                 extensions = ExtensionList(
                     listOf(allowMultipleSelections.of(true))
                 )
@@ -51,7 +52,7 @@ class SelectNextOccurrenceTest {
             EditorStateConfig(
                 doc = doc.asDoc(),
                 selection = SelectionSpec.EditorSelectionSpec(
-                    EditorSelection.single(anchor, head)
+                    EditorSelection.single(DocPos(anchor), DocPos(head))
                 ),
                 extensions = ExtensionList(
                     listOf(allowMultipleSelections.of(true))
@@ -66,8 +67,8 @@ class SelectNextOccurrenceTest {
         val view = createView("hello world", cursor = 2)
         assertTrue(selectNextOccurrence(view))
         val sel = view.state.selection.main
-        assertEquals(0, sel.from)
-        assertEquals(5, sel.to)
+        assertEquals(DocPos.ZERO, sel.from)
+        assertEquals(DocPos(5), sel.to)
     }
 
     @Test
@@ -77,8 +78,8 @@ class SelectNextOccurrenceTest {
         assertTrue(selectNextOccurrence(view))
         assertEquals(2, view.state.selection.ranges.size)
         val added = view.state.selection.ranges[1]
-        assertEquals(8, added.from)
-        assertEquals(11, added.to)
+        assertEquals(DocPos(8), added.from)
+        assertEquals(DocPos(11), added.to)
     }
 
     @Test
@@ -87,9 +88,9 @@ class SelectNextOccurrenceTest {
         val view = createViewWithSelection("foo bar foo", 8, 11)
         assertTrue(selectNextOccurrence(view))
         assertEquals(2, view.state.selection.ranges.size)
-        val wrapped = view.state.selection.ranges.find { it.from == 0 }
-        assertEquals(0, wrapped?.from)
-        assertEquals(3, wrapped?.to)
+        val wrapped = view.state.selection.ranges.find { it.from == DocPos.ZERO }
+        assertEquals(DocPos.ZERO, wrapped?.from)
+        assertEquals(DocPos(3), wrapped?.to)
     }
 
     @Test
@@ -102,8 +103,8 @@ class SelectNextOccurrenceTest {
                 selection = SelectionSpec.EditorSelectionSpec(
                     EditorSelection.create(
                         listOf(
-                            EditorSelection.range(0, 3),
-                            EditorSelection.range(8, 11)
+                            EditorSelection.range(DocPos.ZERO, DocPos(3)),
+                            EditorSelection.range(DocPos(8), DocPos(11))
                         ),
                         1
                     )
@@ -117,8 +118,8 @@ class SelectNextOccurrenceTest {
         assertTrue(selectNextOccurrence(view))
         assertEquals(3, view.state.selection.ranges.size)
         val last = view.state.selection.ranges[2]
-        assertEquals(16, last.from)
-        assertEquals(19, last.to)
+        assertEquals(DocPos(16), last.from)
+        assertEquals(DocPos(19), last.to)
     }
 
     @Test
@@ -147,8 +148,8 @@ class SelectNextOccurrenceTest {
         // Should find the standalone "ar" at 5 (inside "bard") or at 9
         // "bar bard ar art" -> positions: b=0,a=1,r=2, =3,b=4,a=5,r=6,d=7, =8,a=9,r=10, =11,a=12,r=13,t=14
         // "ar" at 1-3 (already selected), next "ar" at 5-7 (in "bard")
-        assertEquals(5, ranges[1].from)
-        assertEquals(7, ranges[1].to)
+        assertEquals(DocPos(5), ranges[1].from)
+        assertEquals(DocPos(7), ranges[1].to)
     }
 
     @Test

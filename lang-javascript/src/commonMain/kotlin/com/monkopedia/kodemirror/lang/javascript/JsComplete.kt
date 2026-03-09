@@ -25,6 +25,7 @@ import com.monkopedia.kodemirror.autocomplete.CompletionSource
 import com.monkopedia.kodemirror.language.syntaxTree
 import com.monkopedia.kodemirror.lezer.common.NodeWeakMap
 import com.monkopedia.kodemirror.lezer.common.SyntaxNode
+import com.monkopedia.kodemirror.state.DocPos
 
 private val Identifier = Regex("[\\w$\\xa1-\\uffff]+")
 
@@ -74,7 +75,7 @@ private val ScopeNodes = setOf(
 data class CompletionPathResult(
     val path: List<String>,
     val name: String,
-    val from: Int
+    val from: DocPos
 )
 
 /**
@@ -85,14 +86,14 @@ data class CompletionPathResult(
  * Returns `null` when the cursor isn't in a completable position.
  */
 fun completionPath(context: CompletionContext): CompletionPathResult? {
-    val inner = syntaxTree(context.state).resolveInner(context.pos, -1)
+    val inner = syntaxTree(context.state).resolveInner(context.pos.value, -1)
     if (dontComplete.contains(inner.name)) return null
     val isWord = inner.name == "VariableName" ||
-        inner.name == "MemberExpression" && inner.to == context.pos
+        inner.name == "MemberExpression" && inner.to == context.pos.value
     if (!isWord && !context.explicit) return null
 
     val textBefore = context.state.doc.sliceString(
-        maxOf(0, context.pos - 500),
+        maxOf(DocPos.ZERO, context.pos - 500),
         context.pos
     )
     val match = Regex("[\\w$\\xa1-\\uffff]*$").find(textBefore)
@@ -102,15 +103,15 @@ fun completionPath(context: CompletionContext): CompletionPathResult? {
     val path = mutableListOf<String>()
     var scanPos = context.pos - matchText.length
     while (true) {
-        val dotBefore = if (scanPos > 0) {
+        val dotBefore = if (scanPos > DocPos.ZERO) {
             context.state.doc.sliceString(scanPos - 1, scanPos)
         } else {
             ""
         }
         if (dotBefore != ".") break
-        scanPos--
+        scanPos -= 1
         val idBefore = context.state.doc.sliceString(
-            maxOf(0, scanPos - 500),
+            maxOf(DocPos.ZERO, scanPos - 500),
             scanPos
         )
         val idMatch = Regex("[\\w$\\xa1-\\uffff]*$").find(idBefore)
@@ -186,7 +187,7 @@ private fun addName(
     seen: MutableSet<String>,
     type: String
 ) {
-    val name = doc.sliceString(node.from, node.to)
+    val name = doc.sliceString(DocPos(node.from), DocPos(node.to))
     if (name.isNotEmpty() && seen.add(name)) {
         completions.add(Completion(label = name, type = type))
     }
@@ -201,12 +202,12 @@ private val cache = NodeWeakMap<List<Completion>>()
  * boundaries.
  */
 val localCompletionSource: CompletionSource = { context ->
-    val inner = syntaxTree(context.state).resolveInner(context.pos, -1)
+    val inner = syntaxTree(context.state).resolveInner(context.pos.value, -1)
     if (dontComplete.contains(inner.name)) {
         null
     } else {
         val isWord = inner.name == "VariableName" ||
-            inner.to == context.pos && (
+            inner.to == context.pos.value && (
                 inner.name == "MemberExpression" ||
                     inner.name == "PropertyName"
                 )
@@ -231,7 +232,7 @@ val localCompletionSource: CompletionSource = { context ->
             if (options != null) {
                 CompletionResult(
                     from = if (isWord) {
-                        inner.from
+                        DocPos(inner.from)
                     } else {
                         context.pos
                     },

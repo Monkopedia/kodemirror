@@ -97,7 +97,7 @@ open class ChangeDesc internal constructor(
      * [posA] provides the position of the range in the old document,
      * [posB] the new position in the changed document.
      */
-    fun iterGaps(f: (posA: Int, posB: Int, length: Int) -> Unit) {
+    fun iterGaps(f: (posA: DocPos, posB: DocPos, length: Int) -> Unit) {
         var i = 0
         var posA = 0
         var posB = 0
@@ -105,7 +105,7 @@ open class ChangeDesc internal constructor(
             val len = sections[i++]
             val ins = sections[i++]
             if (ins < 0) {
-                f(posA, posB, len)
+                f(DocPos(posA), DocPos(posB), len)
                 posB += len
             } else {
                 posB += ins
@@ -121,10 +121,16 @@ open class ChangeDesc internal constructor(
      * separately.
      */
     fun iterChangedRanges(
-        f: (fromA: Int, toA: Int, fromB: Int, toB: Int) -> Unit,
+        f: (fromA: DocPos, toA: DocPos, fromB: DocPos, toB: DocPos) -> Unit,
         individual: Boolean = false
     ) {
-        iterChanges(this, f, individual)
+        iterChanges(
+            this,
+            { fromA, toA, fromB, toB ->
+                f(DocPos(fromA), DocPos(toA), DocPos(fromB), DocPos(toB))
+            },
+            individual
+        )
     }
 
     /**
@@ -170,13 +176,15 @@ open class ChangeDesc internal constructor(
      * Map a given position through these changes, to produce a
      * position pointing into the new document.
      */
-    fun mapPos(pos: Int, assoc: Int = -1): Int = mapPosInner(pos, assoc, MapMode.Simple)!!
+    fun mapPos(pos: DocPos, assoc: Int = -1): DocPos =
+        DocPos(mapPosInner(pos.value, assoc, MapMode.Simple)!!)
 
     /**
      * Map a given position through these changes. Returns null if
      * the position was deleted according to the given [mode].
      */
-    fun mapPos(pos: Int, assoc: Int, mode: MapMode): Int? = mapPosInner(pos, assoc, mode)
+    fun mapPos(pos: DocPos, assoc: Int, mode: MapMode): DocPos? =
+        mapPosInner(pos.value, assoc, mode)?.let { DocPos(it) }
 
     private fun mapPosInner(pos: Int, assoc: Int, mode: MapMode): Int? {
         var posA = 0
@@ -227,15 +235,15 @@ open class ChangeDesc internal constructor(
      * the changes entirely covers the range, the string "cover" is
      * returned.
      */
-    fun touchesRange(from: Int, to: Int = from): TouchesResult {
+    fun touchesRange(from: DocPos, to: DocPos = from): TouchesResult {
         var i = 0
         var pos = 0
-        while (i < sections.size && pos <= to) {
+        while (i < sections.size && pos <= to.value) {
             val len = sections[i++]
             val ins = sections[i++]
             val end = pos + len
-            if (ins >= 0 && pos <= to && end >= from) {
-                return if (pos < from && end > to) {
+            if (ins >= 0 && pos <= to.value && end >= from.value) {
+                return if (pos < from.value && end > to.value) {
                     TouchesResult.Cover
                 } else {
                     TouchesResult.Yes
@@ -299,8 +307,8 @@ enum class TouchesResult {
  */
 sealed interface ChangeSpec {
     data class Single(
-        val from: Int,
-        val to: Int? = null,
+        val from: DocPos,
+        val to: DocPos? = null,
         val insert: InsertContent? = null
     ) : ChangeSpec
 
@@ -352,7 +360,7 @@ class ChangeSet private constructor(
             this,
             { fromA, toA, fromB, _, text ->
                 result = result.replace(
-                    fromB, fromB + (toA - fromA), text
+                    DocPos(fromB), DocPos(fromB + (toA - fromA)), text
                 )
             },
             false
@@ -389,7 +397,7 @@ class ChangeSet private constructor(
                 }
                 newInserted.add(
                     if (len > 0) {
-                        doc.slice(pos, pos + len)
+                        doc.slice(DocPos(pos), DocPos(pos + len))
                     } else {
                         Text.empty
                     }
@@ -430,15 +438,21 @@ class ChangeSet private constructor(
      */
     fun iterChanges(
         f: (
-            fromA: Int,
-            toA: Int,
-            fromB: Int,
-            toB: Int,
+            fromA: DocPos,
+            toA: DocPos,
+            fromB: DocPos,
+            toB: DocPos,
             inserted: Text
         ) -> Unit,
         individual: Boolean = false
     ) {
-        iterChanges(this, f, individual)
+        iterChanges(
+            this,
+            { fromA, toA, fromB, toB, text ->
+                f(DocPos(fromA), DocPos(toA), DocPos(fromB), DocPos(toB), text)
+            },
+            individual
+        )
     }
 
     /**
@@ -579,8 +593,8 @@ class ChangeSet private constructor(
                         ) ?: spec.changeSet
                     }
                     is ChangeSpec.Single -> {
-                        val from = spec.from
-                        val to = spec.to ?: from
+                        val from = spec.from.value
+                        val to = spec.to?.value ?: from
                         if (from > to || from < 0 || to > length) {
                             throw IllegalArgumentException(
                                 "Invalid change range $from to " +
@@ -976,8 +990,8 @@ internal class SectionIter(private val set: ChangeDesc) {
             Text.empty
         } else {
             changeSet.inserted[index].slice(
-                off,
-                if (len == null) Int.MAX_VALUE else off + len
+                DocPos(off),
+                if (len == null) DocPos(Int.MAX_VALUE) else DocPos(off + len)
             )
         }
     }

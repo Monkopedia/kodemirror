@@ -23,6 +23,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.runDesktopComposeUiTest
 import com.monkopedia.kodemirror.language.foldGutter
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
@@ -51,7 +52,7 @@ class SelectionScreenshotTest {
                         doc = doc.asDoc(),
                         selection = SelectionSpec.EditorSelectionSpec(
                             EditorSelection.create(
-                                listOf(EditorSelection.range(anchor, head))
+                                listOf(EditorSelection.range(DocPos(anchor), DocPos(head)))
                             )
                         ),
                         extensions = ExtensionList(

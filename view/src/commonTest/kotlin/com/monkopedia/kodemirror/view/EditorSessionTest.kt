@@ -18,6 +18,7 @@
  */
 package com.monkopedia.kodemirror.view
 
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.TransactionSpec
@@ -49,8 +50,8 @@ class EditorSessionTest {
         view.dispatch(
             TransactionSpec(
                 changes = com.monkopedia.kodemirror.state.ChangeSpec.Single(
-                    5,
-                    5,
+                    DocPos(5),
+                    DocPos(5),
                     com.monkopedia.kodemirror.state.InsertContent.StringContent(" world")
                 )
             )
@@ -127,8 +128,8 @@ class EditorSessionTest {
         val tr = state.update(
             TransactionSpec(
                 changes = com.monkopedia.kodemirror.state.ChangeSpec.Single(
-                    2,
-                    2,
+                    DocPos(2),
+                    DocPos(2),
                     com.monkopedia.kodemirror.state.InsertContent.StringContent("!")
                 )
             )

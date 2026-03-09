@@ -310,7 +310,7 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                                     if (hasGutters) {
                                         GutterView(
                                             session = session,
-                                            lineNumber = item.lineNumber,
+                                            lineNumber = item.lineNumber.value,
                                             modifier = Modifier.width(gutterWidthDp)
                                         )
                                     }
@@ -320,8 +320,8 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                                             .then(contentExtraModifier)
                                             .drawSelectionOverlay(
                                                 state,
-                                                item.from,
-                                                item.to,
+                                                item.from.value,
+                                                item.to.value,
                                                 theme,
                                                 textLayout
                                             )
@@ -332,8 +332,8 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                                             onTextLayout = { result: TextLayoutResult ->
                                                 textLayout = result
                                                 lineLayoutCache.store(
-                                                    capturedLineNum,
-                                                    capturedFrom,
+                                                    capturedLineNum.value,
+                                                    capturedFrom.value,
                                                     capturedTop,
                                                     result
                                                 )

@@ -211,7 +211,9 @@ fun handleTap(view: EditorSession, offset: Offset) {
     val pos = view.posAtCoords(offset.x, offset.y) ?: return
     view.dispatch(
         com.monkopedia.kodemirror.state.TransactionSpec(
-            selection = com.monkopedia.kodemirror.state.SelectionSpec.CursorSpec(pos)
+            selection = com.monkopedia.kodemirror.state.SelectionSpec.CursorSpec(
+                com.monkopedia.kodemirror.state.DocPos(pos)
+            )
         )
     )
 }
@@ -229,7 +231,10 @@ fun handleDrag(view: EditorSession, start: Offset, current: Offset) {
     view.dispatch(
         com.monkopedia.kodemirror.state.TransactionSpec(
             selection = com.monkopedia.kodemirror.state.SelectionSpec.EditorSelectionSpec(
-                com.monkopedia.kodemirror.state.EditorSelection.single(anchor, head)
+                com.monkopedia.kodemirror.state.EditorSelection.single(
+                    com.monkopedia.kodemirror.state.DocPos(anchor),
+                    com.monkopedia.kodemirror.state.DocPos(head)
+                )
             )
         )
     )
@@ -250,11 +255,14 @@ fun handleRectangularDrag(view: EditorSession, start: Offset, current: Offset) {
     val startPos = view.posAtCoords(start.x, start.y) ?: return
     val currentPos = view.posAtCoords(current.x, current.y) ?: return
 
-    val startLine = doc.lineAt(startPos)
-    val currentLine = doc.lineAt(currentPos)
+    val startDocPos = com.monkopedia.kodemirror.state.DocPos(startPos)
+    val currentDocPos = com.monkopedia.kodemirror.state.DocPos(currentPos)
 
-    val startCol = startPos - startLine.from
-    val currentCol = currentPos - currentLine.from
+    val startLine = doc.lineAt(startDocPos)
+    val currentLine = doc.lineAt(currentDocPos)
+
+    val startCol = startDocPos - startLine.from
+    val currentCol = currentDocPos - currentLine.from
 
     val minLineNum = minOf(startLine.number, currentLine.number)
     val maxLineNum = maxOf(startLine.number, currentLine.number)
@@ -262,8 +270,8 @@ fun handleRectangularDrag(view: EditorSession, start: Offset, current: Offset) {
     val maxCol = maxOf(startCol, currentCol)
 
     val ranges = mutableListOf<com.monkopedia.kodemirror.state.SelectionRange>()
-    for (lineNum in minLineNum..maxLineNum) {
-        val line = doc.line(lineNum)
+    for (lineNum in minLineNum.value..maxLineNum.value) {
+        val line = doc.line(com.monkopedia.kodemirror.state.LineNumber(lineNum))
         val lineLen = line.text.length
         val from = line.from + minOf(minCol, lineLen)
         val to = line.from + minOf(maxCol, lineLen)

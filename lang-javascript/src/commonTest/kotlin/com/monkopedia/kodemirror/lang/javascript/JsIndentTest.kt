@@ -20,6 +20,7 @@ package com.monkopedia.kodemirror.lang.javascript
 
 import com.monkopedia.kodemirror.language.getIndentation
 import com.monkopedia.kodemirror.language.indentUnit
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.ExtensionList
@@ -44,7 +45,7 @@ class JsIndentTest {
         var pos = 0
         for ((i, line) in lines.withIndex()) {
             val expectedIndent = line.takeWhile { it == ' ' }.length
-            val actual = getIndentation(state, pos)
+            val actual = getIndentation(state, DocPos(pos))
             assertEquals(
                 expectedIndent,
                 actual,

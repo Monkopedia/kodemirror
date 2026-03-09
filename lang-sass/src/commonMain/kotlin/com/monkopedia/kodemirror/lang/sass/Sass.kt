@@ -28,6 +28,7 @@ import com.monkopedia.kodemirror.language.foldInside
 import com.monkopedia.kodemirror.language.foldNodeProp
 import com.monkopedia.kodemirror.language.indentNodeProp
 import com.monkopedia.kodemirror.lezer.lr.ParserConfig
+import com.monkopedia.kodemirror.state.DocPos
 
 /**
  * A language provider based on the Lezer Sass parser, extended with
@@ -41,10 +42,10 @@ val sassLanguage: LRLanguage = LRLanguage.define(
                     when (type.name) {
                         "Block" -> { node, _ -> foldInside(node) }
                         "Comment" -> { node, state ->
-                            val text = state.doc.sliceString(node.to - 2, node.to)
+                            val text = state.doc.sliceString(DocPos(node.to - 2), DocPos(node.to))
                             FoldRange(
-                                node.from + 2,
-                                if (text == "*/") node.to - 2 else node.to
+                                DocPos(node.from + 2),
+                                if (text == "*/") DocPos(node.to - 2) else DocPos(node.to)
                             )
                         }
                         else -> null

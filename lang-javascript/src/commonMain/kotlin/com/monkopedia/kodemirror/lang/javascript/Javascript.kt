@@ -35,6 +35,7 @@ import com.monkopedia.kodemirror.language.getIndentUnit
 import com.monkopedia.kodemirror.language.indentNodeProp
 import com.monkopedia.kodemirror.lezer.common.NodePropSource
 import com.monkopedia.kodemirror.lezer.lr.ParserConfig
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList
 
@@ -59,11 +60,11 @@ private val jsIndentProp: NodePropSource<*> = indentNodeProp.add { type ->
             { _ -> null }
         type.name == "JSXElement" -> { cx ->
             val closed = Regex("""^\s*</""").containsMatchIn(cx.textAfter)
-            cx.lineIndent(cx.node.from) + if (closed) 0 else cx.unit
+            cx.lineIndent(DocPos(cx.node.from)) + if (closed) 0 else cx.unit
         }
         type.name == "JSXEscape" -> { cx ->
             val closed = Regex("""\s*\}""").containsMatchIn(cx.textAfter)
-            cx.lineIndent(cx.node.from) + if (closed) 0 else cx.unit
+            cx.lineIndent(DocPos(cx.node.from)) + if (closed) 0 else cx.unit
         }
         type.name == "JSXOpenTag" || type.name == "JSXSelfClosingTag" -> { cx ->
             cx.column(cx.node.from) + cx.unit
@@ -82,7 +83,7 @@ private val jsFoldProp: NodePropSource<*> = foldNodeProp.add { type ->
             { node, _ -> foldInside(node) }
         "BlockComment" -> { node, _ ->
             if (node.to - node.from > 4) {
-                FoldRange(node.from + 2, node.to - 2)
+                FoldRange(DocPos(node.from + 2), DocPos(node.to - 2))
             } else {
                 null
             }
@@ -92,7 +93,7 @@ private val jsFoldProp: NodePropSource<*> = foldNodeProp.add { type ->
             if (open.name == "JSXSelfClosingTag") return@add null
             val close = node.lastChild ?: return@add null
             val to = if (close.type.isError) node.to else close.from
-            FoldRange(open.to, to)
+            FoldRange(DocPos(open.to), DocPos(to))
         }
         "JSXSelfClosingTag", "JSXOpenTag" -> { node, _ ->
             val name = node.firstChild?.nextSibling
@@ -101,7 +102,7 @@ private val jsFoldProp: NodePropSource<*> = foldNodeProp.add { type ->
                 null
             } else {
                 val to = if (close.type.isError) node.to else close.from
-                FoldRange(name.to, to)
+                FoldRange(DocPos(name.to), DocPos(to))
             }
         }
         else -> null

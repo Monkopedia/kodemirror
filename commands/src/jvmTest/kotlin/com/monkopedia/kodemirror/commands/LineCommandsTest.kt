@@ -18,6 +18,7 @@
  */
 package com.monkopedia.kodemirror.commands
 
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.SelectionSpec
@@ -32,7 +33,7 @@ class LineCommandsTest {
         val state = EditorState.create(
             EditorStateConfig(
                 doc = doc.asDoc(),
-                selection = SelectionSpec.CursorSpec(cursor)
+                selection = SelectionSpec.CursorSpec(DocPos(cursor))
             )
         )
         return EditorSession(state)

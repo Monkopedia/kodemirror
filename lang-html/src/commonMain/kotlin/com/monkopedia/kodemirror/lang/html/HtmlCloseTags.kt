@@ -20,6 +20,7 @@ package com.monkopedia.kodemirror.lang.html
 
 import com.monkopedia.kodemirror.language.syntaxTree
 import com.monkopedia.kodemirror.state.ChangeSpec
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.SelectionSpec
@@ -76,12 +77,12 @@ val autoCloseTags: Extension = transactionFilter.of { tr ->
 
 private fun handleCloseAngle(
     tr: Transaction,
-    pos: Int,
+    pos: DocPos,
     state: com.monkopedia.kodemirror.state.EditorState,
     doc: Text
 ): TransactionFilterResult {
     val tree = syntaxTree(state)
-    val after = tree.resolveInner(pos, -1)
+    val after = tree.resolveInner(pos.value, -1)
 
     // Look for EndTag (the `>` at the end of an open tag)
     if (after.name != "EndTag") return TransactionFilterResult.Filtered(tr)
@@ -94,7 +95,7 @@ private fun handleCloseAngle(
         return TransactionFilterResult.Filtered(tr)
     }
 
-    val name = elementName(doc, element, pos)
+    val name = elementName(doc, element, pos.value)
     if (name.isEmpty() || selfClosingTags.contains(name)) {
         return TransactionFilterResult.Filtered(tr)
     }
@@ -117,12 +118,12 @@ private fun handleCloseAngle(
 
 private fun handleSlash(
     tr: Transaction,
-    pos: Int,
+    pos: DocPos,
     state: com.monkopedia.kodemirror.state.EditorState,
     doc: Text
 ): TransactionFilterResult {
     val tree = syntaxTree(state)
-    val after = tree.resolveInner(pos, -1)
+    val after = tree.resolveInner(pos.value, -1)
 
     // Look for IncompleteCloseTag (the `</` that starts a close tag)
     if (after.name != "IncompleteCloseTag") {
@@ -132,14 +133,14 @@ private fun handleSlash(
     val tag = after.parent ?: return TransactionFilterResult.Filtered(tr)
 
     // Make sure we're at the right position (just typed `/` after `<`)
-    if (after.from != pos - 1) return TransactionFilterResult.Filtered(tr)
+    if (after.from != pos.value - 1) return TransactionFilterResult.Filtered(tr)
 
     // Check that this element doesn't already have a CloseTag
     if (tag.lastChild?.name == "CloseTag") {
         return TransactionFilterResult.Filtered(tr)
     }
 
-    val name = elementName(doc, tag, pos)
+    val name = elementName(doc, tag, pos.value)
     if (name.isEmpty() || selfClosingTags.contains(name)) {
         return TransactionFilterResult.Filtered(tr)
     }
@@ -172,14 +173,14 @@ private fun elementName(
     if (tree == null) return ""
     val tag = tree.firstChild ?: return ""
     val name = tag.getChild("TagName") ?: return ""
-    return doc.sliceString(name.from, minOf(name.to, max))
+    return doc.sliceString(DocPos(name.from), DocPos(minOf(name.to, max)))
 }
 
 private fun getInsertedText(changes: com.monkopedia.kodemirror.state.ChangeSet): String? {
     var result: String? = null
     changes.iterChanges(
         f = { _, _, _, _, inserted ->
-            val text = inserted.sliceString(0)
+            val text = inserted.sliceString(DocPos.ZERO)
             if (text.isNotEmpty()) {
                 result = text
             }

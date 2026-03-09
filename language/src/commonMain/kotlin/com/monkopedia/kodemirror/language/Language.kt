@@ -22,6 +22,7 @@ import com.monkopedia.kodemirror.lezer.common.Input
 import com.monkopedia.kodemirror.lezer.common.NodeProp
 import com.monkopedia.kodemirror.lezer.common.Parser
 import com.monkopedia.kodemirror.lezer.common.Tree
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList
@@ -155,11 +156,11 @@ class DocInput(private val doc: Text) : Input {
         // Return a chunk starting at pos. Use sliceString to read a
         // reasonably-sized chunk without copying the whole document.
         val chunkSize = minOf(1024, doc.length - pos)
-        return doc.sliceString(pos, pos + chunkSize)
+        return doc.sliceString(DocPos(pos), DocPos(pos + chunkSize))
     }
 
     override fun read(from: Int, to: Int): String {
-        return doc.sliceString(from, to)
+        return doc.sliceString(DocPos(from), DocPos(to))
     }
 
     override val lineChunks: Boolean get() = true

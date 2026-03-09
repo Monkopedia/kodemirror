@@ -25,13 +25,16 @@ import com.monkopedia.kodemirror.language.syntaxTree
 import com.monkopedia.kodemirror.state.ChangeByRangeResult
 import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.CharCategory
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.InsertContent
+import com.monkopedia.kodemirror.state.LineNumber
 import com.monkopedia.kodemirror.state.SelectionRange
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
+import com.monkopedia.kodemirror.state.endPos
 import com.monkopedia.kodemirror.state.findClusterBreak
 import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.groupAt
@@ -253,12 +256,12 @@ val cursorLineBoundaryRight: (EditorSession) -> Boolean = { view ->
 
 /** Move cursor to the start of the document. */
 val cursorDocStart: (EditorSession) -> Boolean = { view ->
-    updateSel(view) { _, _ -> EditorSelection.cursor(0) }
+    updateSel(view) { _, _ -> EditorSelection.cursor(DocPos.ZERO) }
 }
 
 /** Move cursor to the end of the document. */
 val cursorDocEnd: (EditorSession) -> Boolean = { view ->
-    updateSel(view) { _, _ -> EditorSelection.cursor(view.state.doc.length) }
+    updateSel(view) { _, _ -> EditorSelection.cursor(view.state.doc.endPos) }
 }
 
 /** Move cursor one page up (approximately 20 lines). */
@@ -476,14 +479,14 @@ val selectPageDown: (EditorSession) -> Boolean = { view ->
 /** Extend selection to the start of the document. */
 val selectDocStart: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
-        EditorSelection.range(sel.anchor, 0)
+        EditorSelection.range(sel.anchor, DocPos.ZERO)
     }
 }
 
 /** Extend selection to the end of the document. */
 val selectDocEnd: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
-        EditorSelection.range(sel.anchor, view.state.doc.length)
+        EditorSelection.range(sel.anchor, view.state.doc.endPos)
     }
 }
 
@@ -492,7 +495,7 @@ val selectAll: (EditorSession) -> Boolean = { view ->
     view.dispatch(
         TransactionSpec(
             selection = SelectionSpec.EditorSelectionSpec(
-                EditorSelection.single(0, view.state.doc.length)
+                EditorSelection.single(DocPos.ZERO, view.state.doc.endPos)
             ),
             userEvent = "select"
         )
@@ -506,7 +509,7 @@ val selectLine: (EditorSession) -> Boolean = { view ->
     val newRanges = state.selection.ranges.map { sel ->
         val startLine = state.doc.lineAt(sel.from)
         val endLine = state.doc.lineAt(sel.to)
-        val to = if (endLine.number < state.doc.lines) {
+        val to = if (endLine.number.value < state.doc.lines) {
             endLine.to + 1 // include line break
         } else {
             endLine.to
@@ -543,7 +546,7 @@ val deleteCharForward: (EditorSession) -> Boolean = { view ->
         val lineOffset = sel.head - line.from
         if (lineOffset >= line.text.length) {
             // At end of line, delete the line break
-            (sel.head + 1).coerceAtMost(state.doc.length)
+            (sel.head + 1).coerceAtMost(state.doc.endPos)
         } else {
             val nextOffset = findClusterBreak(line.text, lineOffset, forward = true)
             line.from + nextOffset
@@ -572,7 +575,7 @@ val deleteGroupBackward: (EditorSession) -> Boolean = { view ->
     deleteBy(view, forward = false) { state, sel ->
         var pos = sel.head
         val startGroup = groupAt(state, pos, -1)
-        while (pos > 0) {
+        while (pos > DocPos.ZERO) {
             val prev = pos - 1
             val group = groupAt(state, prev, -1)
             if (group != startGroup) break
@@ -586,9 +589,9 @@ val deleteGroupBackward: (EditorSession) -> Boolean = { view ->
 val deleteGroupForward: (EditorSession) -> Boolean = { view ->
     deleteBy(view, forward = true) { state, sel ->
         var pos = sel.head
-        val len = state.doc.length
+        val endPos = state.doc.endPos
         val startGroup = groupAt(state, pos, 1)
-        while (pos < len) {
+        while (pos < endPos) {
             val next = pos + 1
             val group = groupAt(state, next, 1)
             if (group != startGroup) break
@@ -657,15 +660,15 @@ val deleteLine: (EditorSession) -> Boolean = { view ->
             val startLine = state.doc.lineAt(sel.from)
             val endLine = if (sel.empty) startLine else state.doc.lineAt(sel.to)
             val from = startLine.from
-            val to = if (endLine.number < state.doc.lines) {
+            val to = if (endLine.number.value < state.doc.lines) {
                 endLine.to + 1 // include line break
-            } else if (startLine.number > 1) {
+            } else if (startLine.number > LineNumber.FIRST) {
                 startLine.from - 1 // delete preceding line break
             } else {
                 endLine.to
             }
             ChangeByRangeResult(
-                range = EditorSelection.cursor(from.coerceAtMost(state.doc.length)),
+                range = EditorSelection.cursor(from.coerceAtMost(state.doc.endPos)),
                 changes = ChangeSpec.Single(from, to)
             )
         }
@@ -694,7 +697,7 @@ val deleteTrailingWhitespace: (EditorSession) -> Boolean = { view ->
         val trailingWs = Regex("\\s+$")
         val changes = mutableListOf<ChangeSpec>()
         for (i in 1..state.doc.lines) {
-            val line = state.doc.line(i)
+            val line = state.doc.line(LineNumber(i))
             val match = trailingWs.find(line.text)
             if (match != null) {
                 changes.add(
@@ -723,7 +726,7 @@ val deleteTrailingWhitespace: (EditorSession) -> Boolean = { view ->
 private fun deleteBy(
     view: EditorSession,
     forward: Boolean,
-    target: (EditorState, SelectionRange) -> Int
+    target: (EditorState, SelectionRange) -> DocPos
 ): Boolean {
     val state = view.state
     if (state.readOnly) return false
@@ -741,9 +744,9 @@ private fun deleteBy(
             if (from == to) {
                 // Handle cross-line deletion for backspace at line start
                 val crossLine = if (forward) {
-                    (sel.head + 1).coerceAtMost(state.doc.length)
+                    (sel.head + 1).coerceAtMost(state.doc.endPos)
                 } else {
-                    (sel.head - 1).coerceAtLeast(0)
+                    (sel.head - 1).coerceAtLeast(DocPos.ZERO)
                 }
                 if (crossLine == sel.head) {
                     ChangeByRangeResult(range = sel)
@@ -885,7 +888,7 @@ val transposeChars: (EditorSession) -> Boolean = { view ->
         false
     } else {
         val spec = state.changeByRange { sel ->
-            if (!sel.empty || sel.from == 0 || sel.from >= state.doc.length) {
+            if (!sel.empty || sel.from == DocPos.ZERO || sel.from >= state.doc.endPos) {
                 ChangeByRangeResult(range = sel)
             } else {
                 val pos = sel.from
@@ -1057,8 +1060,8 @@ val cursorMatchingBracket: (EditorSession) -> Boolean = { view ->
         val pos = sel.head
         val state = view.state
         // Try character before cursor
-        val before = if (pos > 0) matchBrackets(state, pos - 1, -1) else null
-        val after = if (pos < state.doc.length) matchBrackets(state, pos, 1) else null
+        val before = if (pos > DocPos.ZERO) matchBrackets(state, pos - 1, -1) else null
+        val after = if (pos < state.doc.endPos) matchBrackets(state, pos, 1) else null
         val match = before ?: after
         val end = match?.end
         if (end != null) {
@@ -1074,8 +1077,8 @@ val selectMatchingBracket: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         val pos = sel.head
         val state = view.state
-        val before = if (pos > 0) matchBrackets(state, pos - 1, -1) else null
-        val after = if (pos < state.doc.length) matchBrackets(state, pos, 1) else null
+        val before = if (pos > DocPos.ZERO) matchBrackets(state, pos - 1, -1) else null
+        val after = if (pos < state.doc.endPos) matchBrackets(state, pos, 1) else null
         val match = before ?: after
         val end = match?.end
         if (end != null) {
@@ -1094,15 +1097,15 @@ val selectParentSyntax: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         val state = view.state
         val tree = syntaxTree(state)
-        var node = tree.resolveInner(sel.head, 1)
+        var node = tree.resolveInner(sel.head.value, 1)
         // Find a node that's larger than the current selection
         while (node.parent != null) {
-            if (node.from < sel.from || node.to > sel.to) {
+            if (node.from < sel.from.value || node.to > sel.to.value) {
                 break
             }
             node = node.parent ?: break
         }
-        EditorSelection.range(node.from, node.to)
+        EditorSelection.range(DocPos(node.from), DocPos(node.to))
     }
 }
 
@@ -1139,10 +1142,11 @@ val selectNextOccurrence: (EditorSession) -> Boolean = { view ->
         val existingRanges = state.selection.ranges
 
         // Search forward from the end of the current main selection
-        var found: Pair<Int, Int>? = null
+        var found: Pair<DocPos, DocPos>? = null
         val searchStart = sel.to
         // Search from current position to end of document
-        for (pos in searchStart..docLen - searchText.length) {
+        for (i in searchStart.value..docLen - searchText.length) {
+            val pos = DocPos(i)
             if (state.sliceDoc(pos, pos + searchText.length) == searchText) {
                 // Make sure this range doesn't overlap an existing selection
                 val overlaps = existingRanges.any { r ->
@@ -1156,8 +1160,9 @@ val selectNextOccurrence: (EditorSession) -> Boolean = { view ->
         }
         // Wrap around if not found
         if (found == null) {
-            for (pos in 0..searchStart - 1) {
-                if (pos + searchText.length > docLen) break
+            for (i in 0..searchStart.value - 1) {
+                val pos = DocPos(i)
+                if (i + searchText.length > docLen) break
                 if (state.sliceDoc(pos, pos + searchText.length) == searchText) {
                     val overlaps = existingRanges.any { r ->
                         pos < r.to && pos + searchText.length > r.from
@@ -1209,7 +1214,7 @@ private fun byCharLogical(
     val newOffset = if (forward) {
         if (lineOffset >= line.text.length) {
             // At end of line, move to start of next line
-            if (sel.head >= state.doc.length) return sel
+            if (sel.head >= state.doc.endPos) return sel
             val nextLine = state.doc.lineAt(sel.head + 1)
             val head = nextLine.from
             val anchor = if (extend) sel.anchor else head
@@ -1224,7 +1229,7 @@ private fun byCharLogical(
     } else {
         if (lineOffset <= 0) {
             // At start of line, move to end of previous line
-            if (sel.head <= 0) return sel
+            if (sel.head <= DocPos.ZERO) return sel
             val prevLine = state.doc.lineAt(sel.head - 1)
             val head = prevLine.to
             val anchor = if (extend) sel.anchor else head
@@ -1257,7 +1262,7 @@ private fun moveToGroupStart(
     forward: Boolean,
     extend: Boolean
 ): SelectionRange {
-    val len = state.doc.length
+    val endPos = state.doc.endPos
     var pos = sel.head
     val dir = if (forward) 1 else -1
 
@@ -1265,7 +1270,7 @@ private fun moveToGroupStart(
     val startGroup = groupAt(state, pos, dir)
     while (true) {
         val next = pos + dir
-        if (next < 0 || next > len) break
+        if (next < DocPos.ZERO || next > endPos) break
         val group = groupAt(state, next, -dir)
         if (group != startGroup) break
         pos = next
@@ -1274,7 +1279,7 @@ private fun moveToGroupStart(
     // Then skip past any whitespace
     while (true) {
         val next = pos + dir
-        if (next < 0 || next > len) break
+        if (next < DocPos.ZERO || next > endPos) break
         val group = groupAt(state, next, -dir)
         if (group != CharCategory.Space) break
         pos = next
@@ -1303,8 +1308,8 @@ private fun moveBySyntax(
     val pos = sel.head
 
     // Try bracket matching first
-    val before = if (pos > 0) matchBrackets(state, pos - 1, -1) else null
-    val after = if (pos < state.doc.length) matchBrackets(state, pos, 1) else null
+    val before = if (pos > DocPos.ZERO) matchBrackets(state, pos - 1, -1) else null
+    val after = if (pos < state.doc.endPos) matchBrackets(state, pos, 1) else null
     val bracketMatch = before ?: after
     if (bracketMatch?.end != null) {
         val target = bracketMatch.end!!.to
@@ -1318,13 +1323,13 @@ private fun moveBySyntax(
 
     // Walk the syntax tree to find the nearest enclosing node boundary
     val tree = syntaxTree(state)
-    var node = tree.resolveInner(pos, 1)
+    var node = tree.resolveInner(pos.value, 1)
     while (node.parent != null) {
-        if (forward && node.to > pos) break
-        if (!forward && node.from < pos) break
+        if (forward && node.to > pos.value) break
+        if (!forward && node.from < pos.value) break
         node = node.parent ?: break
     }
-    val target = if (forward) node.to else node.from
+    val target = DocPos(if (forward) node.to else node.from)
     if (target == pos) return sel
     val anchor = if (extend) sel.anchor else target
     return if (extend) {

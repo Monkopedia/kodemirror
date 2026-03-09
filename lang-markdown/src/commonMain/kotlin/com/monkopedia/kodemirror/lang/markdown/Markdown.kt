@@ -36,6 +36,7 @@ import com.monkopedia.kodemirror.lezer.markdown.Subscript
 import com.monkopedia.kodemirror.lezer.markdown.Superscript
 import com.monkopedia.kodemirror.lezer.markdown.markdownExtensionOf
 import com.monkopedia.kodemirror.lezer.markdown.markdownParser as baseParser
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.Extension
 
 private val data = defineLanguageFacet()
@@ -53,8 +54,8 @@ private val commonmark: MarkdownParser = baseParser.configure(
                         null
                     } else {
                         { tree, state ->
-                            val lineEnd = state.doc.lineAt(tree.from).to
-                            FoldRange(lineEnd, tree.to)
+                            val lineEnd = state.doc.lineAt(DocPos(tree.from)).to
+                            FoldRange(lineEnd, DocPos(tree.to))
                         }
                     }
                 },
@@ -94,13 +95,13 @@ private fun findSectionEnd(headerNode: SyntaxNode, level: Int): Int {
 }
 
 val headerIndent: Extension = foldService.of { state, start ->
-    var node: SyntaxNode? = syntaxTree(state).resolveInner(start, -1)
+    var node: SyntaxNode? = syntaxTree(state).resolveInner(start.value, -1)
     while (node != null) {
-        if (node.from < start) break
+        if (DocPos(node.from) < start) break
         val heading = node.type.prop(headingProp)
         if (heading != null) {
             val upto = findSectionEnd(node, heading)
-            if (upto > start) return@of FoldRange(start, upto)
+            if (DocPos(upto) > start) return@of FoldRange(start, DocPos(upto))
         }
         node = node.parent
     }
@@ -123,7 +124,7 @@ private val extended: MarkdownParser = commonmark.configure(
                     foldNodeProp.add { type ->
                         if (type.name == "Table") {
                             { tree, state ->
-                                FoldRange(state.doc.lineAt(tree.from).to, tree.to)
+                                FoldRange(state.doc.lineAt(DocPos(tree.from)).to, DocPos(tree.to))
                             }
                         } else {
                             null

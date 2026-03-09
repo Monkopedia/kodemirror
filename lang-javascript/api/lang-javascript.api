@@ -1,12 +1,12 @@
 public final class com/monkopedia/kodemirror/lang/javascript/CompletionPathResult {
-	public fun <init> (Ljava/util/List;Ljava/lang/String;I)V
+	public synthetic fun <init> (Ljava/util/List;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/util/List;
 	public final fun component2 ()Ljava/lang/String;
-	public final fun component3 ()I
-	public final fun copy (Ljava/util/List;Ljava/lang/String;I)Lcom/monkopedia/kodemirror/lang/javascript/CompletionPathResult;
-	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/lang/javascript/CompletionPathResult;Ljava/util/List;Ljava/lang/String;IILjava/lang/Object;)Lcom/monkopedia/kodemirror/lang/javascript/CompletionPathResult;
+	public final fun component3-8dfawaI ()I
+	public final fun copy-FKPuxTA (Ljava/util/List;Ljava/lang/String;I)Lcom/monkopedia/kodemirror/lang/javascript/CompletionPathResult;
+	public static synthetic fun copy-FKPuxTA$default (Lcom/monkopedia/kodemirror/lang/javascript/CompletionPathResult;Ljava/util/List;Ljava/lang/String;IILjava/lang/Object;)Lcom/monkopedia/kodemirror/lang/javascript/CompletionPathResult;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getFrom ()I
+	public final fun getFrom-8dfawaI ()I
 	public final fun getName ()Ljava/lang/String;
 	public final fun getPath ()Ljava/util/List;
 	public fun hashCode ()I

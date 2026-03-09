@@ -21,6 +21,7 @@ package com.monkopedia.kodemirror.language
 import com.monkopedia.kodemirror.lezer.common.NodeProp
 import com.monkopedia.kodemirror.lezer.common.SyntaxNode
 import com.monkopedia.kodemirror.state.ChangeSpec
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.Facet
@@ -37,7 +38,7 @@ import com.monkopedia.kodemirror.state.transactionFilter
  * function that, given an [IndentContext] and a position, returns
  * the desired indentation (in columns), or null if it has no opinion.
  */
-val indentService: Facet<(IndentContext, Int) -> Int?, List<(IndentContext, Int) -> Int?>> =
+val indentService: Facet<(IndentContext, DocPos) -> Int?, List<(IndentContext, DocPos) -> Int?>> =
     Facet.define()
 
 /**
@@ -78,16 +79,16 @@ fun indentString(state: EditorState, cols: Int): String {
  */
 open class IndentContext(
     val state: EditorState,
-    val simulateBreak: Int? = null,
+    val simulateBreak: DocPos? = null,
     val simulateDoubleBreak: Boolean = false
 ) {
     /** Get the text of a document line by position. */
-    fun lineAt(pos: Int, bias: Int = 1): Line {
+    fun lineAt(pos: DocPos, bias: Int = 1): Line {
         return state.doc.lineAt(pos)
     }
 
     /** Get the indentation column at the start of a line. */
-    fun lineIndent(pos: Int, bias: Int = 1): Int {
+    fun lineIndent(pos: DocPos, bias: Int = 1): Int {
         val line = lineAt(pos, bias)
         return countIndent(line.text, state.tabSize)
     }
@@ -105,8 +106,8 @@ open class IndentContext(
  */
 class TreeIndentContext(
     state: EditorState,
-    val pos: Int,
-    simulateBreak: Int? = null,
+    val pos: DocPos,
+    simulateBreak: DocPos? = null,
     simulateDoubleBreak: Boolean = false
 ) : IndentContext(state, simulateBreak, simulateDoubleBreak) {
     /**
@@ -114,13 +115,13 @@ class TreeIndentContext(
      * position, but updated by [indentFrom] to the node bearing the indent
      * strategy before the strategy function is called.
      */
-    var node: SyntaxNode = syntaxTree(state).resolveInner(pos)
+    var node: SyntaxNode = syntaxTree(state).resolveInner(pos.value)
         internal set
 
     /** Get the column of a given position. */
     fun column(pos: Int, bias: Int = 1): Int {
-        val line = state.doc.lineAt(pos)
-        val offset = pos - line.from
+        val line = state.doc.lineAt(DocPos(pos))
+        val offset = pos - line.from.value
         return countIndent(line.text.substring(0, offset), state.tabSize)
     }
 
@@ -133,11 +134,11 @@ class TreeIndentContext(
 
     /** The base indentation of the line the node starts on. */
     val baseIndent: Int
-        get() = lineIndent(node.from)
+        get() = lineIndent(DocPos(node.from))
 
     /** The base indentation from the node itself. */
     val baseIndentFor: (SyntaxNode) -> Int = { n ->
-        lineIndent(n.from)
+        lineIndent(DocPos(n.from))
     }
 
     /**
@@ -155,7 +156,7 @@ class TreeIndentContext(
  * Returns the desired indentation in columns, or null if no service
  * or strategy provides an answer.
  */
-fun getIndentation(state: EditorState, pos: Int): Int? {
+fun getIndentation(state: EditorState, pos: DocPos): Int? {
     val context = IndentContext(state)
     // Try indent services first
     for (service in state.facet(indentService)) {
@@ -176,7 +177,7 @@ private fun getTreeIndent(cx: TreeIndentContext): Int? {
     return indentFrom(cx.node, cx.pos, cx)
 }
 
-internal fun indentFrom(start: SyntaxNode?, pos: Int, cx: TreeIndentContext): Int? {
+internal fun indentFrom(start: SyntaxNode?, pos: DocPos, cx: TreeIndentContext): Int? {
     var node = start
     while (node != null) {
         val strategy = indentStrategy(node)
@@ -219,11 +220,11 @@ private fun bracketedAligned(context: TreeIndentContext): Pair<Int, Int>? {
     val openToken = tree.childAfter(tree.from) ?: return null
     val last = tree.lastChild
     val sim = context.simulateBreak
-    val openLine = context.state.doc.lineAt(openToken.from)
+    val openLine = context.state.doc.lineAt(DocPos(openToken.from))
     val lineEnd = if (sim == null || sim <= openLine.from) {
-        openLine.to
+        openLine.to.value
     } else {
-        minOf(openLine.to, sim)
+        minOf(openLine.to.value, sim.value)
     }
     var pos = openToken.to
     while (true) {
@@ -231,7 +232,7 @@ private fun bracketedAligned(context: TreeIndentContext): Pair<Int, Int>? {
         if (last != null && next.from >= last.from) return null
         if (!next.type.isSkipped) {
             if (next.from >= lineEnd) return null
-            val afterOpen = openLine.text.substring(openToken.to - openLine.from)
+            val afterOpen = openLine.text.substring(openToken.to - openLine.from.value)
             val space = afterOpen.takeWhile { it == ' ' }.length
             return Pair(openToken.from, openToken.to + space)
         }
@@ -253,7 +254,7 @@ internal fun delimitedStrategy(
             after.length >= space + closing.length &&
             after.substring(space, space + closing.length) == closing
         ) ||
-        closedAt == context.pos + space
+        closedAt == context.pos.value + space
     val aligned = if (align) bracketedAligned(context) else null
     if (aligned != null) {
         return if (closed) {
@@ -269,13 +270,13 @@ internal fun delimitedStrategy(
  * Generate a [ChangeSpec.Multi] that re-indents every line in the
  * given range.
  */
-fun indentRange(state: EditorState, from: Int, to: Int): ChangeSpec? {
+fun indentRange(state: EditorState, from: DocPos, to: DocPos): ChangeSpec? {
     val changes = mutableListOf<ChangeSpec>()
     val startLine = state.doc.lineAt(from)
     val endLine = state.doc.lineAt(to)
 
-    for (lineNum in startLine.number..endLine.number) {
-        val line = state.doc.line(lineNum)
+    for (lineNum in startLine.number.value..endLine.number.value) {
+        val line = state.doc.line(com.monkopedia.kodemirror.state.LineNumber(lineNum))
         val desired = getIndentation(state, line.from) ?: continue
         val current = countIndent(line.text, state.tabSize)
         if (current == desired) continue
@@ -376,9 +377,9 @@ val indentOnInput: Extension = transactionFilter.of { tr ->
     var changed = false
 
     for (range in state.selection.ranges) {
-        val pos = range.head
+        val pos: DocPos = range.head
         val line = state.doc.lineAt(pos)
-        val col = pos - line.from
+        val col: Int = pos - line.from
         val lineText = line.text
         val upToCursor = lineText.substring(0, minOf(col, lineText.length))
 

@@ -19,7 +19,9 @@
 package com.monkopedia.kodemirror.commands
 
 import com.monkopedia.kodemirror.state.ChangeSpec
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.InsertContent
+import com.monkopedia.kodemirror.state.LineNumber
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
@@ -61,12 +63,12 @@ private fun moveLines(view: EditorSession, forward: Boolean): Boolean {
     val startLine = state.doc.lineAt(sel.from)
     val endLine = state.doc.lineAt(sel.to)
 
-    if (forward && endLine.number >= state.doc.lines) return false
-    if (!forward && startLine.number <= 1) return false
+    if (forward && endLine.number.value >= state.doc.lines) return false
+    if (!forward && startLine.number <= LineNumber.FIRST) return false
 
     val changes: ChangeSpec
-    val newAnchor: Int
-    val newHead: Int
+    val newAnchor: DocPos
+    val newHead: DocPos
 
     if (forward) {
         val nextLine = state.doc.line(endLine.number + 1)
@@ -110,8 +112,8 @@ private fun moveLines(view: EditorSession, forward: Boolean): Boolean {
         TransactionSpec(
             changes = changes,
             selection = SelectionSpec.CursorSpec(
-                newAnchor.coerceAtLeast(0),
-                newHead.coerceAtLeast(0)
+                newAnchor.coerceAtLeast(DocPos.ZERO),
+                newHead.coerceAtLeast(DocPos.ZERO)
             ),
             scrollIntoView = true,
             userEvent = "move.line",
@@ -131,8 +133,8 @@ private fun copyLines(view: EditorSession, forward: Boolean): Boolean {
     val blockText = state.sliceDoc(startLine.from, endLine.to)
 
     val changes: ChangeSpec
-    val newAnchor: Int
-    val newHead: Int
+    val newAnchor: DocPos
+    val newHead: DocPos
 
     if (forward) {
         // Insert copy after the block
@@ -160,8 +162,8 @@ private fun copyLines(view: EditorSession, forward: Boolean): Boolean {
         TransactionSpec(
             changes = changes,
             selection = SelectionSpec.CursorSpec(
-                newAnchor.coerceAtLeast(0),
-                newHead.coerceAtLeast(0)
+                newAnchor.coerceAtLeast(DocPos.ZERO),
+                newHead.coerceAtLeast(DocPos.ZERO)
             ),
             scrollIntoView = true,
             userEvent = "input.copyline",

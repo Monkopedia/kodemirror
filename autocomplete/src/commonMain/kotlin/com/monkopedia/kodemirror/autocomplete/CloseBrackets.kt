@@ -19,6 +19,7 @@
 package com.monkopedia.kodemirror.autocomplete
 
 import com.monkopedia.kodemirror.state.ChangeSpec
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList
@@ -26,6 +27,7 @@ import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.TransactionFilterResult
 import com.monkopedia.kodemirror.state.TransactionSpec
+import com.monkopedia.kodemirror.state.endPos
 import com.monkopedia.kodemirror.state.transactionFilter
 import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.KeyBinding
@@ -92,7 +94,7 @@ fun closeBrackets(config: CloseBracketsConfig = CloseBracketsConfig()): Extensio
 
         if (closeBracket != null) {
             // Opening bracket: check if we should auto-close
-            val afterChar = if (pos < doc.length) {
+            val afterChar = if (pos < doc.endPos) {
                 doc.sliceString(pos, pos + 1).firstOrNull()
             } else {
                 null
@@ -120,7 +122,7 @@ fun closeBrackets(config: CloseBracketsConfig = CloseBracketsConfig()): Extensio
 
         // Skip over closing bracket if it's already there
         if (pairs.values.contains(ch)) {
-            val afterChar = if (pos < doc.length) {
+            val afterChar = if (pos < doc.endPos) {
                 doc.sliceString(pos, pos + 1).firstOrNull()
             } else {
                 null
@@ -147,7 +149,7 @@ fun closeBrackets(config: CloseBracketsConfig = CloseBracketsConfig()): Extensio
 val deleteBracketPair: (EditorSession) -> Boolean = { view ->
     val state = view.state
     val pos = state.selection.main.head
-    val result = if (pos > 0 && pos < state.doc.length) {
+    val result = if (pos > DocPos.ZERO && pos < state.doc.endPos) {
         val before = state.doc.sliceString(pos - 1, pos)
         val after = state.doc.sliceString(pos, pos + 1)
         val isPair = before.length == 1 && after.length == 1 &&
@@ -204,7 +206,7 @@ private fun getInsertedText(
     var result: String? = null
     changes.iterChanges(
         f = { _, _, _, _, inserted ->
-            val text = inserted.sliceString(0)
+            val text = inserted.sliceString(DocPos.ZERO)
             if (text.isNotEmpty()) {
                 result = text
             }

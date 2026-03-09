@@ -19,6 +19,7 @@
 package com.monkopedia.kodemirror.autocomplete
 
 import com.monkopedia.kodemirror.state.ChangeSpec
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.InsertContent
@@ -36,7 +37,7 @@ class CompletionStateTest {
         EditorState.create(
             EditorStateConfig(
                 doc = doc.asDoc(),
-                selection = SelectionSpec.CursorSpec(cursor),
+                selection = SelectionSpec.CursorSpec(DocPos(cursor)),
                 extensions = completionStateField
             )
         )
@@ -60,7 +61,7 @@ class CompletionStateTest {
     fun startCompletionEffectOpensCompletion() {
         val state = createState("he", cursor = 2)
         val result = CompletionResult(
-            from = 0,
+            from = DocPos.ZERO,
             options = listOf(Completion(label = "hello"), Completion(label = "help")),
             validFor = Regex("\\w*")
         )
@@ -72,7 +73,7 @@ class CompletionStateTest {
     fun closeCompletionEffectCloses() {
         val state = createState("he", cursor = 2)
         val result = CompletionResult(
-            from = 0,
+            from = DocPos.ZERO,
             options = listOf(Completion(label = "hello")),
             validFor = Regex("\\w*")
         )
@@ -91,7 +92,7 @@ class CompletionStateTest {
     fun setSelectedCompletionChangesIndex() {
         val state = createState("", cursor = 0)
         val result = CompletionResult(
-            from = 0,
+            from = DocPos.ZERO,
             options = listOf(
                 Completion(label = "alpha"),
                 Completion(label = "beta"),
@@ -113,7 +114,7 @@ class CompletionStateTest {
     fun docChangeReFiltersWithValidFor() {
         val state = createState("h", cursor = 1)
         val result = CompletionResult(
-            from = 0,
+            from = DocPos.ZERO,
             options = listOf(
                 Completion(label = "hello"),
                 Completion(label = "help"),
@@ -128,11 +129,11 @@ class CompletionStateTest {
         val tr = opened.update(
             TransactionSpec(
                 changes = ChangeSpec.Single(
-                    1,
-                    1,
+                    DocPos(1),
+                    DocPos(1),
                     InsertContent.StringContent("el")
                 ),
-                selection = SelectionSpec.CursorSpec(3)
+                selection = SelectionSpec.CursorSpec(DocPos(3))
             )
         )
         val filtered = currentCompletions(tr.state)
@@ -144,7 +145,7 @@ class CompletionStateTest {
     fun docChangeWithoutValidForCloses() {
         val state = createState("h", cursor = 1)
         val result = CompletionResult(
-            from = 0,
+            from = DocPos.ZERO,
             options = listOf(Completion(label = "hello"))
         )
         val opened = openCompletions(state, result)
@@ -153,11 +154,11 @@ class CompletionStateTest {
         val tr = opened.update(
             TransactionSpec(
                 changes = ChangeSpec.Single(
-                    1,
-                    1,
+                    DocPos(1),
+                    DocPos(1),
                     InsertContent.StringContent("e")
                 ),
-                selection = SelectionSpec.CursorSpec(2)
+                selection = SelectionSpec.CursorSpec(DocPos(2))
             )
         )
         assertNull(completionStatus(tr.state))

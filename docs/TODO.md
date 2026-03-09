@@ -105,9 +105,7 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
   serialization strategy (replace vs supplement `toJSON`/`fromJSON`).
 - **Effort:** 2–3 days | **Source:** Kotlin Ergonomics
 
-### B4. [BLOCKED] Consider inline value classes for positions
-- **Blocked:** Major breaking change affecting virtually every file. Requires careful migration
-  strategy to distinguish document positions vs line numbers vs arbitrary ints.
+### B4. [DONE] Consider inline value classes for positions
 - **Effort:** 2–3 days | **Source:** Kotlin Ergonomics
 
 ### B5. [BLOCKED] Consider a `lang-kotlin` module

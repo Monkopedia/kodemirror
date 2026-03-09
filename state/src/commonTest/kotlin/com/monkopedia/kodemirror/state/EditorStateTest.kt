@@ -31,7 +31,7 @@ class EditorStateTest {
     fun holdsDocAndSelectionProperties() {
         val state = EditorState.create(EditorStateConfig(doc = "hello".asDoc()))
         assertEquals("hello", state.doc.toString())
-        assertEquals(0, state.selection.main.from)
+        assertEquals(DocPos.ZERO, state.selection.main.from)
     }
 
     @Test
@@ -42,11 +42,14 @@ class EditorStateTest {
                 changes = ChangeSpec.Multi(
                     listOf(
                         ChangeSpec.Single(
-                            from = 2,
-                            to = 4,
+                            from = DocPos(2),
+                            to = DocPos(4),
                             insert = InsertContent.StringContent("w")
                         ),
-                        ChangeSpec.Single(from = 5, insert = InsertContent.StringContent("!"))
+                        ChangeSpec.Single(
+                            from = DocPos(5),
+                            insert = InsertContent.StringContent("!")
+                        )
                     )
                 )
             )
@@ -62,7 +65,7 @@ class EditorStateTest {
                 extensions = ExtensionList(listOf(EditorState.allowMultipleSelections.of(true))),
                 selection = SelectionSpec.EditorSelectionSpec(
                     EditorSelection.create(
-                        listOf(0, 4, 8).map { n -> EditorSelection.cursor(n) }
+                        listOf(0, 4, 8).map { n -> EditorSelection.cursor(DocPos(n)) }
                     )
                 )
             )
@@ -71,7 +74,7 @@ class EditorStateTest {
         assertEquals("QabcdQefghQ", newState.doc.toString())
         assertEquals(
             "1/6/11",
-            newState.selection.ranges.map { r -> r.from }.joinToString("/")
+            newState.selection.ranges.map { r -> r.from.value }.joinToString("/")
         )
     }
 
@@ -89,17 +92,21 @@ class EditorStateTest {
     fun throwsWhenAChangeBoundsAreInvalid() {
         val state = EditorState.create(EditorStateConfig(doc = "1234".asDoc()))
         assertFailsWith<Exception> {
-            state.update(TransactionSpec(changes = ChangeSpec.Single(from = -1, to = 1)))
+            state.update(
+                TransactionSpec(changes = ChangeSpec.Single(from = DocPos(-1), to = DocPos(1)))
+            )
         }
         assertFailsWith<Exception> {
-            state.update(TransactionSpec(changes = ChangeSpec.Single(from = 2, to = 1)))
+            state.update(
+                TransactionSpec(changes = ChangeSpec.Single(from = DocPos(2), to = DocPos(1)))
+            )
         }
         assertFailsWith<Exception> {
             state.update(
                 TransactionSpec(
                     changes = ChangeSpec.Single(
-                        from = 2,
-                        to = 10,
+                        from = DocPos(2),
+                        to = DocPos(10),
                         insert = InsertContent.StringContent("x")
                     )
                 )
@@ -356,7 +363,10 @@ class EditorStateTest {
         assertSame(state2.facet(facet), state.facet(facet))
         val state3 = state.update(
             TransactionSpec(
-                changes = ChangeSpec.Single(from = 0, insert = InsertContent.StringContent("hi"))
+                changes = ChangeSpec.Single(
+                    from = DocPos.ZERO,
+                    insert = InsertContent.StringContent("hi")
+                )
             )
         ).state
         assertEquals("2,1", state3.facet(facet).joinToString(","))
@@ -365,7 +375,7 @@ class EditorStateTest {
     @Test
     fun blocksMultipleSelectionsWhenNotAllowed() {
         val cursors = EditorSelection.create(
-            listOf(EditorSelection.cursor(0), EditorSelection.cursor(1))
+            listOf(EditorSelection.cursor(DocPos.ZERO), EditorSelection.cursor(DocPos(1)))
         )
         val state = EditorState.create(
             EditorStateConfig(
@@ -402,7 +412,7 @@ class EditorStateTest {
             }
         ).state
         assertEquals("qi", state.doc.toString())
-        assertEquals(1, state.selection.main.from)
+        assertEquals(DocPos(1), state.selection.main.from)
     }
 
     @Test
@@ -413,10 +423,10 @@ class EditorStateTest {
                 selection = SelectionSpec.EditorSelectionSpec(
                     EditorSelection.create(
                         listOf(
-                            EditorSelection.range(0, 1),
-                            EditorSelection.range(2, 3),
-                            EditorSelection.range(4, 5),
-                            EditorSelection.range(6, 7)
+                            EditorSelection.range(DocPos(0), DocPos(1)),
+                            EditorSelection.range(DocPos(2), DocPos(3)),
+                            EditorSelection.range(DocPos(4), DocPos(5)),
+                            EditorSelection.range(DocPos(6), DocPos(7))
                         )
                     )
                 ),
@@ -429,16 +439,21 @@ class EditorStateTest {
                     changes = ChangeSpec.Single(
                         from = r.from,
                         to = r.to,
-                        insert = InsertContent.StringContent("-".repeat((r.from shr 1) + 1))
+                        insert = InsertContent.StringContent(
+                            "-".repeat((r.from.value shr 1) + 1)
+                        )
                     ),
-                    range = EditorSelection.range(r.from, r.from + 1 + (r.from shr 1))
+                    range = EditorSelection.range(
+                        r.from,
+                        r.from + 1 + (r.from.value shr 1)
+                    )
                 )
             }
         ).state
         assertEquals("- -- --- ----", state.doc.toString())
         assertEquals(
             "0-1 2-4 5-8 9-13",
-            state.selection.ranges.map { r -> "${r.from}-${r.to}" }.joinToString(" ")
+            state.selection.ranges.map { r -> "${r.from.value}-${r.to.value}" }.joinToString(" ")
         )
     }
 
@@ -466,19 +481,19 @@ class EditorStateTest {
         val tr1 = state.update(
             TransactionSpec(
                 changes = ChangeSpec.Single(
-                    from = 3,
+                    from = DocPos(3),
                     insert = InsertContent.StringContent(" three")
                 ),
-                selection = SelectionSpec.CursorSpec(anchor = 13)
+                selection = SelectionSpec.CursorSpec(anchor = DocPos(13))
             )
         )
         assertEquals("one two", tr1.state.doc.toString())
-        assertEquals(7, tr1.state.selection.main.head)
+        assertEquals(DocPos(7), tr1.state.selection.main.head)
         val tr2 = state.update(
             TransactionSpec(
                 changes = ChangeSpec.Single(
-                    from = 4,
-                    to = 7,
+                    from = DocPos(4),
+                    to = DocPos(7),
                     insert = InsertContent.StringContent("2")
                 )
             )
@@ -509,7 +524,9 @@ class EditorStateTest {
         assertEquals(
             "et",
             state.update(
-                TransactionSpec(changes = ChangeSpec.Single(from = 0, to = 6))
+                TransactionSpec(
+                    changes = ChangeSpec.Single(from = DocPos.ZERO, to = DocPos(6))
+                )
             ).state.doc.toString()
         )
     }
@@ -534,7 +551,9 @@ class EditorStateTest {
         assertEquals(
             "onwo",
             state.update(
-                TransactionSpec(changes = ChangeSpec.Single(from = 0, to = 6))
+                TransactionSpec(
+                    changes = ChangeSpec.Single(from = DocPos.ZERO, to = DocPos(6))
+                )
             ).state.doc.toString()
         )
     }
@@ -553,7 +572,7 @@ class EditorStateTest {
             state.update(
                 TransactionSpec(
                     changes = ChangeSpec.Single(
-                        from = 0,
+                        from = DocPos.ZERO,
                         insert = InsertContent.StringContent("hi")
                     )
                 )
@@ -564,7 +583,7 @@ class EditorStateTest {
             state.update(
                 TransactionSpec(
                     changes = ChangeSpec.Single(
-                        from = 0,
+                        from = DocPos.ZERO,
                         insert = InsertContent.StringContent("hi")
                     ),
                     filter = false
@@ -580,11 +599,13 @@ class EditorStateTest {
         val state = EditorState.create(
             EditorStateConfig(
                 extensions = EditorState.transactionFilter.of { tr ->
-                    if (tr.selection != null && tr.selection!!.main.to > 4) {
+                    if (tr.selection != null && tr.selection!!.main.to > DocPos(4)) {
                         TransactionFilterResult.Specs(
                             listOf(
                                 TransactionSpec(),
-                                TransactionSpec(selection = SelectionSpec.CursorSpec(anchor = 4))
+                                TransactionSpec(
+                                    selection = SelectionSpec.CursorSpec(anchor = DocPos(4))
+                                )
                             )
                         )
                     } else {
@@ -595,15 +616,15 @@ class EditorStateTest {
             )
         )
         assertEquals(
-            3,
+            DocPos(3),
             state.update(
-                TransactionSpec(selection = SelectionSpec.CursorSpec(anchor = 3))
+                TransactionSpec(selection = SelectionSpec.CursorSpec(anchor = DocPos(3)))
             ).selection!!.main.to
         )
         assertEquals(
-            4,
+            DocPos(4),
             state.update(
-                TransactionSpec(selection = SelectionSpec.CursorSpec(anchor = 7))
+                TransactionSpec(selection = SelectionSpec.CursorSpec(anchor = DocPos(7)))
             ).selection!!.main.to
         )
     }
@@ -628,7 +649,7 @@ class EditorStateTest {
                             ),
                             TransactionSpec(
                                 changes = ChangeSpec.Single(
-                                    from = tr.changes.newLength,
+                                    from = DocPos(tr.changes.newLength),
                                     insert = InsertContent.StringContent("!")
                                 ),
                                 sequential = true
@@ -644,7 +665,7 @@ class EditorStateTest {
             state.update(
                 TransactionSpec(
                     changes = ChangeSpec.Single(
-                        from = 3,
+                        from = DocPos(3),
                         insert = InsertContent.StringContent(",")
                     )
                 )
@@ -666,13 +687,19 @@ class EditorStateTest {
         )
         val tr = state.update(
             TransactionSpec(
-                changes = ChangeSpec.Single(from = 0, insert = InsertContent.StringContent("!"))
+                changes = ChangeSpec.Single(
+                    from = DocPos.ZERO,
+                    insert = InsertContent.StringContent("!")
+                )
             )
         )
         assertEquals(100, tr.annotation(ann))
         val trNoFilter = state.update(
             TransactionSpec(
-                changes = ChangeSpec.Single(from = 0, insert = InsertContent.StringContent("!")),
+                changes = ChangeSpec.Single(
+                    from = DocPos.ZERO,
+                    insert = InsertContent.StringContent("!")
+                ),
                 filter = false
             )
         )

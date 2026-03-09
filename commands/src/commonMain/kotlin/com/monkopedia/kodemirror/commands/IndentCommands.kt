@@ -21,6 +21,7 @@ package com.monkopedia.kodemirror.commands
 import com.monkopedia.kodemirror.language.getIndentUnit
 import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.InsertContent
+import com.monkopedia.kodemirror.state.LineNumber
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.view.EditorSession
@@ -50,8 +51,8 @@ private fun changeIndent(view: EditorSession, add: Boolean): Boolean {
 
     val changes = mutableListOf<ChangeSpec>()
 
-    for (lineNum in startLine.number..endLine.number) {
-        val line = state.doc.line(lineNum)
+    for (lineNum in startLine.number.value..endLine.number.value) {
+        val line = state.doc.line(LineNumber(lineNum))
         if (add) {
             changes.add(
                 ChangeSpec.Single(

@@ -28,6 +28,7 @@ import com.monkopedia.kodemirror.language.commentTokens
 import com.monkopedia.kodemirror.language.foldNodeProp
 import com.monkopedia.kodemirror.language.indentNodeProp
 import com.monkopedia.kodemirror.lezer.lr.ParserConfig
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList
 
@@ -44,11 +45,11 @@ val htmlLanguage: LRLanguage = LRLanguage.define(
                         "Element" -> { cx ->
                             val match = Regex("""^(\s*)(<\/)?""").find(cx.textAfter)
                             val matchLen = match?.value?.length ?: 0
-                            if (cx.node.to <= cx.pos + matchLen) {
+                            if (DocPos(cx.node.to) <= cx.pos + matchLen) {
                                 cx.continueAt()
                             } else {
                                 val hasClosing = match?.groupValues?.get(2)?.isNotEmpty() == true
-                                cx.lineIndent(cx.node.from) + if (hasClosing) 0 else cx.unit
+                                cx.lineIndent(DocPos(cx.node.from)) + if (hasClosing) 0 else cx.unit
                             }
                         }
                         "OpenTag", "CloseTag", "SelfClosingTag" -> { cx ->
@@ -57,7 +58,7 @@ val htmlLanguage: LRLanguage = LRLanguage.define(
                         "Document" -> { cx ->
                             val wsMatch = Regex("""\s*""").find(cx.textAfter)
                             val wsLen = wsMatch?.value?.length ?: 0
-                            if (cx.pos + wsLen < cx.node.to) {
+                            if (cx.pos + wsLen < DocPos(cx.node.to)) {
                                 cx.continueAt()
                             } else {
                                 var endElt = cx.node
@@ -76,7 +77,7 @@ val htmlLanguage: LRLanguage = LRLanguage.define(
                                                 )
                                         )
                                 ) {
-                                    cx.lineIndent(endElt.from) + cx.unit
+                                    cx.lineIndent(DocPos(endElt.from)) + cx.unit
                                 } else {
                                     null
                                 }
@@ -92,7 +93,7 @@ val htmlLanguage: LRLanguage = LRLanguage.define(
                             if (first.name != "OpenTag") return@add null
                             val last = node.lastChild ?: return@add null
                             val to = if (last.name == "CloseTag") last.from else node.to
-                            FoldRange(first.to, to)
+                            FoldRange(DocPos(first.to), DocPos(to))
                         }
                         else -> null
                     }

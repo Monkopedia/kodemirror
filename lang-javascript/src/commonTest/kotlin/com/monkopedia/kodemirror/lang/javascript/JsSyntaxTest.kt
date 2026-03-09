@@ -21,6 +21,7 @@ package com.monkopedia.kodemirror.lang.javascript
 import com.monkopedia.kodemirror.language.syntaxTree
 import com.monkopedia.kodemirror.lezer.common.Tree
 import com.monkopedia.kodemirror.state.ChangeSpec
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.InsertContent
@@ -64,8 +65,8 @@ class JsSyntaxTest {
         state = state.update(
             TransactionSpec(
                 changes = ChangeSpec.Single(
-                    from = 0,
-                    to = 3,
+                    from = DocPos.ZERO,
+                    to = DocPos(3),
                     insert = InsertContent.StringContent("fac")
                 )
             )

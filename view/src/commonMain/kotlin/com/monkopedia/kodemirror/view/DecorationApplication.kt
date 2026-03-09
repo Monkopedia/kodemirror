@@ -21,7 +21,9 @@ package com.monkopedia.kodemirror.view
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
+import com.monkopedia.kodemirror.state.LineNumber
 import com.monkopedia.kodemirror.state.RangeSet
 import com.monkopedia.kodemirror.state.SpanIterator
 
@@ -38,9 +40,9 @@ sealed class ColumnItem {
      * @param content    The annotated text for this line.
      */
     data class TextLine(
-        val lineNumber: Int,
-        val from: Int,
-        val to: Int,
+        val lineNumber: LineNumber,
+        val from: DocPos,
+        val to: DocPos,
         val content: AnnotatedString,
         val lineDecorations: List<LineDecoration> = emptyList(),
         val inlineWidgets: List<WidgetDecoration> = emptyList()
@@ -54,7 +56,7 @@ sealed class ColumnItem {
      * @param type   Whether this is before/after/replacing a line.
      */
     data class BlockWidgetItem(
-        val from: Int,
+        val from: DocPos,
         val widget: WidgetDecoration,
         val type: BlockType = BlockType.WidgetBefore
     ) : ColumnItem()
@@ -64,23 +66,26 @@ sealed class ColumnItem {
  * Build an [AnnotatedString] for one document line, applying [MarkDecoration]s
  * from [decorationSets].
  *
- * @param line           The [com.monkopedia.kodemirror.state.Line] to render.
+ * @param lineFrom       Start position of the line in the document.
+ * @param lineTo         End position of the line in the document.
+ * @param lineText       The text content of the line.
  * @param decorationSets Active decoration sets.
  */
 fun buildLineContent(
-    lineFrom: Int,
-    lineTo: Int,
+    lineFrom: DocPos,
+    lineTo: DocPos,
     lineText: String,
     decorationSets: List<DecorationSet>
 ): AnnotatedString {
     val builder = AnnotatedString.Builder(lineText)
+    val lineFromVal = lineFrom.value
 
     // Collect all MarkDecorations that overlap this line
     for (set in decorationSets) {
         set.between(lineFrom, lineTo) { from, to, value ->
             if (value is MarkDecoration && value.spec.style != null) {
-                val startInLine = (from - lineFrom).coerceIn(0, lineText.length)
-                val endInLine = (to - lineFrom).coerceIn(0, lineText.length)
+                val startInLine = (from - lineFromVal).coerceIn(0, lineText.length)
+                val endInLine = (to - lineFromVal).coerceIn(0, lineText.length)
                 if (startInLine < endInLine) {
                     builder.addStyle(value.spec.style, startInLine, endInLine)
                 }
@@ -109,12 +114,14 @@ fun buildColumnItems(
 ): List<ColumnItem> {
     val items = mutableListOf<ColumnItem>()
     val doc = state.doc
+    val viewFrom = DocPos(viewport.from)
+    val viewTo = DocPos(viewport.to)
 
     // Collect replace decorations (fold ranges) sorted by start position
     data class ReplaceRange(val from: Int, val to: Int, val widget: WidgetType?)
     val replaceRanges = mutableListOf<ReplaceRange>()
     for (set in decorationSets) {
-        set.between(viewport.from, viewport.to) { from, to, value ->
+        set.between(viewFrom, viewTo) { from, to, value ->
             if (value is ReplaceDecoration && from < to) {
                 replaceRanges.add(ReplaceRange(from, to, value.spec.widget))
             }
@@ -124,15 +131,16 @@ fun buildColumnItems(
     replaceRanges.sortBy { it.from }
 
     // Collect block widgets indexed by document position
-    val blockWidgetsBefore = mutableMapOf<Int, MutableList<WidgetDecoration>>()
-    val blockWidgetsAfter = mutableMapOf<Int, MutableList<WidgetDecoration>>()
+    val blockWidgetsBefore = mutableMapOf<DocPos, MutableList<WidgetDecoration>>()
+    val blockWidgetsAfter = mutableMapOf<DocPos, MutableList<WidgetDecoration>>()
     for (set in decorationSets) {
-        set.between(viewport.from, viewport.to) { from, _, value ->
+        set.between(viewFrom, viewTo) { from, _, value ->
             if (value is WidgetDecoration && value.spec.block) {
+                val pos = DocPos(from)
                 val list = if (value.spec.side >= 0) {
-                    blockWidgetsAfter.getOrPut(from) { mutableListOf() }
+                    blockWidgetsAfter.getOrPut(pos) { mutableListOf() }
                 } else {
-                    blockWidgetsBefore.getOrPut(from) { mutableListOf() }
+                    blockWidgetsBefore.getOrPut(pos) { mutableListOf() }
                 }
                 list.add(value)
             }
@@ -141,51 +149,66 @@ fun buildColumnItems(
     }
 
     // Collect line decorations
-    val lineDecsByLine = mutableMapOf<Int, MutableList<LineDecoration>>()
+    val lineDecsByLine = mutableMapOf<LineNumber, MutableList<LineDecoration>>()
     // Collect inline widget decorations
-    val inlineWidgetsByLine = mutableMapOf<Int, MutableList<WidgetDecoration>>()
+    val inlineWidgetsByLine =
+        mutableMapOf<LineNumber, MutableList<WidgetDecoration>>()
     for (set in decorationSets) {
-        set.between(viewport.from, viewport.to) { from, _, value ->
+        set.between(viewFrom, viewTo) { from, _, value ->
             if (value is LineDecoration) {
-                val line = doc.lineAt(from)
-                lineDecsByLine.getOrPut(line.number) { mutableListOf() }.add(value)
+                val line = doc.lineAt(DocPos(from))
+                lineDecsByLine.getOrPut(line.number) { mutableListOf() }
+                    .add(value)
             }
             if (value is WidgetDecoration && !value.spec.block) {
-                val line = doc.lineAt(from)
-                inlineWidgetsByLine.getOrPut(line.number) { mutableListOf() }.add(value)
+                val line = doc.lineAt(DocPos(from))
+                inlineWidgetsByLine.getOrPut(line.number) { mutableListOf() }
+                    .add(value)
             }
             null
         }
     }
 
     // Walk visible lines
-    var lineNum = doc.lineAt(viewport.from).number
-    val lastLine = doc.lineAt(viewport.to.coerceAtMost(doc.length)).number
+    var lineNum = doc.lineAt(viewFrom).number
+    val lastLine =
+        doc.lineAt(DocPos(viewport.to.coerceAtMost(doc.length))).number
 
     while (lineNum <= lastLine) {
         val line = doc.line(lineNum)
 
         // Check if this line starts or is inside a replace range
-        val replace = replaceRanges.firstOrNull { it.from < line.to && it.to > line.from }
-        if (replace != null && line.from >= replace.from) {
+        val replace = replaceRanges.firstOrNull {
+            it.from < line.to.value && it.to > line.from.value
+        }
+        if (replace != null && line.from.value >= replace.from) {
             // This line is entirely inside a replace range — skip it
-            lineNum++
+            lineNum = lineNum + 1
             continue
         }
 
         // Emit block-before widgets
         blockWidgetsBefore[line.from]?.forEach { w ->
-            items.add(ColumnItem.BlockWidgetItem(line.from, w, BlockType.WidgetBefore))
+            items.add(
+                ColumnItem.BlockWidgetItem(
+                    line.from,
+                    w,
+                    BlockType.WidgetBefore
+                )
+            )
         }
 
         // Check if a replace range starts on this line
         val replaceOnLine = replaceRanges.firstOrNull {
-            it.from >= line.from && it.from <= line.to
+            it.from >= line.from.value && it.from <= line.to.value
         }
         if (replaceOnLine != null) {
             // Truncate line at replace start and append fold placeholder
-            val truncPos = replaceOnLine.from - line.from
-            val truncText = line.text.substring(0, truncPos.coerceAtMost(line.text.length))
+            val truncPos = replaceOnLine.from - line.from.value
+            val truncText = line.text.substring(
+                0,
+                truncPos.coerceAtMost(line.text.length)
+            )
             val baseContent = buildLineContent(
                 line.from,
                 line.from + truncText.length,
@@ -203,7 +226,8 @@ fun buildColumnItems(
                 baseContent
             }
             val lineDecos = lineDecsByLine[lineNum] ?: emptyList()
-            val inlineWidgets = inlineWidgetsByLine[lineNum] ?: emptyList()
+            val inlineWidgets =
+                inlineWidgetsByLine[lineNum] ?: emptyList()
             items.add(
                 ColumnItem.TextLine(
                     lineNum,
@@ -215,14 +239,23 @@ fun buildColumnItems(
                 )
             )
 
-            // Skip ahead past the replace range to the line containing the end
-            val endLine = doc.lineAt(replaceOnLine.to.coerceAtMost(doc.length))
+            // Skip ahead past the replace range to the line
+            // containing the end
+            val endLine = doc.lineAt(
+                DocPos(replaceOnLine.to.coerceAtMost(doc.length))
+            )
             lineNum = endLine.number
         } else {
             // Normal line
-            val content = buildLineContent(line.from, line.to, line.text, decorationSets)
+            val content = buildLineContent(
+                line.from,
+                line.to,
+                line.text,
+                decorationSets
+            )
             val lineDecos = lineDecsByLine[lineNum] ?: emptyList()
-            val inlineWidgets = inlineWidgetsByLine[lineNum] ?: emptyList()
+            val inlineWidgets =
+                inlineWidgetsByLine[lineNum] ?: emptyList()
             items.add(
                 ColumnItem.TextLine(
                     lineNum,
@@ -233,12 +266,18 @@ fun buildColumnItems(
                     inlineWidgets
                 )
             )
-            lineNum++
+            lineNum = lineNum + 1
         }
 
         // Emit block-after widgets
         blockWidgetsAfter[line.from]?.forEach { w ->
-            items.add(ColumnItem.BlockWidgetItem(line.from, w, BlockType.WidgetAfter))
+            items.add(
+                ColumnItem.BlockWidgetItem(
+                    line.from,
+                    w,
+                    BlockType.WidgetAfter
+                )
+            )
         }
     }
 
@@ -250,11 +289,11 @@ fun buildColumnItems(
  * [RangeSet.spans].
  */
 private class MarkSpanIterator(
-    private val lineFrom: Int,
+    private val lineFrom: DocPos,
     private val lineLength: Int,
     private val builder: AnnotatedString.Builder
 ) : SpanIterator<Decoration> {
-    override fun span(from: Int, to: Int, active: List<Decoration>, openStart: Int) {
+    override fun span(from: DocPos, to: DocPos, active: List<Decoration>, openStart: Int) {
         val startInLine = (from - lineFrom).coerceIn(0, lineLength)
         val endInLine = (to - lineFrom).coerceIn(0, lineLength)
         if (startInLine >= endInLine) return
@@ -269,8 +308,8 @@ private class MarkSpanIterator(
     }
 
     override fun point(
-        from: Int,
-        to: Int,
+        from: DocPos,
+        to: DocPos,
         value: Decoration,
         active: List<Decoration>,
         openStart: Int,

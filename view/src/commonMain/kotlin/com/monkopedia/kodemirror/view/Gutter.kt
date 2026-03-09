@@ -31,6 +31,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.Facet
+import com.monkopedia.kodemirror.state.LineNumber
 import com.monkopedia.kodemirror.state.RangeValue
 
 /** A gutter marker contributes to a specific line's gutter column. */
@@ -89,8 +90,9 @@ fun gutter(config: GutterConfig): Extension = gutters.of(config)
 @Composable
 fun GutterView(session: EditorSession, lineNumber: Int, modifier: Modifier = Modifier) {
     val theme = LocalEditorTheme.current
-    val isActive = session.state.doc.lineAt(session.state.selection.main.head).number == lineNumber
-    val line = session.state.doc.line(lineNumber)
+    val lineNum = LineNumber(lineNumber)
+    val isActive = session.state.doc.lineAt(session.state.selection.main.head).number == lineNum
+    val line = session.state.doc.line(lineNum)
     val configs = session.state.facet(gutters)
     val hasActiveLineGutter = isActive &&
         configs.any { it.type == GutterType.ActiveLineGutter }
@@ -128,7 +130,7 @@ fun GutterView(session: EditorSession, lineNumber: Int, modifier: Modifier = Mod
                     modifier = Modifier.width(14.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    val marker = config.lineMarker.invoke(session, line.from)
+                    val marker = config.lineMarker.invoke(session, line.from.value)
                     if (marker != null) {
                         marker.Content(theme)
                     }

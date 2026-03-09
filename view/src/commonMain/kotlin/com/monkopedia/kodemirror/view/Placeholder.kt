@@ -21,6 +21,7 @@ package com.monkopedia.kodemirror.view
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.style.TextOverflow
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.RangeSet
 import com.monkopedia.kodemirror.state.RangeSetBuilder
@@ -74,7 +75,11 @@ private class PlaceholderPlugin(
             override fun Content() = content()
             override fun equals(other: Any?): Boolean = other === this
         }
-        builder.add(0, 0, Decoration.widget(WidgetDecorationSpec(widget = widget, side = 1)))
+        builder.add(
+            DocPos.ZERO,
+            DocPos.ZERO,
+            Decoration.widget(WidgetDecorationSpec(widget = widget, side = 1))
+        )
         return builder.finish()
     }
 }

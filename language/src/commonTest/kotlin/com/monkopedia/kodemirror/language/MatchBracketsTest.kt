@@ -18,6 +18,7 @@
  */
 package com.monkopedia.kodemirror.language
 
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.asDoc
@@ -37,62 +38,62 @@ class MatchBracketsTest {
     @Test
     fun matchParenthesesForward() {
         val state = createState("(hello)")
-        val result = matchBrackets(state, 0, 1)
+        val result = matchBrackets(state, DocPos.ZERO, 1)
         assertNotNull(result)
         assertTrue(result.matched)
-        assertEquals(0, result.start.from)
-        assertEquals(1, result.start.to)
+        assertEquals(DocPos.ZERO, result.start.from)
+        assertEquals(DocPos(1), result.start.to)
         val end = result.end
         assertNotNull(end)
-        assertEquals(6, end.from)
-        assertEquals(7, end.to)
+        assertEquals(DocPos(6), end.from)
+        assertEquals(DocPos(7), end.to)
     }
 
     @Test
     fun matchSquareBracketsForward() {
         val state = createState("[hello]")
-        val result = matchBrackets(state, 0, 1)
+        val result = matchBrackets(state, DocPos.ZERO, 1)
         assertNotNull(result)
         assertTrue(result.matched)
         val end = result.end
         assertNotNull(end)
-        assertEquals(6, end.from)
+        assertEquals(DocPos(6), end.from)
     }
 
     @Test
     fun matchCurlyBracesForward() {
         val state = createState("{hello}")
-        val result = matchBrackets(state, 0, 1)
+        val result = matchBrackets(state, DocPos.ZERO, 1)
         assertNotNull(result)
         assertTrue(result.matched)
         val end = result.end
         assertNotNull(end)
-        assertEquals(6, end.from)
+        assertEquals(DocPos(6), end.from)
     }
 
     @Test
     fun matchBackward() {
         val state = createState("(hello)")
-        val result = matchBrackets(state, 6, -1)
+        val result = matchBrackets(state, DocPos(6), -1)
         assertNotNull(result)
         assertTrue(result.matched)
-        assertEquals(6, result.start.from)
+        assertEquals(DocPos(6), result.start.from)
         val end = result.end
         assertNotNull(end)
-        assertEquals(0, end.from)
+        assertEquals(DocPos.ZERO, end.from)
     }
 
     @Test
     fun returnsNullForNonBracketCharacter() {
         val state = createState("hello")
-        val result = matchBrackets(state, 2, 1)
+        val result = matchBrackets(state, DocPos(2), 1)
         assertNull(result)
     }
 
     @Test
     fun unmatchedBracketReturnsFalseMatched() {
         val state = createState("(hello")
-        val result = matchBrackets(state, 0, 1)
+        val result = matchBrackets(state, DocPos.ZERO, 1)
         assertNotNull(result)
         assertFalse(result.matched)
         assertNull(result.end)
@@ -102,54 +103,54 @@ class MatchBracketsTest {
     fun nestedBracketsResolveCorrectlyOuter() {
         val state = createState("((a))")
         // Match outer opening paren at position 0
-        val result = matchBrackets(state, 0, 1)
+        val result = matchBrackets(state, DocPos.ZERO, 1)
         assertNotNull(result)
         assertTrue(result.matched)
         val end = result.end
         assertNotNull(end)
-        assertEquals(4, end.from)
+        assertEquals(DocPos(4), end.from)
     }
 
     @Test
     fun nestedBracketsResolveCorrectlyInner() {
         val state = createState("((a))")
         // Match inner opening paren at position 1
-        val result = matchBrackets(state, 1, 1)
+        val result = matchBrackets(state, DocPos(1), 1)
         assertNotNull(result)
         assertTrue(result.matched)
         val end = result.end
         assertNotNull(end)
-        assertEquals(3, end.from)
+        assertEquals(DocPos(3), end.from)
     }
 
     @Test
     fun nestedBracketsBackwardOuter() {
         val state = createState("((a))")
         // Match outer closing paren at position 4
-        val result = matchBrackets(state, 4, -1)
+        val result = matchBrackets(state, DocPos(4), -1)
         assertNotNull(result)
         assertTrue(result.matched)
         val end = result.end
         assertNotNull(end)
-        assertEquals(0, end.from)
+        assertEquals(DocPos.ZERO, end.from)
     }
 
     @Test
     fun nestedBracketsBackwardInner() {
         val state = createState("((a))")
         // Match inner closing paren at position 3
-        val result = matchBrackets(state, 3, -1)
+        val result = matchBrackets(state, DocPos(3), -1)
         assertNotNull(result)
         assertTrue(result.matched)
         val end = result.end
         assertNotNull(end)
-        assertEquals(1, end.from)
+        assertEquals(DocPos(1), end.from)
     }
 
     @Test
     fun posOutOfBoundsReturnsNull() {
         val state = createState("()")
-        assertNull(matchBrackets(state, -1, 1))
-        assertNull(matchBrackets(state, 2, 1))
+        assertNull(matchBrackets(state, DocPos(-1), 1))
+        assertNull(matchBrackets(state, DocPos(2), 1))
     }
 }

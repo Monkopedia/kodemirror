@@ -34,6 +34,7 @@ import com.monkopedia.kodemirror.language.oneDarkHighlightStyle
 import com.monkopedia.kodemirror.language.syntaxHighlighting
 import com.monkopedia.kodemirror.lezer.highlight.Tags
 import com.monkopedia.kodemirror.lezer.lr.ParserConfig
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.view.EditorTheme
@@ -77,7 +78,7 @@ object TestScenarios {
             "BlockComment" -> { node, _ ->
                 val from = node.from + 2
                 val to = node.to - 2
-                if (from < to) FoldRange(from, to) else null
+                if (from < to) FoldRange(DocPos(from), DocPos(to)) else null
             }
             else -> null
         }

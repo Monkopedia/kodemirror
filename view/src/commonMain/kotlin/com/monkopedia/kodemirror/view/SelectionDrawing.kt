@@ -65,12 +65,15 @@ private fun DrawScope.drawLineSelection(
 ) {
     val selection = state.selection
     for (range in selection.ranges) {
+        val rangeFrom = range.from.value
+        val rangeTo = range.to.value
+        val rangeHead = range.head.value
         if (!range.empty) {
             // Draw selection highlight if it overlaps this line
-            val selFrom = maxOf(range.from, lineFrom)
-            val selTo = minOf(range.to, lineTo)
+            val selFrom = maxOf(rangeFrom, lineFrom)
+            val selTo = minOf(rangeTo, lineTo)
             if (selFrom < selTo || (selFrom == selTo && selFrom > lineFrom)) {
-                val extendsToNextLine = range.to > lineTo
+                val extendsToNextLine = rangeTo > lineTo
                 drawLineSelectionRange(
                     selFrom - lineFrom,
                     selTo - lineFrom,
@@ -82,8 +85,8 @@ private fun DrawScope.drawLineSelection(
             }
         }
         // Always draw cursor at head position
-        if (range.head in lineFrom..lineTo) {
-            drawLineCursor(range.head - lineFrom, theme.cursor, textLayoutResult)
+        if (rangeHead in lineFrom..lineTo) {
+            drawLineCursor(rangeHead - lineFrom, theme.cursor, textLayoutResult)
         }
     }
 }

@@ -25,6 +25,7 @@ import com.monkopedia.kodemirror.language.commentTokens
 import com.monkopedia.kodemirror.language.foldNodeProp
 import com.monkopedia.kodemirror.language.indentNodeProp
 import com.monkopedia.kodemirror.lezer.lr.ParserConfig
+import com.monkopedia.kodemirror.state.DocPos
 
 /**
  * A language provider based on the Lezer XML parser, extended with
@@ -38,7 +39,7 @@ val xmlLanguage: LRLanguage = LRLanguage.define(
                     when (type.name) {
                         "Element" -> { cx ->
                             val closed = Regex("""^\s*</""").containsMatchIn(cx.textAfter)
-                            cx.lineIndent(cx.node.from) + if (closed) 0 else cx.unit
+                            cx.lineIndent(DocPos(cx.node.from)) + if (closed) 0 else cx.unit
                         }
                         "OpenTag", "CloseTag", "SelfClosingTag" -> { cx ->
                             cx.column(cx.node.from) + cx.unit
@@ -53,7 +54,10 @@ val xmlLanguage: LRLanguage = LRLanguage.define(
                             if (first.name != "OpenTag") return@add null
                             val last = node.lastChild ?: return@add null
                             val to = if (last.name == "CloseTag") last.from else node.to
-                            com.monkopedia.kodemirror.language.FoldRange(first.to, to)
+                            com.monkopedia.kodemirror.language.FoldRange(
+                                DocPos(first.to),
+                                DocPos(to)
+                            )
                         }
                         else -> null
                     }

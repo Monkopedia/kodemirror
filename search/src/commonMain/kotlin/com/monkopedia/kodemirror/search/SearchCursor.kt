@@ -18,10 +18,12 @@
  */
 package com.monkopedia.kodemirror.search
 
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.Text
+import com.monkopedia.kodemirror.state.endPos
 
 /** A match found by a search cursor. */
-data class SearchMatch(val from: Int, val to: Int)
+data class SearchMatch(val from: DocPos, val to: DocPos)
 
 /**
  * A cursor that iterates over string matches in a [Text] document.
@@ -35,8 +37,8 @@ data class SearchMatch(val from: Int, val to: Int)
 class SearchCursor(
     private val text: Text,
     private val query: String,
-    private val from: Int = 0,
-    private val to: Int = text.length,
+    private val from: DocPos = DocPos.ZERO,
+    private val to: DocPos = text.endPos,
     private val normalize: (String) -> String = { it }
 ) : Iterator<SearchMatch> {
     private var pos = from
@@ -62,7 +64,10 @@ class SearchCursor(
             return
         }
         while (pos <= to - normalizedQuery.length) {
-            val chunk = text.sliceString(pos, minOf(to, pos + 1024))
+            val chunk = text.sliceString(
+                pos,
+                minOf(to, pos + 1024)
+            )
             val normalizedChunk = normalize(chunk)
             val idx = normalizedChunk.indexOf(normalizedQuery)
             if (idx >= 0) {

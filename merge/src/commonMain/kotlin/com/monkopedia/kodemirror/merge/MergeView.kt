@@ -28,10 +28,9 @@ import com.monkopedia.kodemirror.state.Prec
 import com.monkopedia.kodemirror.state.StateEffect
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
+import com.monkopedia.kodemirror.state.endPos
 import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.editorAttributes
-import kotlin.math.max
-import kotlin.math.min
 
 /**
  * Orientation of the two editors.
@@ -212,8 +211,8 @@ class MergeView(config: MergeViewConfig) {
         val destFrom = if (toA) chunk.fromA else chunk.fromB
         val destTo = if (toA) chunk.toA else chunk.toB
 
-        var insert = source.state.sliceDoc(srcFrom, max(srcFrom, srcTo - 1))
-        if (srcFrom != srcTo && destTo <= dest.state.doc.length) {
+        var insert = source.state.sliceDoc(srcFrom, maxOf(srcFrom, srcTo - 1))
+        if (srcFrom != srcTo && destTo <= dest.state.doc.endPos) {
             insert += source.state.lineBreak
         }
 
@@ -221,7 +220,7 @@ class MergeView(config: MergeViewConfig) {
             TransactionSpec(
                 changes = ChangeSpec.Single(
                     destFrom,
-                    min(dest.state.doc.length, destTo),
+                    minOf(dest.state.doc.endPos, destTo),
                     InsertContent.StringContent(insert)
                 ),
                 userEvent = "revert"

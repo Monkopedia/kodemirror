@@ -23,6 +23,7 @@ import com.monkopedia.kodemirror.state.AnnotationType
 import com.monkopedia.kodemirror.state.ChangeDesc
 import com.monkopedia.kodemirror.state.ChangeSet
 import com.monkopedia.kodemirror.state.ChangeSpec
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
@@ -149,7 +150,7 @@ private fun addMappingToBranch(
 }
 
 private fun isAdjacent(a: ChangeDesc, b: ChangeDesc): Boolean {
-    val ranges = mutableListOf<Int>()
+    val ranges = mutableListOf<DocPos>()
     var adjacent = false
     a.iterChangedRanges({ f, t, _, _ ->
         ranges.add(f)

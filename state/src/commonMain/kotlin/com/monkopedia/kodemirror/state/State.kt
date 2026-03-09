@@ -290,7 +290,8 @@ class EditorState private constructor(
     /**
      * Return the given range of the document as a string.
      */
-    fun sliceDoc(from: Int = 0, to: Int = doc.length): String = doc.sliceString(from, to, lineBreak)
+    fun sliceDoc(from: DocPos = DocPos.ZERO, to: DocPos = doc.endPos): String =
+        doc.sliceString(from, to, lineBreak)
 
     /**
      * Get the value of a state [facet][Facet].
@@ -376,7 +377,7 @@ class EditorState private constructor(
      * Find the values for a given language data field using a type-safe key.
      */
     @Suppress("UNCHECKED_CAST")
-    fun <T> languageDataAt(key: LanguageDataKey<T>, pos: Int, side: Int = -1): List<T> {
+    fun <T> languageDataAt(key: LanguageDataKey<T>, pos: DocPos, side: Int = -1): List<T> {
         val values = mutableListOf<T>()
         for (provider in facet(languageData)) {
             for (result in provider(this, pos, side)) {
@@ -396,7 +397,7 @@ class EditorState private constructor(
         "Use the type-safe LanguageDataKey overload instead.",
         ReplaceWith("languageDataAt(LanguageDataKey(name), pos, side)")
     )
-    fun <T> languageDataAt(name: String, pos: Int, side: Int = -1): List<T> {
+    fun <T> languageDataAt(name: String, pos: DocPos, side: Int = -1): List<T> {
         val values = mutableListOf<T>()
         for (provider in facet(languageData)) {
             for (result in provider(this, pos, side)) {
@@ -412,7 +413,7 @@ class EditorState private constructor(
      * Return a function that can categorize strings into one of:
      * Word, Space, or Other.
      */
-    fun charCategorizer(at: Int): (String) -> CharCategory {
+    fun charCategorizer(at: DocPos): (String) -> CharCategory {
         val chars =
             languageDataAt(LanguageDataKey.WORD_CHARS, at)
         return makeCategorizer(
@@ -423,7 +424,7 @@ class EditorState private constructor(
     /**
      * Find the word at the given position.
      */
-    fun wordAt(pos: Int): SelectionRange? {
+    fun wordAt(pos: DocPos): SelectionRange? {
         val line = doc.lineAt(pos)
         val text = line.text
         val cat = charCategorizer(pos)
@@ -455,8 +456,8 @@ class EditorState private constructor(
             null
         } else {
             EditorSelection.range(
-                start + line.from,
-                end + line.from
+                line.from + start,
+                line.from + end
             )
         }
     }
@@ -554,7 +555,7 @@ class EditorState private constructor(
                 )
             }
             var selection = when (val s = config.selection) {
-                null -> EditorSelection.single(0)
+                null -> EditorSelection.single(DocPos.ZERO)
                 is SelectionSpec.EditorSelectionSpec ->
                     s.selection
                 is SelectionSpec.CursorSpec ->
@@ -660,7 +661,7 @@ class EditorState private constructor(
         }
 
     /** The character position of the primary cursor. */
-    val cursorPosition: Int get() = selection.main.head
+    val cursorPosition: DocPos get() = selection.main.head
 }
 
 data class ChangeByRangeResult(

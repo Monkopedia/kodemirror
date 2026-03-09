@@ -64,18 +64,18 @@ public final class com/monkopedia/kodemirror/autocomplete/Completion {
 }
 
 public final class com/monkopedia/kodemirror/autocomplete/CompletionApplyContext {
-	public fun <init> (Lcom/monkopedia/kodemirror/view/EditorSession;Lcom/monkopedia/kodemirror/autocomplete/Completion;II)V
+	public synthetic fun <init> (Lcom/monkopedia/kodemirror/view/EditorSession;Lcom/monkopedia/kodemirror/autocomplete/Completion;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/monkopedia/kodemirror/view/EditorSession;
 	public final fun component2 ()Lcom/monkopedia/kodemirror/autocomplete/Completion;
-	public final fun component3 ()I
-	public final fun component4 ()I
-	public final fun copy (Lcom/monkopedia/kodemirror/view/EditorSession;Lcom/monkopedia/kodemirror/autocomplete/Completion;II)Lcom/monkopedia/kodemirror/autocomplete/CompletionApplyContext;
-	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/autocomplete/CompletionApplyContext;Lcom/monkopedia/kodemirror/view/EditorSession;Lcom/monkopedia/kodemirror/autocomplete/Completion;IIILjava/lang/Object;)Lcom/monkopedia/kodemirror/autocomplete/CompletionApplyContext;
+	public final fun component3-8dfawaI ()I
+	public final fun component4-8dfawaI ()I
+	public final fun copy-iUx8qLE (Lcom/monkopedia/kodemirror/view/EditorSession;Lcom/monkopedia/kodemirror/autocomplete/Completion;II)Lcom/monkopedia/kodemirror/autocomplete/CompletionApplyContext;
+	public static synthetic fun copy-iUx8qLE$default (Lcom/monkopedia/kodemirror/autocomplete/CompletionApplyContext;Lcom/monkopedia/kodemirror/view/EditorSession;Lcom/monkopedia/kodemirror/autocomplete/Completion;IIILjava/lang/Object;)Lcom/monkopedia/kodemirror/autocomplete/CompletionApplyContext;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getCompletion ()Lcom/monkopedia/kodemirror/autocomplete/Completion;
-	public final fun getFrom ()I
+	public final fun getFrom-8dfawaI ()I
 	public final fun getSession ()Lcom/monkopedia/kodemirror/view/EditorSession;
-	public final fun getTo ()I
+	public final fun getTo-8dfawaI ()I
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -104,29 +104,29 @@ public final class com/monkopedia/kodemirror/autocomplete/CompletionConfig {
 }
 
 public final class com/monkopedia/kodemirror/autocomplete/CompletionContext {
-	public fun <init> (Lcom/monkopedia/kodemirror/state/EditorState;IZ)V
+	public synthetic fun <init> (Lcom/monkopedia/kodemirror/state/EditorState;IZLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getExplicit ()Z
-	public final fun getPos ()I
+	public final fun getPos-8dfawaI ()I
 	public final fun getState ()Lcom/monkopedia/kodemirror/state/EditorState;
 	public final fun matchBefore (Lkotlin/text/Regex;)Lcom/monkopedia/kodemirror/autocomplete/MatchBeforeResult;
 	public final fun tokenBefore (Ljava/util/List;)Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;
 }
 
 public final class com/monkopedia/kodemirror/autocomplete/CompletionResult {
-	public fun <init> (ILjava/lang/Integer;Ljava/util/List;Lkotlin/text/Regex;Z)V
-	public synthetic fun <init> (ILjava/lang/Integer;Ljava/util/List;Lkotlin/text/Regex;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()I
-	public final fun component2 ()Ljava/lang/Integer;
+	public synthetic fun <init> (ILcom/monkopedia/kodemirror/state/DocPos;Ljava/util/List;Lkotlin/text/Regex;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (ILcom/monkopedia/kodemirror/state/DocPos;Ljava/util/List;Lkotlin/text/Regex;ZLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-8dfawaI ()I
+	public final fun component2-aIaQTD8 ()Lcom/monkopedia/kodemirror/state/DocPos;
 	public final fun component3 ()Ljava/util/List;
 	public final fun component4 ()Lkotlin/text/Regex;
 	public final fun component5 ()Z
-	public final fun copy (ILjava/lang/Integer;Ljava/util/List;Lkotlin/text/Regex;Z)Lcom/monkopedia/kodemirror/autocomplete/CompletionResult;
-	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/autocomplete/CompletionResult;ILjava/lang/Integer;Ljava/util/List;Lkotlin/text/Regex;ZILjava/lang/Object;)Lcom/monkopedia/kodemirror/autocomplete/CompletionResult;
+	public final fun copy-xipEj1U (ILcom/monkopedia/kodemirror/state/DocPos;Ljava/util/List;Lkotlin/text/Regex;Z)Lcom/monkopedia/kodemirror/autocomplete/CompletionResult;
+	public static synthetic fun copy-xipEj1U$default (Lcom/monkopedia/kodemirror/autocomplete/CompletionResult;ILcom/monkopedia/kodemirror/state/DocPos;Ljava/util/List;Lkotlin/text/Regex;ZILjava/lang/Object;)Lcom/monkopedia/kodemirror/autocomplete/CompletionResult;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getFilter ()Z
-	public final fun getFrom ()I
+	public final fun getFrom-8dfawaI ()I
 	public final fun getOptions ()Ljava/util/List;
-	public final fun getTo ()Ljava/lang/Integer;
+	public final fun getTo-aIaQTD8 ()Lcom/monkopedia/kodemirror/state/DocPos;
 	public final fun getValidFor ()Lkotlin/text/Regex;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -170,31 +170,31 @@ public final class com/monkopedia/kodemirror/autocomplete/ConfigKt {
 }
 
 public final class com/monkopedia/kodemirror/autocomplete/MatchBeforeResult {
-	public fun <init> (IILjava/lang/String;)V
-	public final fun component1 ()I
-	public final fun component2 ()I
+	public synthetic fun <init> (IILjava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-8dfawaI ()I
+	public final fun component2-8dfawaI ()I
 	public final fun component3 ()Ljava/lang/String;
-	public final fun copy (IILjava/lang/String;)Lcom/monkopedia/kodemirror/autocomplete/MatchBeforeResult;
-	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/autocomplete/MatchBeforeResult;IILjava/lang/String;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/autocomplete/MatchBeforeResult;
+	public final fun copy-LrKp6SE (IILjava/lang/String;)Lcom/monkopedia/kodemirror/autocomplete/MatchBeforeResult;
+	public static synthetic fun copy-LrKp6SE$default (Lcom/monkopedia/kodemirror/autocomplete/MatchBeforeResult;IILjava/lang/String;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/autocomplete/MatchBeforeResult;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getFrom ()I
+	public final fun getFrom-8dfawaI ()I
 	public final fun getText ()Ljava/lang/String;
-	public final fun getTo ()I
+	public final fun getTo-8dfawaI ()I
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
 public final class com/monkopedia/kodemirror/autocomplete/SnippetField {
-	public fun <init> (Ljava/lang/String;II)V
+	public synthetic fun <init> (Ljava/lang/String;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
-	public final fun component2 ()I
-	public final fun component3 ()I
-	public final fun copy (Ljava/lang/String;II)Lcom/monkopedia/kodemirror/autocomplete/SnippetField;
-	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/autocomplete/SnippetField;Ljava/lang/String;IIILjava/lang/Object;)Lcom/monkopedia/kodemirror/autocomplete/SnippetField;
+	public final fun component2-8dfawaI ()I
+	public final fun component3-8dfawaI ()I
+	public final fun copy-sX5c8NE (Ljava/lang/String;II)Lcom/monkopedia/kodemirror/autocomplete/SnippetField;
+	public static synthetic fun copy-sX5c8NE$default (Lcom/monkopedia/kodemirror/autocomplete/SnippetField;Ljava/lang/String;IIILjava/lang/Object;)Lcom/monkopedia/kodemirror/autocomplete/SnippetField;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getFrom ()I
+	public final fun getFrom-8dfawaI ()I
 	public final fun getName ()Ljava/lang/String;
-	public final fun getTo ()I
+	public final fun getTo-8dfawaI ()I
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -232,7 +232,7 @@ public final class com/monkopedia/kodemirror/autocomplete/ViewKt {
 	public static final fun getStartCompletion ()Lkotlin/jvm/functions/Function1;
 	public static final fun ifIn (Ljava/util/List;Lkotlin/jvm/functions/Function1;)Lkotlin/jvm/functions/Function1;
 	public static final fun ifNotIn (Ljava/util/List;Lkotlin/jvm/functions/Function1;)Lkotlin/jvm/functions/Function1;
-	public static final fun insertCompletionText (Lcom/monkopedia/kodemirror/state/EditorState;Ljava/lang/String;II)Lcom/monkopedia/kodemirror/state/TransactionSpec;
+	public static final fun insertCompletionText-iUx8qLE (Lcom/monkopedia/kodemirror/state/EditorState;Ljava/lang/String;II)Lcom/monkopedia/kodemirror/state/TransactionSpec;
 	public static final fun moveCompletionSelection (ZLjava/lang/String;)Lkotlin/jvm/functions/Function1;
 	public static synthetic fun moveCompletionSelection$default (ZLjava/lang/String;ILjava/lang/Object;)Lkotlin/jvm/functions/Function1;
 }

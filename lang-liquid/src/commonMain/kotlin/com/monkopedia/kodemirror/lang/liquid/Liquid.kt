@@ -36,12 +36,13 @@ import com.monkopedia.kodemirror.lezer.common.SyntaxNodeRef
 import com.monkopedia.kodemirror.lezer.common.parseMixed
 import com.monkopedia.kodemirror.lezer.lr.LRParser
 import com.monkopedia.kodemirror.lezer.lr.ParserConfig
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList
 
 private fun directiveIndent(except: Regex): (TreeIndentContext) -> Int? = { context ->
     val back = except.containsMatchIn(context.textAfter)
-    context.lineIndent(context.node.from) + (if (back) 0 else context.unit)
+    context.lineIndent(DocPos(context.node.from)) + (if (back) 0 else context.unit)
 }
 
 /**
@@ -75,7 +76,7 @@ val liquidTagLanguage: LRLanguage = LRLanguage.define(
                                 if (first.name != "Tag") return@add null
                                 val last = tree.lastChild ?: return@add null
                                 val to = if (last.name == "EndTag") last.from else tree.to
-                                FoldRange(first.to, to)
+                                FoldRange(DocPos(first.to), DocPos(to))
                             }
                         else -> null
                     }

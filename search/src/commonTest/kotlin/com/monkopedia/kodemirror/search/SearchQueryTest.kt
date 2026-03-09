@@ -18,6 +18,7 @@
  */
 package com.monkopedia.kodemirror.search
 
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.asDoc
@@ -35,7 +36,7 @@ class SearchQueryTest {
         val results = mutableListOf<Pair<Int, Int>>()
         while (cursor.hasNext()) {
             val match = cursor.next()
-            results.add(match.from to match.to)
+            results.add(match.from.value to match.to.value)
         }
         return results
     }
@@ -161,7 +162,7 @@ class SearchQueryTest {
         val query = SearchQuery(
             search = "ab",
             caseSensitive = true,
-            test = { from, _, _ -> from >= 6 }
+            test = { from, _, _ -> from >= DocPos(6) }
         )
         val matches = collectMatches(query.getCursor(state("ab cd ab cd ab")))
         assertEquals(listOf(6 to 8, 12 to 14), matches)
@@ -174,7 +175,7 @@ class SearchQueryTest {
             search = "\\w+",
             regexp = true,
             caseSensitive = true,
-            test = { from, to, _ -> (to - from) > 2 }
+            test = { from, to, _ -> to - from > 2 }
         )
         val matches = collectMatches(query.getCursor(state("hi hey hello")))
         assertEquals(listOf(3 to 6, 7 to 12), matches)
@@ -187,7 +188,7 @@ class SearchQueryTest {
             search = "x",
             caseSensitive = true,
             test = { from, to, _ ->
-                recorded.add(from to to)
+                recorded.add(from.value to to.value)
                 true
             }
         )

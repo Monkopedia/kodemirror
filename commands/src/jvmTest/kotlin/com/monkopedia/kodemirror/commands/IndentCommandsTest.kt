@@ -18,6 +18,7 @@
  */
 package com.monkopedia.kodemirror.commands
 
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
@@ -34,7 +35,7 @@ class IndentCommandsTest {
             EditorStateConfig(
                 doc = doc.asDoc(),
                 selection = SelectionSpec.EditorSelectionSpec(
-                    EditorSelection.single(anchor, head)
+                    EditorSelection.single(DocPos(anchor), DocPos(head))
                 )
             )
         )

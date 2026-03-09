@@ -36,6 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.state.ChangeSpec
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList
@@ -175,12 +176,16 @@ private fun applyCompletion(view: EditorSession, completion: Completion, result:
 }
 
 /** Insert completion text into the document (utility for custom apply functions). */
-fun insertCompletionText(state: EditorState, text: String, from: Int, to: Int): TransactionSpec =
-    TransactionSpec(
-        changes = ChangeSpec.Single(from, to, InsertContent.StringContent(text)),
-        selection = SelectionSpec.CursorSpec(from + text.length),
-        userEvent = "input.complete"
-    )
+fun insertCompletionText(
+    state: EditorState,
+    text: String,
+    from: DocPos,
+    to: DocPos
+): TransactionSpec = TransactionSpec(
+    changes = ChangeSpec.Single(from, to, InsertContent.StringContent(text)),
+    selection = SelectionSpec.CursorSpec(from + text.length),
+    userEvent = "input.complete"
+)
 
 // ── ViewPlugin ──
 
@@ -305,7 +310,7 @@ val completeAnyWord: CompletionSource = { ctx ->
     if (wordMatch != null && wordMatch.text.length >= 2) {
         val word = wordMatch.text
         val doc = ctx.state.doc
-        val text = doc.sliceString(0)
+        val text = doc.sliceString(DocPos.ZERO)
         val words = Regex("[\\w$]{2,}").findAll(text)
             .map { it.value }
             .filter { it != word }
@@ -357,7 +362,7 @@ fun autocompletion(config: CompletionConfig = CompletionConfig()): Extension {
     ) { state ->
         val cs = state.field(completionStateField, require = false)
         if (cs != null && cs.open && cs.filtered.isNotEmpty() && cs.result != null) {
-            Tooltip(pos = cs.result.from) {
+            Tooltip(pos = cs.result.from.value) {
                 val editorView = com.monkopedia.kodemirror.view.LocalEditorSession.current
                 val currentConfig = editorView.state.facet(completionConfig)
                 val currentCs = editorView.state.field(completionStateField, require = false)

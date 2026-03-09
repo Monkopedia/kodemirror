@@ -20,6 +20,7 @@ package com.monkopedia.kodemirror.view
 
 import androidx.compose.runtime.compositionLocalOf
 import com.monkopedia.kodemirror.state.ChangeSpec
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
@@ -28,6 +29,7 @@ import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asInsert
+import com.monkopedia.kodemirror.state.endPos
 import com.monkopedia.kodemirror.state.transactionSpec
 
 /**
@@ -118,8 +120,8 @@ fun EditorSession.setDoc(text: String) {
     dispatch(
         TransactionSpec(
             changes = ChangeSpec.Single(
-                from = 0,
-                to = state.doc.length,
+                from = DocPos.ZERO,
+                to = state.doc.endPos,
                 insert = text.asInsert()
             )
         )
@@ -129,7 +131,7 @@ fun EditorSession.setDoc(text: String) {
 /**
  * Insert [text] at the given [pos] in the document.
  */
-fun EditorSession.insertAt(pos: Int, text: String) {
+fun EditorSession.insertAt(pos: DocPos, text: String) {
     dispatch(
         TransactionSpec(
             changes = ChangeSpec.Single(from = pos, insert = text.asInsert())
@@ -140,7 +142,7 @@ fun EditorSession.insertAt(pos: Int, text: String) {
 /**
  * Delete the text between [from] and [to].
  */
-fun EditorSession.deleteRange(from: Int, to: Int) {
+fun EditorSession.deleteRange(from: DocPos, to: DocPos) {
     dispatch(TransactionSpec(changes = ChangeSpec.Single(from = from, to = to)))
 }
 
@@ -148,7 +150,7 @@ fun EditorSession.deleteRange(from: Int, to: Int) {
  * Set the selection to a range from [anchor] to [head].
  * If [head] is not provided, creates a cursor at [anchor].
  */
-fun EditorSession.select(anchor: Int, head: Int = anchor) {
+fun EditorSession.select(anchor: DocPos, head: DocPos = anchor) {
     dispatch(
         TransactionSpec(
             selection = SelectionSpec.CursorSpec(anchor = anchor, head = head)
@@ -163,7 +165,7 @@ fun EditorSession.selectAll() {
     dispatch(
         TransactionSpec(
             selection = SelectionSpec.EditorSelectionSpec(
-                EditorSelection.single(anchor = 0, head = state.doc.length)
+                EditorSelection.single(anchor = DocPos.ZERO, head = state.doc.endPos)
             )
         )
     )

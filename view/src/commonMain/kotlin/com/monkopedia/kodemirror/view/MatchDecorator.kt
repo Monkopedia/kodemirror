@@ -18,6 +18,7 @@
  */
 package com.monkopedia.kodemirror.view
 
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.RangeSetBuilder
 
@@ -70,7 +71,9 @@ class MatchDecorator(
         view: EditorSession
     ) {
         val doc = state.doc
-        val text = doc.sliceString(viewport.from, viewport.to.coerceAtMost(doc.length))
+        val sliceFrom = DocPos(viewport.from)
+        val sliceTo = DocPos(viewport.to.coerceAtMost(doc.length))
+        val text = doc.sliceString(sliceFrom, sliceTo)
         val baseOffset = viewport.from
         var scanned = 0
 
@@ -80,7 +83,7 @@ class MatchDecorator(
             val to = baseOffset + match.range.last + 1
             decorate(
                 { mFrom, mTo, dec ->
-                    if (mFrom <= mTo) builder.add(mFrom, mTo, dec)
+                    if (mFrom <= mTo) builder.add(DocPos(mFrom), DocPos(mTo), dec)
                 },
                 match,
                 view

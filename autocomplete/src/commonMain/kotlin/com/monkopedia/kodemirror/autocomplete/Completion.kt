@@ -18,6 +18,7 @@
  */
 package com.monkopedia.kodemirror.autocomplete
 
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.view.EditorSession
 
 /**
@@ -80,8 +81,8 @@ data class CompletionSection(
  * @param filter Whether the results should be filtered by the editor (default true).
  */
 data class CompletionResult(
-    val from: Int,
-    val to: Int? = null,
+    val from: DocPos,
+    val to: DocPos? = null,
     val options: List<Completion>,
     val validFor: Regex? = null,
     val filter: Boolean = true
@@ -98,8 +99,8 @@ data class CompletionResult(
 data class CompletionApplyContext(
     val session: EditorSession,
     val completion: Completion,
-    val from: Int,
-    val to: Int
+    val from: DocPos,
+    val to: DocPos
 )
 
 /** A function that provides completions for a given context. */

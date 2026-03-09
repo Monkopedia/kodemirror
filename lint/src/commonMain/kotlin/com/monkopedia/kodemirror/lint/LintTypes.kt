@@ -18,6 +18,7 @@
  */
 package com.monkopedia.kodemirror.lint
 
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.view.EditorSession
 
 /** Severity levels for diagnostics. */
@@ -34,8 +35,8 @@ enum class Severity { HINT, INFO, WARNING, ERROR }
  * @param actions Optional quick-fix actions.
  */
 data class Diagnostic(
-    val from: Int,
-    val to: Int,
+    val from: DocPos,
+    val to: DocPos,
     val severity: Severity,
     val message: String,
     val source: String? = null,

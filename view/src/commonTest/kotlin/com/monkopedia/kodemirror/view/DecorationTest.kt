@@ -18,6 +18,7 @@
  */
 package com.monkopedia.kodemirror.view
 
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.RangeSet
 import com.monkopedia.kodemirror.state.RangeSetBuilder
 import kotlin.test.Test
@@ -125,8 +126,8 @@ class DecorationTest {
     @Test
     fun decorationInRangeSet() {
         val builder = RangeSetBuilder<Decoration>()
-        builder.add(0, 5, Decoration.mark(MarkDecorationSpec()))
-        builder.add(3, 8, Decoration.mark(MarkDecorationSpec(inclusive = true)))
+        builder.add(DocPos.ZERO, DocPos(5), Decoration.mark(MarkDecorationSpec()))
+        builder.add(DocPos(3), DocPos(8), Decoration.mark(MarkDecorationSpec(inclusive = true)))
         val set = builder.finish()
 
         assertEquals(2, set.size)
@@ -143,11 +144,11 @@ class DecorationTest {
     @Test
     fun decorationSetBetween() {
         val builder = RangeSetBuilder<Decoration>()
-        builder.add(2, 6, Decoration.mark(MarkDecorationSpec()))
+        builder.add(DocPos(2), DocPos(6), Decoration.mark(MarkDecorationSpec()))
         val set = builder.finish()
 
         var found = false
-        set.between(0, 10) { _, _, _ ->
+        set.between(DocPos.ZERO, DocPos(10)) { _, _, _ ->
             found = true
             null
         }

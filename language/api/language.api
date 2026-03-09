@@ -57,7 +57,7 @@ public final class com/monkopedia/kodemirror/language/FoldKt {
 	public static final fun codeFolding ()Lcom/monkopedia/kodemirror/state/Extension;
 	public static final fun foldGutter ()Lcom/monkopedia/kodemirror/state/Extension;
 	public static final fun foldInside (Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;)Lcom/monkopedia/kodemirror/language/FoldRange;
-	public static final fun foldable (Lcom/monkopedia/kodemirror/state/EditorState;I)Lcom/monkopedia/kodemirror/language/FoldRange;
+	public static final fun foldable-FCwYIAs (Lcom/monkopedia/kodemirror/state/EditorState;I)Lcom/monkopedia/kodemirror/language/FoldRange;
 	public static final fun foldedRanges (Lcom/monkopedia/kodemirror/state/EditorState;)Lcom/monkopedia/kodemirror/state/RangeSet;
 	public static final fun getFoldAll ()Lkotlin/jvm/functions/Function1;
 	public static final fun getFoldCode ()Lkotlin/jvm/functions/Function1;
@@ -73,14 +73,14 @@ public final class com/monkopedia/kodemirror/language/FoldKt {
 }
 
 public final class com/monkopedia/kodemirror/language/FoldRange {
-	public fun <init> (II)V
-	public final fun component1 ()I
-	public final fun component2 ()I
-	public final fun copy (II)Lcom/monkopedia/kodemirror/language/FoldRange;
-	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/language/FoldRange;IIILjava/lang/Object;)Lcom/monkopedia/kodemirror/language/FoldRange;
+	public synthetic fun <init> (IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-8dfawaI ()I
+	public final fun component2-8dfawaI ()I
+	public final fun copy-5k5VDMc (II)Lcom/monkopedia/kodemirror/language/FoldRange;
+	public static synthetic fun copy-5k5VDMc$default (Lcom/monkopedia/kodemirror/language/FoldRange;IIILjava/lang/Object;)Lcom/monkopedia/kodemirror/language/FoldRange;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getFrom ()I
-	public final fun getTo ()I
+	public final fun getFrom-8dfawaI ()I
+	public final fun getTo-8dfawaI ()I
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -117,17 +117,17 @@ public final class com/monkopedia/kodemirror/language/HighlightStyleKt {
 }
 
 public class com/monkopedia/kodemirror/language/IndentContext {
-	public fun <init> (Lcom/monkopedia/kodemirror/state/EditorState;Ljava/lang/Integer;Z)V
-	public synthetic fun <init> (Lcom/monkopedia/kodemirror/state/EditorState;Ljava/lang/Integer;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun getSimulateBreak ()Ljava/lang/Integer;
+	public synthetic fun <init> (Lcom/monkopedia/kodemirror/state/EditorState;Lcom/monkopedia/kodemirror/state/DocPos;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lcom/monkopedia/kodemirror/state/EditorState;Lcom/monkopedia/kodemirror/state/DocPos;ZLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getSimulateBreak-aIaQTD8 ()Lcom/monkopedia/kodemirror/state/DocPos;
 	public final fun getSimulateDoubleBreak ()Z
 	public final fun getState ()Lcom/monkopedia/kodemirror/state/EditorState;
 	public final fun getTextAfterPos ()Ljava/lang/String;
 	public final fun getUnit ()I
-	public final fun lineAt (II)Lcom/monkopedia/kodemirror/state/Line;
-	public static synthetic fun lineAt$default (Lcom/monkopedia/kodemirror/language/IndentContext;IIILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/Line;
-	public final fun lineIndent (II)I
-	public static synthetic fun lineIndent$default (Lcom/monkopedia/kodemirror/language/IndentContext;IIILjava/lang/Object;)I
+	public final fun lineAt-hDXv4Zw (II)Lcom/monkopedia/kodemirror/state/Line;
+	public static synthetic fun lineAt-hDXv4Zw$default (Lcom/monkopedia/kodemirror/language/IndentContext;IIILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/Line;
+	public final fun lineIndent-hDXv4Zw (II)I
+	public static synthetic fun lineIndent-hDXv4Zw$default (Lcom/monkopedia/kodemirror/language/IndentContext;IIILjava/lang/Object;)I
 }
 
 public final class com/monkopedia/kodemirror/language/IndentKt {
@@ -141,8 +141,8 @@ public final class com/monkopedia/kodemirror/language/IndentKt {
 	public static final fun getIndentService ()Lcom/monkopedia/kodemirror/state/Facet;
 	public static final fun getIndentUnit ()Lcom/monkopedia/kodemirror/state/Facet;
 	public static final fun getIndentUnit (Lcom/monkopedia/kodemirror/state/EditorState;)I
-	public static final fun getIndentation (Lcom/monkopedia/kodemirror/state/EditorState;I)Ljava/lang/Integer;
-	public static final fun indentRange (Lcom/monkopedia/kodemirror/state/EditorState;II)Lcom/monkopedia/kodemirror/state/ChangeSpec;
+	public static final fun getIndentation-FCwYIAs (Lcom/monkopedia/kodemirror/state/EditorState;I)Ljava/lang/Integer;
+	public static final fun indentRange-sX5c8NE (Lcom/monkopedia/kodemirror/state/EditorState;II)Lcom/monkopedia/kodemirror/state/ChangeSpec;
 	public static final fun indentString (Lcom/monkopedia/kodemirror/state/EditorState;I)Ljava/lang/String;
 }
 
@@ -222,8 +222,8 @@ public final class com/monkopedia/kodemirror/language/MatchBracketsKt {
 	public static final fun bracketMatching (Lcom/monkopedia/kodemirror/language/BracketMatchingConfig;)Lcom/monkopedia/kodemirror/state/Extension;
 	public static synthetic fun bracketMatching$default (Lcom/monkopedia/kodemirror/language/BracketMatchingConfig;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/Extension;
 	public static final fun getBracketMatchingHandle ()Lcom/monkopedia/kodemirror/lezer/common/NodeProp;
-	public static final fun matchBrackets (Lcom/monkopedia/kodemirror/state/EditorState;IILcom/monkopedia/kodemirror/language/BracketMatchingConfig;)Lcom/monkopedia/kodemirror/language/MatchResult;
-	public static synthetic fun matchBrackets$default (Lcom/monkopedia/kodemirror/state/EditorState;IILcom/monkopedia/kodemirror/language/BracketMatchingConfig;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/language/MatchResult;
+	public static final fun matchBrackets-e7ZK5RI (Lcom/monkopedia/kodemirror/state/EditorState;IILcom/monkopedia/kodemirror/language/BracketMatchingConfig;)Lcom/monkopedia/kodemirror/language/MatchResult;
+	public static synthetic fun matchBrackets-e7ZK5RI$default (Lcom/monkopedia/kodemirror/state/EditorState;IILcom/monkopedia/kodemirror/language/BracketMatchingConfig;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/language/MatchResult;
 }
 
 public final class com/monkopedia/kodemirror/language/MatchResult {
@@ -327,15 +327,15 @@ public final class com/monkopedia/kodemirror/language/TagStyleSpec {
 }
 
 public final class com/monkopedia/kodemirror/language/TreeIndentContext : com/monkopedia/kodemirror/language/IndentContext {
-	public fun <init> (Lcom/monkopedia/kodemirror/state/EditorState;ILjava/lang/Integer;Z)V
-	public synthetic fun <init> (Lcom/monkopedia/kodemirror/state/EditorState;ILjava/lang/Integer;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lcom/monkopedia/kodemirror/state/EditorState;ILcom/monkopedia/kodemirror/state/DocPos;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lcom/monkopedia/kodemirror/state/EditorState;ILcom/monkopedia/kodemirror/state/DocPos;ZLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun column (II)I
 	public static synthetic fun column$default (Lcom/monkopedia/kodemirror/language/TreeIndentContext;IIILjava/lang/Object;)I
 	public final fun continueAt ()Ljava/lang/Integer;
 	public final fun getBaseIndent ()I
 	public final fun getBaseIndentFor ()Lkotlin/jvm/functions/Function1;
 	public final fun getNode ()Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;
-	public final fun getPos ()I
+	public final fun getPos-8dfawaI ()I
 	public final fun getTextAfter ()Ljava/lang/String;
 }
 

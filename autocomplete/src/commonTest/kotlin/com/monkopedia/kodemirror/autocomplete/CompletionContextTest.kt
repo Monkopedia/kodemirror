@@ -18,6 +18,7 @@
  */
 package com.monkopedia.kodemirror.autocomplete
 
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.asDoc
@@ -36,18 +37,18 @@ class CompletionContextTest {
     @Test
     fun matchBeforeFindsWordBeforeCursor() {
         val s = state("hello world")
-        val ctx = CompletionContext(s, pos = 5, explicit = false)
+        val ctx = CompletionContext(s, pos = DocPos(5), explicit = false)
         val result = ctx.matchBefore(Regex("\\w+"))
         assertNotNull(result)
-        assertEquals(0, result.from)
-        assertEquals(5, result.to)
+        assertEquals(DocPos(0), result.from)
+        assertEquals(DocPos(5), result.to)
         assertEquals("hello", result.text)
     }
 
     @Test
     fun matchBeforeReturnsNullWhenNoMatch() {
         val s = state("hello world")
-        val ctx = CompletionContext(s, pos = 0, explicit = false)
+        val ctx = CompletionContext(s, pos = DocPos.ZERO, explicit = false)
         val result = ctx.matchBefore(Regex("\\w+"))
         assertNull(result)
     }
@@ -55,19 +56,19 @@ class CompletionContextTest {
     @Test
     fun matchBeforeRespectsLineBoundary() {
         val s = state("first\nsecond")
-        val ctx = CompletionContext(s, pos = 12, explicit = false)
+        val ctx = CompletionContext(s, pos = DocPos(12), explicit = false)
         val result = ctx.matchBefore(Regex("\\w+"))
         assertNotNull(result)
         assertEquals("second", result.text)
-        assertEquals(6, result.from)
+        assertEquals(DocPos(6), result.from)
     }
 
     @Test
     fun explicitFlagIsAccessible() {
         val s = state("hello")
-        val ctx1 = CompletionContext(s, pos = 5, explicit = true)
+        val ctx1 = CompletionContext(s, pos = DocPos(5), explicit = true)
         assertTrue(ctx1.explicit)
-        val ctx2 = CompletionContext(s, pos = 5, explicit = false)
+        val ctx2 = CompletionContext(s, pos = DocPos(5), explicit = false)
         assertFalse(ctx2.explicit)
     }
 }

@@ -20,6 +20,7 @@ package com.monkopedia.kodemirror.view
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.text.TextLayoutResult
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 
 /**
@@ -74,9 +75,9 @@ class LineLayoutCache {
      * @param state Current editor state (used to look up the line).
      */
     fun coordsAtPos(pos: Int, side: Int, state: EditorState): Rect? {
-        val line = state.doc.lineAt(pos)
-        val layout = cache[line.number] ?: return null
-        val offsetInLine = pos - line.from
+        val line = state.doc.lineAt(DocPos(pos))
+        val layout = cache[line.number.value] ?: return null
+        val offsetInLine = pos - line.from.value
         val clampedOffset = offsetInLine.coerceIn(0, line.text.length)
         val cursorRect = layout.result.getCursorRect(clampedOffset)
         val top = layout.topPx + cursorRect.top
@@ -115,11 +116,11 @@ class LineLayoutCache {
      * Return block info for the line containing [pos].
      */
     fun blockAtPos(pos: Int, state: EditorState): BlockInfo? {
-        val line = state.doc.lineAt(pos)
-        val layout = cache[line.number] ?: return null
+        val line = state.doc.lineAt(DocPos(pos))
+        val layout = cache[line.number.value] ?: return null
         return BlockInfo(
-            from = line.from,
-            to = line.to,
+            from = line.from.value,
+            to = line.to.value,
             top = layout.topPx,
             height = layout.heightPx,
             type = BlockType.Text

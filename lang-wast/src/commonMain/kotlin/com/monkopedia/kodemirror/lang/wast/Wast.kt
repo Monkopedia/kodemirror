@@ -28,6 +28,7 @@ import com.monkopedia.kodemirror.language.foldInside
 import com.monkopedia.kodemirror.language.foldNodeProp
 import com.monkopedia.kodemirror.language.indentNodeProp
 import com.monkopedia.kodemirror.lezer.lr.ParserConfig
+import com.monkopedia.kodemirror.state.DocPos
 
 /**
  * A language provider for WebAssembly Text format.
@@ -45,7 +46,7 @@ val wastLanguage: LRLanguage = LRLanguage.define(
                     mapOf(
                         "App" to { node, _ -> foldInside(node) },
                         "BlockComment" to { node, _ ->
-                            FoldRange(node.from + 2, node.to - 2)
+                            FoldRange(DocPos(node.from + 2), DocPos(node.to - 2))
                         }
                     )
                 )

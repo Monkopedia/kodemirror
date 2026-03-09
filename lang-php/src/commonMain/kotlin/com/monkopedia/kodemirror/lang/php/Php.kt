@@ -30,6 +30,7 @@ import com.monkopedia.kodemirror.language.foldNodeProp
 import com.monkopedia.kodemirror.language.getIndentUnit
 import com.monkopedia.kodemirror.language.indentNodeProp
 import com.monkopedia.kodemirror.lezer.lr.ParserConfig
+import com.monkopedia.kodemirror.state.DocPos
 
 /**
  * A language provider based on the Lezer PHP parser, extended with
@@ -75,11 +76,11 @@ val phpLanguage: LRLanguage = LRLanguage.define(
                         "ValueList" ->
                             { node, _ -> foldInside(node) }
                         "ColonBlock" -> { node, _ ->
-                            FoldRange(node.from + 1, node.to)
+                            FoldRange(DocPos(node.from + 1), DocPos(node.to))
                         }
                         "BlockComment" -> { node, _ ->
                             if (node.to - node.from > 4) {
-                                FoldRange(node.from + 2, node.to - 2)
+                                FoldRange(DocPos(node.from + 2), DocPos(node.to - 2))
                             } else {
                                 null
                             }

@@ -24,6 +24,7 @@ import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.InsertContent
+import com.monkopedia.kodemirror.state.LineNumber
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.view.EditorSession
@@ -128,8 +129,8 @@ private fun toggleLineComment(view: EditorSession, lineToken: String): Boolean {
 
     // Check if all lines are already commented
     var allCommented = true
-    for (lineNum in startLine.number..endLine.number) {
-        val line = state.doc.line(lineNum)
+    for (lineNum in startLine.number.value..endLine.number.value) {
+        val line = state.doc.line(LineNumber(lineNum))
         val trimmed = line.text.trimStart()
         if (trimmed.isNotEmpty() && !trimmed.startsWith(lineToken)) {
             allCommented = false
@@ -150,8 +151,8 @@ private fun applyLineComment(view: EditorSession, lineToken: String, add: Boolea
 
     val changes = mutableListOf<ChangeSpec>()
 
-    for (lineNum in startLine.number..endLine.number) {
-        val line = state.doc.line(lineNum)
+    for (lineNum in startLine.number.value..endLine.number.value) {
+        val line = state.doc.line(LineNumber(lineNum))
         if (add) {
             changes.add(
                 ChangeSpec.Single(

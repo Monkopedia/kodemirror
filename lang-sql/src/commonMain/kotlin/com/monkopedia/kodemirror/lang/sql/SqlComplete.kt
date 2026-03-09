@@ -25,6 +25,7 @@ import com.monkopedia.kodemirror.autocomplete.CompletionSource
 import com.monkopedia.kodemirror.autocomplete.completeFromList
 import com.monkopedia.kodemirror.language.syntaxTree
 import com.monkopedia.kodemirror.lezer.common.SyntaxNode
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Text
 
@@ -60,7 +61,7 @@ private fun tokenBefore(tree: SyntaxNode): SyntaxNode {
 }
 
 private fun idName(doc: Text, node: SyntaxNode): String {
-    val text = doc.sliceString(node.from, node.to)
+    val text = doc.sliceString(DocPos(node.from), DocPos(node.to))
     val quoted = Regex("""^([`'"\[])(.*)([`'"\]])$""").find(text)
     return quoted?.groupValues?.get(2) ?: text
 }
@@ -115,7 +116,7 @@ private fun getAliases(doc: Text, at: SyntaxNode): Map<String, List<String>>? {
     var prevID: SyntaxNode? = null
     while (scan != null) {
         val kw = if (scan.name == "Keyword") {
-            doc.sliceString(scan.from, scan.to).lowercase()
+            doc.sliceString(DocPos(scan.from), DocPos(scan.to)).lowercase()
         } else {
             null
         }
@@ -140,21 +141,21 @@ private fun getAliases(doc: Text, at: SyntaxNode): Map<String, List<String>>? {
 }
 
 private data class SourceContextResult(
-    val from: Int,
+    val from: DocPos,
     val quoted: String?,
     val parents: List<String>,
     val empty: Boolean = false,
     val aliases: Map<String, List<String>>?
 )
 
-private fun sourceContext(state: EditorState, startPos: Int): SourceContextResult {
-    val pos = syntaxTree(state).resolveInner(startPos, -1)
+private fun sourceContext(state: EditorState, startPos: DocPos): SourceContextResult {
+    val pos = syntaxTree(state).resolveInner(startPos.value, -1)
     val aliases = getAliases(state.doc, pos)
     return when (pos.name) {
         "Identifier", "QuotedIdentifier", "Keyword" -> SourceContextResult(
-            from = pos.from,
+            from = DocPos(pos.from),
             quoted = if (pos.name == "QuotedIdentifier") {
-                state.doc.sliceString(pos.from, pos.from + 1)
+                state.doc.sliceString(DocPos(pos.from), DocPos(pos.from + 1))
             } else {
                 null
             },
@@ -402,7 +403,7 @@ private fun completeKeywords(
     val excluded = listOf("QuotedIdentifier", "String", "LineComment", "BlockComment", ".")
     return { context: CompletionContext ->
         // Only complete when not inside excluded node types
-        val nodeAtCursor = syntaxTree(context.state).resolveInner(context.pos, -1)
+        val nodeAtCursor = syntaxTree(context.state).resolveInner(context.pos.value, -1)
         if (excluded.contains(nodeAtCursor.name)) {
             null
         } else {

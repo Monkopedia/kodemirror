@@ -19,10 +19,12 @@
 package com.monkopedia.kodemirror.search
 
 import com.monkopedia.kodemirror.state.ChangeSpec
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.TransactionSpec
+import com.monkopedia.kodemirror.state.endPos
 import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.KeyBinding
 
@@ -65,8 +67,8 @@ private fun findMatch(view: EditorSession, forward: Boolean): Boolean {
     if (!query.valid) return false
 
     val state = view.state
-    val from = if (forward) state.selection.main.to else 0
-    val to = if (forward) state.doc.length else state.selection.main.from
+    val from = if (forward) state.selection.main.to else DocPos.ZERO
+    val to = if (forward) state.doc.endPos else state.selection.main.from
     val cursor = query.getCursor(state, from, to)
 
     val match = if (forward) {
@@ -82,8 +84,8 @@ private fun findMatch(view: EditorSession, forward: Boolean): Boolean {
 
     // Wrap around if no match found
     val wrappedMatch = match ?: run {
-        val wrapFrom = if (forward) 0 else state.selection.main.from
-        val wrapTo = if (forward) state.selection.main.to else state.doc.length
+        val wrapFrom = if (forward) DocPos.ZERO else state.selection.main.from
+        val wrapTo = if (forward) state.selection.main.to else state.doc.endPos
         val wrapCursor = query.getCursor(state, wrapFrom, wrapTo)
         if (forward) {
             if (wrapCursor.hasNext()) wrapCursor.next() else null
@@ -227,7 +229,12 @@ val selectSelectionMatches: (EditorSession) -> Boolean = { view ->
         while (true) {
             val idx = docText.indexOf(selectedText, searchFrom)
             if (idx < 0) break
-            ranges.add(EditorSelection.range(idx, idx + selectedText.length))
+            ranges.add(
+                EditorSelection.range(
+                    DocPos(idx),
+                    DocPos(idx + selectedText.length)
+                )
+            )
             searchFrom = idx + selectedText.length
         }
         if (ranges.size > 1) {

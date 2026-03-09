@@ -18,6 +18,7 @@
  */
 package com.monkopedia.kodemirror.autocomplete
 
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.ExtensionList
@@ -40,7 +41,7 @@ class AutocompletionCommandsTest {
 
     private val testSource: CompletionSource = { ctx ->
         CompletionResult(
-            from = 0,
+            from = DocPos.ZERO,
             to = ctx.pos,
             options = testOptions
         )
@@ -51,7 +52,7 @@ class AutocompletionCommandsTest {
         val state = EditorState.create(
             EditorStateConfig(
                 doc = doc.asDoc(),
-                selection = SelectionSpec.CursorSpec(cursor),
+                selection = SelectionSpec.CursorSpec(DocPos(cursor)),
                 extensions = ExtensionList(
                     listOf(
                         completionConfig.of(config),

@@ -18,7 +18,9 @@
  */
 package com.monkopedia.kodemirror.search
 
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
+import com.monkopedia.kodemirror.state.endPos
 
 /**
  * Represents a search query with options for how to match.
@@ -39,7 +41,7 @@ data class SearchQuery(
     val regexp: Boolean = false,
     val replace: String = "",
     val wholeWord: Boolean = false,
-    val test: ((from: Int, to: Int, state: EditorState) -> Boolean)? = null
+    val test: ((from: DocPos, to: DocPos, state: EditorState) -> Boolean)? = null
 ) {
     /** Whether this query is non-empty and (if regex) syntactically valid. */
     val valid: Boolean
@@ -65,8 +67,8 @@ data class SearchQuery(
      */
     fun getCursor(
         state: EditorState,
-        from: Int = 0,
-        to: Int = state.doc.length
+        from: DocPos = DocPos.ZERO,
+        to: DocPos = state.doc.endPos
     ): Iterator<SearchMatch> {
         val base = if (regexp && !literal) {
             val options = if (caseSensitive) emptySet() else setOf(RegexOption.IGNORE_CASE)
@@ -142,7 +144,7 @@ data class SearchQuery(
             regexp: Boolean = false,
             replace: String = "",
             wholeWord: Boolean = false,
-            test: ((from: Int, to: Int, state: EditorState) -> Boolean)? = null
+            test: ((from: DocPos, to: DocPos, state: EditorState) -> Boolean)? = null
         ): SearchQuery? {
             val query = SearchQuery(
                 search = search,
@@ -183,8 +185,8 @@ internal class WholeWordSearchCursor(
         nextMatch = null
     }
 
-    private fun isWordBoundary(pos: Int): Boolean {
-        if (pos == 0 || pos == doc.length) return true
+    private fun isWordBoundary(pos: DocPos): Boolean {
+        if (pos == DocPos.ZERO || pos.value == doc.length) return true
         val before = doc.sliceString(pos - 1, pos)
         val after = doc.sliceString(pos, pos + 1)
         val wordBefore = before.isNotEmpty() && isWordChar(before[0])
@@ -206,7 +208,7 @@ internal class WholeWordSearchCursor(
  */
 private class FilteredSearchCursor(
     private val inner: Iterator<SearchMatch>,
-    private val test: (Int, Int, EditorState) -> Boolean,
+    private val test: (DocPos, DocPos, EditorState) -> Boolean,
     private val state: EditorState
 ) : Iterator<SearchMatch> {
     private var nextMatch: SearchMatch? = null

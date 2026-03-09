@@ -21,6 +21,7 @@ package com.monkopedia.kodemirror.language
 import androidx.compose.ui.text.SpanStyle
 import com.monkopedia.kodemirror.lezer.common.NodeProp
 import com.monkopedia.kodemirror.lezer.common.SyntaxNode
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.RangeSet
@@ -81,14 +82,14 @@ private val openingBrackets = setOf('(', '[', '{')
  */
 fun matchBrackets(
     state: EditorState,
-    pos: Int,
+    pos: DocPos,
     dir: Int = -1,
     config: BracketMatchingConfig = BracketMatchingConfig()
 ): MatchResult? {
     val tree = syntaxTree(state)
 
     // Try custom bracket matching handle first
-    val node = tree.resolveInner(pos, dir)
+    val node = tree.resolveInner(pos.value, dir)
     val handle = node.type.prop(bracketMatchingHandle)
     if (handle != null) {
         val result = handle(node, state)
@@ -106,33 +107,45 @@ fun matchBrackets(
 private fun tryTreeMatch(
     state: EditorState,
     tree: com.monkopedia.kodemirror.lezer.common.Tree,
-    pos: Int,
+    pos: DocPos,
     dir: Int,
     config: BracketMatchingConfig
 ): MatchResult? {
-    val node = tree.resolveInner(pos, dir)
+    val node = tree.resolveInner(pos.value, dir)
     val closedBy = node.type.prop(NodeProp.closedBy)
     val openedBy = node.type.prop(NodeProp.openedBy)
 
     if (closedBy != null) {
-        // This is an opening bracket node — find its close
+        // This is an opening bracket node -- find its close
         val matchNode = findMatchingNode(node, closedBy, 1, config.maxScanDistance)
         return MatchResult(
-            start = com.monkopedia.kodemirror.state.EditorSelection.range(node.from, node.to),
+            start = com.monkopedia.kodemirror.state.EditorSelection.range(
+                DocPos(node.from),
+                DocPos(node.to)
+            ),
             end = matchNode?.let {
-                com.monkopedia.kodemirror.state.EditorSelection.range(it.from, it.to)
+                com.monkopedia.kodemirror.state.EditorSelection.range(
+                    DocPos(it.from),
+                    DocPos(it.to)
+                )
             },
             matched = matchNode != null
         )
     }
 
     if (openedBy != null) {
-        // This is a closing bracket node — find its open
+        // This is a closing bracket node -- find its open
         val matchNode = findMatchingNode(node, openedBy, -1, config.maxScanDistance)
         return MatchResult(
-            start = com.monkopedia.kodemirror.state.EditorSelection.range(node.from, node.to),
+            start = com.monkopedia.kodemirror.state.EditorSelection.range(
+                DocPos(node.from),
+                DocPos(node.to)
+            ),
             end = matchNode?.let {
-                com.monkopedia.kodemirror.state.EditorSelection.range(it.from, it.to)
+                com.monkopedia.kodemirror.state.EditorSelection.range(
+                    DocPos(it.from),
+                    DocPos(it.to)
+                )
             },
             matched = matchNode != null
         )
@@ -161,11 +174,11 @@ private fun findMatchingNode(
 
 private fun tryScanMatch(
     state: EditorState,
-    pos: Int,
+    pos: DocPos,
     dir: Int,
     config: BracketMatchingConfig
 ): MatchResult? {
-    if (pos < 0 || pos >= state.doc.length) return null
+    if (pos.value < 0 || pos.value >= state.doc.length) return null
     val doc = state.doc
     val charStr = doc.sliceString(pos, pos + 1)
     if (charStr.isEmpty()) return null
@@ -179,12 +192,12 @@ private fun tryScanMatch(
 
     // Scan for the matching bracket
     var depth = 1
-    var scanPos = pos + scanDir
+    var scanPos = pos.value + scanDir
     val limit = config.maxScanDistance
     var scanned = 0
 
     while (scanned < limit && scanPos >= 0 && scanPos < doc.length) {
-        val scanStr = doc.sliceString(scanPos, scanPos + 1)
+        val scanStr = doc.sliceString(DocPos(scanPos), DocPos(scanPos + 1))
         if (scanStr.isNotEmpty()) {
             val scanCh = scanStr[0]
             if (scanCh == ch) {
@@ -195,8 +208,8 @@ private fun tryScanMatch(
                     return MatchResult(
                         start = start,
                         end = com.monkopedia.kodemirror.state.EditorSelection.range(
-                            scanPos,
-                            scanPos + 1
+                            DocPos(scanPos),
+                            DocPos(scanPos + 1)
                         ),
                         matched = true
                     )
@@ -260,19 +273,19 @@ private class BracketMatchingPlugin(
         )
 
         val builder = RangeSetBuilder<Decoration>()
-        val ranges = mutableListOf<Triple<Int, Int, Decoration>>()
+        val ranges = mutableListOf<Triple<DocPos, DocPos, Decoration>>()
 
         for (sel in state.selection.ranges) {
             val pos = sel.head
             // Check character before cursor
-            if (pos > 0) {
+            if (pos > DocPos.ZERO) {
                 val match = matchBrackets(state, pos - 1, -1, config)
                 if (match != null) {
                     addMatchRanges(match, matchedDeco, unmatchedDeco, ranges)
                 }
             }
             // Check character after cursor (if configured)
-            if (config.afterCursor && pos < state.doc.length) {
+            if (config.afterCursor && pos.value < state.doc.length) {
                 val match = matchBrackets(state, pos, 1, config)
                 if (match != null) {
                     addMatchRanges(match, matchedDeco, unmatchedDeco, ranges)
@@ -282,7 +295,7 @@ private class BracketMatchingPlugin(
 
         // Sort and deduplicate ranges, then add to builder
         ranges.sortBy { it.first }
-        var lastTo = -1
+        var lastTo = DocPos(-1)
         for ((from, to, deco) in ranges) {
             if (from >= lastTo) {
                 builder.add(from, to, deco)
@@ -297,7 +310,7 @@ private class BracketMatchingPlugin(
         match: MatchResult,
         matchedDeco: Decoration,
         unmatchedDeco: Decoration,
-        ranges: MutableList<Triple<Int, Int, Decoration>>
+        ranges: MutableList<Triple<DocPos, DocPos, Decoration>>
     ) {
         val deco = if (match.matched) matchedDeco else unmatchedDeco
         ranges.add(Triple(match.start.from, match.start.to, deco))

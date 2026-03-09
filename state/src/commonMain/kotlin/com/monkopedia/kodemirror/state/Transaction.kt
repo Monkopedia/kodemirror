@@ -158,13 +158,13 @@ sealed interface SelectionSpec {
     ) : SelectionSpec
 
     data class CursorSpec(
-        val anchor: Int,
-        val head: Int? = null
+        val anchor: DocPos,
+        val head: DocPos? = null
     ) : SelectionSpec
 }
 
 /** Create a [SelectionSpec] placing the cursor at [pos]. */
-fun Int.asCursor(): SelectionSpec = SelectionSpec.CursorSpec(this)
+fun DocPos.asCursor(): SelectionSpec = SelectionSpec.CursorSpec(this)
 
 /** Convert this [EditorSelection] to a [SelectionSpec]. */
 fun EditorSelection.asSpec(): SelectionSpec = SelectionSpec.EditorSelectionSpec(this)

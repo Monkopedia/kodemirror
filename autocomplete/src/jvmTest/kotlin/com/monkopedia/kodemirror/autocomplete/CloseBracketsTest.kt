@@ -18,6 +18,7 @@
  */
 package com.monkopedia.kodemirror.autocomplete
 
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.SelectionSpec
@@ -33,7 +34,7 @@ class CloseBracketsTest {
     private fun createState(doc: String, cursor: Int = 0): EditorState = EditorState.create(
         EditorStateConfig(
             doc = doc.asDoc(),
-            selection = SelectionSpec.CursorSpec(cursor)
+            selection = SelectionSpec.CursorSpec(DocPos(cursor))
         )
     )
 
@@ -46,7 +47,7 @@ class CloseBracketsTest {
         val spec = insertBracket(state, "(")
         val tr = state.update(spec)
         assertEquals("()", tr.state.doc.toString())
-        assertEquals(1, tr.state.selection.main.head)
+        assertEquals(DocPos(1), tr.state.selection.main.head)
     }
 
     @Test
@@ -55,7 +56,7 @@ class CloseBracketsTest {
         val spec = insertBracket(state, "\"")
         val tr = state.update(spec)
         assertEquals("\"\"", tr.state.doc.toString())
-        assertEquals(1, tr.state.selection.main.head)
+        assertEquals(DocPos(1), tr.state.selection.main.head)
     }
 
     @Test
@@ -64,7 +65,7 @@ class CloseBracketsTest {
         val spec = insertBracket(state, "[")
         val tr = state.update(spec)
         assertEquals("[]", tr.state.doc.toString())
-        assertEquals(1, tr.state.selection.main.head)
+        assertEquals(DocPos(1), tr.state.selection.main.head)
     }
 
     @Test
@@ -73,7 +74,7 @@ class CloseBracketsTest {
         val spec = insertBracket(state, "{")
         val tr = state.update(spec)
         assertEquals("{}", tr.state.doc.toString())
-        assertEquals(1, tr.state.selection.main.head)
+        assertEquals(DocPos(1), tr.state.selection.main.head)
     }
 
     @Test
@@ -81,7 +82,7 @@ class CloseBracketsTest {
         val view = createView("()", cursor = 1)
         assertTrue(deleteBracketPair(view))
         assertEquals("", view.state.doc.toString())
-        assertEquals(0, view.state.selection.main.head)
+        assertEquals(DocPos.ZERO, view.state.selection.main.head)
     }
 
     @Test
@@ -106,6 +107,6 @@ class CloseBracketsTest {
         val spec = insertBracket(state, "x")
         val tr = state.update(spec)
         assertEquals("x", tr.state.doc.toString())
-        assertEquals(1, tr.state.selection.main.head)
+        assertEquals(DocPos(1), tr.state.selection.main.head)
     }
 }

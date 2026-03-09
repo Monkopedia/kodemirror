@@ -19,6 +19,7 @@
 package com.monkopedia.kodemirror.view
 
 import com.monkopedia.kodemirror.state.CharCategory
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
@@ -32,106 +33,106 @@ class CursorMotionTest {
     private fun state(doc: String, pos: Int = 0): EditorState = EditorState.create(
         EditorStateConfig(
             doc = doc.asDoc(),
-            selection = com.monkopedia.kodemirror.state.SelectionSpec.CursorSpec(pos)
+            selection = com.monkopedia.kodemirror.state.SelectionSpec.CursorSpec(DocPos(pos))
         )
     )
 
     @Test
     fun groupAtWordChar() {
         val s = state("hello world")
-        assertEquals(CharCategory.Word, groupAt(s, 0))
-        assertEquals(CharCategory.Word, groupAt(s, 4))
+        assertEquals(CharCategory.Word, groupAt(s, DocPos.ZERO))
+        assertEquals(CharCategory.Word, groupAt(s, DocPos(4)))
     }
 
     @Test
     fun groupAtSpace() {
         val s = state("hello world")
-        assertEquals(CharCategory.Space, groupAt(s, 5))
+        assertEquals(CharCategory.Space, groupAt(s, DocPos(5)))
     }
 
     @Test
     fun groupAtPunctuation() {
         val s = state("a,b")
-        assertEquals(CharCategory.Other, groupAt(s, 1))
+        assertEquals(CharCategory.Other, groupAt(s, DocPos(1)))
     }
 
     @Test
     fun moveByCharForward() {
         val s = state("hello", 0)
-        val sel = EditorSelection.cursor(0)
+        val sel = EditorSelection.cursor(DocPos.ZERO)
         val moved = moveByChar(s, sel, forward = true)
-        assertEquals(1, moved.head)
+        assertEquals(DocPos(1), moved.head)
         assertTrue(moved.empty) // cursor, not range
     }
 
     @Test
     fun moveByCharBackward() {
         val s = state("hello", 3)
-        val sel = EditorSelection.cursor(3)
+        val sel = EditorSelection.cursor(DocPos(3))
         val moved = moveByChar(s, sel, forward = false)
-        assertEquals(2, moved.head)
+        assertEquals(DocPos(2), moved.head)
     }
 
     @Test
     fun moveByCharAtStart() {
         val s = state("hello", 0)
-        val sel = EditorSelection.cursor(0)
+        val sel = EditorSelection.cursor(DocPos.ZERO)
         val moved = moveByChar(s, sel, forward = false)
-        assertEquals(0, moved.head)
+        assertEquals(DocPos.ZERO, moved.head)
     }
 
     @Test
     fun moveByCharAtEnd() {
         val s = state("hello", 5)
-        val sel = EditorSelection.cursor(5)
+        val sel = EditorSelection.cursor(DocPos(5))
         val moved = moveByChar(s, sel, forward = true)
-        assertEquals(5, moved.head)
+        assertEquals(DocPos(5), moved.head)
     }
 
     @Test
     fun moveByCharExtend() {
         val s = state("hello")
-        val sel = EditorSelection.cursor(1)
+        val sel = EditorSelection.cursor(DocPos(1))
         val moved = moveByChar(s, sel, forward = true, extend = true)
-        assertEquals(1, moved.anchor)
-        assertEquals(2, moved.head)
+        assertEquals(DocPos(1), moved.anchor)
+        assertEquals(DocPos(2), moved.head)
         assertFalse(moved.empty)
     }
 
     @Test
     fun moveByGroupWord() {
         val s = state("hello world")
-        val sel = EditorSelection.cursor(0)
+        val sel = EditorSelection.cursor(DocPos.ZERO)
         val moved = moveByGroup(s, sel, forward = true)
         // Should move past the entire word "hello"
-        assertEquals(5, moved.head)
+        assertEquals(DocPos(5), moved.head)
     }
 
     @Test
     fun moveByGroupSpaces() {
         val s = state("hello world")
-        val sel = EditorSelection.cursor(5)
+        val sel = EditorSelection.cursor(DocPos(5))
         val moved = moveByGroup(s, sel, forward = true)
         // Should move past the space
-        assertEquals(6, moved.head)
+        assertEquals(DocPos(6), moved.head)
     }
 
     @Test
     fun moveByGroupBackward() {
         val s = state("hello world")
-        val sel = EditorSelection.cursor(11)
+        val sel = EditorSelection.cursor(DocPos(11))
         val moved = moveByGroup(s, sel, forward = false)
         // Should move back past "world"
-        assertEquals(6, moved.head)
+        assertEquals(DocPos(6), moved.head)
     }
 
     @Test
     fun moveByGroupExtend() {
         val s = state("hello world")
-        val sel = EditorSelection.cursor(0)
+        val sel = EditorSelection.cursor(DocPos.ZERO)
         val moved = moveByGroup(s, sel, forward = true, extend = true)
-        assertEquals(0, moved.anchor)
-        assertEquals(5, moved.head)
+        assertEquals(DocPos.ZERO, moved.anchor)
+        assertEquals(DocPos(5), moved.head)
     }
 }
 

@@ -51,12 +51,12 @@ class EditorStateBuilder @PublishedApi internal constructor() {
     }
 
     /** Set the initial cursor position. */
-    fun selection(cursor: Int) {
+    fun selection(cursor: DocPos) {
         selectionSpec = SelectionSpec.CursorSpec(cursor)
     }
 
     /** Set the initial selection as a range. */
-    fun selection(anchor: Int, head: Int) {
+    fun selection(anchor: DocPos, head: DocPos) {
         selectionSpec = SelectionSpec.CursorSpec(anchor, head)
     }
 

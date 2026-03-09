@@ -21,7 +21,9 @@ package com.monkopedia.kodemirror.view
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
+import com.monkopedia.kodemirror.state.LineNumber
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
 
@@ -85,18 +87,18 @@ internal class EditorSessionImpl(
     override val textDirection: Direction
         get() {
             val doc = state.doc
-            val firstLine = if (doc.lines > 0) doc.line(1).text else ""
+            val firstLine = if (doc.lines > 0) doc.line(LineNumber.FIRST).text else ""
             return autoDirection(firstLine, 0, firstLine.length)
         }
 
     override fun textDirectionAt(pos: Int): Direction {
         if (!state.facet(perLineTextDirection)) return textDirection
-        val line = state.doc.lineAt(pos)
+        val line = state.doc.lineAt(DocPos(pos))
         return autoDirection(line.text, 0, line.text.length)
     }
 
     override fun bidiSpans(line: com.monkopedia.kodemirror.state.Line): List<BidiSpan> {
-        return computeOrder(line.text, textDirectionAt(line.from))
+        return computeOrder(line.text, textDirectionAt(line.from.value))
     }
 
     override fun phrase(phrase: String, vararg insert: Any): String = state.phrase(phrase, *insert)

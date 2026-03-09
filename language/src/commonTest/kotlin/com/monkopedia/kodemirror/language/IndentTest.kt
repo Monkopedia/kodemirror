@@ -18,6 +18,7 @@
  */
 package com.monkopedia.kodemirror.language
 
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.ExtensionList
@@ -74,16 +75,16 @@ class IndentTest {
 
     @Test
     fun getIndentationWithIndentServiceReturnsServiceResult() {
-        val service: (IndentContext, Int) -> Int? = { _, _ -> 8 }
+        val service: (IndentContext, DocPos) -> Int? = { _, _ -> 8 }
         val state = createState("hello", indentService.of(service))
-        val result = getIndentation(state, 0)
+        val result = getIndentation(state, DocPos.ZERO)
         assertEquals(8, result)
     }
 
     @Test
     fun getIndentationReturnsNullWithoutServiceOrTree() {
         val state = createState("hello")
-        val result = getIndentation(state, 0)
+        val result = getIndentation(state, DocPos.ZERO)
         assertNull(result)
     }
 
@@ -91,8 +92,8 @@ class IndentTest {
     fun indentContextLineIndentComputesCorrectColumnCount() {
         val state = createState("    hello\n  world")
         val ctx = IndentContext(state)
-        assertEquals(4, ctx.lineIndent(0))
-        assertEquals(2, ctx.lineIndent(10))
+        assertEquals(4, ctx.lineIndent(DocPos.ZERO))
+        assertEquals(2, ctx.lineIndent(DocPos(10)))
     }
 
     @Test
@@ -118,27 +119,27 @@ class IndentTest {
 
     @Test
     fun getIndentationFirstServiceWins() {
-        val service1: (IndentContext, Int) -> Int? = { _, _ -> 2 }
-        val service2: (IndentContext, Int) -> Int? = { _, _ -> 8 }
+        val service1: (IndentContext, DocPos) -> Int? = { _, _ -> 2 }
+        val service2: (IndentContext, DocPos) -> Int? = { _, _ -> 8 }
         val state = createState(
             "hello",
             ExtensionList(
                 listOf(indentService.of(service1), indentService.of(service2))
             )
         )
-        assertEquals(2, getIndentation(state, 0))
+        assertEquals(2, getIndentation(state, DocPos.ZERO))
     }
 
     @Test
     fun getIndentationServiceReturningNullFallsThrough() {
-        val service1: (IndentContext, Int) -> Int? = { _, _ -> null }
-        val service2: (IndentContext, Int) -> Int? = { _, _ -> 6 }
+        val service1: (IndentContext, DocPos) -> Int? = { _, _ -> null }
+        val service2: (IndentContext, DocPos) -> Int? = { _, _ -> 6 }
         val state = createState(
             "hello",
             ExtensionList(
                 listOf(indentService.of(service1), indentService.of(service2))
             )
         )
-        assertEquals(6, getIndentation(state, 0))
+        assertEquals(6, getIndentation(state, DocPos.ZERO))
     }
 }

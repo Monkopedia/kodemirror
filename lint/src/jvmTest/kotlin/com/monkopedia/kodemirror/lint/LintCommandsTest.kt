@@ -18,6 +18,7 @@
  */
 package com.monkopedia.kodemirror.lint
 
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.ExtensionList
@@ -40,7 +41,7 @@ class LintCommandsTest {
         val state = EditorState.create(
             EditorStateConfig(
                 doc = doc.asDoc(),
-                selection = SelectionSpec.CursorSpec(cursor),
+                selection = SelectionSpec.CursorSpec(DocPos(cursor)),
                 extensions = ExtensionList(listOf(lintState, lintPanelOpen))
             )
         )
@@ -56,33 +57,33 @@ class LintCommandsTest {
     @Test
     fun nextDiagnosticJumpsToNext() {
         val diags = listOf(
-            Diagnostic(5, 8, Severity.ERROR, "first"),
-            Diagnostic(15, 18, Severity.WARNING, "second")
+            Diagnostic(DocPos(5), DocPos(8), Severity.ERROR, "first"),
+            Diagnostic(DocPos(15), DocPos(18), Severity.WARNING, "second")
         )
         val view = createView("abcdefghijklmnopqrstuvwxyz", diags, cursor = 0)
         assertTrue(nextDiagnostic(view))
-        assertEquals(5, view.state.selection.main.head)
+        assertEquals(DocPos(5), view.state.selection.main.head)
     }
 
     @Test
     fun previousDiagnosticJumpsToPrevious() {
         val diags = listOf(
-            Diagnostic(5, 8, Severity.ERROR, "first"),
-            Diagnostic(15, 18, Severity.WARNING, "second")
+            Diagnostic(DocPos(5), DocPos(8), Severity.ERROR, "first"),
+            Diagnostic(DocPos(15), DocPos(18), Severity.WARNING, "second")
         )
         val view = createView("abcdefghijklmnopqrstuvwxyz", diags, cursor = 20)
         assertTrue(previousDiagnostic(view))
-        assertEquals(15, view.state.selection.main.head)
+        assertEquals(DocPos(15), view.state.selection.main.head)
     }
 
     @Test
     fun nextDiagnosticWrapsAround() {
         val diags = listOf(
-            Diagnostic(2, 5, Severity.ERROR, "only")
+            Diagnostic(DocPos(2), DocPos(5), Severity.ERROR, "only")
         )
         val view = createView("abcdefghij", diags, cursor = 8)
         assertTrue(nextDiagnostic(view))
-        assertEquals(2, view.state.selection.main.head)
+        assertEquals(DocPos(2), view.state.selection.main.head)
     }
 
     @Test

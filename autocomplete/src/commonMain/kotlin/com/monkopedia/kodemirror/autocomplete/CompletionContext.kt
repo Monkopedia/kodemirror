@@ -20,12 +20,13 @@ package com.monkopedia.kodemirror.autocomplete
 
 import com.monkopedia.kodemirror.language.syntaxTree
 import com.monkopedia.kodemirror.lezer.common.SyntaxNode
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 
 /** Result of [CompletionContext.matchBefore]. */
 data class MatchBeforeResult(
-    val from: Int,
-    val to: Int,
+    val from: DocPos,
+    val to: DocPos,
     val text: String
 )
 
@@ -38,7 +39,7 @@ data class MatchBeforeResult(
  */
 class CompletionContext(
     val state: EditorState,
-    val pos: Int,
+    val pos: DocPos,
     val explicit: Boolean
 ) {
     /**
@@ -47,9 +48,9 @@ class CompletionContext(
      */
     fun tokenBefore(types: List<String>): SyntaxNode? {
         val tree = syntaxTree(state)
-        var node = tree.resolveInner(pos, -1)
-        while (node.from < pos) {
-            if (types.contains(node.name) && node.to <= pos) {
+        var node = tree.resolveInner(pos.value, -1)
+        while (node.from < pos.value) {
+            if (types.contains(node.name) && node.to <= pos.value) {
                 return node
             }
             val parent = node.parent ?: break

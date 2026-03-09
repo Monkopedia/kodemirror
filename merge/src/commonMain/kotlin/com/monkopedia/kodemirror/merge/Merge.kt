@@ -139,8 +139,6 @@ private fun moveByChunk(dir: Int): StateCommand = { target: StateCommandTarget -
             val next = chunks[nextIdx]
             val from =
                 if (conf.side == MergeSide.B) next.fromB else next.fromA
-            val to =
-                if (conf.side == MergeSide.B) next.toB else next.toA
             target.dispatch(
                 state.update(
                     TransactionSpec(

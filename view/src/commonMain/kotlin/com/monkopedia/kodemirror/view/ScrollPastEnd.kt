@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.RangeSet
 import com.monkopedia.kodemirror.state.RangeSetBuilder
+import com.monkopedia.kodemirror.state.endPos
 
 /**
  * Extension that adds empty space after the last line of the document,
@@ -56,12 +57,12 @@ private class ScrollPastEndPlugin(view: EditorSession, private val padding: Dp) 
     }
 
     private fun buildDecos(view: EditorSession): DecorationSet {
-        val docLength = view.state.doc.length
+        val docEnd = view.state.doc.endPos
         val builder = RangeSetBuilder<Decoration>()
         val widget = SpacerWidget(padding)
         builder.add(
-            docLength,
-            docLength,
+            docEnd,
+            docEnd,
             Decoration.widget(WidgetDecorationSpec(widget = widget, side = 1, block = true))
         )
         return builder.finish()

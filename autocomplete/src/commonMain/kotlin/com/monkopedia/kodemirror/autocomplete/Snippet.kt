@@ -21,6 +21,7 @@ package com.monkopedia.kodemirror.autocomplete
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import com.monkopedia.kodemirror.state.ChangeSpec
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.InsertContent
@@ -46,7 +47,7 @@ import com.monkopedia.kodemirror.view.keymap
 // ── Snippet field representation ──
 
 /** A named field within an active snippet, spanning [from] to [to] in the document. */
-data class SnippetField(val name: String, val from: Int, val to: Int)
+data class SnippetField(val name: String, val from: DocPos, val to: DocPos)
 
 /**
  * Tracks the currently active snippet insertion — the list of tab-stop

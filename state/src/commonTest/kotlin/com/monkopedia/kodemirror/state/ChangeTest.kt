@@ -47,14 +47,14 @@ private fun rStr(l: Int): String {
 private fun rChange(len: Int): ChangeSpec.Single {
     if (len == 0 || r(3) == 0) {
         return ChangeSpec.Single(
-            from = r(len.coerceAtLeast(1)),
+            from = DocPos(r(len.coerceAtLeast(1))),
             insert = InsertContent.StringContent(rStr(r(5) + 1))
         )
     }
     val from = r(len - 1)
     val to = minOf(from + r(5) + 1, len)
     val insert = if (r(2) == 0) InsertContent.StringContent(rStr(r(2) + 1)) else null
-    return ChangeSpec.Single(from = from, to = to, insert = insert)
+    return ChangeSpec.Single(from = DocPos(from), to = DocPos(to), insert = insert)
 }
 
 private fun rChanges(len: Int, count: Int): List<ChangeSpec.Single> {
@@ -195,13 +195,16 @@ class ChangeDescMapPosTest {
                 MapMode.Simple
             }
             if (mode == MapMode.Simple) {
-                assertEquals(to, set.mapPos(from, assoc))
+                assertEquals(
+                    if (to != null) DocPos(to) else null,
+                    set.mapPos(DocPos(from), assoc)
+                )
             } else {
-                val result = set.mapPos(from, assoc, mode)
+                val result = set.mapPos(DocPos(from), assoc, mode)
                 if (to == null) {
                     assertNull(result)
                 } else {
-                    assertEquals(to, result)
+                    assertEquals(DocPos(to), result)
                 }
             }
         }
@@ -285,7 +288,12 @@ class ChangeSetTest {
             "5 0:2 5",
             ChangeSet.of(
                 ChangeSpec.Multi(
-                    listOf(ChangeSpec.Single(from = 5, insert = InsertContent.StringContent("hi")))
+                    listOf(
+                        ChangeSpec.Single(
+                            from = DocPos(5),
+                            insert = InsertContent.StringContent("hi")
+                        )
+                    )
                 ),
                 10
             ).desc.toString()
@@ -294,7 +302,7 @@ class ChangeSetTest {
             "5 2:0 3",
             ChangeSet.of(
                 ChangeSpec.Multi(
-                    listOf(ChangeSpec.Single(from = 5, to = 7))
+                    listOf(ChangeSpec.Single(from = DocPos(5), to = DocPos(7)))
                 ),
                 10
             ).desc.toString()
@@ -304,11 +312,20 @@ class ChangeSetTest {
             ChangeSet.of(
                 ChangeSpec.Multi(
                     listOf(
-                        ChangeSpec.Single(from = 5, insert = InsertContent.StringContent("hi")),
-                        ChangeSpec.Single(from = 5, insert = InsertContent.StringContent("ok")),
-                        ChangeSpec.Single(from = 0, to = 3),
-                        ChangeSpec.Single(from = 4, to = 6),
-                        ChangeSpec.Single(from = 8, insert = InsertContent.StringContent("boo"))
+                        ChangeSpec.Single(
+                            from = DocPos(5),
+                            insert = InsertContent.StringContent("hi")
+                        ),
+                        ChangeSpec.Single(
+                            from = DocPos(5),
+                            insert = InsertContent.StringContent("ok")
+                        ),
+                        ChangeSpec.Single(from = DocPos.ZERO, to = DocPos(3)),
+                        ChangeSpec.Single(from = DocPos(4), to = DocPos(6)),
+                        ChangeSpec.Single(
+                            from = DocPos(8),
+                            insert = InsertContent.StringContent("boo")
+                        )
                     )
                 ),
                 10
@@ -324,7 +341,12 @@ class ChangeSetTest {
             "01ok23456789",
             ChangeSet.of(
                 ChangeSpec.Multi(
-                    listOf(ChangeSpec.Single(from = 2, insert = InsertContent.StringContent("ok")))
+                    listOf(
+                        ChangeSpec.Single(
+                            from = DocPos(2),
+                            insert = InsertContent.StringContent("ok")
+                        )
+                    )
                 ),
                 10
             ).apply(doc10).toString()
@@ -332,7 +354,9 @@ class ChangeSetTest {
         assertEquals(
             "09",
             ChangeSet.of(
-                ChangeSpec.Multi(listOf(ChangeSpec.Single(from = 1, to = 9))),
+                ChangeSpec.Multi(
+                    listOf(ChangeSpec.Single(from = DocPos(1), to = DocPos(9)))
+                ),
                 10
             ).apply(doc10).toString()
         )
@@ -341,8 +365,11 @@ class ChangeSetTest {
             ChangeSet.of(
                 ChangeSpec.Multi(
                     listOf(
-                        ChangeSpec.Single(from = 2, to = 8),
-                        ChangeSpec.Single(from = 1, insert = InsertContent.StringContent("hi"))
+                        ChangeSpec.Single(from = DocPos(2), to = DocPos(8)),
+                        ChangeSpec.Single(
+                            from = DocPos(1),
+                            insert = InsertContent.StringContent("hi")
+                        )
                     )
                 ),
                 10
@@ -358,7 +385,7 @@ class ChangeSetTest {
                 ChangeSpec.Multi(
                     listOf(
                         ChangeSpec.Single(
-                            from = 8,
+                            from = DocPos(8),
                             insert = InsertContent.StringContent("ABCD")
                         )
                     )
@@ -366,7 +393,9 @@ class ChangeSetTest {
                 10
             ).compose(
                 ChangeSet.of(
-                    ChangeSpec.Multi(listOf(ChangeSpec.Single(from = 8, to = 11))),
+                    ChangeSpec.Multi(
+                        listOf(ChangeSpec.Single(from = DocPos(8), to = DocPos(11)))
+                    ),
                     14
                 )
             ).apply(doc10).toString()
@@ -376,8 +405,14 @@ class ChangeSetTest {
             ChangeSet.of(
                 ChangeSpec.Multi(
                     listOf(
-                        ChangeSpec.Single(from = 2, insert = InsertContent.StringContent("hi")),
-                        ChangeSpec.Single(from = 8, insert = InsertContent.StringContent("ok"))
+                        ChangeSpec.Single(
+                            from = DocPos(2),
+                            insert = InsertContent.StringContent("hi")
+                        ),
+                        ChangeSpec.Single(
+                            from = DocPos(8),
+                            insert = InsertContent.StringContent("ok")
+                        )
                     )
                 ),
                 10
@@ -386,12 +421,12 @@ class ChangeSetTest {
                     ChangeSpec.Multi(
                         listOf(
                             ChangeSpec.Single(
-                                from = 4,
+                                from = DocPos(4),
                                 insert = InsertContent.StringContent("!")
                             ),
-                            ChangeSpec.Single(from = 6, to = 8),
+                            ChangeSpec.Single(from = DocPos(6), to = DocPos(8)),
                             ChangeSpec.Single(
-                                from = 12,
+                                from = DocPos(12),
                                 insert = InsertContent.StringContent("?")
                             )
                         )
@@ -410,11 +445,11 @@ class ChangeSetTest {
                 ChangeSpec.Multi(
                     listOf(
                         ChangeSpec.Single(
-                            from = 2,
+                            from = DocPos(2),
                             insert = InsertContent.StringContent("abc")
                         ),
                         ChangeSpec.Single(
-                            from = 4,
+                            from = DocPos(4),
                             insert = InsertContent.StringContent("def")
                         )
                     )
@@ -422,7 +457,9 @@ class ChangeSetTest {
                 10
             ).compose(
                 ChangeSet.of(
-                    ChangeSpec.Multi(listOf(ChangeSpec.Single(from = 4, to = 8))),
+                    ChangeSpec.Multi(
+                        listOf(ChangeSpec.Single(from = DocPos(4), to = DocPos(8)))
+                    ),
                     16
                 )
             ).apply(doc10).toString()
@@ -434,8 +471,11 @@ class ChangeSetTest {
         val set0 = ChangeSet.of(
             ChangeSpec.Multi(
                 listOf(
-                    ChangeSpec.Single(from = 5, insert = InsertContent.StringContent("hi")),
-                    ChangeSpec.Single(from = 8, to = 10)
+                    ChangeSpec.Single(
+                        from = DocPos(5),
+                        insert = InsertContent.StringContent("hi")
+                    ),
+                    ChangeSpec.Single(from = DocPos(8), to = DocPos(10))
                 )
             ),
             10
@@ -443,8 +483,11 @@ class ChangeSetTest {
         val set1 = ChangeSet.of(
             ChangeSpec.Multi(
                 listOf(
-                    ChangeSpec.Single(from = 10, insert = InsertContent.StringContent("ok")),
-                    ChangeSpec.Single(from = 6, to = 7)
+                    ChangeSpec.Single(
+                        from = DocPos(10),
+                        insert = InsertContent.StringContent("ok")
+                    ),
+                    ChangeSpec.Single(from = DocPos(6), to = DocPos(7))
                 )
             ),
             10
@@ -460,8 +503,11 @@ class ChangeSetTest {
         val set0 = ChangeSet.of(
             ChangeSpec.Multi(
                 listOf(
-                    ChangeSpec.Single(from = 5, insert = InsertContent.StringContent("hi")),
-                    ChangeSpec.Single(from = 8, to = 10)
+                    ChangeSpec.Single(
+                        from = DocPos(5),
+                        insert = InsertContent.StringContent("hi")
+                    ),
+                    ChangeSpec.Single(from = DocPos(8), to = DocPos(10))
                 )
             ),
             10
@@ -477,8 +523,11 @@ class ChangeSetTest {
         val set = ChangeSet.of(
             ChangeSpec.Multi(
                 listOf(
-                    ChangeSpec.Single(from = 4, insert = InsertContent.StringContent("ok")),
-                    ChangeSpec.Single(from = 6, to = 8)
+                    ChangeSpec.Single(
+                        from = DocPos(4),
+                        insert = InsertContent.StringContent("ok")
+                    ),
+                    ChangeSpec.Single(from = DocPos(6), to = DocPos(8))
                 )
             ),
             10
@@ -486,7 +535,9 @@ class ChangeSetTest {
         val result = mutableListOf<List<Any>>()
         set.iterChanges(
             { fromA, toA, fromB, toB, inserted ->
-                result.add(listOf(fromA, toA, fromB, toB, inserted.toString()))
+                result.add(
+                    listOf(fromA.value, toA.value, fromB.value, toB.value, inserted.toString())
+                )
             }
         )
         assertEquals(
@@ -494,7 +545,9 @@ class ChangeSetTest {
             result
         )
         val gapResult = mutableListOf<List<Int>>()
-        set.iterGaps { fromA, toA, len -> gapResult.add(listOf(fromA, toA, len)) }
+        set.iterGaps { fromA, toA, len ->
+            gapResult.add(listOf(fromA.value, toA.value, len))
+        }
         assertEquals(
             listOf(listOf(0, 0, 4), listOf(4, 6, 2), listOf(8, 8, 2)),
             gapResult
@@ -586,8 +639,8 @@ class ChangeSetTest {
                 for (j in 0 until 50) {
                     val change = rChange(doc.length)
                     log.add("ChangeSet.of([$change], ${doc.length})")
-                    val from = change.from
-                    val to = change.to ?: from
+                    val from = change.from.value
+                    val to = change.to?.value ?: from
                     val insert = (change.insert as? InsertContent.StringContent)?.value ?: ""
                     txt = txt.substring(0, from) + insert + txt.substring(to)
                     val set = ChangeSet.of(

@@ -27,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.view.EditorTheme
@@ -69,7 +70,7 @@ fun lintGutter(config: LintGutterConfig = LintGutterConfig()): Extension {
             lineMarker = { view, linePos ->
                 val diagnostics = view.state.field(lintState, require = false)
                     ?.diagnostics ?: emptyList()
-                val line = view.state.doc.lineAt(linePos)
+                val line = view.state.doc.lineAt(DocPos(linePos))
                 val lineDiags = diagnostics.filter { it.from >= line.from && it.from < line.to }
                 val filtered = config.markerFilter?.invoke(lineDiags) ?: lineDiags
                 if (filtered.isEmpty()) {
@@ -91,13 +92,13 @@ fun lintGutter(config: LintGutterConfig = LintGutterConfig()): Extension {
     val hoverExt = hoverTooltip { view, pos ->
         val diagnostics = view.state.field(lintState, require = false)
             ?.diagnostics ?: emptyList()
-        val line = view.state.doc.lineAt(pos)
+        val line = view.state.doc.lineAt(DocPos(pos))
         val lineDiags = diagnostics.filter { it.from >= line.from && it.from < line.to }
         val filtered = config.tooltipFilter?.invoke(lineDiags) ?: lineDiags
         if (filtered.isEmpty()) {
             null
         } else {
-            Tooltip(pos = line.from) {
+            Tooltip(pos = line.from.value) {
                 BasicText(
                     text = filtered.joinToString("\n") { diag ->
                         "[${diag.severity.name.lowercase()}] ${diag.message}"

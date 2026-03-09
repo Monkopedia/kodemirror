@@ -18,6 +18,7 @@
  */
 package com.monkopedia.kodemirror.search
 
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.Text
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -30,7 +31,7 @@ class RegExpCursorTest {
         val results = mutableListOf<Pair<Int, Int>>()
         while (cursor.hasNext()) {
             val match = cursor.next()
-            results.add(match.from to match.to)
+            results.add(match.from.value to match.to.value)
         }
         return results
     }
@@ -77,7 +78,7 @@ class RegExpCursorTest {
     @Test
     fun restrictsToSearchRegion() {
         val text = Text.of("abcdef".split("\n"))
-        val cursor = RegExpCursor(text, ".*", from = 3, to = 6)
+        val cursor = RegExpCursor(text, ".*", from = DocPos(3), to = DocPos(6))
         val matches = collectMatches(cursor)
         assertEquals(1, matches.size)
         assertEquals(3 to 6, matches[0])

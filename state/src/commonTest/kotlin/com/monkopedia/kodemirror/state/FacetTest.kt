@@ -115,7 +115,10 @@ class FacetTest {
         assertEquals("0", st.facet(num).joinToString(","))
         st = st.update(
             TransactionSpec(
-                changes = ChangeSpec.Single(from = 0, insert = InsertContent.StringContent("hello"))
+                changes = ChangeSpec.Single(
+                    from = DocPos.ZERO,
+                    insert = InsertContent.StringContent("hello")
+                )
             )
         ).state
         assertEquals("1", st.facet(num).joinToString(","))
@@ -130,11 +133,16 @@ class FacetTest {
         assertEquals("0", st.facet(num).joinToString(","))
         st = st.update(
             TransactionSpec(
-                changes = ChangeSpec.Single(from = 0, insert = InsertContent.StringContent("hello"))
+                changes = ChangeSpec.Single(
+                    from = DocPos.ZERO,
+                    insert = InsertContent.StringContent("hello")
+                )
             )
         ).state
         assertEquals("1", st.facet(num).joinToString(","))
-        st = st.update(TransactionSpec(selection = SelectionSpec.CursorSpec(anchor = 2))).state
+        st = st.update(
+            TransactionSpec(selection = SelectionSpec.CursorSpec(anchor = DocPos(2)))
+        ).state
         assertEquals("2", st.facet(num).joinToString(","))
         st = st.update(TransactionSpec()).state
         assertEquals("2", st.facet(num).joinToString(","))
@@ -151,7 +159,10 @@ class FacetTest {
         assertEquals("1", st.facet(num).joinToString(","))
         st = st.update(
             TransactionSpec(
-                changes = ChangeSpec.Single(from = 0, insert = InsertContent.StringContent("hello"))
+                changes = ChangeSpec.Single(
+                    from = DocPos.ZERO,
+                    insert = InsertContent.StringContent("hello")
+                )
             )
         ).state
         assertEquals("100,10,1", st.facet(num).joinToString(","))
@@ -171,7 +182,10 @@ class FacetTest {
         assertEquals(4, st.facet(f))
         st = st.update(
             TransactionSpec(
-                changes = ChangeSpec.Single(from = 0, insert = InsertContent.StringContent("hello"))
+                changes = ChangeSpec.Single(
+                    from = DocPos.ZERO,
+                    insert = InsertContent.StringContent("hello")
+                )
             )
         ).state
         assertEquals(9, st.facet(f))

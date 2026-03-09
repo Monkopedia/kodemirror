@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.RangeSet
 import com.monkopedia.kodemirror.state.RangeSetBuilder
@@ -64,7 +65,12 @@ internal class DropCursorPlugin : PluginValue {
         decos = if (newPos != null) {
             val builder = RangeSetBuilder<Decoration>()
             val widget = DropCursorWidget()
-            builder.add(newPos, newPos, Decoration.widget(WidgetDecorationSpec(widget = widget)))
+            val docPos = DocPos(newPos)
+            builder.add(
+                docPos,
+                docPos,
+                Decoration.widget(WidgetDecorationSpec(widget = widget))
+            )
             builder.finish()
         } else {
             RangeSet.empty()

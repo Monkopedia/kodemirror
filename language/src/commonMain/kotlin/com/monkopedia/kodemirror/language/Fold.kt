@@ -25,10 +25,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.lezer.common.NodeProp
 import com.monkopedia.kodemirror.lezer.common.SyntaxNode
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.Facet
+import com.monkopedia.kodemirror.state.LineNumber
 import com.monkopedia.kodemirror.state.RangeSet
 import com.monkopedia.kodemirror.state.RangeSetBuilder
 import com.monkopedia.kodemirror.state.StateEffect
@@ -36,6 +38,7 @@ import com.monkopedia.kodemirror.state.StateEffectType
 import com.monkopedia.kodemirror.state.StateField
 import com.monkopedia.kodemirror.state.StateFieldSpec
 import com.monkopedia.kodemirror.state.TransactionSpec
+import com.monkopedia.kodemirror.state.endPos
 import com.monkopedia.kodemirror.view.Decoration
 import com.monkopedia.kodemirror.view.DecorationSet
 import com.monkopedia.kodemirror.view.EditorSession
@@ -45,7 +48,7 @@ import com.monkopedia.kodemirror.view.WidgetType
 import com.monkopedia.kodemirror.view.decorations
 
 /** A range that can be folded. */
-data class FoldRange(val from: Int, val to: Int)
+data class FoldRange(val from: DocPos, val to: DocPos)
 
 /**
  * Facet for registering fold range providers.
@@ -53,7 +56,8 @@ data class FoldRange(val from: Int, val to: Int)
  * A fold service receives the state and a line-start position,
  * and returns a [FoldRange] if that line can be folded.
  */
-val foldService: Facet<(EditorState, Int) -> FoldRange?, List<(EditorState, Int) -> FoldRange?>> =
+val foldService:
+    Facet<(EditorState, DocPos) -> FoldRange?, List<(EditorState, DocPos) -> FoldRange?>> =
     Facet.define()
 
 /**
@@ -72,14 +76,14 @@ fun foldInside(node: SyntaxNode): FoldRange? {
     val first = node.firstChild ?: return null
     val last = node.lastChild ?: return null
     if (first.to >= last.from) return null
-    return FoldRange(first.to, last.from)
+    return FoldRange(DocPos(first.to), DocPos(last.from))
 }
 
 /** Effect to fold a range. */
 val foldEffect: StateEffectType<FoldRange> = StateEffect.define(
     map = { range, changes ->
-        val from = changes.mapPos(range.from, 1)
-        val to = changes.mapPos(range.to, -1)
+        val from: DocPos = changes.mapPos(range.from, 1)
+        val to: DocPos = changes.mapPos(range.to, -1)
         if (from < to) FoldRange(from, to) else null
     }
 )
@@ -87,8 +91,8 @@ val foldEffect: StateEffectType<FoldRange> = StateEffect.define(
 /** Effect to unfold a range. */
 val unfoldEffect: StateEffectType<FoldRange> = StateEffect.define(
     map = { range, changes ->
-        val from = changes.mapPos(range.from, 1)
-        val to = changes.mapPos(range.to, -1)
+        val from: DocPos = changes.mapPos(range.from, 1)
+        val to: DocPos = changes.mapPos(range.to, -1)
         if (from < to) FoldRange(from, to) else null
     }
 )
@@ -139,8 +143,8 @@ val foldState: StateField<DecorationSet> = StateField.define(
                         ReplaceDecorationSpec(widget = widget)
                     )
                     val builder = RangeSetBuilder<Decoration>()
-                    result.between(0, tr.newDoc.length) { from, to, value ->
-                        builder.add(from, to, value)
+                    result.between(DocPos.ZERO, tr.newDoc.endPos) { from, to, value ->
+                        builder.add(DocPos(from), DocPos(to), value)
                         true
                     }
                     builder.add(range.from, range.to, deco)
@@ -150,10 +154,10 @@ val foldState: StateField<DecorationSet> = StateField.define(
                 if (unfold != null) {
                     val range = unfold.value
                     val builder = RangeSetBuilder<Decoration>()
-                    result.between(0, tr.newDoc.length) { from, to, value ->
+                    result.between(DocPos.ZERO, tr.newDoc.endPos) { from, to, value ->
                         // Keep all ranges except those overlapping with the unfold range
-                        if (from < range.from || to > range.to) {
-                            builder.add(from, to, value)
+                        if (DocPos(from) < range.from || DocPos(to) > range.to) {
+                            builder.add(DocPos(from), DocPos(to), value)
                         }
                         true
                     }
@@ -184,7 +188,7 @@ fun foldedRanges(state: EditorState): DecorationSet {
  * Find a foldable range at the given line position, using registered
  * fold services and tree-based fold props.
  */
-fun foldable(state: EditorState, lineStart: Int): FoldRange? {
+fun foldable(state: EditorState, lineStart: DocPos): FoldRange? {
     // Try fold services first
     for (service in state.facet(foldService)) {
         val range = service(state, lineStart)
@@ -195,7 +199,7 @@ fun foldable(state: EditorState, lineStart: Int): FoldRange? {
     val tree = syntaxTree(state)
     val line = state.doc.lineAt(lineStart)
     val lineEnd = line.to
-    if (tree.length < lineEnd) return null
+    if (tree.length < lineEnd.value) return null
 
     return syntaxFolding(tree, state, lineStart, lineEnd)
 }
@@ -203,17 +207,17 @@ fun foldable(state: EditorState, lineStart: Int): FoldRange? {
 private fun syntaxFolding(
     tree: com.monkopedia.kodemirror.lezer.common.Tree,
     state: EditorState,
-    lineStart: Int,
-    lineEnd: Int
+    lineStart: DocPos,
+    lineEnd: DocPos
 ): FoldRange? {
     var onlyInner = false
-    var cur: SyntaxNode? = tree.resolveInner(lineEnd, 1)
+    var cur: SyntaxNode? = tree.resolveInner(lineEnd.value, 1)
     while (cur != null) {
-        if (cur.to <= lineEnd || cur.from > lineEnd) {
+        if (cur.to <= lineEnd.value || cur.from > lineEnd.value) {
             cur = cur.parent
             continue
         }
-        if (cur.from < lineStart) onlyInner = true
+        if (cur.from < lineStart.value) onlyInner = true
         val strategy = cur.type.prop(foldNodeProp)
         if (strategy != null &&
             (cur.to < tree.length - 50 || tree.length == state.doc.length || !onlyInner)
@@ -260,7 +264,7 @@ val unfoldCode: (EditorSession) -> Boolean = { view ->
     folded.between(pos, pos) { from, to, _ ->
         view.dispatch(
             TransactionSpec(
-                effects = listOf(unfoldEffect.of(FoldRange(from, to)))
+                effects = listOf(unfoldEffect.of(FoldRange(DocPos(from), DocPos(to))))
             )
         )
         found = true
@@ -287,7 +291,7 @@ val foldAll: (EditorSession) -> Boolean = { view ->
     val state = view.state
     val effects = mutableListOf<StateEffect<*>>()
     for (lineNum in 1..state.doc.lines) {
-        val line = state.doc.line(lineNum)
+        val line = state.doc.line(LineNumber(lineNum))
         val range = foldable(state, line.from)
         if (range != null) {
             effects.add(foldEffect.of(range))
@@ -306,8 +310,8 @@ val unfoldAll: (EditorSession) -> Boolean = { view ->
     val state = view.state
     val folded = foldedRanges(state)
     val effects = mutableListOf<StateEffect<*>>()
-    folded.between(0, state.doc.length) { from, to, _ ->
-        effects.add(unfoldEffect.of(FoldRange(from, to)))
+    folded.between(DocPos.ZERO, state.doc.endPos) { from, to, _ ->
+        effects.add(unfoldEffect.of(FoldRange(DocPos(from), DocPos(to))))
         true
     }
     if (effects.isNotEmpty()) {
@@ -341,11 +345,12 @@ fun foldGutter(): Extension {
                     type = com.monkopedia.kodemirror.view.GutterType.Custom("fold"),
                     lineMarker = { view, lineFrom ->
                         val state = view.state
-                        val line = state.doc.lineAt(lineFrom)
+                        val lineFromPos = DocPos(lineFrom)
+                        val line = state.doc.lineAt(lineFromPos)
                         val folded = foldedRanges(state)
                         var hasFold = false
-                        folded.between(lineFrom, line.to) { from, _, _ ->
-                            if (from >= lineFrom && from <= line.to) {
+                        folded.between(lineFromPos, line.to) { from, _, _ ->
+                            if (from >= lineFrom && DocPos(from) <= line.to) {
                                 hasFold = true
                                 false
                             } else {
@@ -355,7 +360,7 @@ fun foldGutter(): Extension {
                         if (hasFold) {
                             FoldGutterMarker(folded = true)
                         } else {
-                            val canFold = foldable(state, lineFrom) != null
+                            val canFold = foldable(state, lineFromPos) != null
                             if (canFold) FoldGutterMarker(folded = false) else null
                         }
                     },

@@ -27,19 +27,19 @@ class EditorSelectionTest {
     fun storesRangesWithPrimaryRange() {
         val sel = EditorSelection.create(
             listOf(
-                EditorSelection.range(0, 1),
-                EditorSelection.range(3, 2),
-                EditorSelection.range(4, 5)
+                EditorSelection.range(DocPos(0), DocPos(1)),
+                EditorSelection.range(DocPos(3), DocPos(2)),
+                EditorSelection.range(DocPos(4), DocPos(5))
             ),
             1
         )
-        assertEquals(2, sel.main.from)
-        assertEquals(3, sel.main.to)
-        assertEquals(3, sel.main.anchor)
-        assertEquals(2, sel.main.head)
+        assertEquals(DocPos(2), sel.main.from)
+        assertEquals(DocPos(3), sel.main.to)
+        assertEquals(DocPos(3), sel.main.anchor)
+        assertEquals(DocPos(2), sel.main.head)
         assertEquals(
             "0/1,3/2,4/5",
-            sel.ranges.joinToString(",") { "${it.anchor}/${it.head}" }
+            sel.ranges.joinToString(",") { "${it.anchor.value}/${it.head.value}" }
         )
     }
 
@@ -47,19 +47,19 @@ class EditorSelectionTest {
     fun mergesAndSortsRangesWhenNormalizing() {
         val sel = EditorSelection.create(
             listOf(
-                EditorSelection.range(10, 12),
-                EditorSelection.range(6, 7),
-                EditorSelection.range(4, 5),
-                EditorSelection.range(3, 4),
-                EditorSelection.range(0, 6),
-                EditorSelection.range(7, 8),
-                EditorSelection.range(9, 13),
-                EditorSelection.range(13, 14)
+                EditorSelection.range(DocPos(10), DocPos(12)),
+                EditorSelection.range(DocPos(6), DocPos(7)),
+                EditorSelection.range(DocPos(4), DocPos(5)),
+                EditorSelection.range(DocPos(3), DocPos(4)),
+                EditorSelection.range(DocPos(0), DocPos(6)),
+                EditorSelection.range(DocPos(7), DocPos(8)),
+                EditorSelection.range(DocPos(9), DocPos(13)),
+                EditorSelection.range(DocPos(13), DocPos(14))
             )
         )
         assertEquals(
             "0/6,6/7,7/8,9/13,13/14",
-            sel.ranges.joinToString(",") { "${it.anchor}/${it.head}" }
+            sel.ranges.joinToString(",") { "${it.anchor.value}/${it.head.value}" }
         )
     }
 
@@ -67,16 +67,16 @@ class EditorSelectionTest {
     fun mergesAdjacentPointRangesWhenNormalizing() {
         val sel = EditorSelection.create(
             listOf(
-                EditorSelection.range(10, 12),
-                EditorSelection.range(12, 12),
-                EditorSelection.range(12, 12),
-                EditorSelection.range(10, 10),
-                EditorSelection.range(8, 10)
+                EditorSelection.range(DocPos(10), DocPos(12)),
+                EditorSelection.range(DocPos(12), DocPos(12)),
+                EditorSelection.range(DocPos(12), DocPos(12)),
+                EditorSelection.range(DocPos(10), DocPos(10)),
+                EditorSelection.range(DocPos(8), DocPos(10))
             )
         )
         assertEquals(
             "8/10,10/12",
-            sel.ranges.joinToString(",") { "${it.anchor}/${it.head}" }
+            sel.ranges.joinToString(",") { "${it.anchor.value}/${it.head.value}" }
         )
     }
 
@@ -84,13 +84,13 @@ class EditorSelectionTest {
     fun preservesDirectionOfLastRangeWhenMergingRanges() {
         val sel = EditorSelection.create(
             listOf(
-                EditorSelection.range(0, 2),
-                EditorSelection.range(10, 1)
+                EditorSelection.range(DocPos(0), DocPos(2)),
+                EditorSelection.range(DocPos(10), DocPos(1))
             )
         )
         assertEquals(
             "10/0",
-            sel.ranges.joinToString(",") { "${it.anchor}/${it.head}" }
+            sel.ranges.joinToString(",") { "${it.anchor.value}/${it.head.value}" }
         )
     }
 }

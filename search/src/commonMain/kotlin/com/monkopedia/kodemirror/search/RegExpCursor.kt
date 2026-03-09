@@ -18,7 +18,9 @@
  */
 package com.monkopedia.kodemirror.search
 
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.Text
+import com.monkopedia.kodemirror.state.endPos
 
 /**
  * A cursor that iterates over regex matches in a [Text] document.
@@ -33,8 +35,8 @@ class RegExpCursor(
     private val text: Text,
     query: String,
     options: Set<RegexOption> = emptySet(),
-    private val from: Int = 0,
-    private val to: Int = text.length
+    private val from: DocPos = DocPos.ZERO,
+    private val to: DocPos = text.endPos
 ) : Iterator<SearchMatch> {
     private val regex: Regex?
     private var pos = from
@@ -73,9 +75,9 @@ class RegExpCursor(
         }
         val content = text.sliceString(pos, to)
         val result = regex.find(content)
-        if (result != null && result.range.first + pos < to) {
+        if (result != null && pos + result.range.first < to) {
             val matchFrom = pos + result.range.first
-            val matchTo = pos + result.range.last + 1
+            val matchTo = pos + (result.range.last + 1)
             matchGroups = result.groupValues
             nextMatch = SearchMatch(matchFrom, matchTo)
         } else {

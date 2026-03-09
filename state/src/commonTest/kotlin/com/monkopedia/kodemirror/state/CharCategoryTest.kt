@@ -36,20 +36,20 @@ class CharCategoryTest {
     @Test
     fun categorisesIntoAlphanumeric() {
         val st = mk()
-        assertEquals(CharCategory.Word, st.charCategorizer(0)("1"))
-        assertEquals(CharCategory.Word, st.charCategorizer(0)("a"))
+        assertEquals(CharCategory.Word, st.charCategorizer(DocPos.ZERO)("1"))
+        assertEquals(CharCategory.Word, st.charCategorizer(DocPos.ZERO)("a"))
     }
 
     @Test
     fun categorisesIntoWhitespace() {
         val st = mk()
-        assertEquals(CharCategory.Space, st.charCategorizer(0)(" "))
+        assertEquals(CharCategory.Space, st.charCategorizer(DocPos.ZERO)(" "))
     }
 
     @Test
     fun categorisesIntoOther() {
         val st = mk()
-        assertEquals(CharCategory.Other, st.charCategorizer(0)("/"))
-        assertEquals(CharCategory.Other, st.charCategorizer(0)("<"))
+        assertEquals(CharCategory.Other, st.charCategorizer(DocPos.ZERO)("/"))
+        assertEquals(CharCategory.Other, st.charCategorizer(DocPos.ZERO)("<"))
     }
 }

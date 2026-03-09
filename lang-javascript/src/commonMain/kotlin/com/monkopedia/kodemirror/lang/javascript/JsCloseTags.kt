@@ -21,6 +21,7 @@ package com.monkopedia.kodemirror.lang.javascript
 import com.monkopedia.kodemirror.language.syntaxTree
 import com.monkopedia.kodemirror.lezer.common.SyntaxNode
 import com.monkopedia.kodemirror.state.ChangeSpec
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.SelectionSpec
@@ -69,12 +70,12 @@ fun autoCloseTags(): Extension = transactionFilter.of { tr ->
 
 private fun handleCloseAngle(
     tr: Transaction,
-    pos: Int,
+    pos: DocPos,
     state: com.monkopedia.kodemirror.state.EditorState,
     doc: Text
 ): TransactionFilterResult {
     val tree = syntaxTree(state)
-    val node = tree.resolveInner(pos, -1)
+    val node = tree.resolveInner(pos.value, -1)
 
     // Check if we're inside a JSXOpenTag or JSXFragmentTag
     val openTag = findAncestor(node, "JSXOpenTag")
@@ -118,12 +119,12 @@ private fun handleCloseAngle(
 
 private fun handleSlash(
     tr: Transaction,
-    pos: Int,
+    pos: DocPos,
     state: com.monkopedia.kodemirror.state.EditorState,
     doc: Text
 ): TransactionFilterResult {
     val tree = syntaxTree(state)
-    val node = tree.resolveInner(pos, -1)
+    val node = tree.resolveInner(pos.value, -1)
 
     // Check if we're inside a JSXStartCloseTag (the `</` in a closing tag)
     val closeTag = findAncestor(node, "JSXStartCloseTag")
@@ -172,7 +173,7 @@ private fun elementName(node: SyntaxNode, doc: Text): String? {
         when (child.name) {
             "JSXIdentifier", "JSXBuiltin", "JSXNamespacedName",
             "JSXMemberExpression" -> {
-                return doc.sliceString(child.from, child.to)
+                return doc.sliceString(DocPos(child.from), DocPos(child.to))
             }
         }
         child = child.nextSibling
@@ -196,7 +197,7 @@ private fun getInsertedText(
     var result: String? = null
     changes.iterChanges(
         f = { _, _, _, _, inserted ->
-            val text = inserted.sliceString(0)
+            val text = inserted.sliceString(DocPos.ZERO)
             if (text.isNotEmpty()) {
                 result = text
             }

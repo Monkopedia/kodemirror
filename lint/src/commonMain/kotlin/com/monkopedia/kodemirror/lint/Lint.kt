@@ -19,6 +19,7 @@
 package com.monkopedia.kodemirror.lint
 
 import androidx.compose.foundation.text.BasicText
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.Slot
@@ -57,7 +58,8 @@ fun linter(source: LintSource, config: LintConfig = LintConfig()): Extension {
     val diagnosticHover = hoverTooltip { view, pos ->
         val diags = view.state.field(lintState, require = false)
             ?.diagnostics ?: emptyList()
-        val atPos = diags.filter { pos >= it.from && pos <= it.to }
+        val docPos = DocPos(pos)
+        val atPos = diags.filter { docPos >= it.from && docPos <= it.to }
         val filtered = config.tooltipFilter?.invoke(atPos) ?: atPos
         if (filtered.isEmpty()) {
             null

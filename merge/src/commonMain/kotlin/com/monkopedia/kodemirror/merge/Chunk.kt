@@ -19,8 +19,9 @@
 package com.monkopedia.kodemirror.merge
 
 import com.monkopedia.kodemirror.state.ChangeDesc
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.Text
-import kotlin.math.max
+import com.monkopedia.kodemirror.state.endPos
 
 val defaultDiffConfig = DiffConfig(scanLimit = 500)
 
@@ -33,10 +34,10 @@ val defaultDiffConfig = DiffConfig(scanLimit = 500)
  */
 class Chunk(
     val changes: List<Change>,
-    val fromA: Int,
-    val toA: Int,
-    val fromB: Int,
-    val toB: Int,
+    val fromA: DocPos,
+    val toA: DocPos,
+    val fromB: DocPos,
+    val toB: DocPos,
     val precise: Boolean = true
 ) {
     fun offset(offA: Int, offB: Int): Chunk {
@@ -47,8 +48,8 @@ class Chunk(
         }
     }
 
-    val endA: Int get() = max(fromA, toA - 1)
-    val endB: Int get() = max(fromB, toB - 1)
+    val endA: DocPos get() = maxOf(fromA, toA - 1)
+    val endB: DocPos get() = maxOf(fromB, toB - 1)
 
     companion object {
         /**
@@ -100,23 +101,23 @@ class Chunk(
     }
 }
 
-private fun fromLine(fromA: Int, fromB: Int, a: Text, b: Text): IntArray {
+private fun fromLine(fromA: DocPos, fromB: DocPos, a: Text, b: Text): Pair<DocPos, DocPos> {
     val lineA = a.lineAt(fromA)
     val lineB = b.lineAt(fromB)
-    return if (lineA.to == fromA && lineB.to == fromB && fromA < a.length && fromB < b.length) {
-        intArrayOf(fromA + 1, fromB + 1)
+    return if (lineA.to == fromA && lineB.to == fromB && fromA < a.endPos && fromB < b.endPos) {
+        Pair(fromA + 1, fromB + 1)
     } else {
-        intArrayOf(lineA.from, lineB.from)
+        Pair(lineA.from, lineB.from)
     }
 }
 
-private fun toLine(toA: Int, toB: Int, a: Text, b: Text): IntArray {
+private fun toLine(toA: DocPos, toB: DocPos, a: Text, b: Text): Pair<DocPos, DocPos> {
     val lineA = a.lineAt(toA)
     val lineB = b.lineAt(toB)
     return if (lineA.from == toA && lineB.from == toB) {
-        intArrayOf(toA, toB)
+        Pair(toA, toB)
     } else {
-        intArrayOf(lineA.to + 1, lineB.to + 1)
+        Pair(lineA.to + 1, lineB.to + 1)
     }
 }
 
@@ -132,26 +133,28 @@ private fun toChunks(
     var i = 0
     while (i < changes.size) {
         val change = changes[i]
-        val fl = fromLine(change.fromA + offA, change.fromB + offB, a, b)
-        var fromA = fl[0]
-        var fromB = fl[1]
-        var tl = toLine(change.toA + offA, change.toB + offB, a, b)
-        var toA = tl[0]
-        var toB = tl[1]
-        val chunk = mutableListOf(change.offset(-fromA + offA, -fromB + offB))
+        val fl = fromLine(DocPos(change.fromA + offA), DocPos(change.fromB + offB), a, b)
+        var fromA = fl.first
+        var fromB = fl.second
+        var tl = toLine(DocPos(change.toA + offA), DocPos(change.toB + offB), a, b)
+        var toA = tl.first
+        var toB = tl.second
+        val chunk = mutableListOf(
+            change.offset(-(fromA.value) + offA, -(fromB.value) + offB)
+        )
         while (i < changes.size - 1) {
             val next = changes[i + 1]
-            val nfl = fromLine(next.fromA + offA, next.fromB + offB, a, b)
-            val nextA = nfl[0]
-            val nextB = nfl[1]
+            val nfl = fromLine(DocPos(next.fromA + offA), DocPos(next.fromB + offB), a, b)
+            val nextA = nfl.first
+            val nextB = nfl.second
             if (nextA > toA + 1 && nextB > toB + 1) break
-            chunk.add(next.offset(-fromA + offA, -fromB + offB))
-            tl = toLine(next.toA + offA, next.toB + offB, a, b)
-            toA = tl[0]
-            toB = tl[1]
+            chunk.add(next.offset(-(fromA.value) + offA, -(fromB.value) + offB))
+            tl = toLine(DocPos(next.toA + offA), DocPos(next.toB + offB), a, b)
+            toA = tl.first
+            toB = tl.second
             i++
         }
-        chunks.add(Chunk(chunk, fromA, max(fromA, toA), fromB, max(fromB, toB), precise))
+        chunks.add(Chunk(chunk, fromA, maxOf(fromA, toA), fromB, maxOf(fromB, toB), precise))
         i++
     }
     return chunks
@@ -160,27 +163,32 @@ private fun toChunks(
 private const val UPDATE_MARGIN = 1000
 
 private data class UpdateRange(
-    val fromA: Int,
-    val toA: Int,
-    val fromB: Int,
-    val toB: Int,
+    val fromA: DocPos,
+    val toA: DocPos,
+    val fromB: DocPos,
+    val toB: DocPos,
     val diffA: Int,
     val diffB: Int
 )
 
-private fun findPos(chunks: List<Chunk>, pos: Int, isA: Boolean, start: Boolean): IntArray {
+private fun findPos(
+    chunks: List<Chunk>,
+    pos: DocPos,
+    isA: Boolean,
+    start: Boolean
+): Pair<DocPos, DocPos> {
     var lo = 0
     var hi = chunks.size
     while (true) {
         if (lo == hi) {
-            var refA = 0
-            var refB = 0
+            var refA = DocPos.ZERO
+            var refB = DocPos.ZERO
             if (lo > 0) {
                 refA = chunks[lo - 1].toA
                 refB = chunks[lo - 1].toB
             }
             val off = pos - if (isA) refA else refB
-            return intArrayOf(refA + off, refB + off)
+            return Pair(refA + off, refB + off)
         }
         val mid = (lo + hi) shr 1
         val chunk = chunks[mid]
@@ -192,9 +200,9 @@ private fun findPos(chunks: List<Chunk>, pos: Int, isA: Boolean, start: Boolean)
             lo = mid + 1
         } else {
             return if (start) {
-                intArrayOf(chunk.fromA, chunk.fromB)
+                Pair(chunk.fromA, chunk.fromB)
             } else {
-                intArrayOf(chunk.toA, chunk.toB)
+                Pair(chunk.toA, chunk.toB)
             }
         }
     }
@@ -209,19 +217,19 @@ private fun findRangesForChange(
     val ranges = mutableListOf<UpdateRange>()
     changes.iterChangedRanges(
         f = { cFromA, cToA, cFromB, cToB ->
-            var fromA = 0
-            var toA = if (isA) changes.length else otherLen
-            var fromB = 0
-            var toB = if (isA) otherLen else changes.length
-            if (cFromA > UPDATE_MARGIN) {
+            var fromA = DocPos.ZERO
+            var toA = DocPos(if (isA) changes.length else otherLen)
+            var fromB = DocPos.ZERO
+            var toB = DocPos(if (isA) otherLen else changes.length)
+            if (cFromA.value > UPDATE_MARGIN) {
                 val fp = findPos(chunks, cFromA - UPDATE_MARGIN, isA, true)
-                fromA = fp[0]
-                fromB = fp[1]
+                fromA = fp.first
+                fromB = fp.second
             }
-            if (cToA < changes.length - UPDATE_MARGIN) {
+            if (cToA.value < changes.length - UPDATE_MARGIN) {
                 val tp = findPos(chunks, cToA + UPDATE_MARGIN, isA, false)
-                toA = tp[0]
-                toB = tp[1]
+                toA = tp.first
+                toB = tp.second
             }
             val lenDiff = (cToB - cFromB) - (cToA - cFromA)
             val diffA = if (isA) lenDiff else 0
@@ -254,8 +262,8 @@ private fun updateChunks(
     var chunkI = 0
     for (i in 0..ranges.size) {
         val range = if (i == ranges.size) null else ranges[i]
-        val fromA = if (range != null) range.fromA + offA else a.length
-        val fromB = if (range != null) range.fromB + offB else b.length
+        val fromA = if (range != null) range.fromA + offA else a.endPos
+        val fromB = if (range != null) range.fromB + offB else b.endPos
         while (chunkI < chunks.size) {
             val next = chunks[chunkI]
             if (next.endA + offA > fromA || next.endB + offB > fromB) break
@@ -265,8 +273,12 @@ private fun updateChunks(
         if (range == null) break
         val toA = range.toA + offA + range.diffA
         val toB = range.toB + offB + range.diffB
-        val d = presentableDiff(a.sliceString(fromA, toA), b.sliceString(fromB, toB), conf)
-        for (chunk in toChunks(d, a, b, fromA, fromB, lastDiffPrecise)) {
+        val d = presentableDiff(
+            a.sliceString(fromA, toA),
+            b.sliceString(fromB, toB),
+            conf
+        )
+        for (chunk in toChunks(d, a, b, fromA.value, fromB.value, lastDiffPrecise)) {
             result.add(chunk)
         }
         offA += range.diffA

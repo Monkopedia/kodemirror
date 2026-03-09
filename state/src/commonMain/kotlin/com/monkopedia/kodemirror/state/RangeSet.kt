@@ -63,7 +63,7 @@ abstract class RangeValue {
     /**
      * Create a [Range] with this value.
      */
-    fun range(from: Int, to: Int = from): Range<Nothing> {
+    fun range(from: DocPos, to: DocPos = from): Range<Nothing> {
         @Suppress("UNCHECKED_CAST")
         return Range.create(from, to, this) as Range<Nothing>
     }
@@ -76,20 +76,20 @@ private fun cmpVal(a: RangeValue, b: RangeValue): Boolean = a == b
  */
 class Range<out T : RangeValue> private constructor(
     /** The range's start position. */
-    val from: Int,
+    val from: DocPos,
     /** Its end position. */
-    val to: Int,
+    val to: DocPos,
     /** The value associated with this range. */
     val value: @UnsafeVariance T
 ) {
     companion object {
-        internal fun <T : RangeValue> create(from: Int, to: Int, value: T): Range<T> =
+        internal fun <T : RangeValue> create(from: DocPos, to: DocPos, value: T): Range<T> =
             Range(from, to, value)
     }
 }
 
 private fun <T : RangeValue> cmpRange(a: Range<T>, b: Range<T>): Int {
-    val d = a.from - b.from
+    val d = a.from.value - b.from.value
     return if (d != 0) {
         d
     } else {
@@ -101,11 +101,11 @@ private fun <T : RangeValue> cmpRange(a: Range<T>, b: Range<T>): Int {
  * Collection of methods used when comparing range sets.
  */
 interface RangeComparator<T : RangeValue> {
-    fun compareRange(from: Int, to: Int, activeA: List<T>, activeB: List<T>)
+    fun compareRange(from: DocPos, to: DocPos, activeA: List<T>, activeB: List<T>)
 
-    fun comparePoint(from: Int, to: Int, pointA: T?, pointB: T?)
+    fun comparePoint(from: DocPos, to: DocPos, pointA: T?, pointB: T?)
 
-    fun boundChange(pos: Int) {}
+    fun boundChange(pos: DocPos) {}
 }
 
 /**
@@ -113,9 +113,9 @@ interface RangeComparator<T : RangeValue> {
  * of ranges.
  */
 interface SpanIterator<T : RangeValue> {
-    fun span(from: Int, to: Int, active: List<T>, openStart: Int)
+    fun span(from: DocPos, to: DocPos, active: List<T>, openStart: Int)
 
-    fun point(from: Int, to: Int, value: T, active: List<T>, openStart: Int, index: Int)
+    fun point(from: DocPos, to: DocPos, value: T, active: List<T>, openStart: Int, index: Int)
 }
 
 internal class Chunk<T : RangeValue>(
@@ -190,21 +190,21 @@ internal class Chunk<T : RangeValue>(
             val mappedTo: Int
             if (curFrom == curTo) {
                 val mapped = changes.mapPos(
-                    curFrom, v.startSide, v.mapMode
-                ) ?: continue
+                    DocPos(curFrom), v.startSide, v.mapMode
+                )?.value ?: continue
                 mappedFrom = mapped
                 mappedTo = if (v.startSide != v.endSide) {
                     val mt =
-                        changes.mapPos(curFrom, v.endSide)
+                        changes.mapPos(DocPos(curFrom), v.endSide).value
                     if (mt < mappedFrom) continue else mt
                 } else {
                     mapped
                 }
             } else {
                 mappedFrom =
-                    changes.mapPos(curFrom, v.startSide)
+                    changes.mapPos(DocPos(curFrom), v.startSide).value
                 mappedTo =
-                    changes.mapPos(curTo, v.endSide)
+                    changes.mapPos(DocPos(curTo), v.endSide).value
                 if (mappedFrom > mappedTo ||
                     (
                         mappedFrom == mappedTo &&
@@ -341,7 +341,7 @@ class RangeSet<T : RangeValue> internal constructor(
         val builder = RangeSetBuilder<T>()
         while (cur.value != null || i < add.size) {
             if (i < add.size &&
-                (cur.from - add[i].from).let { d ->
+                (cur.from - add[i].from.value).let { d ->
                     if (d != 0) {
                         d
                     } else {
@@ -352,8 +352,8 @@ class RangeSet<T : RangeValue> internal constructor(
             ) {
                 val range = add[i++]
                 if (!builder.addInner(
-                        range.from,
-                        range.to,
+                        range.from.value,
+                        range.to.value,
                         range.value
                     )
                 ) {
@@ -365,7 +365,7 @@ class RangeSet<T : RangeValue> internal constructor(
                 (
                     i == add.size ||
                         chunkEnd(cur.chunkIndex) <
-                        add[i].from
+                        add[i].from.value
                     ) &&
                 (
                     filter == null ||
@@ -396,8 +396,8 @@ class RangeSet<T : RangeValue> internal constructor(
                     ) {
                         spill.add(
                             Range.create(
-                                cur.from,
-                                cur.to,
+                                DocPos(cur.from),
+                                DocPos(cur.to),
                                 cur.value!!
                             )
                         )
@@ -434,13 +434,13 @@ class RangeSet<T : RangeValue> internal constructor(
             val start = chunkPos[i]
             val c = chunk[i]
             val touch = changes.touchesRange(
-                start,
-                start + c.length
+                DocPos(start),
+                DocPos(start + c.length)
             )
             if (touch == TouchesResult.No) {
                 maxPt = max(maxPt, c.maxPoint)
                 chunks.add(c)
-                positions.add(changes.mapPos(start))
+                positions.add(changes.mapPos(DocPos(start)).value)
             } else {
                 val (mapped, pos) =
                     c.map(start, changes)
@@ -464,16 +464,18 @@ class RangeSet<T : RangeValue> internal constructor(
      * [to], calling [f] for each. When the callback returns
      * `false`, iteration stops.
      */
-    fun between(from: Int, to: Int, f: (from: Int, to: Int, value: T) -> Boolean?) {
+    fun between(from: DocPos, to: DocPos, f: (from: Int, to: Int, value: T) -> Boolean?) {
         if (isEmpty) return
+        val fromVal = from.value
+        val toVal = to.value
         for (i in chunk.indices) {
             val start = chunkPos[i]
             val c = chunk[i]
-            if (to >= start &&
-                from <= start + c.length &&
+            if (toVal >= start &&
+                fromVal <= start + c.length &&
                 c.between(
-                    start, from - start,
-                    to - start, f
+                    start, fromVal - start,
+                    toVal - start, f
                 ) == false
             ) {
                 return
@@ -537,9 +539,9 @@ class RangeSet<T : RangeValue> internal constructor(
             textDiff.iterGaps { fromA, fromB, length ->
                 compareSpans(
                     sideA,
-                    fromA,
+                    fromA.value,
                     sideB,
-                    fromB,
+                    fromB.value,
                     length,
                     comparator
                 )
@@ -637,8 +639,8 @@ class RangeSet<T : RangeValue> internal constructor(
                             min(active.size, openRanges)
                     }
                     iterator.point(
-                        pos,
-                        curTo,
+                        DocPos(pos),
+                        DocPos(curTo),
                         cursor.point!!,
                         active,
                         openCount,
@@ -650,8 +652,8 @@ class RangeSet<T : RangeValue> internal constructor(
                     )
                 } else if (curTo > pos) {
                     iterator.span(
-                        pos,
-                        curTo,
+                        DocPos(pos),
+                        DocPos(curTo),
                         cursor.active,
                         openRanges
                     )
@@ -781,8 +783,8 @@ class RangeSetBuilder<T : RangeValue> {
      * Add a range. Ranges should be added in sorted (by `from`
      * and `value.startSide`) order.
      */
-    fun add(from: Int, to: Int, value: T) {
-        if (!addInner(from, to, value)) {
+    fun add(from: DocPos, to: DocPos, value: T) {
+        if (!addInner(from.value, to.value, value)) {
             (
                 nextLayer ?: RangeSetBuilder<T>().also {
                     nextLayer = it
@@ -889,7 +891,7 @@ private fun <T : RangeValue> findSharedChunks(
         for (i in set.chunk.indices) {
             val known = inA[set.chunk[i]] ?: continue
             val mappedPos = if (textDiff != null) {
-                textDiff.mapPos(known)
+                textDiff.mapPos(DocPos(known)).value
             } else {
                 known
             }
@@ -897,8 +899,8 @@ private fun <T : RangeValue> findSharedChunks(
                 (
                     textDiff == null ||
                         textDiff.touchesRange(
-                            known,
-                            known + set.chunk[i].length
+                            DocPos(known),
+                            DocPos(known + set.chunk[i].length)
                         ) == TouchesResult.No
                     )
             ) {
@@ -1390,8 +1392,8 @@ private fun <T : RangeValue> compareSpans(
                     )
             ) {
                 comparator.comparePoint(
-                    pos,
-                    clipEnd,
+                    DocPos(pos),
+                    DocPos(clipEnd),
                     a.point,
                     b.point
                 )
@@ -1399,14 +1401,14 @@ private fun <T : RangeValue> compareSpans(
             boundChange = false
         } else {
             if (boundChange) {
-                comparator.boundChange(pos)
+                comparator.boundChange(DocPos(pos))
             }
             if (clipEnd > pos &&
                 !sameValues(a.active, b.active)
             ) {
                 comparator.compareRange(
-                    pos,
-                    clipEnd,
+                    DocPos(pos),
+                    DocPos(clipEnd),
                     a.active,
                     b.active
                 )
@@ -1480,7 +1482,7 @@ private fun findMinIndex(value: List<RangeValue>, array: List<Int>): Int {
 fun <T : RangeValue> RangeSet<T>.forEach(action: (Range<T>) -> Unit) {
     val cursor = iter()
     while (cursor.value != null) {
-        action(Range.create(cursor.from, cursor.to, cursor.value!!))
+        action(Range.create(DocPos(cursor.from), DocPos(cursor.to), cursor.value!!))
         cursor.next()
     }
 }
@@ -1491,7 +1493,7 @@ fun <T : RangeValue> RangeSet<T>.forEach(action: (Range<T>) -> Unit) {
 fun <T : RangeValue> RangeSet<T>.asSequence(): Sequence<Range<T>> = sequence {
     val cursor = iter()
     while (cursor.value != null) {
-        yield(Range.create(cursor.from, cursor.to, cursor.value!!))
+        yield(Range.create(DocPos(cursor.from), DocPos(cursor.to), cursor.value!!))
         cursor.next()
     }
 }

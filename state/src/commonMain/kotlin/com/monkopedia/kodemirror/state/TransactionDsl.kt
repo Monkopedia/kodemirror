@@ -42,37 +42,37 @@ class TransactionSpecBuilder @PublishedApi internal constructor() {
     private var sequentialValue: Boolean = false
 
     /** Insert text at the given position. */
-    fun insert(pos: Int, text: String) {
+    fun insert(pos: DocPos, text: String) {
         changes.add(ChangeSpec.Single(pos, pos, text.asInsert()))
     }
 
     /** Insert a [Text] at the given position. */
-    fun insert(pos: Int, text: Text) {
+    fun insert(pos: DocPos, text: Text) {
         changes.add(ChangeSpec.Single(pos, pos, InsertContent.TextContent(text)))
     }
 
     /** Delete text from [from] to [to]. */
-    fun delete(from: Int, to: Int) {
+    fun delete(from: DocPos, to: DocPos) {
         changes.add(ChangeSpec.Single(from, to))
     }
 
     /** Replace text from [from] to [to] with [text]. */
-    fun replace(from: Int, to: Int, text: String) {
+    fun replace(from: DocPos, to: DocPos, text: String) {
         changes.add(ChangeSpec.Single(from, to, text.asInsert()))
     }
 
     /** Replace text from [from] to [to] with [text]. */
-    fun replace(from: Int, to: Int, text: Text) {
+    fun replace(from: DocPos, to: DocPos, text: Text) {
         changes.add(ChangeSpec.Single(from, to, InsertContent.TextContent(text)))
     }
 
     /** Set the cursor position. */
-    fun selection(cursor: Int) {
+    fun selection(cursor: DocPos) {
         selectionSpec = SelectionSpec.CursorSpec(cursor)
     }
 
     /** Set a selection range. */
-    fun selection(anchor: Int, head: Int) {
+    fun selection(anchor: DocPos, head: DocPos) {
         selectionSpec = SelectionSpec.CursorSpec(anchor, head)
     }
 

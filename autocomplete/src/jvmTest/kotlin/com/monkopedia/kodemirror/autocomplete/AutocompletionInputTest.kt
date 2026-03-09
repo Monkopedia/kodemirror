@@ -19,6 +19,7 @@
 package com.monkopedia.kodemirror.autocomplete
 
 import com.monkopedia.kodemirror.state.ChangeSpec
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.ExtensionList
@@ -43,7 +44,7 @@ class AutocompletionInputTest {
 
     private val testSource: CompletionSource = { ctx ->
         CompletionResult(
-            from = 0,
+            from = DocPos.ZERO,
             to = ctx.pos,
             options = testOptions,
             validFor = Regex("[\\w]*")
@@ -55,7 +56,7 @@ class AutocompletionInputTest {
         val state = EditorState.create(
             EditorStateConfig(
                 doc = doc.asDoc(),
-                selection = SelectionSpec.CursorSpec(cursor),
+                selection = SelectionSpec.CursorSpec(DocPos(cursor)),
                 extensions = ExtensionList(
                     listOf(
                         completionConfig.of(config),
@@ -82,7 +83,7 @@ class AutocompletionInputTest {
     /** Simulate deleting the character before the cursor. */
     private fun deleteBack(view: EditorSession) {
         val pos = view.state.selection.main.head
-        if (pos > 0) {
+        if (pos > DocPos.ZERO) {
             view.dispatch(
                 TransactionSpec(
                     changes = ChangeSpec.Single(pos - 1, pos, InsertContent.StringContent("")),

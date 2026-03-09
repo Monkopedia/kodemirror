@@ -20,6 +20,7 @@ package com.monkopedia.kodemirror.lint
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.RangeSet
 import com.monkopedia.kodemirror.state.RangeSetBuilder
@@ -36,7 +37,6 @@ import com.monkopedia.kodemirror.view.PluginValue
 import com.monkopedia.kodemirror.view.ViewPlugin
 import com.monkopedia.kodemirror.view.ViewUpdate
 import com.monkopedia.kodemirror.view.decorations
-import kotlin.math.min
 
 /** Effect used to update the set of diagnostics. */
 val setDiagnosticsEffect: StateEffectType<List<Diagnostic>> = StateEffect.define()
@@ -70,11 +70,12 @@ internal class LintStateValue(
 
         fun build(diagnostics: List<Diagnostic>, docLength: Int): LintStateValue {
             if (diagnostics.isEmpty()) return empty
+            val docEnd = DocPos(docLength)
             val sorted = diagnostics.sortedBy { it.from }
             val builder = RangeSetBuilder<Decoration>()
             for (diag in sorted) {
-                val from = diag.from.coerceIn(0, docLength)
-                val to = min(diag.to, docLength).coerceAtLeast(from)
+                val from = maxOf(DocPos.ZERO, minOf(diag.from, docEnd))
+                val to = maxOf(from, minOf(diag.to, docEnd))
                 if (from < to) {
                     val style = when (diag.severity) {
                         Severity.HINT -> hintStyle

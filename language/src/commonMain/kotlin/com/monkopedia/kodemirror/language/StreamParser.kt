@@ -33,6 +33,7 @@ import com.monkopedia.kodemirror.lezer.common.TreeFragment
 import com.monkopedia.kodemirror.lezer.highlight.Tag
 import com.monkopedia.kodemirror.lezer.highlight.Tags as highlightTags
 import com.monkopedia.kodemirror.lezer.highlight.styleTagsList
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.Facet
 
 /**
@@ -101,7 +102,7 @@ class StreamLanguage<State> private constructor(
             cx.node.tree,
             cx.node.from,
             cx.node.from,
-            cx.pos
+            cx.pos.value
         )
         val state: State
         var statePos: Int
@@ -112,24 +113,24 @@ class StreamLanguage<State> private constructor(
             state = streamParser.startState(cx.unit)
             statePos = cx.node.from
         }
-        if (cx.pos - statePos > MAX_INDENT_SCAN_DIST) return null
-        while (statePos < cx.pos) {
-            val line = cx.state.doc.lineAt(statePos)
-            val end = minOf(cx.pos, line.to)
+        if (cx.pos.value - statePos > MAX_INDENT_SCAN_DIST) return null
+        while (statePos < cx.pos.value) {
+            val line = cx.state.doc.lineAt(DocPos(statePos))
+            val end = minOf(cx.pos.value, line.to.value)
             if (line.length > 0) {
                 val stream = StringStream(
                     line.text,
                     cx.state.tabSize,
                     cx.unit
                 )
-                while (stream.pos < end - line.from) {
+                while (stream.pos < end - line.from.value) {
                     readToken(streamParser, stream, state)
                 }
             } else {
                 streamParser.blankLine(state, cx.unit)
             }
-            if (end == cx.pos) break
-            statePos = line.to + 1
+            if (end == cx.pos.value) break
+            statePos = line.to.value + 1
         }
         val line = cx.lineAt(cx.pos)
         val textAfterMatch = Regex("""^\s*(.*)""").find(line.text)

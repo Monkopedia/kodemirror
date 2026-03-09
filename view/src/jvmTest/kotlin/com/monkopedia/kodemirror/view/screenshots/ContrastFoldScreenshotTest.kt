@@ -32,6 +32,7 @@ import com.monkopedia.kodemirror.language.foldState
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.ExtensionList
+import com.monkopedia.kodemirror.state.LineNumber
 import com.monkopedia.kodemirror.state.RangeSetBuilder
 import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.view.Decoration
@@ -62,10 +63,10 @@ class ContrastFoldScreenshotTest {
                                 highlightActiveLine,
                                 highlightActiveLineGutter,
                                 foldState.init { state ->
-                                    val line1 = state.doc.line(1)
+                                    val line1 = state.doc.line(LineNumber(1))
                                     val openBrace = line1.text.indexOf('{')
                                     val from = line1.from + openBrace + 1
-                                    val line4 = state.doc.line(4)
+                                    val line4 = state.doc.line(LineNumber(4))
                                     val to = line4.from
                                     val builder = RangeSetBuilder<Decoration>()
                                     builder.add(

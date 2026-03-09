@@ -30,12 +30,13 @@ import com.monkopedia.kodemirror.language.foldNodeProp
 import com.monkopedia.kodemirror.language.indentNodeProp
 import com.monkopedia.kodemirror.lezer.common.SyntaxNode
 import com.monkopedia.kodemirror.lezer.lr.ParserConfig
+import com.monkopedia.kodemirror.state.DocPos
 
 private fun innerBody(context: TreeIndentContext): SyntaxNode? {
     val lineIndent = context.lineIndent(context.pos, -1)
     var found: SyntaxNode? = null
     var node = context.node
-    var pos = context.pos
+    var pos = context.pos.value
     loop@ while (true) {
         val before = node.childBefore(pos) ?: break
         when (before.name) {
@@ -64,9 +65,9 @@ private fun indentBody(context: TreeIndentContext, node: SyntaxNode): Int? {
     val line = context.lineAt(context.pos, -1)
     val to = line.from + line.text.length
     if (Regex("""^\s*($|#)""").containsMatchIn(line.text) &&
-        context.node.to < to + 100 &&
+        context.node.to < to.value + 100 &&
         !Regex("""\S""").containsMatchIn(
-            context.state.doc.sliceString(to, context.node.to)
+            context.state.doc.sliceString(to, DocPos(context.node.to))
         ) &&
         context.lineIndent(context.pos, -1) <= base
     ) {
@@ -169,12 +170,12 @@ val pythonLanguage: LRLanguage = LRLanguage.define(
                         "Body" -> { node, state ->
                             val end =
                                 node.to - if (node.to == state.doc.length) 0 else 1
-                            FoldRange(node.from + 1, end)
+                            FoldRange(DocPos(node.from + 1), DocPos(end))
                         }
                         "String", "FormatString" -> { node, state ->
                             FoldRange(
-                                state.doc.lineAt(node.from).to,
-                                node.to
+                                state.doc.lineAt(DocPos(node.from)).to,
+                                DocPos(node.to)
                             )
                         }
                         else -> null

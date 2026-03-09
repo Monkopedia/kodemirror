@@ -88,30 +88,30 @@ abstract class Text {
     abstract val lines: Int
 
     /** Get the line description around the given position. */
-    fun lineAt(pos: Int): Line {
-        if (pos < 0 || pos > length) {
+    fun lineAt(pos: DocPos): Line {
+        if (pos.value < 0 || pos.value > length) {
             throw IllegalArgumentException(
                 "Invalid position $pos in document of length $length"
             )
         }
-        return lineInner(pos, false, 1, 0)
+        return lineInner(pos.value, false, 1, 0)
     }
 
     /** Get the description for the given (1-based) line number. */
-    fun line(n: Int): Line {
-        if (n < 1 || n > lines) {
+    fun line(n: LineNumber): Line {
+        if (n.value < 1 || n.value > lines) {
             throw IllegalArgumentException(
                 "Invalid line number $n in $lines-line document"
             )
         }
-        return lineInner(n, true, 1, 0)
+        return lineInner(n.value, true, 1, 0)
     }
 
     internal abstract fun lineInner(target: Int, isLine: Boolean, line: Int, offset: Int): Line
 
     /** Replace a range of the text with the given content. */
-    open fun replace(from: Int, to: Int, text: Text): Text {
-        val (clippedFrom, clippedTo) = clip(this, from, to)
+    open fun replace(from: DocPos, to: DocPos, text: Text): Text {
+        val (clippedFrom, clippedTo) = clip(this, from.value, to.value)
         val parts = mutableListOf<Text>()
         decompose(0, clippedFrom, parts, Open.To)
         if (text.length > 0) {
@@ -131,22 +131,23 @@ abstract class Text {
 
     /** Append another document to this one. */
     fun append(other: Text): Text {
-        return replace(length, length, other)
+        return replace(endPos, endPos, other)
     }
 
     /** Retrieve the text between the given points. */
-    fun slice(from: Int, to: Int = length): Text {
-        val (clippedFrom, clippedTo) = clip(this, from, to)
+    fun slice(from: DocPos, to: DocPos = endPos): Text {
+        val (clippedFrom, clippedTo) = clip(this, from.value, to.value)
         val parts = mutableListOf<Text>()
         decompose(clippedFrom, clippedTo, parts, Open.None)
         return TextNode.from(parts, clippedTo - clippedFrom)
     }
 
     /** Retrieve a part of the document as a string. */
-    abstract fun sliceString(from: Int, to: Int = length, lineSep: String = "\n"): String
+    abstract fun sliceString(from: DocPos, to: DocPos = endPos, lineSep: String = "\n"): String
 
     /** Retrieve a part of the document as a string using an [IntRange]. */
-    operator fun get(range: IntRange): String = sliceString(range.first, range.last + 1)
+    operator fun get(range: IntRange): String =
+        sliceString(DocPos(range.first), DocPos(range.last + 1))
 
     /** True if this document has no content. */
     val isEmpty: Boolean get() = length == 0
@@ -157,7 +158,7 @@ abstract class Text {
     /** Return a sequence of lines in this document. */
     fun lineSequence(): Sequence<Line> = sequence {
         for (i in 1..lines) {
-            yield(line(i))
+            yield(line(LineNumber(i)))
         }
     }
 
@@ -209,7 +210,8 @@ abstract class Text {
      * Iterate over a range of the text. When [from] > [to], the
      * iterator will run in reverse.
      */
-    fun iterRange(from: Int, to: Int = length): TextIterator = PartialTextCursor(this, from, to)
+    fun iterRange(from: DocPos, to: DocPos = endPos): TextIterator =
+        PartialTextCursor(this, from.value, to.value)
 
     /**
      * Return a cursor that iterates over the given range of lines,
@@ -219,21 +221,21 @@ abstract class Text {
      * When [from] and [to] are given, they should be 1-based line
      * numbers.
      */
-    fun iterLines(from: Int? = null, to: Int? = null): TextIterator {
+    fun iterLines(from: LineNumber? = null, to: LineNumber? = null): TextIterator {
         val inner: TextIterator
         if (from == null) {
             inner = iter()
         } else {
-            val toLine = to ?: (lines + 1)
+            val toLine = to?.value ?: (lines + 1)
             val start = line(from).from
             inner = iterRange(
                 start,
-                max(
+                maxOf(
                     start,
                     when {
-                        toLine == lines + 1 -> length
-                        toLine <= 1 -> 0
-                        else -> line(toLine - 1).to
+                        toLine == lines + 1 -> endPos
+                        toLine <= 1 -> DocPos.ZERO
+                        else -> line(LineNumber(toLine - 1)).to
                     }
                 )
             )
@@ -247,7 +249,7 @@ abstract class Text {
      * Return the document as a string, using newline characters to
      * separate lines.
      */
-    override fun toString(): String = sliceString(0)
+    override fun toString(): String = sliceString(DocPos.ZERO)
 
     /**
      * Convert the document to an array of lines (which can be
@@ -305,7 +307,7 @@ internal class TextLeaf(
             val str = text[i]
             val end = currentOffset + str.length
             if ((if (isLine) currentLine else end) >= target) {
-                return Line(currentOffset, end, currentLine, str)
+                return Line(DocPos(currentOffset), DocPos(end), LineNumber(currentLine), str)
             }
             currentOffset = end + 1
             currentLine++
@@ -344,9 +346,9 @@ internal class TextLeaf(
         }
     }
 
-    override fun replace(from: Int, to: Int, text: Text): Text {
+    override fun replace(from: DocPos, to: DocPos, text: Text): Text {
         if (text !is TextLeaf) return super.replace(from, to, text)
-        val (clippedFrom, clippedTo) = clip(this, from, to)
+        val (clippedFrom, clippedTo) = clip(this, from.value, to.value)
         val lines = appendText(
             this.text,
             appendText(
@@ -363,8 +365,8 @@ internal class TextLeaf(
         )
     }
 
-    override fun sliceString(from: Int, to: Int, lineSep: String): String {
-        val (clippedFrom, clippedTo) = clip(this, from, to)
+    override fun sliceString(from: DocPos, to: DocPos, lineSep: String): String {
+        val (clippedFrom, clippedTo) = clip(this, from.value, to.value)
         val result = StringBuilder()
         var pos = 0
         for (i in text.indices) {
@@ -477,8 +479,8 @@ internal class TextNode(
         }
     }
 
-    override fun replace(from: Int, to: Int, text: Text): Text {
-        val (clippedFrom, clippedTo) = clip(this, from, to)
+    override fun replace(from: DocPos, to: DocPos, text: Text): Text {
+        val (clippedFrom, clippedTo) = clip(this, from.value, to.value)
         if (text.lines < lines) {
             var pos = 0
             for (i in children.indices) {
@@ -486,8 +488,8 @@ internal class TextNode(
                 val end = pos + child.length
                 if (clippedFrom >= pos && clippedTo <= end) {
                     val updated = child.replace(
-                        clippedFrom - pos,
-                        clippedTo - pos,
+                        DocPos(clippedFrom - pos),
+                        DocPos(clippedTo - pos),
                         text
                     )
                     val totalLines =
@@ -506,16 +508,16 @@ internal class TextNode(
                                 text.length
                         )
                     }
-                    return super.replace(pos, end, updated)
+                    return super.replace(DocPos(pos), DocPos(end), updated)
                 }
                 pos = end + 1
             }
         }
-        return super.replace(clippedFrom, clippedTo, text)
+        return super.replace(DocPos(clippedFrom), DocPos(clippedTo), text)
     }
 
-    override fun sliceString(from: Int, to: Int, lineSep: String): String {
-        val (clippedFrom, clippedTo) = clip(this, from, to)
+    override fun sliceString(from: DocPos, to: DocPos, lineSep: String): String {
+        val (clippedFrom, clippedTo) = clip(this, from.value, to.value)
         val result = StringBuilder()
         var pos = 0
         for (i in children.indices) {
@@ -526,8 +528,8 @@ internal class TextNode(
             if (clippedFrom < end && clippedTo > pos) {
                 result.append(
                     child.sliceString(
-                        clippedFrom - pos,
-                        clippedTo - pos,
+                        DocPos(clippedFrom - pos),
+                        DocPos(clippedTo - pos),
                         lineSep
                     )
                 )
@@ -913,14 +915,14 @@ private class LineCursor(
  */
 class Line internal constructor(
     /** The position of the start of the line. */
-    val from: Int,
+    val from: DocPos,
     /**
      * The position at the end of the line (_before_ the line
      * break, or at the end of document for the last line).
      */
-    val to: Int,
+    val to: DocPos,
     /** This line's line number (1-based). */
-    val number: Int,
+    val number: LineNumber,
     /** The line's content. */
     val text: String
 ) {

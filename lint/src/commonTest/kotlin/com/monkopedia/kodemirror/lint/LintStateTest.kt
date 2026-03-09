@@ -19,6 +19,7 @@
 package com.monkopedia.kodemirror.lint
 
 import com.monkopedia.kodemirror.state.ChangeSpec
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.InsertContent
@@ -55,8 +56,8 @@ class LintStateTest {
     fun canStoreDiagnostics() {
         val state = createState("hello world")
         val diags = listOf(
-            Diagnostic(0, 5, Severity.ERROR, "bad word"),
-            Diagnostic(6, 11, Severity.WARNING, "suspicious")
+            Diagnostic(DocPos(0), DocPos(5), Severity.ERROR, "bad word"),
+            Diagnostic(DocPos(6), DocPos(11), Severity.WARNING, "suspicious")
         )
         val updated = setDiags(state, diags)
         val stored = collectDiags(updated)
@@ -70,17 +71,17 @@ class LintStateTest {
         val state = createState("abcdefghij")
         val withDiags = setDiags(
             state,
-            listOf(Diagnostic(5, 8, Severity.ERROR, "err"))
+            listOf(Diagnostic(DocPos(5), DocPos(8), Severity.ERROR, "err"))
         )
         val tr = withDiags.update(
             TransactionSpec(
-                changes = ChangeSpec.Single(2, 5)
+                changes = ChangeSpec.Single(DocPos(2), DocPos(5))
             )
         )
         val mapped = collectDiags(tr.state)
         assertEquals(1, mapped.size)
-        assertEquals(2, mapped[0].from)
-        assertEquals(5, mapped[0].to)
+        assertEquals(DocPos(2), mapped[0].from)
+        assertEquals(DocPos(5), mapped[0].to)
     }
 
     @Test
@@ -88,29 +89,29 @@ class LintStateTest {
         val state = createState("abcdefghij")
         val withDiags = setDiags(
             state,
-            listOf(Diagnostic(3, 6, Severity.WARNING, "warn"))
+            listOf(Diagnostic(DocPos(3), DocPos(6), Severity.WARNING, "warn"))
         )
         val tr = withDiags.update(
             TransactionSpec(
                 changes = ChangeSpec.Single(
-                    3,
-                    3,
+                    DocPos(3),
+                    DocPos(3),
                     InsertContent.StringContent("XYZ")
                 )
             )
         )
         val mapped = collectDiags(tr.state)
         assertEquals(1, mapped.size)
-        assertEquals(6, mapped[0].from)
-        assertEquals(9, mapped[0].to)
+        assertEquals(DocPos(6), mapped[0].from)
+        assertEquals(DocPos(9), mapped[0].to)
     }
 
     @Test
     fun storesOverlappingDiagnostics() {
         val state = createState("hello world")
         val diags = listOf(
-            Diagnostic(0, 7, Severity.ERROR, "first"),
-            Diagnostic(3, 11, Severity.WARNING, "second")
+            Diagnostic(DocPos(0), DocPos(7), Severity.ERROR, "first"),
+            Diagnostic(DocPos(3), DocPos(11), Severity.WARNING, "second")
         )
         val updated = setDiags(state, diags)
         val stored = collectDiags(updated)
@@ -121,8 +122,8 @@ class LintStateTest {
     fun storesEmptyZeroWidthDiagnostics() {
         val state = createState("hello")
         val diags = listOf(
-            Diagnostic(3, 3, Severity.INFO, "point1"),
-            Diagnostic(3, 3, Severity.INFO, "point2")
+            Diagnostic(DocPos(3), DocPos(3), Severity.INFO, "point1"),
+            Diagnostic(DocPos(3), DocPos(3), Severity.INFO, "point2")
         )
         val updated = setDiags(state, diags)
         assertEquals(2, diagnosticCount(updated))
@@ -132,9 +133,9 @@ class LintStateTest {
     fun diagnosticCountReturnsCorrectCount() {
         val state = createState("hello world")
         val diags = listOf(
-            Diagnostic(0, 3, Severity.ERROR, "a"),
-            Diagnostic(4, 7, Severity.WARNING, "b"),
-            Diagnostic(8, 11, Severity.INFO, "c")
+            Diagnostic(DocPos(0), DocPos(3), Severity.ERROR, "a"),
+            Diagnostic(DocPos(4), DocPos(7), Severity.WARNING, "b"),
+            Diagnostic(DocPos(8), DocPos(11), Severity.INFO, "c")
         )
         val updated = setDiags(state, diags)
         assertEquals(3, diagnosticCount(updated))

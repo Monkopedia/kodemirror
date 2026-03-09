@@ -41,6 +41,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.monkopedia.kodemirror.state.LineNumber
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.StateEffect
 import com.monkopedia.kodemirror.state.StateEffectType
@@ -94,7 +95,7 @@ internal fun GoToLinePanel(view: EditorSession) {
     fun goToLine() {
         val lineNum = lineText.toIntOrNull() ?: return
         val doc = view.state.doc
-        val clampedLine = lineNum.coerceIn(1, doc.lines)
+        val clampedLine = LineNumber(lineNum.coerceIn(1, doc.lines))
         val line = doc.line(clampedLine)
         view.dispatch(
             TransactionSpec(

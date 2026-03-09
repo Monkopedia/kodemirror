@@ -21,6 +21,7 @@ package com.monkopedia.kodemirror.language
 import androidx.compose.ui.text.SpanStyle
 import com.monkopedia.kodemirror.lezer.highlight.Highlighter
 import com.monkopedia.kodemirror.lezer.highlight.highlightTree
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.Prec
 import com.monkopedia.kodemirror.state.RangeSet
@@ -76,7 +77,7 @@ private class TreeHighlighter(
                 val spanStyle = resolveSpanStyle(style)
                 Decoration.mark(MarkDecorationSpec(style = spanStyle))
             }
-            builder.add(from, to, mark)
+            builder.add(DocPos(from), DocPos(to), mark)
         })
         return builder.finish()
     }

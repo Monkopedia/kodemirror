@@ -20,8 +20,10 @@ package com.monkopedia.kodemirror.merge
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.SpanStyle
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
+import com.monkopedia.kodemirror.state.LineNumber
 import com.monkopedia.kodemirror.state.Prec
 import com.monkopedia.kodemirror.state.RangeSet
 import com.monkopedia.kodemirror.state.RangeSetBuilder
@@ -31,6 +33,7 @@ import com.monkopedia.kodemirror.state.StateEffectType
 import com.monkopedia.kodemirror.state.StateField
 import com.monkopedia.kodemirror.state.StateFieldSpec
 import com.monkopedia.kodemirror.state.Text
+import com.monkopedia.kodemirror.state.endPos
 import com.monkopedia.kodemirror.view.Decoration
 import com.monkopedia.kodemirror.view.DecorationSet
 import com.monkopedia.kodemirror.view.DecorationSource
@@ -49,8 +52,6 @@ import com.monkopedia.kodemirror.view.ViewUpdate
 import com.monkopedia.kodemirror.view.WidgetType
 import com.monkopedia.kodemirror.view.decorations
 import com.monkopedia.kodemirror.view.gutter
-import kotlin.math.max
-import kotlin.math.min
 
 // -- Decoration constants --
 
@@ -159,7 +160,7 @@ private fun buildChunkDeco(
         var pos = from
         while (!iter.next().done) {
             if (iter.lineBreak) {
-                pos++
+                pos += 1
                 builder.add(pos, pos, changedLine)
                 gutterBuilder?.add(pos, pos, changedLineGutterMarker)
                 continue
@@ -172,8 +173,8 @@ private fun buildChunkDeco(
                         from + if (isA) nextChange.fromA else nextChange.fromB
                     val nextTo =
                         from + if (isA) nextChange.toA else nextChange.toB
-                    val chFrom = max(pos, nextFrom)
-                    val chTo = min(lineEnd, nextTo)
+                    val chFrom = maxOf(pos, nextFrom)
+                    val chTo = minOf(lineEnd, nextTo)
                     if (chFrom < chTo) builder.add(chFrom, chTo, changedText)
                     if (nextTo < lineEnd) {
                         changeI++
@@ -249,7 +250,7 @@ val Spacers: StateField<DecorationSet> = StateField.define(
  * A state effect that expands the section of collapsed unchanged
  * code starting at the given position.
  */
-val uncollapseUnchanged: StateEffectType<Int> = StateEffect.define { v, m ->
+val uncollapseUnchanged: StateEffectType<DocPos> = StateEffect.define { v, m ->
     m.mapPos(v)
 }
 
@@ -275,7 +276,7 @@ private val CollapsedRanges: StateField<DecorationSet> = StateField.define(
                 e.asType(uncollapseUnchanged)?.let { eff ->
                     result = result.update(
                         RangeSetUpdate(
-                            filter = { from, _, _ -> from != eff.value }
+                            filter = { from, _, _ -> from != eff.value.value }
                         )
                     )
                 }
@@ -301,14 +302,14 @@ private fun buildCollapsedRanges(state: EditorState, margin: Int, minLines: Int)
     val builder = RangeSetBuilder<Decoration>()
     val isA = state.facet(mergeConfig).side == MergeSide.A
     val chunks = state.field(ChunkField)
-    var prevLine = 1
+    var prevLine = LineNumber.FIRST
     for (i in 0..chunks.size) {
         val chunk = if (i < chunks.size) chunks[i] else null
-        val collapseFrom = if (i > 0) prevLine + margin else 1
+        val collapseFrom = if (i > 0) prevLine + margin else LineNumber.FIRST
         val collapseTo = if (chunk != null) {
             state.doc.lineAt(if (isA) chunk.fromA else chunk.fromB).number - 1 - margin
         } else {
-            state.doc.lines
+            LineNumber(state.doc.lines)
         }
         val lines = collapseTo - collapseFrom + 1
         if (lines >= minLines) {
@@ -325,7 +326,7 @@ private fun buildCollapsedRanges(state: EditorState, margin: Int, minLines: Int)
         }
         if (chunk == null) break
         prevLine = state.doc.lineAt(
-            min(state.doc.length, if (isA) chunk.toA else chunk.toB)
+            minOf(state.doc.endPos, if (isA) chunk.toA else chunk.toB)
         ).number
     }
     return builder.finish()

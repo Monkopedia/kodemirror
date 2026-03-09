@@ -19,6 +19,7 @@
 package com.monkopedia.kodemirror.commands
 
 import com.monkopedia.kodemirror.state.ChangeSpec
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.InsertContent
@@ -36,7 +37,7 @@ class HistoryTest {
         val state = EditorState.create(
             EditorStateConfig(
                 doc = doc.asDoc(),
-                selection = SelectionSpec.CursorSpec(cursor),
+                selection = SelectionSpec.CursorSpec(DocPos(cursor)),
                 extensions = history()
             )
         )
@@ -49,8 +50,8 @@ class HistoryTest {
         view.dispatch(
             TransactionSpec(
                 changes = ChangeSpec.Single(
-                    5,
-                    5,
+                    DocPos(5),
+                    DocPos(5),
                     InsertContent.StringContent(" world")
                 ),
                 annotations = listOf(Transaction.addToHistory.of(true))
@@ -71,8 +72,8 @@ class HistoryTest {
         view.dispatch(
             TransactionSpec(
                 changes = ChangeSpec.Single(
-                    5,
-                    5,
+                    DocPos(5),
+                    DocPos(5),
                     InsertContent.StringContent(" world")
                 ),
                 annotations = listOf(Transaction.addToHistory.of(true))
@@ -106,8 +107,8 @@ class HistoryTest {
         view.dispatch(
             TransactionSpec(
                 changes = ChangeSpec.Single(
-                    1,
-                    1,
+                    DocPos(1),
+                    DocPos(1),
                     InsertContent.StringContent("b")
                 ),
                 annotations = listOf(Transaction.addToHistory.of(true)),
@@ -124,8 +125,8 @@ class HistoryTest {
         view.dispatch(
             TransactionSpec(
                 changes = ChangeSpec.Single(
-                    2,
-                    2,
+                    DocPos(2),
+                    DocPos(2),
                     InsertContent.StringContent("c")
                 ),
                 annotations = listOf(Transaction.addToHistory.of(true)),
@@ -151,8 +152,8 @@ class HistoryTest {
         view.dispatch(
             TransactionSpec(
                 changes = ChangeSpec.Single(
-                    4,
-                    4,
+                    DocPos(4),
+                    DocPos(4),
                     InsertContent.StringContent("!")
                 ),
                 annotations = listOf(Transaction.addToHistory.of(true))
@@ -168,8 +169,8 @@ class HistoryTest {
         view.dispatch(
             TransactionSpec(
                 changes = ChangeSpec.Single(
-                    5,
-                    5,
+                    DocPos(5),
+                    DocPos(5),
                     InsertContent.StringContent(" world")
                 ),
                 annotations = listOf(Transaction.addToHistory.of(true))
@@ -182,8 +183,8 @@ class HistoryTest {
         view.dispatch(
             TransactionSpec(
                 changes = ChangeSpec.Single(
-                    5,
-                    5,
+                    DocPos(5),
+                    DocPos(5),
                     InsertContent.StringContent("!")
                 ),
                 annotations = listOf(Transaction.addToHistory.of(true))

@@ -19,9 +19,11 @@
 package com.monkopedia.kodemirror.view
 
 import com.monkopedia.kodemirror.state.CharCategory
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.SelectionRange
+import com.monkopedia.kodemirror.state.endPos
 
 /**
  * Find the character group (word/space/punctuation) at the given position.
@@ -30,10 +32,14 @@ import com.monkopedia.kodemirror.state.SelectionRange
  * @param pos   Document position to query.
  * @param side  -1 = look at the character before pos, 1 = look at char at pos.
  */
-fun groupAt(state: EditorState, pos: Int, side: Int = 1): CharCategory {
+fun groupAt(state: EditorState, pos: DocPos, side: Int = 1): CharCategory {
     val doc = state.doc
     if (doc.length == 0) return CharCategory.Space
-    val queryPos = if (side < 0) (pos - 1).coerceAtLeast(0) else pos.coerceAtMost(doc.length - 1)
+    val queryPos = if (side < 0) {
+        (pos - 1).coerceAtLeast(DocPos.ZERO)
+    } else {
+        pos.coerceAtMost(doc.endPos - 1)
+    }
     val char = doc.sliceString(queryPos, queryPos + 1)
     if (char.isEmpty()) return CharCategory.Space
     val categorizer = state.charCategorizer(queryPos)
@@ -52,7 +58,7 @@ fun moveByChar(
 ): SelectionRange {
     val dir = if (forward) 1 else -1
     val anchor = if (extend) sel.anchor else sel.head
-    val head = (sel.head + dir).coerceIn(0, state.doc.length)
+    val head = (sel.head + dir).coerceIn(DocPos.ZERO, state.doc.endPos)
     return if (extend) {
         EditorSelection.range(anchor, head)
     } else {
@@ -72,16 +78,16 @@ fun moveByGroup(
     extend: Boolean = false
 ): SelectionRange {
     val doc = state.doc
-    val len = doc.length
+    val endPos = doc.endPos
     var pos = sel.head
-    if (pos < 0 || pos > len) return sel
+    if (pos < DocPos.ZERO || pos > endPos) return sel
 
     val startGroup = groupAt(state, pos, if (forward) 1 else -1)
     val dir = if (forward) 1 else -1
 
     while (true) {
         val next = pos + dir
-        if (next < 0 || next > len) break
+        if (next < DocPos.ZERO || next > endPos) break
         val group = groupAt(state, next, -dir)
         if (group != startGroup) break
         pos = next
@@ -105,9 +111,9 @@ fun moveBySubword(
     extend: Boolean = false
 ): SelectionRange {
     val doc = state.doc
-    val len = doc.length
+    val endPos = doc.endPos
     var pos = sel.head
-    if (pos < 0 || pos > len) return sel
+    if (pos < DocPos.ZERO || pos > endPos) return sel
 
     val startGroup = groupAt(state, pos, if (forward) 1 else -1)
     val dir = if (forward) 1 else -1
@@ -121,15 +127,15 @@ fun moveBySubword(
     var sawLower = false
     while (true) {
         val next = pos + dir
-        if (next < 0 || next > len) break
+        if (next < DocPos.ZERO || next > endPos) break
         val group = groupAt(state, next, -dir)
         if (group != CharCategory.Word) break
 
         // Check camelCase boundary
         val checkPos = if (forward) next else next
         val charAtCheck = doc.sliceString(
-            checkPos.coerceAtMost(len - 1),
-            (checkPos + 1).coerceAtMost(len)
+            checkPos.coerceAtMost(endPos - 1),
+            (checkPos + 1).coerceAtMost(endPos)
         )
         if (charAtCheck.isNotEmpty()) {
             val ch = charAtCheck[0]
@@ -166,13 +172,14 @@ fun moveVertically(
     forward: Boolean,
     extend: Boolean = false
 ): SelectionRange {
-    val coords = view.coordsAtPos(sel.head, if (forward) 1 else -1) ?: return sel
+    val coords = view.coordsAtPos(sel.head.value, if (forward) 1 else -1) ?: return sel
     val targetY = if (forward) {
         coords.bottom + 1f
     } else {
         coords.top - 1f
     }
-    val newPos = view.posAtCoords(coords.centerX, targetY) ?: return sel
+    val rawPos = view.posAtCoords(coords.centerX, targetY) ?: return sel
+    val newPos = DocPos(rawPos)
     val anchor = if (extend) sel.anchor else newPos
     return if (extend) EditorSelection.range(anchor, newPos) else EditorSelection.cursor(newPos)
 }

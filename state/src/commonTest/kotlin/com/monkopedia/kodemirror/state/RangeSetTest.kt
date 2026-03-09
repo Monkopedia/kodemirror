@@ -52,9 +52,10 @@ private class Value(
     }
 }
 
-private fun cmp(a: Range<Value>, b: Range<Value>): Int = a.from - b.from
+private fun cmp(a: Range<Value>, b: Range<Value>): Int = a.from.value - b.from.value
 
-private fun mk(from: Int, to: Int, spec: Value): Range<Value> = spec.range(from, to) as Range<Value>
+private fun mk(from: Int, to: Int, spec: Value): Range<Value> =
+    spec.range(DocPos(from), DocPos(to)) as Range<Value>
 
 private fun mk(from: Int, to: Int, name: String): Range<Value> =
     mk(from, to, Value(endSide = if (from == to) 1 else -1, point = from == to, name = name))
@@ -89,13 +90,13 @@ private fun changeSet(changes: List<Triple<Int, Int, Int>>): ChangeSet {
         if (len > 0) {
             collect.add(
                 ChangeSpec.Single(
-                    from = from,
-                    to = to,
+                    from = DocPos(from),
+                    to = DocPos(to),
                     insert = InsertContent.StringContent("x".repeat(len))
                 )
             )
         }
-        if (from < to) collect.add(ChangeSpec.Single(from = from, to = to))
+        if (from < to) collect.add(ChangeSpec.Single(from = DocPos(from), to = DocPos(to)))
     }
     return ChangeSet.of(ChangeSpec.Multi(collect), 5100)
 }
@@ -115,7 +116,7 @@ private fun set0(): RangeSet<Value> {
 
 private fun checkSet(set: RangeSet<Value>) {
     var count = 0
-    set.between(0, set.length) { from, _, value ->
+    set.between(DocPos.ZERO, DocPos(set.length)) { from, _, value ->
         count++
         if (value.pos != null) assertEquals(value.pos, from)
         null
@@ -339,19 +340,23 @@ class RangeSetTest {
 
     private class TestComparator : RangeComparator<Value> {
         val ranges = mutableListOf<Int>()
-        private fun addRange(from: Int, to: Int) {
-            if (ranges.isNotEmpty() && ranges.last() == from) {
-                ranges[ranges.size - 1] = to
+        private fun addRange(from: DocPos, to: DocPos) {
+            if (ranges.isNotEmpty() && ranges.last() == from.value) {
+                ranges[ranges.size - 1] = to.value
             } else {
-                ranges.add(from)
-                ranges.add(to)
+                ranges.add(from.value)
+                ranges.add(to.value)
             }
         }
 
-        override fun compareRange(from: Int, to: Int, activeA: List<Value>, activeB: List<Value>) =
-            addRange(from, to)
+        override fun compareRange(
+            from: DocPos,
+            to: DocPos,
+            activeA: List<Value>,
+            activeB: List<Value>
+        ) = addRange(from, to)
 
-        override fun comparePoint(from: Int, to: Int, pointA: Value?, pointB: Value?) =
+        override fun comparePoint(from: DocPos, to: DocPos, pointA: Value?, pointB: Value?) =
             addRange(from, to)
     }
 
@@ -501,21 +506,21 @@ class RangeSetTest {
 
     private class TestBuilder : SpanIterator<Value> {
         val spans = mutableListOf<String>()
-        override fun span(from: Int, to: Int, active: List<Value>, openStart: Int) {
+        override fun span(from: DocPos, to: DocPos, active: List<Value>, openStart: Int) {
             val name = Value.names(active)
-            spans.add("${to - from}${if (name.isNotEmpty()) "=$name" else ""}")
+            spans.add("${to.value - from.value}${if (name.isNotEmpty()) "=$name" else ""}")
         }
 
         override fun point(
-            from: Int,
-            to: Int,
+            from: DocPos,
+            to: DocPos,
             value: Value,
             active: List<Value>,
             openStart: Int,
             index: Int
         ) {
             spans.add(
-                "${if (to > from) "${to - from}=" else ""}" +
+                "${if (to > from) "${to.value - from.value}=" else ""}" +
                     "${if (value.name != null) "[${value.name}]" else "ø"}"
             )
         }
@@ -620,21 +625,21 @@ class RangeSetTest {
             0,
             30,
             object : SpanIterator<Value> {
-                override fun span(from: Int, to: Int, active: List<Value>, openStart: Int) {
-                    ranges.add(from)
-                    ranges.add(to)
+                override fun span(from: DocPos, to: DocPos, active: List<Value>, openStart: Int) {
+                    ranges.add(from.value)
+                    ranges.add(to.value)
                 }
 
                 override fun point(
-                    from: Int,
-                    to: Int,
+                    from: DocPos,
+                    to: DocPos,
                     value: Value,
                     active: List<Value>,
                     openStart: Int,
                     index: Int
                 ) {
-                    ranges.add(from)
-                    ranges.add(to)
+                    ranges.add(from.value)
+                    ranges.add(to.value)
                 }
             },
             0
@@ -658,10 +663,10 @@ class RangeSetTest {
             0,
             10,
             object : SpanIterator<Value> {
-                override fun span(from: Int, to: Int, active: List<Value>, openStart: Int) {}
+                override fun span(from: DocPos, to: DocPos, active: List<Value>, openStart: Int) {}
                 override fun point(
-                    from: Int,
-                    to: Int,
+                    from: DocPos,
+                    to: DocPos,
                     value: Value,
                     active: List<Value>,
                     openStart: Int,
@@ -736,7 +741,7 @@ class RangeSetTest {
     @Test
     fun betweenIteratesOverRanges() {
         var found = 0
-        set0().between(100, 200) { from, to, _ ->
+        set0().between(DocPos(100), DocPos(200)) { from, to, _ ->
             assertEquals(from + 1 + (from % 4), to)
             assertTrue(to >= 100)
             assertTrue(from <= 200)
@@ -750,7 +755,7 @@ class RangeSetTest {
     fun betweenReturnsRangesInAZeroLengthSet() {
         val set = RangeSet.of(mk(0, 0))
         val found = mutableListOf<Int>()
-        set.between(0, 0) { from, to, _ ->
+        set.between(DocPos.ZERO, DocPos.ZERO) { from, to, _ ->
             found.add(from)
             found.add(to)
             null

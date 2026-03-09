@@ -18,6 +18,7 @@
  */
 package com.monkopedia.kodemirror.search
 
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.ExtensionList
@@ -36,7 +37,7 @@ class SearchCommandsTest {
         val state = EditorState.create(
             EditorStateConfig(
                 doc = doc.asDoc(),
-                selection = SelectionSpec.CursorSpec(cursor),
+                selection = SelectionSpec.CursorSpec(DocPos(cursor)),
                 extensions = ExtensionList(
                     listOf(searchQueryField, searchPanelOpenField)
                 )
@@ -59,8 +60,8 @@ class SearchCommandsTest {
             cursor = 3
         )
         assertTrue(findNext(view))
-        assertEquals(8, view.state.selection.main.from)
-        assertEquals(11, view.state.selection.main.to)
+        assertEquals(DocPos(8), view.state.selection.main.from)
+        assertEquals(DocPos(11), view.state.selection.main.to)
     }
 
     @Test
@@ -71,8 +72,8 @@ class SearchCommandsTest {
             cursor = 19
         )
         assertTrue(findPrevious(view))
-        assertEquals(16, view.state.selection.main.from)
-        assertEquals(19, view.state.selection.main.to)
+        assertEquals(DocPos(16), view.state.selection.main.from)
+        assertEquals(DocPos(19), view.state.selection.main.to)
     }
 
     @Test
@@ -83,8 +84,8 @@ class SearchCommandsTest {
             cursor = 5
         )
         assertTrue(findNext(view))
-        assertEquals(0, view.state.selection.main.from)
-        assertEquals(3, view.state.selection.main.to)
+        assertEquals(DocPos(0), view.state.selection.main.from)
+        assertEquals(DocPos(3), view.state.selection.main.to)
     }
 
     @Test
@@ -95,8 +96,8 @@ class SearchCommandsTest {
             cursor = 0
         )
         assertTrue(findPrevious(view))
-        assertEquals(14, view.state.selection.main.from)
-        assertEquals(17, view.state.selection.main.to)
+        assertEquals(DocPos(14), view.state.selection.main.from)
+        assertEquals(DocPos(17), view.state.selection.main.to)
     }
 
     @Test
@@ -140,7 +141,7 @@ class SearchCommandsTest {
         assertTrue(selectMatches(view))
         // Verify at least one match position is selected
         val sel = view.state.selection.main
-        assertTrue(sel.from != sel.to || sel.from == 0)
+        assertTrue(sel.from != sel.to || sel.from == DocPos.ZERO)
     }
 
     @Test

@@ -29,6 +29,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.state.ChangeSet
 import com.monkopedia.kodemirror.state.ChangeSpec
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList
@@ -41,6 +42,7 @@ import com.monkopedia.kodemirror.state.StateField
 import com.monkopedia.kodemirror.state.StateFieldSpec
 import com.monkopedia.kodemirror.state.Text
 import com.monkopedia.kodemirror.state.TransactionSpec
+import com.monkopedia.kodemirror.state.endPos
 import com.monkopedia.kodemirror.view.Decoration
 import com.monkopedia.kodemirror.view.DecorationSet
 import com.monkopedia.kodemirror.view.EditorSession
@@ -53,8 +55,6 @@ import com.monkopedia.kodemirror.view.WidgetType
 import com.monkopedia.kodemirror.view.decorations
 import com.monkopedia.kodemirror.view.editorAttributes
 import com.monkopedia.kodemirror.view.gutter
-import kotlin.math.max
-import kotlin.math.min
 
 // -- Configuration --
 
@@ -182,7 +182,7 @@ private class DeletionWidget(
             if (chunk.fromA < chunk.toA) {
                 val text = origDoc.sliceString(
                     chunk.fromA,
-                    max(chunk.fromA, chunk.endA)
+                    maxOf(chunk.fromA, chunk.endA)
                 )
                 BasicText(text)
             }
@@ -216,14 +216,17 @@ private val inlineChangedLine = Decoration.line(
     LineDecorationSpec(cssClass = "cm-inlineChangedLine")
 )
 
-private fun chunkCanDisplayInline(state: EditorState, chunk: Chunk): List<Pair<Int, Decoration>>? {
+private fun chunkCanDisplayInline(
+    state: EditorState,
+    chunk: Chunk
+): List<Pair<DocPos, Decoration>>? {
     val a = state.field(originalDoc)
     val b = state.doc
     val linesA = a.lineAt(chunk.endA).number - a.lineAt(chunk.fromA).number + 1
     val linesB = b.lineAt(chunk.endB).number - b.lineAt(chunk.fromB).number + 1
     if (linesA != linesB || linesA >= 10) return null
 
-    val deco = mutableListOf<Pair<Int, Decoration>>()
+    val deco = mutableListOf<Pair<DocPos, Decoration>>()
     var deleteCount = 0
     val bA = chunk.fromA
     val bB = chunk.fromB
@@ -250,7 +253,7 @@ private fun chunkCanDisplayInline(state: EditorState, chunk: Chunk): List<Pair<I
         }
     }
 
-    return if (deleteCount < (chunk.endA - chunk.fromA - linesA * 2)) deco else null
+    return if (deleteCount < (chunk.endA - chunk.fromA) - linesA * 2) deco else null
 }
 
 private fun overrideChunkInline(
@@ -321,14 +324,14 @@ private val deletedChunks: StateField<DecorationSet> = StateField.define(
  * or the cursor. This chunk will no longer be highlighted unless it
  * is edited again.
  */
-fun acceptChunk(view: EditorSession, pos: Int? = null): Boolean {
+fun acceptChunk(view: EditorSession, pos: DocPos? = null): Boolean {
     val state = view.state
     val at = pos ?: state.selection.main.head
     val chunk = state.field(ChunkField).find { it.fromB <= at && it.endB >= at }
         ?: return false
-    val insert = state.sliceDoc(chunk.fromB, max(chunk.fromB, chunk.toB - 1))
+    val insert = state.sliceDoc(chunk.fromB, maxOf(chunk.fromB, chunk.toB - 1))
     val orig = state.field(originalDoc)
-    val insertStr = if (chunk.fromB != chunk.toB && chunk.toA <= orig.length) {
+    val insertStr = if (chunk.fromB != chunk.toB && chunk.toA <= orig.endPos) {
         insert + state.lineBreak
     } else {
         insert
@@ -336,7 +339,7 @@ fun acceptChunk(view: EditorSession, pos: Int? = null): Boolean {
     val changes = ChangeSet.of(
         ChangeSpec.Single(
             chunk.fromA,
-            min(orig.length, chunk.toA),
+            minOf(orig.endPos, chunk.toA),
             InsertContent.StringContent(insertStr)
         ),
         orig.length
@@ -357,14 +360,14 @@ fun acceptChunk(view: EditorSession, pos: Int? = null): Boolean {
  * or the cursor. Reverts that range to the content it has in the
  * original document.
  */
-fun rejectChunk(view: EditorSession, pos: Int? = null): Boolean {
+fun rejectChunk(view: EditorSession, pos: DocPos? = null): Boolean {
     val state = view.state
     val at = pos ?: state.selection.main.head
     val chunk = state.field(ChunkField).find { it.fromB <= at && it.endB >= at }
         ?: return false
     val orig = state.field(originalDoc)
-    val insert = orig.sliceString(chunk.fromA, max(chunk.fromA, chunk.toA - 1))
-    val insertStr = if (chunk.fromA != chunk.toA && chunk.toB <= state.doc.length) {
+    val insert = orig.sliceString(chunk.fromA, maxOf(chunk.fromA, chunk.toA - 1))
+    val insertStr = if (chunk.fromA != chunk.toA && chunk.toB <= state.doc.endPos) {
         insert + state.lineBreak
     } else {
         insert
@@ -373,7 +376,7 @@ fun rejectChunk(view: EditorSession, pos: Int? = null): Boolean {
         TransactionSpec(
             changes = ChangeSpec.Single(
                 chunk.fromB,
-                min(state.doc.length, chunk.toB),
+                minOf(state.doc.endPos, chunk.toB),
                 InsertContent.StringContent(insertStr)
             ),
             userEvent = "revert"
@@ -427,9 +430,11 @@ fun unifiedMergeView(config: UnifiedMergeConfig): Extension {
                 highlightChanges = config.highlightChanges,
                 markGutter = config.gutter,
                 syntaxHighlightDeletions = config.syntaxHighlightDeletions,
-                syntaxHighlightDeletionsMaxLength = config.syntaxHighlightDeletionsMaxLength,
+                syntaxHighlightDeletionsMaxLength =
+                config.syntaxHighlightDeletionsMaxLength,
                 mergeControls = config.mergeControls,
-                overrideChunk = if (config.allowInlineDiffs) ::overrideChunkInline else null,
+                overrideChunk =
+                if (config.allowInlineDiffs) ::overrideChunkInline else null,
                 side = MergeSide.B
             )
         ),

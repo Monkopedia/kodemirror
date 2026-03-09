@@ -24,6 +24,7 @@ import com.monkopedia.kodemirror.autocomplete.CompletionResult
 import com.monkopedia.kodemirror.autocomplete.CompletionSource
 import com.monkopedia.kodemirror.language.syntaxTree
 import com.monkopedia.kodemirror.lezer.common.SyntaxNode
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 
 private fun completions(words: String, type: String): List<Completion> =
@@ -68,14 +69,14 @@ private data class CompletionContext2(
     val type: String,
     val node: SyntaxNode? = null,
     val target: SyntaxNode? = null,
-    val from: Int? = null
+    val from: DocPos? = null
 )
 
 private fun findContext(context: CompletionContext): CompletionContext2? {
     val state = context.state
     val pos = context.pos
-    val node = syntaxTree(state).resolveInner(pos, -1).enterUnfinishedNodesBefore(pos)
-    val before = node.childBefore(pos)?.name ?: node.name
+    val node = syntaxTree(state).resolveInner(pos.value, -1).enterUnfinishedNodesBefore(pos.value)
+    val before = node.childBefore(pos.value)?.name ?: node.name
     if (node.name == "FilterName") return CompletionContext2(type = "filter", node = node)
     if (context.explicit && before == "|") return CompletionContext2(type = "filter")
     if (node.name == "TagName") return CompletionContext2(type = "tag", node = node)
@@ -90,7 +91,7 @@ private fun findContext(context: CompletionContext): CompletionContext2? {
         return CompletionContext2(type = "property", target = node)
     }
     if (node.name == "VariableName") {
-        return CompletionContext2(type = "expression", from = node.from)
+        return CompletionContext2(type = "expression", from = DocPos(node.from))
     }
     val word = context.matchBefore(Regex("""[\w\u00c0-\uffff]+$"""))
     if (word != null) return CompletionContext2(type = "expression", from = word.from)
@@ -114,7 +115,7 @@ private fun resolveProperties(
         val obj = current.getChild("Expression") ?: return emptyList()
         when {
             obj.name == "VariableName" || obj.name == "forloop" || obj.name == "tablerowloop" -> {
-                val text = state.doc.sliceString(obj.from, obj.to)
+                val text = state.doc.sliceString(DocPos(obj.from), DocPos(obj.to))
                 if (text == "forloop") return if (path.isEmpty()) forloop else emptyList()
                 if (text == "tablerowloop") {
                     return if (path.isEmpty()) tablerowloop else emptyList()
@@ -124,14 +125,19 @@ private fun resolveProperties(
             }
             obj.name == "MemberExpression" -> {
                 val name = obj.getChild("PropertyName")
-                if (name != null) path.add(0, state.doc.sliceString(name.from, name.to))
+                if (name != null) {
+                    path.add(
+                        0,
+                        state.doc.sliceString(DocPos(name.from), DocPos(name.to))
+                    )
+                }
                 current = obj
             }
             obj.name == "SubscriptExpression" -> {
                 val exprs = obj.getChildren("Expression")
                 val expr = if (exprs.size > 1) exprs[1] else null
                 val part = if (expr?.name == "StringLiteral") {
-                    state.doc.sliceString(expr.from + 1, expr.to - 1)
+                    state.doc.sliceString(DocPos(expr.from + 1), DocPos(expr.to - 1))
                 } else {
                     "[]"
                 }
@@ -167,7 +173,7 @@ fun liquidCompletionSource(
     val properties = config.properties
     return source@{ context ->
         val cx = findContext(context) ?: return@source null
-        val from = cx.from ?: (cx.node?.from ?: context.pos)
+        val from = cx.from ?: (cx.node?.let { DocPos(it.from) } ?: context.pos)
         val options: List<Completion> = when (cx.type) {
             "filter" -> filters
             "tag" -> tags

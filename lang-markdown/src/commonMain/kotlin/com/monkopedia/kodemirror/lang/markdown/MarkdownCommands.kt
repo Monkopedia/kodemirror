@@ -21,6 +21,7 @@ package com.monkopedia.kodemirror.lang.markdown
 import com.monkopedia.kodemirror.language.syntaxTree
 import com.monkopedia.kodemirror.lezer.common.SyntaxNode
 import com.monkopedia.kodemirror.state.ChangeSpec
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.Text
@@ -29,8 +30,8 @@ import com.monkopedia.kodemirror.view.EditorSession
 
 private class Context(
     val node: SyntaxNode,
-    val from: Int,
-    val to: Int,
+    val from: DocPos,
+    val to: DocPos,
     val spaceBefore: String,
     val spaceAfter: String,
     val type: String,
@@ -60,11 +61,11 @@ private fun getContext(node: SyntaxNode, doc: Text): List<Context> {
                     0,
                     Context(
                         node = cur,
-                        from = mark.from,
-                        to = mark.to,
+                        from = DocPos(mark.from),
+                        to = DocPos(mark.to),
                         spaceBefore = "",
                         spaceAfter = if (mark.to < cur.to &&
-                            doc.sliceString(mark.to, mark.to + 1) == " "
+                            doc.sliceString(DocPos(mark.to), DocPos(mark.to + 1)) == " "
                         ) {
                             " "
                         } else {
@@ -82,17 +83,17 @@ private fun getContext(node: SyntaxNode, doc: Text): List<Context> {
             ) {
                 val mark = cur.firstChild
                 if (mark != null && isMark(mark)) {
-                    val line = doc.lineAt(cur.from)
-                    val indent = cur.from - line.from
+                    val line = doc.lineAt(DocPos(cur.from))
+                    val indent = DocPos(cur.from) - line.from
                     nodes.add(
                         0,
                         Context(
                             node = cur,
-                            from = mark.from,
-                            to = mark.to,
+                            from = DocPos(mark.from),
+                            to = DocPos(mark.to),
                             spaceBefore = " ".repeat(indent),
                             spaceAfter = if (mark.to < cur.to &&
-                                doc.sliceString(mark.to, mark.to + 1) == " "
+                                doc.sliceString(DocPos(mark.to), DocPos(mark.to + 1)) == " "
                             ) {
                                 " "
                             } else {
@@ -112,7 +113,7 @@ private fun getContext(node: SyntaxNode, doc: Text): List<Context> {
 }
 
 private fun blankLine(cx: Context, state: EditorState): Boolean {
-    val line = state.doc.lineAt(cx.node.from)
+    val line = state.doc.lineAt(DocPos(cx.node.from))
     val content = state.doc.sliceString(line.from, line.to).trim()
     return content.isEmpty() || content == ">" ||
         Regex("^\\d+[.)]\$").matches(content) ||
@@ -135,7 +136,7 @@ fun insertNewlineContinueMarkupCommand(
             break
         }
 
-        val node = tree.resolveInner(pos, -1)
+        val node = tree.resolveInner(pos.value, -1)
         val context = getContext(node, state.doc)
         if (context.isEmpty()) {
             canHandle = false
@@ -144,10 +145,9 @@ fun insertNewlineContinueMarkupCommand(
 
         val isBlank = blankLine(context.last(), state)
         if (isBlank && !continueOnBlank) {
-            val lineFrom = line.from
             specs.add(
                 ChangeSpec.Single(
-                    from = lineFrom,
+                    from = line.from,
                     to = line.to,
                     insert = InsertContent.StringContent("")
                 )
@@ -191,9 +191,9 @@ val deleteMarkupBackward: (EditorSession) -> Boolean = { view ->
 
     for (range in state.selection.ranges) {
         val pos = range.from
-        if (pos == 0 || !range.empty) continue
+        if (pos == DocPos.ZERO || !range.empty) continue
 
-        val node = tree.resolveInner(pos, -1)
+        val node = tree.resolveInner(pos.value, -1)
         val context = getContext(node, state.doc)
         if (context.isEmpty()) continue
 
@@ -238,15 +238,15 @@ fun renumberList(state: EditorState, pos: Int): TransactionSpec? {
         if (child.name == "ListItem") {
             val mark = child.firstChild
             if (mark != null && mark.name == "ListMark") {
-                val text = state.doc.sliceString(mark.from, mark.to)
+                val text = state.doc.sliceString(DocPos(mark.from), DocPos(mark.to))
                 val match = Regex("^(\\d+)([.)])").find(text)
                 if (match != null) {
                     val newText = "$number${match.groupValues[2]}"
                     if (newText != text) {
                         specs.add(
                             ChangeSpec.Single(
-                                from = mark.from,
-                                to = mark.to,
+                                from = DocPos(mark.from),
+                                to = DocPos(mark.to),
                                 insert = InsertContent.StringContent(newText)
                             )
                         )

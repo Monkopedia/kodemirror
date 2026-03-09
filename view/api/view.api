@@ -61,15 +61,15 @@ public abstract class com/monkopedia/kodemirror/view/ColumnItem {
 }
 
 public final class com/monkopedia/kodemirror/view/ColumnItem$BlockWidgetItem : com/monkopedia/kodemirror/view/ColumnItem {
-	public fun <init> (ILcom/monkopedia/kodemirror/view/WidgetDecoration;Lcom/monkopedia/kodemirror/view/BlockType;)V
 	public synthetic fun <init> (ILcom/monkopedia/kodemirror/view/WidgetDecoration;Lcom/monkopedia/kodemirror/view/BlockType;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()I
+	public synthetic fun <init> (ILcom/monkopedia/kodemirror/view/WidgetDecoration;Lcom/monkopedia/kodemirror/view/BlockType;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-8dfawaI ()I
 	public final fun component2 ()Lcom/monkopedia/kodemirror/view/WidgetDecoration;
 	public final fun component3 ()Lcom/monkopedia/kodemirror/view/BlockType;
-	public final fun copy (ILcom/monkopedia/kodemirror/view/WidgetDecoration;Lcom/monkopedia/kodemirror/view/BlockType;)Lcom/monkopedia/kodemirror/view/ColumnItem$BlockWidgetItem;
-	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/view/ColumnItem$BlockWidgetItem;ILcom/monkopedia/kodemirror/view/WidgetDecoration;Lcom/monkopedia/kodemirror/view/BlockType;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/view/ColumnItem$BlockWidgetItem;
+	public final fun copy-mUUkw5U (ILcom/monkopedia/kodemirror/view/WidgetDecoration;Lcom/monkopedia/kodemirror/view/BlockType;)Lcom/monkopedia/kodemirror/view/ColumnItem$BlockWidgetItem;
+	public static synthetic fun copy-mUUkw5U$default (Lcom/monkopedia/kodemirror/view/ColumnItem$BlockWidgetItem;ILcom/monkopedia/kodemirror/view/WidgetDecoration;Lcom/monkopedia/kodemirror/view/BlockType;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/view/ColumnItem$BlockWidgetItem;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getFrom ()I
+	public final fun getFrom-8dfawaI ()I
 	public final fun getType ()Lcom/monkopedia/kodemirror/view/BlockType;
 	public final fun getWidget ()Lcom/monkopedia/kodemirror/view/WidgetDecoration;
 	public fun hashCode ()I
@@ -77,30 +77,30 @@ public final class com/monkopedia/kodemirror/view/ColumnItem$BlockWidgetItem : c
 }
 
 public final class com/monkopedia/kodemirror/view/ColumnItem$TextLine : com/monkopedia/kodemirror/view/ColumnItem {
-	public fun <init> (IIILandroidx/compose/ui/text/AnnotatedString;Ljava/util/List;Ljava/util/List;)V
 	public synthetic fun <init> (IIILandroidx/compose/ui/text/AnnotatedString;Ljava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()I
-	public final fun component2 ()I
-	public final fun component3 ()I
+	public synthetic fun <init> (IIILandroidx/compose/ui/text/AnnotatedString;Ljava/util/List;Ljava/util/List;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-Kg6PalM ()I
+	public final fun component2-8dfawaI ()I
+	public final fun component3-8dfawaI ()I
 	public final fun component4 ()Landroidx/compose/ui/text/AnnotatedString;
 	public final fun component5 ()Ljava/util/List;
 	public final fun component6 ()Ljava/util/List;
-	public final fun copy (IIILandroidx/compose/ui/text/AnnotatedString;Ljava/util/List;Ljava/util/List;)Lcom/monkopedia/kodemirror/view/ColumnItem$TextLine;
-	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/view/ColumnItem$TextLine;IIILandroidx/compose/ui/text/AnnotatedString;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/view/ColumnItem$TextLine;
+	public final fun copy-KyLJCBs (IIILandroidx/compose/ui/text/AnnotatedString;Ljava/util/List;Ljava/util/List;)Lcom/monkopedia/kodemirror/view/ColumnItem$TextLine;
+	public static synthetic fun copy-KyLJCBs$default (Lcom/monkopedia/kodemirror/view/ColumnItem$TextLine;IIILandroidx/compose/ui/text/AnnotatedString;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/view/ColumnItem$TextLine;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getContent ()Landroidx/compose/ui/text/AnnotatedString;
-	public final fun getFrom ()I
+	public final fun getFrom-8dfawaI ()I
 	public final fun getInlineWidgets ()Ljava/util/List;
 	public final fun getLineDecorations ()Ljava/util/List;
-	public final fun getLineNumber ()I
-	public final fun getTo ()I
+	public final fun getLineNumber-Kg6PalM ()I
+	public final fun getTo-8dfawaI ()I
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
 public final class com/monkopedia/kodemirror/view/CursorMotionKt {
-	public static final fun groupAt (Lcom/monkopedia/kodemirror/state/EditorState;II)Lcom/monkopedia/kodemirror/state/CharCategory;
-	public static synthetic fun groupAt$default (Lcom/monkopedia/kodemirror/state/EditorState;IIILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/CharCategory;
+	public static final fun groupAt-FsPidVE (Lcom/monkopedia/kodemirror/state/EditorState;II)Lcom/monkopedia/kodemirror/state/CharCategory;
+	public static synthetic fun groupAt-FsPidVE$default (Lcom/monkopedia/kodemirror/state/EditorState;IIILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/CharCategory;
 	public static final fun moveByChar (Lcom/monkopedia/kodemirror/state/EditorState;Lcom/monkopedia/kodemirror/state/SelectionRange;ZZ)Lcom/monkopedia/kodemirror/state/SelectionRange;
 	public static synthetic fun moveByChar$default (Lcom/monkopedia/kodemirror/state/EditorState;Lcom/monkopedia/kodemirror/state/SelectionRange;ZZILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/SelectionRange;
 	public static final fun moveByGroup (Lcom/monkopedia/kodemirror/state/EditorState;Lcom/monkopedia/kodemirror/state/SelectionRange;ZZ)Lcom/monkopedia/kodemirror/state/SelectionRange;
@@ -128,7 +128,7 @@ public final class com/monkopedia/kodemirror/view/Decoration$Companion {
 
 public final class com/monkopedia/kodemirror/view/DecorationApplicationKt {
 	public static final fun buildColumnItems (Lcom/monkopedia/kodemirror/state/EditorState;Lcom/monkopedia/kodemirror/view/Viewport;Ljava/util/List;)Ljava/util/List;
-	public static final fun buildLineContent (IILjava/lang/String;Ljava/util/List;)Landroidx/compose/ui/text/AnnotatedString;
+	public static final fun buildLineContent-ZQWpm6o (IILjava/lang/String;Ljava/util/List;)Landroidx/compose/ui/text/AnnotatedString;
 }
 
 public abstract interface class com/monkopedia/kodemirror/view/DecorationSource : com/monkopedia/kodemirror/view/PluginValue {
@@ -181,14 +181,14 @@ public final class com/monkopedia/kodemirror/view/EditorSession$DefaultImpls {
 public final class com/monkopedia/kodemirror/view/EditorSessionKt {
 	public static final fun EditorSession (Lcom/monkopedia/kodemirror/state/EditorState;Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/kodemirror/view/EditorSession;
 	public static synthetic fun EditorSession$default (Lcom/monkopedia/kodemirror/state/EditorState;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/view/EditorSession;
-	public static final fun deleteRange (Lcom/monkopedia/kodemirror/view/EditorSession;II)V
+	public static final fun deleteRange-sX5c8NE (Lcom/monkopedia/kodemirror/view/EditorSession;II)V
 	public static final fun dispatch (Lcom/monkopedia/kodemirror/view/EditorSession;Lkotlin/jvm/functions/Function1;)V
 	public static final fun getLocalEditorSession ()Landroidx/compose/runtime/ProvidableCompositionLocal;
-	public static final fun insertAt (Lcom/monkopedia/kodemirror/view/EditorSession;ILjava/lang/String;)V
+	public static final fun insertAt-FsPidVE (Lcom/monkopedia/kodemirror/view/EditorSession;ILjava/lang/String;)V
 	public static final fun onChange (Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/kodemirror/state/Extension;
 	public static final fun onSelection (Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/kodemirror/state/Extension;
-	public static final fun select (Lcom/monkopedia/kodemirror/view/EditorSession;II)V
-	public static synthetic fun select$default (Lcom/monkopedia/kodemirror/view/EditorSession;IIILjava/lang/Object;)V
+	public static final fun select-sX5c8NE (Lcom/monkopedia/kodemirror/view/EditorSession;II)V
+	public static synthetic fun select-sX5c8NE$default (Lcom/monkopedia/kodemirror/view/EditorSession;IIILjava/lang/Object;)V
 	public static final fun selectAll (Lcom/monkopedia/kodemirror/view/EditorSession;)V
 	public static final fun setDoc (Lcom/monkopedia/kodemirror/view/EditorSession;Ljava/lang/String;)V
 }
