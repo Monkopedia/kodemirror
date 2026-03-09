@@ -1,4 +1,5 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -8,6 +9,12 @@ plugins {
 
 kotlin {
     jvm("desktop")
+
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs {
+        browser()
+        binaries.executable()
+    }
 
     sourceSets {
         val desktopMain by getting
@@ -52,6 +59,17 @@ kotlin {
             implementation(compose.desktop.currentOs)
         }
     }
+}
+
+configurations.configureEach {
+    resolutionStrategy {
+        force("org.jetbrains.kotlinx:kotlinx-datetime:0.6.2")
+        force("org.jetbrains.kotlinx:kotlinx-datetime-wasm-js:0.6.2")
+    }
+}
+
+tasks.configureEach {
+    if (name.startsWith("wasmJsTest") || name == "wasmJsNodeTest") enabled = false
 }
 
 compose.desktop {
