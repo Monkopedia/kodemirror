@@ -43,7 +43,8 @@ class ViewUpdate(
     val focusChanged: Boolean = false
 ) {
     /** The state before the transactions. */
-    val startState: EditorState = session.state
+    val startState: EditorState =
+        transactions.firstOrNull()?.startState ?: state
 
     /** Whether any transaction changed the document. */
     val docChanged: Boolean

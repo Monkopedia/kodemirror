@@ -60,6 +60,10 @@ internal class EditorSessionImpl(
     override fun dispatchTransaction(tr: Transaction) {
         val focusChanged = hasFocus != lastHasFocus
         lastHasFocus = hasFocus
+        val oldState = state
+        // Set state before updating plugins so that plugins accessing
+        // session.state during their update() callback see the new state.
+        state = tr.state
         val update = ViewUpdate(
             session = this,
             state = tr.state,
@@ -67,8 +71,6 @@ internal class EditorSessionImpl(
             focusChanged = focusChanged
         )
         pluginHost?.update(update)
-        val oldState = state
-        state = tr.state
         pluginHost?.syncToState(tr.state, oldState)
         onUpdate(tr)
     }

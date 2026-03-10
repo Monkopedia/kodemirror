@@ -26,8 +26,13 @@ import androidx.compose.ui.test.performMouseInput
 import androidx.compose.ui.test.performTextInput
 import com.monkopedia.kodemirror.commands.standardKeymap
 import com.monkopedia.kodemirror.state.DocPos
+import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.TransactionSpec
+import com.monkopedia.kodemirror.view.PluginSpec
+import com.monkopedia.kodemirror.view.PluginValue
+import com.monkopedia.kodemirror.view.ViewPlugin
+import com.monkopedia.kodemirror.view.ViewUpdate
 import com.monkopedia.kodemirror.view.keymapOf
 import org.junit.Test
 
@@ -159,6 +164,58 @@ class TextInputTest {
         waitForIdle()
         holder.assertCursorAt(4)
         holder.assertDoc("ABXYCDEF")
+    }
+
+    @Test
+    fun pluginSeesNewStateDuringUpdate() {
+        // Verify that a ViewPlugin's update() callback sees the new state
+        // on session.state (not the stale pre-dispatch state).
+        var sessionStateDuringUpdate: String? = null
+        var updateStateDuringUpdate: String? = null
+        val testPlugin = ViewPlugin.define(
+            PluginSpec<PluginValue>(
+                create = { _ ->
+                    object : PluginValue {
+                        override fun update(update: ViewUpdate) {
+                            if (update.docChanged) {
+                                sessionStateDuringUpdate =
+                                    update.session.state.doc.toString()
+                                updateStateDuringUpdate =
+                                    update.state.doc.toString()
+                            }
+                        }
+                    }
+                }
+            )
+        )
+        val ext = ExtensionList(
+            listOf(keymapOf(standardKeymap), testPlugin.asExtension())
+        )
+        runEditorTest(doc = "Hello", extensions = ext) { holder ->
+            onNodeWithTag("KodeMirror").performMouseInput {
+                click(Offset(10f, 15f))
+            }
+            waitForIdle()
+
+            holder.session.dispatch(
+                TransactionSpec(
+                    selection = SelectionSpec.CursorSpec(DocPos(0))
+                )
+            )
+            waitForIdle()
+
+            onNodeWithTag("KodeMirror_input").performTextInput("X")
+            waitForIdle()
+
+            assert(sessionStateDuringUpdate == updateStateDuringUpdate) {
+                "session.state during update() was " +
+                    "'$sessionStateDuringUpdate' but update.state was " +
+                    "'$updateStateDuringUpdate'"
+            }
+            assert(updateStateDuringUpdate == "XHello") {
+                "Expected doc 'XHello' but got '$updateStateDuringUpdate'"
+            }
+        }
     }
 
     @Test
