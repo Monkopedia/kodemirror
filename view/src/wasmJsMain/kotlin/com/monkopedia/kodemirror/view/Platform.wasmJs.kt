@@ -34,23 +34,31 @@ private external fun detectOsFromBrowser(): String
 @JsFun("(text) => { navigator.clipboard.writeText(text); }")
 private external fun jsClipboardWrite(text: String)
 
-// Capture the browser's layout-aware event.key before Compose processes it.
-// Browser keydown events fire in capture phase on document before reaching
-// the canvas, so the stored key is always from the current event.
+// Capture the browser's layout-aware event.key on every keydown.
+// Installed eagerly at module load so it's ready before the first key event.
+// Uses capture phase on document so it fires before Skiko/Compose processes
+// the event on the canvas.
 @JsFun(
     """() => {
-    window.__kodemirrorLastKey = '';
+    globalThis.__kodeKey = '';
     document.addEventListener('keydown', function(e) {
-        window.__kodemirrorLastKey = e.key;
+        globalThis.__kodeKey = e.key;
     }, true);
 }"""
 )
-private external fun installKeyListener()
+private external fun installKeyCapture()
 
-@JsFun("() => { return window.__kodemirrorLastKey || ''; }")
-private external fun getLastBrowserKey(): String
+@JsFun("() => globalThis.__kodeKey || ''")
+private external fun readCapturedKey(): String
 
-private var keyListenerInstalled = false
+// Eagerly install the capture listener when this file is first loaded.
+// platformOsName() is called during currentOs initialization (before any
+// key events), which triggers loading of this file and runs this initializer.
+@Suppress("unused")
+private val keyCaptureInstalled: Boolean = run {
+    installKeyCapture()
+    true
+}
 
 internal actual fun platformOsName(): String = detectOsFromBrowser()
 
@@ -60,11 +68,7 @@ internal actual fun keyEventCharacter(event: KeyEvent): Char? {
 }
 
 internal actual fun keyEventLayoutKey(event: KeyEvent): String? {
-    if (!keyListenerInstalled) {
-        installKeyListener()
-        keyListenerInstalled = true
-    }
-    val key = getLastBrowserKey()
+    val key = readCapturedKey()
     // Browser's event.key is a single character for printable keys ("x", "z")
     // and a longer string for special keys ("Enter", "Tab", "ArrowLeft").
     // Only return single-character keys (layout-aware characters).
