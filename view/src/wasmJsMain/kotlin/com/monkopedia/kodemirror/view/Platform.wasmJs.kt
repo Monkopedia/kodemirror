@@ -19,7 +19,7 @@
 package com.monkopedia.kodemirror.view
 
 import androidx.compose.ui.input.key.KeyEvent
-import kotlin.js.JsFun
+import kotlin.JsFun
 
 @JsFun(
     """() => {
