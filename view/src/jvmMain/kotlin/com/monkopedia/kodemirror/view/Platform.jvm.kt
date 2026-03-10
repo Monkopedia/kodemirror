@@ -19,6 +19,7 @@
 package com.monkopedia.kodemirror.view
 
 import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.utf16CodePoint
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
@@ -37,8 +38,13 @@ internal actual fun keyEventCharacter(event: KeyEvent): Char? {
 internal actual fun keyEventLayoutKey(event: KeyEvent): String? {
     val codePoint = event.utf16CodePoint
     if (codePoint == 0) return null
-    // Ctrl+letter produces control characters 1-26 for a-z
-    if (codePoint in 1..26) return ('a' + (codePoint - 1)).toString()
+    // Ctrl+letter produces control characters 1-26 for a-z.
+    // Only recover when Ctrl is actually held — unmodified special keys
+    // (Tab=9, Backspace=8, Enter=10/13) also live in this range but are
+    // filtered out by isSpecialKey() in the caller.
+    if (codePoint in 1..26 && event.isCtrlPressed) {
+        return ('a' + (codePoint - 1)).toString()
+    }
     val char = codePoint.toChar()
     if (char.isISOControl()) return null
     return char.lowercaseChar().toString()

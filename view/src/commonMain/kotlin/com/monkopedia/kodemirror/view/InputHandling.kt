@@ -42,7 +42,14 @@ fun keyEventToName(event: KeyEvent): String {
     if (event.isCtrlPressed) parts.add("Ctrl")
     if (event.isMetaPressed) parts.add("Meta")
     if (event.isShiftPressed) parts.add("Shift")
-    val keyName = keyEventLayoutKey(event) ?: keyName(event.key)
+    // Special keys (Enter, Tab, arrows, etc.) always use physical key names.
+    // Letter/digit/symbol keys prefer the layout-aware name so shortcuts
+    // respect the user's keyboard layout (e.g. Dvorak).
+    val keyName = if (isSpecialKey(event.key)) {
+        keyName(event.key)
+    } else {
+        keyEventLayoutKey(event) ?: keyName(event.key)
+    }
     parts.add(keyName)
     return parts.joinToString("-")
 }
@@ -110,6 +117,23 @@ private fun keyName(key: Key): String = when (key) {
     Key.Eight -> "8"
     Key.Nine -> "9"
     else -> key.toString()
+}
+
+/**
+ * Whether this [Key] represents a special (non-character) key whose name
+ * should always come from the physical key code, not the keyboard layout.
+ */
+private fun isSpecialKey(key: Key): Boolean = when (key) {
+    Key.Enter, Key.Escape, Key.Tab, Key.Backspace, Key.Delete,
+    Key.DirectionLeft, Key.DirectionRight, Key.DirectionUp, Key.DirectionDown,
+    Key.Home, Key.MoveEnd, Key.PageUp, Key.PageDown,
+    Key.F1, Key.F2, Key.F3, Key.F4, Key.F5, Key.F6,
+    Key.F7, Key.F8, Key.F9, Key.F10, Key.F11, Key.F12,
+    Key.ShiftLeft, Key.ShiftRight,
+    Key.CtrlLeft, Key.CtrlRight,
+    Key.AltLeft, Key.AltRight,
+    Key.MetaLeft, Key.MetaRight -> true
+    else -> false
 }
 
 /**
@@ -197,7 +221,11 @@ private fun keyEventToNameWithoutShift(event: KeyEvent): String {
     if (event.isCtrlPressed) parts.add("Ctrl")
     if (event.isMetaPressed) parts.add("Meta")
     // Shift intentionally omitted
-    val name = keyEventLayoutKey(event) ?: keyName(event.key)
+    val name = if (isSpecialKey(event.key)) {
+        keyName(event.key)
+    } else {
+        keyEventLayoutKey(event) ?: keyName(event.key)
+    }
     parts.add(name)
     return parts.joinToString("-")
 }
