@@ -34,6 +34,16 @@ internal actual fun keyEventCharacter(event: KeyEvent): Char? {
     return char
 }
 
+internal actual fun keyEventLayoutKey(event: KeyEvent): String? {
+    val codePoint = event.utf16CodePoint
+    if (codePoint == 0) return null
+    // Ctrl+letter produces control characters 1-26 for a-z
+    if (codePoint in 1..26) return ('a' + (codePoint - 1)).toString()
+    val char = codePoint.toChar()
+    if (char.isISOControl()) return null
+    return char.lowercaseChar().toString()
+}
+
 internal actual fun platformClipboardGet(): String? = try {
     val clipboard = Toolkit.getDefaultToolkit().systemClipboard
     clipboard.getData(DataFlavor.stringFlavor) as? String

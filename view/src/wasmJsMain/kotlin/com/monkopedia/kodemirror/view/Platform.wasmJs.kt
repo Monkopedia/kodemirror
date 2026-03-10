@@ -41,6 +41,12 @@ internal actual fun keyEventCharacter(event: KeyEvent): Char? {
     return null
 }
 
+internal actual fun keyEventLayoutKey(event: KeyEvent): String? {
+    // On wasmJs, Compose doesn't reliably expose the layout-aware character
+    // from keydown events. Fall back to physical key names for now.
+    return null
+}
+
 internal actual fun platformClipboardGet(): String? {
     // Clipboard API on web is async; not supported in synchronous context
     return null

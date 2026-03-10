@@ -42,7 +42,7 @@ fun keyEventToName(event: KeyEvent): String {
     if (event.isCtrlPressed) parts.add("Ctrl")
     if (event.isMetaPressed) parts.add("Meta")
     if (event.isShiftPressed) parts.add("Shift")
-    val keyName = keyName(event.key)
+    val keyName = keyEventLayoutKey(event) ?: keyName(event.key)
     parts.add(keyName)
     return parts.joinToString("-")
 }
@@ -197,7 +197,7 @@ private fun keyEventToNameWithoutShift(event: KeyEvent): String {
     if (event.isCtrlPressed) parts.add("Ctrl")
     if (event.isMetaPressed) parts.add("Meta")
     // Shift intentionally omitted
-    val name = keyName(event.key)
+    val name = keyEventLayoutKey(event) ?: keyName(event.key)
     parts.add(name)
     return parts.joinToString("-")
 }
