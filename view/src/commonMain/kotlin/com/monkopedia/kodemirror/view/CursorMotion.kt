@@ -22,6 +22,7 @@ import com.monkopedia.kodemirror.state.CharCategory
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.EditorState
+import com.monkopedia.kodemirror.state.LineNumber
 import com.monkopedia.kodemirror.state.SelectionRange
 import com.monkopedia.kodemirror.state.endPos
 
@@ -179,7 +180,30 @@ fun moveVertically(
         coords.top - 1f
     }
     val rawPos = view.posAtCoords(coords.centerX, targetY) ?: return sel
-    val newPos = DocPos(rawPos)
+    val doc = view.state.doc
+    val currentLine = doc.lineAt(sel.head)
+    val resultLine = doc.lineAt(DocPos(rawPos))
+
+    // If posAtCoords snapped back to the same line (e.g., due to inter-line
+    // gap), move to the adjacent line at approximately the same column.
+    val newPos = if (resultLine.number == currentLine.number) {
+        val col = sel.head.value - currentLine.from.value
+        val adjLineNum = if (forward) {
+            currentLine.number.value + 1
+        } else {
+            currentLine.number.value - 1
+        }
+        if (adjLineNum in 1..doc.lines) {
+            val adjLine = doc.line(LineNumber(adjLineNum))
+            val targetCol = col.coerceAtMost(adjLine.text.length)
+            DocPos(adjLine.from.value + targetCol)
+        } else {
+            DocPos(rawPos)
+        }
+    } else {
+        DocPos(rawPos)
+    }
+
     val anchor = if (extend) sel.anchor else newPos
     return if (extend) EditorSelection.range(anchor, newPos) else EditorSelection.cursor(newPos)
 }

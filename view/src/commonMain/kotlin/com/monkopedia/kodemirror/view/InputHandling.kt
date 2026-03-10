@@ -28,6 +28,7 @@ import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
+import com.monkopedia.kodemirror.state.asInsert
 
 /**
  * Build a string key identifier from a Compose [KeyEvent].
@@ -199,6 +200,32 @@ private fun keyEventToNameWithoutShift(event: KeyEvent): String {
     val name = keyName(event.key)
     parts.add(name)
     return parts.joinToString("-")
+}
+
+/**
+ * Handle character input from a key event.
+ *
+ * If the key event represents a printable character that wasn't consumed by
+ * key bindings, insert it into the document at the current cursor position.
+ *
+ * @return true if a character was inserted (the event should be consumed).
+ */
+fun handleCharacterInput(view: EditorSession, event: KeyEvent): Boolean {
+    if (event.type != KeyEventType.KeyDown) return false
+    // Don't insert for modified keys (Ctrl+A, Alt+X, etc.)
+    if (event.isCtrlPressed || event.isMetaPressed || event.isAltPressed) return false
+    val char = keyEventCharacter(event) ?: return false
+    val sel = view.state.selection.main
+    view.dispatch(
+        com.monkopedia.kodemirror.state.TransactionSpec(
+            changes = com.monkopedia.kodemirror.state.ChangeSpec.Single(
+                from = sel.from,
+                to = sel.to,
+                insert = char.toString().asInsert()
+            )
+        )
+    )
+    return true
 }
 
 /**

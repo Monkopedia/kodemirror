@@ -293,6 +293,9 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                 }
                 BasicTextField(
                     value = hiddenTextValue,
+                    cursorBrush = androidx.compose.ui.graphics.SolidColor(
+                        Color.Transparent
+                    ),
                     onValueChange = { newValue ->
                         val inserted = newValue.text
                         if (inserted.isNotEmpty()) {
@@ -321,8 +324,10 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                             impl.hasFocus = focusState.isFocused
                         }
                         .onPreviewKeyEvent { event ->
-                            // Try key bindings first; if handled, consume
-                            handleKeyEvent(session, event)
+                            // Try key bindings first; if handled, consume.
+                            // Otherwise try direct character insertion.
+                            handleKeyEvent(session, event) ||
+                                handleCharacterInput(session, event)
                         }
                 )
 
@@ -423,6 +428,14 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                         }
                     }
                 }
+
+                // Trigger relayout when editor coordinates are first captured,
+                // so line layout caches can be populated on the next pass.
+                // (onGloballyPositioned fires bottom-up: child content boxes
+                // fire before the parent, so editorCoordinates is null on the
+                // first layout pass. Reading it here triggers a recomposition
+                // once the parent sets it, allowing content callbacks to work.)
+                remember(editorCoordinates) { editorCoordinates }
 
                 // Sync viewport/height tracking for ViewUpdate flags
                 // Evict stale cache entries for scrolled-off lines

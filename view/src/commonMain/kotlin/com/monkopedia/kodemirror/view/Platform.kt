@@ -18,4 +18,12 @@
  */
 package com.monkopedia.kodemirror.view
 
+import androidx.compose.ui.input.key.KeyEvent
+
 internal expect fun platformOsName(): String
+
+/**
+ * Extract the printable character from a [KeyEvent], or null if the event
+ * does not represent a printable character (e.g., arrow keys, modifiers).
+ */
+internal expect fun keyEventCharacter(event: KeyEvent): Char?

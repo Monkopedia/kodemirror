@@ -18,4 +18,11 @@
  */
 package com.monkopedia.kodemirror.view
 
+import androidx.compose.ui.input.key.KeyEvent
+
 internal actual fun platformOsName(): String = "Linux"
+
+internal actual fun keyEventCharacter(event: KeyEvent): Char? {
+    // On wasmJs, character input flows through BasicTextField's onValueChange
+    return null
+}

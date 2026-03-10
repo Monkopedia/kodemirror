@@ -339,6 +339,7 @@ public final class com/monkopedia/kodemirror/view/HighlightWhitespaceKt {
 
 public final class com/monkopedia/kodemirror/view/InputHandlingKt {
 	public static final fun getCurrentOs ()Ljava/lang/String;
+	public static final fun handleCharacterInput-34rOyRA (Lcom/monkopedia/kodemirror/view/EditorSession;Ljava/lang/Object;)Z
 	public static final fun handleDrag-2x9bVx0 (Lcom/monkopedia/kodemirror/view/EditorSession;JJ)V
 	public static final fun handleKeyEvent-34rOyRA (Lcom/monkopedia/kodemirror/view/EditorSession;Ljava/lang/Object;)Z
 	public static final fun handleRectangularDrag-2x9bVx0 (Lcom/monkopedia/kodemirror/view/EditorSession;JJ)V

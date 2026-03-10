@@ -118,4 +118,81 @@ class KeyboardHandlingTest {
         // "Hello world" is 11 chars, so end of line 1 = offset 11
         holder.assertCursorAt(11)
     }
+
+    @Test
+    fun arrowUp_movesToPreviousLine() = runEditorTest(
+        doc = twoLineDoc,
+        extensions = keymapExt
+    ) { holder ->
+        // Place cursor on line 2 via dispatch
+        holder.session.dispatch(
+            com.monkopedia.kodemirror.state.TransactionSpec(
+                selection = com.monkopedia.kodemirror.state.SelectionSpec
+                    .CursorSpec(com.monkopedia.kodemirror.state.DocPos(14))
+            )
+        )
+        waitForIdle()
+        holder.assertCursorOnLine(2)
+
+        // Focus the input
+        onNodeWithTag("KodeMirror").performMouseInput {
+            click(Offset(10f, 15f))
+        }
+        waitForIdle()
+
+        // Re-set cursor on line 2 (click moved it)
+        holder.session.dispatch(
+            com.monkopedia.kodemirror.state.TransactionSpec(
+                selection = com.monkopedia.kodemirror.state.SelectionSpec
+                    .CursorSpec(com.monkopedia.kodemirror.state.DocPos(14))
+            )
+        )
+        waitForIdle()
+        holder.assertCursorOnLine(2)
+
+        onNodeWithTag("KodeMirror_input").performKeyInput {
+            keyDown(Key.DirectionUp)
+            keyUp(Key.DirectionUp)
+        }
+        waitForIdle()
+        holder.assertCursorOnLine(1)
+    }
+
+    @Test
+    fun arrowLeft_movesCursorBackward() = runEditorTest(
+        doc = twoLineDoc,
+        extensions = keymapExt
+    ) { holder ->
+        // Place cursor at position 3
+        holder.session.dispatch(
+            com.monkopedia.kodemirror.state.TransactionSpec(
+                selection = com.monkopedia.kodemirror.state.SelectionSpec
+                    .CursorSpec(com.monkopedia.kodemirror.state.DocPos(3))
+            )
+        )
+        waitForIdle()
+
+        // Focus the input
+        onNodeWithTag("KodeMirror").performMouseInput {
+            click(Offset(10f, 15f))
+        }
+        waitForIdle()
+
+        // Re-set cursor at position 3
+        holder.session.dispatch(
+            com.monkopedia.kodemirror.state.TransactionSpec(
+                selection = com.monkopedia.kodemirror.state.SelectionSpec
+                    .CursorSpec(com.monkopedia.kodemirror.state.DocPos(3))
+            )
+        )
+        waitForIdle()
+        holder.assertCursorAt(3)
+
+        onNodeWithTag("KodeMirror_input").performKeyInput {
+            keyDown(Key.DirectionLeft)
+            keyUp(Key.DirectionLeft)
+        }
+        waitForIdle()
+        holder.assertCursorAt(2)
+    }
 }

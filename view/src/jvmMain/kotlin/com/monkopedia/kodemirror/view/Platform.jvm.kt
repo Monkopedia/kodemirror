@@ -18,4 +18,15 @@
  */
 package com.monkopedia.kodemirror.view
 
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.utf16CodePoint
+
 internal actual fun platformOsName(): String = System.getProperty("os.name") ?: "Linux"
+
+internal actual fun keyEventCharacter(event: KeyEvent): Char? {
+    val codePoint = event.utf16CodePoint
+    if (codePoint == 0) return null
+    val char = codePoint.toChar()
+    if (char.isISOControl()) return null
+    return char
+}
