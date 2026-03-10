@@ -24,13 +24,14 @@ import com.monkopedia.kodemirror.basicsetup.basicSetup
 import com.monkopedia.kodemirror.lang.javascript.javascript
 import com.monkopedia.kodemirror.samples.showcase.DemoScaffold
 import com.monkopedia.kodemirror.samples.showcase.SampleDocs
+import com.monkopedia.kodemirror.state.Doc
 import com.monkopedia.kodemirror.state.LineNumber
-import com.monkopedia.kodemirror.state.RangeSet
 import com.monkopedia.kodemirror.state.RangeSetBuilder
 import com.monkopedia.kodemirror.state.plus
 import com.monkopedia.kodemirror.view.Decoration
 import com.monkopedia.kodemirror.view.DecorationSet
 import com.monkopedia.kodemirror.view.DecorationSource
+import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.KodeMirror
 import com.monkopedia.kodemirror.view.LineDecorationSpec
 import com.monkopedia.kodemirror.view.PluginValue
@@ -38,36 +39,37 @@ import com.monkopedia.kodemirror.view.ViewPlugin
 import com.monkopedia.kodemirror.view.ViewUpdate
 import com.monkopedia.kodemirror.view.rememberEditorSession
 
+// Dark-theme stripe color matching CodeMirror reference (#34474788)
 private val stripe = Decoration.line(
-    LineDecorationSpec(style = SpanStyle(background = Color(0x15FFFFFF)))
+    LineDecorationSpec(style = SpanStyle(background = Color(0x88344747)))
 )
 
+private fun buildStripes(doc: Doc, step: Int): DecorationSet {
+    val builder = RangeSetBuilder<Decoration>()
+    for (i in 1..doc.lines) {
+        if (i % step == 0) {
+            val line = doc.line(LineNumber(i))
+            builder.add(line.from, line.from, stripe)
+        }
+    }
+    return builder.finish()
+}
+
 private class ZebraPlugin(
+    session: EditorSession,
     private val step: Int
 ) : PluginValue, DecorationSource {
-    override var decorations: DecorationSet = RangeSet.empty()
-
-    fun buildDecorations(update: ViewUpdate): DecorationSet {
-        val builder = RangeSetBuilder<Decoration>()
-        val doc = update.state.doc
-        for (i in 1..doc.lines) {
-            if (i % step == 0) {
-                val line = doc.line(LineNumber(i))
-                builder.add(line.from, line.from, stripe)
-            }
-        }
-        return builder.finish()
-    }
+    override var decorations: DecorationSet = buildStripes(session.state.doc, step)
 
     override fun update(update: ViewUpdate) {
         if (update.docChanged || update.viewportChanged) {
-            decorations = buildDecorations(update)
+            decorations = buildStripes(update.state.doc, step)
         }
     }
 }
 
-private val zebraPlugin = ViewPlugin.fromDecorationSource { _ ->
-    ZebraPlugin(step = 2)
+private val zebraPlugin = ViewPlugin.fromDecorationSource { session ->
+    ZebraPlugin(session = session, step = 2)
 }
 
 @Composable

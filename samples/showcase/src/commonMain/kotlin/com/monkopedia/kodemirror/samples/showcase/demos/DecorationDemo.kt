@@ -29,14 +29,15 @@ import com.monkopedia.kodemirror.basicsetup.basicSetup
 import com.monkopedia.kodemirror.lang.javascript.javascript
 import com.monkopedia.kodemirror.samples.showcase.DemoScaffold
 import com.monkopedia.kodemirror.samples.showcase.SampleDocs
+import com.monkopedia.kodemirror.state.Doc
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.LineNumber
-import com.monkopedia.kodemirror.state.RangeSet
 import com.monkopedia.kodemirror.state.RangeSetBuilder
 import com.monkopedia.kodemirror.state.plus
 import com.monkopedia.kodemirror.view.Decoration
 import com.monkopedia.kodemirror.view.DecorationSet
 import com.monkopedia.kodemirror.view.DecorationSource
+import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.KodeMirror
 import com.monkopedia.kodemirror.view.MarkDecorationSpec
 import com.monkopedia.kodemirror.view.PluginValue
@@ -68,35 +69,40 @@ private class InfoWidget : WidgetType() {
     }
 }
 
-private class DecorationPlugin : PluginValue, DecorationSource {
-    override var decorations: DecorationSet = RangeSet.empty()
+private fun buildDecorations(doc: Doc): DecorationSet {
+    val builder = RangeSetBuilder<Decoration>()
+    val text = doc.toString()
+    // Highlight "function" keywords
+    var idx = text.indexOf("function")
+    while (idx >= 0) {
+        builder.add(DocPos(idx), DocPos(idx + 8), highlightMark)
+        idx = text.indexOf("function", idx + 1)
+    }
+    // Widget after first line
+    if (doc.lines >= 1) {
+        val firstLineEnd = doc.line(LineNumber(1)).to
+        builder.add(
+            firstLineEnd, firstLineEnd,
+            Decoration.widget(WidgetDecorationSpec(InfoWidget()))
+        )
+    }
+    return builder.finish()
+}
+
+private class DecorationPlugin(
+    session: EditorSession
+) : PluginValue, DecorationSource {
+    override var decorations: DecorationSet = buildDecorations(session.state.doc)
 
     override fun update(update: ViewUpdate) {
-        if (update.docChanged || decorations === RangeSet.empty<Decoration>()) {
-            val builder = RangeSetBuilder<Decoration>()
-            val doc = update.state.doc
-            val text = doc.toString()
-            // Highlight "function" keywords
-            var idx = text.indexOf("function")
-            while (idx >= 0) {
-                builder.add(DocPos(idx), DocPos(idx + 8), highlightMark)
-                idx = text.indexOf("function", idx + 1)
-            }
-            // Widget after first line
-            if (doc.lines >= 1) {
-                val firstLineEnd = doc.line(LineNumber(1)).to
-                builder.add(
-                    firstLineEnd, firstLineEnd,
-                    Decoration.widget(WidgetDecorationSpec(InfoWidget()))
-                )
-            }
-            decorations = builder.finish()
+        if (update.docChanged) {
+            decorations = buildDecorations(update.state.doc)
         }
     }
 }
 
-private val decorationPlugin = ViewPlugin.fromDecorationSource { _ ->
-    DecorationPlugin()
+private val decorationPlugin = ViewPlugin.fromDecorationSource { session ->
+    DecorationPlugin(session)
 }
 
 @Composable
