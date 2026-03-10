@@ -29,10 +29,10 @@ import com.monkopedia.kodemirror.basicsetup.basicSetup
 import com.monkopedia.kodemirror.lang.javascript.javascript
 import com.monkopedia.kodemirror.samples.showcase.DemoScaffold
 import com.monkopedia.kodemirror.samples.showcase.SampleDocs
-import com.monkopedia.kodemirror.state.Doc
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.LineNumber
 import com.monkopedia.kodemirror.state.RangeSetBuilder
+import com.monkopedia.kodemirror.state.Text
 import com.monkopedia.kodemirror.state.plus
 import com.monkopedia.kodemirror.view.Decoration
 import com.monkopedia.kodemirror.view.DecorationSet
@@ -69,7 +69,7 @@ private class InfoWidget : WidgetType() {
     }
 }
 
-private fun buildDecorations(doc: Doc): DecorationSet {
+private fun buildDecorations(doc: Text): DecorationSet {
     val builder = RangeSetBuilder<Decoration>()
     val text = doc.toString()
     // Highlight "function" keywords

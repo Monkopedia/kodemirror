@@ -24,8 +24,8 @@ import com.monkopedia.kodemirror.basicsetup.basicSetup
 import com.monkopedia.kodemirror.lang.javascript.javascript
 import com.monkopedia.kodemirror.samples.showcase.DemoScaffold
 import com.monkopedia.kodemirror.samples.showcase.SampleDocs
-import com.monkopedia.kodemirror.state.Doc
 import com.monkopedia.kodemirror.state.LineNumber
+import com.monkopedia.kodemirror.state.Text
 import com.monkopedia.kodemirror.state.RangeSetBuilder
 import com.monkopedia.kodemirror.state.plus
 import com.monkopedia.kodemirror.view.Decoration
@@ -44,7 +44,7 @@ private val stripe = Decoration.line(
     LineDecorationSpec(style = SpanStyle(background = Color(0x88344747)))
 )
 
-private fun buildStripes(doc: Doc, step: Int): DecorationSet {
+private fun buildStripes(doc: Text, step: Int): DecorationSet {
     val builder = RangeSetBuilder<Decoration>()
     for (i in 1..doc.lines) {
         if (i % step == 0) {
