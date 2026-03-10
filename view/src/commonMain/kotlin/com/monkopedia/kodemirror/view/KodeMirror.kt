@@ -408,19 +408,6 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                                             style = theme.contentTextStyle,
                                             onTextLayout = { result: TextLayoutResult ->
                                                 textLayout = result
-                                                val editorCoords =
-                                                    editorCoordinates
-                                                if (editorCoords != null) {
-                                                    // Will be updated with real position
-                                                    // from onGloballyPositioned
-                                                    lineLayoutCache.store(
-                                                        capturedLineNum.value,
-                                                        capturedFrom.value,
-                                                        0f,
-                                                        0f,
-                                                        result
-                                                    )
-                                                }
                                             }
                                         )
                                         for (widget in item.inlineWidgets) {

@@ -109,16 +109,23 @@ class LineLayoutCache {
                     offsetInLine.coerceIn(0, layout.result.layoutInput.text.length)
             }
         }
-        // Outside rendered range: clamp to first/last line
+        // y is outside any line's exact range — find the best matching line
         val sorted = cache.values.sortedBy { it.topPx }
-        return when {
-            sorted.isEmpty() -> null
-            y < sorted.first().topPx -> sorted.first().lineFrom
-            else -> {
-                val last = sorted.last()
-                last.lineFrom + last.result.layoutInput.text.length
-            }
-        }
+        if (sorted.isEmpty()) return null
+
+        // When y falls in a gap between two lines, prefer the line below
+        // (whose top is closest). This ensures downward vertical navigation
+        // crosses to the next line rather than snapping back to the current.
+        val closest = sorted.firstOrNull { it.topPx > y }
+            ?: sorted.lastOrNull { it.bottomPx < y }
+            ?: sorted.first()
+        val localX = (x - closest.leftPx).coerceAtLeast(0f)
+        val localY = (y - closest.topPx).coerceIn(0f, closest.heightPx)
+        val offsetInLine = closest.result.getOffsetForPosition(
+            Offset(localX, localY)
+        )
+        return closest.lineFrom +
+            offsetInLine.coerceIn(0, closest.result.layoutInput.text.length)
     }
 
     /**

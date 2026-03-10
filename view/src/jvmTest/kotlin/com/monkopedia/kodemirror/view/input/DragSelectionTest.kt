@@ -69,4 +69,29 @@ class DragSelectionTest {
         waitForIdle()
         holder.assertSelectionNotEmpty()
     }
+
+    @Test
+    fun dragBottomToTop() = runEditorTest(doc = threeLineDoc) { holder ->
+        // Drag from line 3 up to line 1 — should create a selection, not
+        // jump to selecting the entire document.
+        onNodeWithTag("KodeMirror").performMouseInput {
+            moveTo(Offset(50f, 55f))
+            press()
+            moveTo(Offset(50f, 40f))
+            moveTo(Offset(50f, 15f))
+            release()
+        }
+        waitForIdle()
+        holder.assertSelectionNotEmpty()
+
+        // The anchor should be on line 3 and head on line 1 (or vice versa).
+        // Verify the selection doesn't span the entire document.
+        val sel = holder.session.state.selection.main
+        val doc = holder.session.state.doc
+        val selLength = sel.to.value - sel.from.value
+        assert(selLength < doc.length) {
+            "Selection covers the entire document ($selLength chars out of " +
+                "${doc.length}). Expected partial selection from bottom-to-top drag."
+        }
+    }
 }
