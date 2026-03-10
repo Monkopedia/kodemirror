@@ -68,6 +68,9 @@ internal actual fun keyEventCharacter(event: KeyEvent): Char? {
 }
 
 internal actual fun keyEventLayoutKey(event: KeyEvent): String? {
+    // Reference keyCaptureInstalled to prevent dead-code elimination of the
+    // property initializer that installs the document keydown listener.
+    keyCaptureInstalled
     val key = readCapturedKey()
     // Browser's event.key is a single character for printable keys ("x", "z")
     // and a longer string for special keys ("Enter", "Tab", "ArrowLeft").
@@ -80,9 +83,6 @@ internal actual fun platformClipboardGet(): String? {
     // Clipboard API on web is async; not supported in synchronous context
     return null
 }
-
-internal actual fun platformDebugKeyInfo(): String =
-    "captured='${readCapturedKey()}' installed=$keyCaptureInstalled"
 
 internal actual fun platformClipboardSet(text: String) {
     try {

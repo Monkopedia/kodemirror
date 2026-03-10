@@ -57,8 +57,6 @@ internal actual fun platformClipboardGet(): String? = try {
     null
 }
 
-internal actual fun platformDebugKeyInfo(): String = "jvm"
-
 internal actual fun platformClipboardSet(text: String) {
     try {
         val clipboard = Toolkit.getDefaultToolkit().systemClipboard
