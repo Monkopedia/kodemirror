@@ -81,6 +81,9 @@ internal actual fun platformClipboardGet(): String? {
     return null
 }
 
+internal actual fun platformDebugKeyInfo(): String =
+    "captured='${readCapturedKey()}' installed=$keyCaptureInstalled"
+
 internal actual fun platformClipboardSet(text: String) {
     try {
         jsClipboardWrite(text)

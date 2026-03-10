@@ -41,6 +41,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -53,7 +54,9 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isAltPressed
+import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerEventPass
@@ -63,8 +66,10 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
@@ -287,6 +292,9 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                         }
                     }
             ) {
+                // Debug key event log
+                val debugLog = remember { mutableStateListOf<String>() }
+
                 // Hidden text field for receiving IME/text input and key events
                 var hiddenTextValue by remember {
                     mutableStateOf(TextFieldValue(""))
@@ -329,10 +337,24 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                             impl.hasFocus = focusState.isFocused
                         }
                         .onPreviewKeyEvent { event ->
-                            // Try key bindings first; if handled, consume.
-                            // Character input flows through BasicTextField's
-                            // onValueChange via the platform TextInputService.
-                            handleKeyEvent(session, event)
+                            if (event.type == KeyEventType.KeyDown) {
+                                val layoutKey = keyEventLayoutKey(event)
+                                val name = keyEventToName(event)
+                                val platDebug = platformDebugKeyInfo()
+                                val handled = handleKeyEvent(session, event)
+                                debugLog.add(
+                                    0,
+                                    "compose=${event.key} layout=$layoutKey " +
+                                        "name=$name handled=$handled " +
+                                        "plat=$platDebug"
+                                )
+                                if (debugLog.size > 15) {
+                                    debugLog.removeRange(15, debugLog.size)
+                                }
+                                handled
+                            } else {
+                                handleKeyEvent(session, event)
+                            }
                         }
                 )
 
@@ -456,6 +478,27 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                         .toSet()
                     if (visibleLineNumbers.isNotEmpty()) {
                         lineLayoutCache.evict(visibleLineNumbers)
+                    }
+                }
+
+                // Debug key event overlay
+                if (debugLog.isNotEmpty()) {
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .fillMaxWidth()
+                            .background(Color.Black.copy(alpha = 0.85f))
+                            .padding(4.dp)
+                    ) {
+                        for (entry in debugLog) {
+                            BasicText(
+                                text = entry,
+                                style = TextStyle(
+                                    color = Color.Green,
+                                    fontSize = 11.sp
+                                )
+                            )
+                        }
                     }
                 }
 

@@ -48,3 +48,6 @@ internal expect fun platformClipboardGet(): String?
 
 /** Write text to the system clipboard. */
 internal expect fun platformClipboardSet(text: String)
+
+/** Debug: return platform-specific key capture info. */
+internal expect fun platformDebugKeyInfo(): String
