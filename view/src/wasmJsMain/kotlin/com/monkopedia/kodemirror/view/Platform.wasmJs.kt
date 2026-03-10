@@ -26,3 +26,12 @@ internal actual fun keyEventCharacter(event: KeyEvent): Char? {
     // On wasmJs, character input flows through BasicTextField's onValueChange
     return null
 }
+
+internal actual fun platformClipboardGet(): String? {
+    // Clipboard API on web is async; not supported in synchronous context
+    return null
+}
+
+internal actual fun platformClipboardSet(text: String) {
+    // Clipboard API on web is async; not supported in synchronous context
+}

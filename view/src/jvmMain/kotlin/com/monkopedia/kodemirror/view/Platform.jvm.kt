@@ -20,6 +20,9 @@ package com.monkopedia.kodemirror.view
 
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.utf16CodePoint
+import java.awt.Toolkit
+import java.awt.datatransfer.DataFlavor
+import java.awt.datatransfer.StringSelection
 
 internal actual fun platformOsName(): String = System.getProperty("os.name") ?: "Linux"
 
@@ -29,4 +32,20 @@ internal actual fun keyEventCharacter(event: KeyEvent): Char? {
     val char = codePoint.toChar()
     if (char.isISOControl()) return null
     return char
+}
+
+internal actual fun platformClipboardGet(): String? = try {
+    val clipboard = Toolkit.getDefaultToolkit().systemClipboard
+    clipboard.getData(DataFlavor.stringFlavor) as? String
+} catch (_: Exception) {
+    null
+}
+
+internal actual fun platformClipboardSet(text: String) {
+    try {
+        val clipboard = Toolkit.getDefaultToolkit().systemClipboard
+        clipboard.setContents(StringSelection(text), null)
+    } catch (_: Exception) {
+        // Clipboard not available
+    }
 }

@@ -20,6 +20,9 @@ package com.monkopedia.kodemirror.commands
 
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.view.KeyBinding
+import com.monkopedia.kodemirror.view.clipboardCopy
+import com.monkopedia.kodemirror.view.clipboardCut
+import com.monkopedia.kodemirror.view.clipboardPaste
 import com.monkopedia.kodemirror.view.keymapOf
 
 /**
@@ -79,7 +82,12 @@ val standardKeymap: List<KeyBinding> = listOf(
     KeyBinding(key = "Enter", run = insertNewlineAndIndent),
 
     // Selection
-    KeyBinding(key = "Ctrl-a", mac = "Meta-a", run = selectAll)
+    KeyBinding(key = "Ctrl-a", mac = "Meta-a", run = selectAll),
+
+    // Clipboard
+    KeyBinding(key = "Ctrl-c", mac = "Meta-c", run = clipboardCopy),
+    KeyBinding(key = "Ctrl-x", mac = "Meta-x", run = clipboardCut),
+    KeyBinding(key = "Ctrl-v", mac = "Meta-v", run = clipboardPaste)
 )
 
 /**

@@ -27,3 +27,9 @@ internal expect fun platformOsName(): String
  * does not represent a printable character (e.g., arrow keys, modifiers).
  */
 internal expect fun keyEventCharacter(event: KeyEvent): Char?
+
+/** Read text from the system clipboard. Returns null if unavailable. */
+internal expect fun platformClipboardGet(): String?
+
+/** Write text to the system clipboard. */
+internal expect fun platformClipboardSet(text: String)

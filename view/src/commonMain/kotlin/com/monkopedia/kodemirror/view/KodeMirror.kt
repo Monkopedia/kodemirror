@@ -302,13 +302,18 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                             val sel = session.state.selection.main
                             val from = sel.from
                             val to = sel.to
+                            val newCursor = com.monkopedia.kodemirror.state.DocPos(
+                                from.value + inserted.length
+                            )
                             session.dispatch(
                                 TransactionSpec(
                                     changes = ChangeSpec.Single(
                                         from = from,
                                         to = to,
                                         insert = inserted.asInsert()
-                                    )
+                                    ),
+                                    selection = com.monkopedia.kodemirror.state.SelectionSpec
+                                        .CursorSpec(newCursor)
                                 )
                             )
                         }
@@ -325,9 +330,9 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                         }
                         .onPreviewKeyEvent { event ->
                             // Try key bindings first; if handled, consume.
-                            // Otherwise try direct character insertion.
-                            handleKeyEvent(session, event) ||
-                                handleCharacterInput(session, event)
+                            // Character input flows through BasicTextField's
+                            // onValueChange via the platform TextInputService.
+                            handleKeyEvent(session, event)
                         }
                 )
 

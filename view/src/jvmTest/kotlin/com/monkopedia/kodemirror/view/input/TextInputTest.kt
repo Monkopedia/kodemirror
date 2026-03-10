@@ -127,4 +127,68 @@ class TextInputTest {
 
         holder.assertDoc("Hi World")
     }
+
+    @Test
+    fun cursorAdvancesAfterTyping() = runEditorTest(
+        doc = "ABCDEF",
+        extensions = keymapExt
+    ) { holder ->
+        // Click to focus
+        onNodeWithTag("KodeMirror").performMouseInput {
+            click(Offset(10f, 15f))
+        }
+        waitForIdle()
+
+        // Set cursor at position 2 via dispatch
+        holder.session.dispatch(
+            TransactionSpec(
+                selection = SelectionSpec.CursorSpec(DocPos(2))
+            )
+        )
+        waitForIdle()
+        holder.assertCursorAt(2)
+
+        // Type "X" — cursor should move to 3
+        onNodeWithTag("KodeMirror_input").performTextInput("X")
+        waitForIdle()
+        holder.assertCursorAt(3)
+        holder.assertDoc("ABXCDEF")
+
+        // Type "Y" — cursor should move to 4
+        onNodeWithTag("KodeMirror_input").performTextInput("Y")
+        waitForIdle()
+        holder.assertCursorAt(4)
+        holder.assertDoc("ABXYCDEF")
+    }
+
+    @Test
+    fun multipleCharactersInsertSequentially() = runEditorTest(
+        doc = "Hello",
+        extensions = keymapExt
+    ) { holder ->
+        // Click to focus
+        onNodeWithTag("KodeMirror").performMouseInput {
+            click(Offset(10f, 15f))
+        }
+        waitForIdle()
+
+        // Set cursor at position 0
+        holder.session.dispatch(
+            TransactionSpec(
+                selection = SelectionSpec.CursorSpec(DocPos(0))
+            )
+        )
+        waitForIdle()
+
+        // Type "ABC" one char at a time
+        onNodeWithTag("KodeMirror_input").performTextInput("A")
+        waitForIdle()
+        onNodeWithTag("KodeMirror_input").performTextInput("B")
+        waitForIdle()
+        onNodeWithTag("KodeMirror_input").performTextInput("C")
+        waitForIdle()
+
+        holder.assertDoc("ABCHello")
+        holder.assertCursorAt(3)
+    }
 }

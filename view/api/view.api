@@ -57,6 +57,12 @@ public final class com/monkopedia/kodemirror/view/BlockType : java/lang/Enum {
 	public static fun values ()[Lcom/monkopedia/kodemirror/view/BlockType;
 }
 
+public final class com/monkopedia/kodemirror/view/ClipboardCommandsKt {
+	public static final fun getClipboardCopy ()Lkotlin/jvm/functions/Function1;
+	public static final fun getClipboardCut ()Lkotlin/jvm/functions/Function1;
+	public static final fun getClipboardPaste ()Lkotlin/jvm/functions/Function1;
+}
+
 public abstract class com/monkopedia/kodemirror/view/ColumnItem {
 }
 
