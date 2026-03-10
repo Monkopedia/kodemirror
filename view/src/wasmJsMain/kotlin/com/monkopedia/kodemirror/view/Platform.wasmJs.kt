@@ -34,6 +34,24 @@ private external fun detectOsFromBrowser(): String
 @JsFun("(text) => { navigator.clipboard.writeText(text); }")
 private external fun jsClipboardWrite(text: String)
 
+// Capture the browser's layout-aware event.key before Compose processes it.
+// Browser keydown events fire in capture phase on document before reaching
+// the canvas, so the stored key is always from the current event.
+@JsFun(
+    """() => {
+    window.__kodemirrorLastKey = '';
+    document.addEventListener('keydown', function(e) {
+        window.__kodemirrorLastKey = e.key;
+    }, true);
+}"""
+)
+private external fun installKeyListener()
+
+@JsFun("() => { return window.__kodemirrorLastKey || ''; }")
+private external fun getLastBrowserKey(): String
+
+private var keyListenerInstalled = false
+
 internal actual fun platformOsName(): String = detectOsFromBrowser()
 
 internal actual fun keyEventCharacter(event: KeyEvent): Char? {
@@ -42,9 +60,16 @@ internal actual fun keyEventCharacter(event: KeyEvent): Char? {
 }
 
 internal actual fun keyEventLayoutKey(event: KeyEvent): String? {
-    // On wasmJs, Compose doesn't reliably expose the layout-aware character
-    // from keydown events. Fall back to physical key names for now.
-    return null
+    if (!keyListenerInstalled) {
+        installKeyListener()
+        keyListenerInstalled = true
+    }
+    val key = getLastBrowserKey()
+    // Browser's event.key is a single character for printable keys ("x", "z")
+    // and a longer string for special keys ("Enter", "Tab", "ArrowLeft").
+    // Only return single-character keys (layout-aware characters).
+    if (key.length != 1) return null
+    return key.lowercase()
 }
 
 internal actual fun platformClipboardGet(): String? {
