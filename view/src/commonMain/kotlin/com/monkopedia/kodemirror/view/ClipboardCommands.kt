@@ -19,6 +19,8 @@
 package com.monkopedia.kodemirror.view
 
 import com.monkopedia.kodemirror.state.ChangeSpec
+import com.monkopedia.kodemirror.state.DocPos
+import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asInsert
 
@@ -64,6 +66,9 @@ val clipboardPaste: (EditorSession) -> Boolean = { view ->
                     from = sel.from,
                     to = sel.to,
                     insert = text.asInsert()
+                ),
+                selection = SelectionSpec.CursorSpec(
+                    DocPos(sel.from.value + text.length)
                 )
             )
         )

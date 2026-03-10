@@ -19,8 +19,22 @@
 package com.monkopedia.kodemirror.view
 
 import androidx.compose.ui.input.key.KeyEvent
+import kotlin.js.JsFun
 
-internal actual fun platformOsName(): String = "Linux"
+@JsFun(
+    """() => {
+    var ua = navigator.userAgent.toLowerCase();
+    if (ua.indexOf('mac') !== -1) return 'Mac';
+    if (ua.indexOf('win') !== -1) return 'Windows';
+    return 'Linux';
+}"""
+)
+private external fun detectOsFromBrowser(): String
+
+@JsFun("(text) => { navigator.clipboard.writeText(text); }")
+private external fun jsClipboardWrite(text: String)
+
+internal actual fun platformOsName(): String = detectOsFromBrowser()
 
 internal actual fun keyEventCharacter(event: KeyEvent): Char? {
     // On wasmJs, character input flows through BasicTextField's onValueChange
@@ -33,5 +47,9 @@ internal actual fun platformClipboardGet(): String? {
 }
 
 internal actual fun platformClipboardSet(text: String) {
-    // Clipboard API on web is async; not supported in synchronous context
+    try {
+        jsClipboardWrite(text)
+    } catch (_: Throwable) {
+        // Clipboard API may not be available in all contexts
+    }
 }

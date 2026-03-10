@@ -26,6 +26,13 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performMouseInput
 import com.monkopedia.kodemirror.commands.standardKeymap
+import com.monkopedia.kodemirror.state.ChangeSpec
+import com.monkopedia.kodemirror.state.DocPos
+import com.monkopedia.kodemirror.state.EditorSelection
+import com.monkopedia.kodemirror.state.SelectionSpec
+import com.monkopedia.kodemirror.state.TransactionSpec
+import com.monkopedia.kodemirror.state.asInsert
+import com.monkopedia.kodemirror.view.insertAt
 import com.monkopedia.kodemirror.view.keymapOf
 import org.junit.Test
 
@@ -156,6 +163,108 @@ class KeyboardHandlingTest {
         }
         waitForIdle()
         holder.assertCursorOnLine(1)
+    }
+
+    @Test
+    fun ctrlX_cutsSelectedText() = runEditorTest(
+        doc = "Hello World",
+        extensions = keymapExt
+    ) { holder ->
+        // Focus
+        onNodeWithTag("KodeMirror").performMouseInput {
+            click(Offset(10f, 15f))
+        }
+        waitForIdle()
+
+        // Select "Hello" (positions 0-5)
+        holder.session.dispatch(
+            TransactionSpec(
+                selection = SelectionSpec.EditorSelectionSpec(
+                    EditorSelection.single(DocPos(0), DocPos(5))
+                )
+            )
+        )
+        waitForIdle()
+        holder.assertSelectionNotEmpty()
+
+        // Press Ctrl+X
+        onNodeWithTag("KodeMirror_input").performKeyInput {
+            keyDown(Key.CtrlLeft)
+            keyDown(Key.X)
+            keyUp(Key.X)
+            keyUp(Key.CtrlLeft)
+        }
+        waitForIdle()
+
+        // "Hello" should have been cut
+        holder.assertDoc(" World")
+    }
+
+    @Test
+    fun insertAt_advancesCursor() = runEditorTest(
+        doc = "Hello",
+        extensions = keymapExt
+    ) { holder ->
+        // Focus
+        onNodeWithTag("KodeMirror").performMouseInput {
+            click(Offset(10f, 15f))
+        }
+        waitForIdle()
+
+        // Place cursor at position 5 (end of "Hello")
+        holder.session.dispatch(
+            TransactionSpec(
+                selection = SelectionSpec.CursorSpec(DocPos(5))
+            )
+        )
+        waitForIdle()
+        holder.assertCursorAt(5)
+
+        // Insert a tab via insertAt — cursor should advance past it
+        holder.session.insertAt(DocPos(5), "\t")
+        waitForIdle()
+        holder.assertDoc("Hello\t")
+        holder.assertCursorAt(6)
+    }
+
+    @Test
+    fun paste_advancesCursorPastInsertedText() = runEditorTest(
+        doc = "ABCDEF",
+        extensions = keymapExt
+    ) { holder ->
+        // Focus
+        onNodeWithTag("KodeMirror").performMouseInput {
+            click(Offset(10f, 15f))
+        }
+        waitForIdle()
+
+        // Place cursor at position 3
+        holder.session.dispatch(
+            TransactionSpec(
+                selection = SelectionSpec.CursorSpec(DocPos(3))
+            )
+        )
+        waitForIdle()
+        holder.assertCursorAt(3)
+
+        // Simulate what clipboardPaste does: insert text with explicit cursor
+        val pasteText = "XYZ"
+        val sel = holder.session.state.selection.main
+        holder.session.dispatch(
+            TransactionSpec(
+                changes = ChangeSpec.Single(
+                    from = sel.from,
+                    to = sel.to,
+                    insert = pasteText.asInsert()
+                ),
+                selection = SelectionSpec.CursorSpec(
+                    DocPos(sel.from.value + pasteText.length)
+                )
+            )
+        )
+        waitForIdle()
+        holder.assertDoc("ABCXYZDEF")
+        holder.assertCursorAt(6)
     }
 
     @Test

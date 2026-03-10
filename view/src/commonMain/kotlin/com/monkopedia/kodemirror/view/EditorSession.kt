@@ -139,7 +139,8 @@ fun EditorSession.setDoc(text: String) {
 fun EditorSession.insertAt(pos: DocPos, text: String) {
     dispatch(
         TransactionSpec(
-            changes = ChangeSpec.Single(from = pos, insert = text.asInsert())
+            changes = ChangeSpec.Single(from = pos, insert = text.asInsert()),
+            selection = SelectionSpec.CursorSpec(pos + text.length)
         )
     )
 }
