@@ -457,16 +457,18 @@ public final class com/monkopedia/kodemirror/view/LineGap {
 }
 
 public final class com/monkopedia/kodemirror/view/LineLayout {
-	public fun <init> (IIFLandroidx/compose/ui/text/TextLayoutResult;)V
+	public fun <init> (IIFFLandroidx/compose/ui/text/TextLayoutResult;)V
 	public final fun component1 ()I
 	public final fun component2 ()I
 	public final fun component3 ()F
-	public final fun component4 ()Landroidx/compose/ui/text/TextLayoutResult;
-	public final fun copy (IIFLandroidx/compose/ui/text/TextLayoutResult;)Lcom/monkopedia/kodemirror/view/LineLayout;
-	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/view/LineLayout;IIFLandroidx/compose/ui/text/TextLayoutResult;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/view/LineLayout;
+	public final fun component4 ()F
+	public final fun component5 ()Landroidx/compose/ui/text/TextLayoutResult;
+	public final fun copy (IIFFLandroidx/compose/ui/text/TextLayoutResult;)Lcom/monkopedia/kodemirror/view/LineLayout;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/view/LineLayout;IIFFLandroidx/compose/ui/text/TextLayoutResult;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/view/LineLayout;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBottomPx ()F
 	public final fun getHeightPx ()F
+	public final fun getLeftPx ()F
 	public final fun getLineFrom ()I
 	public final fun getLineNumber ()I
 	public final fun getResult ()Landroidx/compose/ui/text/TextLayoutResult;
@@ -483,7 +485,7 @@ public final class com/monkopedia/kodemirror/view/LineLayoutCache {
 	public final fun evict (Ljava/util/Set;)V
 	public final fun forLine (I)Lcom/monkopedia/kodemirror/view/LineLayout;
 	public final fun posAtCoords (FFLcom/monkopedia/kodemirror/state/EditorState;)Ljava/lang/Integer;
-	public final fun store (IIFLandroidx/compose/ui/text/TextLayoutResult;)V
+	public final fun store (IIFFLandroidx/compose/ui/text/TextLayoutResult;)V
 }
 
 public final class com/monkopedia/kodemirror/view/MarkDecoration : com/monkopedia/kodemirror/view/Decoration {
