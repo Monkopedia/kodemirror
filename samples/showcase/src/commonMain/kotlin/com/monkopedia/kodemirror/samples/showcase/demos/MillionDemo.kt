@@ -18,7 +18,7 @@ package com.monkopedia.kodemirror.samples.showcase.demos
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.monkopedia.kodemirror.basicsetup.basicSetup
+import com.monkopedia.kodemirror.samples.showcase.showcaseSetup
 import com.monkopedia.kodemirror.lang.javascript.javascript
 import com.monkopedia.kodemirror.samples.showcase.DemoScaffold
 import com.monkopedia.kodemirror.samples.showcase.SampleDocs
@@ -34,7 +34,7 @@ fun MillionDemo() {
     ) {
         val session = rememberEditorSession(
             doc = SampleDocs.largeDocument,
-            extensions = basicSetup + javascript().extension
+            extensions = showcaseSetup + javascript().extension
         )
         KodeMirror(
             session = session,

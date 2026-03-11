@@ -23,7 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.monkopedia.kodemirror.basicsetup.basicSetup
+import com.monkopedia.kodemirror.samples.showcase.showcaseSetup
 import com.monkopedia.kodemirror.lang.javascript.javascript
 import com.monkopedia.kodemirror.merge.MergeView
 import com.monkopedia.kodemirror.merge.MergeViewConfig
@@ -41,11 +41,11 @@ fun MergeDemo() {
             MergeViewConfig(
                 a = EditorStateConfig(
                     doc = SampleDocs.mergeOriginal.asDoc(),
-                    extensions = basicSetup + javascript().extension
+                    extensions = showcaseSetup + javascript().extension
                 ),
                 b = EditorStateConfig(
                     doc = SampleDocs.mergeModified.asDoc(),
-                    extensions = basicSetup + javascript().extension
+                    extensions = showcaseSetup + javascript().extension
                 ),
                 highlightChanges = true,
                 gutter = true

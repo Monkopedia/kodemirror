@@ -18,7 +18,7 @@ package com.monkopedia.kodemirror.samples.showcase.demos
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.monkopedia.kodemirror.basicsetup.basicSetup
+import com.monkopedia.kodemirror.samples.showcase.showcaseSetup
 import com.monkopedia.kodemirror.lang.javascript.javascript
 import com.monkopedia.kodemirror.lint.Diagnostic
 import com.monkopedia.kodemirror.lint.LintSource
@@ -89,7 +89,7 @@ fun LintDemo() {
     ) {
         val session = rememberEditorSession(
             doc = lintDoc,
-            extensions = basicSetup + javascript().extension + linter(myLinter)
+            extensions = showcaseSetup + javascript().extension + linter(myLinter)
         )
         KodeMirror(
             session = session,

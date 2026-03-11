@@ -23,7 +23,7 @@ import com.monkopedia.kodemirror.autocomplete.CompletionConfig
 import com.monkopedia.kodemirror.autocomplete.CompletionResult
 import com.monkopedia.kodemirror.autocomplete.CompletionSource
 import com.monkopedia.kodemirror.autocomplete.autocompletion
-import com.monkopedia.kodemirror.basicsetup.basicSetup
+import com.monkopedia.kodemirror.samples.showcase.showcaseSetup
 import com.monkopedia.kodemirror.lang.javascript.javascript
 import com.monkopedia.kodemirror.samples.showcase.DemoScaffold
 import com.monkopedia.kodemirror.samples.showcase.SampleDocs
@@ -71,7 +71,7 @@ fun AutocompletionDemo() {
     ) {
         val session = rememberEditorSession(
             doc = SampleDocs.javascript,
-            extensions = basicSetup + javascript().extension +
+            extensions = showcaseSetup + javascript().extension +
                 autocompletion(
                     CompletionConfig(override = listOf(myCompletionSource))
                 )

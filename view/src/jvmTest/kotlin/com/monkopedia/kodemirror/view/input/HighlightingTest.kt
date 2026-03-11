@@ -24,9 +24,14 @@ import androidx.compose.ui.test.click
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performMouseInput
 import androidx.compose.ui.test.performTextInput
+import com.monkopedia.kodemirror.basicsetup.basicSetup
 import com.monkopedia.kodemirror.commands.standardKeymap
 import com.monkopedia.kodemirror.lang.javascript.jsParser
 import com.monkopedia.kodemirror.language.Language
+import com.monkopedia.kodemirror.language.LanguageSupport
+import com.monkopedia.kodemirror.language.StreamLanguage
+import com.monkopedia.kodemirror.language.StreamParser
+import com.monkopedia.kodemirror.language.StringStream
 import com.monkopedia.kodemirror.language.defaultHighlightStyle
 import com.monkopedia.kodemirror.language.syntaxHighlighting
 import com.monkopedia.kodemirror.language.syntaxTree
@@ -35,6 +40,7 @@ import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.TransactionSpec
+import com.monkopedia.kodemirror.state.plus
 import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.PluginSpec
 import com.monkopedia.kodemirror.view.PluginValue
@@ -258,6 +264,119 @@ class HighlightingTest {
             assert(returnAfter!!.from == returnPos + 1) {
                 "Expected 'return' at ${returnPos + 1} but was at " +
                     "${returnAfter.from}"
+            }
+        }
+    }
+
+    // ---- StreamLanguage highlighting tests ----
+
+    private data class SimpleState(val inString: Boolean = false)
+
+    private val simpleStreamParser = object : StreamParser<SimpleState> {
+        override val name = "simple-lang"
+
+        override fun startState(indentUnit: Int) = SimpleState()
+
+        override fun token(stream: StringStream, state: SimpleState): String? {
+            if (stream.match("//")) {
+                stream.skipToEnd()
+                return "comment"
+            }
+            if (stream.match("\"")) {
+                while (!stream.eol()) {
+                    if (stream.next() == "\"") break
+                }
+                return "string"
+            }
+            if (stream.match(Regex("\\d+")) != null) return "number"
+            if (stream.match(
+                    Regex("\\b(fn|let|if|else|return)\\b")
+                ) != null
+            ) {
+                return "keyword"
+            }
+            if (stream.match(Regex("\\b(Int|String)\\b")) != null) {
+                return "typeName"
+            }
+            stream.next()
+            return null
+        }
+
+        override fun copyState(state: SimpleState) = state.copy()
+    }
+
+    @Test
+    fun streamLanguageHighlightingProducesDecorations() {
+        val simpleLang = StreamLanguage.define(simpleStreamParser)
+
+        lateinit var trackerInstance: HighlightTracker
+        val tracker = ViewPlugin.define(
+            PluginSpec(
+                create = { view ->
+                    HighlightTracker(view).also { trackerInstance = it }
+                }
+            )
+        )
+
+        runEditorTest(
+            doc = "fn test(n: Int): Int {\n  if n <= 1 { return n }\n}",
+            extensions = basicSetup +
+                LanguageSupport(simpleLang).extension +
+                tracker.asExtension()
+        ) { holder ->
+            waitForIdle()
+
+            val ranges = trackerInstance.ranges
+            assert(ranges.isNotEmpty()) {
+                "StreamLanguage highlighting should produce decoration " +
+                    "ranges, got empty list. Tree: " +
+                    syntaxTree(holder.session.state)
+            }
+
+            // "fn" keyword at position 0-2
+            val fnRange = ranges.find { it.from == 0 && it.to == 2 }
+            assert(fnRange != null) {
+                "Expected highlight for 'fn' keyword at 0-2, " +
+                    "got: $ranges"
+            }
+        }
+    }
+
+    @Test
+    fun streamLanguageAnnotatedStringHasSpanStyles() {
+        val simpleLang = StreamLanguage.define(simpleStreamParser)
+
+        runEditorTest(
+            doc = "fn foo",
+            extensions = basicSetup +
+                LanguageSupport(simpleLang).extension
+        ) { holder ->
+            waitForIdle()
+
+            val state = holder.session.state
+            val allDecos = state.facet(
+                com.monkopedia.kodemirror.view.decorations
+            )
+            val impl = holder.session as com.monkopedia.kodemirror.view.EditorSessionImpl
+            val pluginDecos = impl.pluginHost?.collectDecorations()
+                ?: emptyList()
+            val decoSets = allDecos + pluginDecos
+
+            val items = com.monkopedia.kodemirror.view.buildColumnItems(
+                state,
+                com.monkopedia.kodemirror.view.Viewport(0, state.doc.length),
+                decoSets
+            )
+
+            val textLine = items
+                .filterIsInstance<com.monkopedia.kodemirror.view.ColumnItem.TextLine>()
+                .first()
+            val annotated = textLine.content
+            val styles = annotated.spanStyles
+            assert(styles.isNotEmpty()) {
+                "Expected AnnotatedString to have SpanStyles from " +
+                    "highlighting, got none. Text='${annotated.text}', " +
+                    "allDecos=$allDecos, pluginDecos=$pluginDecos"
             }
         }
     }

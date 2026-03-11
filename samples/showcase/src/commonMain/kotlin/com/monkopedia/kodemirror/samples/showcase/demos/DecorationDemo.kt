@@ -25,7 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.monkopedia.kodemirror.basicsetup.basicSetup
+import com.monkopedia.kodemirror.samples.showcase.showcaseSetup
 import com.monkopedia.kodemirror.lang.javascript.javascript
 import com.monkopedia.kodemirror.samples.showcase.DemoScaffold
 import com.monkopedia.kodemirror.samples.showcase.SampleDocs
@@ -114,7 +114,7 @@ fun DecorationDemo() {
     ) {
         val session = rememberEditorSession(
             doc = SampleDocs.javascript,
-            extensions = basicSetup + javascript().extension +
+            extensions = showcaseSetup + javascript().extension +
                 decorationPlugin.asExtension()
         )
         KodeMirror(

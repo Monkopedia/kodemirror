@@ -22,7 +22,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.monkopedia.kodemirror.basicsetup.basicSetup
+import com.monkopedia.kodemirror.samples.showcase.showcaseSetup
 import com.monkopedia.kodemirror.lang.javascript.javascript
 import com.monkopedia.kodemirror.samples.showcase.DemoScaffold
 import com.monkopedia.kodemirror.samples.showcase.SampleDocs
@@ -44,11 +44,11 @@ fun SplitDemo() {
         ) {
             val sessionLeft = rememberEditorSession(
                 doc = SampleDocs.javascript,
-                extensions = basicSetup + javascript().extension + oneDark
+                extensions = showcaseSetup + javascript().extension + oneDark
             )
             val sessionRight = rememberEditorSession(
                 doc = SampleDocs.javascript,
-                extensions = basicSetup + javascript().extension + dracula
+                extensions = showcaseSetup + javascript().extension + dracula
             )
             KodeMirror(
                 session = sessionLeft,

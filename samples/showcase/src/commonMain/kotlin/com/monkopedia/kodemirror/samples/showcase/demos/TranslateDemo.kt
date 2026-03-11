@@ -29,7 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.monkopedia.kodemirror.basicsetup.basicSetup
+import com.monkopedia.kodemirror.samples.showcase.showcaseSetup
 import com.monkopedia.kodemirror.lang.javascript.javascript
 import com.monkopedia.kodemirror.samples.showcase.DemoScaffold
 import com.monkopedia.kodemirror.samples.showcase.SampleDocs
@@ -85,7 +85,7 @@ fun TranslateDemo() {
 
     val session = rememberEditorSession(
         doc = SampleDocs.javascript,
-        extensions = basicSetup + javascript().extension +
+        extensions = showcaseSetup + javascript().extension +
             phrasesCompartment.of(phrasesExt(lang))
     )
 

@@ -18,12 +18,12 @@ package com.monkopedia.kodemirror.samples.showcase.demos
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.monkopedia.kodemirror.basicsetup.basicSetup
 import com.monkopedia.kodemirror.language.LanguageSupport
 import com.monkopedia.kodemirror.language.StreamLanguage
 import com.monkopedia.kodemirror.language.StreamParser
 import com.monkopedia.kodemirror.language.StringStream
 import com.monkopedia.kodemirror.samples.showcase.DemoScaffold
+import com.monkopedia.kodemirror.samples.showcase.showcaseSetup
 import com.monkopedia.kodemirror.state.plus
 import com.monkopedia.kodemirror.view.KodeMirror
 import com.monkopedia.kodemirror.view.rememberEditorSession
@@ -90,7 +90,7 @@ fun LangPackageDemo() {
     ) {
         val session = rememberEditorSession(
             doc = sampleCode,
-            extensions = basicSetup + LanguageSupport(simpleLang).extension
+            extensions = showcaseSetup + LanguageSupport(simpleLang).extension
         )
         KodeMirror(
             session = session,

@@ -18,7 +18,7 @@ package com.monkopedia.kodemirror.samples.showcase.demos
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.monkopedia.kodemirror.basicsetup.basicSetup
+import com.monkopedia.kodemirror.samples.showcase.showcaseSetup
 import com.monkopedia.kodemirror.lang.yaml.yaml
 import com.monkopedia.kodemirror.samples.showcase.DemoScaffold
 import com.monkopedia.kodemirror.state.plus
@@ -53,7 +53,7 @@ fun BundleDemo() {
     ) {
         val session = rememberEditorSession(
             doc = GRADLE_CONFIG,
-            extensions = basicSetup + yaml().extension + editable.of(false)
+            extensions = showcaseSetup + yaml().extension + editable.of(false)
         )
         KodeMirror(
             session = session,

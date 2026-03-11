@@ -18,7 +18,7 @@ package com.monkopedia.kodemirror.samples.showcase.demos
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.monkopedia.kodemirror.basicsetup.basicSetup
+import com.monkopedia.kodemirror.samples.showcase.showcaseSetup
 import com.monkopedia.kodemirror.lang.html.html
 import com.monkopedia.kodemirror.samples.showcase.DemoScaffold
 import com.monkopedia.kodemirror.samples.showcase.SampleDocs
@@ -34,7 +34,7 @@ fun MixedLanguageDemo() {
     ) {
         val session = rememberEditorSession(
             doc = SampleDocs.html,
-            extensions = basicSetup + html().extension
+            extensions = showcaseSetup + html().extension
         )
         KodeMirror(
             session = session,

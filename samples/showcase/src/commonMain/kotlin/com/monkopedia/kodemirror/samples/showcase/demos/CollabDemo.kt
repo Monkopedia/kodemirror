@@ -27,7 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.monkopedia.kodemirror.basicsetup.basicSetup
+import com.monkopedia.kodemirror.samples.showcase.showcaseSetup
 import com.monkopedia.kodemirror.collab.CollabConfig
 import com.monkopedia.kodemirror.collab.Update
 import com.monkopedia.kodemirror.collab.collab
@@ -45,12 +45,12 @@ import com.monkopedia.kodemirror.view.rememberEditorSession
 fun CollabDemo() {
     val sessionA = rememberEditorSession(
         doc = SampleDocs.collabInitial,
-        extensions = basicSetup + javascript().extension +
+        extensions = showcaseSetup + javascript().extension +
             collab(CollabConfig(clientID = "editor-a"))
     )
     val sessionB = rememberEditorSession(
         doc = SampleDocs.collabInitial,
-        extensions = basicSetup + javascript().extension +
+        extensions = showcaseSetup + javascript().extension +
             collab(CollabConfig(clientID = "editor-b"))
     )
 

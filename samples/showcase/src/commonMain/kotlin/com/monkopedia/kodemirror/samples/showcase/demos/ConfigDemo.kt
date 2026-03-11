@@ -29,7 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.monkopedia.kodemirror.basicsetup.basicSetup
+import com.monkopedia.kodemirror.samples.showcase.showcaseSetup
 import com.monkopedia.kodemirror.lang.javascript.javascript
 import com.monkopedia.kodemirror.lang.python.python
 import com.monkopedia.kodemirror.samples.showcase.DemoScaffold
@@ -67,7 +67,7 @@ fun ConfigDemo() {
 
     val session = rememberEditorSession(
         doc = lang.doc,
-        extensions = basicSetup +
+        extensions = showcaseSetup +
             langCompartment.of(lang.ext) +
             themeCompartment.of(theme.ext)
     )

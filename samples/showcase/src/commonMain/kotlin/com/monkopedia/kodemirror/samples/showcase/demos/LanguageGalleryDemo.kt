@@ -28,7 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.monkopedia.kodemirror.basicsetup.basicSetup
+import com.monkopedia.kodemirror.samples.showcase.showcaseSetup
 import com.monkopedia.kodemirror.lang.css.css
 import com.monkopedia.kodemirror.lang.go.go
 import com.monkopedia.kodemirror.lang.html.html
@@ -86,7 +86,7 @@ fun LanguageGalleryDemo() {
                     )
                     val session = rememberEditorSession(
                         doc = entry.sample,
-                        extensions = basicSetup + entry.extension
+                        extensions = showcaseSetup + entry.extension
                     )
                     KodeMirror(
                         session = session,

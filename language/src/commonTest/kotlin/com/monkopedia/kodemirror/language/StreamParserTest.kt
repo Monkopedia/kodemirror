@@ -18,6 +18,8 @@
  */
 package com.monkopedia.kodemirror.language
 
+import com.monkopedia.kodemirror.lezer.highlight.highlightTree
+import com.monkopedia.kodemirror.lezer.highlight.ruleNodeProp
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.asDoc
@@ -180,6 +182,62 @@ class StreamParserTest {
         val tree = syntaxTree(state)
         assertNotNull(tree)
         assertEquals(10, tree.length)
+    }
+
+    @Test
+    fun tokenNodesHaveRuleNodeProp() {
+        val lang = StreamLanguage.define(simpleParser)
+        val state = EditorState.create(
+            EditorStateConfig(
+                doc = "if 42".asDoc(),
+                extensions = lang.extension
+            )
+        )
+        val tree = syntaxTree(state)
+        val cursor = tree.cursor()
+        var keywordHasRule = false
+        var numberHasRule = false
+        while (cursor.next()) {
+            val rule = cursor.type.prop(ruleNodeProp)
+            if (cursor.type.name == "keyword" && rule != null) keywordHasRule = true
+            if (cursor.type.name == "number" && rule != null) numberHasRule = true
+        }
+        assertTrue(keywordHasRule, "keyword token should have ruleNodeProp")
+        assertTrue(numberHasRule, "number token should have ruleNodeProp")
+    }
+
+    @Test
+    fun highlightTreeProducesRangesForStreamLanguage() {
+        val lang = StreamLanguage.define(simpleParser)
+        val state = EditorState.create(
+            EditorStateConfig(
+                doc = "if 42".asDoc(),
+                extensions = lang.extension
+            )
+        )
+        val tree = syntaxTree(state)
+        val ranges = mutableListOf<Triple<Int, Int, String>>()
+        highlightTree(
+            tree,
+            defaultHighlightStyle as com.monkopedia.kodemirror.lezer.highlight.Highlighter,
+            { from, to, cls -> ranges.add(Triple(from, to, cls)) }
+        )
+        assertTrue(
+            ranges.isNotEmpty(),
+            "highlightTree should produce ranges for stream language tokens"
+        )
+        // "if" is a keyword at 0-2
+        val keywordRange = ranges.find { it.first == 0 && it.second == 2 }
+        assertNotNull(
+            keywordRange,
+            "Expected highlight range for 'if' keyword at 0-2, got: $ranges"
+        )
+        // "42" is a number at 3-5
+        val numberRange = ranges.find { it.first == 3 && it.second == 5 }
+        assertNotNull(
+            numberRange,
+            "Expected highlight range for '42' number at 3-5, got: $ranges"
+        )
     }
 
     @Test

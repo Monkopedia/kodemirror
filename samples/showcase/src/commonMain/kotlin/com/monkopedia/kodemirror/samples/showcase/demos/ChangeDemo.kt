@@ -25,7 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.monkopedia.kodemirror.basicsetup.basicSetup
+import com.monkopedia.kodemirror.samples.showcase.showcaseSetup
 import com.monkopedia.kodemirror.lang.javascript.javascript
 import com.monkopedia.kodemirror.samples.showcase.DemoScaffold
 import com.monkopedia.kodemirror.samples.showcase.SampleDocs
@@ -43,7 +43,7 @@ import com.monkopedia.kodemirror.view.setDoc
 fun ChangeDemo() {
     val session = rememberEditorSession(
         doc = SampleDocs.javascript,
-        extensions = basicSetup + javascript().extension
+        extensions = showcaseSetup + javascript().extension
     )
 
     DemoScaffold(
