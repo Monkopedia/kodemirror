@@ -22,7 +22,9 @@ import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.plus
 
 /**
- * Showcase-specific setup that layers dark-theme syntax highlighting
- * on top of [basicSetup], since the showcase app uses a dark Material theme.
+ * Showcase-specific setup: [basicSetup] plus One Dark syntax highlighting
+ * to match the dark Material theme. The non-fallback [oneDarkHighlightStyle]
+ * overrides basicSetup's fallback [defaultHighlightStyle][com.monkopedia.kodemirror.language.defaultHighlightStyle].
  */
-val showcaseSetup: Extension = basicSetup + syntaxHighlighting(oneDarkHighlightStyle)
+val showcaseSetup: Extension =
+    basicSetup + syntaxHighlighting(oneDarkHighlightStyle)

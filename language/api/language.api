@@ -310,7 +310,8 @@ public final class com/monkopedia/kodemirror/language/StringStream {
 }
 
 public final class com/monkopedia/kodemirror/language/SyntaxHighlightingKt {
-	public static final fun syntaxHighlighting (Lcom/monkopedia/kodemirror/lezer/highlight/Highlighter;)Lcom/monkopedia/kodemirror/state/Extension;
+	public static final fun syntaxHighlighting (Lcom/monkopedia/kodemirror/lezer/highlight/Highlighter;Z)Lcom/monkopedia/kodemirror/state/Extension;
+	public static synthetic fun syntaxHighlighting$default (Lcom/monkopedia/kodemirror/lezer/highlight/Highlighter;ZILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/Extension;
 }
 
 public final class com/monkopedia/kodemirror/language/TagStyleSpec {

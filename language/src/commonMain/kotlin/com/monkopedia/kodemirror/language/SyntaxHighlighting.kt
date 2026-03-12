@@ -39,15 +39,21 @@ import com.monkopedia.kodemirror.view.ViewUpdate
 /**
  * Wrap a highlighter in an editor extension that uses it to apply
  * syntax highlighting to the editor content.
+ *
+ * When [fallback] is true, the highlighter registers at the lowest
+ * precedence so that any non-fallback highlight style overrides it.
+ * This matches upstream CodeMirror's behavior where `basicSetup`
+ * includes `defaultHighlightStyle` as a fallback.
  */
-fun syntaxHighlighting(highlighter: Highlighter): Extension {
+fun syntaxHighlighting(highlighter: Highlighter, fallback: Boolean = false): Extension {
     val plugin = ViewPlugin.define(
         PluginSpec(
             create = { view -> TreeHighlighter(view, highlighter) },
             decorations = { v -> v.decorations }
         )
     )
-    return Prec.high(plugin.asExtension())
+    val ext = plugin.asExtension()
+    return if (fallback) Prec.lowest(ext) else Prec.high(ext)
 }
 
 private class TreeHighlighter(

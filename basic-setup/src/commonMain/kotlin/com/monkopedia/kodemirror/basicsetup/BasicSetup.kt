@@ -83,7 +83,7 @@ val minimalSetup: Extension = extensionListOf(
     highlightSpecialChars,
     history(),
     drawSelection,
-    syntaxHighlighting(defaultHighlightStyle),
+    syntaxHighlighting(defaultHighlightStyle, fallback = true),
     keymapOf(defaultKeymap)
 )
 
@@ -112,7 +112,7 @@ val basicSetup: Extension = extensionListOf(
     dropCursor,
     allowMultipleSelections.of(true),
     indentOnInput,
-    syntaxHighlighting(defaultHighlightStyle),
+    syntaxHighlighting(defaultHighlightStyle, fallback = true),
     bracketMatching(),
     closeBrackets(),
     autocompletion(),
