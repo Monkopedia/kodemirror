@@ -19,7 +19,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import com.monkopedia.kodemirror.samples.showcase.showcaseSetup
+import com.monkopedia.kodemirror.basicsetup.basicSetup
 import com.monkopedia.kodemirror.lang.javascript.javascript
 import com.monkopedia.kodemirror.samples.showcase.DemoScaffold
 import com.monkopedia.kodemirror.samples.showcase.SampleDocs
@@ -47,7 +47,7 @@ fun StylingDemo() {
     ) {
         val session = rememberEditorSession(
             doc = SampleDocs.javascript,
-            extensions = showcaseSetup + javascript().extension +
+            extensions = basicSetup + javascript().extension +
                 editorTheme.of(customTheme)
         )
         KodeMirror(

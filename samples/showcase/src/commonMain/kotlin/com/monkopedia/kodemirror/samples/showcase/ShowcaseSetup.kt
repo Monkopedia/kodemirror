@@ -16,15 +16,13 @@
 package com.monkopedia.kodemirror.samples.showcase
 
 import com.monkopedia.kodemirror.basicsetup.basicSetup
-import com.monkopedia.kodemirror.language.oneDarkHighlightStyle
-import com.monkopedia.kodemirror.language.syntaxHighlighting
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.plus
+import com.monkopedia.kodemirror.themonedark.oneDark
 
 /**
- * Showcase-specific setup: [basicSetup] plus One Dark syntax highlighting
- * to match the dark Material theme. The non-fallback [oneDarkHighlightStyle]
- * overrides basicSetup's fallback [defaultHighlightStyle][com.monkopedia.kodemirror.language.defaultHighlightStyle].
+ * Showcase-specific setup: [basicSetup] plus the [oneDark] theme,
+ * matching how a CodeMirror project uses `basicSetup` + a theme extension.
+ * The theme bundles both editor UI colors and syntax highlighting.
  */
-val showcaseSetup: Extension =
-    basicSetup + syntaxHighlighting(oneDarkHighlightStyle)
+val showcaseSetup: Extension = basicSetup + oneDark
