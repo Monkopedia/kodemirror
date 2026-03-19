@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>CM6 Gap Analysis Test Fixture</title>
+  <style>
+    body { margin: 0; padding: 0; background: #282c34; }
+    #editor { width: 800px; height: 600px; }
+  </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "codemirror": "https://esm.sh/*codemirror@6.0.1",
+        "@codemirror/state": "https://esm.sh/*@codemirror/state@6.4.1",
+        "@codemirror/view": "https://esm.sh/*@codemirror/view@6.34.1",
+        "@codemirror/language": "https://esm.sh/*@codemirror/language@6.10.6",
+        "@codemirror/commands": "https://esm.sh/*@codemirror/commands@6.7.1",
+        "@codemirror/search": "https://esm.sh/*@codemirror/search@6.5.8",
+        "@codemirror/autocomplete": "https://esm.sh/*@codemirror/autocomplete@6.18.4",
+        "@codemirror/lint": "https://esm.sh/*@codemirror/lint@6.8.4",
+        "@codemirror/lang-javascript": "https://esm.sh/*@codemirror/lang-javascript@6.2.2",
+        "@codemirror/theme-one-dark": "https://esm.sh/*@codemirror/theme-one-dark@6.1.2",
+        "@lezer/common": "https://esm.sh/*@lezer/common@1.2.3",
+        "@lezer/highlight": "https://esm.sh/*@lezer/highlight@1.2.1",
+        "@lezer/javascript": "https://esm.sh/*@lezer/javascript@1.4.21",
+        "@lezer/lr": "https://esm.sh/*@lezer/lr@1.4.2",
+        "crelt": "https://esm.sh/*crelt@1.0.6",
+        "style-mod": "https://esm.sh/*style-mod@4.1.2",
+        "w3c-keyname": "https://esm.sh/*w3c-keyname@2.2.8"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="editor"></div>
+
+  <script type="module">
+    import { basicSetup, EditorView } from "codemirror";
+    import { javascript } from "@codemirror/lang-javascript";
+    import { oneDark } from "@codemirror/theme-one-dark";
+
+    const doc = `// Fibonacci sequence
+function fibonacci(n) {
+    if (n <= 1) return n;
+    return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+// Print first 10 numbers
+for (let i = 0; i < 10; i++) {
+    console.log(\`fib(\${i}) = \${fibonacci(i)}\`);
+}`;
+
+    window.cmVersion = 0;
+
+    const view = new EditorView({
+      doc,
+      extensions: [
+        basicSetup,
+        javascript(),
+        oneDark,
+        EditorView.updateListener.of((update) => {
+          window.cmVersion++;
+        }),
+      ],
+      parent: document.getElementById("editor"),
+    });
+
+    window.cmView = view;
+    window.cmReady = true;
+
+    window.getState = function () {
+      const state = view.state;
+      const doc = state.doc;
+      const sel = state.selection;
+      const main = sel.main;
+      const line = doc.lineAt(main.head);
+
+      return {
+        doc: doc.toString(),
+        cursor: {
+          pos: main.head,
+          line: line.number,
+          col: main.head - line.from,
+        },
+        selection: {
+          anchor: main.anchor,
+          head: main.head,
+          empty: main.empty,
+          ranges: sel.ranges.map((r) => ({
+            from: r.from,
+            to: r.to,
+            anchor: r.anchor,
+            head: r.head,
+          })),
+        },
+        docInfo: {
+          lines: doc.lines,
+          length: doc.length,
+        },
+      };
+    };
+  </script>
+</body>
+</html>

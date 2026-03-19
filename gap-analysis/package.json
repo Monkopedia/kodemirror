@@ -1,0 +1,15 @@
+{
+  "name": "kodemirror-gap-analysis",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:perf": "playwright test --project=performance",
+    "report": "ts-node report/generate-report.ts",
+    "install-browser": "playwright install chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}

@@ -19,14 +19,22 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeViewport
+import kotlin.JsFun
 import kotlinx.browser.document
+
+@JsFun("() => new URLSearchParams(window.location.search).get('test') === 'true'")
+private external fun isTestMode(): Boolean
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
     val body = document.body ?: return
     ComposeViewport(body) {
         MaterialTheme(colorScheme = darkColorScheme()) {
-            ShowcaseApp()
+            if (isTestMode()) {
+                TestEditorPage()
+            } else {
+                ShowcaseApp()
+            }
         }
     }
 }
