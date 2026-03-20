@@ -1,7 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 import * as path from "path";
+import * as fs from "fs";
 
-const fixturesDir = path.join(__dirname, "fixtures");
 const showcaseDist = path.join(
   __dirname,
   "..",
@@ -13,14 +13,19 @@ const showcaseDist = path.join(
   "developmentExecutable"
 );
 
+// Only start the KM web server if the showcase build exists.
+// In headless environments, Skiko/Compose wasmJs cannot render (needs GPU/WebGL),
+// so KM tests will gracefully degrade to CM6-only mode.
+const kmBuildExists = fs.existsSync(path.join(showcaseDist, "index.html"));
+
 export default defineConfig({
   testDir: "./tests",
-  timeout: 120_000,
-  expect: { timeout: 30_000 },
-  fullyParallel: true,
+  timeout: 60_000,
+  expect: { timeout: 10_000 },
+  fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  workers: 2,
   reporter: [
     ["html", { open: "never" }],
     ["json", { outputFile: "report/results.json" }],
@@ -44,10 +49,14 @@ export default defineConfig({
       retries: 0,
     },
   ],
-  webServer: {
-    command: `python3 -m http.server 8081 --directory "${showcaseDist}"`,
-    port: 8081,
-    reuseExistingServer: !process.env.CI,
-    timeout: 10_000,
-  },
+  ...(kmBuildExists
+    ? {
+        webServer: {
+          command: `python3 -m http.server 8081 --directory "${showcaseDist}"`,
+          port: 8081,
+          reuseExistingServer: !process.env.CI,
+          timeout: 10_000,
+        },
+      }
+    : {}),
 });

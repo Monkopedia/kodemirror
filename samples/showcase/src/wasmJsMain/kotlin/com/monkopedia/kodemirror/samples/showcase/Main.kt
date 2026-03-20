@@ -22,15 +22,15 @@ import androidx.compose.ui.window.ComposeViewport
 import kotlin.JsFun
 import kotlinx.browser.document
 
-@JsFun("() => new URLSearchParams(window.location.search).get('test') === 'true'")
-private external fun isTestMode(): Boolean
+@JsFun("() => new URLSearchParams(window.location.search).get('test') || ''")
+private external fun getTestParam(): String
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
     val body = document.body ?: return
     ComposeViewport(body) {
         MaterialTheme(colorScheme = darkColorScheme()) {
-            if (isTestMode()) {
+            if (getTestParam() == "true") {
                 TestEditorPage()
             } else {
                 ShowcaseApp()

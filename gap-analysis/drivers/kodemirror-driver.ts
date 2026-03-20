@@ -17,7 +17,8 @@ export class KodemirrorDriver implements EditorDriver {
         const km = (globalThis as any).__kodemirror;
         return km && km.ready === true && km.state !== null;
       },
-      { timeout: 60_000 }
+      undefined,
+      { timeout: 90_000 }
     );
   }
 
