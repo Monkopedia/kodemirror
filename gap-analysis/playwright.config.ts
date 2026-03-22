@@ -18,6 +18,10 @@ const showcaseDist = path.join(
 // so KM tests will gracefully degrade to CM6-only mode.
 const kmBuildExists = fs.existsSync(path.join(showcaseDist, "index.html"));
 
+// Skiko/Compose requires WebGL which only works in headed mode with a display.
+// When DISPLAY is set (e.g., via Xvfb), launch Chrome in headed mode.
+const hasDisplay = !!process.env.DISPLAY;
+
 export default defineConfig({
   testDir: "./tests",
   timeout: 60_000,
@@ -35,16 +39,23 @@ export default defineConfig({
     actionTimeout: 15_000,
     screenshot: "only-on-failure",
     trace: "on-first-retry",
+    locale: "en-US",
   },
   projects: [
     {
       name: "gap-analysis",
-      use: { ...devices["Desktop Chrome"] },
+      use: {
+        ...devices["Desktop Chrome"],
+        ...(hasDisplay ? { launchOptions: { headless: false } } : {}),
+      },
       testIgnore: ["**/performance.spec.ts"],
     },
     {
       name: "performance",
-      use: { ...devices["Desktop Chrome"] },
+      use: {
+        ...devices["Desktop Chrome"],
+        ...(hasDisplay ? { launchOptions: { headless: false } } : {}),
+      },
       testMatch: ["**/performance.spec.ts"],
       retries: 0,
     },

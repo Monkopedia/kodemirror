@@ -43,9 +43,15 @@ export class KodemirrorDriver implements EditorDriver {
     return state.selection;
   }
 
+  private canvasLocator() {
+    // Compose for Web renders inside a shadow DOM on <body>.
+    // Playwright's default locator pierces shadow DOM automatically.
+    return this.page.locator("canvas");
+  }
+
   async type(text: string): Promise<void> {
     // Canvas-based editor: click on canvas to focus, then type
-    const canvas = this.page.locator("canvas");
+    const canvas = this.canvasLocator();
     await canvas.click();
     await this.page.keyboard.type(text);
   }
@@ -59,7 +65,7 @@ export class KodemirrorDriver implements EditorDriver {
   }
 
   async focus(): Promise<void> {
-    const canvas = this.page.locator("canvas");
+    const canvas = this.canvasLocator();
     await canvas.click();
   }
 

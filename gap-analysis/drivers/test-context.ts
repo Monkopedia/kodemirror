@@ -12,10 +12,11 @@ export interface GapTestFixtures {
 const cm6FixturePath = path.join(__dirname, "..", "fixtures", "cm6-test.html");
 
 // How long to wait for the Kodemirror wasmJs app to become ready.
-// In headless Chromium, Skiko/Compose may never initialize (no GPU / WebGL).
-// Set KM_READY_TIMEOUT=90000 (or higher) when running with a display server.
+// With Xvfb (DISPLAY set), Skiko/Compose can render; use 30s default.
+// Without a display, KM will fail quickly (5s timeout).
+const hasDisplay = !!process.env.DISPLAY;
 const KM_READY_TIMEOUT = parseInt(
-  process.env.KM_READY_TIMEOUT ?? "5000",
+  process.env.KM_READY_TIMEOUT ?? (hasDisplay ? "30000" : "5000"),
   10
 );
 
