@@ -113,12 +113,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1206,
+                      "duration": 1195,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:51:29.852Z",
+                      "startTime": "2026-03-22T22:08:52.216Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -133,7 +133,7 @@
             },
             {
               "title": "Delete key",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -146,53 +146,18 @@
                     {
                       "workerIndex": 0,
                       "parallelIndex": 0,
-                      "status": "failed",
-                      "duration": 1074,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m228\u001b[39m\nReceived: \u001b[31m229\u001b[39m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m228\u001b[39m\nReceived: \u001b[31m229\u001b[39m\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/editing.spec.ts:51:38",
-                        "location": {
-                          "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/editing.spec.ts",
-                          "column": 38,
-                          "line": 51
-                        },
-                        "snippet": "  49 |     if (km) {\n  50 |       const kmAfter = await km.getState();\n> 51 |       expect(kmAfter.docInfo.length).toBe(kmBefore!.docInfo.length - 1);\n     |                                      ^\n  52 |       expect(kmAfter.cursor.pos).toBe(kmBefore!.cursor.pos);\n  53 |     }\n  54 |   });"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/editing.spec.ts",
-                            "column": 38,
-                            "line": 51
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m228\u001b[39m\nReceived: \u001b[31m229\u001b[39m\n\n  49 |     if (km) {\n  50 |       const kmAfter = await km.getState();\n> 51 |       expect(kmAfter.docInfo.length).toBe(kmBefore!.docInfo.length - 1);\n     |                                      ^\n  52 |       expect(kmAfter.cursor.pos).toBe(kmBefore!.cursor.pos);\n  53 |     }\n  54 |   });\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/editing.spec.ts:51:38"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 1030,
+                      "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:51:31.247Z",
+                      "startTime": "2026-03-22T22:08:53.587Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/editing-Editing-Delete-key-gap-analysis/test-failed-1.png"
-                        },
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/editing-Editing-Delete-key-gap-analysis/test-failed-2.png"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/editing.spec.ts",
-                        "column": 38,
-                        "line": 51
-                      }
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "9cdefc69da2b06b5d427-a3d2f07ba40fec4d3861",
@@ -213,15 +178,15 @@
                   "projectName": "gap-analysis",
                   "results": [
                     {
-                      "workerIndex": 2,
+                      "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1136,
+                      "duration": 1088,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:51:33.084Z",
+                      "startTime": "2026-03-22T22:08:54.627Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -247,15 +212,15 @@
                   "projectName": "gap-analysis",
                   "results": [
                     {
-                      "workerIndex": 2,
+                      "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1151,
+                      "duration": 1594,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:51:34.402Z",
+                      "startTime": "2026-03-22T22:08:55.726Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -281,13 +246,13 @@
                   "projectName": "gap-analysis",
                   "results": [
                     {
-                      "workerIndex": 2,
+                      "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 2104,
+                      "duration": 2641,
                       "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"REDO_TEST\"\u001b[39m\nReceived string:    \u001b[31m\"// Fibonacci sequence\u001b[39m\n\u001b[31mfunction fibonacci(n) {\u001b[39m\n\u001b[31m    if (n <= 1) return n;\u001b[39m\n\u001b[31m    return fibonacci(n - 1) + fibonacci(n - 2);\u001b[39m\n\u001b[31m}·\u001b[39m\n\u001b[31m// Print first 10 numbers\u001b[39m\n\u001b[31mfor (let i = 0; i < 10; i++) {\u001b[39m\n\u001b[31m    console.log(`fib(${i}) = ${fibonacci(i)}`);\u001b[39m\n\u001b[31m}RREREDREDOREDO_TTESST\"\u001b[39m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"REDO_TEST\"\u001b[39m\nReceived string:    \u001b[31m\"// Fibonacci sequence\u001b[39m\n\u001b[31mfunction fibonacci(n) {\u001b[39m\n\u001b[31m    if (n <= 1) return n;\u001b[39m\n\u001b[31m    return fibonacci(n - 1) + fibonacci(n - 2);\u001b[39m\n\u001b[31m}·\u001b[39m\n\u001b[31m// Print first 10 numbers\u001b[39m\n\u001b[31mfor (let i = 0; i < 10; i++) {\u001b[39m\n\u001b[31m    console.log(`fib(${i}) = ${fibonacci(i)}`);\u001b[39m\n\u001b[31m}RREREDREDOREDO_TTESST\"\u001b[39m\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/editing.spec.ts:120:23",
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"REDO_TEST\"\u001b[39m\nReceived string:    \u001b[31m\"// Fibonacci sequence\u001b[39m\n\u001b[31mfunction fibonacci(n) {\u001b[39m\n\u001b[31m    if (n <= 1) return n;\u001b[39m\n\u001b[31m    return fibonacci(n - 1) + fibonacci(n - 2);\u001b[39m\n\u001b[31m}·\u001b[39m\n\u001b[31m// Print first 10 numbers\u001b[39m\n\u001b[31mfor (let i = 0; i < 10; i++) {\u001b[39m\n\u001b[31m    console.log(`fib(${i}) = ${fibonacci(i)}`);\u001b[39m\n\u001b[31m}REEDEDOEDO_EDO_TEDO_TEEDO_TESEDO_TEST\"\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"REDO_TEST\"\u001b[39m\nReceived string:    \u001b[31m\"// Fibonacci sequence\u001b[39m\n\u001b[31mfunction fibonacci(n) {\u001b[39m\n\u001b[31m    if (n <= 1) return n;\u001b[39m\n\u001b[31m    return fibonacci(n - 1) + fibonacci(n - 2);\u001b[39m\n\u001b[31m}·\u001b[39m\n\u001b[31m// Print first 10 numbers\u001b[39m\n\u001b[31mfor (let i = 0; i < 10; i++) {\u001b[39m\n\u001b[31m    console.log(`fib(${i}) = ${fibonacci(i)}`);\u001b[39m\n\u001b[31m}REEDEDOEDO_EDO_TEDO_TEEDO_TESEDO_TEST\"\u001b[39m\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/editing.spec.ts:120:23",
                         "location": {
                           "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/editing.spec.ts",
                           "column": 23,
@@ -302,13 +267,13 @@
                             "column": 23,
                             "line": 120
                           },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"REDO_TEST\"\u001b[39m\nReceived string:    \u001b[31m\"// Fibonacci sequence\u001b[39m\n\u001b[31mfunction fibonacci(n) {\u001b[39m\n\u001b[31m    if (n <= 1) return n;\u001b[39m\n\u001b[31m    return fibonacci(n - 1) + fibonacci(n - 2);\u001b[39m\n\u001b[31m}·\u001b[39m\n\u001b[31m// Print first 10 numbers\u001b[39m\n\u001b[31mfor (let i = 0; i < 10; i++) {\u001b[39m\n\u001b[31m    console.log(`fib(${i}) = ${fibonacci(i)}`);\u001b[39m\n\u001b[31m}RREREDREDOREDO_TTESST\"\u001b[39m\n\n  118 |     if (km) {\n  119 |       const kmAfter = await km.getDoc();\n> 120 |       expect(kmAfter).toContain(\"REDO_TEST\");\n      |                       ^\n  121 |     }\n  122 |   });\n  123 |\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/editing.spec.ts:120:23"
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"REDO_TEST\"\u001b[39m\nReceived string:    \u001b[31m\"// Fibonacci sequence\u001b[39m\n\u001b[31mfunction fibonacci(n) {\u001b[39m\n\u001b[31m    if (n <= 1) return n;\u001b[39m\n\u001b[31m    return fibonacci(n - 1) + fibonacci(n - 2);\u001b[39m\n\u001b[31m}·\u001b[39m\n\u001b[31m// Print first 10 numbers\u001b[39m\n\u001b[31mfor (let i = 0; i < 10; i++) {\u001b[39m\n\u001b[31m    console.log(`fib(${i}) = ${fibonacci(i)}`);\u001b[39m\n\u001b[31m}REEDEDOEDO_EDO_TEDO_TEEDO_TESEDO_TEST\"\u001b[39m\n\n  118 |     if (km) {\n  119 |       const kmAfter = await km.getDoc();\n> 120 |       expect(kmAfter).toContain(\"REDO_TEST\");\n      |                       ^\n  121 |     }\n  122 |   });\n  123 |\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/editing.spec.ts:120:23"
                         }
                       ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:51:35.562Z",
+                      "startTime": "2026-03-22T22:08:57.332Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -350,15 +315,15 @@
                   "projectName": "gap-analysis",
                   "results": [
                     {
-                      "workerIndex": 5,
+                      "workerIndex": 2,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1246,
+                      "duration": 1698,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:51:38.470Z",
+                      "startTime": "2026-03-22T22:09:00.750Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -404,12 +369,12 @@
                       "workerIndex": 1,
                       "parallelIndex": 1,
                       "status": "passed",
-                      "duration": 1119,
+                      "duration": 1584,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:51:29.853Z",
+                      "startTime": "2026-03-22T22:08:52.209Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -438,12 +403,12 @@
                       "workerIndex": 1,
                       "parallelIndex": 1,
                       "status": "passed",
-                      "duration": 1005,
+                      "duration": 997,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:51:31.167Z",
+                      "startTime": "2026-03-22T22:08:53.978Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -458,7 +423,7 @@
             },
             {
               "title": "initial cursor position",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -471,53 +436,18 @@
                     {
                       "workerIndex": 1,
                       "parallelIndex": 1,
-                      "status": "failed",
-                      "duration": 1056,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m0\u001b[39m\nReceived: \u001b[31m229\u001b[39m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m0\u001b[39m\nReceived: \u001b[31m229\u001b[39m\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/features.spec.ts:54:28",
-                        "location": {
-                          "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/features.spec.ts",
-                          "column": 28,
-                          "line": 54
-                        },
-                        "snippet": "  52 |     if (km) {\n  53 |       const kmCursor = await km.getCursor();\n> 54 |       expect(kmCursor.pos).toBe(0);\n     |                            ^\n  55 |       expect(kmCursor.line).toBe(cm6Cursor.line);\n  56 |       expect(kmCursor.col).toBe(cm6Cursor.col);\n  57 |     }"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/features.spec.ts",
-                            "column": 28,
-                            "line": 54
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m0\u001b[39m\nReceived: \u001b[31m229\u001b[39m\n\n  52 |     if (km) {\n  53 |       const kmCursor = await km.getCursor();\n> 54 |       expect(kmCursor.pos).toBe(0);\n     |                            ^\n  55 |       expect(kmCursor.line).toBe(cm6Cursor.line);\n  56 |       expect(kmCursor.col).toBe(cm6Cursor.col);\n  57 |     }\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/features.spec.ts:54:28"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 1002,
+                      "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:51:32.182Z",
+                      "startTime": "2026-03-22T22:08:54.982Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/features-Features-initial-cursor-position-gap-analysis/test-failed-1.png"
-                        },
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/features-Features-initial-cursor-position-gap-analysis/test-failed-2.png"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/features.spec.ts",
-                        "column": 28,
-                        "line": 54
-                      }
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "85b3cc1667c06e9efc8f-6f0da8b2f8a289425953",
@@ -527,7 +457,7 @@
             },
             {
               "title": "bracket matching - cursor next to bracket",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -538,55 +468,20 @@
                   "projectName": "gap-analysis",
                   "results": [
                     {
-                      "workerIndex": 3,
+                      "workerIndex": 1,
                       "parallelIndex": 1,
-                      "status": "failed",
-                      "duration": 2148,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m19\u001b[39m\nReceived: \u001b[31m16\u001b[39m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m19\u001b[39m\nReceived: \u001b[31m16\u001b[39m\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/features.spec.ts:80:34",
-                        "location": {
-                          "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/features.spec.ts",
-                          "column": 34,
-                          "line": 80
-                        },
-                        "snippet": "  78 |     if (km) {\n  79 |       const kmState = await km.getState();\n> 80 |       expect(kmState.cursor.col).toBe(cm6State.cursor.col);\n     |                                  ^\n  81 |       expect(kmState.cursor.line).toBe(cm6State.cursor.line);\n  82 |     }\n  83 |   });"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/features.spec.ts",
-                            "column": 34,
-                            "line": 80
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m19\u001b[39m\nReceived: \u001b[31m16\u001b[39m\n\n  78 |     if (km) {\n  79 |       const kmState = await km.getState();\n> 80 |       expect(kmState.cursor.col).toBe(cm6State.cursor.col);\n     |                                  ^\n  81 |       expect(kmState.cursor.line).toBe(cm6State.cursor.line);\n  82 |     }\n  83 |   });\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/features.spec.ts:80:34"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 1852,
+                      "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:51:34.020Z",
+                      "startTime": "2026-03-22T22:08:55.994Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/features-Features-bracket-matching---cursor-next-to-bracket-gap-analysis/test-failed-2.png"
-                        },
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/features-Features-bracket-matching---cursor-next-to-bracket-gap-analysis/test-failed-1.png"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/features.spec.ts",
-                        "column": 34,
-                        "line": 80
-                      }
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "85b3cc1667c06e9efc8f-7a908f2a660cd4c0d742",
@@ -613,7 +508,7 @@
           "specs": [
             {
               "title": "arrow keys - right",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -624,55 +519,20 @@
                   "projectName": "gap-analysis",
                   "results": [
                     {
-                      "workerIndex": 4,
+                      "workerIndex": 1,
                       "parallelIndex": 1,
-                      "status": "failed",
-                      "duration": 1207,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m1\u001b[39m\nReceived: \u001b[31m0\u001b[39m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m1\u001b[39m\nReceived: \u001b[31m0\u001b[39m\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/navigation.spec.ts:21:28",
-                        "location": {
-                          "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/navigation.spec.ts",
-                          "column": 28,
-                          "line": 21
-                        },
-                        "snippet": "  19 |     if (km) {\n  20 |       const kmCursor = await km.getCursor();\n> 21 |       expect(kmCursor.pos).toBe(cm6Cursor.pos);\n     |                            ^\n  22 |       expect(kmCursor.col).toBe(cm6Cursor.col);\n  23 |     }\n  24 |   });"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/navigation.spec.ts",
-                            "column": 28,
-                            "line": 21
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m1\u001b[39m\nReceived: \u001b[31m0\u001b[39m\n\n  19 |     if (km) {\n  20 |       const kmCursor = await km.getCursor();\n> 21 |       expect(kmCursor.pos).toBe(cm6Cursor.pos);\n     |                            ^\n  22 |       expect(kmCursor.col).toBe(cm6Cursor.col);\n  23 |     }\n  24 |   });\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/navigation.spec.ts:21:28"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 1016,
+                      "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:51:37.071Z",
+                      "startTime": "2026-03-22T22:08:57.858Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/navigation-Navigation-arrow-keys---right-gap-analysis/test-failed-1.png"
-                        },
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/navigation-Navigation-arrow-keys---right-gap-analysis/test-failed-2.png"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/navigation.spec.ts",
-                        "column": 28,
-                        "line": 21
-                      }
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "5d2868f7d23420c27cca-33455e43d556c4bdb2cf",
@@ -693,15 +553,15 @@
                   "projectName": "gap-analysis",
                   "results": [
                     {
-                      "workerIndex": 6,
+                      "workerIndex": 1,
                       "parallelIndex": 1,
                       "status": "passed",
-                      "duration": 1172,
+                      "duration": 1047,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:51:39.231Z",
+                      "startTime": "2026-03-22T22:08:58.885Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -716,7 +576,7 @@
             },
             {
               "title": "arrow keys - down",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -727,55 +587,20 @@
                   "projectName": "gap-analysis",
                   "results": [
                     {
-                      "workerIndex": 6,
+                      "workerIndex": 1,
                       "parallelIndex": 1,
-                      "status": "failed",
-                      "duration": 1087,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m2\u001b[39m\nReceived: \u001b[31m10\u001b[39m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m2\u001b[39m\nReceived: \u001b[31m10\u001b[39m\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/navigation.spec.ts:61:29",
-                        "location": {
-                          "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/navigation.spec.ts",
-                          "column": 29,
-                          "line": 61
-                        },
-                        "snippet": "  59 |     if (km) {\n  60 |       const kmCursor = await km.getCursor();\n> 61 |       expect(kmCursor.line).toBe(cm6Cursor.line);\n     |                             ^\n  62 |       expect(kmCursor.col).toBe(cm6Cursor.col);\n  63 |     }\n  64 |   });"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/navigation.spec.ts",
-                            "column": 29,
-                            "line": 61
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m2\u001b[39m\nReceived: \u001b[31m10\u001b[39m\n\n  59 |     if (km) {\n  60 |       const kmCursor = await km.getCursor();\n> 61 |       expect(kmCursor.line).toBe(cm6Cursor.line);\n     |                             ^\n  62 |       expect(kmCursor.col).toBe(cm6Cursor.col);\n  63 |     }\n  64 |   });\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/navigation.spec.ts:61:29"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 1033,
+                      "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:51:40.585Z",
+                      "startTime": "2026-03-22T22:08:59.940Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/navigation-Navigation-arrow-keys---down-gap-analysis/test-failed-1.png"
-                        },
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/navigation-Navigation-arrow-keys---down-gap-analysis/test-failed-2.png"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/navigation.spec.ts",
-                        "column": 29,
-                        "line": 61
-                      }
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "5d2868f7d23420c27cca-4229bc5c6ace3baf50e2",
@@ -785,7 +610,7 @@
             },
             {
               "title": "arrow keys - up",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -796,55 +621,20 @@
                   "projectName": "gap-analysis",
                   "results": [
                     {
-                      "workerIndex": 8,
+                      "workerIndex": 1,
                       "parallelIndex": 1,
-                      "status": "failed",
-                      "duration": 1161,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m9\u001b[39m\nReceived: \u001b[31m10\u001b[39m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m9\u001b[39m\nReceived: \u001b[31m10\u001b[39m\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/navigation.spec.ts:77:29",
-                        "location": {
-                          "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/navigation.spec.ts",
-                          "column": 29,
-                          "line": 77
-                        },
-                        "snippet": "  75 |     if (km) {\n  76 |       const kmCursor = await km.getCursor();\n> 77 |       expect(kmCursor.line).toBe(cm6Cursor.line);\n     |                             ^\n  78 |       expect(kmCursor.col).toBe(cm6Cursor.col);\n  79 |     }\n  80 |   });"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/navigation.spec.ts",
-                            "column": 29,
-                            "line": 77
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m9\u001b[39m\nReceived: \u001b[31m10\u001b[39m\n\n  75 |     if (km) {\n  76 |       const kmCursor = await km.getCursor();\n> 77 |       expect(kmCursor.line).toBe(cm6Cursor.line);\n     |                             ^\n  78 |       expect(kmCursor.col).toBe(cm6Cursor.col);\n  79 |     }\n  80 |   });\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/navigation.spec.ts:77:29"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 1496,
+                      "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:51:42.471Z",
+                      "startTime": "2026-03-22T22:09:00.981Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/navigation-Navigation-arrow-keys---up-gap-analysis/test-failed-2.png"
-                        },
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/navigation-Navigation-arrow-keys---up-gap-analysis/test-failed-1.png"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/navigation.spec.ts",
-                        "column": 29,
-                        "line": 77
-                      }
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "5d2868f7d23420c27cca-b5deea75aad3dde3c6fe",
@@ -854,7 +644,7 @@
             },
             {
               "title": "Home key",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -865,55 +655,20 @@
                   "projectName": "gap-analysis",
                   "results": [
                     {
-                      "workerIndex": 9,
+                      "workerIndex": 1,
                       "parallelIndex": 1,
-                      "status": "failed",
-                      "duration": 1174,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m0\u001b[39m\nReceived: \u001b[31m4\u001b[39m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m0\u001b[39m\nReceived: \u001b[31m4\u001b[39m\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/navigation.spec.ts:98:28",
-                        "location": {
-                          "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/navigation.spec.ts",
-                          "column": 28,
-                          "line": 98
-                        },
-                        "snippet": "   96 |     if (km) {\n   97 |       const kmCursor = await km.getCursor();\n>  98 |       expect(kmCursor.col).toBe(cm6Cursor.col);\n      |                            ^\n   99 |     }\n  100 |   });\n  101 |"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/navigation.spec.ts",
-                            "column": 28,
-                            "line": 98
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m0\u001b[39m\nReceived: \u001b[31m4\u001b[39m\n\n   96 |     if (km) {\n   97 |       const kmCursor = await km.getCursor();\n>  98 |       expect(kmCursor.col).toBe(cm6Cursor.col);\n      |                            ^\n   99 |     }\n  100 |   });\n  101 |\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/navigation.spec.ts:98:28"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 1135,
+                      "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:51:44.589Z",
+                      "startTime": "2026-03-22T22:09:02.484Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/navigation-Navigation-Home-key-gap-analysis/test-failed-1.png"
-                        },
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/navigation-Navigation-Home-key-gap-analysis/test-failed-2.png"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/navigation.spec.ts",
-                        "column": 28,
-                        "line": 98
-                      }
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "5d2868f7d23420c27cca-dec55eb3d1c87c21eca9",
@@ -934,15 +689,15 @@
                   "projectName": "gap-analysis",
                   "results": [
                     {
-                      "workerIndex": 11,
+                      "workerIndex": 1,
                       "parallelIndex": 1,
                       "status": "passed",
-                      "duration": 1119,
+                      "duration": 1038,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:51:46.692Z",
+                      "startTime": "2026-03-22T22:09:03.627Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -957,7 +712,7 @@
             },
             {
               "title": "Ctrl+Home - go to document start",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -968,55 +723,20 @@
                   "projectName": "gap-analysis",
                   "results": [
                     {
-                      "workerIndex": 11,
+                      "workerIndex": 1,
                       "parallelIndex": 1,
-                      "status": "failed",
-                      "duration": 1036,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m0\u001b[39m\nReceived: \u001b[31m229\u001b[39m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m0\u001b[39m\nReceived: \u001b[31m229\u001b[39m\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/navigation.spec.ts:130:28",
-                        "location": {
-                          "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/navigation.spec.ts",
-                          "column": 28,
-                          "line": 130
-                        },
-                        "snippet": "  128 |     if (km) {\n  129 |       const kmCursor = await km.getCursor();\n> 130 |       expect(kmCursor.pos).toBe(0);\n      |                            ^\n  131 |     }\n  132 |   });\n  133 |"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/navigation.spec.ts",
-                            "column": 28,
-                            "line": 130
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m0\u001b[39m\nReceived: \u001b[31m229\u001b[39m\n\n  128 |     if (km) {\n  129 |       const kmCursor = await km.getCursor();\n> 130 |       expect(kmCursor.pos).toBe(0);\n      |                            ^\n  131 |     }\n  132 |   });\n  133 |\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/navigation.spec.ts:130:28"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 1522,
+                      "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:51:48.015Z",
+                      "startTime": "2026-03-22T22:09:04.673Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/navigation-Navigation-Ctrl-Home---go-to-document-start-gap-analysis/test-failed-1.png"
-                        },
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/navigation-Navigation-Ctrl-Home---go-to-document-start-gap-analysis/test-failed-2.png"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/navigation.spec.ts",
-                        "column": 28,
-                        "line": 130
-                      }
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "5d2868f7d23420c27cca-cea34d48fee72d7618f8",
@@ -1037,15 +757,15 @@
                   "projectName": "gap-analysis",
                   "results": [
                     {
-                      "workerIndex": 14,
+                      "workerIndex": 1,
                       "parallelIndex": 1,
                       "status": "passed",
-                      "duration": 1094,
+                      "duration": 1032,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:51:49.811Z",
+                      "startTime": "2026-03-22T22:09:06.202Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1060,7 +780,7 @@
             },
             {
               "title": "Ctrl+Right - word movement forward",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -1071,55 +791,20 @@
                   "projectName": "gap-analysis",
                   "results": [
                     {
-                      "workerIndex": 14,
+                      "workerIndex": 1,
                       "parallelIndex": 1,
-                      "status": "failed",
-                      "duration": 1063,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m2\u001b[39m\nReceived: \u001b[31m0\u001b[39m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m2\u001b[39m\nReceived: \u001b[31m0\u001b[39m\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/navigation.spec.ts:161:28",
-                        "location": {
-                          "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/navigation.spec.ts",
-                          "column": 28,
-                          "line": 161
-                        },
-                        "snippet": "  159 |     if (km) {\n  160 |       const kmCursor = await km.getCursor();\n> 161 |       expect(kmCursor.pos).toBe(cm6Cursor.pos);\n      |                            ^\n  162 |     }\n  163 |   });\n  164 |"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/navigation.spec.ts",
-                            "column": 28,
-                            "line": 161
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m2\u001b[39m\nReceived: \u001b[31m0\u001b[39m\n\n  159 |     if (km) {\n  160 |       const kmCursor = await km.getCursor();\n> 161 |       expect(kmCursor.pos).toBe(cm6Cursor.pos);\n      |                            ^\n  162 |     }\n  163 |   });\n  164 |\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/navigation.spec.ts:161:28"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 1031,
+                      "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:51:51.086Z",
+                      "startTime": "2026-03-22T22:09:07.241Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/navigation-Navigation-Ctrl-Right---word-movement-forward-gap-analysis/test-failed-1.png"
-                        },
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/navigation-Navigation-Ctrl-Right---word-movement-forward-gap-analysis/test-failed-2.png"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/navigation.spec.ts",
-                        "column": 28,
-                        "line": 161
-                      }
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "5d2868f7d23420c27cca-ef43df5daec0e7e0f707",
@@ -1129,7 +814,7 @@
             },
             {
               "title": "Ctrl+Left - word movement backward",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -1140,55 +825,20 @@
                   "projectName": "gap-analysis",
                   "results": [
                     {
-                      "workerIndex": 16,
+                      "workerIndex": 1,
                       "parallelIndex": 1,
-                      "status": "failed",
-                      "duration": 1160,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m13\u001b[39m\nReceived: \u001b[31m21\u001b[39m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m13\u001b[39m\nReceived: \u001b[31m21\u001b[39m\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/navigation.spec.ts:178:28",
-                        "location": {
-                          "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/navigation.spec.ts",
-                          "column": 28,
-                          "line": 178
-                        },
-                        "snippet": "  176 |     if (km) {\n  177 |       const kmCursor = await km.getCursor();\n> 178 |       expect(kmCursor.pos).toBe(cm6Cursor.pos);\n      |                            ^\n  179 |     }\n  180 |   });\n  181 |"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/navigation.spec.ts",
-                            "column": 28,
-                            "line": 178
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m13\u001b[39m\nReceived: \u001b[31m21\u001b[39m\n\n  176 |     if (km) {\n  177 |       const kmCursor = await km.getCursor();\n> 178 |       expect(kmCursor.pos).toBe(cm6Cursor.pos);\n      |                            ^\n  179 |     }\n  180 |   });\n  181 |\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/navigation.spec.ts:178:28"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 1090,
+                      "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:51:52.929Z",
+                      "startTime": "2026-03-22T22:09:08.280Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/navigation-Navigation-Ctrl-Left---word-movement-backward-gap-analysis/test-failed-1.png"
-                        },
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/navigation-Navigation-Ctrl-Left---word-movement-backward-gap-analysis/test-failed-2.png"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/navigation.spec.ts",
-                        "column": 28,
-                        "line": 178
-                      }
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "5d2868f7d23420c27cca-36281fdce9102430a3cb",
@@ -1209,10 +859,10 @@
                   "projectName": "gap-analysis",
                   "results": [
                     {
-                      "workerIndex": 18,
+                      "workerIndex": 1,
                       "parallelIndex": 1,
                       "status": "failed",
-                      "duration": 1180,
+                      "duration": 2096,
                       "error": {
                         "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m21\u001b[39m\nReceived: \u001b[31m25\u001b[39m",
                         "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m21\u001b[39m\nReceived: \u001b[31m25\u001b[39m\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/navigation.spec.ts:198:28",
@@ -1236,18 +886,18 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:51:55.009Z",
+                      "startTime": "2026-03-22T22:09:09.376Z",
                       "annotations": [],
                       "attachments": [
                         {
                           "name": "screenshot",
                           "contentType": "image/png",
-                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/navigation-Navigation-column-memory-across-lines-gap-analysis/test-failed-1.png"
+                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/navigation-Navigation-column-memory-across-lines-gap-analysis/test-failed-2.png"
                         },
                         {
                           "name": "screenshot",
                           "contentType": "image/png",
-                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/navigation-Navigation-column-memory-across-lines-gap-analysis/test-failed-2.png"
+                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/navigation-Navigation-column-memory-across-lines-gap-analysis/test-failed-1.png"
                         }
                       ],
                       "errorLocation": {
@@ -1284,7 +934,7 @@
           "specs": [
             {
               "title": "Shift+Right - extend selection right",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -1295,55 +945,20 @@
                   "projectName": "gap-analysis",
                   "results": [
                     {
-                      "workerIndex": 5,
+                      "workerIndex": 2,
                       "parallelIndex": 0,
-                      "status": "failed",
-                      "duration": 1104,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mfalse\u001b[39m\nReceived: \u001b[31mtrue\u001b[39m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mfalse\u001b[39m\nReceived: \u001b[31mtrue\u001b[39m\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/selection.spec.ts:20:27",
-                        "location": {
-                          "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/selection.spec.ts",
-                          "column": 27,
-                          "line": 20
-                        },
-                        "snippet": "  18 |     if (km) {\n  19 |       const kmSel = await km.getSelection();\n> 20 |       expect(kmSel.empty).toBe(false);\n     |                           ^\n  21 |       expect(kmSel.anchor).toBe(cm6Sel.anchor);\n  22 |       expect(kmSel.head).toBe(cm6Sel.head);\n  23 |     }"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/selection.spec.ts",
-                            "column": 27,
-                            "line": 20
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mfalse\u001b[39m\nReceived: \u001b[31mtrue\u001b[39m\n\n  18 |     if (km) {\n  19 |       const kmSel = await km.getSelection();\n> 20 |       expect(kmSel.empty).toBe(false);\n     |                           ^\n  21 |       expect(kmSel.anchor).toBe(cm6Sel.anchor);\n  22 |       expect(kmSel.head).toBe(cm6Sel.head);\n  23 |     }\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/selection.spec.ts:20:27"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 1062,
+                      "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:51:39.880Z",
+                      "startTime": "2026-03-22T22:09:02.635Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/selection-Selection-Shift-Right---extend-selection-right-gap-analysis/test-failed-1.png"
-                        },
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/selection-Selection-Shift-Right---extend-selection-right-gap-analysis/test-failed-2.png"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/selection.spec.ts",
-                        "column": 27,
-                        "line": 20
-                      }
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "3c1ccfa8f32b1efd3e53-fa98405e2e710ff3c950",
@@ -1353,7 +968,7 @@
             },
             {
               "title": "Shift+Left - extend selection left",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -1364,55 +979,20 @@
                   "projectName": "gap-analysis",
                   "results": [
                     {
-                      "workerIndex": 7,
+                      "workerIndex": 2,
                       "parallelIndex": 0,
-                      "status": "failed",
-                      "duration": 2245,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m4\u001b[39m\nReceived: \u001b[31m5\u001b[39m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m4\u001b[39m\nReceived: \u001b[31m5\u001b[39m\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/selection.spec.ts:41:26",
-                        "location": {
-                          "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/selection.spec.ts",
-                          "column": 26,
-                          "line": 41
-                        },
-                        "snippet": "  39 |       const kmSel = await km.getSelection();\n  40 |       expect(kmSel.anchor).toBe(cm6Sel.anchor);\n> 41 |       expect(kmSel.head).toBe(cm6Sel.head);\n     |                          ^\n  42 |     }\n  43 |   });\n  44 |"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/selection.spec.ts",
-                            "column": 26,
-                            "line": 41
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m4\u001b[39m\nReceived: \u001b[31m5\u001b[39m\n\n  39 |       const kmSel = await km.getSelection();\n  40 |       expect(kmSel.anchor).toBe(cm6Sel.anchor);\n> 41 |       expect(kmSel.head).toBe(cm6Sel.head);\n     |                          ^\n  42 |     }\n  43 |   });\n  44 |\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/selection.spec.ts:41:26"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 1156,
+                      "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:51:41.785Z",
+                      "startTime": "2026-03-22T22:09:03.708Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/selection-Selection-Shift-Left---extend-selection-left-gap-analysis/test-failed-2.png"
-                        },
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/selection-Selection-Shift-Left---extend-selection-left-gap-analysis/test-failed-1.png"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/selection.spec.ts",
-                        "column": 26,
-                        "line": 41
-                      }
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "3c1ccfa8f32b1efd3e53-0eb9ac83ff8bd1920910",
@@ -1422,7 +1002,7 @@
             },
             {
               "title": "Shift+Down - extend selection down",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -1433,55 +1013,20 @@
                   "projectName": "gap-analysis",
                   "results": [
                     {
-                      "workerIndex": 10,
+                      "workerIndex": 2,
                       "parallelIndex": 0,
-                      "status": "failed",
-                      "duration": 1185,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m22\u001b[39m\nReceived: \u001b[31m0\u001b[39m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m22\u001b[39m\nReceived: \u001b[31m0\u001b[39m\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/selection.spec.ts:55:26",
-                        "location": {
-                          "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/selection.spec.ts",
-                          "column": 26,
-                          "line": 55
-                        },
-                        "snippet": "  53 |       const kmSel = await km.getSelection();\n  54 |       expect(kmSel.anchor).toBe(cm6Sel.anchor);\n> 55 |       expect(kmSel.head).toBe(cm6Sel.head);\n     |                          ^\n  56 |     }\n  57 |   });\n  58 |"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/selection.spec.ts",
-                            "column": 26,
-                            "line": 55
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m22\u001b[39m\nReceived: \u001b[31m0\u001b[39m\n\n  53 |       const kmSel = await km.getSelection();\n  54 |       expect(kmSel.anchor).toBe(cm6Sel.anchor);\n> 55 |       expect(kmSel.head).toBe(cm6Sel.head);\n     |                          ^\n  56 |     }\n  57 |   });\n  58 |\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/selection.spec.ts:55:26"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 1009,
+                      "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:51:44.999Z",
+                      "startTime": "2026-03-22T22:09:04.875Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/selection-Selection-Shift-Down---extend-selection-down-gap-analysis/test-failed-1.png"
-                        },
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/selection-Selection-Shift-Down---extend-selection-down-gap-analysis/test-failed-2.png"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/selection.spec.ts",
-                        "column": 26,
-                        "line": 55
-                      }
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "3c1ccfa8f32b1efd3e53-be274b7b4f8405e568fc",
@@ -1491,7 +1036,7 @@
             },
             {
               "title": "Ctrl+Shift+Right - select word right",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -1502,55 +1047,20 @@
                   "projectName": "gap-analysis",
                   "results": [
                     {
-                      "workerIndex": 12,
+                      "workerIndex": 2,
                       "parallelIndex": 0,
-                      "status": "failed",
-                      "duration": 1149,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m2\u001b[39m\nReceived: \u001b[31m0\u001b[39m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m2\u001b[39m\nReceived: \u001b[31m0\u001b[39m\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/selection.spec.ts:69:26",
-                        "location": {
-                          "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/selection.spec.ts",
-                          "column": 26,
-                          "line": 69
-                        },
-                        "snippet": "  67 |       const kmSel = await km.getSelection();\n  68 |       expect(kmSel.anchor).toBe(cm6Sel.anchor);\n> 69 |       expect(kmSel.head).toBe(cm6Sel.head);\n     |                          ^\n  70 |     }\n  71 |   });\n  72 |"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/selection.spec.ts",
-                            "column": 26,
-                            "line": 69
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m2\u001b[39m\nReceived: \u001b[31m0\u001b[39m\n\n  67 |       const kmSel = await km.getSelection();\n  68 |       expect(kmSel.anchor).toBe(cm6Sel.anchor);\n> 69 |       expect(kmSel.head).toBe(cm6Sel.head);\n     |                          ^\n  70 |     }\n  71 |   });\n  72 |\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/selection.spec.ts:69:26"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 1036,
+                      "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:51:47.119Z",
+                      "startTime": "2026-03-22T22:09:05.893Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/selection-Selection-Ctrl-Shift-Right---select-word-right-gap-analysis/test-failed-1.png"
-                        },
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/selection-Selection-Ctrl-Shift-Right---select-word-right-gap-analysis/test-failed-2.png"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/selection.spec.ts",
-                        "column": 26,
-                        "line": 69
-                      }
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "3c1ccfa8f32b1efd3e53-b4c93e3384151620d29e",
@@ -1560,7 +1070,7 @@
             },
             {
               "title": "Ctrl+Shift+Left - select word left",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -1571,55 +1081,20 @@
                   "projectName": "gap-analysis",
                   "results": [
                     {
-                      "workerIndex": 13,
+                      "workerIndex": 2,
                       "parallelIndex": 0,
-                      "status": "failed",
-                      "duration": 1218,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m13\u001b[39m\nReceived: \u001b[31m21\u001b[39m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m13\u001b[39m\nReceived: \u001b[31m21\u001b[39m\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/selection.spec.ts:86:26",
-                        "location": {
-                          "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/selection.spec.ts",
-                          "column": 26,
-                          "line": 86
-                        },
-                        "snippet": "  84 |       const kmSel = await km.getSelection();\n  85 |       expect(kmSel.anchor).toBe(cm6Sel.anchor);\n> 86 |       expect(kmSel.head).toBe(cm6Sel.head);\n     |                          ^\n  87 |     }\n  88 |   });\n  89 |"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/selection.spec.ts",
-                            "column": 26,
-                            "line": 86
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m13\u001b[39m\nReceived: \u001b[31m21\u001b[39m\n\n  84 |       const kmSel = await km.getSelection();\n  85 |       expect(kmSel.anchor).toBe(cm6Sel.anchor);\n> 86 |       expect(kmSel.head).toBe(cm6Sel.head);\n     |                          ^\n  87 |     }\n  88 |   });\n  89 |\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/selection.spec.ts:86:26"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 1060,
+                      "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:51:49.192Z",
+                      "startTime": "2026-03-22T22:09:06.940Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/selection-Selection-Ctrl-Shift-Left---select-word-left-gap-analysis/test-failed-1.png"
-                        },
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/selection-Selection-Ctrl-Shift-Left---select-word-left-gap-analysis/test-failed-2.png"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/selection.spec.ts",
-                        "column": 26,
-                        "line": 86
-                      }
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "3c1ccfa8f32b1efd3e53-e1647e798cdf36926509",
@@ -1629,7 +1104,7 @@
             },
             {
               "title": "Shift+Home - select to line start",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -1640,55 +1115,20 @@
                   "projectName": "gap-analysis",
                   "results": [
                     {
-                      "workerIndex": 15,
+                      "workerIndex": 2,
                       "parallelIndex": 0,
-                      "status": "failed",
-                      "duration": 2250,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m0\u001b[39m\nReceived: \u001b[31m10\u001b[39m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m0\u001b[39m\nReceived: \u001b[31m10\u001b[39m\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/selection.spec.ts:105:26",
-                        "location": {
-                          "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/selection.spec.ts",
-                          "column": 26,
-                          "line": 105
-                        },
-                        "snippet": "  103 |       const kmSel = await km.getSelection();\n  104 |       expect(kmSel.anchor).toBe(cm6Sel.anchor);\n> 105 |       expect(kmSel.head).toBe(cm6Sel.head);\n      |                          ^\n  106 |     }\n  107 |   });\n  108 |"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/selection.spec.ts",
-                            "column": 26,
-                            "line": 105
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m0\u001b[39m\nReceived: \u001b[31m10\u001b[39m\n\n  103 |       const kmSel = await km.getSelection();\n  104 |       expect(kmSel.anchor).toBe(cm6Sel.anchor);\n> 105 |       expect(kmSel.head).toBe(cm6Sel.head);\n      |                          ^\n  106 |     }\n  107 |   });\n  108 |\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/selection.spec.ts:105:26"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 1205,
+                      "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:51:51.356Z",
+                      "startTime": "2026-03-22T22:09:08.010Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/selection-Selection-Shift-Home---select-to-line-start-gap-analysis/test-failed-2.png"
-                        },
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/selection-Selection-Shift-Home---select-to-line-start-gap-analysis/test-failed-1.png"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/selection.spec.ts",
-                        "column": 26,
-                        "line": 105
-                      }
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "3c1ccfa8f32b1efd3e53-1e4958d3d0e0d6401899",
@@ -1709,15 +1149,15 @@
                   "projectName": "gap-analysis",
                   "results": [
                     {
-                      "workerIndex": 17,
+                      "workerIndex": 2,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1174,
+                      "duration": 1047,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:51:54.550Z",
+                      "startTime": "2026-03-22T22:09:09.223Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1743,15 +1183,15 @@
                   "projectName": "gap-analysis",
                   "results": [
                     {
-                      "workerIndex": 17,
+                      "workerIndex": 2,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 992,
+                      "duration": 1030,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:51:55.892Z",
+                      "startTime": "2026-03-22T22:09:10.277Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1777,13 +1217,13 @@
                   "projectName": "gap-analysis",
                   "results": [
                     {
-                      "workerIndex": 17,
+                      "workerIndex": 2,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 2184,
+                      "duration": 2221,
                       "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"replaced\"\u001b[39m\nReceived string:    \u001b[31m\"// Fibonacci sequence\u001b[39m\n\u001b[31mfunction fibonacci(n) {\u001b[39m\n\u001b[31m    if (n <= 1) return n;\u001b[39m\n\u001b[31m    return fibonacci(n - 1) + fibonacci(n - 2);\u001b[39m\n\u001b[31m}·\u001b[39m\n\u001b[31m// Print first 10 numbers\u001b[39m\n\u001b[31mfor (let i = 0; i < 10; i++) {\u001b[39m\n\u001b[31m    console.log(`fib(${i}) = ${fibonacci(i)}`);\u001b[39m\n\u001b[31m}rrerepreplaacaceaced\"\u001b[39m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"replaced\"\u001b[39m\nReceived string:    \u001b[31m\"// Fibonacci sequence\u001b[39m\n\u001b[31mfunction fibonacci(n) {\u001b[39m\n\u001b[31m    if (n <= 1) return n;\u001b[39m\n\u001b[31m    return fibonacci(n - 1) + fibonacci(n - 2);\u001b[39m\n\u001b[31m}·\u001b[39m\n\u001b[31m// Print first 10 numbers\u001b[39m\n\u001b[31mfor (let i = 0; i < 10; i++) {\u001b[39m\n\u001b[31m    console.log(`fib(${i}) = ${fibonacci(i)}`);\u001b[39m\n\u001b[31m}rrerepreplaacaceaced\"\u001b[39m\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/selection.spec.ts:154:21",
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"replaced\"\u001b[39m\nReceived string:    \u001b[31m\"reepepleplaeplaceplaceeplaced Fibonacci sequence\u001b[39m\n\u001b[31mfunction fibonacci(n) {\u001b[39m\n\u001b[31m    if (n <= 1) return n;\u001b[39m\n\u001b[31m    return fibonacci(n - 1) + fibonacci(n - 2);\u001b[39m\n\u001b[31m}·\u001b[39m\n\u001b[31m// Print first 10 numbers\u001b[39m\n\u001b[31mfor (let i = 0; i < 10; i++) {\u001b[39m\n\u001b[31m    console.log(`fib(${i}) = ${fibonacci(i)}`);\u001b[39m\n\u001b[31m}\"\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"replaced\"\u001b[39m\nReceived string:    \u001b[31m\"reepepleplaeplaceplaceeplaced Fibonacci sequence\u001b[39m\n\u001b[31mfunction fibonacci(n) {\u001b[39m\n\u001b[31m    if (n <= 1) return n;\u001b[39m\n\u001b[31m    return fibonacci(n - 1) + fibonacci(n - 2);\u001b[39m\n\u001b[31m}·\u001b[39m\n\u001b[31m// Print first 10 numbers\u001b[39m\n\u001b[31mfor (let i = 0; i < 10; i++) {\u001b[39m\n\u001b[31m    console.log(`fib(${i}) = ${fibonacci(i)}`);\u001b[39m\n\u001b[31m}\"\u001b[39m\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/selection.spec.ts:154:21",
                         "location": {
                           "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/selection.spec.ts",
                           "column": 21,
@@ -1798,13 +1238,13 @@
                             "column": 21,
                             "line": 154
                           },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"replaced\"\u001b[39m\nReceived string:    \u001b[31m\"// Fibonacci sequence\u001b[39m\n\u001b[31mfunction fibonacci(n) {\u001b[39m\n\u001b[31m    if (n <= 1) return n;\u001b[39m\n\u001b[31m    return fibonacci(n - 1) + fibonacci(n - 2);\u001b[39m\n\u001b[31m}·\u001b[39m\n\u001b[31m// Print first 10 numbers\u001b[39m\n\u001b[31mfor (let i = 0; i < 10; i++) {\u001b[39m\n\u001b[31m    console.log(`fib(${i}) = ${fibonacci(i)}`);\u001b[39m\n\u001b[31m}rrerepreplaacaceaced\"\u001b[39m\n\n  152 |     if (km) {\n  153 |       const kmDoc = await km.getDoc();\n> 154 |       expect(kmDoc).toContain(\"replaced\");\n      |                     ^\n  155 |       const kmAfter = await km.getSelection();\n  156 |       expect(kmAfter.empty).toBe(true);\n  157 |     }\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/selection.spec.ts:154:21"
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"replaced\"\u001b[39m\nReceived string:    \u001b[31m\"reepepleplaeplaceplaceeplaced Fibonacci sequence\u001b[39m\n\u001b[31mfunction fibonacci(n) {\u001b[39m\n\u001b[31m    if (n <= 1) return n;\u001b[39m\n\u001b[31m    return fibonacci(n - 1) + fibonacci(n - 2);\u001b[39m\n\u001b[31m}·\u001b[39m\n\u001b[31m// Print first 10 numbers\u001b[39m\n\u001b[31mfor (let i = 0; i < 10; i++) {\u001b[39m\n\u001b[31m    console.log(`fib(${i}) = ${fibonacci(i)}`);\u001b[39m\n\u001b[31m}\"\u001b[39m\n\n  152 |     if (km) {\n  153 |       const kmDoc = await km.getDoc();\n> 154 |       expect(kmDoc).toContain(\"replaced\");\n      |                     ^\n  155 |       const kmAfter = await km.getSelection();\n  156 |       expect(kmAfter.empty).toBe(true);\n  157 |     }\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/selection.spec.ts:154:21"
                         }
                       ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:51:56.892Z",
+                      "startTime": "2026-03-22T22:09:11.315Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1863,15 +1303,15 @@
                   "projectName": "gap-analysis",
                   "results": [
                     {
-                      "workerIndex": 19,
+                      "workerIndex": 3,
                       "parallelIndex": 1,
                       "status": "passed",
-                      "duration": 1168,
+                      "duration": 1619,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:51:57.121Z",
+                      "startTime": "2026-03-22T22:09:12.268Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1897,15 +1337,15 @@
                   "projectName": "gap-analysis",
                   "results": [
                     {
-                      "workerIndex": 19,
+                      "workerIndex": 3,
                       "parallelIndex": 1,
                       "status": "passed",
-                      "duration": 1061,
+                      "duration": 1594,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:51:58.483Z",
+                      "startTime": "2026-03-22T22:09:14.071Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1931,10 +1371,10 @@
                   "projectName": "gap-analysis",
                   "results": [
                     {
-                      "workerIndex": 19,
+                      "workerIndex": 3,
                       "parallelIndex": 1,
                       "status": "failed",
-                      "duration": 2091,
+                      "duration": 2610,
                       "error": {
                         "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m",
                         "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/typing.spec.ts:63:26",
@@ -1958,7 +1398,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:51:59.552Z",
+                      "startTime": "2026-03-22T22:09:15.674Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2000,15 +1440,15 @@
                   "projectName": "gap-analysis",
                   "results": [
                     {
-                      "workerIndex": 21,
-                      "parallelIndex": 1,
+                      "workerIndex": 5,
+                      "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1175,
+                      "duration": 1655,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:52:02.416Z",
+                      "startTime": "2026-03-22T22:09:19.059Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -2034,10 +1474,10 @@
                   "projectName": "gap-analysis",
                   "results": [
                     {
-                      "workerIndex": 21,
-                      "parallelIndex": 1,
+                      "workerIndex": 5,
+                      "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 2147,
+                      "duration": 2701,
                       "error": {
                         "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m2\u001b[39m\nReceived: \u001b[31m0\u001b[39m",
                         "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m2\u001b[39m\nReceived: \u001b[31m0\u001b[39m\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/typing.spec.ts:106:34",
@@ -2061,7 +1501,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:52:03.782Z",
+                      "startTime": "2026-03-22T22:09:20.886Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2092,7 +1532,7 @@
             },
             {
               "title": "Tab key",
-              "ok": true,
+              "ok": false,
               "tags": [],
               "tests": [
                 {
@@ -2103,20 +1543,55 @@
                   "projectName": "gap-analysis",
                   "results": [
                     {
-                      "workerIndex": 22,
+                      "workerIndex": 6,
                       "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1078,
-                      "errors": [],
+                      "status": "failed",
+                      "duration": 1658,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m0\u001b[39m\nReceived: \u001b[31m1\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m0\u001b[39m\nReceived: \u001b[31m1\u001b[39m\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/typing.spec.ts:126:28",
+                        "location": {
+                          "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/typing.spec.ts",
+                          "column": 28,
+                          "line": 126
+                        },
+                        "snippet": "  124 |     if (km) {\n  125 |       const kmCursor = await km.getCursor();\n> 126 |       expect(kmCursor.col).toBe(cm6Col);\n      |                            ^\n  127 |     }\n  128 |   });\n  129 | });"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/typing.spec.ts",
+                            "column": 28,
+                            "line": 126
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m0\u001b[39m\nReceived: \u001b[31m1\u001b[39m\n\n  124 |     if (km) {\n  125 |       const kmCursor = await km.getCursor();\n> 126 |       expect(kmCursor.col).toBe(cm6Col);\n      |                            ^\n  127 |     }\n  128 |   });\n  129 | });\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/typing.spec.ts:126:28"
+                        }
+                      ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:52:06.650Z",
+                      "startTime": "2026-03-22T22:09:24.323Z",
                       "annotations": [],
-                      "attachments": []
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/typing-Typing-Tab-key-gap-analysis/test-failed-1.png"
+                        },
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/typing-Typing-Tab-key-gap-analysis/test-failed-2.png"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/typing.spec.ts",
+                        "column": 28,
+                        "line": 126
+                      }
                     }
                   ],
-                  "status": "expected"
+                  "status": "unexpected"
                 }
               ],
               "id": "55c4864cc1d114f1b841-59ec4f2aea8abd080f38",
@@ -2154,15 +1629,15 @@
                   "projectName": "gap-analysis",
                   "results": [
                     {
-                      "workerIndex": 20,
+                      "workerIndex": 4,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1014,
+                      "duration": 1044,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:51:59.864Z",
+                      "startTime": "2026-03-22T22:09:14.308Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -2188,15 +1663,15 @@
                   "projectName": "gap-analysis",
                   "results": [
                     {
-                      "workerIndex": 20,
+                      "workerIndex": 4,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2113,
+                      "duration": 1673,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:52:01.080Z",
+                      "startTime": "2026-03-22T22:09:15.552Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -2222,15 +1697,15 @@
                   "projectName": "gap-analysis",
                   "results": [
                     {
-                      "workerIndex": 20,
+                      "workerIndex": 4,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1065,
+                      "duration": 1070,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-22T21:52:03.204Z",
+                      "startTime": "2026-03-22T22:09:17.235Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -2250,11 +1725,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-03-22T21:51:29.013Z",
-    "duration": 38951.140999999996,
-    "expected": 18,
+    "startTime": "2026-03-22T22:08:51.385Z",
+    "duration": 34834.772,
+    "expected": 33,
     "skipped": 0,
-    "unexpected": 21,
+    "unexpected": 6,
     "flaky": 0
   }
 }

@@ -49,15 +49,31 @@ export class KodemirrorDriver implements EditorDriver {
     return this.page.locator("canvas");
   }
 
+  private async waitForUpdate(fromVersion: number): Promise<void> {
+    try {
+      await this.page.waitForFunction(
+        (v: number) => {
+          const km = (globalThis as any).__kodemirror;
+          return km && km.version > v;
+        },
+        fromVersion,
+        { timeout: 500 }
+      );
+    } catch {
+      // Key press may not change state (e.g. Ctrl+F, arrow at boundary)
+    }
+  }
+
   async type(text: string): Promise<void> {
-    // Canvas-based editor: click on canvas to focus, then type
-    const canvas = this.canvasLocator();
-    await canvas.click();
+    const ver = await this.getVersion();
     await this.page.keyboard.type(text);
+    await this.waitForUpdate(ver);
   }
 
   async press(key: string): Promise<void> {
+    const ver = await this.getVersion();
     await this.page.keyboard.press(key);
+    await this.waitForUpdate(ver);
   }
 
   async click(x: number, y: number): Promise<void> {
@@ -65,8 +81,10 @@ export class KodemirrorDriver implements EditorDriver {
   }
 
   async focus(): Promise<void> {
+    const ver = await this.getVersion();
     const canvas = this.canvasLocator();
     await canvas.click();
+    await this.waitForUpdate(ver);
   }
 
   async screenshot(path?: string): Promise<Buffer> {
