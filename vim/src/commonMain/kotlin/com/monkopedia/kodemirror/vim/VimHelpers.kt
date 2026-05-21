@@ -385,7 +385,12 @@ internal fun selectForInsert(cm: VimEditor, head: LinePos, height: Int) {
         val lineHead = offsetCursor(head, i, 0)
         sel.add(LinePosRange(anchor = lineHead, head = lineHead))
     }
-    cm.setSelections(sel, 0)
+    // Position the cursor for insert mode without recording a history boundary.
+    // A history-recorded selection here would stamp `selectionsAfter` on the
+    // preceding operator-delete event, preventing the subsequent inserted text
+    // from grouping with it — so `u` would take two steps to revert a single
+    // change command (c/cw/s/…). See #23.
+    cm.setSelections(sel, 0, addToHistory = false)
 }
 
 // ---------------------------------------------------------------------------

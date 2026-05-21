@@ -42,6 +42,7 @@ import com.monkopedia.kodemirror.state.LineNumber
 import com.monkopedia.kodemirror.state.MapMode
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.Text
+import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asInsert
 import com.monkopedia.kodemirror.state.endPos
@@ -792,7 +793,11 @@ internal fun VimEditor.setCursor(line: Int, ch: Int = 0) {
 
 internal fun VimEditor.setCursor(pos: LinePos) = setCursor(pos.line, pos.ch)
 
-internal fun VimEditor.setSelections(selections: List<LinePosRange>, primIndex: Int? = null) {
+internal fun VimEditor.setSelections(
+    selections: List<LinePosRange>,
+    primIndex: Int? = null,
+    addToHistory: Boolean = true
+) {
     val doc = session.state.doc
     val ranges = selections.map { x ->
         val head = indexFromPos(doc, x.head)
@@ -807,7 +812,12 @@ internal fun VimEditor.setSelections(selections: List<LinePosRange>, primIndex: 
         TransactionSpec(
             selection = SelectionSpec.EditorSelectionSpec(
                 EditorSelection.create(ranges, primIndex ?: 0)
-            )
+            ),
+            annotations = if (addToHistory) {
+                emptyList()
+            } else {
+                listOf(Transaction.addToHistory.of(false))
+            }
         )
     )
 }

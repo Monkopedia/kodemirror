@@ -227,6 +227,21 @@ class VimMiscTest {
     }
 
     @Test
+    fun cw_insert_is_single_undo_unit_issue23() = testVim(value = "word1 word2") { h ->
+        // Regression for #23: a change command (cw) plus the text typed in its
+        // insert session must be ONE undo unit, matching vim. Previously the
+        // operator-delete and the insert were separate undo steps because the
+        // insert-entry cursor selection stamped a history boundary on the
+        // delete event.
+        h.doKeys("c", "w")
+        h.doKeys("t", "e", "s", "t")
+        h.doKeys("<Esc>")
+        assertEquals("test word2", h.cm.getValue())
+        h.doKeys("u")
+        assertEquals("word1 word2", h.cm.getValue())
+    }
+
+    @Test
     fun dot_insert_cw_issue21() = testVim(value = "one two three") { h ->
         // Regression for #21: `.` after `cw<text><Esc>` must re-insert the
         // typed text, not merely delete the word. Previously the inserted text
