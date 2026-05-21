@@ -2306,6 +2306,11 @@ internal fun logSearchQuery(cm: VimEditor, macroModeState: MacroModeState, query
 // ---------------------------------------------------------------------------
 
 internal fun onChange(cm: VimEditor, changeObj: Change?) {
+    // Only capture document changes that happen while editing in insert mode.
+    // Normal-mode edits (e.g. p, x, dd) are replayed by re-running the command
+    // on dot-repeat, not by replaying inserted text, so recording them here
+    // would double-apply on `.`.
+    if (cm.vim?.insertMode != true) return
     val macroModeState = cm.vimContext.macroModeState
     val lastChange = macroModeState.lastInsertModeChanges
     if (!macroModeState.isPlaying) {

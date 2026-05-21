@@ -244,12 +244,14 @@ object Vim : VimApiInterface {
     }
 
     internal val cursorActivityHandlers = mutableMapOf<VimEditor, (Array<out Any?>) -> Unit>()
+    internal val changeHandlers = mutableMapOf<VimEditor, (Array<out Any?>) -> Unit>()
 
     fun enterVimMode(cm: VimEditor) {
         cm.signal("vim-mode-change", mapOf("mode" to "normal"))
         val handler: (Array<out Any?>) -> Unit = { onCursorActivity(cm) }
         cursorActivityHandlers[cm] = handler
         cm.events.on("cursorActivity", handler)
+        registerChangeHandler(cm)
         maybeInitVimState(cm)
     }
 
@@ -257,7 +259,23 @@ object Vim : VimApiInterface {
         cursorActivityHandlers.remove(cm)?.let { handler ->
             cm.events.off("cursorActivity", handler)
         }
+        changeHandlers.remove(cm)?.let { handler ->
+            cm.events.off("change", handler)
+        }
         cm.vim = null
+    }
+
+    // Records insert-mode input into lastInsertModeChanges so that dot-repeat
+    // (`.`) and macros can replay the text typed during a change/insert command.
+    // The recorder itself only acts while in insert mode (see onChange), so the
+    // handler can stay registered for the lifetime of vim mode.
+    internal fun registerChangeHandler(cm: VimEditor) {
+        if (changeHandlers.containsKey(cm)) return
+        val handler: (Array<out Any?>) -> Unit = { args ->
+            onChange(cm, args.getOrNull(1) as? Change)
+        }
+        changeHandlers[cm] = handler
+        cm.events.on("change", handler)
     }
 
     fun exitVisualMode(cm: VimEditor, moveHead: Boolean = true) {
@@ -540,6 +558,7 @@ internal fun maybeInitVimState(cm: VimEditor): VimState {
             Vim.cursorActivityHandlers[cm] = handler
             cm.events.on("cursorActivity", handler)
         }
+        Vim.registerChangeHandler(cm)
     }
 }
 

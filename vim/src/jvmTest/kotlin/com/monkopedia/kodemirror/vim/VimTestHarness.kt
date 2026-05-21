@@ -172,7 +172,11 @@ internal fun typeKey(cm: VimEditor, key: String) {
                         last.next = next
                         last = next
                     }
-                    onChange(cm, first)
+                    // Drive recording through the registered "change" handlers,
+                    // exactly as the editor's operation pipeline does, rather
+                    // than calling the recorder directly. Calling onChange here
+                    // masked the missing change-event wiring behind #21.
+                    cm.events.getHandlers("change")?.forEach { it(arrayOf(cm, first)) }
                 }
                 key == "Enter" || key == "Return" -> {
                     // Simulate Enter in insert mode: insert newline with

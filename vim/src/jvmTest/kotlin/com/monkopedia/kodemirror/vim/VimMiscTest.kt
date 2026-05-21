@@ -227,6 +227,20 @@ class VimMiscTest {
     }
 
     @Test
+    fun dot_insert_cw_issue21() = testVim(value = "one two three") { h ->
+        // Regression for #21: `.` after `cw<text><Esc>` must re-insert the
+        // typed text, not merely delete the word. Previously the inserted text
+        // was dropped because insert-mode input was never recorded into
+        // lastInsertModeChanges (the change-event handler was never wired up).
+        h.doKeys("c", "w")
+        h.doKeys("X", "Y")
+        h.doKeys("<Esc>")
+        h.doKeys("w")
+        h.doKeys(".")
+        assertEquals("XY XY three", h.cm.getValue())
+    }
+
+    @Test
     fun dot_delete() = testVim(value = "zabcde") { h ->
         h.cm.setCursor(0, 5)
         h.doKeys("i")
