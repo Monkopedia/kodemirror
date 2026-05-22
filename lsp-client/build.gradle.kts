@@ -10,6 +10,7 @@ kotlin {
             implementation(project(":state"))
             implementation(project(":view"))
             implementation(project(":lint"))
+            implementation(project(":autocomplete"))
             implementation(libs.lsp)
             implementation(libs.kotlinx.coroutines.core)
             implementation(compose.ui)
@@ -19,6 +20,7 @@ kotlin {
         commonTest.dependencies {
             implementation(project(":state"))
             implementation(project(":view"))
+            implementation(project(":autocomplete"))
         }
     }
 }

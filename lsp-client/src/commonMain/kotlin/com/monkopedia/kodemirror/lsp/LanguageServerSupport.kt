@@ -25,10 +25,10 @@ import com.monkopedia.kodemirror.state.ExtensionList
  * Public entry point: build the editor [Extension] that connects an editor for
  * a single file to a language server through [client].
  *
- * Mirrors upstream `@codemirror/lsp-client`'s `languageServerSupport`. For the
- * scaffold this only registers the [LSPPlugin]; feature extensions (completion,
- * hover, diagnostics, signature help, rename, etc.) are appended to the returned
- * [ExtensionList] by later issues.
+ * Mirrors upstream `@codemirror/lsp-client`'s `languageServerSupport`. It
+ * registers the [LSPPlugin], server-pushed diagnostics, and server completion;
+ * the remaining feature extensions (hover, signature help, rename, etc.) are
+ * appended to the returned [ExtensionList] by later issues.
  *
  * @param client The [LSPClient] wrapping the provided language server.
  * @param uri The document URI for this editor's file.
@@ -45,9 +45,11 @@ fun languageServerSupport(client: LSPClient, uri: String, languageId: String): E
             plugin.asExtension(),
             // Render diagnostics the server pushes via publishDiagnostics — see
             // #37. The notification handler lives on client.languageClient.
-            serverDiagnostics()
-            // TODO(#38): hover tooltips
-            // TODO(#39): completion source
+            serverDiagnostics(),
+            // Request completions from the server as the editor's autocomplete
+            // source — see #38.
+            serverCompletion(client, uri)
+            // TODO(#39): hover tooltips
             // TODO(#40): signature help
             // TODO(#41): go-to-definition
             // TODO(#42): find references
