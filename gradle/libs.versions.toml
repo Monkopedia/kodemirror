@@ -13,6 +13,7 @@ kover = "0.9.8"
 dokka = "2.2.0"
 bcv = "0.18.1"
 vanniktech = "0.35.0"
+lsp = "1.0.0-RC2"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -20,6 +21,8 @@ kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serializa
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 roborazzi-compose-desktop = { module = "io.github.takahirom.roborazzi:roborazzi-compose-desktop", version.ref = "roborazzi" }
+lsp = { module = "com.monkopedia.lsp:lsp", version.ref = "lsp" }
+lsp-ksrpc = { module = "com.monkopedia.lsp:lsp-ksrpc", version.ref = "lsp" }
 
 [plugins]
 androidLibrary = { id = "com.android.library", version.ref = "agp" }
