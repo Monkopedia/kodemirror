@@ -40,6 +40,7 @@ import com.monkopedia.lsp.Hover
 import com.monkopedia.lsp.HoverParams
 import com.monkopedia.lsp.MarkupContent
 import com.monkopedia.lsp.MarkupKind
+import com.monkopedia.lsp.StringOr
 import com.monkopedia.lsp.TextDocumentIdentifier
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.Json
@@ -137,6 +138,37 @@ private fun parseHoverObject(obj: JsonObject): HoverBlock? {
     val markdown = markup?.kind == MarkupKind.MARKDOWN
     return HoverBlock(text = value, markdown = markdown)
 }
+
+/**
+ * Convert a typed LSP `string | MarkupContent` documentation value (as carried
+ * by [SignatureInformation][com.monkopedia.lsp.SignatureInformation] and
+ * [ParameterInformation][com.monkopedia.lsp.ParameterInformation]) into the same
+ * ordered list of [HoverBlock]s used to render hover popups, so the shared
+ * markdown→Compose conversion ([hoverBlockToAnnotatedString]/[HoverContent]) can
+ * be reused for signature-help documentation.
+ *
+ * A plain `string` is rendered as non-markdown prose; a `MarkupContent` is
+ * rendered as markdown only when its [kind][MarkupContent.kind] is
+ * [MARKDOWN][MarkupKind.MARKDOWN]. Blank values yield an empty list.
+ */
+internal fun documentationBlocks(documentation: StringOr<MarkupContent>?): List<HoverBlock> =
+    when (documentation) {
+        null -> emptyList()
+        is StringOr.StringValue ->
+            documentation.value
+                .takeIf { it.isNotBlank() }
+                ?.let { listOf(HoverBlock(text = it, markdown = false)) }
+                ?: emptyList()
+        is StringOr.Value -> {
+            val markup = documentation.value
+            markup.value
+                .takeIf { it.isNotBlank() }
+                ?.let {
+                    listOf(HoverBlock(text = it, markdown = markup.kind == MarkupKind.MARKDOWN))
+                }
+                ?: emptyList()
+        }
+    }
 
 /**
  * Styling knobs for rendering a [HoverBlock] to an [AnnotatedString], so the

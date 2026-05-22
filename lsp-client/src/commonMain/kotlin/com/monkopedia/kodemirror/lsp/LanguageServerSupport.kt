@@ -50,8 +50,10 @@ fun languageServerSupport(client: LSPClient, uri: String, languageId: String): E
             // source — see #38.
             serverCompletion(client, uri),
             // Show hover information from the server as a tooltip — see #39.
-            serverHover(client, uri)
-            // TODO(#40): signature help
+            serverHover(client, uri),
+            // Show signature help (parameter hints) as a tooltip on trigger
+            // characters or explicit invocation — see #40.
+            signatureHelp(client, uri)
             // TODO(#41): go-to-definition
             // TODO(#42): find references
             // TODO(#43): rename
