@@ -62,8 +62,11 @@ fun languageServerSupport(client: LSPClient, uri: String, languageId: String): E
             findReferencesExtension(client, uri),
             // Rename the symbol at the cursor (textDocument/rename) via an input
             // prompt, applying the resulting WorkspaceEdit; F2 keymap — see #43.
-            renameSymbolExtension(client, uri)
-            // TODO(#44): formatting
+            renameSymbolExtension(client, uri),
+            // Format the whole document (textDocument/formatting), applying the
+            // returned edits as a single transaction; Shift-Alt-f keymap — see
+            // #44.
+            formatDocumentExtension(client, uri)
             // TODO(#45): code actions
         )
     )

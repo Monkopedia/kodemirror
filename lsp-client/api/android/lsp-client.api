@@ -141,6 +141,13 @@ public final class com/monkopedia/kodemirror/lsp/ServerDiagnosticsKt {
 	public static final fun serverDiagnostics ()Lcom/monkopedia/kodemirror/state/Extension;
 }
 
+public final class com/monkopedia/kodemirror/lsp/ServerFormatKt {
+	public static final fun formatDocument (Lcom/monkopedia/kodemirror/view/EditorSession;)Z
+	public static final fun formatDocumentExtension (Lcom/monkopedia/kodemirror/lsp/LSPClient;Ljava/lang/String;Z)Lcom/monkopedia/kodemirror/state/Extension;
+	public static synthetic fun formatDocumentExtension$default (Lcom/monkopedia/kodemirror/lsp/LSPClient;Ljava/lang/String;ZILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/Extension;
+	public static final fun getFormatKeymap ()Ljava/util/List;
+}
+
 public final class com/monkopedia/kodemirror/lsp/ServerHoverKt {
 	public static final fun serverHover (Lcom/monkopedia/kodemirror/lsp/LSPClient;Ljava/lang/String;J)Lcom/monkopedia/kodemirror/state/Extension;
 	public static synthetic fun serverHover$default (Lcom/monkopedia/kodemirror/lsp/LSPClient;Ljava/lang/String;JILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/Extension;
