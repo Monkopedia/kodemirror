@@ -26,6 +26,8 @@ import com.monkopedia.lsp.InitializedParams
 import com.monkopedia.lsp.LanguageServer
 import com.monkopedia.lsp.ServerCapabilities
 import com.monkopedia.lsp.WorkspaceFolder
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -79,6 +81,14 @@ class LSPClient(
     val config: LSPClientConfig = LSPClientConfig()
 ) {
     private val initMutex = Mutex()
+    private val syncMutex = Mutex()
+
+    /**
+     * Client-lifetime coroutine scope, used for work that must outlive any
+     * single editor session (e.g. sending `textDocument/didClose` as a plugin
+     * tears down its own scope).
+     */
+    val scope: CoroutineScope = CoroutineScope(SupervisorJob())
 
     /** The full result of the `initialize` request, or null until initialized. */
     var initializeResult: InitializeResult? = null
@@ -118,6 +128,24 @@ class LSPClient(
         initializeResult = result
         server.initialized(InitializedParams())
         result
+    }
+
+    /**
+     * Flush any pending document changes to the server.
+     *
+     * Mirrors upstream `@codemirror/lsp-client`'s `LSPClient.sync()`: it asks the
+     * [workspace] for the set of files with unsynced changes
+     * ([Workspace.syncFiles]) and emits a `textDocument/didChange` notification
+     * for each, honoring the negotiated [DocumentSyncMode]. Calls are serialized
+     * so notifications go out in version order.
+     *
+     * No-op when the client has not been initialized yet.
+     */
+    suspend fun sync(): Unit = syncMutex.withLock {
+        if (!isInitialized) return
+        for (update in workspace.syncFiles()) {
+            workspace.sendChange(update)
+        }
     }
 
     /**

@@ -62,18 +62,31 @@ class LSPPlugin internal constructor(
             // Ensure the server handshake has completed before any feature
             // wiring attempts to use it.
             client.initialize()
-            // TODO(#36): send textDocument/didOpen once document sync lands.
+            // Announce the document, then flush anything that changed while the
+            // handshake was in flight.
+            client.workspace.didOpenFile(uri)
+            client.sync()
         }
     }
 
     override fun update(update: ViewUpdate) {
-        // TODO(#36): forward document changes as textDocument/didChange.
+        if (update.docChanged) {
+            // Record the changes against the workspace file and schedule a flush.
+            client.workspace.updateFile(uri, update.changes)
+            scope.launch {
+                client.initialize()
+                client.sync()
+            }
+        }
         // TODO(#37..#45): trigger feature updates (diagnostics, signature help, ...).
     }
 
     override fun destroy() {
-        // TODO(#36): send textDocument/didClose before unregistering.
+        // Detach synchronously, then notify the server that the file closed.
         client.workspace.closeFile(uri)
+        client.scope.launch {
+            client.workspace.didCloseFile(uri)
+        }
         job.cancel()
     }
 

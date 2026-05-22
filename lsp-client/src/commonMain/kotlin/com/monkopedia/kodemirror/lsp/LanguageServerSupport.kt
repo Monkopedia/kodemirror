@@ -40,8 +40,9 @@ fun languageServerSupport(client: LSPClient, uri: String, languageId: String): E
     val plugin = LSPPlugin.define(client, uri, languageId)
     return ExtensionList(
         listOf(
+            // The plugin owns document sync (didOpen/didChange/didClose,
+            // version tracking, and position mapping) — see #36.
             plugin.asExtension()
-            // TODO(#36): document sync extension
             // TODO(#37): publishDiagnostics -> lint integration
             // TODO(#38): hover tooltips
             // TODO(#39): completion source
