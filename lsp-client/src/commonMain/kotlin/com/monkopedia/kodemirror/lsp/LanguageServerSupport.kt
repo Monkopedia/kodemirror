@@ -42,8 +42,10 @@ fun languageServerSupport(client: LSPClient, uri: String, languageId: String): E
         listOf(
             // The plugin owns document sync (didOpen/didChange/didClose,
             // version tracking, and position mapping) — see #36.
-            plugin.asExtension()
-            // TODO(#37): publishDiagnostics -> lint integration
+            plugin.asExtension(),
+            // Render diagnostics the server pushes via publishDiagnostics — see
+            // #37. The notification handler lives on client.languageClient.
+            serverDiagnostics()
             // TODO(#38): hover tooltips
             // TODO(#39): completion source
             // TODO(#40): signature help

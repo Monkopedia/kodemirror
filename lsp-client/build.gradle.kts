@@ -9,6 +9,7 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":state"))
             implementation(project(":view"))
+            implementation(project(":lint"))
             implementation(libs.lsp)
             implementation(libs.kotlinx.coroutines.core)
             implementation(compose.ui)

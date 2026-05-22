@@ -23,6 +23,7 @@ import com.monkopedia.lsp.InitializeParams
 import com.monkopedia.lsp.InitializeParamsClientInfo
 import com.monkopedia.lsp.InitializeResult
 import com.monkopedia.lsp.InitializedParams
+import com.monkopedia.lsp.LanguageClient
 import com.monkopedia.lsp.LanguageServer
 import com.monkopedia.lsp.ServerCapabilities
 import com.monkopedia.lsp.WorkspaceFolder
@@ -96,6 +97,20 @@ class LSPClient(
 
     /** The [Workspace] managed by this client. */
     val workspace: Workspace = config.createWorkspace(this)
+
+    /**
+     * The [LanguageClient] the consumer registers as the client side of their
+     * transport (e.g. ksrpc's `connectAsLspClient`).
+     *
+     * **Deviation from upstream:** as with [server], the transport lives in the
+     * consumer's code rather than in this module. By handing the consumer this
+     * [LanguageClient], server→client notifications — most importantly
+     * `textDocument/publishDiagnostics` — are routed back into the editor: the
+     * handler resolves the file/session via the [workspace] and pushes
+     * diagnostics into `:lint` (see [serverDiagnostics]). Other server→client
+     * methods have spec-safe defaults until later feature issues fill them in.
+     */
+    val languageClient: LanguageClient = LSPLanguageClient(this)
 
     /**
      * The capabilities reported by the server during [initialize], or null if

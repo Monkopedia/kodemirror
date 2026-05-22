@@ -59,7 +59,26 @@ fun linter(source: LintSource, config: LintConfig = LintConfig()): Extension =
 private fun <V : PluginValue> createLinterExtension(
     linterPlugin: ViewPlugin<V>,
     config: LintConfig
-): Extension {
+): Extension = ExtensionList(
+    listOf(
+        lintDisplay(config),
+        linterPlugin.asExtension()
+    )
+)
+
+/**
+ * The diagnostic-display half of the linter, without any lint source.
+ *
+ * Installs the diagnostic state field (underline decorations + hover tooltip),
+ * the lint panel, and the lint keymap, so that diagnostics pushed via
+ * [setDiagnostics] are rendered. Use this when diagnostics come from somewhere
+ * other than a local [LintSource] — for example a language server feeding
+ * diagnostics in directly. The plain [linter] functions build on top of this.
+ *
+ * @param config Linter configuration. Only [LintConfig.tooltipFilter] affects
+ *   the display; the source-related options are unused here.
+ */
+fun lintDisplay(config: LintConfig = LintConfig()): Extension {
     val panelProvider = showPanels.compute(
         listOf(Slot.FieldSlot(lintPanelOpen))
     ) { state ->
@@ -101,7 +120,6 @@ private fun <V : PluginValue> createLinterExtension(
         listOf(
             lintState,
             lintPanelOpen,
-            linterPlugin.asExtension(),
             panelProvider,
             diagnosticHover,
             keymap.of(lintKeymap)

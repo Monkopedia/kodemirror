@@ -29,6 +29,7 @@ public final class com/monkopedia/kodemirror/lsp/LSPClient {
 	public synthetic fun <init> (Lcom/monkopedia/lsp/LanguageServer;Lcom/monkopedia/kodemirror/lsp/LSPClientConfig;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getConfig ()Lcom/monkopedia/kodemirror/lsp/LSPClientConfig;
 	public final fun getInitializeResult ()Lcom/monkopedia/lsp/InitializeResult;
+	public final fun getLanguageClient ()Lcom/monkopedia/lsp/LanguageClient;
 	public final fun getScope ()Lkotlinx/coroutines/CoroutineScope;
 	public final fun getServer ()Lcom/monkopedia/lsp/LanguageServer;
 	public final fun getServerCapabilities ()Lcom/monkopedia/lsp/ServerCapabilities;
@@ -87,6 +88,10 @@ public final class com/monkopedia/kodemirror/lsp/LSPPlugin$Companion {
 
 public final class com/monkopedia/kodemirror/lsp/LanguageServerSupportKt {
 	public static final fun languageServerSupport (Lcom/monkopedia/kodemirror/lsp/LSPClient;Ljava/lang/String;Ljava/lang/String;)Lcom/monkopedia/kodemirror/state/Extension;
+}
+
+public final class com/monkopedia/kodemirror/lsp/ServerDiagnosticsKt {
+	public static final fun serverDiagnostics ()Lcom/monkopedia/kodemirror/state/Extension;
 }
 
 public class com/monkopedia/kodemirror/lsp/Workspace {

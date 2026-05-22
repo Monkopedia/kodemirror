@@ -87,6 +87,8 @@ public final class com/monkopedia/kodemirror/lint/LintGutterKt {
 }
 
 public final class com/monkopedia/kodemirror/lint/LintKt {
+	public static final fun lintDisplay (Lcom/monkopedia/kodemirror/lint/LintConfig;)Lcom/monkopedia/kodemirror/state/Extension;
+	public static synthetic fun lintDisplay$default (Lcom/monkopedia/kodemirror/lint/LintConfig;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/Extension;
 	public static final fun linter (Lkotlin/jvm/functions/Function1;Lcom/monkopedia/kodemirror/lint/LintConfig;)Lcom/monkopedia/kodemirror/state/Extension;
 	public static final fun linter (Lkotlin/jvm/functions/Function2;Lcom/monkopedia/kodemirror/lint/LintConfig;)Lcom/monkopedia/kodemirror/state/Extension;
 	public static synthetic fun linter$default (Lkotlin/jvm/functions/Function1;Lcom/monkopedia/kodemirror/lint/LintConfig;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/Extension;
