@@ -28,6 +28,8 @@ kotlin {
             implementation(project(":search"))
             implementation(project(":autocomplete"))
             implementation(project(":lint"))
+            implementation(project(":lsp-client"))
+            implementation(libs.lsp)
             implementation(project(":collab"))
             implementation(project(":merge"))
             implementation(project(":vim"))

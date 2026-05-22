@@ -38,6 +38,7 @@ import com.monkopedia.kodemirror.samples.showcase.demos.KeybindingsDemo
 import com.monkopedia.kodemirror.samples.showcase.demos.LangPackageDemo
 import com.monkopedia.kodemirror.samples.showcase.demos.LanguageGalleryDemo
 import com.monkopedia.kodemirror.samples.showcase.demos.LintDemo
+import com.monkopedia.kodemirror.samples.showcase.demos.LspDemo
 import com.monkopedia.kodemirror.samples.showcase.demos.MergeDemo
 import com.monkopedia.kodemirror.samples.showcase.demos.MillionDemo
 import com.monkopedia.kodemirror.samples.showcase.demos.MixedLanguageDemo
@@ -134,6 +135,10 @@ val allDemos: List<DemoItem> = listOf(
         "tooltip", "Tooltips", "Cursor & hover tooltips",
         DemoCategory.FEATURES
     ) { TooltipDemo() },
+    DemoItem(
+        "lsp", "Language Server", "LSP client + stub server",
+        DemoCategory.FEATURES
+    ) { LspDemo() },
     DemoItem(
         "zebra", "Zebra Stripes", "ViewPlugin line decoration",
         DemoCategory.ADVANCED
