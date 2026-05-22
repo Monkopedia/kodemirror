@@ -56,8 +56,10 @@ fun languageServerSupport(client: LSPClient, uri: String, languageId: String): E
             signatureHelp(client, uri),
             // Go-to-definition family (definition/declaration/typeDefinition/
             // implementation) with the F12 jump-to-definition keymap — see #41.
-            definitionJumps(client, uri)
-            // TODO(#42): find references
+            definitionJumps(client, uri),
+            // Find references (textDocument/references) with a reference panel
+            // and the Shift-F12 / Escape keymap — see #42.
+            findReferencesExtension(client, uri)
             // TODO(#43): rename
             // TODO(#44): formatting
             // TODO(#45): code actions

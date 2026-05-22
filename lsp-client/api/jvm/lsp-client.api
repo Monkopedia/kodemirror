@@ -90,6 +90,20 @@ public final class com/monkopedia/kodemirror/lsp/LanguageServerSupportKt {
 	public static final fun languageServerSupport (Lcom/monkopedia/kodemirror/lsp/LSPClient;Ljava/lang/String;Ljava/lang/String;)Lcom/monkopedia/kodemirror/state/Extension;
 }
 
+public final class com/monkopedia/kodemirror/lsp/ReferenceLocation {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;Lcom/monkopedia/lsp/Range;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lcom/monkopedia/lsp/Range;
+	public final fun copy (Ljava/lang/String;Lcom/monkopedia/lsp/Range;)Lcom/monkopedia/kodemirror/lsp/ReferenceLocation;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/lsp/ReferenceLocation;Ljava/lang/String;Lcom/monkopedia/lsp/Range;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/lsp/ReferenceLocation;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getRange ()Lcom/monkopedia/lsp/Range;
+	public final fun getUri ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class com/monkopedia/kodemirror/lsp/ServerCompletionConfig {
 	public static final field $stable I
 	public fun <init> ()V
@@ -130,6 +144,14 @@ public final class com/monkopedia/kodemirror/lsp/ServerDiagnosticsKt {
 public final class com/monkopedia/kodemirror/lsp/ServerHoverKt {
 	public static final fun serverHover (Lcom/monkopedia/kodemirror/lsp/LSPClient;Ljava/lang/String;J)Lcom/monkopedia/kodemirror/state/Extension;
 	public static synthetic fun serverHover$default (Lcom/monkopedia/kodemirror/lsp/LSPClient;Ljava/lang/String;JILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/Extension;
+}
+
+public final class com/monkopedia/kodemirror/lsp/ServerReferencesKt {
+	public static final fun closeReferencePanel (Lcom/monkopedia/kodemirror/view/EditorSession;)Z
+	public static final fun findReferences (Lcom/monkopedia/kodemirror/view/EditorSession;)Z
+	public static final fun findReferencesExtension (Lcom/monkopedia/kodemirror/lsp/LSPClient;Ljava/lang/String;Z)Lcom/monkopedia/kodemirror/state/Extension;
+	public static synthetic fun findReferencesExtension$default (Lcom/monkopedia/kodemirror/lsp/LSPClient;Ljava/lang/String;ZILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/Extension;
+	public static final fun getFindReferencesKeymap ()Ljava/util/List;
 }
 
 public final class com/monkopedia/kodemirror/lsp/ServerSignatureHelpKt {

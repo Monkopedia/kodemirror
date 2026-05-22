@@ -18,13 +18,10 @@
  */
 package com.monkopedia.kodemirror.lsp
 
-import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.Facet
 import com.monkopedia.kodemirror.state.Prec
-import com.monkopedia.kodemirror.state.SelectionSpec
-import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.define
 import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.KeyBinding
@@ -200,40 +197,17 @@ private inline fun jumpToOrigin(
 }
 
 /**
- * Move the user to [target].
- *
- * Ports upstream `jumpToOrigin`'s navigation tail:
- * - **Same file** (target URI equals the binding's [uri][DefinitionServer.uri]):
- *   resolve the target range start against the file's current document
- *   ([fromPosition]) and dispatch a selection move with scroll-into-view on the
- *   binding's own file session.
- * - **Cross file:** ask the [Workspace] to surface the target file
- *   ([Workspace.displayFile]); if it returns a session, move that session's
- *   selection to the target start (resolved against *that* session's document).
- *
- * **Workspace limitation:** the default [Workspace] is single-file — its
- * [displayFile][Workspace.displayFile] only returns a session for a file that is
- * already open (it cannot open arbitrary files). For such a workspace a cross-file
- * jump degrades gracefully to a no-op. To support real cross-file navigation, a
- * consumer must subclass [Workspace] and override [displayFile][Workspace.displayFile]
- * to create/find and reveal an editor for the URI (mirroring upstream's
- * `Workspace.displayFile`).
+ * Move the user to [target], delegating to the shared [navigateToLocation]
+ * helper (same-file vs cross-file resolution, position mapping, scroll into
+ * view) that go-to-definition and find-references both use.
  */
 private fun navigateToTarget(binding: DefinitionServer, target: JumpTarget) {
-    val workspace = binding.client.workspace
-    val targetSession: EditorSession? = if (target.uri == binding.uri) {
-        workspace.getFile(binding.uri)?.session
-    } else {
-        workspace.displayFile(target.uri)
-    }
-    if (targetSession == null) return
-    val offset = fromPosition(target.range.start, targetSession.state.doc)
-    targetSession.dispatch(
-        TransactionSpec(
-            selection = SelectionSpec.CursorSpec(DocPos(offset)),
-            scrollIntoView = true,
-            userEvent = "select.definition"
-        )
+    navigateToLocation(
+        client = binding.client,
+        sourceUri = binding.uri,
+        targetUri = target.uri,
+        position = target.range.start,
+        userEvent = "select.definition"
     )
 }
 
