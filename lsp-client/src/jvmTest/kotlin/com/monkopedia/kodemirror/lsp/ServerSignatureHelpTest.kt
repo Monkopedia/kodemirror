@@ -19,13 +19,18 @@
 package com.monkopedia.kodemirror.lsp
 
 import androidx.compose.ui.text.font.FontWeight
+import com.monkopedia.kodemirror.state.EditorState
+import com.monkopedia.lsp.LanguageServer
 import com.monkopedia.lsp.ParameterInformation
 import com.monkopedia.lsp.SignatureHelp
 import com.monkopedia.lsp.SignatureInformation
+import java.lang.reflect.Proxy
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotSame
 import kotlin.test.assertNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonPrimitive
@@ -194,5 +199,55 @@ class ServerSignatureHelpTest {
         assertEquals(0, prevActive(1))
         // Clamp at first.
         assertEquals(0, prevActive(0))
+    }
+
+    // --- multi-instance: per-editor signature-help binding ---
+
+    /**
+     * A do-nothing [LanguageServer] used only to construct distinct [LSPClient]s;
+     * none of its methods are invoked because [signatureHelp] merely stores the
+     * client in the [signatureHelpServer] facet (it does not contact the server).
+     */
+    private fun stubServer(): LanguageServer = Proxy.newProxyInstance(
+        LanguageServer::class.java.classLoader,
+        arrayOf(LanguageServer::class.java)
+    ) { _, method, _ ->
+        error("stub LanguageServer.${method.name} should not be called in this test")
+    } as LanguageServer
+
+    @Test
+    fun twoEditorsKeepIndependentSignatureHelpBindings() {
+        val clientA = LSPClient(stubServer())
+        val clientB = LSPClient(stubServer())
+
+        val stateA = EditorState.create(
+            doc = "a",
+            extensions = signatureHelp(clientA, "file:///a.kt")
+        )
+        // Installing a second editor must NOT clobber the first one's binding,
+        // which was the original module-level `activeSignaturePlugin` bug.
+        val stateB = EditorState.create(
+            doc = "b",
+            extensions = signatureHelp(clientB, "file:///b.kt")
+        )
+
+        val bindingA = stateA.facet(signatureHelpServer)
+        val bindingB = stateB.facet(signatureHelpServer)
+
+        // Each editor resolves its OWN client/uri from its own state.
+        assertEquals("file:///a.kt", bindingA?.uri)
+        assertSame(clientA, bindingA?.client)
+        assertEquals("file:///b.kt", bindingB?.uri)
+        assertSame(clientB, bindingB?.client)
+
+        // The second install did not overwrite the first (no shared mutable state).
+        assertNotSame(bindingA, bindingB)
+        assertSame(clientA, stateA.facet(signatureHelpServer)?.client)
+    }
+
+    @Test
+    fun editorWithoutSignatureHelpHasNullBinding() {
+        val state = EditorState.create(doc = "x")
+        assertNull(state.facet(signatureHelpServer))
     }
 }

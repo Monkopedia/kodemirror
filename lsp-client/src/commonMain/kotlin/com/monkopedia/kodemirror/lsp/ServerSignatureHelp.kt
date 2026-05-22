@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList
+import com.monkopedia.kodemirror.state.Facet
 import com.monkopedia.kodemirror.state.Prec
 import com.monkopedia.kodemirror.state.StateEffect
 import com.monkopedia.kodemirror.state.StateEffectType
@@ -77,6 +78,28 @@ import kotlinx.serialization.json.intOrNull
 data class SignatureHelpConfig(
     val keymap: Boolean = true
 )
+
+/**
+ * The per-editor signature-help server binding: the [client] wrapping the
+ * language server and the document [uri] for this editor's file.
+ *
+ * Carried through state by [signatureHelpServer] so the single, shared
+ * [signatureHelpPlugin] can read its configuration from the editor it is
+ * running in rather than capturing it at install time. This is what keeps
+ * signature help per-editor when multiple editors are open.
+ */
+internal data class SignatureHelpServer(val client: LSPClient, val uri: String)
+
+/**
+ * The [Facet] carrying the per-editor [SignatureHelpServer] binding.
+ *
+ * Combines to the last non-null value, so an editor that installs
+ * [signatureHelp] gets its own [client][SignatureHelpServer.client] /
+ * [uri][SignatureHelpServer.uri] while editors without it see null (and the
+ * shared [signatureHelpPlugin] no-ops).
+ */
+internal val signatureHelpServer: Facet<SignatureHelpServer?, SignatureHelpServer?> =
+    Facet.define(combine = { values -> values.lastOrNull { it != null } })
 
 /**
  * The inclusive-start / exclusive-end offsets into a signature label that
@@ -261,8 +284,14 @@ internal fun signatureLabel(label: String, range: ActiveParamRange?) = buildAnno
 
 /**
  * The [ViewPlugin] that drives signature help for a single editor, requesting
- * `textDocument/signatureHelp` from the language server wrapped by [client] for
- * the file at [uri] and dispatching [signatureEffect]s into [signatureState].
+ * `textDocument/signatureHelp` from the language server and dispatching
+ * [signatureEffect]s into [signatureState].
+ *
+ * The plugin reads its per-editor [SignatureHelpServer] binding (client + uri)
+ * from the [signatureHelpServer] facet of the session it is running in, so a
+ * single shared [signatureHelpPlugin] handle works correctly for every open
+ * editor. When no binding is present (the facet is null) every operation is a
+ * no-op.
  *
  * Ports upstream `@codemirror/lsp-client`'s `signaturePlugin`:
  * - On an `input.type` transaction that inserts a server
@@ -280,9 +309,7 @@ internal fun signatureLabel(label: String, range: ActiveParamRange?) = buildAnno
  * [serverHover]/[serverCompletionSource].
  */
 internal class SignatureHelpPlugin(
-    private val session: EditorSession,
-    private val client: LSPClient,
-    private val uri: String
+    private val session: EditorSession
 ) : PluginValue {
     private val job = SupervisorJob(session.coroutineScope.coroutineContext[Job])
     private val scope: CoroutineScope =
@@ -294,7 +321,12 @@ internal class SignatureHelpPlugin(
     /** The most recent debounced re-trigger job, cancelled when superseded. */
     private var delayed: Job? = null
 
+    /** This editor's signature-help binding, or null when none is installed. */
+    private val server: SignatureHelpServer?
+        get() = session.state.facet(signatureHelpServer)
+
     override fun update(update: ViewUpdate) {
+        val client = update.state.facet(signatureHelpServer)?.client ?: return
         val sigState = update.state.field(signatureState)
 
         var triggerCharacter: String? = null
@@ -378,14 +410,17 @@ internal class SignatureHelpPlugin(
 
     /**
      * Request `textDocument/signatureHelp` at [pos] with [context], or null when
-     * the server has no `signatureHelpProvider` capability. Rethrows
-     * [CancellationException] so cancellation propagates cooperatively.
+     * this editor has no [signatureHelpServer] binding or the server has no
+     * `signatureHelpProvider` capability. Rethrows [CancellationException] so
+     * cancellation propagates cooperatively.
      */
     private suspend fun getSignatureHelp(pos: Int, context: SignatureHelpContext): SignatureHelp? {
+        val binding = server ?: return null
+        val client = binding.client
         if (client.serverCapabilities?.signatureHelpProvider == null) return null
         client.sync()
         val params = SignatureHelpParams(
-            textDocument = TextDocumentIdentifier(uri = uri),
+            textDocument = TextDocumentIdentifier(uri = binding.uri),
             position = toPosition(pos, session.state.doc),
             context = context
         )
@@ -415,31 +450,27 @@ internal class SignatureHelpPlugin(
 }
 
 /**
- * Build the [ViewPlugin] descriptor for the [SignatureHelpPlugin], capturing
- * [client]/[uri]. Held in a single field so [showSignatureHelp] and the cycling
- * commands can locate the active plugin via [EditorSession.plugin].
+ * The single, shared [ViewPlugin] handle for signature help.
+ *
+ * Defined once at module scope and installed by every [signatureHelp] call. The
+ * plugin captures no client/uri — each instance reads its per-editor binding
+ * from the [signatureHelpServer] facet of the session it is created for. Because
+ * the handle is shared and stateless across editors, [showSignatureHelp]
+ * resolves the correct per-editor plugin via [EditorSession.plugin] for every
+ * open editor (no module-level mutable state to clobber).
  */
-private fun signaturePlugin(client: LSPClient, uri: String): ViewPlugin<SignatureHelpPlugin> =
-    ViewPlugin.define(create = { session -> SignatureHelpPlugin(session, client, uri) })
-
-/**
- * The [ViewPlugin] handle for the most recently installed [signatureHelp]
- * extension, so the module-level [showSignatureHelp] command can find the
- * plugin. Mirrors upstream's module-level `signaturePlugin`; a single
- * signature-help configuration per editor is supported (as upstream).
- */
-private var activeSignaturePlugin: ViewPlugin<SignatureHelpPlugin>? = null
+private val signatureHelpPlugin: ViewPlugin<SignatureHelpPlugin> =
+    ViewPlugin.define(create = { session -> SignatureHelpPlugin(session) })
 
 /**
  * Explicitly prompt the server to provide signature help at the cursor.
  *
  * Ports upstream `@codemirror/lsp-client`'s `showSignatureHelp` command: fires an
- * `Invoked` request through the active [SignatureHelpPlugin]. Returns false when
- * no signature-help extension is installed.
+ * `Invoked` request through this editor's [SignatureHelpPlugin]. Returns false
+ * when no signature-help extension is installed in [session].
  */
 fun showSignatureHelp(session: EditorSession): Boolean {
-    val handle = activeSignaturePlugin ?: return false
-    val plugin = session.plugin(handle) ?: return false
+    val plugin = session.plugin(signatureHelpPlugin) ?: return false
     val field = session.state.field(signatureState)
     plugin.startRequest(
         SignatureHelpContext(
@@ -517,11 +548,10 @@ fun signatureHelp(
     uri: String,
     config: SignatureHelpConfig = SignatureHelpConfig()
 ): Extension {
-    val plugin = signaturePlugin(client, uri)
-    activeSignaturePlugin = plugin
     val extensions = buildList {
+        add(signatureHelpServer.of(SignatureHelpServer(client, uri)))
+        add(signatureHelpPlugin.asExtension())
         add(signatureState)
-        add(plugin.asExtension())
         if (config.keymap) add(Prec.high(keymap.of(signatureKeymap)))
     }
     return ExtensionList(extensions)
