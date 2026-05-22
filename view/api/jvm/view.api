@@ -765,12 +765,14 @@ public final class com/monkopedia/kodemirror/view/Tooltip {
 }
 
 public final class com/monkopedia/kodemirror/view/TooltipKt {
+	public static final field DEFAULT_HOVER_TIME J
 	public static final fun TooltipLayer (Lcom/monkopedia/kodemirror/view/EditorSession;Landroidx/compose/runtime/Composer;I)V
 	public static final fun closeHoverTooltips (Lcom/monkopedia/kodemirror/view/EditorSession;)V
 	public static final fun getShowTooltip ()Lcom/monkopedia/kodemirror/state/Facet;
 	public static final fun getShowTooltips ()Lcom/monkopedia/kodemirror/state/Facet;
 	public static final fun getTooltips (Lcom/monkopedia/kodemirror/view/EditorSession;)Ljava/util/List;
 	public static final fun hasHoverTooltips (Lcom/monkopedia/kodemirror/view/EditorSession;)Z
+	public static final fun hoverTooltip (JLkotlin/jvm/functions/Function3;)Lcom/monkopedia/kodemirror/state/Extension;
 	public static final fun hoverTooltip (Lkotlin/jvm/functions/Function2;)Lcom/monkopedia/kodemirror/state/Extension;
 	public static final fun repositionTooltips (Lcom/monkopedia/kodemirror/view/EditorSession;)V
 }

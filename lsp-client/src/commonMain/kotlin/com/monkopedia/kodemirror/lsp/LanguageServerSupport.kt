@@ -48,8 +48,9 @@ fun languageServerSupport(client: LSPClient, uri: String, languageId: String): E
             serverDiagnostics(),
             // Request completions from the server as the editor's autocomplete
             // source — see #38.
-            serverCompletion(client, uri)
-            // TODO(#39): hover tooltips
+            serverCompletion(client, uri),
+            // Show hover information from the server as a tooltip — see #39.
+            serverHover(client, uri)
             // TODO(#40): signature help
             // TODO(#41): go-to-definition
             // TODO(#42): find references

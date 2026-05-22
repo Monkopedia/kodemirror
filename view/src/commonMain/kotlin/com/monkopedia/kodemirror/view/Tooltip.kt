@@ -31,6 +31,11 @@ import androidx.compose.ui.window.Popup
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.Facet
 import com.monkopedia.kodemirror.state.RangeSet
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * Describes a tooltip to show near a document position.
@@ -114,7 +119,53 @@ fun TooltipLayer(session: EditorSession) {
  */
 fun hoverTooltip(source: (EditorSession, Int) -> Tooltip?): Extension {
     return ViewPlugin.define(
-        create = { session -> HoverTooltipPlugin(session, source) },
+        create = { session -> HoverTooltipPlugin(session, syncSource = source) },
+        configure = {
+            copy(
+                decorations = { _ -> RangeSet.empty() }
+            )
+        }
+    ).asExtension()
+}
+
+/**
+ * Default hover delay, in milliseconds, used by the async [hoverTooltip]
+ * overload. Mirrors upstream CodeMirror's `hoverTime` default.
+ */
+const val DEFAULT_HOVER_TIME: Long = 300
+
+/**
+ * Show a hover tooltip computed by a **suspending** [source].
+ *
+ * This is the asynchronous counterpart to the synchronous [hoverTooltip]: where
+ * the synchronous overload demands a tooltip be produced immediately, this one
+ * lets [source] suspend — for example to issue a network/IPC request such as an
+ * LSP `textDocument/hover` — before returning a [Tooltip] (or null for "no
+ * tooltip here").
+ *
+ * Upstream CodeMirror's hover source is promise-based (`(view, pos, side) =>
+ * Tooltip | Promise<Tooltip | null> | null`); kodemirror's
+ * [synchronous overload][hoverTooltip] cannot express that, so this overload is
+ * the Kotlin/coroutine adaptation of upstream's async hover path.
+ *
+ * Behavior matches upstream's hover machinery:
+ * - The request is debounced by [hoverTime] (the pointer must rest for that long
+ *   before [source] is invoked).
+ * - Moving to a different position cancels any in-flight request, so a slow
+ *   server response for an abandoned position never pops a stale tooltip.
+ *
+ * @param hoverTime Delay before [source] is invoked, in milliseconds. Pass
+ *   [DEFAULT_HOVER_TIME] for upstream's default; an explicit value is required
+ *   so a bare trailing lambda is not ambiguous with the synchronous
+ *   [hoverTooltip] overload.
+ * @param source Suspending function returning a tooltip for the position, or
+ *               null.
+ */
+fun hoverTooltip(hoverTime: Long, source: suspend (EditorSession, Int) -> Tooltip?): Extension {
+    return ViewPlugin.define(
+        create = { session ->
+            HoverTooltipPlugin(session, asyncSource = source, hoverTime = hoverTime)
+        },
         configure = {
             copy(
                 decorations = { _ -> RangeSet.empty() }
@@ -168,9 +219,22 @@ fun repositionTooltips(session: EditorSession) {
 
 internal class HoverTooltipPlugin(
     private val session: EditorSession,
-    private val source: (EditorSession, Int) -> Tooltip?
+    private val syncSource: ((EditorSession, Int) -> Tooltip?)? = null,
+    private val asyncSource: (suspend (EditorSession, Int) -> Tooltip?)? = null,
+    private val hoverTime: Long = DEFAULT_HOVER_TIME
 ) : PluginValue {
     private val _currentTooltip = mutableStateOf<Tooltip?>(null)
+
+    /** Lifecycle scope for in-flight async hover requests. */
+    private val job = SupervisorJob(session.coroutineScope.coroutineContext[Job])
+    private val scope: CoroutineScope =
+        CoroutineScope(session.coroutineScope.coroutineContext + job)
+
+    /** The most recent in-flight async hover request, cancelled on move. */
+    private var pending: Job? = null
+
+    /** The position the current/pending tooltip is anchored at. */
+    private var lastPos: Int? = null
 
     val currentTooltip: Tooltip? get() = _currentTooltip.value
 
@@ -180,10 +244,39 @@ internal class HoverTooltipPlugin(
     }
 
     fun updateHoverAtPos(docPos: Int?) {
-        _currentTooltip.value = if (docPos != null) source(session, docPos) else null
+        if (docPos == lastPos) return
+        lastPos = docPos
+        // Any move cancels an outstanding async request so a late response for
+        // an abandoned position can't pop a stale tooltip (matches upstream).
+        pending?.cancel()
+        pending = null
+
+        val async = asyncSource
+        if (async != null) {
+            // Clear immediately, then debounce by [hoverTime] before requesting.
+            _currentTooltip.value = null
+            if (docPos == null) return
+            pending = scope.launch {
+                delay(hoverTime)
+                val result = async(session, docPos)
+                // Only show if the pointer is still resting on this position.
+                if (lastPos == docPos) _currentTooltip.value = result
+            }
+        } else {
+            val sync = syncSource
+            _currentTooltip.value =
+                if (docPos != null && sync != null) sync(session, docPos) else null
+        }
     }
 
     fun clearHover() {
+        pending?.cancel()
+        pending = null
+        lastPos = null
         _currentTooltip.value = null
+    }
+
+    override fun destroy() {
+        job.cancel()
     }
 }
