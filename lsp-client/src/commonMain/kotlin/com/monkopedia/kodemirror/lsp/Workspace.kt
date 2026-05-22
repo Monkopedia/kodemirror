@@ -148,6 +148,24 @@ open class Workspace(
     fun getFile(uri: String): WorkspaceFile? = files[uri]
 
     /**
+     * Surface the file at [uri] to the user and return the editor session showing
+     * it, or null when this is not possible.
+     *
+     * Mirrors upstream `@codemirror/lsp-client`'s `Workspace.displayFile`, called
+     * by features that need to put a file other than the one in the current
+     * editor in front of the user (most notably the [jumpToDefinition] family for
+     * cross-file jumps).
+     *
+     * **Default (single-file) behavior:** this base [Workspace] only tracks files
+     * that have been [opened][openFile] with an attached session; it returns the
+     * [session][WorkspaceFile.session] of an already-open file and cannot open
+     * arbitrary files from disk. A consumer that wants real cross-file navigation
+     * should subclass [Workspace] and override this to create/find and reveal an
+     * editor for [uri].
+     */
+    open fun displayFile(uri: String): EditorSession? = files[uri]?.session
+
+    /**
      * Obtain a live [WorkspaceMapping] for [uri] that tracks edits applied after
      * this call, or null if no such file is open. A feature that issues an LSP
      * request should capture a mapping when it sends the request and use it to

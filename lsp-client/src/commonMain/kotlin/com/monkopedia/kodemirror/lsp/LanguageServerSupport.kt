@@ -53,8 +53,10 @@ fun languageServerSupport(client: LSPClient, uri: String, languageId: String): E
             serverHover(client, uri),
             // Show signature help (parameter hints) as a tooltip on trigger
             // characters or explicit invocation — see #40.
-            signatureHelp(client, uri)
-            // TODO(#41): go-to-definition
+            signatureHelp(client, uri),
+            // Go-to-definition family (definition/declaration/typeDefinition/
+            // implementation) with the F12 jump-to-definition keymap — see #41.
+            definitionJumps(client, uri)
             // TODO(#42): find references
             // TODO(#43): rename
             // TODO(#44): formatting

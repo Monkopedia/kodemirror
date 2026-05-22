@@ -113,6 +113,16 @@ public final class com/monkopedia/kodemirror/lsp/ServerCompletionKt {
 	public static synthetic fun serverCompletionSource$default (Lcom/monkopedia/kodemirror/lsp/LSPClient;Ljava/lang/String;Lcom/monkopedia/kodemirror/lsp/ServerCompletionConfig;ILjava/lang/Object;)Lkotlin/jvm/functions/Function2;
 }
 
+public final class com/monkopedia/kodemirror/lsp/ServerDefinitionKt {
+	public static final fun definitionJumps (Lcom/monkopedia/kodemirror/lsp/LSPClient;Ljava/lang/String;Z)Lcom/monkopedia/kodemirror/state/Extension;
+	public static synthetic fun definitionJumps$default (Lcom/monkopedia/kodemirror/lsp/LSPClient;Ljava/lang/String;ZILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/Extension;
+	public static final fun getJumpToDefinitionKeymap ()Ljava/util/List;
+	public static final fun jumpToDeclaration (Lcom/monkopedia/kodemirror/view/EditorSession;)Z
+	public static final fun jumpToDefinition (Lcom/monkopedia/kodemirror/view/EditorSession;)Z
+	public static final fun jumpToImplementation (Lcom/monkopedia/kodemirror/view/EditorSession;)Z
+	public static final fun jumpToTypeDefinition (Lcom/monkopedia/kodemirror/view/EditorSession;)Z
+}
+
 public final class com/monkopedia/kodemirror/lsp/ServerDiagnosticsKt {
 	public static final fun serverDiagnostics ()Lcom/monkopedia/kodemirror/state/Extension;
 }
@@ -151,6 +161,7 @@ public class com/monkopedia/kodemirror/lsp/Workspace {
 	public fun closeFile (Ljava/lang/String;)V
 	public fun didCloseFile (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun didOpenFile (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun displayFile (Ljava/lang/String;)Lcom/monkopedia/kodemirror/view/EditorSession;
 	public final fun getClient ()Lcom/monkopedia/kodemirror/lsp/LSPClient;
 	public final fun getFile (Ljava/lang/String;)Lcom/monkopedia/kodemirror/lsp/WorkspaceFile;
 	public final fun getMapping (Ljava/lang/String;)Lcom/monkopedia/kodemirror/lsp/WorkspaceMapping;
