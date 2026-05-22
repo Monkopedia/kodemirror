@@ -154,6 +154,13 @@ public final class com/monkopedia/kodemirror/lsp/ServerReferencesKt {
 	public static final fun getFindReferencesKeymap ()Ljava/util/List;
 }
 
+public final class com/monkopedia/kodemirror/lsp/ServerRenameKt {
+	public static final fun getRenameKeymap ()Ljava/util/List;
+	public static final fun renameSymbol (Lcom/monkopedia/kodemirror/view/EditorSession;)Z
+	public static final fun renameSymbolExtension (Lcom/monkopedia/kodemirror/lsp/LSPClient;Ljava/lang/String;Z)Lcom/monkopedia/kodemirror/state/Extension;
+	public static synthetic fun renameSymbolExtension$default (Lcom/monkopedia/kodemirror/lsp/LSPClient;Ljava/lang/String;ZILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/Extension;
+}
+
 public final class com/monkopedia/kodemirror/lsp/ServerSignatureHelpKt {
 	public static final fun getSignatureKeymap ()Ljava/util/List;
 	public static final fun nextSignature (Lcom/monkopedia/kodemirror/view/EditorSession;)Z

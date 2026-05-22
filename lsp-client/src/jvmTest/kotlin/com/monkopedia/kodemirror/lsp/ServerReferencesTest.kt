@@ -21,10 +21,10 @@ package com.monkopedia.kodemirror.lsp
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Text
 import com.monkopedia.kodemirror.view.EditorSession
+import com.monkopedia.lsp.LanguageServer
 import com.monkopedia.lsp.Location
 import com.monkopedia.lsp.Position
 import com.monkopedia.lsp.Range
-import com.monkopedia.lsp.LanguageServer
 import java.lang.reflect.Proxy
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -167,7 +167,11 @@ class ServerReferencesTest {
         val binding = state.facet(referenceServer)!!
         val entry = ReferenceEntry(
             ReferenceLocation("file:///other.kt", range(0, 0, 0, 1)),
-            "other.kt", 1, "", "", ""
+            "other.kt",
+            1,
+            "",
+            "",
+            ""
         )
         // Default single-file workspace cannot display an unopened file: no crash, no move.
         showReference(binding, entry)
@@ -200,7 +204,9 @@ class ServerReferencesTest {
             com.monkopedia.kodemirror.state.TransactionSpec(
                 effects = listOf(
                     setReferencePanel.of(
-                        ReferencePanelState(listOf(ReferenceLocation("file:///a.kt", range(0, 0, 0, 1))))
+                        ReferencePanelState(
+                            listOf(ReferenceLocation("file:///a.kt", range(0, 0, 0, 1)))
+                        )
                     )
                 )
             )

@@ -59,8 +59,10 @@ fun languageServerSupport(client: LSPClient, uri: String, languageId: String): E
             definitionJumps(client, uri),
             // Find references (textDocument/references) with a reference panel
             // and the Shift-F12 / Escape keymap — see #42.
-            findReferencesExtension(client, uri)
-            // TODO(#43): rename
+            findReferencesExtension(client, uri),
+            // Rename the symbol at the cursor (textDocument/rename) via an input
+            // prompt, applying the resulting WorkspaceEdit; F2 keymap — see #43.
+            renameSymbolExtension(client, uri)
             // TODO(#44): formatting
             // TODO(#45): code actions
         )
