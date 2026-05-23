@@ -172,6 +172,60 @@ internal actual fun platformFocusInput() {
     platformFocusCanvas()
 }
 
+// Write to the system clipboard via the async Clipboard API. This must be
+// called synchronously inside the user gesture (the keydown handler) so the
+// browser's transient-activation check passes; the returned promise resolves
+// later. Falls back to the legacy execCommand('copy') path via a hidden
+// textarea when navigator.clipboard is unavailable (insecure context, older
+// browser).
+@JsFun(
+    """(text) => {
+    try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).catch(function() {});
+            return true;
+        }
+    } catch (e) {}
+    try {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        var ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        return ok;
+    } catch (e) {
+        return false;
+    }
+}"""
+)
+private external fun jsWriteClipboard(text: String): Boolean
+
+// Read the system clipboard asynchronously and deliver the text to the Kotlin
+// callback when the promise resolves. Returns true if a read was started.
+@JsFun(
+    """(cb) => {
+    try {
+        if (navigator.clipboard && navigator.clipboard.readText) {
+            navigator.clipboard.readText().then(function(text) {
+                cb(text == null ? '' : text);
+            }).catch(function() {});
+            return true;
+        }
+    } catch (e) {}
+    return false;
+}"""
+)
+private external fun jsReadClipboard(callback: (JsString) -> Unit): Boolean
+
+internal actual fun platformWriteClipboard(text: String): Boolean = jsWriteClipboard(text)
+
+internal actual fun platformReadClipboard(onResult: (String) -> Unit): Boolean =
+    jsReadClipboard { text -> onResult(text.toString()) }
+
 // Eagerly install the capture listener when this file is first loaded.
 // platformOsName() is called during currentOs initialization (before any
 // key events), which triggers loading of this file and runs this initializer.

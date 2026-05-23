@@ -26,20 +26,36 @@ import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asInsert
 
 /**
+ * Write [text] to the system clipboard, bridging the platform gap.
+ *
+ * On wasmJs [platformWriteClipboard] kicks off `navigator.clipboard.writeText`
+ * synchronously inside the originating key-event gesture (returns true). On
+ * JVM/Desktop it returns false, so we fall back to Compose's `ClipboardManager`,
+ * which writes the AWT system clipboard synchronously. In both cases the
+ * in-editor [EditorSessionImpl.internalClipboard] buffer is updated as an
+ * immediate, always-reliable fallback for paste within the same session.
+ */
+private fun writeClipboard(impl: EditorSessionImpl?, text: String) {
+    impl?.internalClipboard = text
+    val handledByPlatform = platformWriteClipboard(text)
+    if (!handledByPlatform) {
+        try {
+            impl?.clipboardManager?.setText(AnnotatedString(text))
+        } catch (_: Throwable) {
+            // Best-effort system clipboard write; the internal buffer is the
+            // reliable fallback.
+        }
+    }
+}
+
+/**
  * Copy the current selection to the system clipboard.
  */
 val clipboardCopy: (EditorSession) -> Boolean = { view ->
     val impl = view as? EditorSessionImpl
     val sel = view.state.selection.main
     if (!sel.empty) {
-        val text = view.state.doc.sliceString(sel.from, sel.to)
-        impl?.internalClipboard = text
-        try {
-            impl?.clipboardManager?.setText(AnnotatedString(text))
-        } catch (_: Throwable) {
-            // On wasmJs the browser clipboard API may fail (security policy,
-            // async limitations).  The internal buffer is the reliable fallback.
-        }
+        writeClipboard(impl, view.state.doc.sliceString(sel.from, sel.to))
     }
     true
 }
@@ -51,14 +67,7 @@ val clipboardCut: (EditorSession) -> Boolean = { view ->
     val impl = view as? EditorSessionImpl
     val sel = view.state.selection.main
     if (!sel.empty) {
-        val text = view.state.doc.sliceString(sel.from, sel.to)
-        impl?.internalClipboard = text
-        try {
-            impl?.clipboardManager?.setText(AnnotatedString(text))
-        } catch (_: Throwable) {
-            // Best-effort system clipboard write; internal buffer is the
-            // reliable fallback on wasmJs.
-        }
+        writeClipboard(impl, view.state.doc.sliceString(sel.from, sel.to))
         view.dispatch(
             TransactionSpec(
                 changes = ChangeSpec.Single(from = sel.from, to = sel.to)
@@ -73,9 +82,15 @@ val clipboardCut: (EditorSession) -> Boolean = { view ->
  */
 val clipboardPaste: (EditorSession) -> Boolean = { view ->
     val impl = view as? EditorSessionImpl
-    // Try the system clipboard first; fall back to the internal buffer.
-    // On wasmJs the browser clipboard API is async so getText() often
-    // returns null even after a successful setText().
+    // On wasmJs the browser Clipboard API read is asynchronous, so it cannot
+    // deliver a value within this synchronous key-event handler. Kick off an
+    // async read to refresh the internal buffer for the *next* paste, then use
+    // the best value currently available (Compose ClipboardManager on JVM, or
+    // the internal buffer — which holds the most recent in-editor copy/cut and
+    // any previously-read external clipboard contents).
+    platformReadClipboard { external ->
+        if (external.isNotEmpty()) impl?.internalClipboard = external
+    }
     val text = try {
         impl?.clipboardManager?.getText()?.text
     } catch (_: Throwable) {

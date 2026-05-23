@@ -85,3 +85,35 @@ internal expect fun platformUnregisterKeyHandler(token: PlatformKeyHandlerToken)
  * On JVM/Desktop, this is a no-op since Compose manages focus natively.
  */
 internal expect fun platformFocusInput()
+
+/**
+ * Write [text] to the underlying system clipboard.
+ *
+ * On wasmJs the canvas-rendered editor has no DOM `contenteditable`, so the
+ * browser's native copy/cut machinery has nothing to read. This bridges the
+ * copy/cut commands to `navigator.clipboard.writeText`, which is asynchronous
+ * but must be invoked synchronously inside the originating user gesture (the
+ * keydown handler) to satisfy the browser's transient-activation requirement.
+ * The write itself completes asynchronously; the in-editor buffer is kept as
+ * an immediate fallback.
+ *
+ * On JVM/Desktop this is a no-op — Compose's `ClipboardManager` writes to the
+ * system clipboard synchronously, so the command layer handles it directly.
+ *
+ * @return true if the platform attempted a system-clipboard write, false if it
+ *   delegated entirely to the Compose `ClipboardManager` (e.g. JVM).
+ */
+internal expect fun platformWriteClipboard(text: String): Boolean
+
+/**
+ * Asynchronously read the system clipboard and deliver the contents to
+ * [onResult]. Because the browser clipboard API is async, the value cannot be
+ * returned synchronously inside a key-event handler; callers use this to prime
+ * the internal buffer so the *next* paste reflects external clipboard contents.
+ *
+ * On JVM/Desktop this is a no-op — the command layer reads the Compose
+ * `ClipboardManager` synchronously.
+ *
+ * @return true if an asynchronous read was started, false otherwise (e.g. JVM).
+ */
+internal expect fun platformReadClipboard(onResult: (String) -> Unit): Boolean
