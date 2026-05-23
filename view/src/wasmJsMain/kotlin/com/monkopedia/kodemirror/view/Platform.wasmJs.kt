@@ -41,30 +41,33 @@ private external fun detectOsFromBrowser(): String
 // Routes ALL keys through __kodeKeyCallback because Playwright (and some
 // headless environments) dispatch key events to BODY rather than the canvas
 // in the shadow DOM, so Skiko never generates Compose KeyEvents for them.
-// The callback receives (key, ctrlKey, altKey, metaKey, shiftKey) and should
-// return true if the key was handled (to prevent default browser behavior).
+// The callback receives (key, ctrlKey, altKey, metaKey, shiftKey) and returns
+// true if the editor's keymap actually handled the key.
+//
+// preventDefault() is called ONLY when the callback reports the key was
+// handled. This is critical: previously every modified/special key was
+// prevented unconditionally, which swallowed browser-reserved shortcuts the
+// editor has no binding for (Ctrl+Tab, Ctrl+W, Ctrl+1-9, etc.) so the browser
+// never saw them (#49). Unhandled keys must fall through to the browser.
+//
 // For real users (events targeting the canvas), both this callback AND
 // onPreviewKeyEvent may fire; a Kotlin-side flag prevents double-handling.
 @JsFun(
     """() => {
     globalThis.__kodeKey = '';
     globalThis.__kodeKeyCallback = null;
-    var special = ['Home','End','Tab','Backspace','Delete','Enter','Escape',
-        'ArrowUp','ArrowDown','ArrowLeft','ArrowRight',
-        'PageUp','PageDown','F1','F2','F3','F4','F5','F6',
-        'F7','F8','F9','F10','F11','F12'];
     document.addEventListener('keydown', function(e) {
         globalThis.__kodeKey = e.key;
-        var isModified = e.ctrlKey || e.metaKey || e.altKey;
-        if (isModified || special.indexOf(e.key) !== -1) {
-            e.preventDefault();
-        }
         // Route all keys through the Kotlin callback. This is necessary
         // because Playwright (and some headless environments) dispatch key
         // events to BODY rather than the canvas in the shadow DOM, so Skiko
         // never converts them to Compose KeyEvents. The Kotlin callback
         // sets a flag so onPreviewKeyEvent skips if Skiko also processes
         // the same event (preventing double-handling).
+        //
+        // Only consume the event (preventDefault) when the editor's keymap
+        // actually handled it. Keys with no editor binding propagate to the
+        // browser so reserved shortcuts (Ctrl+Tab, Ctrl+W, ...) still work.
         if (globalThis.__kodeKeyCallback) {
             var handled = globalThis.__kodeKeyCallback(
                 e.key, e.ctrlKey, e.altKey, e.metaKey, e.shiftKey
