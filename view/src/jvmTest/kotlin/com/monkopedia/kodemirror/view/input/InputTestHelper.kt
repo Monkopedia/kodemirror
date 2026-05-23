@@ -29,6 +29,7 @@ import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.view.EditorSession
+import com.monkopedia.kodemirror.view.EditorSessionImpl
 import com.monkopedia.kodemirror.view.KodeMirror
 import com.monkopedia.kodemirror.view.lineNumbers
 
@@ -123,4 +124,18 @@ fun SessionHolder.assertCursorAt(pos: Int) {
     assert(head == DocPos(pos)) {
         "Expected cursor at $pos but was at ${head.value}"
     }
+}
+
+/** Index of the first item currently laid out in the editor's line list. */
+fun SessionHolder.firstVisibleIndex(): Int = (session as EditorSessionImpl).lastFirstVisibleItem
+
+/** Number of items currently laid out in the editor's line list. */
+fun SessionHolder.visibleItemCount(): Int = (session as EditorSessionImpl).lastVisibleItemCount
+
+/** Whether the given column-item index is within the currently laid-out range. */
+fun SessionHolder.isIndexVisible(index: Int): Boolean {
+    val impl = session as EditorSessionImpl
+    val first = impl.lastFirstVisibleItem
+    val count = impl.lastVisibleItemCount
+    return index in first until (first + count)
 }

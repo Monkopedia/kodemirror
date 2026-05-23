@@ -69,9 +69,29 @@ internal class EditorSessionImpl(
 
     /** Tracking fields for ViewUpdate flags — updated by the composable. */
     internal var lastFirstVisibleItem: Int = 0
+
+    /** Number of items currently laid out in the viewport (for tests/diagnostics). */
+    internal var lastVisibleItemCount: Int = 0
     internal var lastLayoutHeight: Float = 0f
     internal var hasFocus: Boolean = false
     private var lastHasFocus: Boolean = false
+
+    /**
+     * Pending scroll-into-view request, observed by the composable.
+     *
+     * Set whenever a dispatched transaction carries [Transaction.scrollIntoView].
+     * The composable observes this via Compose snapshot state and scrolls the
+     * line list so the [ScrollRequest.target] document position becomes visible.
+     *
+     * A monotonically increasing [ScrollRequest.token] guarantees that two
+     * consecutive jumps to the *same* position (e.g. vim `n` landing on the same
+     * column) still trigger a fresh scroll, since the value is observed by
+     * identity/equality.
+     */
+    internal var scrollRequest: ScrollRequest? by mutableStateOf(null)
+        private set
+
+    private var scrollRequestToken: Long = 0
 
     /** Dispatch one or more transaction specs against the current state. */
     override fun dispatch(vararg specs: TransactionSpec) {
@@ -95,7 +115,23 @@ internal class EditorSessionImpl(
         )
         pluginHost?.update(update)
         pluginHost?.syncToState(tr.state, oldState)
+        // Honor scrollIntoView: queue a request for the composable to reveal
+        // the primary selection head. This drives caret-reveal on cursor moves
+        // (#33) and the search/jump reveal in vim `n`/`N` (#58).
+        if (tr.scrollIntoView) {
+            scrollRequest = ScrollRequest(
+                target = tr.state.selection.main.head.value,
+                token = scrollRequestToken++
+            )
+        }
         onUpdate(tr)
+    }
+
+    /** Clear the pending scroll request once the composable has handled it. */
+    internal fun consumeScrollRequest(request: ScrollRequest) {
+        if (scrollRequest === request) {
+            scrollRequest = null
+        }
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -128,3 +164,12 @@ internal class EditorSessionImpl(
 
     override fun phrase(phrase: String, vararg insert: Any): String = state.phrase(phrase, *insert)
 }
+
+/**
+ * A pending request to scroll a document position into the visible viewport.
+ *
+ * @param target document offset to reveal (the primary selection head).
+ * @param token  monotonically increasing id, so repeated requests to the same
+ *   [target] still register as distinct values.
+ */
+internal data class ScrollRequest(val target: Int, val token: Long)

@@ -23,6 +23,7 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.awaitTouchSlopOrCancellation
 import androidx.compose.foundation.gestures.drag
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -48,6 +49,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -169,6 +171,36 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
     }
 
     val lazyState = rememberLazyListState()
+
+    // Honor transaction.scrollIntoView: when a dispatched transaction requests
+    // it, scroll the line list so the primary selection head becomes visible.
+    // This drives caret-reveal on cursor moves (#33) and the search-jump reveal
+    // for vim `n`/`N` and similar selection jumps (#58). Without this, an
+    // off-screen target lands invisibly because the LazyColumn never scrolls.
+    //
+    // Observe via snapshotFlow (outside composition) rather than keying a
+    // LaunchedEffect directly on the request value: running a scroll while the
+    // LazyColumn is still mid-(sub)composition can trip the Compose runtime.
+    val currentColumnItems = rememberUpdatedState(columnItems)
+    LaunchedEffect(session) {
+        snapshotFlow { impl.scrollRequest }
+            .collect { request ->
+                if (request == null) return@collect
+                val items = currentColumnItems.value
+                val targetIndex = items.indexOfFirst { item ->
+                    when (item) {
+                        is ColumnItem.TextLine ->
+                            request.target >= item.from.value &&
+                                request.target <= item.to.value
+                        is ColumnItem.BlockWidgetItem -> false
+                    }
+                }
+                if (targetIndex >= 0) {
+                    scrollItemIntoView(lazyState, targetIndex)
+                }
+                impl.consumeScrollRequest(request)
+            }
+    }
 
     // Track Alt key state for rectangular selection
     var altPressed by remember { mutableStateOf(false) }
@@ -722,6 +754,8 @@ private fun EditorContent(
             }
         }.collect { (startIdx, count) ->
             val startIndex = startIdx ?: 0
+            impl.lastFirstVisibleItem = startIndex
+            impl.lastVisibleItemCount = count
             val visibleLineNumbers = columnItems
                 .drop(startIndex)
                 .take(count.coerceAtLeast(1))
@@ -826,6 +860,70 @@ fun rememberEditorSession(
     onUpdate: (Transaction) -> Unit = {}
 ): EditorSession {
     return remember { EditorSession(EditorState.create(config), onUpdate) }
+}
+
+/**
+ * Scroll [lazyState] the minimal amount needed to bring [targetIndex] fully
+ * into the visible viewport.
+ *
+ * Mirrors CodeMirror 6's `scrollIntoView` "nearest" behavior: if the item is
+ * already fully visible, do nothing; if it is above the viewport, align it to
+ * the top; if it is below the viewport, align it to the bottom. Items larger
+ * than the viewport are aligned to the top so their start is visible.
+ */
+internal suspend fun scrollItemIntoView(lazyState: LazyListState, targetIndex: Int) {
+    val layoutInfo = lazyState.layoutInfo
+    val visible = layoutInfo.visibleItemsInfo
+    if (visible.isEmpty()) {
+        // Nothing laid out yet (e.g. first frame). Best-effort: jump to the item.
+        lazyState.scrollToItem(targetIndex)
+        return
+    }
+    // Bounds of the usable viewport (inside content padding).
+    val viewportStart = layoutInfo.viewportStartOffset
+    val viewportEnd = layoutInfo.viewportEndOffset
+    val viewportHeight = viewportEnd - viewportStart
+
+    val existing = visible.firstOrNull { it.index == targetIndex }
+    val firstVisibleIndex = visible.first().index
+
+    // Decide whether the target is above the viewport, below it, or already
+    // visible. For an item that is laid out, use its measured bounds; for one
+    // scrolled off-screen, infer direction from its index.
+    val above: Boolean
+    val below: Boolean
+    if (existing != null) {
+        above = existing.offset < viewportStart
+        below = existing.offset + existing.size > viewportEnd
+    } else {
+        above = targetIndex < firstVisibleIndex
+        below = !above
+    }
+
+    when {
+        // Above the viewport (or fully off-screen above): align top edge to
+        // the viewport top.
+        above -> lazyState.scrollToItem(targetIndex)
+        // Below the viewport (or off-screen below): bring the item to the top
+        // first (guarantees it is laid out and visible), then, if it fits with
+        // room to spare, scroll backward so it sits at the viewport bottom and
+        // the preceding context above the caret stays on screen — matching
+        // CM6's "nearest" alignment.
+        below -> {
+            lazyState.scrollToItem(targetIndex)
+            val now = lazyState.layoutInfo.visibleItemsInfo
+                .firstOrNull { it.index == targetIndex }
+            if (now != null) {
+                val slack = (viewportHeight - now.size).toFloat()
+                if (slack > 0f) {
+                    // scrollBy(negative) moves content down, revealing earlier
+                    // items above and pushing the target toward the bottom.
+                    lazyState.scrollBy(-slack)
+                }
+            }
+        }
+        // else: already fully visible, nothing to do.
+    }
 }
 
 /** Layout info saved when [onGloballyPositioned] fires before the parent. */
