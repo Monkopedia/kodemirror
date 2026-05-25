@@ -37,26 +37,21 @@ import com.monkopedia.kodemirror.view.LocalEditorTheme
 import com.monkopedia.kodemirror.view.Tooltip
 import com.monkopedia.kodemirror.view.hoverTooltip
 import com.monkopedia.lsp.Hover
+import com.monkopedia.lsp.HoverContents
 import com.monkopedia.lsp.HoverParams
+import com.monkopedia.lsp.MarkedString
 import com.monkopedia.lsp.MarkupContent
 import com.monkopedia.lsp.MarkupKind
 import com.monkopedia.lsp.StringOr
 import com.monkopedia.lsp.TextDocumentIdentifier
 import kotlinx.coroutines.CancellationException
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonNull
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.contentOrNull
 
 /**
  * A single rendered block of LSP hover content.
  *
  * The LSP `Hover.contents` field is a union (`MarkupContent | MarkedString |
- * MarkedString[] | string`); [parseHoverContents] flattens it into an ordered
- * list of these blocks for rendering.
+ * MarkedString[]`, modelled by [HoverContents]); [parseHoverContents] flattens
+ * it into an ordered list of these blocks for rendering.
  *
  * @param text The textual body of the block.
  * @param language When non-null, the block is a fenced code block tagged with
@@ -72,71 +67,55 @@ internal data class HoverBlock(
     val markdown: Boolean = false
 )
 
-private val hoverJson = Json {
-    ignoreUnknownKeys = true
-    isLenient = true
-}
-
 /**
- * Parse the raw `textDocument/hover` result (which the typed
- * [LanguageServer][com.monkopedia.lsp.LanguageServer] returns as a [Hover] whose
- * [contents][Hover.contents] is an untyped [JsonElement]) into an ordered list
- * of [HoverBlock]s.
+ * Parse the typed `textDocument/hover` result's [contents][Hover.contents]
+ * (a strict [HoverContents] union) into an ordered list of [HoverBlock]s.
  *
- * Handles every shape the LSP `Hover.contents` union allows:
- * - a plain `string` (non-markdown prose),
- * - a `MarkupContent` object `{kind, value}` (markdown when
- *   [kind][MarkupContent.kind] is [MARKDOWN][MarkupKind.MARKDOWN]),
- * - a `MarkedString`, i.e. either a `string` (rendered as a markdown block, per
- *   the LSP spec) or `{language, value}` (a fenced code block in that language),
- * - an array of `MarkedString` (each element handled as above).
+ * Handles every variant the LSP `Hover.contents` union allows:
+ * - [MarkupContentValue][HoverContents.MarkupContentValue] — a `MarkupContent`
+ *   `{kind, value}` (markdown when [kind][MarkupContent.kind] is
+ *   [MARKDOWN][MarkupKind.MARKDOWN]),
+ * - [MarkedStringValue][HoverContents.MarkedStringValue] — a `MarkedString`,
+ *   i.e. either a `string` (rendered as a markdown block, per the LSP spec) or
+ *   `{language, value}` (a fenced code block in that language),
+ * - [MarkedStringArray][HoverContents.MarkedStringArray] — an array of
+ *   `MarkedString` (each element handled as above).
  *
  * Empty/blank blocks are dropped. Returns an empty list when there is nothing to
  * show (which the caller treats as "no tooltip").
  */
-internal fun parseHoverContents(contents: JsonElement): List<HoverBlock> = when (contents) {
-    is JsonNull -> emptyList()
-    is JsonPrimitive -> {
-        // Plain `string` form of the union.
-        contents.contentOrNull
-            ?.takeIf { it.isNotBlank() }
-            ?.let { listOf(HoverBlock(text = it, markdown = false)) }
-            ?: emptyList()
-    }
-    is JsonObject -> parseHoverObject(contents)?.let { listOf(it) } ?: emptyList()
-    is JsonArray -> contents.flatMap { element ->
-        when (element) {
-            is JsonPrimitive ->
-                element.contentOrNull
-                    ?.takeIf { it.isNotBlank() }
-                    // Per the spec, a bare string inside a MarkedString[] is markdown.
-                    ?.let { listOf(HoverBlock(text = it, markdown = true)) }
-                    ?: emptyList()
-            is JsonObject -> parseHoverObject(element)?.let { listOf(it) } ?: emptyList()
-            else -> emptyList()
-        }
-    }
+internal fun parseHoverContents(contents: HoverContents): List<HoverBlock> = when (contents) {
+    is HoverContents.MarkupContentValue ->
+        markupContentBlock(contents.value)?.let { listOf(it) } ?: emptyList()
+    is HoverContents.MarkedStringValue ->
+        markedStringBlock(contents.value)?.let { listOf(it) } ?: emptyList()
+    is HoverContents.MarkedStringArray ->
+        contents.value.mapNotNull { markedStringBlock(it) }
 }
 
 /**
- * Parse a single object element of `Hover.contents` — either a
- * [MarkupContent] (`{kind, value}`) or a `MarkedString` (`{language, value}`).
- * The two are disambiguated by which key is present (`kind` vs `language`).
+ * Convert one [MarkupContent] to a [HoverBlock], rendering it as markdown only
+ * when its [kind][MarkupContent.kind] is [MARKDOWN][MarkupKind.MARKDOWN]. Blank
+ * content yields `null` (dropped).
  */
-private fun parseHoverObject(obj: JsonObject): HoverBlock? {
-    val value = (obj["value"] as? JsonPrimitive)?.contentOrNull ?: return null
-    if (value.isBlank()) return null
-    val language = (obj["language"] as? JsonPrimitive)?.contentOrNull
-    if (language != null) {
-        // MarkedString {language, value}: a fenced code block.
-        return HoverBlock(text = value, language = language, markdown = false)
-    }
-    // MarkupContent {kind, value}.
-    val markup = runCatching {
-        hoverJson.decodeFromJsonElement(MarkupContent.serializer(), obj)
-    }.getOrNull()
-    val markdown = markup?.kind == MarkupKind.MARKDOWN
-    return HoverBlock(text = value, markdown = markdown)
+private fun markupContentBlock(markup: MarkupContent): HoverBlock? = markup.value
+    .takeIf { it.isNotBlank() }
+    ?.let { HoverBlock(text = it, markdown = markup.kind == MarkupKind.MARKDOWN) }
+
+/**
+ * Convert one `MarkedString` to a [HoverBlock]: a bare `string` becomes a
+ * markdown block (per the LSP spec), while `{language, value}` becomes a fenced
+ * code block in that language. Blank content yields `null` (dropped).
+ */
+private fun markedStringBlock(marked: MarkedString): HoverBlock? = when (marked) {
+    is StringOr.StringValue ->
+        marked.value
+            .takeIf { it.isNotBlank() }
+            ?.let { HoverBlock(text = it, markdown = true) }
+    is StringOr.Value ->
+        marked.value.value
+            .takeIf { it.isNotBlank() }
+            ?.let { HoverBlock(text = it, language = marked.value.language, markdown = false) }
 }
 
 /**
@@ -352,7 +331,8 @@ internal fun hoverTooltipPos(
  * 3. captures a [WorkspaceMapping] so the response range can be remapped if the
  *    document changes while the request is in flight,
  * 4. issues `textDocument/hover` at the pointer position,
- * 5. parses the [contents][Hover.contents] union ([parseHoverContents]) and
+ * 5. parses the [contents][Hover.contents] [HoverContents] union
+ *    ([parseHoverContents]) and
  *    renders it to Compose ([HoverContent]; see its HTML→Compose deviation
  *    note), anchored at the [Hover.range] start when present.
  *

@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+- Bumped `com.monkopedia.lsp` (`lsp` + `lsp-ksrpc`) from `1.0.0-RC2` to `1.0.0-RC3`. RC3 tightens several `Hover.contents` / `ServerCapabilities.textDocumentSync` fields from untyped `JsonElement` to strict union types, so `:lsp-client`'s `ServerHover` and `DocumentSync` now read the typed `HoverContents` and `ServerCapabilitiesTextDocumentSync` unions directly instead of hand-parsing `JsonElement` (internal parsing only; no public API change). The `:lsp-client` module remains pre-stable.
+
 ### Fixed
 - wasmJs editor no longer swallows browser-reserved keyboard shortcuts (Ctrl+Tab, Ctrl+Shift+Tab, Ctrl+PgUp/PgDn, Ctrl+1–9, Ctrl+W/T/L, …) — the document keydown listener now calls `preventDefault()` only when the editor's keymap actually handled the key, so unbound modified/special keys propagate to the browser (#49)
 - Copy/cut/paste did not reach the system clipboard on the Compose/wasm target (vim `y`, emacs, and default keymaps) — the canvas render has no DOM `contenteditable`, so the copy/cut commands now bridge to `navigator.clipboard.writeText` synchronously within the originating key gesture (with a hidden-textarea `execCommand` fallback) and paste primes its buffer from `navigator.clipboard.readText`; the in-editor buffer from #16 remains the immediate fallback. JVM/desktop continues to use Compose's `ClipboardManager` (#34)

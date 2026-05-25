@@ -53,6 +53,7 @@ import com.monkopedia.lsp.SignatureHelpContext
 import com.monkopedia.lsp.SignatureHelpParams
 import com.monkopedia.lsp.SignatureHelpTriggerKind
 import com.monkopedia.lsp.SignatureInformation
+import com.monkopedia.lsp.StringOr
 import com.monkopedia.lsp.TextDocumentIdentifier
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -60,10 +61,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.intOrNull
 
 /**
  * Configuration for [signatureHelp].
@@ -131,17 +128,19 @@ internal fun activeParamRange(
     val params = signature.parameters ?: return null
     val index = (signature.activeParameter ?: helpActiveParameter)?.toInt() ?: return null
     val param = params.getOrNull(index) ?: return null
-    val label = param.label
-    if (label is JsonArray && label.size == 2) {
-        val from = (label[0] as? JsonPrimitive)?.intOrNull
-        val to = (label[1] as? JsonPrimitive)?.intOrNull
-        if (from != null && to != null) return ActiveParamRange(from, to)
-        return null
+    return when (val label = param.label) {
+        is StringOr.Value -> {
+            val offsets = label.value
+            if (offsets.size != 2) return null
+            ActiveParamRange(offsets[0].toInt(), offsets[1].toInt())
+        }
+        is StringOr.StringValue -> {
+            val str = label.value
+            val found = signature.label.indexOf(str)
+            if (found < 0) return null
+            ActiveParamRange(found, found + str.length)
+        }
     }
-    val str = (label as? JsonPrimitive)?.contentOrNull ?: return null
-    val found = signature.label.indexOf(str)
-    if (found < 0) return null
-    return ActiveParamRange(found, found + str.length)
 }
 
 /**

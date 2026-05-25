@@ -28,11 +28,10 @@ import com.monkopedia.lsp.ServerCapabilities
 import com.monkopedia.lsp.TextDocumentContentChangeEventRange
 import com.monkopedia.lsp.TextDocumentContentChangeEventVariant
 import com.monkopedia.lsp.TextDocumentSyncKind
+import com.monkopedia.lsp.TextDocumentSyncOptions
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonObject
 
 class DocumentSyncTest {
     private fun doc(vararg lines: String): Text = Text.of(lines.toList())
@@ -88,7 +87,7 @@ class DocumentSyncTest {
 
     @Test
     fun syncModeFromNumberCapability() {
-        val caps = ServerCapabilities(textDocumentSync = JsonPrimitive(2))
+        val caps = ServerCapabilities(textDocumentSync = TextDocumentSyncKind.INCREMENTAL)
         val mode = DocumentSyncMode.forCapabilities(caps)
         assertEquals(TextDocumentSyncKind.INCREMENTAL, mode.change)
         assertTrue(mode.openClose)
@@ -97,10 +96,10 @@ class DocumentSyncTest {
     @Test
     fun syncModeFromOptionsCapability() {
         val caps = ServerCapabilities(
-            textDocumentSync = buildJsonObject {
-                put("openClose", JsonPrimitive(true))
-                put("change", JsonPrimitive(1))
-            }
+            textDocumentSync = TextDocumentSyncOptions(
+                openClose = true,
+                change = TextDocumentSyncKind.FULL
+            )
         )
         val mode = DocumentSyncMode.forCapabilities(caps)
         assertEquals(TextDocumentSyncKind.FULL, mode.change)

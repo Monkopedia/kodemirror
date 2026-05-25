@@ -24,6 +24,7 @@ import com.monkopedia.lsp.LanguageServer
 import com.monkopedia.lsp.ParameterInformation
 import com.monkopedia.lsp.SignatureHelp
 import com.monkopedia.lsp.SignatureInformation
+import com.monkopedia.lsp.StringOr
 import java.lang.reflect.Proxy
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -32,18 +33,15 @@ import kotlin.test.assertNotSame
 import kotlin.test.assertNull
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonPrimitive
 
 class ServerSignatureHelpTest {
 
-    private fun param(label: kotlinx.serialization.json.JsonElement) =
-        ParameterInformation(label = label)
+    private fun param(label: StringOr<List<UInt>>) = ParameterInformation(label = label)
 
-    private fun strParam(label: String) = param(JsonPrimitive(label))
+    private fun strParam(label: String) = param(StringOr.StringValue(label))
 
     private fun offsetParam(from: Int, to: Int) =
-        param(JsonArray(listOf(JsonPrimitive(from), JsonPrimitive(to))))
+        param(StringOr.Value(listOf(from.toUInt(), to.toUInt())))
 
     private fun signature(
         label: String,

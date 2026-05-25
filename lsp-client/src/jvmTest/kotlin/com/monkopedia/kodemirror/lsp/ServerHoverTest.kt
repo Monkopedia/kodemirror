@@ -24,36 +24,47 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import com.monkopedia.kodemirror.state.Text
 import com.monkopedia.lsp.Hover
+import com.monkopedia.lsp.HoverContents
+import com.monkopedia.lsp.MarkedString
+import com.monkopedia.lsp.MarkedStringObject
+import com.monkopedia.lsp.MarkupContent
+import com.monkopedia.lsp.MarkupKind
 import com.monkopedia.lsp.Position
 import com.monkopedia.lsp.Range
+import com.monkopedia.lsp.StringOr
+import com.monkopedia.lsp.markdown
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonElement
 
 class ServerHoverTest {
-    private val json = Json { ignoreUnknownKeys = true }
+    private fun markedString(value: String): MarkedString = StringOr.StringValue(value)
 
-    private fun element(raw: String): JsonElement = json.parseToJsonElement(raw)
+    private fun markedString(language: String, value: String): MarkedString =
+        StringOr.Value(MarkedStringObject(language = language, value = value))
 
-    // --- parseHoverContents: union shapes ---
+    // --- parseHoverContents: union variants ---
 
     @Test
     fun parsesPlainString() {
-        val blocks = parseHoverContents(element("\"hello world\""))
+        // A bare-string MarkedString is markdown per the LSP spec.
+        val blocks = parseHoverContents(
+            HoverContents.MarkedStringValue(markedString("hello world"))
+        )
         assertEquals(1, blocks.size)
         assertEquals("hello world", blocks[0].text)
-        assertFalse(blocks[0].markdown)
+        assertTrue(blocks[0].markdown)
         assertNull(blocks[0].language)
     }
 
     @Test
     fun parsesMarkupContentMarkdown() {
         val blocks = parseHoverContents(
-            element("""{"kind":"markdown","value":"**bold** text"}""")
+            HoverContents.MarkupContentValue(
+                MarkupContent(kind = MarkupKind.MARKDOWN, value = "**bold** text")
+            )
         )
         assertEquals(1, blocks.size)
         assertEquals("**bold** text", blocks[0].text)
@@ -64,7 +75,9 @@ class ServerHoverTest {
     @Test
     fun parsesMarkupContentPlainText() {
         val blocks = parseHoverContents(
-            element("""{"kind":"plaintext","value":"*not* bold"}""")
+            HoverContents.MarkupContentValue(
+                MarkupContent(kind = MarkupKind.PLAIN_TEXT, value = "*not* bold")
+            )
         )
         assertEquals(1, blocks.size)
         assertFalse(blocks[0].markdown)
@@ -73,7 +86,7 @@ class ServerHoverTest {
     @Test
     fun parsesMarkedStringObject() {
         val blocks = parseHoverContents(
-            element("""{"language":"kotlin","value":"fun foo()"}""")
+            HoverContents.MarkedStringValue(markedString("kotlin", "fun foo()"))
         )
         assertEquals(1, blocks.size)
         assertEquals("fun foo()", blocks[0].text)
@@ -84,8 +97,8 @@ class ServerHoverTest {
     @Test
     fun parsesMarkedStringArray() {
         val blocks = parseHoverContents(
-            element(
-                """[{"language":"kotlin","value":"fun foo()"},"some *markdown*"]"""
+            HoverContents.MarkedStringArray(
+                listOf(markedString("kotlin", "fun foo()"), markedString("some *markdown*"))
             )
         )
         assertEquals(2, blocks.size)
@@ -96,12 +109,15 @@ class ServerHoverTest {
     }
 
     @Test
-    fun dropsBlankAndNullBlocks() {
-        assertTrue(parseHoverContents(element("\"   \"")).isEmpty())
-        assertTrue(parseHoverContents(element("null")).isEmpty())
-        assertTrue(parseHoverContents(element("[]")).isEmpty())
+    fun dropsBlankBlocks() {
+        assertTrue(
+            parseHoverContents(HoverContents.MarkedStringValue(markedString("   "))).isEmpty()
+        )
+        assertTrue(parseHoverContents(HoverContents.MarkedStringArray(emptyList())).isEmpty())
         val blocks = parseHoverContents(
-            element("""[{"language":"kotlin","value":"x"},"  "]""")
+            HoverContents.MarkedStringArray(
+                listOf(markedString("kotlin", "x"), markedString("  "))
+            )
         )
         assertEquals(1, blocks.size)
     }
@@ -187,7 +203,7 @@ class ServerHoverTest {
     @Test
     fun usesPointerPosWhenNoRange() {
         val d = doc("line one\nline two")
-        val hover = Hover(contents = json.parseToJsonElement("\"x\""), range = null)
+        val hover = Hover(contents = HoverContents.markdown("x"), range = null)
         assertEquals(5, hoverTooltipPos(hover, 5, d, null))
     }
 
@@ -196,7 +212,7 @@ class ServerHoverTest {
         val d = doc("line one\nline two")
         // Range starts at line 1 (0-based), char 0 -> offset 9.
         val hover = Hover(
-            contents = json.parseToJsonElement("\"x\""),
+            contents = HoverContents.markdown("x"),
             range = Range(
                 start = Position(line = 1u, character = 0u),
                 end = Position(line = 1u, character = 4u)

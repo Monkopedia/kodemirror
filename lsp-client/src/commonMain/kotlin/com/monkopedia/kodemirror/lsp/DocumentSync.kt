@@ -25,14 +25,12 @@ import com.monkopedia.kodemirror.state.Text
 import com.monkopedia.lsp.Position
 import com.monkopedia.lsp.Range
 import com.monkopedia.lsp.ServerCapabilities
+import com.monkopedia.lsp.ServerCapabilitiesTextDocumentSync
 import com.monkopedia.lsp.TextDocumentContentChangeEvent
 import com.monkopedia.lsp.TextDocumentContentChangeEventRange
 import com.monkopedia.lsp.TextDocumentContentChangeEventVariant
 import com.monkopedia.lsp.TextDocumentSyncKind
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.booleanOrNull
-import kotlinx.serialization.json.intOrNull
+import com.monkopedia.lsp.TextDocumentSyncOptions
 
 /**
  * Convert a kodemirror document offset to an LSP [Position].
@@ -104,31 +102,22 @@ data class DocumentSyncMode(
          *
          * The `textDocumentSync` capability is, per the LSP spec, either the
          * [TextDocumentSyncKind] number (legacy form) or a
-         * `TextDocumentSyncOptions` object (`{openClose, change}`). When it is
-         * absent the spec defaults to no syncing; we follow upstream and still
-         * advertise open/close while defaulting [change] to
-         * [TextDocumentSyncKind.NONE].
+         * [TextDocumentSyncOptions] object (`{openClose, change}`), modelled by
+         * the [ServerCapabilitiesTextDocumentSync] union. When it is absent the
+         * spec defaults to no syncing; we follow upstream and still advertise
+         * open/close while defaulting [change] to [TextDocumentSyncKind.NONE].
          */
-        fun forCapabilities(capabilities: ServerCapabilities?): DocumentSyncMode {
-            val sync = capabilities?.textDocumentSync
-                ?: return DocumentSyncMode(openClose = true, change = TextDocumentSyncKind.NONE)
-            return when (sync) {
-                is JsonPrimitive -> {
-                    val kind = sync.intOrNull?.toUInt()?.let { TextDocumentSyncKind(it) }
-                        ?: TextDocumentSyncKind.NONE
-                    DocumentSyncMode(openClose = true, change = kind)
-                }
-                is JsonObject -> {
-                    val openClose = (sync["openClose"] as? JsonPrimitive)
-                        ?.booleanOrNull ?: false
-                    val change = (sync["change"] as? JsonPrimitive)?.intOrNull
-                        ?.toUInt()?.let { TextDocumentSyncKind(it) }
-                        ?: TextDocumentSyncKind.NONE
-                    DocumentSyncMode(openClose = openClose, change = change)
-                }
-                else -> DocumentSyncMode(openClose = true, change = TextDocumentSyncKind.NONE)
+        fun forCapabilities(capabilities: ServerCapabilities?): DocumentSyncMode =
+            when (val sync = capabilities?.textDocumentSync) {
+                null -> DocumentSyncMode(openClose = true, change = TextDocumentSyncKind.NONE)
+                is TextDocumentSyncKind ->
+                    DocumentSyncMode(openClose = true, change = sync)
+                is TextDocumentSyncOptions ->
+                    DocumentSyncMode(
+                        openClose = sync.openClose ?: false,
+                        change = sync.change ?: TextDocumentSyncKind.NONE
+                    )
             }
-        }
     }
 }
 
