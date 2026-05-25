@@ -30,6 +30,7 @@ import com.monkopedia.lsp.ColorPresentation
 import com.monkopedia.lsp.ColorPresentationParams
 import com.monkopedia.lsp.CompletionItem
 import com.monkopedia.lsp.CompletionItemKind
+import com.monkopedia.lsp.CompletionList
 import com.monkopedia.lsp.CompletionOptions
 import com.monkopedia.lsp.CompletionParams
 import com.monkopedia.lsp.CreateFilesParams
@@ -65,6 +66,7 @@ import com.monkopedia.lsp.ExecuteCommandParams
 import com.monkopedia.lsp.FoldingRange
 import com.monkopedia.lsp.FoldingRangeParams
 import com.monkopedia.lsp.Hover
+import com.monkopedia.lsp.HoverContents
 import com.monkopedia.lsp.HoverParams
 import com.monkopedia.lsp.ImplementationParams
 import com.monkopedia.lsp.InitializeParams
@@ -109,9 +111,19 @@ import com.monkopedia.lsp.SignatureHelp
 import com.monkopedia.lsp.SignatureHelpOptions
 import com.monkopedia.lsp.SignatureHelpParams
 import com.monkopedia.lsp.SignatureInformation
+import com.monkopedia.lsp.SingleOrArray
 import com.monkopedia.lsp.StringOr
 import com.monkopedia.lsp.TextDocumentCodeActionResult
+import com.monkopedia.lsp.TextDocumentCompletionResult
+import com.monkopedia.lsp.TextDocumentDeclarationResult
+import com.monkopedia.lsp.TextDocumentDefinitionResult
+import com.monkopedia.lsp.TextDocumentDocumentSymbolResult
+import com.monkopedia.lsp.TextDocumentImplementationResult
+import com.monkopedia.lsp.TextDocumentInlineCompletionResult
 import com.monkopedia.lsp.TextDocumentSemanticTokensFullDeltaResult
+import com.monkopedia.lsp.TextDocumentSyncKind
+import com.monkopedia.lsp.TextDocumentSyncOptions
+import com.monkopedia.lsp.TextDocumentTypeDefinitionResult
 import com.monkopedia.lsp.TextEdit
 import com.monkopedia.lsp.TypeDefinitionParams
 import com.monkopedia.lsp.TypeHierarchyItem
@@ -125,11 +137,9 @@ import com.monkopedia.lsp.WorkspaceDiagnosticReport
 import com.monkopedia.lsp.WorkspaceEdit
 import com.monkopedia.lsp.WorkspaceSymbol
 import com.monkopedia.lsp.WorkspaceSymbolParams
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.buildJsonArray
-import kotlinx.serialization.json.encodeToJsonElement
 
 /**
  * An in-memory [LanguageServer] used by [LspDemo] to drive the `:lsp-client`
@@ -168,7 +178,10 @@ class StubLanguageServer : LanguageServer {
         capabilities = ServerCapabilities(
             // Incremental text sync ({ openClose: true, change: 2 }, 2 = Incremental)
             // so didOpen/didChange flow with ranged edits.
-            textDocumentSync = Json.parseToJsonElement("""{"openClose":true,"change":2}"""),
+            textDocumentSync = TextDocumentSyncOptions(
+                openClose = true,
+                change = TextDocumentSyncKind.INCREMENTAL
+            ),
             completionProvider = CompletionOptions(
                 triggerCharacters = listOf(".")
             ),
@@ -235,7 +248,9 @@ class StubLanguageServer : LanguageServer {
 
     // ── completion ──
 
-    override suspend fun textDocumentCompletion(params: CompletionParams): JsonElement {
+    override suspend fun textDocumentCompletion(
+        params: CompletionParams
+    ): TextDocumentCompletionResult {
         val items = listOf(
             CompletionItem(
                 label = "greet",
@@ -262,9 +277,8 @@ class StubLanguageServer : LanguageServer {
                 insertText = "name"
             )
         )
-        return Json.encodeToJsonElement(
-            kotlinx.serialization.builtins.ListSerializer(CompletionItem.serializer()),
-            items
+        return TextDocumentCompletionResult.CompletionListValue(
+            CompletionList(isIncomplete = false, items = items)
         )
     }
 
@@ -273,8 +287,7 @@ class StubLanguageServer : LanguageServer {
     // ── hover ──
 
     override suspend fun textDocumentHover(params: HoverParams): Hover = Hover(
-        contents = Json.encodeToJsonElement(
-            MarkupContent.serializer(),
+        contents = HoverContents.MarkupContentValue(
             MarkupContent(
                 kind = MarkupKind.MARKDOWN,
                 value = buildString {
@@ -303,11 +316,11 @@ class StubLanguageServer : LanguageServer {
                     ),
                     parameters = listOf(
                         ParameterInformation(
-                            label = Json.encodeToJsonElement("name: String"),
+                            label = StringOr.StringValue("name: String"),
                             documentation = StringOr.StringValue("The name to greet.")
                         ),
                         ParameterInformation(
-                            label = Json.encodeToJsonElement("polite: Boolean = true"),
+                            label = StringOr.StringValue("polite: Boolean = true"),
                             documentation = StringOr.StringValue("Whether to be polite.")
                         )
                     )
@@ -319,12 +332,14 @@ class StubLanguageServer : LanguageServer {
 
     // ── definition ──
 
-    override suspend fun textDocumentDefinition(params: DefinitionParams): JsonElement =
-        Json.encodeToJsonElement(
-            Location.serializer(),
-            // Jump to the definition of `greet` on the first line of the sample doc.
+    override suspend fun textDocumentDefinition(
+        params: DefinitionParams
+    ): TextDocumentDefinitionResult = TextDocumentDefinitionResult.DefinitionValue(
+        // Jump to the definition of `greet` on the first line of the sample doc.
+        SingleOrArray.Single(
             Location(uri = params.textDocument.uri, range = range(0u, 4u, 0u, 9u))
         )
+    )
 
     // ── references ──
 
@@ -361,11 +376,15 @@ class StubLanguageServer : LanguageServer {
     // these are never reached in this demo; they exist to satisfy the interface.
     // ─────────────────────────────────────────────────────────────────────────
 
-    override suspend fun textDocumentImplementation(params: ImplementationParams): JsonElement =
-        JsonNull
+    override suspend fun textDocumentImplementation(
+        params: ImplementationParams
+    ): TextDocumentImplementationResult =
+        TextDocumentImplementationResult.DefinitionLinkArray(emptyList())
 
-    override suspend fun textDocumentTypeDefinition(params: TypeDefinitionParams): JsonElement =
-        JsonNull
+    override suspend fun textDocumentTypeDefinition(
+        params: TypeDefinitionParams
+    ): TextDocumentTypeDefinitionResult =
+        TextDocumentTypeDefinitionResult.DefinitionLinkArray(emptyList())
 
     override suspend fun textDocumentDocumentColor(
         params: DocumentColorParams
@@ -379,7 +398,10 @@ class StubLanguageServer : LanguageServer {
         params: FoldingRangeParams
     ): List<FoldingRange> = emptyList()
 
-    override suspend fun textDocumentDeclaration(params: DeclarationParams): JsonElement = JsonNull
+    override suspend fun textDocumentDeclaration(
+        params: DeclarationParams
+    ): TextDocumentDeclarationResult =
+        TextDocumentDeclarationResult.DeclarationLinkArray(emptyList())
 
     override suspend fun textDocumentSelectionRange(
         params: SelectionRangeParams
@@ -456,7 +478,8 @@ class StubLanguageServer : LanguageServer {
 
     override suspend fun textDocumentInlineCompletion(
         params: InlineCompletionParams
-    ): JsonElement = JsonNull
+    ): TextDocumentInlineCompletionResult =
+        TextDocumentInlineCompletionResult.InlineCompletionItemArray(emptyList())
 
     override suspend fun textDocumentWillSaveWaitUntil(
         params: WillSaveTextDocumentParams
@@ -466,8 +489,10 @@ class StubLanguageServer : LanguageServer {
         params: DocumentHighlightParams
     ): List<DocumentHighlight> = emptyList()
 
-    override suspend fun textDocumentDocumentSymbol(params: DocumentSymbolParams): JsonElement =
-        buildJsonArray { }
+    override suspend fun textDocumentDocumentSymbol(
+        params: DocumentSymbolParams
+    ): TextDocumentDocumentSymbolResult =
+        TextDocumentDocumentSymbolResult.SymbolInformationArray(emptyList())
 
     override suspend fun textDocumentCodeAction(
         params: CodeActionParams
@@ -504,7 +529,7 @@ class StubLanguageServer : LanguageServer {
 
     override suspend fun textDocumentPrepareRename(
         params: PrepareRenameParams
-    ): PrepareRenameResult = Json.encodeToJsonElement(Range.serializer(), range(0u, 4u, 0u, 9u))
+    ): PrepareRenameResult = range(0u, 4u, 0u, 9u)
 
     override suspend fun workspaceExecuteCommand(params: ExecuteCommandParams): LSPAny = JsonNull
 

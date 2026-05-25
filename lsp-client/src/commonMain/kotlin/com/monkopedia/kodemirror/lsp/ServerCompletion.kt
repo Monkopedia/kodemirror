@@ -47,14 +47,9 @@ import com.monkopedia.lsp.InsertTextFormat
 import com.monkopedia.lsp.MarkupContent
 import com.monkopedia.lsp.Range
 import com.monkopedia.lsp.StringOr
+import com.monkopedia.lsp.TextDocumentCompletionResult
 import com.monkopedia.lsp.TextDocumentIdentifier
 import com.monkopedia.lsp.TextEdit
-import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonNull
-import kotlinx.serialization.json.JsonObject
 
 /**
  * Configuration for [serverCompletion].
@@ -381,30 +376,26 @@ internal fun completionResultRange(
     return from to to
 }
 
-private val completionJson = Json {
-    ignoreUnknownKeys = true
-    isLenient = true
-}
-
 /**
- * Parse the raw `textDocument/completion` result (which the typed
- * [LanguageServer][com.monkopedia.lsp.LanguageServer] returns as a
- * [JsonElement]) into a [CompletionList]. The LSP result is
- * `CompletionItem[] | CompletionList | null`; arrays are wrapped into a list
- * with `isIncomplete = false`, and `null`/JSON-null become null.
+ * Normalize the typed `textDocument/completion` result into a [CompletionList].
+ *
+ * Since the RC4 lsp bump the typed
+ * [LanguageServer][com.monkopedia.lsp.LanguageServer] returns the strict sealed
+ * [TextDocumentCompletionResult] (was a raw `JsonElement`). The LSP result union
+ * is still `CompletionItem[] | CompletionList | null`:
+ * - [CompletionListValue][TextDocumentCompletionResult.CompletionListValue]
+ *   carries the [CompletionList] verbatim (preserving its `isIncomplete`),
+ * - [CompletionItemArray][TextDocumentCompletionResult.CompletionItemArray] is
+ *   wrapped into a list with `isIncomplete = false`,
+ * - a `null` result (the server returning nothing) becomes null here.
  */
-internal fun parseCompletionResult(element: JsonElement?): CompletionList? = when (element) {
-    null, JsonNull -> null
-    is JsonArray -> CompletionList(
-        isIncomplete = false,
-        items = completionJson.decodeFromJsonElement(
-            ListSerializer(CompletionItem.serializer()),
-            element
-        )
-    )
-    is JsonObject -> completionJson.decodeFromJsonElement(CompletionList.serializer(), element)
-    else -> null
-}
+internal fun parseCompletionResult(result: TextDocumentCompletionResult?): CompletionList? =
+    when (result) {
+        null -> null
+        is TextDocumentCompletionResult.CompletionListValue -> result.value
+        is TextDocumentCompletionResult.CompletionItemArray ->
+            CompletionList(isIncomplete = false, items = result.value)
+    }
 
 /**
  * The suspend completion source that requests completions from the language

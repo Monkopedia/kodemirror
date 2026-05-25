@@ -25,6 +25,7 @@ import com.monkopedia.kodemirror.state.Text
 import com.monkopedia.lsp.CompletionItem
 import com.monkopedia.lsp.CompletionItemKind
 import com.monkopedia.lsp.CompletionItemLabelDetails
+import com.monkopedia.lsp.CompletionList
 import com.monkopedia.lsp.InsertReplaceEdit
 import com.monkopedia.lsp.InsertTextFormat
 import com.monkopedia.lsp.MarkupContent
@@ -32,6 +33,7 @@ import com.monkopedia.lsp.MarkupKind
 import com.monkopedia.lsp.Position
 import com.monkopedia.lsp.Range
 import com.monkopedia.lsp.StringOr
+import com.monkopedia.lsp.TextDocumentCompletionResult
 import com.monkopedia.lsp.TextEdit
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -309,10 +311,10 @@ class ServerCompletionTest {
 
     @Test
     fun parseArrayResult() {
-        val json = kotlinx.serialization.json.Json.parseToJsonElement(
-            """[{"label":"a"},{"label":"b"}]"""
+        val result = TextDocumentCompletionResult.CompletionItemArray(
+            listOf(CompletionItem(label = "a"), CompletionItem(label = "b"))
         )
-        val list = parseCompletionResult(json)
+        val list = parseCompletionResult(result)
         assertNotNull(list)
         assertEquals(false, list.isIncomplete)
         assertEquals(2, list.items.size)
@@ -321,10 +323,10 @@ class ServerCompletionTest {
 
     @Test
     fun parseCompletionListResult() {
-        val json = kotlinx.serialization.json.Json.parseToJsonElement(
-            """{"isIncomplete":true,"items":[{"label":"x"}]}"""
+        val result = TextDocumentCompletionResult.CompletionListValue(
+            CompletionList(isIncomplete = true, items = listOf(CompletionItem(label = "x")))
         )
-        val list = parseCompletionResult(json)
+        val list = parseCompletionResult(result)
         assertNotNull(list)
         assertTrue(list.isIncomplete)
         assertEquals(1, list.items.size)

@@ -28,22 +28,22 @@ import com.monkopedia.kodemirror.view.KeyBinding
 import com.monkopedia.kodemirror.view.keymap as keymapFacet
 import com.monkopedia.lsp.BooleanOr
 import com.monkopedia.lsp.DeclarationParams
+import com.monkopedia.lsp.DefinitionLink
 import com.monkopedia.lsp.DefinitionParams
 import com.monkopedia.lsp.ImplementationParams
 import com.monkopedia.lsp.Location
-import com.monkopedia.lsp.LocationLink
 import com.monkopedia.lsp.Position
 import com.monkopedia.lsp.Range
 import com.monkopedia.lsp.ServerCapabilities
+import com.monkopedia.lsp.SingleOrArray
+import com.monkopedia.lsp.TextDocumentDeclarationResult
+import com.monkopedia.lsp.TextDocumentDefinitionResult
 import com.monkopedia.lsp.TextDocumentIdentifier
+import com.monkopedia.lsp.TextDocumentImplementationResult
+import com.monkopedia.lsp.TextDocumentTypeDefinitionResult
 import com.monkopedia.lsp.TypeDefinitionParams
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonNull
-import kotlinx.serialization.json.JsonObject
 
 /**
  * The per-editor go-to-definition binding: the [client] wrapping the language
@@ -82,53 +82,78 @@ internal val definitionServer: Facet<DefinitionServer?, DefinitionServer?> =
  */
 internal data class JumpTarget(val uri: String, val range: Range)
 
-private val definitionJson = Json {
-    ignoreUnknownKeys = true
-    isLenient = true
+/**
+ * Collapse a `Definition`/`Declaration` value — the LSP `Location | Location[]`
+ * union, modelled by the lsp library as [SingleOrArray]`<`[Location]`>` — into
+ * the first navigable [JumpTarget].
+ *
+ * For the array shape the **first** element is used, matching upstream's
+ * `Array.isArray(response) ? response[0] : response`; an empty array yields null.
+ */
+internal fun SingleOrArray<Location>.firstJumpTarget(): JumpTarget? {
+    val location = when (this) {
+        is SingleOrArray.Single -> value
+        is SingleOrArray.Multiple -> value.firstOrNull()
+    } ?: return null
+    return JumpTarget(location.uri, location.range)
 }
 
 /**
- * Parse the raw definition-family result (which the typed
- * [LanguageServer][com.monkopedia.lsp.LanguageServer] returns as a [JsonElement])
- * into the first navigable [JumpTarget], or null when there is nothing to jump
- * to.
+ * Collapse a `DefinitionLink[]`/`DeclarationLink[]` value (a list of
+ * [DefinitionLink], which is [LocationLink]) into the first navigable
+ * [JumpTarget], or null for an empty list.
  *
- * Handles every shape the result union allows:
- * - `null` / JSON `null` → null,
- * - a single `Location` object (`{uri, range}`),
- * - a single `LocationLink` object (`{targetUri, targetSelectionRange, ...}`),
- * - an array of `Location` or `LocationLink` (the **first** element is used,
- *   matching upstream's `Array.isArray(response) ? response[0] : response`).
- *
- * For a [LocationLink] the [targetSelectionRange][LocationLink.targetSelectionRange]
- * is used (the range that should be revealed/selected when the link is followed,
- * per the LSP spec), with its [targetUri][LocationLink.targetUri].
+ * For a [LocationLink][com.monkopedia.lsp.LocationLink] the
+ * `targetSelectionRange` is used (the range that should be revealed/selected when
+ * the link is followed, per the LSP spec), with its `targetUri`.
  */
-internal fun parseDefinitionResult(element: JsonElement?): JumpTarget? = when (element) {
-    null, JsonNull -> null
-    is JsonObject -> parseLocationElement(element)
-    is JsonArray -> element.firstOrNull()?.let { parseLocationElement(it) }
-    else -> null
+internal fun List<DefinitionLink>.firstJumpTarget(): JumpTarget? {
+    val link = firstOrNull() ?: return null
+    return JumpTarget(link.targetUri, link.targetSelectionRange)
 }
 
 /**
- * Parse a single element of a definition-family result — either a [Location]
- * (`{uri, range}`) or a [LocationLink] (`{targetUri, targetSelectionRange, …}`),
- * disambiguated by which key is present (`uri` vs `targetUri`).
+ * Collapse a `textDocument/definition` result into the first navigable
+ * [JumpTarget].
+ *
+ * Since the RC4 lsp bump the typed
+ * [LanguageServer][com.monkopedia.lsp.LanguageServer] returns the strict sealed
+ * [TextDocumentDefinitionResult] (was a raw `JsonElement`). The
+ * [DefinitionValue][TextDocumentDefinitionResult.DefinitionValue] branch carries
+ * a `Location | Location[]`; the
+ * [DefinitionLinkArray][TextDocumentDefinitionResult.DefinitionLinkArray] branch
+ * carries a `LocationLink[]`. A `null` result (server returned nothing) → null.
  */
-private fun parseLocationElement(element: JsonElement): JumpTarget? {
-    val obj = element as? JsonObject ?: return null
-    if (obj.containsKey("targetUri")) {
-        val link = runCatching {
-            definitionJson.decodeFromJsonElement(LocationLink.serializer(), obj)
-        }.getOrNull() ?: return null
-        return JumpTarget(link.targetUri, link.targetSelectionRange)
+internal fun parseDefinitionResult(result: TextDocumentDefinitionResult?): JumpTarget? =
+    when (result) {
+        null -> null
+        is TextDocumentDefinitionResult.DefinitionValue -> result.value.firstJumpTarget()
+        is TextDocumentDefinitionResult.DefinitionLinkArray -> result.value.firstJumpTarget()
     }
-    val loc = runCatching {
-        definitionJson.decodeFromJsonElement(Location.serializer(), obj)
-    }.getOrNull() ?: return null
-    return JumpTarget(loc.uri, loc.range)
-}
+
+/** As [parseDefinitionResult], for the `textDocument/declaration` result. */
+internal fun parseDeclarationResult(result: TextDocumentDeclarationResult?): JumpTarget? =
+    when (result) {
+        null -> null
+        is TextDocumentDeclarationResult.DeclarationValue -> result.value.firstJumpTarget()
+        is TextDocumentDeclarationResult.DeclarationLinkArray -> result.value.firstJumpTarget()
+    }
+
+/** As [parseDefinitionResult], for the `textDocument/typeDefinition` result. */
+internal fun parseTypeDefinitionResult(result: TextDocumentTypeDefinitionResult?): JumpTarget? =
+    when (result) {
+        null -> null
+        is TextDocumentTypeDefinitionResult.DefinitionValue -> result.value.firstJumpTarget()
+        is TextDocumentTypeDefinitionResult.DefinitionLinkArray -> result.value.firstJumpTarget()
+    }
+
+/** As [parseDefinitionResult], for the `textDocument/implementation` result. */
+internal fun parseImplementationResult(result: TextDocumentImplementationResult?): JumpTarget? =
+    when (result) {
+        null -> null
+        is TextDocumentImplementationResult.DefinitionValue -> result.value.firstJumpTarget()
+        is TextDocumentImplementationResult.DefinitionLinkArray -> result.value.firstJumpTarget()
+    }
 
 /**
  * Whether a [ServerCapabilities] field carrying one of the definition-family
@@ -161,8 +186,8 @@ private inline fun DefinitionServer.serverSupports(
  *   facet; returns false (command not handled) when none is installed,
  * - returns false when the server explicitly lacks the [capability],
  * - otherwise flushes pending edits ([LSPClient.sync]), issues [request] at the
- *   cursor, parses the result union ([parseDefinitionResult]) and navigates
- *   ([navigateToTarget]).
+ *   cursor (each caller maps its strict sealed result to a [JumpTarget]) and
+ *   navigates ([navigateToTarget]).
  *
  * The suspending work runs on the [client scope][LSPClient.scope] (not the
  * session's) because a cross-file jump targets a different editor session, and
@@ -177,7 +202,7 @@ private inline fun DefinitionServer.serverSupports(
 private inline fun jumpToOrigin(
     session: EditorSession,
     crossinline capability: (ServerCapabilities) -> BooleanOr<*>?,
-    crossinline request: suspend (DefinitionServer, Position) -> JsonElement
+    crossinline request: suspend (DefinitionServer, Position) -> JumpTarget?
 ): Boolean {
     val binding = session.state.facet(definitionServer) ?: return false
     if (!binding.serverSupports(capability)) return false
@@ -185,12 +210,11 @@ private inline fun jumpToOrigin(
     binding.client.scope.launch {
         binding.client.sync()
         val position = toPosition(pos, session.state.doc)
-        val result = try {
+        val target = try {
             request(binding, position)
         } catch (e: CancellationException) {
             throw e
-        }
-        val target = parseDefinitionResult(result) ?: return@launch
+        } ?: return@launch
         navigateToTarget(binding, target)
     }
     return true
@@ -224,10 +248,12 @@ fun jumpToDefinition(session: EditorSession): Boolean = jumpToOrigin(
     session,
     capability = { it.definitionProvider },
     request = { binding, position ->
-        binding.client.server.textDocumentDefinition(
-            DefinitionParams(
-                textDocument = TextDocumentIdentifier(uri = binding.uri),
-                position = position
+        parseDefinitionResult(
+            binding.client.server.textDocumentDefinition(
+                DefinitionParams(
+                    textDocument = TextDocumentIdentifier(uri = binding.uri),
+                    position = position
+                )
             )
         )
     }
@@ -243,10 +269,12 @@ fun jumpToDeclaration(session: EditorSession): Boolean = jumpToOrigin(
     session,
     capability = { it.declarationProvider },
     request = { binding, position ->
-        binding.client.server.textDocumentDeclaration(
-            DeclarationParams(
-                textDocument = TextDocumentIdentifier(uri = binding.uri),
-                position = position
+        parseDeclarationResult(
+            binding.client.server.textDocumentDeclaration(
+                DeclarationParams(
+                    textDocument = TextDocumentIdentifier(uri = binding.uri),
+                    position = position
+                )
             )
         )
     }
@@ -262,10 +290,12 @@ fun jumpToTypeDefinition(session: EditorSession): Boolean = jumpToOrigin(
     session,
     capability = { it.typeDefinitionProvider },
     request = { binding, position ->
-        binding.client.server.textDocumentTypeDefinition(
-            TypeDefinitionParams(
-                textDocument = TextDocumentIdentifier(uri = binding.uri),
-                position = position
+        parseTypeDefinitionResult(
+            binding.client.server.textDocumentTypeDefinition(
+                TypeDefinitionParams(
+                    textDocument = TextDocumentIdentifier(uri = binding.uri),
+                    position = position
+                )
             )
         )
     }
@@ -281,10 +311,12 @@ fun jumpToImplementation(session: EditorSession): Boolean = jumpToOrigin(
     session,
     capability = { it.implementationProvider },
     request = { binding, position ->
-        binding.client.server.textDocumentImplementation(
-            ImplementationParams(
-                textDocument = TextDocumentIdentifier(uri = binding.uri),
-                position = position
+        parseImplementationResult(
+            binding.client.server.textDocumentImplementation(
+                ImplementationParams(
+                    textDocument = TextDocumentIdentifier(uri = binding.uri),
+                    position = position
+                )
             )
         )
     }

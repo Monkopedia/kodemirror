@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Changed
+- Bumped `com.monkopedia.lsp` (`lsp` + `lsp-ksrpc`) from `1.0.0-RC3` to `1.0.0-RC4`. RC4 tightens several `LanguageServer` method *result* types from untyped `JsonElement` to strict sealed unions, so `:lsp-client` now consumes the typed results directly instead of hand-parsing `JsonElement`: `textDocument/completion` reads `TextDocumentCompletionResult` (`CompletionListValue` / `CompletionItemArray`) and the go-to-definition family (`textDocument/{definition,declaration,typeDefinition,implementation}`) reads the strict `TextDocument{Definition,Declaration,TypeDefinition,Implementation}Result` (`DefinitionValue`/`DeclarationValue` wrapping `SingleOrArray<Location>`, and `DefinitionLinkArray`/`DeclarationLinkArray` wrapping `List<LocationLink>`). Internal parsing only; no public API change. The `:lsp-client` module remains pre-stable.
 - Bumped `com.monkopedia.lsp` (`lsp` + `lsp-ksrpc`) from `1.0.0-RC2` to `1.0.0-RC3`. RC3 tightens several `Hover.contents` / `ServerCapabilities.textDocumentSync` fields from untyped `JsonElement` to strict union types, so `:lsp-client`'s `ServerHover` and `DocumentSync` now read the typed `HoverContents` and `ServerCapabilitiesTextDocumentSync` unions directly instead of hand-parsing `JsonElement` (internal parsing only; no public API change). The `:lsp-client` module remains pre-stable.
 
 ### Fixed

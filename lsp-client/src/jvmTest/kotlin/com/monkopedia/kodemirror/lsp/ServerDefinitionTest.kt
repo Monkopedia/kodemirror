@@ -24,6 +24,15 @@ import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.lsp.BooleanOr
 import com.monkopedia.lsp.DefinitionOptions
 import com.monkopedia.lsp.LanguageServer
+import com.monkopedia.lsp.Location
+import com.monkopedia.lsp.LocationLink
+import com.monkopedia.lsp.Position
+import com.monkopedia.lsp.Range
+import com.monkopedia.lsp.SingleOrArray
+import com.monkopedia.lsp.TextDocumentDeclarationResult
+import com.monkopedia.lsp.TextDocumentDefinitionResult
+import com.monkopedia.lsp.TextDocumentImplementationResult
+import com.monkopedia.lsp.TextDocumentTypeDefinitionResult
 import java.lang.reflect.Proxy
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -32,50 +41,36 @@ import kotlin.test.assertNotSame
 import kotlin.test.assertNull
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonNull
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonArray
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 
 class ServerDefinitionTest {
 
-    private fun rangeJson(startLine: Int, startChar: Int, endLine: Int, endChar: Int): JsonObject =
-        buildJsonObject {
-            put(
-                "start",
-                buildJsonObject {
-                    put("line", startLine)
-                    put("character", startChar)
-                }
-            )
-            put(
-                "end",
-                buildJsonObject {
-                    put("line", endLine)
-                    put("character", endChar)
-                }
-            )
-        }
+    private fun range(startLine: Int, startChar: Int, endLine: Int, endChar: Int): Range = Range(
+        start = Position(line = startLine.toUInt(), character = startChar.toUInt()),
+        end = Position(line = endLine.toUInt(), character = endChar.toUInt())
+    )
 
-    private fun locationJson(uri: String, line: Int, char: Int): JsonObject = buildJsonObject {
-        put("uri", uri)
-        put("range", rangeJson(line, char, line, char + 1))
-    }
+    private fun location(uri: String, line: Int, char: Int): Location =
+        Location(uri = uri, range = range(line, char, line, char + 1))
 
-    private fun locationLinkJson(uri: String, line: Int, char: Int): JsonObject = buildJsonObject {
-        put("targetUri", uri)
-        put("targetRange", rangeJson(line, 0, line, 20))
-        put("targetSelectionRange", rangeJson(line, char, line, char + 4))
-    }
+    private fun locationLink(uri: String, line: Int, char: Int): LocationLink = LocationLink(
+        targetUri = uri,
+        targetRange = range(line, 0, line, 20),
+        targetSelectionRange = range(line, char, line, char + 4)
+    )
+
+    private fun definitionValue(value: SingleOrArray<Location>): TextDocumentDefinitionResult =
+        TextDocumentDefinitionResult.DefinitionValue(value)
+
+    private fun definitionLinks(value: List<LocationLink>): TextDocumentDefinitionResult =
+        TextDocumentDefinitionResult.DefinitionLinkArray(value)
 
     // --- result-union parsing: Location vs Location[] vs LocationLink[] vs null ---
 
     @Test
     fun parsesSingleLocation() {
-        val target = parseDefinitionResult(locationJson("file:///a.kt", 3, 7))
+        val target = parseDefinitionResult(
+            definitionValue(SingleOrArray.Single(location("file:///a.kt", 3, 7)))
+        )
         assertEquals("file:///a.kt", target?.uri)
         assertEquals(3u, target?.range?.start?.line)
         assertEquals(7u, target?.range?.start?.character)
@@ -83,11 +78,13 @@ class ServerDefinitionTest {
 
     @Test
     fun parsesLocationArrayPicksFirst() {
-        val arr = buildJsonArray {
-            add(locationJson("file:///first.kt", 1, 2))
-            add(locationJson("file:///second.kt", 9, 9))
-        }
-        val target = parseDefinitionResult(arr)
+        val target = parseDefinitionResult(
+            definitionValue(
+                SingleOrArray.Multiple(
+                    listOf(location("file:///first.kt", 1, 2), location("file:///second.kt", 9, 9))
+                )
+            )
+        )
         // Upstream uses response[0] for arrays.
         assertEquals("file:///first.kt", target?.uri)
         assertEquals(1u, target?.range?.start?.line)
@@ -95,7 +92,9 @@ class ServerDefinitionTest {
 
     @Test
     fun parsesSingleLocationLinkUsesTargetSelectionRange() {
-        val target = parseDefinitionResult(locationLinkJson("file:///b.kt", 5, 4))
+        val target = parseDefinitionResult(
+            definitionLinks(listOf(locationLink("file:///b.kt", 5, 4)))
+        )
         assertEquals("file:///b.kt", target?.uri)
         // targetSelectionRange start (not targetRange).
         assertEquals(5u, target?.range?.start?.line)
@@ -104,21 +103,51 @@ class ServerDefinitionTest {
 
     @Test
     fun parsesLocationLinkArrayPicksFirst() {
-        val arr = buildJsonArray {
-            add(locationLinkJson("file:///x.kt", 2, 1))
-            add(locationLinkJson("file:///y.kt", 8, 8))
-        }
-        val target = parseDefinitionResult(arr)
+        val target = parseDefinitionResult(
+            definitionLinks(
+                listOf(locationLink("file:///x.kt", 2, 1), locationLink("file:///y.kt", 8, 8))
+            )
+        )
         assertEquals("file:///x.kt", target?.uri)
         assertEquals(2u, target?.range?.start?.line)
     }
 
     @Test
-    fun parsesNullResults() {
+    fun parsesNullAndEmptyResults() {
         assertNull(parseDefinitionResult(null))
-        assertNull(parseDefinitionResult(JsonNull))
-        assertNull(parseDefinitionResult(JsonArray(emptyList())))
-        assertNull(parseDefinitionResult(JsonPrimitive("nonsense")))
+        assertNull(parseDefinitionResult(definitionValue(SingleOrArray.Multiple(emptyList()))))
+        assertNull(parseDefinitionResult(definitionLinks(emptyList())))
+    }
+
+    @Test
+    fun declarationTypeDefinitionImplementationParseSameShapes() {
+        val declaration = parseDeclarationResult(
+            TextDocumentDeclarationResult.DeclarationValue(
+                SingleOrArray.Single(location("file:///d.kt", 1, 1))
+            )
+        )
+        assertEquals("file:///d.kt", declaration?.uri)
+
+        val typeDef = parseTypeDefinitionResult(
+            TextDocumentTypeDefinitionResult.DefinitionLinkArray(
+                listOf(locationLink("file:///t.kt", 2, 3))
+            )
+        )
+        assertEquals("file:///t.kt", typeDef?.uri)
+        assertEquals(3u, typeDef?.range?.start?.character)
+
+        val impl = parseImplementationResult(
+            TextDocumentImplementationResult.DefinitionValue(
+                SingleOrArray.Multiple(
+                    listOf(location("file:///i.kt", 4, 0), location("file:///j.kt", 9, 9))
+                )
+            )
+        )
+        assertEquals("file:///i.kt", impl?.uri)
+
+        assertNull(parseDeclarationResult(null))
+        assertNull(parseTypeDefinitionResult(null))
+        assertNull(parseImplementationResult(null))
     }
 
     // --- target-range -> document offset resolution ---
@@ -127,7 +156,9 @@ class ServerDefinitionTest {
     fun targetRangeStartResolvesToOffset() {
         val doc = Text.of(listOf("line0", "line1", "XXXXXX"))
         // Target on line 2 (0-based), character 3 -> offset of "X" + 3.
-        val target = parseDefinitionResult(locationJson("file:///a.kt", 2, 3))!!
+        val target = parseDefinitionResult(
+            definitionValue(SingleOrArray.Single(location("file:///a.kt", 2, 3)))
+        )!!
         val offset = fromPosition(target.range.start, doc)
         // "line0\n" = 6, "line1\n" = 12, +3 = 15.
         assertEquals(15, offset)
@@ -136,7 +167,9 @@ class ServerDefinitionTest {
     @Test
     fun targetRangeStartFromLocationLinkResolvesToOffset() {
         val doc = Text.of(listOf("abc", "defgh"))
-        val target = parseDefinitionResult(locationLinkJson("file:///a.kt", 1, 2))!!
+        val target = parseDefinitionResult(
+            definitionLinks(listOf(locationLink("file:///a.kt", 1, 2)))
+        )!!
         val offset = fromPosition(target.range.start, doc)
         // "abc\n" = 4, +2 = 6.
         assertEquals(6, offset)
