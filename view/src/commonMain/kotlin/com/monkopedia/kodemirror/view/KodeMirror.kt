@@ -34,7 +34,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -84,6 +83,7 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -91,6 +91,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
@@ -113,6 +114,24 @@ import kotlinx.coroutines.launch
  *
  * Wires up the [EditorSession] with plugin hosting, layout caching, and
  * input handling, then renders the editor content.
+ *
+ * ## Height contract
+ *
+ * The editor fills the height it is given. Callers should place it under a
+ * **bounded** vertical constraint — e.g. a parent that constrains height, or
+ * `Modifier.height(...)` / `Modifier.heightIn(max = ...)`. Under a bounded
+ * height the inner line list scrolls and caret reveal (scroll-into-view) keeps
+ * the caret on screen, matching CodeMirror 6, where the editor scroller is
+ * given a height (often a `max-height`).
+ *
+ * If the editor is placed under an **unbounded** vertical constraint — e.g. a
+ * parent with `Modifier.verticalScroll(...)`, `wrapContentHeight()`, or inside
+ * another vertically scrolling container — there is no bounded height to fill.
+ * In that case the editor grows to its full content height (the whole document
+ * is laid out and the outer container scrolls). It will NOT collapse to zero
+ * height. Note that under unbounded constraints the editor's own
+ * scroll-into-view cannot keep the caret visible (there is nothing to scroll
+ * within the editor); the surrounding scroll container governs visibility.
  *
  * @param session  The [EditorSession] to display.
  * @param modifier Modifier applied to the outermost container.
@@ -370,7 +389,11 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
         LocalContentTextStyle provides contentStyle,
         LocalEditorSession provides session
     ) {
-        Column(modifier = modifier.fillMaxSize()) {
+        Column(
+            modifier = modifier
+                .fillMaxWidth()
+                .boundUnconstrainedHeight(contentHeightPx)
+        ) {
             for (panel in topPanels) {
                 Box(Modifier.fillMaxWidth().background(theme.panelBackground)) {
                     panel.content(this)
@@ -1011,6 +1034,40 @@ private fun HorizontalScrollbar(
         }
     }
 }
+
+/**
+ * Guard the editor [Column] against an unbounded (`Infinity`) incoming
+ * `maxHeight` (#33).
+ *
+ * The editor fills the height it is given. Under a bounded height this is a
+ * no-op — the original constraints pass through unchanged and the inner line
+ * list scrolls. But under an unbounded vertical constraint (a parent with
+ * `Modifier.verticalScroll(...)`, `wrapContentHeight()`, or another scrolling
+ * container) two things break:
+ *  - `Column` `weight(1f)` distributes the *remaining* (infinite) space, which
+ *    collapses the content Box — and the editor — to zero height; and
+ *  - the inner `LazyColumn` throws, because a vertically-scrollable component
+ *    may not be measured with an infinite `maxHeight`.
+ *
+ * To degrade gracefully we replace an infinite `maxHeight` with the document's
+ * natural content height ([contentHeightPx], top/bottom padding + all lines).
+ * The editor then grows to fit the whole document and the surrounding scroll
+ * container scrolls it, instead of collapsing or crashing.
+ */
+private fun Modifier.boundUnconstrainedHeight(contentHeightPx: Float): Modifier =
+    layout { measurable, constraints ->
+        val effective = if (constraints.maxHeight == Constraints.Infinity) {
+            constraints.copy(
+                maxHeight = contentHeightPx.roundToInt().coerceAtLeast(0)
+            )
+        } else {
+            constraints
+        }
+        val placeable = measurable.measure(effective)
+        layout(placeable.width, placeable.height) {
+            placeable.placeRelative(0, 0)
+        }
+    }
 
 /** Draw editor and gutter backgrounds behind content. */
 private fun Modifier.drawEditorBackground(
