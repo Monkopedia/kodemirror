@@ -42,6 +42,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -551,6 +552,12 @@ private fun EditorContent(
     val state by session::state
     val theme = LocalEditorTheme.current
     val contentStyle = LocalContentTextStyle.current
+    // Shared widest-line width: every no-wrap line is measured to this min so
+    // all per-line horizontalScroll modifiers share one consistent scroll
+    // range. Without it, short lines (laid out last) clobber the shared
+    // ScrollState.maxValue to 0, breaking scrolling and the scrollbar (#67).
+    val maxLineWidthPx = remember { mutableStateOf(0) }
+    val density = LocalDensity.current
 
     // Hidden text field for receiving IME/text input and key events
     var hiddenTextValue by remember {
@@ -741,10 +748,15 @@ private fun EditorContent(
                             contentModifier = if (wrapLines) {
                                 contentModifier.fillMaxWidth()
                             } else {
-                                contentModifier.wrapContentWidth(
-                                    align = Alignment.Start,
-                                    unbounded = true
-                                )
+                                val minW = with(density) {
+                                    maxLineWidthPx.value.toDp()
+                                }
+                                contentModifier
+                                    .wrapContentWidth(
+                                        align = Alignment.Start,
+                                        unbounded = true
+                                    )
+                                    .widthIn(min = minW)
                             }
                             Box(
                                 modifier = contentModifier
@@ -796,6 +808,11 @@ private fun EditorContent(
                                         textLayout = result
                                         textLayoutResults[capturedLineNum.value] =
                                             result
+                                        if (!wrapLines &&
+                                            result.size.width > maxLineWidthPx.value
+                                        ) {
+                                            maxLineWidthPx.value = result.size.width
+                                        }
                                     }
                                 )
                                 for (widget in item.inlineWidgets) {
