@@ -805,7 +805,14 @@ private fun EditorContent(
                     }
                     Row(
                         modifier = lineModifier,
-                        verticalAlignment = Alignment.CenterVertically
+                        // On a wrapped (multi-row) line, top-align so the gutter
+                        // line number sits beside the first visual row rather
+                        // than being centered across all rows.
+                        verticalAlignment = if (wrapLines) {
+                            Alignment.Top
+                        } else {
+                            Alignment.CenterVertically
+                        }
                     ) {
                         if (hasGutters) {
                             GutterView(

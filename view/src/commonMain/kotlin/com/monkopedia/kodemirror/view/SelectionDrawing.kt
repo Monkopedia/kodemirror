@@ -165,12 +165,19 @@ private fun DrawScope.drawBlockCursor(
 
     val x: Float
     val charWidth: Float
+    // Vertical extent: default to the full line, override with the cursor rect's
+    // row for wrapped lines so the block only covers the caret's visual row.
+    var top = 0f
+    var height = lineHeight
 
     if (textLayoutResult != null && offsetInLine < textLen) {
         // Character position: get exact bounds from text layout
         x = textLayoutResult.getHorizontalPosition(offsetInLine, true)
         val boundingBox = textLayoutResult.getBoundingBox(offsetInLine)
         charWidth = boundingBox.width.coerceAtLeast(4f)
+        val cursorRect = textLayoutResult.getCursorRect(offsetInLine)
+        top = cursorRect.top
+        height = cursorRect.height
     } else if (textLayoutResult != null && textLen > 0) {
         // End of line: position after last character, use average char width
         x = textLayoutResult.getHorizontalPosition(textLen, true)
@@ -183,8 +190,8 @@ private fun DrawScope.drawBlockCursor(
 
     drawRect(
         color = BLOCK_CURSOR_COLOR.copy(alpha = alpha),
-        topLeft = Offset(x, 0f),
-        size = Size(charWidth, lineHeight)
+        topLeft = Offset(x, top),
+        size = Size(charWidth, height)
     )
 }
 
@@ -193,19 +200,26 @@ private fun DrawScope.drawLineCursor(
     cursorColor: Color,
     textLayoutResult: TextLayoutResult?
 ) {
-    val lineHeight = size.height
     val textLen = textLayoutResult?.layoutInput?.text?.length
-    val x = if (textLayoutResult != null && textLen != null && offsetInLine <= textLen) {
-        textLayoutResult.getHorizontalPosition(offsetInLine, true)
+    if (textLayoutResult != null && textLen != null && offsetInLine in 0..textLen) {
+        // Use the cursor rect so the caret only spans its actual visual row
+        // (a full-height span on wrapped multi-row lines is wrong).
+        val r = textLayoutResult.getCursorRect(offsetInLine)
+        drawLine(
+            color = cursorColor,
+            start = Offset(r.left, r.top),
+            end = Offset(r.left, r.bottom),
+            strokeWidth = 2f
+        )
     } else {
-        0f
+        // Fallback: start of line, full height (empty line / no layout).
+        drawLine(
+            color = cursorColor,
+            start = Offset(0f, 0f),
+            end = Offset(0f, size.height),
+            strokeWidth = 2f
+        )
     }
-    drawLine(
-        color = cursorColor,
-        start = Offset(x, 0f),
-        end = Offset(x, lineHeight),
-        strokeWidth = 2f
-    )
 }
 
 private fun DrawScope.drawLineSelectionRange(
