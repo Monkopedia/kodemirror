@@ -30,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.basicsetup.basicSetup
+import com.monkopedia.kodemirror.lang.markdown.markdown
 import com.monkopedia.kodemirror.samples.showcase.DemoScaffold
 import com.monkopedia.kodemirror.samples.showcase.SampleDocs
 import com.monkopedia.kodemirror.state.Compartment
@@ -49,6 +50,7 @@ fun WrappingDemo() {
     val session = rememberEditorSession(
         doc = SampleDocs.wrapping,
         extensions = basicSetup +
+            markdown().extension +
             wrapCompartment.of(if (wrap) lineWrapping else ExtensionList(emptyList()))
     )
 
