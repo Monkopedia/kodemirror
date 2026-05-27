@@ -199,14 +199,28 @@ fun moveVertically(
         coords.top - 1f
     }
     val rawPos = view.posAtCoords(coords.centerX, targetY)
-    val resultLine = rawPos?.let { doc.lineAt(DocPos(it)) }
 
-    // Determine target line number — if posAtCoords snapped back to the
-    // same line (e.g. inter-line gap), move to the adjacent line instead.
-    val targetLineNum = if (resultLine != null && resultLine.number != currentLine.number) {
-        resultLine.number.value
+    // posAtCoords is wrap-aware: targetY lands on the adjacent VISUAL row, which
+    // may be another wrapped row of the SAME logical line. Honor that result
+    // directly so vertical motion steps by visual row (this is what gj/gk and
+    // the default cursor up/down rely on for wrapped lines).
+    if (rawPos != null && rawPos != sel.head.value) {
+        val newPos = DocPos(rawPos)
+        val anchor = if (extend) sel.anchor else newPos
+        return if (extend) {
+            EditorSelection.range(anchor, newPos, goalColumn = goalCol)
+        } else {
+            EditorSelection.cursor(newPos, goalColumn = goalCol)
+        }
+    }
+
+    // Fallback: posAtCoords couldn't move (no layout geometry, or it snapped
+    // back to the same offset across an inter-line gap). Step by a whole logical
+    // line using the preserved goal column.
+    val targetLineNum = if (forward) {
+        currentLine.number.value + 1
     } else {
-        if (forward) currentLine.number.value + 1 else currentLine.number.value - 1
+        currentLine.number.value - 1
     }
 
     if (targetLineNum !in 1..doc.lines) return sel

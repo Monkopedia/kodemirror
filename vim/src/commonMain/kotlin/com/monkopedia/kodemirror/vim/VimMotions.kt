@@ -18,6 +18,8 @@
  */
 package com.monkopedia.kodemirror.vim
 
+import com.monkopedia.kodemirror.state.EditorSelection
+import com.monkopedia.kodemirror.view.moveVertically
 import kotlin.math.floor
 
 // ---------------------------------------------------------------------------
@@ -275,7 +277,17 @@ internal val motions: MutableMap<String, MotionFn> = mutableMapOf(
     },
 
     "moveByDisplayLines" to { cm, head, motionArgs, vim, _inputState ->
-        val cur = head
+        // gj/gk move by VISUAL (wrapped) row, not by logical line. Drive the
+        // view's wrap-aware vertical motion (the same one cursorLineUp/Down use)
+        // so a count moves that many visual rows and the goal column is tracked
+        // by moveVertically itself. We deliberately do NOT apply vim's lastHPos
+        // sticky-column logic here (that's for the linewise moveByLines).
+        //
+        // Discoverability: plain j/k remain LINEWISE (moveByLines) — they jump a
+        // whole logical line at a time even when it wraps across multiple visual
+        // rows. Users who prefer j/k to follow visual rows can remap them with:
+        //     Vim.map("j", "gj")
+        //     Vim.map("k", "gk")
         when (vim.lastMotion) {
             motions["moveByDisplayLines"],
             motions["moveByScroll"],
@@ -290,19 +302,45 @@ internal val motions: MutableMap<String, MotionFn> = mutableMapOf(
                 vim.lastHSPos = 0 // charCoords not available
             }
         }
+        val forward = motionArgs.forward == true
         val repeat = motionArgs.repeat.coerceAtLeast(1)
-        var current = cur
-        for (i in 0 until repeat) {
-            // In Compose, display lines == logical lines (no wrapping info available)
-            val newLine = if (motionArgs.forward == true) {
-                current.line + 1
-            } else {
-                current.line - 1
+        val session = cm.session
+
+        // Start from the current head as a document offset and let the
+        // wrap-aware vertical motion walk visual rows.
+        var sel = EditorSelection.cursor(cm.indexFromPos(head))
+        var movedVisually = false
+        var i = 0
+        while (i < repeat) {
+            val next = moveVertically(session, sel, forward = forward)
+            if (next.head == sel.head) {
+                // No progress: either we hit the document edge or live layout
+                // geometry isn't available. Stop the visual walk; any remaining
+                // repeats fall back to logical-line movement below.
+                break
             }
-            if (newLine < cm.firstLine() || newLine > cm.lastLine()) break
-            current = LinePos(newLine, current.ch)
+            sel = next
+            movedVisually = true
+            i++
         }
-        if (!cursorEqual(current, head)) {
+
+        var current = cm.posFromIndex(sel.head)
+
+        // Graceful fallback: when geometry is unavailable, moveVertically can't
+        // move at all (returns the same position). Preserve the previous
+        // logical-line behavior for any iterations the visual walk couldn't do.
+        if (i < repeat) {
+            var fallback = current
+            for (j in i until repeat) {
+                val newLine = if (forward) fallback.line + 1 else fallback.line - 1
+                if (newLine < cm.firstLine() || newLine > cm.lastLine()) break
+                fallback = LinePos(newLine, fallback.ch)
+            }
+            current = fallback
+        }
+
+        if (movedVisually && !cursorEqual(current, head)) {
+            // Keep lastHPos roughly in sync for any subsequent linewise motion.
             vim.lastHPos = current.ch
         }
         MotionResult.from(current)
