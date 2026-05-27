@@ -93,6 +93,28 @@ class ClickTargetingTest {
     }
 
     @Test
+    fun clickFarColumnOnLongLine_noWrapDefault() = runEditorTest(
+        // A single long line wider than the 400px viewport. In the no-wrap
+        // default the line extends horizontally, so a click well into the
+        // line must resolve to a column past the first handful of characters
+        // (the bug in #20 clipped clicks to the first visible region).
+        doc = (1..40).joinToString(" ") { "word$it" },
+        width = 400
+    ) { holder ->
+        onNodeWithTag("KodeMirror").performMouseInput {
+            // Click near the right edge of the viewport on the first line.
+            click(Offset(360f, 15f))
+        }
+        waitForIdle()
+        holder.assertCursorOnLine(1)
+        val col = holder.session.state.selection.main.head.value
+        assert(col > 10) {
+            "Expected click near right edge to resolve to a column past the " +
+                "start of the line, but landed at offset $col"
+        }
+    }
+
+    @Test
     fun clickBelowLastLine() = runEditorTest(doc = "A\nB") { holder ->
         // Click well below all content — should land on last line
         onNodeWithTag("KodeMirror").performMouseInput {

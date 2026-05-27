@@ -37,8 +37,31 @@ val editorAttributes: Facet<Map<String, String>, Map<String, String>> = Facet.de
     combine = { values -> values.fold(emptyMap()) { acc, m -> acc + m } }
 )
 
-/** Extension that enables soft line wrapping. */
-val lineWrapping: Extension = contentAttributes.of(mapOf("class" to "cm-lineWrapping"))
+/**
+ * Internal facet that drives the line-wrapping layout decision.
+ *
+ * The renderer reads this facet to decide whether long lines soft-wrap
+ * (`true`) or extend horizontally with horizontal scrolling (`false`,
+ * the default — matching CodeMirror 6, which does not wrap by default).
+ *
+ * Enabled via the public [lineWrapping] extension. Kept internal so the
+ * public surface stays a single opt-in [Extension] (mirroring CM6's
+ * `EditorView.lineWrapping`).
+ */
+internal val lineWrappingFacet: Facet<Boolean, Boolean> = Facet.define(
+    combine = { values -> values.any { it } }
+)
+
+/**
+ * Extension that enables soft line wrapping.
+ *
+ * By default the editor does NOT wrap long lines (matching CodeMirror 6):
+ * lines extend horizontally and the content area scrolls horizontally so the
+ * whole line is reachable. Adding this extension makes lines soft-wrap onto
+ * multiple visual rows instead, growing the line's height and removing the
+ * need for horizontal scrolling.
+ */
+val lineWrapping: Extension = lineWrappingFacet.of(true)
 
 /**
  * Facet for contributing decoration sets from extensions and plugins.

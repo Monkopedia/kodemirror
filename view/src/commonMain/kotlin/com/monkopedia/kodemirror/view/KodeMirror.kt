@@ -18,12 +18,14 @@
  */
 package com.monkopedia.kodemirror.view
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.awaitTouchSlopOrCancellation
 import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -32,13 +34,16 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
@@ -158,6 +163,10 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
     val topPanels = allPanels.filter { it.top }
     val bottomPanels = allPanels.filter { !it.top }
     val hasGutters = state.facet(gutters).isNotEmpty()
+    // Line-wrapping mode. Default (false) matches CodeMirror 6: long lines do
+    // not wrap and the content scrolls horizontally. When the `lineWrapping`
+    // extension is present, lines soft-wrap onto multiple visual rows instead.
+    val wrapLines = state.facet(lineWrappingFacet)
     val viewport = Viewport(0, state.doc.length)
     // Compute columnItems when state changes. Decorations (both from
     // facets and plugins) are derived from state, so `state` is a
@@ -171,6 +180,11 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
     }
 
     val lazyState = rememberLazyListState()
+    // Shared horizontal scroll state for the content area. In the default
+    // no-wrap mode this lets long lines extend past the viewport and remain
+    // reachable; all lines share one state so they scroll together while the
+    // gutter (rendered outside the scroll region) stays fixed.
+    val horizontalScrollState = rememberScrollState()
 
     // Honor transaction.scrollIntoView: when a dispatched transaction requests
     // it, scroll the line list so the primary selection head becomes visible.
@@ -417,7 +431,8 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                                     textLayoutResults,
                                     hasGutters,
                                     gutterWidthDp,
-                                    density
+                                    density,
+                                    if (wrapLines) 0 else horizontalScrollState.value
                                 )
                                     ?: session.posAtCoords(
                                         downPosition.x, downPosition.y
@@ -469,6 +484,8 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                     hasGutters = hasGutters,
                     gutterWidthDp = gutterWidthDp,
                     lineHeightDp = lineHeightDp,
+                    wrapLines = wrapLines,
+                    horizontalScrollState = horizontalScrollState,
                     lineLayoutCache = lineLayoutCache,
                     pendingLineLayouts = pendingLineLayouts,
                     editorCoordinates = editorCoordinates,
@@ -498,6 +515,8 @@ private fun EditorContent(
     hasGutters: Boolean,
     gutterWidthDp: Dp,
     lineHeightDp: Dp,
+    wrapLines: Boolean,
+    horizontalScrollState: ScrollState,
     lineLayoutCache: LineLayoutCache,
     pendingLineLayouts: MutableMap<Int, PendingLineLayout>,
     editorCoordinates: LayoutCoordinates?,
@@ -648,9 +667,14 @@ private fun EditorContent(
                         mutableStateOf<TextLayoutResult?>(null)
                     }
 
-                    val lineModifier: Modifier = Modifier
-                        .fillMaxWidth()
-                        .height(lineHeightDp)
+                    // In no-wrap mode (CM6 default) each line occupies a single
+                    // visual row of fixed height. In wrap mode the line may grow
+                    // to multiple rows, so only pin a minimum height.
+                    val lineModifier: Modifier = if (wrapLines) {
+                        Modifier.fillMaxWidth().heightIn(min = lineHeightDp)
+                    } else {
+                        Modifier.fillMaxWidth().height(lineHeightDp)
+                    }
                     var contentExtraModifier: Modifier = Modifier
                         .padding(start = 6.dp, end = 2.dp)
                     for (deco in item.lineDecorations) {
@@ -670,61 +694,90 @@ private fun EditorContent(
                                 modifier = Modifier.width(gutterWidthDp)
                             )
                         }
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
+                        // Viewport box: fills the remaining width and clips to
+                        // it. In no-wrap mode it scrolls horizontally so long
+                        // lines stay reachable; the gutter (outside this box)
+                        // stays fixed. In wrap mode there is no horizontal
+                        // scroll — lines wrap to fit the width instead.
+                        var viewportModifier: Modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                        if (!wrapLines) {
+                            viewportModifier = viewportModifier
+                                .horizontalScroll(horizontalScrollState)
+                        }
+                        Box(modifier = viewportModifier) {
+                            // Content box holds the actual text at its natural
+                            // width (no-wrap) or constrained to the viewport
+                            // width (wrap). Selection overlay and layout capture
+                            // live here so the recorded left offset already
+                            // accounts for the horizontal scroll position,
+                            // letting click->offset resolve across the full line.
+                            var contentModifier: Modifier = Modifier
                                 .fillMaxHeight()
-                                .then(contentExtraModifier)
-                                .drawSelectionOverlay(
-                                    state,
-                                    item.from.value,
-                                    item.to.value,
-                                    theme,
-                                    textLayout,
-                                    item.tabOffsetMap
+                            contentModifier = if (wrapLines) {
+                                contentModifier.fillMaxWidth()
+                            } else {
+                                contentModifier.wrapContentWidth(
+                                    align = Alignment.Start,
+                                    unbounded = true
                                 )
-                                .onGloballyPositioned { contentCoords ->
-                                    val layout = textLayout
-                                        ?: return@onGloballyPositioned
-                                    val editorCoords = editorCoordinates
-                                    if (editorCoords != null &&
-                                        editorCoords.isAttached
-                                    ) {
-                                        val pos = editorCoords.localPositionOf(
-                                            contentCoords,
-                                            Offset.Zero
-                                        )
-                                        lineLayoutCache.store(
-                                            capturedLineNum.value,
-                                            capturedFrom.value,
-                                            pos.y,
-                                            pos.x,
-                                            layout
-                                        )
-                                        pendingLineLayouts
-                                            .remove(capturedLineNum.value)
-                                    } else {
-                                        pendingLineLayouts[capturedLineNum.value] =
-                                            PendingLineLayout(
+                            }
+                            Box(
+                                modifier = contentModifier
+                                    .then(contentExtraModifier)
+                                    .drawSelectionOverlay(
+                                        state,
+                                        item.from.value,
+                                        item.to.value,
+                                        theme,
+                                        textLayout,
+                                        item.tabOffsetMap
+                                    )
+                                    .onGloballyPositioned { contentCoords ->
+                                        val layout = textLayout
+                                            ?: return@onGloballyPositioned
+                                        val editorCoords = editorCoordinates
+                                        if (editorCoords != null &&
+                                            editorCoords.isAttached
+                                        ) {
+                                            val pos = editorCoords.localPositionOf(
+                                                contentCoords,
+                                                Offset.Zero
+                                            )
+                                            lineLayoutCache.store(
                                                 capturedLineNum.value,
                                                 capturedFrom.value,
-                                                contentCoords,
+                                                pos.y,
+                                                pos.x,
                                                 layout
                                             )
+                                            pendingLineLayouts
+                                                .remove(capturedLineNum.value)
+                                        } else {
+                                            pendingLineLayouts[capturedLineNum.value] =
+                                                PendingLineLayout(
+                                                    capturedLineNum.value,
+                                                    capturedFrom.value,
+                                                    contentCoords,
+                                                    layout
+                                                )
+                                        }
                                     }
+                            ) {
+                                BasicText(
+                                    text = item.content,
+                                    style = contentStyle,
+                                    softWrap = wrapLines,
+                                    onTextLayout = { result: TextLayoutResult ->
+                                        textLayout = result
+                                        textLayoutResults[capturedLineNum.value] =
+                                            result
+                                    }
+                                )
+                                for (widget in item.inlineWidgets) {
+                                    widget.spec.widget.Content()
                                 }
-                        ) {
-                            BasicText(
-                                text = item.content,
-                                style = contentStyle,
-                                onTextLayout = { result: TextLayoutResult ->
-                                    textLayout = result
-                                    textLayoutResults[capturedLineNum.value] =
-                                        result
-                                }
-                            )
-                            for (widget in item.inlineWidgets) {
-                                widget.spec.widget.Content()
                             }
                         }
                     }
@@ -946,7 +999,8 @@ private fun posFromVisibleItems(
     textLayoutResults: Map<Int, TextLayoutResult>,
     hasGutters: Boolean,
     gutterWidthDp: Dp,
-    density: Density
+    density: Density,
+    horizontalScrollPx: Int
 ): Int? {
     val contentStartPx = with(density) {
         (if (hasGutters) gutterWidthDp.toPx() else 0f) + 6.dp.toPx()
@@ -960,7 +1014,11 @@ private fun posFromVisibleItems(
             val layout = textLayoutResults[item.lineNumber.value]
                 ?: return item.from.value // no layout yet, return line start
             val localY = offset.y - itemTop
-            val localX = (offset.x - contentStartPx).coerceAtLeast(0f)
+            // Add the horizontal scroll offset: the click x is in viewport
+            // space, but the text is shifted left by the scroll amount, so the
+            // true position within the line is x - contentStart + scroll.
+            val localX = (offset.x - contentStartPx + horizontalScrollPx)
+                .coerceAtLeast(0f)
             val expandedOffset = layout.getOffsetForPosition(
                 Offset(localX, localY)
             )
