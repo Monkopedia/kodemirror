@@ -197,35 +197,7 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
     // gutter (rendered outside the scroll region) stays fixed.
     val horizontalScrollState = rememberScrollState()
 
-    // Honor transaction.scrollIntoView: when a dispatched transaction requests
-    // it, scroll the line list so the primary selection head becomes visible.
-    // This drives caret-reveal on cursor moves (#33) and the search-jump reveal
-    // for vim `n`/`N` and similar selection jumps (#58). Without this, an
-    // off-screen target lands invisibly because the LazyColumn never scrolls.
-    //
-    // Observe via snapshotFlow (outside composition) rather than keying a
-    // LaunchedEffect directly on the request value: running a scroll while the
-    // LazyColumn is still mid-(sub)composition can trip the Compose runtime.
     val currentColumnItems = rememberUpdatedState(columnItems)
-    LaunchedEffect(session) {
-        snapshotFlow { impl.scrollRequest }
-            .collect { request ->
-                if (request == null) return@collect
-                val items = currentColumnItems.value
-                val targetIndex = items.indexOfFirst { item ->
-                    when (item) {
-                        is ColumnItem.TextLine ->
-                            request.target >= item.from.value &&
-                                request.target <= item.to.value
-                        is ColumnItem.BlockWidgetItem -> false
-                    }
-                }
-                if (targetIndex >= 0) {
-                    scrollItemIntoView(lazyState, targetIndex)
-                }
-                impl.consumeScrollRequest(request)
-            }
-    }
 
     // Track Alt key state for rectangular selection
     var altPressed by remember { mutableStateOf(false) }
@@ -296,6 +268,101 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
             theme.layout.contentTopPadding + lineHeightDp * columnItems.size +
                 theme.layout.contentBottomPadding
             ).toPx()
+    }
+
+    // Honor transaction.scrollIntoView: when a dispatched transaction requests
+    // it, scroll the line list so the primary selection head becomes visible.
+    // This drives caret-reveal on cursor moves (#33) and the search-jump reveal
+    // for vim `n`/`N` and similar selection jumps (#58). Without this, an
+    // off-screen target lands invisibly because the LazyColumn never scrolls.
+    //
+    // In no-wrap mode this also scrolls HORIZONTALLY so the caret stays in view
+    // when it moves past the right or left content edge (#69), the horizontal
+    // analog of the vertical reveal above.
+    //
+    // Observe via snapshotFlow (outside composition) rather than keying a
+    // LaunchedEffect directly on the request value: running a scroll while the
+    // LazyColumn is still mid-(sub)composition can trip the Compose runtime.
+    val contentStartPaddingPx = with(density) { 6.dp.toPx() }
+    val gutterWidthPx = with(density) { gutterWidthDp.toPx() }
+    LaunchedEffect(session) {
+        snapshotFlow { impl.scrollRequest }
+            .collect { request ->
+                if (request == null) return@collect
+                val items = currentColumnItems.value
+                val targetIndex = items.indexOfFirst { item ->
+                    when (item) {
+                        is ColumnItem.TextLine ->
+                            request.target >= item.from.value &&
+                                request.target <= item.to.value
+                        is ColumnItem.BlockWidgetItem -> false
+                    }
+                }
+                if (targetIndex >= 0) {
+                    scrollItemIntoView(lazyState, targetIndex)
+
+                    // Horizontal reveal (no-wrap mode only). Wrapped lines never
+                    // overflow horizontally, so there is nothing to scroll.
+                    if (!wrapLines) {
+                        val line = items[targetIndex] as? ColumnItem.TextLine
+                        val layout = line?.let {
+                            textLayoutResults[it.lineNumber.value]
+                        }
+                        val coordsWidth = editorCoordinates?.size?.width
+                        if (line != null && layout != null && coordsWidth != null) {
+                            // Map the document offset within the line to the
+                            // expanded-text offset (tab expansion), exactly as
+                            // the cursor is drawn, then read its x in line-local
+                            // pixels (0 = line start, before the 6.dp padding).
+                            val offsetInLine = (request.target - line.from.value)
+                                .coerceIn(0, line.to.value - line.from.value)
+                            val mappedOffset = mapTabOffset(
+                                offsetInLine,
+                                line.tabOffsetMap
+                            )
+                            val cursorX = layout.getCursorRect(mappedOffset).left
+
+                            // Content viewport width = editor width minus the
+                            // gutter and the 6.dp content start padding. This
+                            // mirrors posFromVisibleItems' contentStartPx so the
+                            // forward (offset->x) and inverse (x->offset) maps
+                            // agree.
+                            val gutter = if (hasGutters) gutterWidthPx else 0f
+                            val viewportPx =
+                                coordsWidth - gutter - contentStartPaddingPx
+                            if (viewportPx > 0f) {
+                                val scroll =
+                                    horizontalScrollState.value.toFloat()
+                                val marginPx = 24f
+                                val target = when {
+                                    cursorX < scroll + marginPx ->
+                                        cursorX - marginPx
+                                    cursorX > scroll + viewportPx - marginPx ->
+                                        cursorX - viewportPx + marginPx
+                                    else -> null
+                                }
+                                if (target != null) {
+                                    val clamped = target.coerceIn(
+                                        0f,
+                                        horizontalScrollState.maxValue.toFloat()
+                                    )
+                                    horizontalScrollState.scrollTo(
+                                        clamped.roundToInt()
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+                impl.consumeScrollRequest(request)
+            }
+    }
+
+    // Mirror the horizontal scroll offset into the session for test
+    // observability (parallels lastFirstVisibleItem / lastVisibleItemCount).
+    LaunchedEffect(session) {
+        snapshotFlow { horizontalScrollState.value }
+            .collect { impl.lastHorizontalScrollPx = it }
     }
 
     CompositionLocalProvider(

@@ -132,6 +132,9 @@ fun SessionHolder.firstVisibleIndex(): Int = (session as EditorSessionImpl).last
 /** Number of items currently laid out in the editor's line list. */
 fun SessionHolder.visibleItemCount(): Int = (session as EditorSessionImpl).lastVisibleItemCount
 
+/** Current horizontal scroll offset of the content area, in pixels. */
+fun SessionHolder.horizontalScrollPx(): Int = (session as EditorSessionImpl).lastHorizontalScrollPx
+
 /** Whether the given column-item index is within the currently laid-out range. */
 fun SessionHolder.isIndexVisible(index: Int): Boolean {
     val impl = session as EditorSessionImpl

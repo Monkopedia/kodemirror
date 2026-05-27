@@ -72,6 +72,14 @@ internal class EditorSessionImpl(
 
     /** Number of items currently laid out in the viewport (for tests/diagnostics). */
     internal var lastVisibleItemCount: Int = 0
+
+    /**
+     * Current horizontal scroll offset of the content area, in pixels
+     * (for tests/diagnostics). Updated by the composable as the shared
+     * horizontal scroll state changes; drives the horizontal scroll-into-view
+     * assertions in tests.
+     */
+    internal var lastHorizontalScrollPx: Int = 0
     internal var lastLayoutHeight: Float = 0f
     internal var hasFocus: Boolean = false
     private var lastHasFocus: Boolean = false

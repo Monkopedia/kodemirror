@@ -92,6 +92,18 @@ internal sealed class ColumnItem {
 }
 
 /**
+ * Convert a document-relative offset into the expanded-text offset, using the
+ * tab offset map. Returns [docOffset] unchanged when [tabOffsetMap] is `null`
+ * (no tabs in the line). This is the inverse of [unmapTabOffset] and mirrors
+ * the forward mapping used when drawing the cursor/selection.
+ */
+internal fun mapTabOffset(docOffset: Int, tabOffsetMap: IntArray?): Int {
+    if (tabOffsetMap == null) return docOffset
+    val index = docOffset.coerceIn(0, tabOffsetMap.size - 1)
+    return tabOffsetMap[index]
+}
+
+/**
  * Convert an expanded-text offset back to the original document-relative
  * offset, using the tab offset map. Returns [expandedOffset] unchanged
  * when [tabOffsetMap] is `null` (no tabs in the line).
