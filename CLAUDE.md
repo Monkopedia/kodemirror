@@ -29,7 +29,13 @@ committing or pushing directly to `main`. An independent reviewer pass produces 
 - Author PRs as `monkopedia-coder` via coderbot and always pass `--reviewer monkopedia-reviewer`;
   PRs opened outside this flow sit unreviewed.
 - Keep each PR to one focused change and reference the issue (`Fixes #<n>`).
-- CI must be green before merge — fix ALL CI issues, don't just report them.
+- CI must be green before merge — fix ALL CI issues, don't just report them. **"Green" means the
+  PR's actual GitHub Actions checks have completed and passed — `check` (JVM/wasmJs/Android),
+  `check-macos`, and `check-ios` (native). The reviewer MUST wait for these (e.g. `gh pr checks <n>
+  --watch`, or `gh pr merge <n> --squash --auto`) before merging; a local `./gradlew` re-run is a
+  fast first pass, NOT a substitute — it does not run the macOS/iOS native suite. `main` is branch-
+  protected requiring these three checks, so merges block until they pass.** Do not merge while
+  checks are still in progress.
 - Implementation branches may proceed in parallel; the reviewer serializes merges.
 
 The legacy two-phase pattern (work agent in a worktree → separate review agent merges to `main`
