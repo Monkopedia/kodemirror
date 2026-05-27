@@ -23,7 +23,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.awaitTouchSlopOrCancellation
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.drag
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
@@ -34,6 +37,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -44,6 +48,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
@@ -60,6 +65,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -78,6 +84,7 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -85,6 +92,7 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
@@ -96,6 +104,8 @@ import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.state.asInsert
+import kotlin.math.roundToInt
+import kotlinx.coroutines.launch
 
 /**
  * The main editor composable.
@@ -492,6 +502,19 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                     textLayoutResults = textLayoutResults,
                     keyProcessedByCallback = keyProcessedByCallback
                 )
+                // Visible horizontal scrollbar for no-wrap mode (#65). Only
+                // shown when there is actual horizontal overflow and line
+                // wrapping is off — otherwise the long-line content clips at the
+                // right edge with no affordance on the Skiko canvas.
+                if (!wrapLines && horizontalScrollState.maxValue > 0) {
+                    HorizontalScrollbar(
+                        scrollState = horizontalScrollState,
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .fillMaxWidth()
+                            .padding(start = if (hasGutters) gutterWidthDp else 0.dp)
+                    )
+                }
             }
             for (panel in bottomPanels) {
                 Box(
@@ -823,6 +846,86 @@ private fun EditorContent(
 
     // Tooltip layer
     TooltipLayer(session = session)
+}
+
+/**
+ * A custom horizontal scrollbar built entirely from commonMain Compose
+ * primitives so it compiles on every target (jvm, android, wasmJs, native).
+ *
+ * The desktop/skiko `HorizontalScrollbar` is NOT usable here because the
+ * androidMain source set depends on jvmMain, and that API does not exist on
+ * Android. This draws a thin track with a draggable thumb instead.
+ *
+ * Thumb sizing: the visible fraction of the content is
+ * `viewportPx / (viewportPx + scrollState.maxValue)`, so the thumb width is
+ * `trackWidth * viewportFraction`. The thumb offset maps the scroll position
+ * onto the remaining track travel: `(value / maxValue) * (trackWidth - thumb)`.
+ *
+ * Dragging maps thumb-track pixels back to content pixels by the inverse ratio
+ * `(trackWidth - thumb)` of travel ↔ `maxValue` of scroll, so a full thumb
+ * sweep scrolls the full content.
+ */
+@Composable
+private fun HorizontalScrollbar(
+    scrollState: ScrollState,
+    modifier: Modifier = Modifier
+) {
+    val theme = LocalEditorTheme.current
+    val scope = rememberCoroutineScope()
+    val thumbColor = theme.foreground.copy(alpha = 0.35f)
+    val trackColor = theme.foreground.copy(alpha = 0.08f)
+
+    var trackWidthPx by remember { mutableStateOf(0) }
+
+    Box(
+        modifier = modifier
+            .testTag("KodeMirror_hscroll")
+            .height(10.dp)
+            .background(trackColor)
+            .onSizeChanged { trackWidthPx = it.width }
+    ) {
+        val maxValue = scrollState.maxValue
+        val trackWidth = trackWidthPx.toFloat()
+        if (trackWidth > 0f && maxValue > 0) {
+            // Visible fraction of the content -> thumb length as a fraction of
+            // the track. The total content width in px is viewport + maxValue.
+            val viewportFraction = trackWidth / (trackWidth + maxValue)
+            val minThumbPx = with(LocalDensity.current) { 24.dp.toPx() }
+            val thumbWidthPx = (trackWidth * viewportFraction)
+                .coerceIn(minThumbPx.coerceAtMost(trackWidth), trackWidth)
+            val travel = trackWidth - thumbWidthPx
+            val thumbOffsetPx = if (maxValue > 0 && travel > 0f) {
+                (scrollState.value.toFloat() / maxValue) * travel
+            } else {
+                0f
+            }
+            val density = LocalDensity.current
+            val thumbWidthDp = with(density) { thumbWidthPx.toDp() }
+
+            Box(
+                modifier = Modifier
+                    .offset { IntOffset(thumbOffsetPx.roundToInt(), 0) }
+                    .width(thumbWidthDp)
+                    .height(8.dp)
+                    .padding(vertical = 1.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(thumbColor)
+                    .draggable(
+                        orientation = Orientation.Horizontal,
+                        state = rememberDraggableState { deltaPx ->
+                            if (travel > 0f) {
+                                // Map thumb-track pixels back to content
+                                // pixels: full travel == full maxValue scroll.
+                                val scrollDelta = deltaPx * (maxValue / travel)
+                                scope.launch {
+                                    scrollState.scrollBy(scrollDelta)
+                                }
+                            }
+                        }
+                    )
+            )
+        }
+    }
 }
 
 /** Draw editor and gutter backgrounds behind content. */
