@@ -264,6 +264,21 @@ object SampleDocs {
         }
     """.trimIndent()
 
+    val wrapping = """
+        Line wrapping in KodeMirror
+
+        This paragraph is intentionally a single very long line of prose so that the difference between soft-wrapping and horizontal scrolling is immediately obvious: when the lineWrapping extension is enabled the text reflows to fit the available width, but when it is disabled the line simply continues off the right edge of the viewport and a horizontal scrollbar appears instead, while the caret keeps the cursor in view as you move along it.
+
+        Short line.
+
+        Another paragraph with enough words to clearly exceed the width of a typical editor viewport, demonstrating that wrapping applies to every visual line in the document rather than just the first one, and that toggling the mode reflows or unflows all of them at once.
+
+        // A long code-ish comment line that also runs well past the right edge so that even monospace content shows the wrap-vs-scroll behavior without needing any syntax highlighting at all to make the point.
+        val longString = "this is a deliberately long string literal value that does not contain any line breaks and therefore stretches far beyond the visible editor width when wrapping is turned off"
+
+        End.
+    """.trimIndent()
+
     val largeDocument: String by lazy {
         buildString {
             repeat(10_000) { i ->

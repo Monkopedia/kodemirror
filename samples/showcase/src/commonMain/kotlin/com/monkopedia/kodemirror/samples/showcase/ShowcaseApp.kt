@@ -51,6 +51,7 @@ import com.monkopedia.kodemirror.samples.showcase.demos.TabDemo
 import com.monkopedia.kodemirror.samples.showcase.demos.TooltipDemo
 import com.monkopedia.kodemirror.samples.showcase.demos.TranslateDemo
 import com.monkopedia.kodemirror.samples.showcase.demos.VimModeDemo
+import com.monkopedia.kodemirror.samples.showcase.demos.WrappingDemo
 import com.monkopedia.kodemirror.samples.showcase.demos.ZebraDemo
 
 enum class DemoCategory(val title: String) {
@@ -95,6 +96,10 @@ val allDemos: List<DemoItem> = listOf(
         "readonly", "Read-Only Mode", "Toggle editable",
         DemoCategory.CONFIGURATION
     ) { ReadOnlyDemo() },
+    DemoItem(
+        "wrapping", "Line Wrapping", "Soft-wrap vs horizontal scroll",
+        DemoCategory.CONFIGURATION
+    ) { WrappingDemo() },
     DemoItem(
         "keybindings", "Keybindings", "Keymap presets & reference",
         DemoCategory.CONFIGURATION
