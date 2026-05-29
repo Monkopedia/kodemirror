@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Tests
+- Add LSPClient-core and LSPPlugin test coverage (#80)
+
 ### Added
 - Horizontal scrollbar for long lines in no-wrap mode. The editor renders on a Skiko canvas with no native scrollbar, so long lines clipped at the right edge with horizontal scroll only reachable via shift+wheel/trackpad. A custom commonMain scrollbar (thin track + draggable thumb) is now shown whenever there is horizontal overflow and line wrapping is off; it is hidden when content fits or `lineWrapping` is enabled (#65)
 
