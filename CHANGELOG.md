@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Bumped `com.monkopedia.lsp` (`lsp` + `lsp-ksrpc`) from `1.0.0-RC2` to `1.0.0-RC3`. RC3 tightens several `Hover.contents` / `ServerCapabilities.textDocumentSync` fields from untyped `JsonElement` to strict union types, so `:lsp-client`'s `ServerHover` and `DocumentSync` now read the typed `HoverContents` and `ServerCapabilitiesTextDocumentSync` unions directly instead of hand-parsing `JsonElement` (internal parsing only; no public API change). The `:lsp-client` module remains pre-stable.
 
 ### Fixed
+- Goal/sticky-column ("column memory") is preserved across vertical cursor moves again (regressed by the visual-row motion change) (#87)
 - Vim gj/gk now move by visual (wrapped) row (#77)
 - Caret height and gutter alignment on wrapped lines (#75)
 - `KodeMirror` placed under an unbounded vertical constraint (a parent with `Modifier.verticalScroll(...)`, `wrapContentHeight()`, or another scrolling container) no longer collapses to zero height or crashes the inner `LazyColumn` (which disallows an infinite `maxHeight`). The editor now grows to its content height so the surrounding scroll container can scroll it. The `KodeMirror` KDoc documents the height contract: callers should give the editor a bounded height for in-editor scrolling and caret reveal (#33)

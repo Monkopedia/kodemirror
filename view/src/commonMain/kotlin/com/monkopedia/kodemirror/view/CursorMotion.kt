@@ -186,26 +186,56 @@ fun moveVertically(
     val doc = view.state.doc
     val currentLine = doc.lineAt(sel.head)
 
-    // Preserve goalColumn across consecutive vertical moves so that
-    // moving down through a short line and back up remembers the
-    // original column.
+    // Preserve goalColumn across consecutive vertical moves so that moving down
+    // through a short line and back up remembers the original column. The goal
+    // column is the REMEMBERED horizontal position; it is captured on the first
+    // vertical move and must NOT be overwritten by subsequent vertical moves.
     val goalCol = sel.goalColumn
         ?: (sel.head.value - currentLine.from.value)
 
     val coords = view.coordsAtPos(sel.head.value, if (forward) 1 else -1) ?: return sel
+
+    // Vertical motion targets the adjacent visual row at the REMEMBERED goal
+    // column's x, not the current head's x. When a stored goalColumn differs
+    // from the head's column (e.g. after End landed the cursor short on a short
+    // line), resolve the goal column to an x on the current logical line and use
+    // that as the horizontal target so wrap-aware posAtCoords lands at the goal.
+    val headCol = sel.head.value - currentLine.from.value
+    val goalX = if (goalCol != headCol) {
+        val goalPos = (currentLine.from.value + goalCol)
+            .coerceAtMost(currentLine.to.value)
+        view.coordsAtPos(goalPos, 1)?.centerX ?: coords.centerX
+    } else {
+        coords.centerX
+    }
     val targetY = if (forward) {
         coords.bottom + 1f
     } else {
         coords.top - 1f
     }
-    val rawPos = view.posAtCoords(coords.centerX, targetY)
+    val rawPos = view.posAtCoords(goalX, targetY)
 
     // posAtCoords is wrap-aware: targetY lands on the adjacent VISUAL row, which
     // may be another wrapped row of the SAME logical line. Honor that result
     // directly so vertical motion steps by visual row (this is what gj/gk and
     // the default cursor up/down rely on for wrapped lines).
     if (rawPos != null && rawPos != sel.head.value) {
-        val newPos = DocPos(rawPos)
+        val resultLine = doc.lineAt(DocPos(rawPos))
+        // When the target visual row is a DIFFERENT logical line, re-project the
+        // remembered goal column onto that line (clamped) rather than trusting the
+        // x-derived offset. This is what restores column memory: posAtCoords can
+        // only resolve goalX as far as the current (possibly short) line extends,
+        // so on a short intermediate line goalX under-reports the goal. Snapping
+        // to the clamped goal column keeps the cursor at the remembered column and
+        // lets it spring back out to the goal on the next, longer line.
+        // Within the SAME wrapped logical line, honor posAtCoords so motion stays
+        // by visual row.
+        val newPos = if (resultLine.number != currentLine.number) {
+            val targetCol = goalCol.coerceAtMost(resultLine.text.length)
+            DocPos(resultLine.from.value + targetCol)
+        } else {
+            DocPos(rawPos)
+        }
         val anchor = if (extend) sel.anchor else newPos
         return if (extend) {
             EditorSelection.range(anchor, newPos, goalColumn = goalCol)

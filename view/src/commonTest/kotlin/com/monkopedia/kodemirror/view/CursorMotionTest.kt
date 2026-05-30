@@ -24,6 +24,7 @@ import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.Line
+import com.monkopedia.kodemirror.state.LineNumber
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asDoc
@@ -228,6 +229,91 @@ class CursorMotionTest {
         val moved = moveVertically(session, sel, forward = false)
         assertEquals(DocPos(3), moved.head, "gk should move one VISUAL row up")
         assertEquals(1, session.state.doc.lineAt(moved.head).number.value)
+    }
+
+    // -----------------------------------------------------------------------
+    // Goal column ("column memory") across vertical moves (#87). After landing
+    // on a SHORT line (cursor clamped to its end), the goal column must be
+    // remembered so the next move to a longer line springs back to the goal
+    // column — matching CM6/vim/standard editors. Regressed by the visual-row
+    // motion change (#78), which targeted the current head's x instead of the
+    // remembered goal column's x.
+    // -----------------------------------------------------------------------
+
+    // Three NON-wrapping logical lines (each fits in one visual row):
+    //   line 1: "a long first line here"  (22 chars)
+    //   line 2: "shrt"                    (4 chars)
+    //   line 3: "another long line here"  (22 chars)
+    // Layout model: char width 1px, row height 10px, one visual row per line.
+    private val columnMemoryDoc = "a long first line here\nshrt\nanother long line here"
+
+    private fun columnMemorySession(startPos: Int): EditorSession =
+        object : FakeEditorSession(state(columnMemoryDoc, startPos)) {
+            private val rowHeight = 10f
+
+            override fun coordsAtPos(pos: Int, side: Int): Rect? {
+                val line = state.doc.lineAt(DocPos(pos))
+                val col = pos - line.from.value
+                val top = (line.number.value - 1) * rowHeight
+                val x = col.toFloat()
+                return Rect(x, top, x, top + rowHeight)
+            }
+
+            override fun posAtCoords(x: Float, y: Float): Int? {
+                val rowIndex = (y / rowHeight).toInt().coerceIn(0, state.doc.lines - 1)
+                val line = state.doc.line(LineNumber(rowIndex + 1))
+                val col = x.toInt().coerceIn(0, line.text.length)
+                return line.from.value + col
+            }
+        }
+
+    @Test
+    fun goalColumnPreservedAcrossShortIntermediateLine() {
+        // Cursor starts at the END of line 1 (offset 22, column 22). This is the
+        // remembered goal column once vertical motion begins.
+        val session = columnMemorySession(startPos = 22)
+        val start = EditorSelection.cursor(DocPos(22))
+
+        // Down once: line 2 ("shrt", len 4) clamps the cursor to its end (col 4).
+        val down1 = moveVertically(session, start, forward = true)
+        assertEquals(2, session.state.doc.lineAt(down1.head).number.value)
+        assertEquals(
+            4,
+            down1.head.value - session.state.doc.lineAt(down1.head).from.value,
+            "short line clamps cursor to its end column"
+        )
+        assertEquals(22, down1.goalColumn, "goal column is captured and preserved")
+
+        // Down again: line 3 ("another long line here", len 22) must spring back
+        // to the GOAL column (22), NOT stay at the short-line column (4).
+        val down2 = moveVertically(session, down1, forward = true)
+        assertEquals(3, session.state.doc.lineAt(down2.head).number.value)
+        assertEquals(
+            22,
+            down2.head.value - session.state.doc.lineAt(down2.head).from.value,
+            "cursor returns to the remembered goal column on the longer line"
+        )
+        assertEquals(22, down2.goalColumn, "goal column survives the round trip")
+    }
+
+    @Test
+    fun goalColumnPreservedOnDownThenUpRoundTrip() {
+        // Start at the end of line 1 (col 22), move down to the short line, then
+        // back up. The cursor must return to the original column on line 1.
+        val session = columnMemorySession(startPos = 22)
+        val start = EditorSelection.cursor(DocPos(22))
+
+        val down = moveVertically(session, start, forward = true)
+        // Clamped to the short line's end.
+        assertEquals(2, session.state.doc.lineAt(down.head).number.value)
+
+        val up = moveVertically(session, down, forward = false)
+        assertEquals(1, session.state.doc.lineAt(up.head).number.value)
+        assertEquals(
+            22,
+            up.head.value - session.state.doc.lineAt(up.head).from.value,
+            "down-then-up round trip preserves the original column"
+        )
     }
 
     @Test
