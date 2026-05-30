@@ -80,6 +80,14 @@ internal class EditorSessionImpl(
      * assertions in tests.
      */
     internal var lastHorizontalScrollPx: Int = 0
+
+    /**
+     * Laid-out width, in pixels, of the most recently positioned active line's
+     * content box (the box carrying the line-decoration background highlight).
+     * In no-wrap mode this should reach the viewport width even for short
+     * content; used by the active-line-highlight regression test for #85.
+     */
+    internal var lastActiveLineContentWidthPx: Int = 0
     internal var lastLayoutHeight: Float = 0f
     internal var hasFocus: Boolean = false
     private var lastHasFocus: Boolean = false

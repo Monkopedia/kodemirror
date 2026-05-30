@@ -647,6 +647,15 @@ private fun EditorContent(
     // range. Without it, short lines (laid out last) clobber the shared
     // ScrollState.maxValue to 0, breaking scrolling and the scrollbar (#67).
     val maxLineWidthPx = remember { mutableStateOf(0) }
+    // Laid-out width of the per-line viewport (the weight(1f) box). In no-wrap
+    // mode the content box scrolls horizontally, so it is measured with an
+    // infinite max width and cannot learn the viewport width itself. We capture
+    // the viewport's actual width here so a short line's content (and thus its
+    // line-decoration background highlight) can fill the full viewport width
+    // rather than stopping at the text width (#85). The viewport width is
+    // weight-determined (independent of content width), so feeding it back into
+    // the content min-width is loop-safe.
+    val viewportWidthPx = remember { mutableStateOf(0) }
     val density = LocalDensity.current
 
     // Hidden text field for receiving IME/text input and key events
@@ -797,10 +806,21 @@ private fun EditorContent(
                     }
                     var contentExtraModifier: Modifier = Modifier
                         .padding(start = 6.dp, end = 2.dp)
+                    var hasLineBackground = false
                     for (deco in item.lineDecorations) {
                         val bg = deco.spec.style?.background
                         if (bg != null && bg != Color.Unspecified) {
                             contentExtraModifier = contentExtraModifier.background(bg)
+                            hasLineBackground = true
+                        }
+                    }
+                    // Test hook (#85): record the laid-out width of a
+                    // background-highlighted line's content box so the
+                    // regression test can assert the highlight fills the
+                    // viewport in no-wrap mode rather than stopping at the text.
+                    if (hasLineBackground && !wrapLines) {
+                        contentExtraModifier = contentExtraModifier.onSizeChanged {
+                            impl.lastActiveLineContentWidthPx = it.width
                         }
                     }
                     Row(
@@ -830,7 +850,13 @@ private fun EditorContent(
                             .weight(1f)
                             .fillMaxHeight()
                         if (!wrapLines) {
+                            // Capture the viewport's actual visible width from
+                            // the weight(1f) box (before the horizontalScroll,
+                            // which would otherwise measure the child with an
+                            // infinite max width). Used as an additional content
+                            // min-width so highlights fill the viewport (#85).
                             viewportModifier = viewportModifier
+                                .onSizeChanged { viewportWidthPx.value = it.width }
                                 .horizontalScroll(horizontalScrollState)
                         }
                         Box(modifier = viewportModifier) {
@@ -845,8 +871,17 @@ private fun EditorContent(
                             contentModifier = if (wrapLines) {
                                 contentModifier.fillMaxWidth()
                             } else {
+                                // Min width = the wider of the widest line and
+                                // the viewport. The first keeps long lines at
+                                // their full natural width (uniform scroll range,
+                                // #68); the second makes a short line's content
+                                // (and its line-decoration background) fill the
+                                // viewport instead of stopping at the text (#85).
                                 val minW = with(density) {
-                                    maxLineWidthPx.value.toDp()
+                                    maxOf(
+                                        maxLineWidthPx.value,
+                                        viewportWidthPx.value
+                                    ).toDp()
                                 }
                                 contentModifier
                                     .wrapContentWidth(

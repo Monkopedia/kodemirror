@@ -31,6 +31,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Transactions with `scrollIntoView` now actually scroll the view: the editor was never reacting to the flag, so selection jumps that landed off-screen (vim `n`/`N` search-repeat, goto-line, history/undo, etc.) left the target invisible. The line list now scrolls the primary selection head into view, matching CodeMirror 6's `scrollIntoView` "nearest" behavior (#58, #33)
 - Vim dot-repeat (`.`) dropped the inserted text of change/insert commands (`c`, `cw`, `s`, `i`, `a`, `o`, …) — the insert-mode change event was never wired up, so `lastInsertModeChanges` stayed empty and `.` replayed only the operator/delete (#21)
 - Vim change/insert commands (`c`, `cw`, `s`, …) were not a single undo unit — `u` took two steps to revert because the insert-entry cursor selection stamped a history boundary on the operator-delete event (#23)
+- Active-line and line-decoration highlight backgrounds again fill the full editor width in no-wrap mode (regressed by the horizontal-scroll layout work) (#85)
 
 ## [0.2.0] - 2026-04-10
 

@@ -135,6 +135,14 @@ fun SessionHolder.visibleItemCount(): Int = (session as EditorSessionImpl).lastV
 /** Current horizontal scroll offset of the content area, in pixels. */
 fun SessionHolder.horizontalScrollPx(): Int = (session as EditorSessionImpl).lastHorizontalScrollPx
 
+/**
+ * Laid-out width, in pixels, of the most recently positioned line whose content
+ * box carries a line-decoration background highlight (e.g. the active line). In
+ * no-wrap mode this should reach the viewport width even for short content (#85).
+ */
+fun SessionHolder.activeLineContentWidthPx(): Int =
+    (session as EditorSessionImpl).lastActiveLineContentWidthPx
+
 /** Whether the given column-item index is within the currently laid-out range. */
 fun SessionHolder.isIndexVisible(index: Int): Boolean {
     val impl = session as EditorSessionImpl
