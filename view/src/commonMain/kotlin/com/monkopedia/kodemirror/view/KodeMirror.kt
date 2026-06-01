@@ -141,6 +141,14 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
     val impl = session as EditorSessionImpl
     val state by session::state
 
+    // Attach the coroutine scope to the session BEFORE constructing the plugin
+    // host. syncToState() builds the view plugins, and some plugins (e.g.
+    // HoverTooltipPlugin) read session.coroutineScope eagerly in their
+    // initializer; if the scope isn't attached yet that read throws
+    // "EditorSession is not attached to a KodeMirror composable" (#92).
+    val compositionScope = rememberCoroutineScope()
+    impl.backingCoroutineScope = compositionScope
+
     val pluginHost = remember(session) {
         ViewPluginHost(session).also { it.syncToState(state, null) }
     }
@@ -157,7 +165,6 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
         mutableMapOf<Int, TextLayoutResult>()
     }
 
-    val compositionScope = rememberCoroutineScope()
     val clipboardManager = LocalClipboardManager.current
 
     // Wire up session internals eagerly (during composition, not in a side
@@ -167,7 +174,6 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
     // harmless because remember() always returns the same instances.
     impl.pluginHost = pluginHost
     impl.lineLayoutCache = lineLayoutCache
-    impl.backingCoroutineScope = compositionScope
     impl.clipboardManager = clipboardManager
 
     DisposableEffect(session) {

@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- Editor no longer crashes on mount ("EditorSession is not attached") when a hover-tooltip or lint extension is used; the session coroutine scope is now attached before plugins are constructed (#92)
+
 ## [0.3.0] - 2026-05-29
 
 ### Tests
