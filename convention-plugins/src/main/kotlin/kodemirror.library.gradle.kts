@@ -130,7 +130,9 @@ mavenPublishing {
             url.set("https://github.com/Monkopedia/kodemirror/")
         }
     }
-    publishToMavenCentral()
+    // automaticRelease = true publishes straight to the Central Portal on a successful
+    // deploy, skipping the manual "Publish" click in the Sonatype Central Portal UI.
+    publishToMavenCentral(automaticRelease = true)
     signAllPublications()
 }
 
