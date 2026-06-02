@@ -12,7 +12,7 @@ roborazzi = "1.59.0"
 kover = "0.9.8"
 dokka = "2.2.0"
 bcv = "0.18.1"
-vanniktech = "0.35.0"
+vanniktech = "0.36.0"
 lsp = "1.0.0"
 
 [libraries]
