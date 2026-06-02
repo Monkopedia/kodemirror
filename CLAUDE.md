@@ -57,6 +57,25 @@ When the user asks to compare screenshots or fix visual differences, follow the 
 
 Each fix should be a single focused PR via the automated review workflow.
 
+### Release process
+
+Publishing is irreversible and runs only on maintainer go. Git tags and GitHub Releases exist
+**only** for fully-published versions; a partial/failed publish is a burned version — skip it and
+cut the next patch.
+
+1. **Version-bump PR** (normal coderbot → reviewer flow): set `version = "X.Y.Z"` (drop the
+   `-SNAPSHOT` suffix) in both `convention-plugins/src/main/kotlin/kodemirror.library.gradle.kts`
+   and `kodemirror-bom/build.gradle.kts`, and finalize `CHANGELOG.md` (`## [Unreleased]` →
+   `## [X.Y.Z] - <date>`).
+2. **Tag** `vX.Y.Z` on the merged release commit and push the tag.
+3. **Dispatch `deploy.yml`** (`gh workflow run deploy.yml`). It publishes all targets to Maven
+   Central AND, after every matrix publish succeeds, the `release` job auto-creates the matching
+   GitHub Release (`vX.Y.Z`) from the CHANGELOG section. The job skips `-SNAPSHOT`/`-RC` versions
+   and is re-run safe (no-op if the release already exists). `--verify-tag` fails the job if the
+   tag was never pushed.
+4. **Verify** the BOM resolves on Maven Central (`repo1.maven.org`); propagation can take 10–35 min.
+5. **Notify** downstream consumers.
+
 ### General
 
 - When the user says to "always" do something, record that instruction in this file.

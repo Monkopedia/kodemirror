@@ -57,3 +57,53 @@ jobs:
         -Psigning.gnupg.keyName='${{ secrets.OSSRH_GPG_SECRET_KEY_ID }}'
         -PmavenCentralUsername='${{ secrets.OSSRH_USERNAME }}'
         -PmavenCentralPassword='${{ secrets.OSSRH_TOKEN }}'
+
+  # After ALL Maven Central matrix publishes succeed, cut a matching GitHub Release.
+  release:
+    needs: deploy
+    runs-on: ubuntu-latest
+    # Top-level perms are read-only; this job needs write to create a release.
+    permissions:
+      contents: write
+    env:
+      # gh CLI is preinstalled on ubuntu runners; authenticate via the Actions token.
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+    - uses: actions/checkout@v4
+    - name: Create GitHub Release
+      run: |
+        set -euo pipefail
+        # Detect the published version from the build files (never hardcode).
+        VERSION=$(grep -E '^version = ' kodemirror-bom/build.gradle.kts | sed -E 's/.*"([^"]+)".*/\1/')
+        echo "Detected version: $VERSION"
+
+        # Only final releases get a GitHub Release; skip pre-release versions.
+        case "$VERSION" in
+          *-SNAPSHOT|*-RC*)
+            echo "Version $VERSION is a pre-release (SNAPSHOT/RC); skipping GitHub Release."
+            exit 0
+            ;;
+        esac
+
+        TAG="v$VERSION"
+
+        # Idempotent: if a release already exists for this tag, skip (re-run safe).
+        if gh release view "$TAG" --repo Monkopedia/kodemirror >/dev/null 2>&1; then
+          echo "Release $TAG already exists; nothing to do."
+          exit 0
+        fi
+
+        # Extract this version's CHANGELOG section: from the "## [VERSION] - date"
+        # header up to (but not including) the next "## [" header.
+        awk -v v="## [$VERSION]" 'index($0,v)==1{f=1;print;next} /^## \[/{f=0} f' CHANGELOG.md > /tmp/relnotes.md
+
+        if [ -s /tmp/relnotes.md ]; then
+          echo "Using CHANGELOG section for release notes:"
+          cat /tmp/relnotes.md
+          gh release create "$TAG" --repo Monkopedia/kodemirror \
+            --title "$TAG" --notes-file /tmp/relnotes.md --latest --verify-tag
+        else
+          echo "No CHANGELOG section found for $VERSION; falling back to --generate-notes."
+          gh release create "$TAG" --repo Monkopedia/kodemirror \
+            --title "$TAG" --generate-notes --latest --verify-tag
+        fi
