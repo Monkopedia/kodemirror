@@ -68,11 +68,12 @@ cut the next patch.
    and `kodemirror-bom/build.gradle.kts`, and finalize `CHANGELOG.md` (`## [Unreleased]` →
    `## [X.Y.Z] - <date>`).
 2. **Tag** `vX.Y.Z` on the merged release commit and push the tag.
-3. **Dispatch `deploy.yml`** (`gh workflow run deploy.yml`). It publishes all targets to Maven
-   Central AND, after every matrix publish succeeds, the `release` job auto-creates the matching
-   GitHub Release (`vX.Y.Z`) from the CHANGELOG section. The job skips `-SNAPSHOT`/`-RC` versions
-   and is re-run safe (no-op if the release already exists). `--verify-tag` fails the job if the
-   tag was never pushed.
+3. **Dispatch `deploy.yml`** (`gh workflow run deploy.yml`). A single macOS runner publishes all
+   targets (incl. the BOM) to Maven Central in one Gradle invocation — one atomic Central Portal
+   deployment, validated + auto-released. After it succeeds, the `release` job auto-creates the
+   matching GitHub Release (`vX.Y.Z`) from the CHANGELOG section. The job skips `-SNAPSHOT`/`-RC`
+   versions and is re-run safe (no-op if the release already exists). `--verify-tag` fails the job
+   if the tag was never pushed.
 4. **Verify** the BOM resolves on Maven Central (`repo1.maven.org`); propagation can take 10–35 min.
 5. **Notify** downstream consumers.
 

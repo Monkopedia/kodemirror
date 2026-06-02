@@ -8,36 +8,31 @@ permissions:
 jobs:
   build:
     uses: ./.github/workflows/ci.yml
+
+  # Publish EVERYTHING in a single Gradle invocation on one runner.
+  #
+  # The vanniktech maven-publish plugin uses a build-scoped shared service
+  # (MavenCentralBuildService, maxParallelUsages=1) that collects every module's
+  # artifacts registered during the build and, at the end of the build, uploads
+  # them as ONE Central Portal deployment. Because all modules share the
+  # group+version (com.monkopedia.kodemirror:<version>), that single deployment
+  # bundles all targets (jvm, android, wasmJs, macos*, ios*) AND the BOM, and is
+  # validated + auto-released atomically (automaticRelease = true in the
+  # convention plugin adds the Publish/Validate end-of-build actions).
+  #
+  # This replaces the previous 10-way matrix, where each entry ran in a SEPARATE
+  # Gradle invocation and therefore created a SEPARATE deployment. That caused the
+  # validation timeout / partial publishes, and on 0.3.2 left the BOM deployment
+  # un-released ("Skipping deployment validation!") because the BOM module is the
+  # only one without automaticRelease, so its isolated invocation never added a
+  # Validate action.
+  #
+  # Runs on macOS because the apple-native targets (macos*/ios*) require a macOS
+  # toolchain; jvm/android/wasmJs build on any platform and macos-latest ships the
+  # Android SDK, so one runner can build and publish every target this project has.
   deploy:
     needs: build
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          # BOM
-          - target: :kodemirror-bom:publishMavenPublicationToMavenCentralRepository
-            os: ubuntu-latest
-          # Ubuntu targets
-          - target: publishJvmPublicationToMavenCentralRepository
-            os: ubuntu-latest
-          - target: publishAndroidReleasePublicationToMavenCentralRepository
-            os: ubuntu-latest
-          - target: publishWasmJsPublicationToMavenCentralRepository
-            os: ubuntu-latest
-          - target: publishKotlinMultiplatformPublicationToMavenCentralRepository
-            os: ubuntu-latest
-          # macOS targets (need macOS runner for native compilation)
-          - target: publishIosArm64PublicationToMavenCentralRepository
-            os: macos-latest
-          - target: publishIosSimulatorArm64PublicationToMavenCentralRepository
-            os: macos-latest
-          - target: publishIosX64PublicationToMavenCentralRepository
-            os: macos-latest
-          - target: publishMacosArm64PublicationToMavenCentralRepository
-            os: macos-latest
-          - target: publishMacosX64PublicationToMavenCentralRepository
-            os: macos-latest
-    runs-on: ${{ matrix.os }}
+    runs-on: macos-latest
     steps:
     - uses: actions/checkout@v4
     - name: Import GPG key
@@ -50,15 +45,15 @@ jobs:
         java-version: '21'
         distribution: 'temurin'
     - uses: gradle/actions/setup-gradle@v4
-    - name: Gradle publish
+    - name: Gradle publish (single atomic Central Portal deployment)
       run: >-
-        ./gradlew ${{ matrix.target }}
+        ./gradlew publishToMavenCentral
         -Psigning.gnupg.passphrase='${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}'
         -Psigning.gnupg.keyName='${{ secrets.OSSRH_GPG_SECRET_KEY_ID }}'
         -PmavenCentralUsername='${{ secrets.OSSRH_USERNAME }}'
         -PmavenCentralPassword='${{ secrets.OSSRH_TOKEN }}'
 
-  # After ALL Maven Central matrix publishes succeed, cut a matching GitHub Release.
+  # After the Maven Central publish succeeds, cut a matching GitHub Release.
   release:
     needs: deploy
     runs-on: ubuntu-latest

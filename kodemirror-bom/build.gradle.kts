@@ -99,7 +99,14 @@ mavenPublishing {
             url.set("https://github.com/Monkopedia/kodemirror/")
         }
     }
-    publishToMavenCentral()
+    // automaticRelease = true matches the library convention plugin so the BOM
+    // module also contributes the Publish/Validate end-of-build actions. In the
+    // single-invocation publish (deploy.yml) the shared MavenCentralBuildService
+    // bundles every module — incl. this BOM — into one deployment that the other
+    // modules already mark for auto-release; setting it here too makes the BOM
+    // self-sufficient and avoids the 0.3.2 "Skipping deployment validation!" bug
+    // where the BOM's isolated deployment never released.
+    publishToMavenCentral(automaticRelease = true)
     signAllPublications()
 }
 
