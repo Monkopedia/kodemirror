@@ -131,6 +131,11 @@ internal class EditorSessionImpl(
         )
         pluginHost?.update(update)
         pluginHost?.syncToState(tr.state, oldState)
+        // Notify registered update listeners after the view/plugins have updated,
+        // matching CM6 where updateListeners fire after the view updates. Reading
+        // an unset facet yields an empty list, so this is a no-op when no listeners
+        // are registered. Drives the onChange/onSelection extensions (#103).
+        tr.state.facet(EditorSession.updateListener).forEach { it(update) }
         // Honor scrollIntoView: queue a request for the composable to reveal
         // the primary selection head. This drives caret-reveal on cursor moves
         // (#33) and the search/jump reveal in vim `n`/`N` (#58).

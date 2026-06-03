@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- updateListener facet (and the onChange/onSelection extensions built on it) now fire on every transaction; previously they were registered but never dispatched (#103)
+
 ## [0.3.2] - 2026-06-02
 
 ### Fixed
