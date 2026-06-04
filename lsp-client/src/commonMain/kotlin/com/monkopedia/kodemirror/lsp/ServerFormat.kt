@@ -132,7 +132,7 @@ fun formatDocument(session: EditorSession): Boolean {
             )
         } catch (e: CancellationException) {
             throw e
-        }
+        } ?: return@launch
         val spec = textEditsToChangeSpec(edits, targetSession.state.doc, mapping = null)
             ?: return@launch
         targetSession.dispatch(TransactionSpec(changes = spec, userEvent = "format"))

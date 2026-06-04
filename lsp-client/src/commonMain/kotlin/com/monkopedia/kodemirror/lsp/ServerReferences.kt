@@ -248,7 +248,7 @@ fun findReferences(session: EditorSession): Boolean {
             )
         } catch (e: CancellationException) {
             throw e
-        }
+        } ?: return@launch
         val locations = toReferenceLocations(response)
         if (locations.isEmpty()) return@launch
         session.dispatch(

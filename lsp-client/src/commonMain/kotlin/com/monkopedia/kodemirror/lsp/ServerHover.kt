@@ -370,7 +370,7 @@ fun serverHover(
             client.server.textDocumentHover(params)
         } catch (e: CancellationException) {
             throw e
-        }
+        } ?: return@hover null
         val blocks = parseHoverContents(hover.contents)
         if (blocks.isEmpty()) return@hover null
         val anchor = hoverTooltipPos(hover, pos, prevDoc, mapping)

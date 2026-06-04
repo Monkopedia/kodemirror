@@ -303,7 +303,7 @@ private fun doRename(
             } catch (e: CancellationException) {
                 throw e
             }
-            applyWorkspaceEdit(client, binding.uri, response, mapping)
+            if (response != null) applyWorkspaceEdit(client, binding.uri, response, mapping)
         } finally {
             if (mapping != null) client.workspace.releaseMapping(mapping)
         }

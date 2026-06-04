@@ -227,7 +227,7 @@ class LSPClientTest {
                 )
             ).applied
         )
-        assertTrue(lc.workspaceWorkspaceFolders().isEmpty())
+        assertTrue(lc.workspaceWorkspaceFolders().isNullOrEmpty())
     }
 
     @Test
