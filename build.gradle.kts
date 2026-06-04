@@ -56,7 +56,7 @@ tasks.register("stripStableFromApiDumps") {
 subprojects {
     pluginManager.withPlugin("org.jetbrains.kotlin.plugin.compose") {
         extensions.configure<org.jetbrains.kotlin.compose.compiler.gradle.ComposeCompilerGradlePluginExtension> {
-            stabilityConfigurationFile.set(
+            stabilityConfigurationFiles.add(
                 rootProject.layout.projectDirectory.file("compose-stability.conf")
             )
         }

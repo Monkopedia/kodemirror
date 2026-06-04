@@ -70,8 +70,8 @@ public final class com/monkopedia/kodemirror/vim/ActionArgs {
 public final class com/monkopedia/kodemirror/vim/ComposableSingletons$VimPanelKt {
 	public static final field INSTANCE Lcom/monkopedia/kodemirror/vim/ComposableSingletons$VimPanelKt;
 	public fun <init> ()V
-	public final fun getLambda$749234107$vim_release ()Lkotlin/jvm/functions/Function3;
-	public final fun getLambda$929911605$vim_release ()Lkotlin/jvm/functions/Function3;
+	public final fun getLambda$749234107$com_monkopedia_kodemirror_vim_release ()Lkotlin/jvm/functions/Function3;
+	public final fun getLambda$929911605$com_monkopedia_kodemirror_vim_release ()Lkotlin/jvm/functions/Function3;
 }
 
 public final class com/monkopedia/kodemirror/vim/ExParams {

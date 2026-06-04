@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+- Built on Kotlin 2.4.0 (was 2.3.20). Consumers of the wasmJs/native klibs must be on Kotlin 2.4.0+ (klib ABI is forward-incompatible). Also bumped the lsp dependency to 1.0.1 (the Kotlin-2.4.0 build; identical public API) (#105).
+
 ### Fixed
 - updateListener facet (and the onChange/onSelection extensions built on it) now fire on every transaction; previously they were registered but never dispatched (#103)
 

@@ -1,6 +1,6 @@
 [versions]
 agp = "8.13.2"
-kotlin = "2.3.20"
+kotlin = "2.4.0"
 compose-plugin = "1.10.3"
 atomicfu = "0.32.1"
 kotlinx-serialization = "1.10.0"
@@ -13,7 +13,7 @@ kover = "0.9.8"
 dokka = "2.2.0"
 bcv = "0.18.1"
 vanniktech = "0.36.0"
-lsp = "1.0.0"
+lsp = "1.0.1"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
