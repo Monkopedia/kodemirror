@@ -463,7 +463,13 @@ fun serverCompletionSource(
     val items = result.items
     val (from, to) = completionResultRange(context, items)
     val options = items.map { mapCompletionItem(it, doc) }
-    val validFor = if (result.isIncomplete) null else (config.validFor ?: prefixRegexp(items))
+    // Always provide a validFor prefix regex, even for isIncomplete results, so the
+    // client filters the already-returned items by the typed prefix as the user types
+    // (#114). Many servers (e.g. kotlin-lsp) mark EVERY member list isIncomplete=true;
+    // gating validFor on that left the list unfiltered (and the accept-range stale →
+    // "`.xplus`"). Servers that return a genuinely partial list still get client-side
+    // narrowing of what they sent, which is the right behaviour for a full member list.
+    val validFor = config.validFor ?: prefixRegexp(items)
 
     CompletionResult(
         from = from,

@@ -246,7 +246,18 @@ private class CompletionPlugin(private val view: EditorSession) : PluginValue {
         if (update.docChanged) {
             for (tr in update.transactions) {
                 if (tr.isUserEvent("input") && !tr.isUserEvent("input.complete")) {
-                    triggerCompletion(view, explicit = false)
+                    // If completion is STILL open after this edit, the state field
+                    // already re-filtered the existing result against the typed text
+                    // (the input matched its validFor) — narrowing happened in-place.
+                    // Re-querying here would replace that narrowed list with a fresh
+                    // full result and reset the apply range, which is exactly the
+                    // "doesn't filter / inserts `.xplus`" bug (#114). Only (re-)trigger
+                    // when completion is closed (or the edit closed it because the text
+                    // no longer matched validFor) — that starts a fresh query.
+                    val cs = update.state.field(completionStateField, require = false)
+                    if (cs == null || !cs.open) {
+                        triggerCompletion(view, explicit = false)
+                    }
                     return
                 }
             }

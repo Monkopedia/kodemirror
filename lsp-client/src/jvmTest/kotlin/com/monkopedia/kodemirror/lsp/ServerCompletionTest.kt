@@ -26,15 +26,18 @@ import com.monkopedia.lsp.CompletionItem
 import com.monkopedia.lsp.CompletionItemKind
 import com.monkopedia.lsp.CompletionItemLabelDetails
 import com.monkopedia.lsp.CompletionList
+import com.monkopedia.lsp.CompletionOptions
 import com.monkopedia.lsp.InsertReplaceEdit
 import com.monkopedia.lsp.InsertTextFormat
 import com.monkopedia.lsp.MarkupContent
 import com.monkopedia.lsp.MarkupKind
 import com.monkopedia.lsp.Position
 import com.monkopedia.lsp.Range
+import com.monkopedia.lsp.ServerCapabilities
 import com.monkopedia.lsp.StringOr
 import com.monkopedia.lsp.TextDocumentCompletionResult
 import com.monkopedia.lsp.TextEdit
+import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -300,6 +303,38 @@ class ServerCompletionTest {
         val re = prefixRegexp(emptyList())
         assertTrue(re.matches("anything123"))
         assertTrue(!re.matches("has space"))
+    }
+
+    @Test
+    fun isIncompleteResultStillGetsValidFor() = runBlocking {
+        // #114 regression: kotlin-lsp marks EVERY member list isIncomplete=true. The
+        // source must still set validFor so the client filters the returned items by
+        // the typed prefix — gating validFor on isIncomplete left the list unfiltered
+        // (and the accept-range stale → "`.xplus`"). The bug was a literal
+        // `if (result.isIncomplete) null else ...`.
+        val fixture = TestLanguageServer(
+            capabilities = ServerCapabilities(completionProvider = CompletionOptions()),
+            responses = mapOf(
+                "textDocumentCompletion" to TextDocumentCompletionResult.CompletionListValue(
+                    CompletionList(
+                        isIncomplete = true,
+                        items = listOf(
+                            CompletionItem(label = "plus"),
+                            CompletionItem(label = "minus")
+                        )
+                    )
+                )
+            )
+        )
+        val client = LSPClient(fixture.server)
+        client.initialize()
+        val source = serverCompletionSource(client, "inmemory://t.kt")
+        // explicit = true skips the trigger-character gate so we reach the result.
+        val result = source(CompletionContext(EditorState.create("x."), DocPos(2), explicit = true))
+        assertNotNull(result)
+        assertNotNull(result.validFor)
+        // A word prefix matches → the client narrows the list as the user types.
+        assertTrue(result.validFor!!.matches("pl"))
     }
 
     // ── completion list result parsing ──
