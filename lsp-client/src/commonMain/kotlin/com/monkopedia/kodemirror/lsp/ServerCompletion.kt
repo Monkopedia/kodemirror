@@ -23,9 +23,7 @@ import com.monkopedia.kodemirror.autocomplete.CompletionApplyContext
 import com.monkopedia.kodemirror.autocomplete.CompletionConfig
 import com.monkopedia.kodemirror.autocomplete.CompletionContext
 import com.monkopedia.kodemirror.autocomplete.CompletionResult
-import com.monkopedia.kodemirror.autocomplete.CompletionSource
 import com.monkopedia.kodemirror.autocomplete.SuspendCompletionSource
-import com.monkopedia.kodemirror.autocomplete.asyncCompletionSource
 import com.monkopedia.kodemirror.autocomplete.autocompletion
 import com.monkopedia.kodemirror.autocomplete.snippet
 import com.monkopedia.kodemirror.autocomplete.snippets
@@ -194,7 +192,15 @@ internal fun CompletionItemTextEdit.newText(): String = when (this) {
  * `label`.
  */
 internal fun CompletionItem.insertionText(): String =
-    textEdit?.newText() ?: textEditText ?: insertText ?: label
+    // Treat an EMPTY newText/insertText as absent and fall through to `label`.
+    // Servers that use lazy completion (e.g. kotlin-lsp) send items with an
+    // empty `textEdit.newText` and resolve the real insertion via
+    // `completionItem/resolve`; the empty string would otherwise short-circuit
+    // this chain and leave both the displayed and inserted text blank (#109).
+    textEdit?.newText()?.ifEmpty { null }
+        ?: textEditText?.ifEmpty { null }
+        ?: insertText?.ifEmpty { null }
+        ?: label
 
 /**
  * Map a single LSP [CompletionItem] to an `:autocomplete` [Completion].
@@ -246,6 +252,7 @@ internal fun mapCompletionItem(item: CompletionItem, doc: Text): Completion {
         }
         return Completion(
             label = item.label,
+            displayLabel = item.label,
             detail = item.detail,
             info = info,
             type = type,
@@ -264,7 +271,11 @@ internal fun mapCompletionItem(item: CompletionItem, doc: Text): Completion {
         }
     }
     return Completion(
+        // label is the insertion/filter text; displayLabel is what the popup
+        // SHOWS — the human-readable item.label (e.g. "transform"), which can
+        // differ from the inserted text and must not be left to default to it (#109).
         label = text,
+        displayLabel = item.label,
         detail = item.detail,
         info = info,
         type = type,
@@ -489,12 +500,15 @@ fun serverCompletion(
     uri: String,
     config: ServerCompletionConfig = ServerCompletionConfig()
 ): Extension {
-    val source: CompletionSource = asyncCompletionSource(
-        serverCompletionSource(client, uri, config)
-    )
+    // Register the LSP source as an ASYNC override. The framework launches it on
+    // the editor's coroutine scope and dispatches the result when it resolves —
+    // the previous `asyncCompletionSource` (blocking) bridge is unsupported on
+    // wasmJs (it throws), so completion never opened on web (#109). The suspend
+    // source works uniformly on jvm/wasmJs/native this way.
+    val source: SuspendCompletionSource = serverCompletionSource(client, uri, config)
     return ExtensionList(
         listOf(
-            autocompletion(CompletionConfig(override = listOf(source))),
+            autocompletion(CompletionConfig(asyncOverride = listOf(source))),
             snippets()
         )
     )

@@ -22,19 +22,19 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
@@ -53,6 +53,7 @@ import com.monkopedia.kodemirror.view.ThemeKey
 import com.monkopedia.kodemirror.view.Tooltip
 import com.monkopedia.kodemirror.view.ViewPlugin
 import com.monkopedia.kodemirror.view.ViewUpdate
+import kotlinx.coroutines.launch
 import com.monkopedia.kodemirror.view.keymap
 import com.monkopedia.kodemirror.view.showTooltip
 
@@ -146,6 +147,7 @@ private fun triggerCompletion(view: EditorSession, explicit: Boolean) {
     val pos = state.selection.main.head
     val ctx = CompletionContext(state, pos, explicit)
     val sources = config.override ?: emptyList()
+    val asyncSources = config.asyncOverride ?: emptyList()
     for (source in sources) {
         val result = source(ctx)
         if (result != null && result.options.isNotEmpty()) {
@@ -156,6 +158,30 @@ private fun triggerCompletion(view: EditorSession, explicit: Boolean) {
             )
             return
         }
+    }
+    // Async (suspend) sources — e.g. a language server. Launched on the editor's
+    // coroutine scope; the result is dispatched when it resolves. This is the
+    // wasmJs-safe path (no blocking bridge). See CompletionConfig.asyncOverride.
+    if (asyncSources.isNotEmpty()) {
+        view.coroutineScope.launch {
+            for (source in asyncSources) {
+                val result = source(ctx)
+                if (result != null && result.options.isNotEmpty()) {
+                    view.dispatch(
+                        TransactionSpec(
+                            effects = listOf(startCompletionEffect.of(result))
+                        )
+                    )
+                    return@launch
+                }
+            }
+            if (explicit) {
+                view.dispatch(
+                    TransactionSpec(effects = listOf(closeCompletionEffect.of(Unit)))
+                )
+            }
+        }
+        return
     }
     // No results, close if open
     if (explicit) {
@@ -236,69 +262,68 @@ private fun CompletionList(
     val result = completionState.result ?: return
     val theme = LocalEditorTheme.current
 
+    // A plain Column (not LazyColumn) so the popup wraps-content to the WIDEST
+    // row: a LazyColumn does not wrap-content on the cross axis, so under this
+    // wrap-content parent it collapsed to the min width and clipped every label
+    // to ~0 (only the fixed-width type icon showed) (#109). It also avoids the
+    // unbounded-height LazyColumn collapse (cf. #33). The list is capped at
+    // config.maxRenderedOptions, so a non-lazy column + verticalScroll is fine.
     Column(
-        modifier = Modifier.background(theme[completionBackground]).padding(2.dp)
+        modifier = Modifier
+            .background(theme[completionBackground])
+            // Bounded width (not pure wrap-content): on Compose-wasmJs a BasicText
+            // with no width modifier measures to ~0 intrinsic width, so the label
+            // needs a CONCRETE width to paint (the fixed-width icon survives, a
+            // width-less label collapses to blank). A bounded Column lets the row's
+            // fillMaxWidth + the label's weight(1f) resolve to a real width (#109).
+            .widthIn(min = 200.dp, max = 360.dp)
+            .heightIn(max = 240.dp)
+            .verticalScroll(rememberScrollState())
+            .padding(2.dp)
     ) {
-        LazyColumn {
-            itemsIndexed(items) { index, item ->
-                val isSelected = index == completionState.selected
-                Row(
-                    modifier = Modifier
-                        .background(
-                            if (isSelected) {
-                                theme[completionSelectedBackground]
-                            } else {
-                                Color.Transparent
-                            }
-                        )
-                        .clickable { applyCompletion(view, item.completion, result) }
-                        .padding(horizontal = 4.dp, vertical = 2.dp)
-                ) {
-                    val textColor = theme[completionTextColor]
-                    if (config.icons && item.completion.type != null) {
-                        BasicText(
-                            text = typeIcon(item.completion.type),
-                            style = TextStyle(color = theme[completionIconColor]),
-                            modifier = Modifier.width(20.dp)
-                        )
-                    }
-                    BasicText(
-                        text = buildHighlightedLabel(
-                            item.completion.displayLabel ?: item.completion.label,
-                            item.highlighted
-                        ),
-                        style = TextStyle(color = textColor)
+        items.forEachIndexed { index, item ->
+            val isSelected = index == completionState.selected
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        if (isSelected) {
+                            theme[completionSelectedBackground]
+                        } else {
+                            Color.Transparent
+                        }
                     )
-                    if (item.completion.detail != null) {
-                        BasicText(
-                            text = " ${item.completion.detail}",
-                            style = TextStyle(color = theme[completionDetailColor]),
-                            modifier = Modifier.padding(start = 4.dp)
-                        )
-                    }
+                    .clickable { applyCompletion(view, item.completion, result) }
+                    .padding(horizontal = 4.dp, vertical = 2.dp)
+            ) {
+                val textColor = theme[completionTextColor]
+                if (config.icons && item.completion.type != null) {
+                    BasicText(
+                        text = typeIcon(item.completion.type),
+                        style = TextStyle(color = theme[completionIconColor]),
+                        modifier = Modifier.width(20.dp)
+                    )
                 }
+                // weight(1f) gives the label text a concrete width within the bounded
+                // row so it paints — a width-less BasicText collapses to ~0 on wasmJs.
+                // Detail (if any) is folded into the same text rather than a separate
+                // width-less BasicText (which would likewise collapse). Plain String,
+                // not AnnotatedString — BasicText(AnnotatedString) also failed to paint
+                // here, so prefix-match bold highlighting is dropped for now (#111).
+                val label = item.completion.displayLabel ?: item.completion.label
+                val text = item.completion.detail?.let { "$label  $it" } ?: label
+                BasicText(
+                    text = text,
+                    style = TextStyle(color = textColor),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
             }
         }
     }
 }
 
-@Composable
-private fun buildHighlightedLabel(label: String, highlights: List<IntRange>) =
-    buildAnnotatedString {
-        var pos = 0
-        for (range in highlights) {
-            if (pos < range.first) {
-                append(label.substring(pos, range.first))
-            }
-            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
-                append(label.substring(range.first, range.last + 1))
-            }
-            pos = range.last + 1
-        }
-        if (pos < label.length) {
-            append(label.substring(pos))
-        }
-    }
 
 private fun typeIcon(type: String): String = when (type) {
     "function", "method" -> "f"

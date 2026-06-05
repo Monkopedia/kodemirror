@@ -107,10 +107,17 @@ mavenPublishing {
     // self-sufficient and avoids the 0.3.2 "Skipping deployment validation!" bug
     // where the BOM's isolated deployment never released.
     publishToMavenCentral(automaticRelease = true)
-    signAllPublications()
+    // Sign released artifacts only; SNAPSHOT builds (local mavenLocal iteration)
+    // skip signing. See the matching guard in the kodemirror.library convention plugin.
+    if (!version.toString().endsWith("SNAPSHOT")) {
+        signAllPublications()
+    }
 }
 
-signing {
-    useGpgCmd()
-    sign(extensions.getByType<PublishingExtension>().publications)
+// Sign released artifacts only; SNAPSHOT builds skip signing (local mavenLocal loop).
+if (!version.toString().endsWith("SNAPSHOT")) {
+    signing {
+        useGpgCmd()
+        sign(extensions.getByType<PublishingExtension>().publications)
+    }
 }

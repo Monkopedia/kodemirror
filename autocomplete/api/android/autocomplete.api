@@ -91,8 +91,8 @@ public final class com/monkopedia/kodemirror/autocomplete/CompletionApplyContext
 public final class com/monkopedia/kodemirror/autocomplete/CompletionConfig {
 	public static final field $stable I
 	public fun <init> ()V
-	public fun <init> (ZZZIZZLjava/util/List;)V
-	public synthetic fun <init> (ZZZIZZLjava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (ZZZIZZLjava/util/List;Ljava/util/List;)V
+	public synthetic fun <init> (ZZZIZZLjava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Z
 	public final fun component2 ()Z
 	public final fun component3 ()Z
@@ -100,10 +100,12 @@ public final class com/monkopedia/kodemirror/autocomplete/CompletionConfig {
 	public final fun component5 ()Z
 	public final fun component6 ()Z
 	public final fun component7 ()Ljava/util/List;
-	public final fun copy (ZZZIZZLjava/util/List;)Lcom/monkopedia/kodemirror/autocomplete/CompletionConfig;
-	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/autocomplete/CompletionConfig;ZZZIZZLjava/util/List;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/autocomplete/CompletionConfig;
+	public final fun component8 ()Ljava/util/List;
+	public final fun copy (ZZZIZZLjava/util/List;Ljava/util/List;)Lcom/monkopedia/kodemirror/autocomplete/CompletionConfig;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/autocomplete/CompletionConfig;ZZZIZZLjava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/autocomplete/CompletionConfig;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getActivateOnTyping ()Z
+	public final fun getAsyncOverride ()Ljava/util/List;
 	public final fun getCloseOnBlur ()Z
 	public final fun getDefaultKeymap ()Z
 	public final fun getIcons ()Z

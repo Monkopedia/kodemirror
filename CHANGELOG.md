@@ -6,8 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- `CompletionConfig.asyncOverride`: suspend completion sources that the autocomplete framework launches on the editor's coroutine scope and dispatches when they resolve. This is the wasmJs-safe way to drive an async source (e.g. a language server) — the previous `asyncCompletionSource` blocking bridge throws on wasmJs (#109).
+
+### Fixed
+- **LSP completion now works on wasmJs (#109).** Several issues stacked: (a) the completion source was registered via `asyncCompletionSource`, whose wasmJs actual throws, so the popup never opened — `serverCompletion` now registers via the new `asyncOverride` path; (b) two `autocompletion()` extensions (e.g. `basicSetup` + `languageServerSupport`) no longer shadow each other — the `completionConfig` facet now merges completion sources across all configs instead of taking only the last; (c) the completion popup is rendered with a plain `Column` + bounded width and a `weight`-sized label so it lays out and paints on Compose-wasmJs (a `LazyColumn`/width-less `BasicText` collapsed to nothing); (d) completion labels display (and insert) correctly for servers that use lazy completion — `insertionText()` now treats an empty `textEdit.newText`/`insertText` as absent and falls back to the item label, and `mapCompletionItem` sets `displayLabel` to the item label. (Bold prefix-match highlighting is temporarily dropped on this path — #111; `completionItem/resolve` for auto-imports is tracked in #112.)
+- Completion trigger characters (e.g. `.`) are no longer inserted twice on wasmJs: the hidden text field's input-echo suppression is now reset per keydown and survives the extra `onValueChange` that a completion-popup recomposition can fire (#109).
+
 ### Changed
-- Bumped the lsp dependency to 1.2.0 (was 1.0.1). 1.2.0 tightens several `LanguageServer`/`LanguageClient` return types to be nullable, matching the LSP spec's optional results (`textDocument/hover`, `textDocument/formatting`, `textDocument/references`, `textDocument/rename`, `workspace/workspaceFolders`). The client now treats a null result as "no result" (no-op / empty), preserving prior behaviour. No public API change.
+- Bumped the lsp dependency to 1.2.0 (was 1.0.1) (#108). 1.2.0 tightens several `LanguageServer`/`LanguageClient` return types to be nullable, matching the LSP spec's optional results (`textDocument/hover`, `textDocument/formatting`, `textDocument/references`, `textDocument/rename`, `workspace/workspaceFolders`). The client now treats a null result as "no result" (no-op / empty), preserving prior behaviour.
+- Release artifacts are signed only for non-SNAPSHOT versions, so a local `publishToMavenLocal` of a `-SNAPSHOT` build no longer requires a GPG key.
 
 ## [0.3.3] - 2026-06-04
 

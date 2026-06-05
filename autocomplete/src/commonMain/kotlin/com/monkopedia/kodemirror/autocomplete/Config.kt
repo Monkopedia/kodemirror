@@ -29,6 +29,11 @@ import com.monkopedia.kodemirror.state.Facet
  * @param maxRenderedOptions Maximum number of options to render at once.
  * @param icons Whether to show type icons next to completions.
  * @param override Optional override completion sources that replace the defaults.
+ * @param asyncOverride Optional suspend completion sources. Unlike [override]
+ *   (which must return synchronously), these are launched on the editor's
+ *   coroutine scope and their result dispatched when it resolves — the only way
+ *   to drive an async source (e.g. a language server) on wasmJs, where a
+ *   blocking bridge is impossible. Tried after [override] yields nothing.
  */
 data class CompletionConfig(
     val activateOnTyping: Boolean = true,
@@ -37,10 +42,30 @@ data class CompletionConfig(
     val maxRenderedOptions: Int = 100,
     val icons: Boolean = true,
     val defaultKeymap: Boolean = true,
-    val override: List<CompletionSource>? = null
+    val override: List<CompletionSource>? = null,
+    val asyncOverride: List<SuspendCompletionSource>? = null
 )
 
-/** Facet for completion configuration. */
+/**
+ * Facet for completion configuration.
+ *
+ * Scalar settings (activateOnTyping, etc.) are taken from the highest-precedence
+ * config, but completion SOURCES ([CompletionConfig.override] /
+ * [CompletionConfig.asyncOverride]) from EVERY contributing config are merged.
+ * This lets independently-registered `autocompletion()` extensions coexist —
+ * e.g. `basicSetup`'s bundled `autocompletion()` and `languageServerSupport`'s
+ * `serverCompletion()` — instead of the last one silently shadowing the others'
+ * sources, which left LSP completion with zero sources (#109).
+ */
 val completionConfig: Facet<CompletionConfig, CompletionConfig> = Facet.define(
-    combine = { values -> values.lastOrNull() ?: CompletionConfig() }
+    combine = { values ->
+        if (values.isEmpty()) {
+            CompletionConfig()
+        } else {
+            values.last().copy(
+                override = values.flatMap { it.override.orEmpty() }.ifEmpty { null },
+                asyncOverride = values.flatMap { it.asyncOverride.orEmpty() }.ifEmpty { null }
+            )
+        }
+    }
 )

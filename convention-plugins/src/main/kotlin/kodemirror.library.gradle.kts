@@ -133,19 +133,28 @@ mavenPublishing {
     // automaticRelease = true publishes straight to the Central Portal on a successful
     // deploy, skipping the manual "Publish" click in the Sonatype Central Portal UI.
     publishToMavenCentral(automaticRelease = true)
-    signAllPublications()
+    // Sign released artifacts only. SNAPSHOT builds (e.g. local `publishToMavenLocal`
+    // iteration) skip signing: the Central Portal does not require signatures for
+    // snapshots, and skipping avoids needing a GPG key for fast local loops.
+    if (!version.toString().endsWith("SNAPSHOT")) {
+        signAllPublications()
+    }
 }
 
-signing {
-    useGpgCmd()
-    sign(extensions.getByType<PublishingExtension>().publications)
-}
+// Sign released artifacts only. SNAPSHOT builds (local `publishToMavenLocal`
+// iteration) skip signing entirely — no GPG key needed for the fast local loop.
+if (!version.toString().endsWith("SNAPSHOT")) {
+    signing {
+        useGpgCmd()
+        sign(extensions.getByType<PublishingExtension>().publications)
+    }
 
-afterEvaluate {
-    tasks.withType<Sign> {
-        val signingTask = this
-        tasks.withType<AbstractPublishToMaven> {
-            dependsOn(signingTask)
+    afterEvaluate {
+        tasks.withType<Sign> {
+            val signingTask = this
+            tasks.withType<AbstractPublishToMaven> {
+                dependsOn(signingTask)
+            }
         }
     }
 }

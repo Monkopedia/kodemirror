@@ -245,6 +245,14 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
     // should skip to avoid double-handling.
     val keyProcessedByCallback = remember { booleanArrayOf(false) }
 
+    // Suppresses the hidden text field's onValueChange echo for a key already
+    // handled by the key-event paths (document-level handler / onPreviewKeyEvent).
+    // Declared here (rather than inside EditorContent) so the document-level key
+    // handler below can RESET it at the start of each keydown. It then stays
+    // armed across the — possibly multiple — onValueChange echoes a single
+    // keystroke can produce on wasmJs when a completion popup recomposes (#109).
+    val suppressInput = remember { booleanArrayOf(false) }
+
     // Register a platform-level key handler that receives ALL keydown events.
     // This is the primary input path on wasmJs because Playwright (and some
     // headless environments) dispatch key events to BODY rather than the
@@ -253,12 +261,24 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
     // onPreviewKeyEvent fire — the flag prevents double-handling.
     DisposableEffect(session) {
         val token = platformRegisterKeyHandler handler@{ key, ctrl, alt, meta, shift ->
-            // Clear the flag at the start of each key event.
-            // It will be set to true only if we handle this key.
+            // Clear the flags at the start of each key event.
+            // keyProcessedByCallback is set true only if we handle this key.
+            // suppressInput is reset so this keystroke can re-arm echo
+            // suppression from scratch; it then stays armed across the
+            // (possibly multiple) onValueChange echoes one keystroke can
+            // produce on wasmJs when a completion popup recomposes (#109).
             keyProcessedByCallback[0] = false
+            suppressInput[0] = false
             val handled = handleRawKeyEvent(session, key, ctrl, alt, meta, shift)
             if (handled) {
                 keyProcessedByCallback[0] = true
+                // A plain printable char inserted here still triggers an
+                // onValueChange echo on the hidden field even when onPreviewKeyEvent
+                // does NOT fire on the live wasmJs build — so arm echo suppression
+                // directly rather than relying on onPreviewKeyEvent to bridge it (#109).
+                if (key.length == 1 && !ctrl && !alt && !meta && !key[0].isISOControl()) {
+                    suppressInput[0] = true
+                }
             }
             handled
         }
@@ -597,7 +617,8 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                     pendingLineLayouts = pendingLineLayouts,
                     editorCoordinates = editorCoordinates,
                     textLayoutResults = textLayoutResults,
-                    keyProcessedByCallback = keyProcessedByCallback
+                    keyProcessedByCallback = keyProcessedByCallback,
+                    suppressInput = suppressInput
                 )
                 // Visible horizontal scrollbar for no-wrap mode (#65). Only
                 // shown when there is actual horizontal overflow and line
@@ -641,7 +662,8 @@ private fun EditorContent(
     pendingLineLayouts: MutableMap<Int, PendingLineLayout>,
     editorCoordinates: LayoutCoordinates?,
     textLayoutResults: MutableMap<Int, TextLayoutResult>,
-    keyProcessedByCallback: BooleanArray
+    keyProcessedByCallback: BooleanArray,
+    suppressInput: BooleanArray
 ) {
     val session = LocalEditorSession.current
     val impl = session as EditorSessionImpl
@@ -668,17 +690,25 @@ private fun EditorContent(
     var hiddenTextValue by remember {
         mutableStateOf(TextFieldValue(""))
     }
-    // Flag to suppress onValueChange when onPreviewKeyEvent consumed the key.
-    // On wasmJs, returning true from onPreviewKeyEvent does NOT call
-    // preventDefault() on the DOM event, so the browser still generates an
-    // input event that triggers onValueChange. This flag bridges the gap.
-    val suppressInput = remember { booleanArrayOf(false) }
+    // suppressInput (hoisted to the caller) suppresses the hidden text field's
+    // onValueChange echo when onPreviewKeyEvent / the document-level handler
+    // already consumed the key. On wasmJs, returning true from onPreviewKeyEvent
+    // does NOT call preventDefault() on the DOM event, so the browser still
+    // generates an input event that triggers onValueChange. This flag bridges
+    // the gap. It is RESET per keydown (by the document-level handler), not by
+    // onValueChange, so it survives more than one echo per keystroke (#109).
     BasicTextField(
         value = hiddenTextValue,
         cursorBrush = SolidColor(Color.Transparent),
         onValueChange = { newValue ->
             if (suppressInput[0]) {
-                suppressInput[0] = false
+                // Sticky: do NOT clear suppressInput here. A single keystroke can
+                // produce more than one onValueChange echo on wasmJs — the browser
+                // input event, plus a re-fire when a completion popup recomposes —
+                // and both must be dropped, otherwise the trigger character is
+                // re-inserted (doubled) and the spurious doc-change closes the
+                // just-opened completion popup (#109). The flag is reset per
+                // keydown by the document-level key handler.
                 hiddenTextValue = TextFieldValue("")
                 return@BasicTextField
             }
