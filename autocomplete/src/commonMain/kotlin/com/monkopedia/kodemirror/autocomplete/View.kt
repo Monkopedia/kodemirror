@@ -18,6 +18,7 @@
  */
 package com.monkopedia.kodemirror.autocomplete
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -27,10 +28,14 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
@@ -267,6 +272,7 @@ private class CompletionPlugin(private val view: EditorSession) : PluginValue {
 
 // ── Composable UI ──
 
+@OptIn(ExperimentalFoundationApi::class)
 @Suppress("ktlint:standard:function-naming")
 @Composable
 private fun CompletionList(
@@ -277,6 +283,15 @@ private fun CompletionList(
     val items = completionState.filtered.take(config.maxRenderedOptions)
     val result = completionState.result ?: return
     val theme = LocalEditorTheme.current
+
+    // Keep the selected row visible as the user arrow-navigates — the
+    // verticalScroll Column does not follow the selection on its own (#115).
+    // The requester is attached to whichever row is currently selected, so
+    // bringIntoView() on selection change scrolls that row into the viewport.
+    val bringIntoViewRequester = remember { BringIntoViewRequester() }
+    LaunchedEffect(completionState.selected) {
+        bringIntoViewRequester.bringIntoView()
+    }
 
     // A plain Column (not LazyColumn) so the popup wraps-content to the WIDEST
     // row: a LazyColumn does not wrap-content on the cross axis, so under this
@@ -301,6 +316,13 @@ private fun CompletionList(
             val isSelected = index == completionState.selected
             Row(
                 modifier = Modifier
+                    .then(
+                        if (isSelected) {
+                            Modifier.bringIntoViewRequester(bringIntoViewRequester)
+                        } else {
+                            Modifier
+                        }
+                    )
                     .fillMaxWidth()
                     .background(
                         if (isSelected) {
