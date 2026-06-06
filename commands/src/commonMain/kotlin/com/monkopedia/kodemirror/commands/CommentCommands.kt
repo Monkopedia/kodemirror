@@ -152,10 +152,16 @@ private fun applyLineComment(view: EditorSession, lineToken: String, add: Boolea
     for (lineNum in startLine.number.value..endLine.number.value) {
         val line = state.doc.line(LineNumber(lineNum))
         if (add) {
+            // Insert the comment token AFTER the line's leading whitespace, not at
+            // column 0 — otherwise indentation is pushed past the marker
+            // ("//    indented" instead of "    // indented"), which also disagreed
+            // with the uncomment path's leading-space handling (#116/#119).
+            val leadingSpace = line.text.length - line.text.trimStart().length
+            val insertAt = line.from + leadingSpace
             changes.add(
                 ChangeSpec.Single(
-                    line.from,
-                    line.from,
+                    insertAt,
+                    insertAt,
                     InsertContent.StringContent("$lineToken ")
                 )
             )
