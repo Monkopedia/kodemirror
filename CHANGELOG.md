@@ -18,7 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Editing no longer crashes (`IllegalArgumentException: Invalid position …`) when a coordinate query (tooltip positioning, caret reveal) holds a document position that briefly outlives a shrinking edit. `coordsAtPos`/`blockAtPos` now return null for a position outside the current document instead of throwing `lineAt` mid-render — on a delete that removes the last character a stale position is exactly `length + 1` (#127).
 
 ### Tests
-- Ported upstream `:commands` coverage for `insertNewlineKeepIndent` and the bracket-explosion behaviour of `insertNewlineAndIndent` (both were ported but untested) (#116).
+- Ported upstream `:commands` coverage for `insertNewlineKeepIndent` and the bracket-explosion behaviour of `insertNewlineAndIndent` (both were ported but untested), including its use of a registered `indentService` for language-aware indentation (#116).
 - Added `:autocomplete` pipeline coverage for unfiltered (`filter = false`) results, accept replacing a range that extends past the cursor, first-non-empty source selection, and `completeFromList` word-match/explicit gating (#117).
 
 ### Changed
