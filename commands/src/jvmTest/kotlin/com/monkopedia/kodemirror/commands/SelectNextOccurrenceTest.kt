@@ -153,6 +153,24 @@ class SelectNextOccurrenceTest {
     }
 
     @Test
+    fun matchesSubwordWhenASubwordIsSelected() {
+        // Ported from upstream `@codemirror/search` `test-selection-match.ts`
+        // ("matches subwords if a subword is selected"). Selecting "one" inside
+        // the word "onetwo" also selects the "one" inside "onethree".
+        //
+        // kodemirror's selectNextOccurrence does a plain substring search (no
+        // whole-word boundary restriction), so a subword selection naturally
+        // matches occurrences embedded in other words. "onetwo onethree":
+        // o0 n1 e2 t3 w4 o5 ' '6 o7 n8 e9 t10 h11 r12 e13 e14.
+        val view = createViewWithSelection("onetwo onethree", 0, 3)
+        assertTrue(selectNextOccurrence(view))
+        val ranges = view.state.selection.ranges
+        assertEquals(2, ranges.size)
+        assertEquals(DocPos(7), ranges[1].from)
+        assertEquals(DocPos(10), ranges[1].to)
+    }
+
+    @Test
     fun multipleInvocationsAddAll() {
         val doc = "aa bb aa cc aa"
         val view = createView(doc, cursor = 0)
