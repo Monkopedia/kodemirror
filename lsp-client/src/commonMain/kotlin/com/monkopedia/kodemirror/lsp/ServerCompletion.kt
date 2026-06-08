@@ -429,10 +429,12 @@ internal fun parseCompletionResult(result: TextDocumentCompletionResult?): Compl
  * cancelled cooperatively through structured concurrency. (Upstream instead
  * sends an explicit cancel notification.)
  *
- * **`isIncomplete`:** when the server marks the list incomplete, the result is
- * returned with `validFor = null` so `:autocomplete` re-queries on the next
- * keystroke instead of filtering the stale list; complete lists get the
- * `validFor` regex so they can be filtered locally.
+ * **`isIncomplete`:** the result always carries a `validFor` prefix regex
+ * (from [config] or [prefixRegexp]), even when the server marks the list
+ * incomplete, so `:autocomplete` narrows the already-returned items by the
+ * typed prefix as the user types. Many servers mark every member list
+ * `isIncomplete = true`; gating `validFor` on that flag left such lists
+ * unfiltered (and the accept range stale), so it is set unconditionally (#114).
  */
 fun serverCompletionSource(
     client: LSPClient,
