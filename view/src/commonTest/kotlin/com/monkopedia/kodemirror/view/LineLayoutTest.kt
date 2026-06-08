@@ -101,4 +101,24 @@ class LineLayoutTest {
         val state = makeState("hello")
         assertNull(cache.posAtCoords(0f, 0f, state))
     }
+
+    @Test
+    fun coordsAtPosPastDocEndReturnsNull() {
+        // #127: a coordinate query for a position one past EOF (a stale
+        // tooltip / caret-reveal position that outlived a shrinking edit) must
+        // return null, not throw "Invalid position …" from lineAt mid-render.
+        val cache = LineLayoutCache()
+        val state = makeState("hello") // length 5
+        assertNull(cache.coordsAtPos(6, 1, state)) // length + 1
+        assertNull(cache.coordsAtPos(-1, 1, state))
+    }
+
+    @Test
+    fun blockAtPosPastDocEndReturnsNull() {
+        // #127: same out-of-range guard for blockAtPos.
+        val cache = LineLayoutCache()
+        val state = makeState("hello") // length 5
+        assertNull(cache.blockAtPos(6, state)) // length + 1
+        assertNull(cache.blockAtPos(-1, state))
+    }
 }

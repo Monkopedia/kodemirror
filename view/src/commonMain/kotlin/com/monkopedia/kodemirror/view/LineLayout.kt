@@ -99,6 +99,14 @@ internal class LineLayoutCache {
      * @param state Current editor state (used to look up the line).
      */
     fun coordsAtPos(pos: Int, side: Int, state: EditorState): Rect? {
+        // A coordinate query for a position outside the current document yields
+        // no coordinates rather than throwing. Callers may hold a position that
+        // briefly outlives a shrinking edit by one frame — an async hover /
+        // diagnostic tooltip (TooltipLayer), a queued caret-reveal — before
+        // their source recomputes against the new doc. On a delete that removes
+        // the last character such a stale pos is exactly doc.length + 1, and
+        // lineAt would throw mid-render. Tolerate it: return null (#127).
+        if (pos < 0 || pos > state.doc.length) return null
         val line = state.doc.lineAt(DocPos(pos))
         val layout = cache[line.number.value] ?: return null
         val offsetInLine = pos - line.from.value
@@ -149,6 +157,10 @@ internal class LineLayoutCache {
      * Return block info for the line containing [pos].
      */
     fun blockAtPos(pos: Int, state: EditorState): BlockInfo? {
+        // See coordsAtPos: a position outside the current document (e.g. one
+        // past EOF after a shrinking edit) returns null rather than throwing
+        // (#127).
+        if (pos < 0 || pos > state.doc.length) return null
         val line = state.doc.lineAt(DocPos(pos))
         val layout = cache[line.number.value] ?: return null
         return BlockInfo(
