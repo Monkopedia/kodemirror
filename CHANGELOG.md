@@ -17,6 +17,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Arrow-navigating a completion list longer than the popup now scrolls the selected row into view; the `verticalScroll` column previously did not follow the selection, so the highlight could move out of sight below the fold (#115).
 - Editing no longer crashes (`IllegalArgumentException: Invalid position …`) when a coordinate query (tooltip positioning, caret reveal) holds a document position that briefly outlives a shrinking edit. `coordsAtPos`/`blockAtPos` now return null for a position outside the current document instead of throwing `lineAt` mid-render — on a delete that removes the last character a stale position is exactly `length + 1` (#127).
 
+### Tests
+- Ported upstream `:commands` coverage for `insertNewlineKeepIndent` and the bracket-explosion behaviour of `insertNewlineAndIndent` (both were ported but untested) (#116).
+
 ### Changed
 - Bumped the lsp dependency to 1.2.0 (was 1.0.1) (#108). 1.2.0 tightens several `LanguageServer`/`LanguageClient` return types to be nullable, matching the LSP spec's optional results (`textDocument/hover`, `textDocument/formatting`, `textDocument/references`, `textDocument/rename`, `workspace/workspaceFolders`). The client now treats a null result as "no result" (no-op / empty), preserving prior behaviour.
 - Release artifacts are signed only for non-SNAPSHOT versions, so a local `publishToMavenLocal` of a `-SNAPSHOT` build no longer requires a GPG key.
