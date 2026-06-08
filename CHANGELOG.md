@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Tests
 - Ported upstream `:commands` coverage for `insertNewlineKeepIndent` and the bracket-explosion behaviour of `insertNewlineAndIndent` (both were ported but untested) (#116).
+- Added `:autocomplete` pipeline coverage for unfiltered (`filter = false`) results, accept replacing a range that extends past the cursor, first-non-empty source selection, and `completeFromList` word-match/explicit gating (#117).
 
 ### Changed
 - Bumped the lsp dependency to 1.2.0 (was 1.0.1) (#108). 1.2.0 tightens several `LanguageServer`/`LanguageClient` return types to be nullable, matching the LSP spec's optional results (`textDocument/hover`, `textDocument/formatting`, `textDocument/references`, `textDocument/rename`, `workspace/workspaceFolders`). The client now treats a null result as "no result" (no-op / empty), preserving prior behaviour.
