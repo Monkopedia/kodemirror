@@ -192,21 +192,26 @@ private fun triggerCompletion(view: EditorSession, explicit: Boolean) {
 }
 
 private fun applyCompletion(view: EditorSession, completion: Completion, result: CompletionResult) {
+    // Clamp the stored result range to the CURRENT document. result.from/to are
+    // captured when the completion is requested; if the doc shrank since (the user
+    // backspaced while the popup was open, or a shorter re-sync landed) they can
+    // point past the doc end and crash dispatch with "Invalid position" (#124).
+    val docLen = DocPos(view.state.doc.length)
+    val from = result.from.coerceIn(DocPos.ZERO, docLen)
+    val to = (result.to ?: view.state.selection.main.head).coerceIn(from, docLen)
     val fn = completion.applyFn
     if (fn != null) {
         fn(
             CompletionApplyContext(
                 view,
                 completion,
-                result.from,
-                result.to ?: view.state.selection.main.head
+                from,
+                to
             )
         )
         return
     }
     val text = completion.apply ?: completion.label
-    val from = result.from
-    val to = result.to ?: view.state.selection.main.head
     view.dispatch(
         TransactionSpec(
             changes = ChangeSpec.Single(from, to, InsertContent.StringContent(text)),

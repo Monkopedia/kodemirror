@@ -166,4 +166,19 @@ class AutocompletionInputTest {
         assertEquals(1, filtered.size)
         assertEquals("cherry", filtered[0].label)
     }
+
+    @Test
+    fun acceptAfterDocShrankDoesNotCrash() {
+        // #124: the result's to-position is captured when completion is requested.
+        // If the doc shrinks before accept (backspace while the popup is open), that
+        // stale position points past the doc end and must be clamped — previously it
+        // crashed dispatch with "Invalid position DocPos(N) in document of length …".
+        val view = createView("apple", cursor = 5)
+        startCompletion(view) // result.to captured at pos 5
+        deleteBack(view) // doc -> "appl" (len 4); stored to=5 is now past the end
+        assertEquals("active", completionStatus(view.state)) // still open, filtered to "apple"
+        // Must not throw; applies the completion over the clamped range.
+        assertTrue(acceptCompletion(view))
+        assertEquals("apple", view.state.doc.toString())
+    }
 }
