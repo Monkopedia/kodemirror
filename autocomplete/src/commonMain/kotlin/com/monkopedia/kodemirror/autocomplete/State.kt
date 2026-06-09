@@ -20,6 +20,7 @@ package com.monkopedia.kodemirror.autocomplete
 
 import com.monkopedia.kodemirror.state.Annotation
 import com.monkopedia.kodemirror.state.AnnotationType
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.StateEffect
 import com.monkopedia.kodemirror.state.StateEffectType
@@ -35,19 +36,26 @@ val pickedCompletion: AnnotationType<Completion> = Annotation.define()
 /** Effect to set the selected completion index. */
 val setSelectedCompletion: StateEffectType<Int> = StateEffect.define()
 
-/** Effect to open the completion list with results. */
-internal val startCompletionEffect: StateEffectType<CompletionResult> = StateEffect.define()
+/**
+ * Effect to open the completion list with one or more source results. The
+ * results are merged + deduped into a single ordered list (see
+ * [mergeCompletions]); a single-source query passes a singleton list (#137).
+ */
+internal val startCompletionEffect: StateEffectType<List<CompletionResult>> = StateEffect.define()
 
 /** Effect to close the completion list. */
 internal val closeCompletionEffect: StateEffectType<Unit> = StateEffect.define()
 
 /** Internal state tracking the completion list. */
 internal data class CompletionState(
-    val result: CompletionResult? = null,
+    val results: List<CompletionResult> = emptyList(),
     val filtered: List<FilterResult> = emptyList(),
     val selected: Int = 0,
     val open: Boolean = false
 ) {
+    /** The completion span start — the smallest `from` across active results. */
+    val from: DocPos? get() = results.minByOrNull { it.from.value }?.from
+
     companion object {
         val empty = CompletionState()
     }
@@ -63,18 +71,10 @@ internal val completionStateField: StateField<CompletionState> = StateField.defi
             for (effect in tr.effects) {
                 val startEffect = effect.asType(startCompletionEffect)
                 if (startEffect != null) {
-                    val completionResult = startEffect.value
-                    val query = tr.state.doc.sliceString(
-                        completionResult.from,
-                        tr.state.selection.main.head
-                    )
-                    val filtered = filterCompletions(
-                        completionResult.options,
-                        query,
-                        completionResult.filter
-                    )
+                    val results = startEffect.value
+                    val filtered = mergeCompletions(results, tr.state)
                     result = CompletionState(
-                        result = completionResult,
+                        results = results,
                         filtered = filtered,
                         selected = 0,
                         open = filtered.isNotEmpty()
@@ -94,20 +94,23 @@ internal val completionStateField: StateField<CompletionState> = StateField.defi
                 }
             }
 
-            // Re-filter on doc change if we have an open result
-            if (tr.docChanged && result.open && result.result != null) {
-                val cr = result.result
+            // Re-filter on doc change while open. Each active result is kept only
+            // while its own validFor still matches the text between its from and
+            // the cursor; results that fall out of validFor drop, and if none
+            // survive the list closes. The survivors are re-merged + deduped.
+            if (tr.docChanged && result.open && result.results.isNotEmpty()) {
                 val head = tr.state.selection.main.head
-                val validFor = cr.validFor
-                val currentText = tr.state.doc.sliceString(cr.from, head)
-
-                if (validFor != null && validFor.containsMatchIn(currentText)) {
-                    val filtered = filterCompletions(
-                        cr.options,
-                        currentText,
-                        cr.filter
-                    )
+                val surviving = result.results.filter { cr ->
+                    val validFor = cr.validFor
+                    val currentText = tr.state.doc.sliceString(cr.from, head)
+                    validFor != null && validFor.containsMatchIn(currentText)
+                }
+                if (surviving.isEmpty()) {
+                    result = CompletionState.empty
+                } else {
+                    val filtered = mergeCompletions(surviving, tr.state)
                     result = result.copy(
+                        results = surviving,
                         filtered = filtered,
                         selected = result.selected.coerceIn(
                             0,
@@ -115,8 +118,6 @@ internal val completionStateField: StateField<CompletionState> = StateField.defi
                         ),
                         open = filtered.isNotEmpty()
                     )
-                } else {
-                    result = CompletionState.empty
                 }
             }
 

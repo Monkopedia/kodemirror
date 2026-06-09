@@ -18,18 +18,62 @@
  */
 package com.monkopedia.kodemirror.autocomplete
 
+import com.monkopedia.kodemirror.state.EditorState
+
 /**
  * Result of filtering a completion option against a query.
  *
  * @param completion The original completion.
  * @param score Match score (higher = better match).
  * @param highlighted Ranges in the label that matched.
+ * @param result The source [CompletionResult] this option came from. Used by the
+ *   apply path so each option is inserted over *its own* result's `from`..`to`
+ *   range — different sources can return different ranges (see [mergeCompletions]).
+ *   Null only when [filterCompletions] is called directly (e.g. unit tests).
  */
 internal data class FilterResult(
     val completion: Completion,
     val score: Int,
-    val highlighted: List<IntRange>
+    val highlighted: List<IntRange>,
+    val result: CompletionResult? = null
 )
+
+/**
+ * Filter, merge and dedup the options of multiple completion [results] into one
+ * ordered list — the cross-source merge upstream `@codemirror/autocomplete`
+ * performs in `sortOptions` (#137).
+ *
+ * Each result is filtered against the text between *its own* `from` and the
+ * cursor, honouring its own [filter][CompletionResult.filter] flag (so a
+ * `filter = false` source keeps all of its options alongside the filtered ones).
+ * The combined options are sorted by score (descending, stable — so equal-scoring
+ * options keep source order: source A's options before source B's), then
+ * deduplicated by label, keeping the first (highest-scored) occurrence.
+ *
+ * **Differing `from`:** sources may return different `from` positions. Each
+ * option carries its originating [result][FilterResult.result], so accepting it
+ * replaces that source's range correctly even when sources disagree. Filtering
+ * also uses each result's own span. The popup is anchored at the smallest `from`
+ * (see the tooltip provider). This faithfully covers both the common case
+ * (sources sharing `from`) and differing-`from` results.
+ */
+internal fun mergeCompletions(
+    results: List<CompletionResult>,
+    state: EditorState
+): List<FilterResult> {
+    val head = state.selection.main.head
+    val combined = results.flatMap { result ->
+        val query = state.doc.sliceString(result.from, head)
+        filterCompletions(result.options, query, result.filter)
+            .map { it.copy(result = result) }
+    }
+    // sortedByDescending is stable, so equal-scoring options keep their original
+    // (source) order. Dedup by label keeps the first — i.e. highest-scored — one.
+    val seen = HashSet<String>()
+    return combined
+        .sortedByDescending { it.score }
+        .filter { seen.add(it.completion.label) }
+}
 
 /**
  * Filter and score a list of completions against a query string.

@@ -41,16 +41,17 @@ import kotlin.test.assertNull
  *  - `filter = false` (unfiltered) results keep every option as the user types
  *  - accepting replaces the result's whole `from`..`to` range, including a `to`
  *    that extends past the cursor
- *  - source selection: the first source that returns options wins (kodemirror
- *    consults sources in order and uses the first non-empty result — it does
- *    NOT merge across sources, see the note below)
+ *  - a single source's options flow through unchanged
  *  - `completeFromList`'s word-match / explicit gating
+ *
+ * Cross-source merge + dedup of options (the upstream `sortOptions` behaviour) is
+ * now implemented (#137) and covered by `MultiSourceCompletionTest`.
  *
  * Divergences from upstream that are deliberately NOT ported here (kodemirror
  * does not implement them — tracked on #117, not asserted as green tests):
- * cross-source merge + dedup of options, multi-cursor completion, `sortText`
- * (kodemirror uses `boost`, covered by FilterTest), and the explicit-session
- * lifecycle nuances (backspace-out-of-word, stop-on-non-spanning-input).
+ * multi-cursor completion, `sortText` (kodemirror uses `boost`, covered by
+ * FilterTest), and the explicit-session lifecycle nuances (backspace-out-of-word,
+ * stop-on-non-spanning-input).
  */
 class CompletionPipelineTest {
 
@@ -139,10 +140,9 @@ class CompletionPipelineTest {
     }
 
     @Test
-    fun firstNonEmptySourceWinsAndIsNotMerged() {
-        // kodemirror consults override sources in order and uses the FIRST that
-        // returns options; it does not merge across sources. So a second
-        // non-empty source's options never appear.
+    fun singleSourceOptionsFlowThroughInOrder() {
+        // A single override source's options pass through unchanged and in order.
+        // (Cross-source merge is covered by MultiSourceCompletionTest, #137.)
         val v = viewWith(
             { ctx ->
                 CompletionResult(

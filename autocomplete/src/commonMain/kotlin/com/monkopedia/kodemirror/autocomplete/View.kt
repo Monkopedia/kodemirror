@@ -103,8 +103,11 @@ val closeCompletion: (EditorSession) -> Boolean = { view ->
 val acceptCompletion: (EditorSession) -> Boolean = { view ->
     val cs = view.state.field(completionStateField, require = false)
     if (cs != null && cs.open && cs.filtered.isNotEmpty()) {
-        val completion = cs.filtered[cs.selected].completion
-        applyCompletion(view, completion, cs.result!!)
+        val item = cs.filtered[cs.selected]
+        // Apply over the option's OWN source result range — sources can return
+        // different from..to, so we must not assume a single shared result (#137).
+        val result = item.result ?: cs.results.first()
+        applyCompletion(view, item.completion, result)
         true
     } else {
         false
@@ -154,20 +157,26 @@ private fun triggerCompletion(view: EditorSession, explicit: Boolean) {
     val ctx = CompletionContext(state, pos, explicit)
     val sources = config.override ?: emptyList()
     val asyncSources = config.asyncOverride ?: emptyList()
-    for (source in sources) {
-        val result = source(ctx)
-        if (result != null && result.options.isNotEmpty()) {
-            view.dispatch(
-                TransactionSpec(
-                    effects = listOf(startCompletionEffect.of(result))
-                )
+    // Query ALL sync sources and MERGE their results, rather than stopping at the
+    // first non-empty one. The merge (dedup by label, score-ordered, per-source
+    // filter/validFor/from) happens in the state field via mergeCompletions (#137).
+    val results = sources.mapNotNull { source -> source(ctx) }
+        .filter { it.options.isNotEmpty() }
+    if (results.isNotEmpty()) {
+        view.dispatch(
+            TransactionSpec(
+                effects = listOf(startCompletionEffect.of(results))
             )
-            return
-        }
+        )
+        return
     }
     // Async (suspend) sources — e.g. a language server. Launched on the editor's
     // coroutine scope; the result is dispatched when it resolves. This is the
     // wasmJs-safe path (no blocking bridge). See CompletionConfig.asyncOverride.
+    // The async path stays first-non-empty-wins (not merged): async sources are
+    // typically a single language server, and merging would force awaiting every
+    // source serially before showing anything. A single result still flows through
+    // the same merge machinery as a singleton list.
     if (asyncSources.isNotEmpty()) {
         view.coroutineScope.launch {
             for (source in asyncSources) {
@@ -175,7 +184,7 @@ private fun triggerCompletion(view: EditorSession, explicit: Boolean) {
                 if (result != null && result.options.isNotEmpty()) {
                     view.dispatch(
                         TransactionSpec(
-                            effects = listOf(startCompletionEffect.of(result))
+                            effects = listOf(startCompletionEffect.of(listOf(result)))
                         )
                     )
                     return@launch
@@ -309,7 +318,7 @@ private fun CompletionList(
     config: CompletionConfig
 ) {
     val items = completionState.filtered.take(config.maxRenderedOptions)
-    val result = completionState.result ?: return
+    if (completionState.results.isEmpty()) return
     val theme = LocalEditorTheme.current
 
     // Keep the selected row visible as the user arrow-navigates — the
@@ -359,7 +368,13 @@ private fun CompletionList(
                             Color.Transparent
                         }
                     )
-                    .clickable { applyCompletion(view, item.completion, result) }
+                    .clickable {
+                        applyCompletion(
+                            view,
+                            item.completion,
+                            item.result ?: completionState.results.first()
+                        )
+                    }
                     .padding(horizontal = 4.dp, vertical = 2.dp)
             ) {
                 val textColor = theme[completionTextColor]
@@ -478,8 +493,10 @@ fun autocompletion(config: CompletionConfig = CompletionConfig()): Extension {
         listOf(Slot.FieldSlot(completionStateField))
     ) { state ->
         val cs = state.field(completionStateField, require = false)
-        if (cs != null && cs.open && cs.filtered.isNotEmpty() && cs.result != null) {
-            Tooltip(pos = cs.result.from.value) {
+        val csFrom = cs?.from
+        if (cs != null && cs.open && cs.filtered.isNotEmpty() && csFrom != null) {
+            // Anchor the popup at the smallest from across the merged sources.
+            Tooltip(pos = csFrom.value) {
                 val editorView = com.monkopedia.kodemirror.view.LocalEditorSession.current
                 val currentConfig = editorView.state.facet(completionConfig)
                 val currentCs = editorView.state.field(completionStateField, require = false)

@@ -45,7 +45,7 @@ class CompletionStateTest {
     private fun openCompletions(state: EditorState, result: CompletionResult): EditorState {
         val tr = state.update(
             TransactionSpec(
-                effects = listOf(startCompletionEffect.of(result))
+                effects = listOf(startCompletionEffect.of(listOf(result)))
             )
         )
         return tr.state

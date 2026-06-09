@@ -18,33 +18,49 @@
  */
 package com.monkopedia.kodemirror.autocomplete
 
+import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.ExtensionList
+import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.SelectionSpec
+import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.view.EditorSession
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * Multiple independently-registered `autocompletion()` configs must coexist —
- * their completion sources are merged by the `completionConfig` facet rather than
- * the last config shadowing the others. This is the #109 facet-merge fix
- * (basicSetup's bundled autocompletion() + languageServerSupport's source); part
- * of the #117 `:autocomplete` test port.
+ * Cross-source completion behaviour (#137).
+ *
+ * Two concerns are covered here:
+ *  - The `completionConfig` facet MERGES override-source *lists* across
+ *    independently-registered `autocompletion()` configs (the #109 fix:
+ *    basicSetup's bundled `autocompletion()` + languageServerSupport's source),
+ *    rather than the last config shadowing the others.
+ *  - `triggerCompletion` queries ALL sync override sources and MERGES their
+ *    *results* into one ordered, deduped list — the upstream
+ *    `@codemirror/autocomplete` `sortOptions` behaviour ("can merge multiple
+ *    sources", "removes duplicate options", "supports unfiltered completions").
+ *    This replaces the previous first-non-empty-source-wins behaviour (#137,
+ *    surfaced by the #117 test port).
  */
 class MultiSourceCompletionTest {
 
     private val emptySource: CompletionSource = { null }
 
-    private fun listSource(vararg labels: String): CompletionSource = { ctx ->
+    private fun listSource(
+        vararg labels: String,
+        from: DocPos = DocPos.ZERO,
+        filter: Boolean = true
+    ): CompletionSource = { ctx ->
         CompletionResult(
-            from = DocPos.ZERO,
+            from = from,
             to = ctx.pos,
             options = labels.map { Completion(label = it) },
-            validFor = Regex("[\\w]*")
+            validFor = Regex("[\\w]*"),
+            filter = filter
         )
     }
 
@@ -59,6 +75,17 @@ class MultiSourceCompletionTest {
             )
         )
         return EditorSession(state)
+    }
+
+    private fun typeChar(view: EditorSession, ch: String) {
+        val pos = view.state.selection.main.head
+        view.dispatch(
+            TransactionSpec(
+                changes = ChangeSpec.Single(pos, pos, InsertContent.StringContent(ch)),
+                selection = SelectionSpec.CursorSpec(pos + ch.length),
+                userEvent = "input.type"
+            )
+        )
     }
 
     @Test
@@ -102,5 +129,57 @@ class MultiSourceCompletionTest {
         val c = currentCompletions(v.state)
         assertEquals(1, c.size)
         assertEquals("real", c[0].label)
+    }
+
+    @Test
+    fun canMergeMultipleSources() {
+        // Upstream "can merge multiple sources": TWO non-empty sources now both
+        // contribute (previously the first non-empty source won and the second's
+        // options never appeared). Equal-scoring options keep source order.
+        val v = viewWith(
+            CompletionConfig(override = listOf(listSource("a", "b"), listSource("c", "d")))
+        )
+        startCompletion(v)
+        val labels = currentCompletions(v.state).map { it.label }
+        assertEquals(listOf("a", "b", "c", "d"), labels)
+    }
+
+    @Test
+    fun removesDuplicateOptions() {
+        // Upstream "removes duplicate options": identical labels from different
+        // sources collapse to a single entry.
+        val v = viewWith(
+            CompletionConfig(
+                override = listOf(
+                    listSource("foo", "bar"),
+                    listSource("foo", "baz")
+                )
+            )
+        )
+        startCompletion(v)
+        val labels = currentCompletions(v.state).map { it.label }
+        assertEquals(listOf("foo", "bar", "baz"), labels)
+    }
+
+    @Test
+    fun supportsUnfilteredCompletionsAlongsideFilteredOnes() {
+        // Upstream "supports unfiltered completions": a filter = false source keeps
+        // ALL of its options even as the user types a prefix that the filtered
+        // source narrows on. Here "ap" narrows the filtered source to "apple" but
+        // the unfiltered source's "zzz" stays.
+        val v = viewWith(
+            CompletionConfig(
+                override = listOf(
+                    listSource("apple", "other"),
+                    listSource("zzz", filter = false)
+                )
+            )
+        )
+        startCompletion(v)
+        assertEquals(3, currentCompletions(v.state).size)
+        typeChar(v, "a")
+        typeChar(v, "p")
+        val labels = currentCompletions(v.state).map { it.label }.toSet()
+        assertEquals(setOf("apple", "zzz"), labels)
     }
 }
