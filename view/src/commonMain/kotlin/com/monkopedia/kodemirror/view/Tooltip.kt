@@ -26,8 +26,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupPositionProvider
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.Facet
 import com.monkopedia.kodemirror.state.RangeSet
@@ -88,17 +93,32 @@ fun TooltipLayer(session: EditorSession) {
 
     for (tooltip in all) {
         val coords = session.coordsAtPos(tooltip.pos) ?: continue
-        Popup(
-            alignment = androidx.compose.ui.Alignment.TopStart,
-            offset = androidx.compose.ui.unit.IntOffset(
-                x = coords.left.toInt(),
-                y = if (tooltip.above) {
-                    (coords.top - 4f).toInt()
-                } else {
-                    (coords.bottom + 4f).toInt()
-                }
+        // Position via a provider that knows the measured tooltip size and the
+        // window bounds, so the tooltip is clamped on-screen and flipped
+        // above/below the anchor instead of being placed at the raw caret
+        // coordinate (which lands offscreen near the viewport edges, or for a
+        // multi-line hover range whose end sits low in the viewport) (#110).
+        val positionProvider = object : PopupPositionProvider {
+            override fun calculatePosition(
+                anchorBounds: IntRect,
+                windowSize: IntSize,
+                layoutDirection: LayoutDirection,
+                popupContentSize: IntSize
+            ): IntOffset = computeTooltipOffset(
+                anchorLeft = anchorBounds.left,
+                anchorTop = anchorBounds.top,
+                coordsLeft = coords.left.toInt(),
+                coordsTop = coords.top.toInt(),
+                coordsBottom = coords.bottom.toInt(),
+                above = tooltip.above,
+                strictSide = tooltip.strictSide,
+                contentWidth = popupContentSize.width,
+                contentHeight = popupContentSize.height,
+                windowWidth = windowSize.width,
+                windowHeight = windowSize.height
             )
-        ) {
+        }
+        Popup(popupPositionProvider = positionProvider) {
             Box(
                 modifier = Modifier
                     .background(theme.tooltipBackground, tooltipShape)
@@ -109,6 +129,52 @@ fun TooltipLayer(session: EditorSession) {
             }
         }
     }
+}
+
+/**
+ * Compute the on-screen offset (in window coordinates) for a tooltip, clamping
+ * it to the window and flipping it above/below the anchor so it stays visible.
+ *
+ * All inputs are pixels. [anchorLeft]/[anchorTop] are the window-space top-left
+ * of the editor area the tooltip is anchored within; [coordsLeft]/[coordsTop]/
+ * [coordsBottom] are the hovered caret rect within that editor area. The
+ * tooltip is preferentially placed [gap] px below the caret (or above when
+ * [above]); then:
+ *  - x is clamped so the tooltip stays within the window horizontally;
+ *  - vertically it flips to the opposite side if the preferred side would
+ *    overflow the window and the opposite side fits (unless [strictSide]);
+ *  - y is finally clamped into the window as a last resort (e.g. a tooltip
+ *    taller than the viewport pins to the top).
+ *
+ * Pure geometry (no Compose types beyond the [IntOffset] result) so the
+ * clamping/flipping is unit-testable without a render (#110).
+ */
+internal fun computeTooltipOffset(
+    anchorLeft: Int,
+    anchorTop: Int,
+    coordsLeft: Int,
+    coordsTop: Int,
+    coordsBottom: Int,
+    above: Boolean,
+    strictSide: Boolean,
+    contentWidth: Int,
+    contentHeight: Int,
+    windowWidth: Int,
+    windowHeight: Int,
+    gap: Int = 4
+): IntOffset {
+    val x = (anchorLeft + coordsLeft)
+        .coerceIn(0, (windowWidth - contentWidth).coerceAtLeast(0))
+    val belowY = anchorTop + coordsBottom + gap
+    val aboveY = anchorTop + coordsTop - gap - contentHeight
+    val belowFits = belowY + contentHeight <= windowHeight
+    val aboveFits = aboveY >= 0
+    val y = when {
+        strictSide -> if (above) aboveY else belowY
+        above -> if (!aboveFits && belowFits) belowY else aboveY
+        else -> if (!belowFits && aboveFits) aboveY else belowY
+    }.coerceIn(0, (windowHeight - contentHeight).coerceAtLeast(0))
+    return IntOffset(x, y)
 }
 
 /**
