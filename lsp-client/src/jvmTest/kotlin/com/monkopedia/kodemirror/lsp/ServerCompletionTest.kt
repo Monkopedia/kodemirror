@@ -18,10 +18,16 @@
  */
 package com.monkopedia.kodemirror.lsp
 
+import com.monkopedia.kodemirror.autocomplete.Completion
+import com.monkopedia.kodemirror.autocomplete.CompletionApplyContext
 import com.monkopedia.kodemirror.autocomplete.CompletionContext
+import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
+import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.Text
+import com.monkopedia.kodemirror.state.TransactionSpec
+import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.lsp.CompletionItem
 import com.monkopedia.lsp.CompletionItemKind
 import com.monkopedia.lsp.CompletionItemLabelDetails
@@ -29,6 +35,7 @@ import com.monkopedia.lsp.CompletionList
 import com.monkopedia.lsp.CompletionOptions
 import com.monkopedia.lsp.InsertReplaceEdit
 import com.monkopedia.lsp.InsertTextFormat
+import com.monkopedia.lsp.LSPAny
 import com.monkopedia.lsp.MarkupContent
 import com.monkopedia.lsp.MarkupKind
 import com.monkopedia.lsp.Position
@@ -37,7 +44,11 @@ import com.monkopedia.lsp.ServerCapabilities
 import com.monkopedia.lsp.StringOr
 import com.monkopedia.lsp.TextDocumentCompletionResult
 import com.monkopedia.lsp.TextEdit
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -380,5 +391,198 @@ class ServerCompletionTest {
             doc("x")
         )
         assertEquals("Int", c.detail)
+    }
+
+    // ── lazy completion: completionItem/resolve (#112) ──
+
+    /** An [LSPAny] `data` payload, the canonical signal that an item is lazy. */
+    private fun dataPayload(id: String): LSPAny = JsonObject(mapOf("id" to JsonPrimitive(id)))
+
+    @Test
+    fun needsResolveDetection() {
+        // Lazy item: empty textEdit.newText + a data payload → needs resolve.
+        assertTrue(
+            CompletionItem(
+                label = "transform",
+                textEdit = TextEdit(
+                    range = Range(Position(0u, 0u), Position(0u, 0u)),
+                    newText = ""
+                ),
+                data = dataPayload("1")
+            ).needsResolve()
+        )
+        // Data present even with concrete insertion → still resolve (auto-imports).
+        assertTrue(
+            CompletionItem(label = "x", insertText = "x", data = dataPayload("2")).needsResolve()
+        )
+        // No insertion and no edits, no data → still worth resolving.
+        assertTrue(CompletionItem(label = "y", insertText = "").needsResolve())
+        // Fully-formed item (real insertion, no data) → no resolve.
+        assertTrue(!CompletionItem(label = "z", insertText = "z").needsResolve())
+        // Item already carrying additionalTextEdits and insertion, no data → no resolve.
+        assertTrue(
+            !CompletionItem(
+                label = "w",
+                insertText = "w",
+                additionalTextEdits = listOf(
+                    TextEdit(range = Range(Position(0u, 0u), Position(0u, 0u)), newText = "import x\n")
+                )
+            ).needsResolve()
+        )
+    }
+
+    @Test
+    fun lazyApplyResolvesAndAppliesInsertionPlusAutoImport() = runBlocking {
+        // Server: completion returns a lazy item (empty newText + data); resolve
+        // returns the real insertion AND an auto-import additionalTextEdit at the top.
+        val lazyItem = CompletionItem(
+            label = "transform",
+            kind = CompletionItemKind.FUNCTION,
+            textEdit = TextEdit(
+                range = Range(Position(2u, 0u), Position(2u, 0u)),
+                newText = ""
+            ),
+            data = dataPayload("transform")
+        )
+        val resolvedItem = lazyItem.copy(
+            textEdit = TextEdit(
+                range = Range(Position(2u, 0u), Position(2u, 9u)),
+                newText = "transform"
+            ),
+            additionalTextEdits = listOf(
+                TextEdit(
+                    range = Range(Position(0u, 0u), Position(0u, 0u)),
+                    newText = "import foo.transform\n"
+                )
+            )
+        )
+        val fixture = TestLanguageServer(
+            capabilities = ServerCapabilities(
+                completionProvider = CompletionOptions(resolveProvider = true)
+            ),
+            responses = mapOf(
+                "textDocumentCompletion" to TextDocumentCompletionResult.CompletionListValue(
+                    CompletionList(isIncomplete = false, items = listOf(lazyItem))
+                ),
+                "completionItemResolve" to resolvedItem
+            )
+        )
+        val client = LSPClient(fixture.server)
+        client.initialize()
+
+        // Cursor at end (no trailing newline) so the assertions are exact.
+        val docText = "package p\n\ntrans"
+        val cursor = docText.length
+        val completion = mapCompletionItem(lazyItem, doc(docText), client, resolveProvider = true)
+        // Lazy → custom applyFn that resolves on apply.
+        assertNotNull(completion.applyFn)
+
+        val session = recordingSession(docText)
+        // Apply replacing the typed prefix "trans" on line 2 with the resolved text.
+        completion.applyFn!!(
+            CompletionApplyContext(session, completion, DocPos(11), DocPos(cursor))
+        )
+
+        assertTrue(
+            "completionItemResolve" in fixture.calls,
+            "apply must trigger completionItem/resolve"
+        )
+        // BOTH the resolved insertion AND the auto-import landed, in one document.
+        val text = session.state.doc.toString()
+        assertEquals("import foo.transform\npackage p\n\ntransform", text)
+        // Cursor sits just after the inserted "transform", shifted forward by the
+        // earlier auto-import insertion.
+        assertEquals(text.length, session.state.selection.main.head.value)
+    }
+
+    @Test
+    fun noResolveWhenServerLacksResolveProvider() = runBlocking {
+        val lazyItem = CompletionItem(
+            label = "transform",
+            textEdit = TextEdit(
+                range = Range(Position(0u, 0u), Position(0u, 0u)),
+                newText = ""
+            ),
+            data = dataPayload("transform")
+        )
+        val fixture = TestLanguageServer(
+            // resolveProvider omitted (null) → no resolve support.
+            capabilities = ServerCapabilities(completionProvider = CompletionOptions()),
+            responses = mapOf("completionItemResolve" to lazyItem)
+        )
+        val client = LSPClient(fixture.server)
+        client.initialize()
+
+        val completion = mapCompletionItem(lazyItem, doc("x"), client, resolveProvider = false)
+        // No resolve support → eager mapping, no custom applyFn for a plain item.
+        assertNull(completion.applyFn)
+
+        val session = recordingSession("x")
+        applyDefault(session, completion, DocPos(1), DocPos(1))
+        assertTrue(
+            "completionItemResolve" !in fixture.calls,
+            "must not resolve when the server has no resolveProvider"
+        )
+    }
+
+    @Test
+    fun noResolveWhenItemAlreadyComplete() = runBlocking {
+        // resolveProvider = true, but the item is fully formed (real insertion,
+        // no data) → no resolve, eager apply.
+        val completeItem = CompletionItem(label = "println", insertText = "println")
+        val fixture = TestLanguageServer(
+            capabilities = ServerCapabilities(
+                completionProvider = CompletionOptions(resolveProvider = true)
+            ),
+            responses = mapOf("completionItemResolve" to completeItem)
+        )
+        val client = LSPClient(fixture.server)
+        client.initialize()
+
+        val completion = mapCompletionItem(completeItem, doc("x"), client, resolveProvider = true)
+        assertNull(completion.applyFn)
+
+        val session = recordingSession("x")
+        applyDefault(session, completion, DocPos(0), DocPos(0))
+        assertTrue("completionItemResolve" !in fixture.calls)
+    }
+
+    // ── test session plumbing ──
+
+    /**
+     * Mimic the framework's default (no-applyFn) apply so the "no resolve" tests
+     * exercise the same path the real editor would.
+     */
+    private fun applyDefault(
+        session: EditorSession,
+        completion: Completion,
+        from: DocPos,
+        to: DocPos
+    ) {
+        val text = completion.apply ?: completion.label
+        session.dispatch(
+            TransactionSpec(
+                changes = ChangeSpec.Single(
+                    from,
+                    to,
+                    InsertContent.StringContent(text)
+                )
+            )
+        )
+    }
+
+    /**
+     * An [EditorSession] that delegates [dispatch]/[state] to a real headless
+     * session but supplies an eager [coroutineScope] (the real one errors unless
+     * attached to a composable). [Dispatchers.Unconfined] runs the launched
+     * resolve-then-apply synchronously since the stub resolves immediately.
+     */
+    private fun recordingSession(doc: String): EditorSession =
+        DelegatingSession(EditorState.create(doc))
+
+    private class DelegatingSession(
+        initial: EditorState
+    ) : EditorSession by EditorSession(initial) {
+        override val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Unconfined)
     }
 }

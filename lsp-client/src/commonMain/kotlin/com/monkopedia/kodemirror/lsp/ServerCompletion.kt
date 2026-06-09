@@ -48,6 +48,7 @@ import com.monkopedia.lsp.StringOr
 import com.monkopedia.lsp.TextDocumentCompletionResult
 import com.monkopedia.lsp.TextDocumentIdentifier
 import com.monkopedia.lsp.TextEdit
+import kotlinx.coroutines.launch
 
 /**
  * Configuration for [serverCompletion].
@@ -226,14 +227,34 @@ internal fun CompletionItem.insertionText(): String =
  * `documentation` markup kind is also flattened to its raw `value` string
  * because [Completion.info] is a plain string.
  *
+ * **Lazy completion (`completionItem/resolve`):** when the server advertises
+ * `completionProvider.resolveProvider == true` and the [item] still
+ * [needs resolution][CompletionItem.needsResolve] (e.g. kotlin-lsp sends an empty
+ * `textEdit.newText` plus a `data` field and delivers the real insertion and
+ * auto-import `additionalTextEdits` only on resolve, #112), the installed
+ * [applyFn][Completion.applyFn] first issues `completionItem/resolve` and then
+ * applies the *resolved* item's insertion **and** its `additionalTextEdits`
+ * (the auto-imports) as the apply transaction. Items that need no resolution, or
+ * a [client] without [resolve support][resolveProvider], keep the eager behavior.
+ *
  * @param item The LSP completion item to map.
  * @param doc The document the completion applies to, used to resolve any
  *   [additionalTextEdits][CompletionItem.additionalTextEdits] ranges.
+ * @param client The LSP client, used to issue `completionItem/resolve` on apply
+ *   for lazy items. When null no resolution is attempted.
+ * @param resolveProvider Whether the server advertises completion-item resolve
+ *   support (`completionProvider.resolveProvider`).
  */
-internal fun mapCompletionItem(item: CompletionItem, doc: Text): Completion {
+internal fun mapCompletionItem(
+    item: CompletionItem,
+    doc: Text,
+    client: LSPClient? = null,
+    resolveProvider: Boolean = false
+): Completion {
     val text = item.insertionText()
     val isSnippet = item.insertTextFormat == InsertTextFormat.SNIPPET
     val extraEdits = item.additionalTextEdits.orEmpty()
+    val resolvable = client != null && resolveProvider && item.needsResolve()
 
     val type = kindToType(item.kind)
     val info = documentationText(item.documentation)
@@ -242,10 +263,16 @@ internal fun mapCompletionItem(item: CompletionItem, doc: Text): Completion {
         // Snippet: display the item's own label, expand the template on apply.
         val template = lspSnippetToTemplate(text)
         val baseApply = snippet(template)
-        val applyFn: (CompletionApplyContext) -> Unit = if (extraEdits.isEmpty()) {
-            baseApply
-        } else {
-            { ctx ->
+        val applyFn: (CompletionApplyContext) -> Unit = when {
+            resolvable -> { ctx ->
+                resolveThenApply(ctx, client, item) { resolved ->
+                    applyAdditionalTextEdits(ctx, doc, resolved.additionalTextEdits.orEmpty())
+                    // Re-expand from the resolved item in case resolve filled the snippet.
+                    snippet(lspSnippetToTemplate(resolved.insertionText()))(ctx)
+                }
+            }
+            extraEdits.isEmpty() -> baseApply
+            else -> { ctx ->
                 applyAdditionalTextEdits(ctx, doc, extraEdits)
                 baseApply(ctx)
             }
@@ -262,10 +289,22 @@ internal fun mapCompletionItem(item: CompletionItem, doc: Text): Completion {
 
     // Plain-text completion. The label *is* the inserted text (upstream sets
     // both label and the implicit apply text to `text`).
-    val applyFn: ((CompletionApplyContext) -> Unit)? = if (extraEdits.isEmpty()) {
-        null
-    } else {
-        { ctx ->
+    val applyFn: ((CompletionApplyContext) -> Unit)? = when {
+        resolvable -> { ctx ->
+            resolveThenApply(ctx, client, item) { resolved ->
+                // Insertion + auto-import additionalTextEdits in ONE transaction so
+                // the cursor-anchored insertion and the (typically earlier) import
+                // edit don't invalidate each other's positions (#112).
+                insertWithAdditionalTextEdits(
+                    ctx,
+                    doc,
+                    resolved.insertionText(),
+                    resolved.additionalTextEdits.orEmpty()
+                )
+            }
+        }
+        extraEdits.isEmpty() -> null
+        else -> { ctx ->
             applyAdditionalTextEdits(ctx, doc, extraEdits)
             insertPlainText(ctx, text)
         }
@@ -283,12 +322,112 @@ internal fun mapCompletionItem(item: CompletionItem, doc: Text): Completion {
     )
 }
 
+/**
+ * Whether [completionItem/resolve][com.monkopedia.lsp.LanguageServer.completionItemResolve]
+ * could still add information to this item, following upstream
+ * `@codemirror/lsp-client`'s "resolve when the item carries [data] or has not yet
+ * delivered its insertion/auto-imports" heuristic.
+ *
+ * An item is considered to need resolution when it carries a server-private
+ * [data][CompletionItem.data] payload (the canonical LSP signal that the server
+ * deferred work to resolve — kotlin-lsp always sets this for lazy items, #112),
+ * or when it has no concrete insertion text yet (every `textEdit`/`textEditText`/
+ * `insertText` is absent or empty, so [insertionText] falls back to [label]) and
+ * no `additionalTextEdits`. A fully-formed item (real insertion text, edits
+ * already present, and no `data`) needs no resolve and keeps the eager path.
+ */
+internal fun CompletionItem.needsResolve(): Boolean {
+    if (`data` != null) return true
+    val hasInsertion = !textEdit?.newText().isNullOrEmpty() ||
+        !textEditText.isNullOrEmpty() ||
+        !insertText.isNullOrEmpty()
+    val hasExtraEdits = !additionalTextEdits.isNullOrEmpty()
+    return !hasInsertion && !hasExtraEdits
+}
+
+/**
+ * Issue `completionItem/resolve` for [item] on the session's coroutine scope and
+ * then run [apply] with the resolved item.
+ *
+ * [Completion.applyFn] is synchronous while
+ * [completionItemResolve][com.monkopedia.lsp.LanguageServer.completionItemResolve]
+ * is a suspend call, so the resolve-then-apply is launched on
+ * [ctx.session.coroutineScope][com.monkopedia.kodemirror.view.EditorSession.coroutineScope]
+ * (the cheap, correct hook the issue calls for). If resolve fails the apply
+ * falls back to the unresolved [item] so a basic insertion still lands.
+ */
+private fun resolveThenApply(
+    ctx: CompletionApplyContext,
+    client: LSPClient,
+    item: CompletionItem,
+    apply: (resolved: CompletionItem) -> Unit
+) {
+    ctx.session.coroutineScope.launch {
+        val resolved = try {
+            client.server.completionItemResolve(item)
+        } catch (_: Throwable) {
+            // Resolve failed (e.g. transport error): fall back to the original
+            // item so the user still gets the basic insertion (#112).
+            item
+        }
+        apply(resolved)
+    }
+}
+
 /** Insert [text] over the completion's replace range (plain, non-snippet path). */
 private fun insertPlainText(ctx: CompletionApplyContext, text: String) {
     ctx.session.dispatch(
         TransactionSpec(
             changes = ChangeSpec.Single(ctx.from, ctx.to, InsertContent.StringContent(text)),
             selection = SelectionSpec.CursorSpec(ctx.from + text.length),
+            userEvent = "input.complete"
+        )
+    )
+}
+
+/**
+ * Insert [text] over the completion's replace range AND apply [extraEdits] (the
+ * resolved item's auto-import `additionalTextEdits`) in a single transaction.
+ *
+ * Combining them matters for lazy completion: the auto-import edit is typically
+ * inserted near the top of the file, *before* the cursor-anchored insertion. Two
+ * separate transactions would let the first shift the second's positions; one
+ * [ChangeSpec.Multi] keeps every change anchored to the original document. The
+ * cursor is placed after the primary insertion, mapped through the change set so
+ * an earlier import edit shifts it correctly.
+ */
+private fun insertWithAdditionalTextEdits(
+    ctx: CompletionApplyContext,
+    doc: Text,
+    text: String,
+    extraEdits: List<TextEdit>
+) {
+    if (extraEdits.isEmpty()) {
+        insertPlainText(ctx, text)
+        return
+    }
+    // Resolve every edit range up front so we can both build the change specs and
+    // compute how much earlier edits shift the post-insertion cursor.
+    data class ResolvedEdit(val from: Int, val to: Int, val newText: String)
+    val resolved = extraEdits.map { edit ->
+        val a = fromPosition(edit.range.start, doc)
+        val b = fromPosition(edit.range.end, doc)
+        ResolvedEdit(minOf(a, b), maxOf(a, b), edit.newText)
+    }
+    // Specs sorted ascending by start so the change set builds in a single batch.
+    val primary = ResolvedEdit(ctx.from.value, ctx.to.value, text)
+    val specs = (resolved + primary)
+        .sortedBy { it.from }
+        .map { ChangeSpec.Single(DocPos(it.from), DocPos(it.to), InsertContent.StringContent(it.newText)) }
+    // Net length change from edits ending at or before the primary insertion start
+    // shifts the post-insertion cursor.
+    val shiftBefore = resolved
+        .filter { it.to <= ctx.from.value }
+        .sumOf { it.newText.length - (it.to - it.from) }
+    ctx.session.dispatch(
+        TransactionSpec(
+            changes = ChangeSpec.Multi(specs),
+            selection = SelectionSpec.CursorSpec(ctx.from + text.length + shiftBefore),
             userEvent = "input.complete"
         )
     )
@@ -464,7 +603,12 @@ fun serverCompletionSource(
 
     val items = result.items
     val (from, to) = completionResultRange(context, items)
-    val options = items.map { mapCompletionItem(it, doc) }
+    // kotlin-lsp and friends ship lazy items (empty insertion + `data`) and deliver
+    // the real textEdit/insertText AND auto-import additionalTextEdits only via
+    // `completionItem/resolve`; honour resolve on apply when the server advertises
+    // it (#112).
+    val resolveProvider = client.serverCapabilities?.completionProvider?.resolveProvider == true
+    val options = items.map { mapCompletionItem(it, doc, client, resolveProvider) }
     // Always provide a validFor prefix regex, even for isIncomplete results, so the
     // client filters the already-returned items by the typed prefix as the user types
     // (#114). Many servers (e.g. kotlin-lsp) mark EVERY member list isIncomplete=true;
