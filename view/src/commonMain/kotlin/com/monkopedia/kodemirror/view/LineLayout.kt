@@ -110,7 +110,11 @@ internal class LineLayoutCache {
         val line = state.doc.lineAt(DocPos(pos))
         val layout = cache[line.number.value] ?: return null
         val offsetInLine = pos - line.from.value
-        val clampedOffset = offsetInLine.coerceIn(0, line.text.length)
+        // Clamp to the LAYOUT's text length, not the doc line length: the cached
+        // layout lags the doc by a frame during typing, so offsetInLine can
+        // exceed it and getCursorRect would throw "offset out of bounds" (#152).
+        val layoutLen = layout.result.layoutInput.text.length
+        val clampedOffset = offsetInLine.coerceIn(0, layoutLen)
         val cursorRect = layout.result.getCursorRect(clampedOffset)
         val top = layout.topPx + cursorRect.top
         val bottom = layout.topPx + cursorRect.bottom

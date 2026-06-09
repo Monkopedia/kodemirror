@@ -365,7 +365,16 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                                 offsetInLine,
                                 line.tabOffsetMap
                             )
-                            val cursorX = layout.getCursorRect(mappedOffset).left
+                            // Clamp to the LAYOUT's text length, not the doc
+                            // line length: `layout` is a cached TextLayoutResult
+                            // that lags the doc by a frame during typing and
+                            // mapTabOffset can expand the offset, so mappedOffset
+                            // can exceed the layout's text — getCursorRect would
+                            // throw "offset out of bounds" (#152).
+                            val layoutLen = layout.layoutInput.text.length
+                            val cursorX = layout
+                                .getCursorRect(mappedOffset.coerceIn(0, layoutLen))
+                                .left
 
                             // Content viewport width = editor width minus the
                             // gutter and the 6.dp content start padding. This
