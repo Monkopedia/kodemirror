@@ -108,6 +108,7 @@ val defaultKeymap: List<KeyBinding> = standardKeymap + commentKeymap + listOf(
     // Indent
     KeyBinding(key = "Ctrl-]", run = indentMore),
     KeyBinding(key = "Ctrl-[", run = indentLess),
+    KeyBinding(key = "Ctrl-Alt-\\", mac = "Meta-Alt-\\", run = indentSelection),
 
     // Delete line
     KeyBinding(key = "Ctrl-Shift-k", run = deleteLine),

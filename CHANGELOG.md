@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 - Minimal Android sample app (`samples/android`) that embeds and builds a `KodeMirror` editor with `basicSetup` plus a Markdown language extension, unblocking the "running on Android" prerequisite (#29).
+- `indentSelection` command (`:commands`): re-indents every line touched by the selection to the indentation computed by the language indent service / tree strategy (`getIndentation`), mirroring upstream `@codemirror/commands`. Skips lines where `getIndentation` returns null, applies all line changes in one transaction, and moves the cursor ahead of the indentation when it sat within the old indent. Bound in `defaultKeymap` to `Ctrl-Alt-\` (`Meta-Alt-\` on macOS) (#135).
 - `CompletionConfig.asyncOverride`: suspend completion sources that the autocomplete framework launches on the editor's coroutine scope and dispatches when they resolve. This is the wasmJs-safe way to drive an async source (e.g. a language server) — the previous `asyncCompletionSource` blocking bridge throws on wasmJs (#109).
 
 ### Fixed

@@ -126,6 +126,7 @@ public final class com/monkopedia/kodemirror/commands/HistoryKt {
 public final class com/monkopedia/kodemirror/commands/IndentCommandsKt {
 	public static final fun getIndentLess ()Lkotlin/jvm/functions/Function1;
 	public static final fun getIndentMore ()Lkotlin/jvm/functions/Function1;
+	public static final fun getIndentSelection ()Lkotlin/jvm/functions/Function1;
 }
 
 public final class com/monkopedia/kodemirror/commands/KeymapsKt {

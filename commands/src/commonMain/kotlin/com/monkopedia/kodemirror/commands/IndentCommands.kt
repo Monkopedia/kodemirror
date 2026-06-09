@@ -19,12 +19,17 @@
 package com.monkopedia.kodemirror.commands
 
 import com.monkopedia.kodemirror.language.getIndentUnit
+import com.monkopedia.kodemirror.language.getIndentation
 import com.monkopedia.kodemirror.language.indentString
+import com.monkopedia.kodemirror.state.ChangeByRangeResult
 import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorSelection
+import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.InsertContent
+import com.monkopedia.kodemirror.state.Line
 import com.monkopedia.kodemirror.state.LineNumber
+import com.monkopedia.kodemirror.state.SelectionRange
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
@@ -43,6 +48,80 @@ val indentMore: (EditorSession) -> Boolean = { view ->
  */
 val indentLess: (EditorSession) -> Boolean = { view ->
     changeIndent(view, add = false)
+}
+
+/**
+ * Auto-indent the lines touched by the selection, replacing each line's
+ * existing leading whitespace with the indentation computed by the
+ * language's [getIndentation] (indent service / tree strategy).
+ *
+ * Lines for which `getIndentation` returns `null` (no opinion) are left
+ * untouched. When the cursor sits within a line's old indentation, it is
+ * moved to the end of the new indentation, matching upstream
+ * `@codemirror/commands` `indentSelection`.
+ *
+ * Note: unlike upstream, kodemirror's [getIndentation] does not yet support
+ * the `overrideIndentation` option, so tree-based strategies see the
+ * pre-change indentation of earlier lines when re-indenting a block. The
+ * end result is applied in a single transaction with the selection remapped.
+ */
+val indentSelection: (EditorSession) -> Boolean = { view ->
+    val state = view.state
+    if (state.readOnly) {
+        false
+    } else {
+        var atLine = -1
+        val spec = state.changeByRange { range ->
+            val changes = mutableListOf<ChangeSpec>()
+            var pos = range.from
+            while (pos <= range.to) {
+                val line = state.doc.lineAt(pos)
+                if (
+                    line.number.value > atLine &&
+                    (range.empty || range.to > line.from)
+                ) {
+                    indentLine(state, line, range, changes)
+                    atLine = line.number.value
+                }
+                pos = line.to + 1
+            }
+            val changeSet = state.changes(ChangeSpec.Multi(changes))
+            ChangeByRangeResult(
+                range = EditorSelection.range(
+                    changeSet.mapPos(range.anchor, 1),
+                    changeSet.mapPos(range.head, 1)
+                ),
+                changes = ChangeSpec.Multi(changes)
+            )
+        }
+        view.dispatch(spec.copy(userEvent = "indent"))
+        true
+    }
+}
+
+/**
+ * Compute and append the re-indentation change for [line], mirroring the
+ * per-line body of upstream's `indentSelection`.
+ */
+private fun indentLine(
+    state: EditorState,
+    line: Line,
+    range: SelectionRange,
+    changes: MutableList<ChangeSpec>
+) {
+    var indent = getIndentation(state, line.from) ?: return
+    if (line.text.none { !it.isWhitespace() }) indent = 0
+    val cur = line.text.takeWhile { it == ' ' || it == '\t' }
+    val norm = indentString(state, indent)
+    if (cur != norm || range.from < line.from + cur.length) {
+        changes.add(
+            ChangeSpec.Single(
+                line.from,
+                line.from + cur.length,
+                InsertContent.StringContent(norm)
+            )
+        )
+    }
 }
 
 private fun changeIndent(view: EditorSession, add: Boolean): Boolean {
