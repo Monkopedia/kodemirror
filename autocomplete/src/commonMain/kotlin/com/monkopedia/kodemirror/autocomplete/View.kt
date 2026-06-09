@@ -184,10 +184,22 @@ private fun triggerCompletion(view: EditorSession, explicit: Boolean) {
     // source serially before showing anything. A single result still flows through
     // the same merge machinery as a singleton list.
     if (asyncSources.isNotEmpty()) {
+        // Capture the trigger position so we can detect, when the source resolves,
+        // whether the doc/selection drifted while the coroutine was suspended (#153).
+        val triggerPos = pos
         view.coroutineScope.launch {
             for (source in asyncSources) {
                 val result = source(ctx)
                 if (result != null && result.options.isNotEmpty()) {
+                    // The source may have suspended across doc/selection edits (the
+                    // user kept typing, moved the cursor, or closed the popup). A
+                    // result that no longer applies to the LIVE state must be dropped
+                    // rather than re-opening the popup — otherwise an in-flight LSP
+                    // request resolving after an Escape re-opens it, demanding another
+                    // Escape (#153). Survivors open the popup exactly as before.
+                    if (!asyncResultApplicable(view.state, result, triggerPos)) {
+                        return@launch
+                    }
                     view.dispatch(
                         TransactionSpec(
                             effects = listOf(
@@ -212,6 +224,34 @@ private fun triggerCompletion(view: EditorSession, explicit: Boolean) {
             TransactionSpec(effects = listOf(closeCompletionEffect.of(Unit)))
         )
     }
+}
+
+/**
+ * Whether an async completion [result] that resolved after suspending is still
+ * applicable to the current [state]. The coroutine may have suspended across
+ * doc/selection changes since launch, so this re-checks against live state before
+ * the popup opens — mirroring the in-place re-filter in [completionStateField]
+ * (anchored `validFor.matches` over the `from`..head span, #139). A result is
+ * dropped (returns `false`) when:
+ *   * the primary selection is no longer an empty cursor (a range was selected, or
+ *     the context otherwise moved), or
+ *   * the cursor moved before the result's [CompletionResult.from] (`head < from`), or
+ *   * the text from `from` to the cursor no longer matches [CompletionResult.validFor]
+ *     (the typed token changed or cleared). When `validFor` is absent there is no
+ *     reuse rule, so the result is valid only at the unchanged [triggerPos].
+ */
+private fun asyncResultApplicable(
+    state: EditorState,
+    result: CompletionResult,
+    triggerPos: DocPos
+): Boolean {
+    val main = state.selection.main
+    if (!main.empty) return false
+    val head = main.head
+    if (head < result.from) return false
+    val validFor = result.validFor
+        ?: return head == triggerPos
+    return validFor.matches(state.doc.sliceString(result.from, head))
 }
 
 private fun applyCompletion(view: EditorSession, completion: Completion, result: CompletionResult) {
