@@ -41,13 +41,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.monkopedia.kodemirror.state.ChangeByRangeResult
 import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
+import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.InsertContent
-import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.Slot
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.view.EditorSession
@@ -217,28 +218,55 @@ private fun applyCompletion(view: EditorSession, completion: Completion, result:
         return
     }
     val text = completion.apply ?: completion.label
+    val base = insertCompletionText(view.state, text, from, to)
     view.dispatch(
-        TransactionSpec(
-            changes = ChangeSpec.Single(from, to, InsertContent.StringContent(text)),
-            selection = SelectionSpec.CursorSpec(from + text.length),
-            effects = listOf(closeCompletionEffect.of(Unit)),
-            annotations = listOf(pickedCompletion.of(completion)),
-            userEvent = "input.complete"
+        base.copy(
+            effects = base.effects.orEmpty() + closeCompletionEffect.of(Unit),
+            annotations = listOf(pickedCompletion.of(completion))
         )
     )
 }
 
-/** Insert completion text into the document (utility for custom apply functions). */
+/**
+ * Insert completion text into the document (utility for custom apply functions).
+ *
+ * The completion is applied at every selection range whose typed prefix matches the
+ * one being replaced at the primary range, mirroring upstream's multi-cursor apply.
+ * [from]/[to] describe the range replaced at the *primary* cursor; for each other
+ * range the same relative span is replaced only when the doc text there equals the
+ * primary span (i.e. the same token is being typed at that cursor). Ranges that don't
+ * match are left untouched. With a single selection this reduces to a plain insert.
+ */
 fun insertCompletionText(
     state: EditorState,
     text: String,
     from: DocPos,
     to: DocPos
-): TransactionSpec = TransactionSpec(
-    changes = ChangeSpec.Single(from, to, InsertContent.StringContent(text)),
-    selection = SelectionSpec.CursorSpec(from + text.length),
-    userEvent = "input.complete"
-)
+): TransactionSpec {
+    val main = state.selection.main
+    val fromOff = from - main.from
+    val toOff = to - main.from
+    val spec = state.changeByRange { range ->
+        // Secondary ranges only get the completion when the text immediately around
+        // them matches what's being replaced at the primary range. Empty primary
+        // spans (from == to) always apply (nothing distinguishing to match).
+        if (range != main && from != to &&
+            state.sliceDoc(range.from + fromOff, range.from + toOff) != state.sliceDoc(from, to)
+        ) {
+            ChangeByRangeResult(range = range)
+        } else {
+            ChangeByRangeResult(
+                changes = ChangeSpec.Single(
+                    range.from + fromOff,
+                    if (to == main.from) range.to else range.from + toOff,
+                    InsertContent.StringContent(text)
+                ),
+                range = EditorSelection.cursor(range.from + fromOff + text.length)
+            )
+        }
+    }
+    return spec.copy(userEvent = "input.complete")
+}
 
 // ── ViewPlugin ──
 

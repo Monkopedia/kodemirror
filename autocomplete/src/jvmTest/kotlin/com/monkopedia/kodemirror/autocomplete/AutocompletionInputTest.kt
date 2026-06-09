@@ -20,12 +20,14 @@ package com.monkopedia.kodemirror.autocomplete
 
 import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
+import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.TransactionSpec
+import com.monkopedia.kodemirror.state.allowMultipleSelections
 import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.view.EditorSession
 import kotlin.test.Test
@@ -180,5 +182,66 @@ class AutocompletionInputTest {
         // Must not throw; applies the completion over the clamped range.
         assertTrue(acceptCompletion(view))
         assertEquals("apple", view.state.doc.toString())
+    }
+
+    /**
+     * A completion source that replaces the two characters before the (primary)
+     * cursor — i.e. a typed two-char token — so multi-cursor apply has a concrete
+     * prefix span to match against the other cursors.
+     */
+    private val twoCharPrefixSource: CompletionSource = { ctx ->
+        CompletionResult(
+            from = ctx.pos - 2,
+            to = ctx.pos,
+            options = listOf(Completion(label = "apple")),
+            validFor = Regex("[\\w]*")
+        )
+    }
+
+    private fun createMultiCursorView(doc: String, cursors: List<Int>, main: Int): EditorSession {
+        val config = CompletionConfig(override = listOf(twoCharPrefixSource))
+        val state = EditorState.create(
+            EditorStateConfig(
+                doc = doc.asDoc(),
+                selection = SelectionSpec.EditorSelectionSpec(
+                    EditorSelection.create(
+                        cursors.map { EditorSelection.cursor(DocPos(it)) },
+                        main
+                    )
+                ),
+                extensions = ExtensionList(
+                    listOf(
+                        allowMultipleSelections.of(true),
+                        completionConfig.of(config),
+                        completionStateField
+                    )
+                )
+            )
+        )
+        return EditorSession(state)
+    }
+
+    @Test
+    fun completesForMultipleCursors() {
+        // Two cursors each after a typed "ap" prefix; both should be completed.
+        val view = createMultiCursorView("ap ap", cursors = listOf(2, 5), main = 1)
+        startCompletion(view)
+        assertEquals("active", completionStatus(view.state))
+        assertTrue(acceptCompletion(view))
+        assertEquals("apple apple", view.state.doc.toString())
+        assertEquals(2, view.state.selection.ranges.size)
+    }
+
+    @Test
+    fun doesNotCompleteForMultipleCursorsIfPrefixDoesNotMatch() {
+        // Primary cursor after "ap" (matches "apple"); secondary cursor after "xy"
+        // (different token) must be left untouched — only the matching one completes.
+        val view = createMultiCursorView("xy ap", cursors = listOf(2, 5), main = 1)
+        startCompletion(view)
+        assertEquals("active", completionStatus(view.state))
+        assertTrue(acceptCompletion(view))
+        assertEquals("xy apple", view.state.doc.toString())
+        // The non-matching cursor is preserved as a still-separate range.
+        assertEquals(2, view.state.selection.ranges.size)
     }
 }
