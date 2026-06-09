@@ -171,7 +171,7 @@ private fun triggerCompletion(view: EditorSession, explicit: Boolean) {
     if (results.isNotEmpty()) {
         view.dispatch(
             TransactionSpec(
-                effects = listOf(startCompletionEffect.of(results))
+                effects = listOf(startCompletionEffect.of(StartCompletion(results, explicit)))
             )
         )
         return
@@ -190,7 +190,9 @@ private fun triggerCompletion(view: EditorSession, explicit: Boolean) {
                 if (result != null && result.options.isNotEmpty()) {
                     view.dispatch(
                         TransactionSpec(
-                            effects = listOf(startCompletionEffect.of(listOf(result)))
+                            effects = listOf(
+                                startCompletionEffect.of(StartCompletion(listOf(result), explicit))
+                            )
                         )
                     )
                     return@launch

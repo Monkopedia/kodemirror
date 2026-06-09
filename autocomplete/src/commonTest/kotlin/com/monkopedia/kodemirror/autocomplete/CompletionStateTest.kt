@@ -42,10 +42,16 @@ class CompletionStateTest {
             )
         )
 
-    private fun openCompletions(state: EditorState, result: CompletionResult): EditorState {
+    private fun openCompletions(
+        state: EditorState,
+        result: CompletionResult,
+        explicit: Boolean = false
+    ): EditorState {
         val tr = state.update(
             TransactionSpec(
-                effects = listOf(startCompletionEffect.of(listOf(result)))
+                effects = listOf(
+                    startCompletionEffect.of(StartCompletion(listOf(result), explicit))
+                )
             )
         )
         return tr.state

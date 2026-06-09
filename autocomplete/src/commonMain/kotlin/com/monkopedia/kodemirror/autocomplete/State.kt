@@ -37,21 +37,43 @@ val pickedCompletion: AnnotationType<Completion> = Annotation.define()
 val setSelectedCompletion: StateEffectType<Int> = StateEffect.define()
 
 /**
- * Effect to open the completion list with one or more source results. The
- * results are merged + deduped into a single ordered list (see
- * [mergeCompletions]); a single-source query passes a singleton list (#137).
+ * Payload for [startCompletionEffect]: the freshly-queried [results] (merged +
+ * deduped into a single ordered list by [mergeCompletions]; a single-source query
+ * passes a singleton list, #137) plus whether the session was opened explicitly
+ * (Ctrl-Space / [startCompletion]) rather than implicitly by typing. The
+ * [explicit][CompletionState.explicit] flag governs the session lifecycle.
  */
-internal val startCompletionEffect: StateEffectType<List<CompletionResult>> = StateEffect.define()
+internal data class StartCompletion(
+    val results: List<CompletionResult>,
+    val explicit: Boolean
+)
+
+/**
+ * Effect to open the completion list with one or more source results plus whether
+ * the trigger was explicit. See [StartCompletion].
+ */
+internal val startCompletionEffect: StateEffectType<StartCompletion> = StateEffect.define()
 
 /** Effect to close the completion list. */
 internal val closeCompletionEffect: StateEffectType<Unit> = StateEffect.define()
 
-/** Internal state tracking the completion list. */
+/**
+ * Internal state tracking the completion list.
+ *
+ * @param explicit Whether the active session was opened explicitly (Ctrl-Space /
+ *   [startCompletion]) rather than implicitly by typing. An explicit session has a
+ *   looser backspacing lifecycle: the user may delete back to (and including) the
+ *   session's original [from] — an empty query re-shows all options and the session
+ *   stays open — whereas an implicit session closes once the typed span is fully
+ *   removed. Mirrors upstream `@codemirror/autocomplete`'s `ActiveResult`
+ *   `explicit`/`limit` distinction (`limit = from + (explicit ? 0 : 1)`).
+ */
 internal data class CompletionState(
     val results: List<CompletionResult> = emptyList(),
     val filtered: List<FilterResult> = emptyList(),
     val selected: Int = 0,
-    val open: Boolean = false
+    val open: Boolean = false,
+    val explicit: Boolean = false
 ) {
     /** The completion span start — the smallest `from` across active results. */
     val from: DocPos? get() = results.minByOrNull { it.from.value }?.from
@@ -71,13 +93,14 @@ internal val completionStateField: StateField<CompletionState> = StateField.defi
             for (effect in tr.effects) {
                 val startEffect = effect.asType(startCompletionEffect)
                 if (startEffect != null) {
-                    val results = startEffect.value
+                    val results = startEffect.value.results
                     val filtered = mergeCompletions(results, tr.state)
                     result = CompletionState(
                         results = results,
                         filtered = filtered,
                         selected = 0,
-                        open = filtered.isNotEmpty()
+                        open = filtered.isNotEmpty(),
+                        explicit = startEffect.value.explicit
                     )
                 }
                 if (effect.asType(closeCompletionEffect) != null) {
@@ -94,28 +117,46 @@ internal val completionStateField: StateField<CompletionState> = StateField.defi
                 }
             }
 
-            // Re-filter on doc change while open. Each active result is kept only
-            // while its own validFor still matches the text between its from and
-            // the cursor; results that fall out of validFor drop, and if none
-            // survive the list closes. The survivors are re-merged + deduped.
+            // Re-filter on doc change while open, applying the explicit-session
+            // lifecycle (mirrors upstream `@codemirror/autocomplete`'s
+            // `ActiveResult.updateFor`):
+            //   * Backspacing before the session's original `from` closes it. An
+            //     EXPLICIT session may backspace back to `from` itself (empty query,
+            //     re-shows everything) and stays open; an IMPLICIT session closes
+            //     once the typed span is fully removed (one char past `from`) —
+            //     upstream's `limit = from + (explicit ? 0 : 1)` plus the backspacing
+            //     guard. Backspacing is detected via the `delete` user event.
+            //   * Otherwise each active result is kept only while its own validFor
+            //     still FULLY matches (anchored, like upstream `checkValid`) the text
+            //     between its `from` and the cursor; results that fall out of validFor
+            //     (e.g. non-spanning input such as a typed space) drop, and if none
+            //     survive the list closes. Survivors are re-merged + deduped.
+            //   * The selection resets to 0 on every refinement (upstream builds a
+            //     fresh `ActiveResult`, whose selection starts at the top).
             if (tr.docChanged && result.open && result.results.isNotEmpty()) {
                 val head = tr.state.selection.main.head
-                val surviving = result.results.filter { cr ->
-                    val validFor = cr.validFor
-                    val currentText = tr.state.doc.sliceString(cr.from, head)
-                    validFor != null && validFor.containsMatchIn(currentText)
+                val sessionFrom = result.from
+                val isBackspace = tr.isUserEvent("delete")
+                val limit = if (result.explicit) sessionFrom else sessionFrom?.plus(1)
+                val backedOut = sessionFrom != null &&
+                    (head < sessionFrom || (isBackspace && limit != null && head < limit))
+                val surviving = if (backedOut) {
+                    emptyList()
+                } else {
+                    result.results.filter { cr ->
+                        val validFor = cr.validFor
+                        head >= cr.from && validFor != null &&
+                            validFor.matches(tr.state.doc.sliceString(cr.from, head))
+                    }
                 }
-                if (surviving.isEmpty()) {
-                    result = CompletionState.empty
+                result = if (surviving.isEmpty()) {
+                    CompletionState.empty
                 } else {
                     val filtered = mergeCompletions(surviving, tr.state)
-                    result = result.copy(
+                    result.copy(
                         results = surviving,
                         filtered = filtered,
-                        selected = result.selected.coerceIn(
-                            0,
-                            (filtered.size - 1).coerceAtLeast(0)
-                        ),
+                        selected = 0,
                         open = filtered.isNotEmpty()
                     )
                 }
