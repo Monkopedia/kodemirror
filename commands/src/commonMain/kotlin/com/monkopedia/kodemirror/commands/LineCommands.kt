@@ -20,11 +20,14 @@ package com.monkopedia.kodemirror.commands
 
 import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
+import com.monkopedia.kodemirror.state.EditorSelection
+import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.InsertContent
-import com.monkopedia.kodemirror.state.LineNumber
+import com.monkopedia.kodemirror.state.SelectionRange
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
+import com.monkopedia.kodemirror.state.endPos
 import com.monkopedia.kodemirror.view.EditorSession
 
 /**
@@ -55,65 +58,112 @@ val copyLineDown: (EditorSession) -> Boolean = { view ->
     copyLines(view, forward = true)
 }
 
+/**
+ * A contiguous block of lines covered by one or more selection
+ * ranges. Adjacent/overlapping ranges (whose line spans touch) merge
+ * into a single block.
+ */
+private class LineBlock(
+    var from: DocPos,
+    var to: DocPos,
+    val ranges: MutableList<SelectionRange>
+)
+
+/**
+ * Group all selection ranges into contiguous line-blocks, mirroring
+ * upstream `@codemirror/commands` `selectedLineBlocks`.
+ */
+private fun selectedLineBlocks(state: EditorState): List<LineBlock> {
+    val blocks = mutableListOf<LineBlock>()
+    var upto = 0
+    var seen = false
+    for (range in state.selection.ranges) {
+        val startLine = state.doc.lineAt(range.from)
+        var endLine = state.doc.lineAt(range.to)
+        // A non-empty range ending exactly at the start of a line does
+        // not include that trailing line.
+        if (!range.empty && range.to == endLine.from) {
+            endLine = state.doc.lineAt(range.to - 1)
+        }
+        if (seen && upto >= startLine.number.value) {
+            val prev = blocks[blocks.size - 1]
+            prev.to = endLine.to
+            prev.ranges.add(range)
+        } else {
+            blocks.add(LineBlock(startLine.from, endLine.to, mutableListOf(range)))
+        }
+        upto = endLine.number.value
+        seen = true
+    }
+    return blocks
+}
+
 private fun moveLines(view: EditorSession, forward: Boolean): Boolean {
     val state = view.state
     if (state.readOnly) return false
 
-    val sel = state.selection.main
-    val startLine = state.doc.lineAt(sel.from)
-    val endLine = state.doc.lineAt(sel.to)
+    val docEnd = state.doc.endPos
+    val changes = mutableListOf<ChangeSpec>()
+    val ranges = mutableListOf<SelectionRange>()
 
-    if (forward && endLine.number.value >= state.doc.lines) return false
-    if (!forward && startLine.number <= LineNumber.FIRST) return false
+    for (block in selectedLineBlocks(state)) {
+        // Skip blocks already pinned at the doc edge in the move
+        // direction.
+        if (if (forward) block.to == docEnd else block.from == DocPos.ZERO) continue
 
-    val changes: ChangeSpec
-    val newAnchor: DocPos
-    val newHead: DocPos
+        val nextLine = if (forward) {
+            state.doc.lineAt(block.to + 1)
+        } else {
+            state.doc.lineAt(block.from - 1)
+        }
+        val size = nextLine.length + state.lineBreak.length
 
-    if (forward) {
-        val nextLine = state.doc.line(endLine.number + 1)
-        val lineText = state.sliceDoc(nextLine.from, nextLine.to)
-        // Delete the next line (including its preceding line break)
-        // and insert it before the block
-        changes = ChangeSpec.Multi(
-            listOf(
-                ChangeSpec.Single(endLine.to, nextLine.to),
+        if (forward) {
+            // Delete the following line and re-insert it before the
+            // block, sliding the block (and its ranges) up by `size`.
+            changes.add(ChangeSpec.Single(block.to, nextLine.to))
+            changes.add(
                 ChangeSpec.Single(
-                    startLine.from,
-                    startLine.from,
-                    InsertContent.StringContent(lineText + state.lineBreak)
+                    block.from,
+                    block.from,
+                    InsertContent.StringContent(nextLine.text + state.lineBreak)
                 )
             )
-        )
-        val lineLen = lineText.length + state.lineBreak.length
-        newAnchor = sel.anchor + lineLen
-        newHead = sel.head + lineLen
-    } else {
-        val prevLine = state.doc.line(startLine.number - 1)
-        val lineText = state.sliceDoc(prevLine.from, prevLine.to)
-        // Delete the previous line (including its trailing line break)
-        // and insert it after the block
-        changes = ChangeSpec.Multi(
-            listOf(
-                ChangeSpec.Single(prevLine.from, startLine.from),
+            for (r in block.ranges) {
+                // Clip at end of doc so the block can't run past it.
+                val anchor = (r.anchor + size).coerceAtMost(docEnd)
+                val head = (r.head + size).coerceAtMost(docEnd)
+                ranges.add(EditorSelection.range(anchor, head))
+            }
+        } else {
+            // Delete the preceding line and re-insert it after the
+            // block, sliding the block (and its ranges) down by `size`.
+            changes.add(ChangeSpec.Single(nextLine.from, block.from))
+            changes.add(
                 ChangeSpec.Single(
-                    endLine.to,
-                    endLine.to,
-                    InsertContent.StringContent(state.lineBreak + lineText)
+                    block.to,
+                    block.to,
+                    InsertContent.StringContent(state.lineBreak + nextLine.text)
                 )
             )
-        )
-        val lineLen = lineText.length + state.lineBreak.length
-        newAnchor = sel.anchor - lineLen
-        newHead = sel.head - lineLen
+            for (r in block.ranges) {
+                ranges.add(EditorSelection.range(r.anchor - size, r.head - size))
+            }
+        }
     }
+
+    if (changes.isEmpty()) return false
 
     view.dispatch(
         TransactionSpec(
-            changes = changes,
-            selection = SelectionSpec.CursorSpec(
-                newAnchor.coerceAtLeast(DocPos.ZERO),
-                newHead.coerceAtLeast(DocPos.ZERO)
+            changes = ChangeSpec.Multi(changes),
+            selection = SelectionSpec.EditorSelectionSpec(
+                EditorSelection.create(
+                    ranges,
+                    // An edge block may have been skipped, dropping its
+                    // ranges; keep mainIndex in bounds.
+                    state.selection.mainIndex.coerceIn(0, ranges.size - 1)
+                )
             ),
             scrollIntoView = true,
             userEvent = "move.line",
