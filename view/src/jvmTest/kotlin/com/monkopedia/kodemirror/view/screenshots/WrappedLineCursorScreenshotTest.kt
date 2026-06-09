@@ -37,7 +37,7 @@ import com.monkopedia.kodemirror.view.highlightActiveLine
 import com.monkopedia.kodemirror.view.lightEditorTheme
 import com.monkopedia.kodemirror.view.lineNumbers
 import com.monkopedia.kodemirror.view.lineWrapping
-import io.github.takahirom.roborazzi.captureRoboImage
+import com.monkopedia.kodemirror.view.screenshots.TestScenarios.captureScreenshot
 import org.junit.Test
 
 /**
@@ -94,6 +94,6 @@ class WrappedLineCursorScreenshotTest {
             val session = remember(state) { EditorSession(state) }
             KodeMirror(session = session)
         }
-        onRoot().captureRoboImage("screenshots/compose/wrapped-line-cursor.png")
+        onRoot().captureScreenshot("screenshots/compose/wrapped-line-cursor.png")
     }
 }

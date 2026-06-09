@@ -34,7 +34,7 @@ import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.KodeMirror
 import com.monkopedia.kodemirror.view.highlightActiveLine
 import com.monkopedia.kodemirror.view.lineNumbers
-import io.github.takahirom.roborazzi.captureRoboImage
+import com.monkopedia.kodemirror.view.screenshots.TestScenarios.captureScreenshot
 import org.junit.Test
 
 @OptIn(ExperimentalTestApi::class)
@@ -68,6 +68,6 @@ class ActiveLineScreenshotTest {
             val session = remember(state) { EditorSession(state) }
             KodeMirror(session = session)
         }
-        onRoot().captureRoboImage("screenshots/compose/active-line.png")
+        onRoot().captureScreenshot("screenshots/compose/active-line.png")
     }
 }

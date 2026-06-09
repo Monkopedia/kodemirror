@@ -19,9 +19,14 @@
 package com.monkopedia.kodemirror.view.screenshots
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.sp
+import com.github.takahirom.roborazzi.RoborazziOptions
+import io.github.takahirom.roborazzi.captureRoboImage
 import com.monkopedia.kodemirror.lang.javascript.javascriptLanguage
 import com.monkopedia.kodemirror.language.FoldRange
 import com.monkopedia.kodemirror.language.HighlightStyle
@@ -48,6 +53,54 @@ import com.monkopedia.kodemirror.view.editorTheme
  * so that visual comparisons are meaningful.
  */
 object TestScenarios {
+
+    /**
+     * Deterministic monospace font for screenshot baselines.
+     *
+     * The editor's default [com.monkopedia.kodemirror.view.defaultEditorFontFamily]
+     * is [FontFamily.Monospace], which resolves to whatever monospace font the host
+     * OS happens to provide. That makes glyph advance widths (and therefore the
+     * rendered pixels) vary across machines, so committed baselines fail
+     * `verifyRoborazzi` on a different runner purely from font drift.
+     *
+     * We pin a bundled JetBrains Mono Regular (OFL-1.1, see
+     * `view/src/jvmTest/resources/fonts/OFL.txt`) loaded from the test classpath
+     * via the Compose Desktop `Font(resource: String)` factory. Skiko's rasteriser
+     * is bundled with Compose (it does not use OS-native rasterisation), so the
+     * same font + same Skiko version produces the same pixels everywhere, making
+     * the baselines reproducible across the local dev machine and CI runners.
+     */
+    val pinnedFontFamily: FontFamily = FontFamily(
+        Font(resource = "fonts/JetBrainsMono-Regular.ttf")
+    )
+
+    /**
+     * Extension that forces every screenshot to render with [pinnedFontFamily].
+     * Applied by [jsLanguageExtensions] / [jsExtensionsContrast] and the
+     * placeholder scenario so all baselines share one deterministic font.
+     */
+    val pinnedFont: Extension = editorContentStyle.of(
+        TextStyle(fontFamily = pinnedFontFamily)
+    )
+
+    /**
+     * Roborazzi compare options shared by every screenshot test.
+     *
+     * With [pinnedFont] the render is intended to be byte-stable across machines,
+     * but we allow a tiny non-zero [changeThreshold][RoborazziOptions.CompareOptions]
+     * (0.1% of pixels) as a safety margin against incidental antialiasing drift
+     * between the local dev machine and the CI runner. This is small enough that a
+     * real visual regression (e.g. a missing highlight fill or a shifted line) still
+     * trips the gate, while sub-pixel noise does not turn the gate flaky.
+     */
+    val screenshotOptions: RoborazziOptions = RoborazziOptions(
+        compareOptions = RoborazziOptions.CompareOptions(changeThreshold = 0.001f)
+    )
+
+    /** Capture [path] using the shared [screenshotOptions] tolerance. */
+    fun SemanticsNodeInteraction.captureScreenshot(path: String) {
+        captureRoboImage(filePath = path, roborazziOptions = screenshotOptions)
+    }
 
     val SAMPLE_CODE = """
         |function fibonacci(n) {
@@ -116,7 +169,7 @@ object TestScenarios {
     fun jsLanguageExtensions(light: Boolean = true): Extension {
         val lang = Language(configuredParser, "javascript")
         val style = if (light) defaultHighlightStyle else oneDarkHighlightStyle
-        return extensionListOf(lang.extension, syntaxHighlighting(style))
+        return extensionListOf(lang.extension, syntaxHighlighting(style), pinnedFont)
     }
 
     val extremeContrastTheme = EditorTheme(
@@ -192,6 +245,7 @@ object TestScenarios {
             lang.extension,
             syntaxHighlighting(extremeContrastHighlightStyle),
             editorTheme.of(extremeContrastTheme),
+            pinnedFont,
             editorContentStyle.of(
                 TextStyle(fontSize = 13.sp, lineHeight = (13 * 1.4).sp)
             )

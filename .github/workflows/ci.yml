@@ -20,6 +20,7 @@ jobs:
       - name: Lint and test (JVM + wasmJs + Android)
         run: >-
           ./gradlew apiCheck jvmTest
+          :view:verifyRoborazziJvm
           testDebugUnitTest
           :state:wasmJsTest
           :collab:wasmJsTest

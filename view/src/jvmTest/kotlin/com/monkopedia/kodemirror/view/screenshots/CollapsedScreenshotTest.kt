@@ -37,7 +37,7 @@ import com.monkopedia.kodemirror.view.ReplaceDecorationSpec
 import com.monkopedia.kodemirror.view.WidgetType
 import com.monkopedia.kodemirror.view.highlightActiveLine
 import com.monkopedia.kodemirror.view.lineNumbers
-import io.github.takahirom.roborazzi.captureRoboImage
+import com.monkopedia.kodemirror.view.screenshots.TestScenarios.captureScreenshot
 import org.junit.Test
 
 @OptIn(ExperimentalTestApi::class)
@@ -85,7 +85,7 @@ class CollapsedScreenshotTest {
             val session = remember(state) { EditorSession(state) }
             KodeMirror(session = session)
         }
-        onRoot().captureRoboImage("screenshots/compose/collapsed.png")
+        onRoot().captureScreenshot("screenshots/compose/collapsed.png")
     }
 }
 
