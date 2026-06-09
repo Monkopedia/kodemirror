@@ -135,7 +135,8 @@ class MultiSourceCompletionTest {
     fun canMergeMultipleSources() {
         // Upstream "can merge multiple sources": TWO non-empty sources now both
         // contribute (previously the first non-empty source won and the second's
-        // options never appeared). Equal-scoring options keep source order.
+        // options never appeared). All options are sorted by one global order
+        // (here: equal score, so label-ascending), which for a,b,c,d matches input.
         val v = viewWith(
             CompletionConfig(override = listOf(listSource("a", "b"), listSource("c", "d")))
         )
@@ -147,7 +148,9 @@ class MultiSourceCompletionTest {
     @Test
     fun removesDuplicateOptions() {
         // Upstream "removes duplicate options": identical labels from different
-        // sources collapse to a single entry.
+        // sources collapse to a single entry. Empty query -> every option scores 0
+        // with no sortText, so the single global sort orders them label-ascending
+        // (bar, baz, foo) and the duplicate "foo" is deduped.
         val v = viewWith(
             CompletionConfig(
                 override = listOf(
@@ -158,7 +161,7 @@ class MultiSourceCompletionTest {
         )
         startCompletion(v)
         val labels = currentCompletions(v.state).map { it.label }
-        assertEquals(listOf("foo", "bar", "baz"), labels)
+        assertEquals(listOf("bar", "baz", "foo"), labels)
     }
 
     @Test

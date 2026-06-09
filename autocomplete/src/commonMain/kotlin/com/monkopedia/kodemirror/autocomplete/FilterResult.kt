@@ -46,9 +46,12 @@ internal data class FilterResult(
  * Each result is filtered against the text between *its own* `from` and the
  * cursor, honouring its own [filter][CompletionResult.filter] flag (so a
  * `filter = false` source keeps all of its options alongside the filtered ones).
- * The combined options are sorted by score (descending, stable — so equal-scoring
- * options keep source order: source A's options before source B's), then
- * deduplicated by label, keeping the first (highest-scored) occurrence.
+ * The combined options are then sorted by a SINGLE GLOBAL ordering
+ * ([completionOrder] — score descending, then `sortText ?: label` ascending),
+ * mirroring upstream `@codemirror/autocomplete`'s `sortOptions`, which globally
+ * sorts all candidates across sources rather than concatenating per-source runs.
+ * They are then deduplicated by label, keeping the first occurrence — which, under
+ * the global order, is the highest-ranked one for that label.
  *
  * **Differing `from`:** sources may return different `from` positions. Each
  * option carries its originating [result][FilterResult.result], so accepting it
@@ -67,11 +70,12 @@ internal fun mergeCompletions(
         filterCompletions(result.options, query, result.filter)
             .map { it.copy(result = result) }
     }
-    // sortedByDescending is stable, so equal-scoring options keep their original
-    // (source) order. Dedup by label keeps the first — i.e. highest-scored — one.
+    // A single global sort across all sources (completionOrder: score descending,
+    // then sortText ?: label ascending), mirroring upstream sortOptions. Dedup by
+    // label then keeps the first occurrence — the highest-ranked one for that label.
     val seen = HashSet<String>()
     return combined
-        .sortedByDescending { it.score }
+        .sortedWith(completionOrder)
         .filter { seen.add(it.completion.label) }
 }
 
