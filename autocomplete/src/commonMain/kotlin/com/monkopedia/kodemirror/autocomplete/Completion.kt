@@ -51,6 +51,11 @@ enum class CompletionType(val value: String) {
  * @param boost Priority boost (higher = shown earlier).
  * @param apply Optional custom apply text (overrides [label]).
  * @param section Optional grouping section.
+ * @param sortText Optional explicit sort key (e.g. an LSP server's
+ *   `CompletionItem.sortText`). When present it breaks ties between options of
+ *   equal score, compared lexicographically (ascending), letting a server order
+ *   items as it prefers even when their labels would sort differently. When
+ *   absent, ties fall back to label ordering.
  */
 data class Completion(
     val label: String,
@@ -61,7 +66,8 @@ data class Completion(
     val boost: Int = 0,
     val apply: String? = null,
     val applyFn: ((CompletionApplyContext) -> Unit)? = null,
-    val section: CompletionSection? = null
+    val section: CompletionSection? = null,
+    val sortText: String? = null
 )
 
 /** A named section for grouping completions. */

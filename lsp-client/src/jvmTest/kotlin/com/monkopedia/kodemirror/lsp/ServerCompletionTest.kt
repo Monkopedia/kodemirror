@@ -144,6 +144,8 @@ class ServerCompletionTest {
         assertEquals("println", c.label)
         assertEquals("function", c.type)
         assertEquals("fun println(): Unit", c.detail)
+        // The server's explicit sort key is carried through (#138).
+        assertEquals("0001", c.sortText)
         // Plain text with no extra edits => default apply (no custom applyFn).
         assertNull(c.applyFn)
     }

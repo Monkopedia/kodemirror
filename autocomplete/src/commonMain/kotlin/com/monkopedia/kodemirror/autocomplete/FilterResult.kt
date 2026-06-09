@@ -39,6 +39,14 @@ internal data class FilterResult(
  * - Case-insensitive prefix: 200 + boost
  * - Fuzzy subsequence: 100 + boost - penalty
  * - No match: excluded
+ *
+ * Ordering: primary key is [score][FilterResult.score] descending (which folds
+ * in each option's [boost][Completion.boost]). Ties are broken by the option's
+ * explicit [sortText][Completion.sortText] ascending when present, otherwise by
+ * its [label][Completion.label] ascending — mirroring upstream
+ * `@codemirror/autocomplete`, where `sortText` (the LSP server's explicit
+ * ranking key) lets the server order equal-scored items as it prefers even when
+ * their labels would sort differently.
  */
 internal fun filterCompletions(
     options: List<Completion>,
@@ -48,7 +56,7 @@ internal fun filterCompletions(
     if (query.isEmpty() || !filter) {
         return options.map {
             FilterResult(it, it.boost, emptyList())
-        }
+        }.sortedWith(completionOrder)
     }
 
     return options.mapNotNull { completion ->
@@ -63,8 +71,19 @@ internal fun filterCompletions(
         } else {
             null
         }
-    }.sortedByDescending { it.score }
+    }.sortedWith(completionOrder)
 }
+
+/**
+ * Ranking comparator: [score][FilterResult.score] descending, then the option's
+ * [sortText][Completion.sortText] (falling back to its [label][Completion.label])
+ * ascending. The sort-key fallback is per-option, so a `sortText`-bearing item
+ * and a plain item with equal score are compared via the former's `sortText` and
+ * the latter's `label`.
+ */
+private val completionOrder: Comparator<FilterResult> =
+    compareByDescending<FilterResult> { it.score }
+        .thenBy { it.completion.sortText ?: it.completion.label }
 
 /**
  * Score a label against a query.

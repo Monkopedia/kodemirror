@@ -134,4 +134,61 @@ class FilterTest {
         assertEquals("apple", results[0].completion.label)
         assertTrue(results[0].score > results[1].score)
     }
+
+    @Test
+    fun sortTextOverridesLabelOrderForEqualScore() {
+        // Labels sort A < B, but sortText reverses that: the server wants Apple last.
+        val opts = listOf(
+            Completion(label = "Apple", sortText = "2"),
+            Completion(label = "Banana", sortText = "1")
+        )
+        val results = filterCompletions(opts, "")
+        assertEquals(listOf("Banana", "Apple"), results.map { it.completion.label })
+    }
+
+    @Test
+    fun sortTextBreaksTiesAmongEqualScores() {
+        // All three are exact prefix matches (same score); sortText decides order.
+        val opts = listOf(
+            Completion(label = "abc", sortText = "c"),
+            Completion(label = "abc2", sortText = "a"),
+            Completion(label = "abc3", sortText = "b")
+        )
+        val results = filterCompletions(opts, "abc")
+        assertEquals(
+            listOf("abc2", "abc3", "abc"),
+            results.map { it.completion.label }
+        )
+    }
+
+    @Test
+    fun scoreAndBoostDominateSortText() {
+        // The boosted item wins on score even though its sortText sorts last.
+        val opts = listOf(
+            Completion(label = "alpha", boost = 50, sortText = "zzz"),
+            Completion(label = "alpha2", boost = 0, sortText = "aaa")
+        )
+        val results = filterCompletions(opts, "alp")
+        assertEquals("alpha", results[0].completion.label)
+        assertTrue(results[0].score > results[1].score)
+    }
+
+    @Test
+    fun absentSortTextFallsBackToLabelOrder() {
+        // No sortText anywhere: equal-score items order by label ascending.
+        val results = filterCompletions(options("Banana", "Apple"), "")
+        assertEquals(listOf("Apple", "Banana"), results.map { it.completion.label })
+    }
+
+    @Test
+    fun sortTextItemComparedAgainstPlainItemLabel() {
+        // One item has sortText, the other only a label; each contributes its own
+        // sort key (sortText "z" vs label "Apple"), so Apple sorts first.
+        val opts = listOf(
+            Completion(label = "Banana", sortText = "z"),
+            Completion(label = "Apple")
+        )
+        val results = filterCompletions(opts, "")
+        assertEquals(listOf("Apple", "Banana"), results.map { it.completion.label })
+    }
 }

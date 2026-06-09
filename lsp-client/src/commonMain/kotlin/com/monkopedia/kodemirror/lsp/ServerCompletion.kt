@@ -283,7 +283,8 @@ internal fun mapCompletionItem(
             detail = item.detail,
             info = info,
             type = type,
-            applyFn = applyFn
+            applyFn = applyFn,
+            sortText = item.sortText
         )
     }
 
@@ -318,7 +319,8 @@ internal fun mapCompletionItem(
         detail = item.detail,
         info = info,
         type = type,
-        applyFn = applyFn
+        applyFn = applyFn,
+        sortText = item.sortText
     )
 }
 
