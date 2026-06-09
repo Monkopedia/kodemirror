@@ -38,7 +38,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.state.ChangeByRangeResult
@@ -53,6 +58,7 @@ import com.monkopedia.kodemirror.state.Slot
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.KeyBinding
+import com.monkopedia.kodemirror.view.LocalContentTextStyle
 import com.monkopedia.kodemirror.view.LocalEditorTheme
 import com.monkopedia.kodemirror.view.PluginValue
 import com.monkopedia.kodemirror.view.ThemeKey
@@ -320,6 +326,12 @@ private fun CompletionList(
     val items = completionState.filtered.take(config.maxRenderedOptions)
     if (completionState.results.isEmpty()) return
     val theme = LocalEditorTheme.current
+    // Render the popup in the editor's content font, like every other piece of
+    // editor UI chrome (gutter, panels, placeholder all read LocalContentTextStyle).
+    // This keeps the popup visually consistent with the editor and — because the
+    // showcase / screenshot tests pin a concrete font via editorContentStyle — makes
+    // the AnnotatedString label paint in a deterministic font (#111).
+    val contentFontFamily = LocalContentTextStyle.current.fontFamily
 
     // Keep the selected row visible as the user arrow-navigates — the
     // verticalScroll Column does not follow the selection on its own (#115).
@@ -338,6 +350,7 @@ private fun CompletionList(
     // config.maxRenderedOptions, so a non-lazy column + verticalScroll is fine.
     Column(
         modifier = Modifier
+            .testTag("completionPopup")
             .background(theme[completionBackground])
             // Bounded width (not pure wrap-content): on Compose-wasmJs a BasicText
             // with no width modifier measures to ~0 intrinsic width, so the label
@@ -381,21 +394,26 @@ private fun CompletionList(
                 if (config.icons && item.completion.type != null) {
                     BasicText(
                         text = typeIcon(item.completion.type),
-                        style = TextStyle(color = theme[completionIconColor]),
+                        style = TextStyle(
+                            color = theme[completionIconColor],
+                            fontFamily = contentFontFamily
+                        ),
                         modifier = Modifier.width(20.dp)
                     )
                 }
                 // weight(1f) gives the label text a concrete width within the bounded
                 // row so it paints — a width-less BasicText collapses to ~0 on wasmJs.
-                // Detail (if any) is folded into the same text rather than a separate
-                // width-less BasicText (which would likewise collapse). Plain String,
-                // not AnnotatedString — BasicText(AnnotatedString) also failed to paint
-                // here, so prefix-match bold highlighting is dropped for now (#111).
+                // Detail (if any) is folded into the same AnnotatedString rather than a
+                // separate width-less BasicText (which would likewise collapse).
+                // The matched-prefix ranges (item.highlighted) are rendered bold (#111).
+                // The earlier #109 "AnnotatedString doesn't paint on wasmJs" was an
+                // intrinsic-width-0 measurement collapse, not a paint failure: with a
+                // bounded popup width + weight(1f) the AnnotatedString now resolves to a
+                // real width and paints on both jvm and wasmJs.
                 val label = item.completion.displayLabel ?: item.completion.label
-                val text = item.completion.detail?.let { "$label  $it" } ?: label
                 BasicText(
-                    text = text,
-                    style = TextStyle(color = textColor),
+                    text = buildHighlightedLabel(label, item.completion.detail, item.highlighted),
+                    style = TextStyle(color = textColor, fontFamily = contentFontFamily),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f)
@@ -405,6 +423,33 @@ private fun CompletionList(
     }
 }
 
+
+/**
+ * Build the popup label as an [AnnotatedString] with the matched-prefix
+ * [highlighted] ranges rendered bold, optionally folding [detail] on the end.
+ * The [highlighted] ranges index into [label] and come from the fuzzy matcher
+ * ([FilterResult.highlighted]); they are clamped defensively so a stale range
+ * can never throw. [detail] (when present) is appended after the label and left
+ * unstyled.
+ */
+private fun buildHighlightedLabel(
+    label: String,
+    detail: String?,
+    highlighted: List<IntRange>
+): AnnotatedString = buildAnnotatedString {
+    append(label)
+    for (range in highlighted) {
+        val start = range.first.coerceIn(0, label.length)
+        val end = (range.last + 1).coerceIn(start, label.length)
+        if (start < end) {
+            addStyle(SpanStyle(fontWeight = FontWeight.Bold), start, end)
+        }
+    }
+    if (detail != null) {
+        append("  ")
+        append(detail)
+    }
+}
 
 private fun typeIcon(type: String): String = when (type) {
     "function", "method" -> "f"

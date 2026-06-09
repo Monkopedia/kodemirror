@@ -53,6 +53,7 @@ fun main() {
                 val demoParam = getDemoParam()
                 when {
                     getTestParam() == "true" -> TestEditorPage()
+                    getTestParam() == "completion" -> CompletionTestEditorPage()
                     getTestParam() == "vim" -> VimTestEditorPage()
                     themeParam.isNotEmpty() -> ThemeTestPage(themeParam)
                     demoParam.isNotEmpty() -> EmbeddedDemo(demoParam)
