@@ -107,6 +107,7 @@ import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.state.asInsert
 import kotlin.math.roundToInt
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 /**
@@ -334,81 +335,109 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
         snapshotFlow { impl.scrollRequest }
             .collect { request ->
                 if (request == null) return@collect
-                val items = currentColumnItems.value
-                val targetIndex = items.indexOfFirst { item ->
-                    when (item) {
-                        is ColumnItem.TextLine ->
-                            request.target >= item.from.value &&
-                                request.target <= item.to.value
-                        is ColumnItem.BlockWidgetItem -> false
-                    }
-                }
-                if (targetIndex >= 0) {
-                    scrollItemIntoView(lazyState, targetIndex)
-
-                    // Horizontal reveal (no-wrap mode only). Wrapped lines never
-                    // overflow horizontally, so there is nothing to scroll.
-                    if (!wrapLines) {
-                        val line = items[targetIndex] as? ColumnItem.TextLine
-                        val layout = line?.let {
-                            textLayoutResults[it.lineNumber.value]
+                try {
+                    val items = currentColumnItems.value
+                    val targetIndex = items.indexOfFirst { item ->
+                        when (item) {
+                            is ColumnItem.TextLine ->
+                                request.target >= item.from.value &&
+                                    request.target <= item.to.value
+                            is ColumnItem.BlockWidgetItem -> false
                         }
-                        val coordsWidth = editorCoordinates?.size?.width
-                        if (line != null && layout != null && coordsWidth != null) {
-                            // Map the document offset within the line to the
-                            // expanded-text offset (tab expansion), exactly as
-                            // the cursor is drawn, then read its x in line-local
-                            // pixels (0 = line start, before the 6.dp padding).
-                            val offsetInLine = (request.target - line.from.value)
-                                .coerceIn(0, line.to.value - line.from.value)
-                            val mappedOffset = mapTabOffset(
-                                offsetInLine,
-                                line.tabOffsetMap
-                            )
-                            // Clamp to the LAYOUT's text length, not the doc
-                            // line length: `layout` is a cached TextLayoutResult
-                            // that lags the doc by a frame during typing and
-                            // mapTabOffset can expand the offset, so mappedOffset
-                            // can exceed the layout's text — getCursorRect would
-                            // throw "offset out of bounds" (#152).
-                            val layoutLen = layout.layoutInput.text.length
-                            val cursorX = layout
-                                .getCursorRect(mappedOffset.coerceIn(0, layoutLen))
-                                .left
+                    }
+                    if (targetIndex >= 0) {
+                        scrollItemIntoView(lazyState, targetIndex)
 
-                            // Content viewport width = editor width minus the
-                            // gutter and the 6.dp content start padding. This
-                            // mirrors posFromVisibleItems' contentStartPx so the
-                            // forward (offset->x) and inverse (x->offset) maps
-                            // agree.
-                            val gutter = if (hasGutters) gutterWidthPx else 0f
-                            val viewportPx =
-                                coordsWidth - gutter - contentStartPaddingPx
-                            if (viewportPx > 0f) {
-                                val scroll =
-                                    horizontalScrollState.value.toFloat()
-                                val marginPx = 24f
-                                val target = when {
-                                    cursorX < scroll + marginPx ->
-                                        cursorX - marginPx
-                                    cursorX > scroll + viewportPx - marginPx ->
-                                        cursorX - viewportPx + marginPx
-                                    else -> null
-                                }
-                                if (target != null) {
-                                    val clamped = target.coerceIn(
-                                        0f,
-                                        horizontalScrollState.maxValue.toFloat()
+                        // Horizontal reveal (no-wrap mode only). Wrapped lines
+                        // never overflow horizontally, so there is nothing to
+                        // scroll.
+                        if (!wrapLines) {
+                            val line = items[targetIndex] as? ColumnItem.TextLine
+                            val layout = line?.let {
+                                textLayoutResults[it.lineNumber.value]
+                            }
+                            val coordsWidth = editorCoordinates?.size?.width
+                            if (line != null && layout != null &&
+                                coordsWidth != null
+                            ) {
+                                // Map the document offset within the line to the
+                                // expanded-text offset (tab expansion), exactly
+                                // as the cursor is drawn, then read its x in
+                                // line-local pixels (0 = line start, before the
+                                // 6.dp padding).
+                                val offsetInLine =
+                                    (request.target - line.from.value)
+                                        .coerceIn(
+                                            0,
+                                            line.to.value - line.from.value
+                                        )
+                                val mappedOffset = mapTabOffset(
+                                    offsetInLine,
+                                    line.tabOffsetMap
+                                )
+                                // Clamp to the LAYOUT's text length, not the doc
+                                // line length: `layout` is a cached
+                                // TextLayoutResult that lags the doc by a frame
+                                // during typing and mapTabOffset can expand the
+                                // offset, so mappedOffset can exceed the
+                                // layout's text — getCursorRect would throw
+                                // "offset out of bounds" (#152).
+                                val layoutLen = layout.layoutInput.text.length
+                                val cursorX = layout
+                                    .getCursorRect(
+                                        mappedOffset.coerceIn(0, layoutLen)
                                     )
-                                    horizontalScrollState.scrollTo(
-                                        clamped.roundToInt()
-                                    )
+                                    .left
+
+                                // Content viewport width = editor width minus
+                                // the gutter and the 6.dp content start padding.
+                                // This mirrors posFromVisibleItems'
+                                // contentStartPx so the forward (offset->x) and
+                                // inverse (x->offset) maps agree.
+                                val gutter =
+                                    if (hasGutters) gutterWidthPx else 0f
+                                val viewportPx =
+                                    coordsWidth - gutter - contentStartPaddingPx
+                                if (viewportPx > 0f) {
+                                    val scroll =
+                                        horizontalScrollState.value.toFloat()
+                                    val marginPx = 24f
+                                    val target = when {
+                                        cursorX < scroll + marginPx ->
+                                            cursorX - marginPx
+                                        cursorX > scroll + viewportPx - marginPx ->
+                                            cursorX - viewportPx + marginPx
+                                        else -> null
+                                    }
+                                    if (target != null) {
+                                        val clamped = target.coerceIn(
+                                            0f,
+                                            horizontalScrollState.maxValue
+                                                .toFloat()
+                                        )
+                                        horizontalScrollState.scrollTo(
+                                            clamped.roundToInt()
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
+                    impl.consumeScrollRequest(request)
+                } catch (t: Throwable) {
+                    // A single failed reveal must never permanently kill the
+                    // collector. If the body throws, the LaunchedEffect would
+                    // complete exceptionally and is not relaunched (key
+                    // `session` is unchanged), leaving scroll-into-view dead for
+                    // the rest of the session (#155). Swallow the failure, still
+                    // consume the request so a persistently-bad one isn't
+                    // retried forever, and keep collecting — failing one UI
+                    // reveal for a frame is correct; dying permanently is not.
+                    // Rethrow CancellationException so structured cancellation
+                    // (effect disposal) still tears the coroutine down.
+                    if (t is CancellationException) throw t
+                    impl.consumeScrollRequest(request)
                 }
-                impl.consumeScrollRequest(request)
             }
     }
 
@@ -1023,17 +1052,27 @@ private fun EditorContent(
                 items.firstOrNull()?.index to items.size
             }
         }.collect { (startIdx, count) ->
-            val startIndex = startIdx ?: 0
-            impl.lastFirstVisibleItem = startIndex
-            impl.lastVisibleItemCount = count
-            val visibleLineNumbers = columnItems
-                .drop(startIndex)
-                .take(count.coerceAtLeast(1))
-                .filterIsInstance<ColumnItem.TextLine>()
-                .map { it.lineNumber.value }
-                .toSet()
-            if (visibleLineNumbers.isNotEmpty()) {
-                lineLayoutCache.evict(visibleLineNumbers)
+            try {
+                val startIndex = startIdx ?: 0
+                impl.lastFirstVisibleItem = startIndex
+                impl.lastVisibleItemCount = count
+                val visibleLineNumbers = columnItems
+                    .drop(startIndex)
+                    .take(count.coerceAtLeast(1))
+                    .filterIsInstance<ColumnItem.TextLine>()
+                    .map { it.lineNumber.value }
+                    .toSet()
+                if (visibleLineNumbers.isNotEmpty()) {
+                    lineLayoutCache.evict(visibleLineNumbers)
+                }
+            } catch (t: Throwable) {
+                // Defense-in-depth (#155): this session-scoped collector drives
+                // viewport tracking + stale-line cache eviction. A throw here
+                // would complete the LaunchedEffect exceptionally and it would
+                // not relaunch (key `session`), permanently breaking viewport
+                // reporting and cache eviction for the session. Rethrow
+                // CancellationException so disposal still cancels the coroutine.
+                if (t is CancellationException) throw t
             }
         }
     }
