@@ -14,6 +14,7 @@ dokka = "2.2.0"
 bcv = "0.18.1"
 vanniktech = "0.36.0"
 lsp = "1.2.0"
+androidx-activity = "1.9.3"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -23,6 +24,7 @@ kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.
 roborazzi-compose-desktop = { module = "io.github.takahirom.roborazzi:roborazzi-compose-desktop", version.ref = "roborazzi" }
 lsp = { module = "com.monkopedia.lsp:lsp", version.ref = "lsp" }
 lsp-ksrpc = { module = "com.monkopedia.lsp:lsp-ksrpc", version.ref = "lsp" }
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity" }
 
 [plugins]
 androidLibrary = { id = "com.android.library", version.ref = "agp" }
