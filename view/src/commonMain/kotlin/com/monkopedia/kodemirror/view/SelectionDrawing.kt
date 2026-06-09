@@ -195,16 +195,32 @@ private fun DrawScope.drawBlockCursor(
     )
 }
 
+/**
+ * Resolve the offset to query the line's [TextLayoutResult] for the caret rect,
+ * or null when there is no layout to query (draw the line-start fallback).
+ *
+ * The layout lags the document by one frame: right after a keystroke the doc
+ * change has applied but the text hasn't re-laid-out yet, so [offsetInLine] is
+ * transiently `textLen + 1`. We must NOT bail to the line-start (column 0) in
+ * that case — that produced a one-frame caret flash to column 0 on every
+ * keypress (#146, regression from #76). Instead clamp into the current layout so
+ * the caret sits at the line END for that single frame and snaps exact next
+ * frame. The fallback is reserved for a genuinely absent layout (empty line).
+ */
+internal fun cursorLayoutOffset(offsetInLine: Int, textLen: Int?): Int? =
+    if (textLen == null) null else offsetInLine.coerceIn(0, textLen)
+
 private fun DrawScope.drawLineCursor(
     offsetInLine: Int,
     cursorColor: Color,
     textLayoutResult: TextLayoutResult?
 ) {
     val textLen = textLayoutResult?.layoutInput?.text?.length
-    if (textLayoutResult != null && textLen != null && offsetInLine in 0..textLen) {
+    val safe = cursorLayoutOffset(offsetInLine, textLen)
+    if (textLayoutResult != null && safe != null) {
         // Use the cursor rect so the caret only spans its actual visual row
         // (a full-height span on wrapped multi-row lines is wrong).
-        val r = textLayoutResult.getCursorRect(offsetInLine)
+        val r = textLayoutResult.getCursorRect(safe)
         drawLine(
             color = cursorColor,
             start = Offset(r.left, r.top),
@@ -212,7 +228,7 @@ private fun DrawScope.drawLineCursor(
             strokeWidth = 2f
         )
     } else {
-        // Fallback: start of line, full height (empty line / no layout).
+        // Fallback: start of line, full height (no layout — e.g. empty line).
         drawLine(
             color = cursorColor,
             start = Offset(0f, 0f),
