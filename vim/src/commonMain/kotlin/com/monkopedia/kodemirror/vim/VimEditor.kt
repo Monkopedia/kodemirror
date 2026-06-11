@@ -101,6 +101,14 @@ internal class Operation {
     var change: Change? = null
     var changeHandlers: List<(Array<out Any?>) -> Unit>? = null
     var changeStart: DocPos? = null
+
+    /**
+     * Primary selection head captured when the operation began, used to decide
+     * whether the operation actually moved the cursor (and therefore should
+     * reveal it). Null when the operation was opened lazily (e.g. by a change
+     * handler) without a recorded starting position.
+     */
+    var startSelectionHead: DocPos? = null
 }
 
 internal class Change(
@@ -608,14 +616,30 @@ internal fun VimEditor.onSelectionChange() {
 
 internal fun VimEditor.onBeforeEndOperation() {
     val op = curOp ?: return
-    var scrollIntoView = false
     if (op.change != null) {
         op.changeHandlers?.forEach { it(arrayOf(this, op.change)) }
     }
     if (op.cursorActivity) {
         op.cursorActivityHandlers?.forEach { it(arrayOf(this, null)) }
-        if (op.isVimOp) scrollIntoView = true
     }
+    // Reveal the primary selection when a vim operation moved the cursor.
+    //
+    // In-operation motions dispatch with scrollIntoView = false (because
+    // curOp != null in setCursor), so the operation must reveal the cursor
+    // itself when it ends. We key this off whether the operation actually
+    // moved the primary head — comparing the head captured at the start of
+    // the operation against the final head — rather than the cursorActivity
+    // flag. cursorActivity is only set when the VimExtension plugin's update()
+    // has already run onSelectionChange(); that timing is unreliable for
+    // in-operation motions like gg/G (and never happens in headless mode), so
+    // relying on it left the cursor offscreen. Gating on real movement also
+    // avoids the spurious "jump to top" reveal: an operation that did not move
+    // the cursor no longer yanks the viewport to a stale head. The no-argument
+    // scrollIntoView() resolves its target to the (final) current selection
+    // head, so this always reveals the destination, never offset 0.
+    val finalHead = session.state.selection.main.head
+    val movedCursor = op.startSelectionHead != null && op.startSelectionHead != finalHead
+    val scrollIntoView = op.isVimOp && movedCursor
     curOp = null
     if (scrollIntoView) {
         this.scrollIntoView()
@@ -877,7 +901,9 @@ internal fun VimEditor.overWriteSelection(text: String) {
 
 internal fun <T> VimEditor.operation(fn: () -> T): T {
     if (curOp == null) {
-        curOp = Operation()
+        curOp = Operation().also {
+            it.startSelectionHead = session.state.selection.main.head
+        }
     }
     curOp!!.depth++
     try {
