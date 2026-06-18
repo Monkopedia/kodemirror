@@ -20,10 +20,10 @@ package com.monkopedia.kodemirror.view
 
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.awaitTouchSlopOrCancellation
-import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
@@ -36,8 +36,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -46,8 +46,6 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.BasicTextField
@@ -216,12 +214,18 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
         buildColumnItems(state, viewport, extensionDecos + pluginDecos)
     }
 
-    val lazyState = rememberLazyListState()
+    // Key the scroll states to `session` like every sibling per-session state
+    // above (pluginHost/lineLayoutCache/pendingLineLayouts/textLayoutResults).
+    // If they used rememberLazyListState()/rememberScrollState() they would
+    // survive a session swap, carrying the previous document's
+    // firstVisibleItemIndex/offset and scroll range into the new document and
+    // wedging scrolling across swaps between different-length docs (#166).
+    val lazyState = remember(session) { LazyListState() }
     // Shared horizontal scroll state for the content area. In the default
     // no-wrap mode this lets long lines extend past the viewport and remain
     // reachable; all lines share one state so they scroll together while the
     // gutter (rendered outside the scroll region) stays fixed.
-    val horizontalScrollState = rememberScrollState()
+    val horizontalScrollState = remember(session) { ScrollState(0) }
 
     val currentColumnItems = rememberUpdatedState(columnItems)
 
@@ -1099,10 +1103,7 @@ private fun EditorContent(
  * sweep scrolls the full content.
  */
 @Composable
-private fun HorizontalScrollbar(
-    scrollState: ScrollState,
-    modifier: Modifier = Modifier
-) {
+private fun HorizontalScrollbar(scrollState: ScrollState, modifier: Modifier = Modifier) {
     val theme = LocalEditorTheme.current
     val scope = rememberCoroutineScope()
     val thumbColor = theme.foreground.copy(alpha = 0.35f)
