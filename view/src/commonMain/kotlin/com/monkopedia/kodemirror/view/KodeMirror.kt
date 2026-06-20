@@ -1362,6 +1362,34 @@ private class PendingLineLayout(
 )
 
 /**
+ * Pick the index of the visible text line a hit at vertical position [y]
+ * resolves to. [tops] and [sizes] are the parallel arrays of each visible
+ * line's top and height (live LazyColumn layout, in layout order).
+ *
+ * Returns the line whose `tops[i]..tops[i] + sizes[i]` range contains [y]; if
+ * [y] falls in an inter-line gap or outside the rendered range, it clamps to
+ * the nearest line — preferring the line BELOW (first whose top is past [y]) so
+ * downward gaps resolve consistently with [LineLayoutCache.posAtCoords], then
+ * the last visible line for a [y] below everything. Returns null ONLY when
+ * there are no visible lines.
+ *
+ * Extracted from [posFromVisibleItems] so this never-null clamping — the #165
+ * fix that stops a click falling back to the stale absolute-position cache — is
+ * unit-testable without a live LazyColumn.
+ */
+internal fun chooseHitLineIndex(tops: FloatArray, sizes: FloatArray, y: Float): Int? {
+    if (tops.isEmpty()) return null
+    for (i in tops.indices) {
+        val top = tops[i]
+        if (y >= top && y < top + sizes[i]) return i
+    }
+    for (i in tops.indices) {
+        if (tops[i] > y) return i
+    }
+    return tops.size - 1
+}
+
+/**
  * Compute a document position from a tap offset using the [LazyColumn]'s own
  * layout info (the LIVE line positions), not the [LineLayoutCache].
  *
@@ -1396,17 +1424,10 @@ private fun posFromVisibleItems(
     }
     if (textItems.isEmpty()) return null
 
-    // Pick the item whose vertical range contains y; if y is in a gap or
-    // outside the rendered range, clamp to the nearest line — preferring the
-    // line BELOW (first item whose top is past y), matching
-    // LineLayoutCache.posAtCoords so downward gaps resolve consistently, then
-    // falling back to the last visible line for a y below everything.
-    val (info, item) = textItems.firstOrNull { (info, _) ->
-        val top = info.offset.toFloat()
-        offset.y >= top && offset.y < top + info.size
-    }
-        ?: textItems.firstOrNull { (info, _) -> info.offset.toFloat() > offset.y }
-        ?: textItems.last()
+    val tops = FloatArray(textItems.size) { textItems[it].first.offset.toFloat() }
+    val sizes = FloatArray(textItems.size) { textItems[it].first.size.toFloat() }
+    val idx = chooseHitLineIndex(tops, sizes, offset.y) ?: return null
+    val (info, item) = textItems[idx]
 
     val itemTop = info.offset.toFloat()
     val layout = textLayoutResults[item.lineNumber.value]
