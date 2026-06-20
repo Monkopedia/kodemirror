@@ -519,10 +519,19 @@ internal fun handleTap(view: EditorSession, offset: Offset) {
  * @param view   The editor view.
  * @param start  The document-space coordinate where the drag started.
  * @param current The current drag position.
+ * @param posAt  Resolves a viewport coordinate to a document offset. Callers
+ *   pass the LIVE-layout resolver (`posFromVisibleItems`-backed) so drag
+ *   selection tracks scrolling instead of using the stale-after-scroll cache
+ *   (#165).
  */
-internal fun handleDrag(view: EditorSession, start: Offset, current: Offset) {
-    val anchor = view.posAtCoords(start.x, start.y) ?: return
-    val head = view.posAtCoords(current.x, current.y) ?: return
+internal fun handleDrag(
+    view: EditorSession,
+    start: Offset,
+    current: Offset,
+    posAt: (Offset) -> Int?
+) {
+    val anchor = posAt(start) ?: return
+    val head = posAt(current) ?: return
     view.dispatch(
         TransactionSpec(
             selection = SelectionSpec.EditorSelectionSpec(
@@ -542,10 +551,15 @@ internal fun handleDrag(view: EditorSession, start: Offset, current: Offset) {
  * @param start   The document-space coordinate where the drag started.
  * @param current The current drag position.
  */
-internal fun handleRectangularDrag(view: EditorSession, start: Offset, current: Offset) {
+internal fun handleRectangularDrag(
+    view: EditorSession,
+    start: Offset,
+    current: Offset,
+    posAt: (Offset) -> Int?
+) {
     val doc = view.state.doc
-    val startPos = view.posAtCoords(start.x, start.y) ?: return
-    val currentPos = view.posAtCoords(current.x, current.y) ?: return
+    val startPos = posAt(start) ?: return
+    val currentPos = posAt(current) ?: return
 
     val startDocPos = DocPos(startPos)
     val currentDocPos = DocPos(currentPos)
