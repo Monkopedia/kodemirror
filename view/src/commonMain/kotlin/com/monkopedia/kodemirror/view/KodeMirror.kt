@@ -335,6 +335,9 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
     // LazyColumn is still mid-(sub)composition can trip the Compose runtime.
     val contentStartPaddingPx = with(density) { 6.dp.toPx() }
     val gutterWidthPx = with(density) { gutterWidthDp.toPx() }
+    val contentTopPaddingPx = with(density) {
+        theme.layout.contentTopPadding.toPx()
+    }
     LaunchedEffect(session) {
         snapshotFlow { impl.scrollRequest }
             .collect { request ->
@@ -469,7 +472,8 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
             hasGutters,
             gutterWidthDp,
             density,
-            if (wrapLines) 0 else horizontalScrollState.value
+            if (wrapLines) 0 else horizontalScrollState.value,
+            contentTopPaddingPx
         ) ?: session.posAtCoords(offset.x, offset.y)
     }
 
@@ -1412,7 +1416,8 @@ private fun posFromVisibleItems(
     hasGutters: Boolean,
     gutterWidthDp: Dp,
     density: Density,
-    horizontalScrollPx: Int
+    horizontalScrollPx: Int,
+    contentTopPaddingPx: Float
 ): Int? {
     val contentStartPx = with(density) {
         (if (hasGutters) gutterWidthDp.toPx() else 0f) + 6.dp.toPx()
@@ -1424,12 +1429,19 @@ private fun posFromVisibleItems(
     }
     if (textItems.isEmpty()) return null
 
-    val tops = FloatArray(textItems.size) { textItems[it].first.offset.toFloat() }
+    // LazyListItemInfo.offset starts at y=0, but the LazyColumn renders its
+    // content shifted down by `contentTopPadding` (the content padding sits
+    // above the first item). The pointer `offset.y` is in that padded space, so
+    // the item tops must be shifted by the same amount or every click resolves
+    // ~contentTopPadding px too low — biasing toward the next line down (#169).
+    val tops = FloatArray(textItems.size) {
+        textItems[it].first.offset.toFloat() + contentTopPaddingPx
+    }
     val sizes = FloatArray(textItems.size) { textItems[it].first.size.toFloat() }
     val idx = chooseHitLineIndex(tops, sizes, offset.y) ?: return null
     val (info, item) = textItems[idx]
 
-    val itemTop = info.offset.toFloat()
+    val itemTop = info.offset.toFloat() + contentTopPaddingPx
     val layout = textLayoutResults[item.lineNumber.value]
         ?: return item.from.value // no layout yet, return line start
     val localY = (offset.y - itemTop).coerceIn(0f, info.size.toFloat())
