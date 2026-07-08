@@ -20,6 +20,7 @@ package com.monkopedia.kodemirror.search
 
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
+import com.monkopedia.kodemirror.state.Text
 import com.monkopedia.kodemirror.state.endPos
 
 /**
@@ -81,8 +82,12 @@ data class SearchQuery(
             }
             SearchCursor(state.doc, search, from, to, normalize)
         }
-        val cursor = if (wholeWord) WholeWordSearchCursor(base, state.doc) else base
-        return if (test != null) FilteredSearchCursor(cursor, test, state) else cursor
+        val cursor = if (wholeWord) wholeWordSearchCursor(base, state.doc) else base
+        return if (test != null) {
+            FilteringSearchCursor(cursor) { test(it.from, it.to, state) }
+        } else {
+            cursor
+        }
     }
 
     /**
@@ -161,12 +166,12 @@ data class SearchQuery(
 }
 
 /**
- * A search cursor that only matches whole words (bounded by non-word characters).
- * Wraps any [Iterator]<[SearchMatch]> and filters to whole-word boundaries.
+ * A filtering decorator over an [Iterator]<[SearchMatch]>: lazily pulls from
+ * [inner], yielding only the matches for which [predicate] returns true.
  */
-internal class WholeWordSearchCursor(
+private class FilteringSearchCursor(
     private val inner: Iterator<SearchMatch>,
-    private val doc: com.monkopedia.kodemirror.state.Text
+    private val predicate: (SearchMatch) -> Boolean
 ) : Iterator<SearchMatch> {
     private var nextMatch: SearchMatch? = null
 
@@ -177,21 +182,12 @@ internal class WholeWordSearchCursor(
     private fun advance() {
         while (inner.hasNext()) {
             val match = inner.next()
-            if (isWordBoundary(match.from) && isWordBoundary(match.to)) {
+            if (predicate(match)) {
                 nextMatch = match
                 return
             }
         }
         nextMatch = null
-    }
-
-    private fun isWordBoundary(pos: DocPos): Boolean {
-        if (pos == DocPos.ZERO || pos.value == doc.length) return true
-        val before = doc.sliceString(pos - 1, pos)
-        val after = doc.sliceString(pos, pos + 1)
-        val wordBefore = before.isNotEmpty() && isWordChar(before[0])
-        val wordAfter = after.isNotEmpty() && isWordChar(after[0])
-        return wordBefore != wordAfter
     }
 
     override fun hasNext(): Boolean = nextMatch != null
@@ -204,36 +200,20 @@ internal class WholeWordSearchCursor(
 }
 
 /**
- * A search cursor that filters matches using a test callback.
+ * A search cursor that only matches whole words (bounded by non-word characters).
+ * Wraps any [Iterator]<[SearchMatch]> and filters to whole-word boundaries.
  */
-private class FilteredSearchCursor(
-    private val inner: Iterator<SearchMatch>,
-    private val test: (DocPos, DocPos, EditorState) -> Boolean,
-    private val state: EditorState
-) : Iterator<SearchMatch> {
-    private var nextMatch: SearchMatch? = null
-
-    init {
-        advance()
+private fun wholeWordSearchCursor(inner: Iterator<SearchMatch>, doc: Text): Iterator<SearchMatch> {
+    fun isWordBoundary(pos: DocPos): Boolean {
+        if (pos == DocPos.ZERO || pos.value == doc.length) return true
+        val before = doc.sliceString(pos - 1, pos)
+        val after = doc.sliceString(pos, pos + 1)
+        val wordBefore = before.isNotEmpty() && isWordChar(before[0])
+        val wordAfter = after.isNotEmpty() && isWordChar(after[0])
+        return wordBefore != wordAfter
     }
-
-    private fun advance() {
-        while (inner.hasNext()) {
-            val match = inner.next()
-            if (test(match.from, match.to, state)) {
-                nextMatch = match
-                return
-            }
-        }
-        nextMatch = null
-    }
-
-    override fun hasNext(): Boolean = nextMatch != null
-
-    override fun next(): SearchMatch {
-        val match = nextMatch ?: throw NoSuchElementException()
-        advance()
-        return match
+    return FilteringSearchCursor(inner) {
+        isWordBoundary(it.from) && isWordBoundary(it.to)
     }
 }
 
