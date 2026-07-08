@@ -165,7 +165,6 @@ internal class LinterPlugin(
     private val config: LintConfig
 ) : PluginValue {
     private var pendingSince: Long = -1L
-    private var hasRun = false
 
     init {
         // Run the linter on creation
@@ -198,7 +197,6 @@ internal class LinterPlugin(
 
     private fun runLinter() {
         val diagnostics = source(view)
-        hasRun = true
         view.dispatch(
             TransactionSpec(
                 effects = listOf(setDiagnosticsEffect.of(diagnostics))
