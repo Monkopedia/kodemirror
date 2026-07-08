@@ -121,7 +121,6 @@ public class com/monkopedia/kodemirror/language/IndentContext {
 	public final fun getSimulateBreak-aIaQTD8 ()Lcom/monkopedia/kodemirror/state/DocPos;
 	public final fun getSimulateDoubleBreak ()Z
 	public final fun getState ()Lcom/monkopedia/kodemirror/state/EditorState;
-	public final fun getTextAfterPos ()Ljava/lang/String;
 	public final fun getUnit ()I
 	public final fun lineAt-hDXv4Zw (II)Lcom/monkopedia/kodemirror/state/Line;
 	public static synthetic fun lineAt-hDXv4Zw$default (Lcom/monkopedia/kodemirror/language/IndentContext;IIILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/Line;

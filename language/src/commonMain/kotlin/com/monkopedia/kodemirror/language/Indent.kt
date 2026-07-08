@@ -64,13 +64,13 @@ val indentNodeProp: NodeProp<(TreeIndentContext) -> Int?> = NodeProp()
 fun getIndentUnit(state: EditorState): Int = state.facet(indentUnit)
 
 /**
- * Generate an indentation string for the given number of columns,
- * using tabs if the state's [indentUnit] divides evenly, otherwise spaces.
+ * Generate an indentation string for the given number of columns.
+ *
+ * Always uses spaces (one space per column) for consistency, regardless
+ * of the state's [indentUnit].
  */
 fun indentString(state: EditorState, cols: Int): String {
-    val unit = getIndentUnit(state)
     if (cols < 0) return ""
-    // Always use spaces for consistency
     return " ".repeat(cols)
 }
 
@@ -93,9 +93,6 @@ open class IndentContext(
 
     /** The indent unit size for this state. */
     val unit: Int get() = getIndentUnit(state)
-
-    /** The text content of the document. */
-    val textAfterPos: String get() = ""
 }
 
 /**
