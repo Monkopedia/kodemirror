@@ -27,6 +27,7 @@ import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
+import com.monkopedia.kodemirror.commands.cursorCharLeft
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.RangeSet
@@ -349,7 +350,7 @@ internal class VimPluginValue(internal val session: EditorSession) : PluginValue
                 syncPromptPanel()
                 return true
             } else if (event.key == Key.Backspace) {
-                com.monkopedia.kodemirror.commands.cursorCharLeft(cm.session)
+                cursorCharLeft(cm.session)
                 updateStatus()
                 syncPromptPanel()
                 return true

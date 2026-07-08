@@ -19,8 +19,11 @@
 package com.monkopedia.kodemirror.lang.html
 
 import com.monkopedia.kodemirror.language.syntaxTree
+import com.monkopedia.kodemirror.lezer.common.SyntaxNode
+import com.monkopedia.kodemirror.state.ChangeSet
 import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
+import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.SelectionSpec
@@ -78,7 +81,7 @@ val autoCloseTags: Extension = transactionFilter.of { tr ->
 private fun handleCloseAngle(
     tr: Transaction,
     pos: DocPos,
-    state: com.monkopedia.kodemirror.state.EditorState,
+    state: EditorState,
     doc: Text
 ): TransactionFilterResult {
     val tree = syntaxTree(state)
@@ -119,7 +122,7 @@ private fun handleCloseAngle(
 private fun handleSlash(
     tr: Transaction,
     pos: DocPos,
-    state: com.monkopedia.kodemirror.state.EditorState,
+    state: EditorState,
     doc: Text
 ): TransactionFilterResult {
     val tree = syntaxTree(state)
@@ -165,18 +168,14 @@ private fun handleSlash(
  * Extract the element name from an Element node by finding the first
  * child's TagName.
  */
-private fun elementName(
-    doc: Text,
-    tree: com.monkopedia.kodemirror.lezer.common.SyntaxNode?,
-    max: Int = doc.length
-): String {
+private fun elementName(doc: Text, tree: SyntaxNode?, max: Int = doc.length): String {
     if (tree == null) return ""
     val tag = tree.firstChild ?: return ""
     val name = tag.getChild("TagName") ?: return ""
     return doc.sliceString(DocPos(name.from), DocPos(minOf(name.to, max)))
 }
 
-private fun getInsertedText(changes: com.monkopedia.kodemirror.state.ChangeSet): String? {
+private fun getInsertedText(changes: ChangeSet): String? {
     var result: String? = null
     changes.iterChanges(
         f = { _, _, _, _, inserted ->

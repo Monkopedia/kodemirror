@@ -20,6 +20,7 @@ package com.monkopedia.kodemirror.lang.markdown
 
 import com.monkopedia.kodemirror.language.Language
 import com.monkopedia.kodemirror.language.LanguageSupport
+import com.monkopedia.kodemirror.lezer.common.Parser
 import com.monkopedia.kodemirror.lezer.markdown.MarkdownExtension
 import com.monkopedia.kodemirror.lezer.markdown.MarkdownParser
 import com.monkopedia.kodemirror.lezer.markdown.ParseCodeConfig
@@ -56,7 +57,7 @@ fun markdown(config: MarkdownSupportConfig = MarkdownSupportConfig()): LanguageS
     val support = mutableListOf<Extension>()
     support.add(headerIndent)
 
-    val codeParser: ((String) -> com.monkopedia.kodemirror.lezer.common.Parser?)? =
+    val codeParser: ((String) -> Parser?)? =
         if (config.codeLanguages != null || config.defaultCodeLanguage != null) {
             { info: String ->
                 if (info.isNotEmpty() && config.codeLanguages != null) {

@@ -46,6 +46,7 @@ import com.monkopedia.kodemirror.state.endPos
 import com.monkopedia.kodemirror.view.Decoration
 import com.monkopedia.kodemirror.view.DecorationSet
 import com.monkopedia.kodemirror.view.EditorSession
+import com.monkopedia.kodemirror.view.EditorTheme
 import com.monkopedia.kodemirror.view.GutterConfig
 import com.monkopedia.kodemirror.view.GutterMarker
 import com.monkopedia.kodemirror.view.GutterType
@@ -97,7 +98,7 @@ data class CollapseConfig(
 
 private val deletedChunkGutterMarker = object : GutterMarker() {
     @Composable
-    override fun Content(theme: com.monkopedia.kodemirror.view.EditorTheme) {
+    override fun Content(theme: EditorTheme) {
     }
 }
 
@@ -214,7 +215,7 @@ private class InlineDeletionWidget(private val text: String) : WidgetType() {
 
 private val inlineChangedLineGutterMarker = object : GutterMarker() {
     @Composable
-    override fun Content(theme: com.monkopedia.kodemirror.view.EditorTheme) {
+    override fun Content(theme: EditorTheme) {
     }
 }
 

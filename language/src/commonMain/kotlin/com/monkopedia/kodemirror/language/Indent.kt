@@ -28,6 +28,7 @@ import com.monkopedia.kodemirror.state.Facet
 import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.LanguageDataKey
 import com.monkopedia.kodemirror.state.Line
+import com.monkopedia.kodemirror.state.LineNumber
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.TransactionFilterResult
 import com.monkopedia.kodemirror.state.TransactionSpec
@@ -328,7 +329,7 @@ fun indentRange(state: EditorState, from: DocPos, to: DocPos): ChangeSpec? {
     val endLine = state.doc.lineAt(to)
 
     for (lineNum in startLine.number.value..endLine.number.value) {
-        val line = state.doc.line(com.monkopedia.kodemirror.state.LineNumber(lineNum))
+        val line = state.doc.line(LineNumber(lineNum))
         val desired = getIndentation(state, line.from) ?: continue
         val current = countIndent(line.text, state.tabSize)
         if (current == desired) continue

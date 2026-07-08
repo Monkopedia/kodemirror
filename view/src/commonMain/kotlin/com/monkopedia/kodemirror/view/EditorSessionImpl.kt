@@ -24,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ClipboardManager
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
+import com.monkopedia.kodemirror.state.Line
 import com.monkopedia.kodemirror.state.LineNumber
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
@@ -179,7 +180,7 @@ internal class EditorSessionImpl(
         return autoDirection(line.text, 0, line.text.length)
     }
 
-    override fun bidiSpans(line: com.monkopedia.kodemirror.state.Line): List<BidiSpan> {
+    override fun bidiSpans(line: Line): List<BidiSpan> {
         return computeOrder(line.text, textDirectionAt(line.from.value))
     }
 

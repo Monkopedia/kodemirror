@@ -25,6 +25,7 @@ import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.LineNumber
+import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.view.EditorSession
@@ -267,7 +268,7 @@ private fun applyBlockComment(
     view.dispatch(
         TransactionSpec(
             changes = ChangeSpec.Multi(changes),
-            selection = com.monkopedia.kodemirror.state.SelectionSpec.EditorSelectionSpec(
+            selection = SelectionSpec.EditorSelectionSpec(
                 EditorSelection.single(newSelFrom, newSelTo)
             ),
             scrollIntoView = true,

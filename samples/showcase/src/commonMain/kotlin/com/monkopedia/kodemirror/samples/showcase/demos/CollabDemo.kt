@@ -38,6 +38,7 @@ import com.monkopedia.kodemirror.lang.javascript.javascript
 import com.monkopedia.kodemirror.samples.showcase.DemoScaffold
 import com.monkopedia.kodemirror.samples.showcase.SampleDocs
 import com.monkopedia.kodemirror.state.plus
+import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.KodeMirror
 import com.monkopedia.kodemirror.view.rememberEditorSession
 
@@ -59,7 +60,7 @@ fun CollabDemo() {
     val sharedUpdates = remember { mutableListOf<Update>() }
 
     // --8<-- [start:sync-logic]
-    fun syncOne(session: com.monkopedia.kodemirror.view.EditorSession) {
+    fun syncOne(session: EditorSession) {
         val version = getSyncedVersion(session.state)
         val pending = sharedUpdates.drop(version)
         if (pending.isNotEmpty()) {
@@ -67,7 +68,7 @@ fun CollabDemo() {
         }
     }
 
-    fun sendOne(session: com.monkopedia.kodemirror.view.EditorSession) {
+    fun sendOne(session: EditorSession) {
         val sendable = sendableUpdates(session.state)
         for (u in sendable) {
             sharedUpdates.add(

@@ -32,6 +32,7 @@ import com.monkopedia.kodemirror.state.SelectionRangeData
 import com.monkopedia.kodemirror.state.StateField
 import com.monkopedia.kodemirror.state.StateJson
 import com.monkopedia.kodemirror.state.Text
+import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.state.fromData
 import com.monkopedia.kodemirror.state.toData
@@ -110,7 +111,7 @@ fun EditorStateSaver(
 fun EditorSessionSaver(
     extensions: Extension? = null,
     fields: Map<String, StateField<*>>? = null,
-    onUpdate: (com.monkopedia.kodemirror.state.Transaction) -> Unit = {}
+    onUpdate: (Transaction) -> Unit = {}
 ): Saver<EditorSession, String> = Saver(
     save = { session ->
         StateJson.encodeToString(session.state.toData(fields))
@@ -142,7 +143,7 @@ fun rememberSaveableEditorSession(
     doc: String = "",
     extensions: Extension? = null,
     fields: Map<String, StateField<*>>? = null,
-    onUpdate: (com.monkopedia.kodemirror.state.Transaction) -> Unit = {}
+    onUpdate: (Transaction) -> Unit = {}
 ): EditorSession = rememberSaveable(
     saver = EditorSessionSaver(extensions, fields, onUpdate)
 ) {

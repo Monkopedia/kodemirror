@@ -20,8 +20,10 @@ package com.monkopedia.kodemirror.lang.javascript
 
 import com.monkopedia.kodemirror.language.syntaxTree
 import com.monkopedia.kodemirror.lezer.common.SyntaxNode
+import com.monkopedia.kodemirror.state.ChangeSet
 import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
+import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.SelectionSpec
@@ -71,7 +73,7 @@ fun autoCloseTags(): Extension = transactionFilter.of { tr ->
 private fun handleCloseAngle(
     tr: Transaction,
     pos: DocPos,
-    state: com.monkopedia.kodemirror.state.EditorState,
+    state: EditorState,
     doc: Text
 ): TransactionFilterResult {
     val tree = syntaxTree(state)
@@ -120,7 +122,7 @@ private fun handleCloseAngle(
 private fun handleSlash(
     tr: Transaction,
     pos: DocPos,
-    state: com.monkopedia.kodemirror.state.EditorState,
+    state: EditorState,
     doc: Text
 ): TransactionFilterResult {
     val tree = syntaxTree(state)
@@ -190,10 +192,7 @@ private fun findAncestor(node: SyntaxNode, name: String): SyntaxNode? {
     return null
 }
 
-private fun getInsertedText(
-    changes: com.monkopedia.kodemirror.state.ChangeSet,
-    docLength: Int
-): String? {
+private fun getInsertedText(changes: ChangeSet, docLength: Int): String? {
     var result: String? = null
     changes.iterChanges(
         f = { _, _, _, _, inserted ->

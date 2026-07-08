@@ -18,6 +18,7 @@
  */
 package com.monkopedia.kodemirror.autocomplete
 
+import com.monkopedia.kodemirror.state.ChangeSet
 import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
@@ -197,10 +198,7 @@ private fun parsePairs(brackets: String): Map<Char, Char> {
     return result
 }
 
-private fun getInsertedText(
-    changes: com.monkopedia.kodemirror.state.ChangeSet,
-    docLength: Int
-): String? {
+private fun getInsertedText(changes: ChangeSet, docLength: Int): String? {
     var result: String? = null
     changes.iterChanges(
         f = { _, _, _, _, inserted ->

@@ -29,10 +29,12 @@ import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.Facet
+import com.monkopedia.kodemirror.state.Line
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.StateField
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
+import com.monkopedia.kodemirror.state.TransactionSpecBuilder
 import com.monkopedia.kodemirror.state.asInsert
 import com.monkopedia.kodemirror.state.endPos
 import com.monkopedia.kodemirror.state.transactionSpec
@@ -79,7 +81,7 @@ interface EditorSession {
     fun textDirectionAt(pos: Int): Direction
 
     /** Get the bidirectional text spans for a line. */
-    fun bidiSpans(line: com.monkopedia.kodemirror.state.Line): List<BidiSpan>
+    fun bidiSpans(line: Line): List<BidiSpan>
 
     /** Translate a phrase, optionally inserting values. */
     fun phrase(phrase: String, vararg insert: Any): String
@@ -119,9 +121,7 @@ fun EditorSession(initialState: EditorState, onUpdate: (Transaction) -> Unit = {
  * }
  * ```
  */
-fun EditorSession.dispatch(
-    block: com.monkopedia.kodemirror.state.TransactionSpecBuilder.() -> Unit
-) {
+fun EditorSession.dispatch(block: TransactionSpecBuilder.() -> Unit) {
     dispatch(transactionSpec(block))
 }
 

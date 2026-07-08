@@ -19,6 +19,7 @@
 package com.monkopedia.kodemirror.lang.xml
 
 import com.monkopedia.kodemirror.language.CommentTokens
+import com.monkopedia.kodemirror.language.FoldRange
 import com.monkopedia.kodemirror.language.LRLanguage
 import com.monkopedia.kodemirror.language.LanguageSupport
 import com.monkopedia.kodemirror.language.commentTokens
@@ -54,7 +55,7 @@ val xmlLanguage: LRLanguage = LRLanguage.define(
                             if (first.name != "OpenTag") return@add null
                             val last = node.lastChild ?: return@add null
                             val to = if (last.name == "CloseTag") last.from else node.to
-                            com.monkopedia.kodemirror.language.FoldRange(
+                            FoldRange(
                                 DocPos(first.to),
                                 DocPos(to)
                             )

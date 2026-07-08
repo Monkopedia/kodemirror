@@ -22,6 +22,7 @@ import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.InsertContent
+import com.monkopedia.kodemirror.state.SelectionRange
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.StateEffect
 import com.monkopedia.kodemirror.state.TransactionSpec
@@ -197,7 +198,7 @@ val selectMatches: (EditorSession) -> Boolean = { view ->
         false
     } else {
         val state = view.state
-        val ranges = mutableListOf<com.monkopedia.kodemirror.state.SelectionRange>()
+        val ranges = mutableListOf<SelectionRange>()
         val cursor = query.getCursor(state)
         for (match in cursor) {
             ranges.add(EditorSelection.range(match.from, match.to))
@@ -226,7 +227,7 @@ val selectSelectionMatches: (EditorSession) -> Boolean = { view ->
     if (selectedText.isEmpty()) {
         false
     } else {
-        val ranges = mutableListOf<com.monkopedia.kodemirror.state.SelectionRange>()
+        val ranges = mutableListOf<SelectionRange>()
         val docText = state.doc.toString()
         var searchFrom = 0
         while (true) {

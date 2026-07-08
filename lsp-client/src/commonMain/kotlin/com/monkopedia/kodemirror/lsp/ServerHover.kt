@@ -33,6 +33,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.state.Extension
+import com.monkopedia.kodemirror.state.Text
+import com.monkopedia.kodemirror.view.DEFAULT_HOVER_TIME
 import com.monkopedia.kodemirror.view.LocalEditorTheme
 import com.monkopedia.kodemirror.view.Tooltip
 import com.monkopedia.kodemirror.view.hoverTooltip
@@ -311,7 +313,7 @@ internal fun HoverContent(blocks: List<HoverBlock>) {
 internal fun hoverTooltipPos(
     hover: Hover,
     pos: Int,
-    prevDoc: com.monkopedia.kodemirror.state.Text,
+    prevDoc: Text,
     mapping: WorkspaceMapping?
 ): Int {
     val range = hover.range ?: return pos
@@ -349,33 +351,30 @@ internal fun hoverTooltipPos(
  *   request. Defaults to `:view`'s
  *   [DEFAULT_HOVER_TIME][com.monkopedia.kodemirror.view.DEFAULT_HOVER_TIME].
  */
-fun serverHover(
-    client: LSPClient,
-    uri: String,
-    hoverTime: Long = com.monkopedia.kodemirror.view.DEFAULT_HOVER_TIME
-): Extension = hoverTooltip(hoverTime) hover@{ session, pos ->
-    if (client.serverCapabilities?.hoverProvider == null) return@hover null
+fun serverHover(client: LSPClient, uri: String, hoverTime: Long = DEFAULT_HOVER_TIME): Extension =
+    hoverTooltip(hoverTime) hover@{ session, pos ->
+        if (client.serverCapabilities?.hoverProvider == null) return@hover null
 
-    // Flush pending edits so the server resolves against current text.
-    client.sync()
+        // Flush pending edits so the server resolves against current text.
+        client.sync()
 
-    val prevDoc = session.state.doc
-    val mapping = client.workspace.getMapping(uri)
-    try {
-        val params = HoverParams(
-            textDocument = TextDocumentIdentifier(uri = uri),
-            position = toPosition(pos, prevDoc)
-        )
-        val hover = try {
-            client.server.textDocumentHover(params)
-        } catch (e: CancellationException) {
-            throw e
-        } ?: return@hover null
-        val blocks = parseHoverContents(hover.contents)
-        if (blocks.isEmpty()) return@hover null
-        val anchor = hoverTooltipPos(hover, pos, prevDoc, mapping)
-        Tooltip(pos = anchor, content = { HoverContent(blocks) })
-    } finally {
-        mapping?.let { client.workspace.releaseMapping(it) }
+        val prevDoc = session.state.doc
+        val mapping = client.workspace.getMapping(uri)
+        try {
+            val params = HoverParams(
+                textDocument = TextDocumentIdentifier(uri = uri),
+                position = toPosition(pos, prevDoc)
+            )
+            val hover = try {
+                client.server.textDocumentHover(params)
+            } catch (e: CancellationException) {
+                throw e
+            } ?: return@hover null
+            val blocks = parseHoverContents(hover.contents)
+            if (blocks.isEmpty()) return@hover null
+            val anchor = hoverTooltipPos(hover, pos, prevDoc, mapping)
+            Tooltip(pos = anchor, content = { HoverContent(blocks) })
+        } finally {
+            mapping?.let { client.workspace.releaseMapping(it) }
+        }
     }
-}

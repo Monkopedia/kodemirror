@@ -25,6 +25,7 @@ package com.monkopedia.kodemirror.lang.python
 
 import com.monkopedia.kodemirror.lezer.lr.ContextTracker
 import com.monkopedia.kodemirror.lezer.lr.ExternalTokenizer
+import com.monkopedia.kodemirror.lezer.lr.InputStream
 import com.monkopedia.kodemirror.lezer.lr.LRParser
 import com.monkopedia.kodemirror.lezer.lr.ParserSpec
 import com.monkopedia.kodemirror.lezer.lr.SpecializerSpec
@@ -289,7 +290,7 @@ private val legacyPrint = ExternalTokenizer({ input, _ ->
     }
 })
 
-private fun skipEscape(input: com.monkopedia.kodemirror.lezer.lr.InputStream, ch: Int) {
+private fun skipEscape(input: InputStream, ch: Int) {
     if (ch == letter_o) {
         for (i in 0 until 2) {
             if (input.next >= 48 && input.next <= 55) input.advance() else break

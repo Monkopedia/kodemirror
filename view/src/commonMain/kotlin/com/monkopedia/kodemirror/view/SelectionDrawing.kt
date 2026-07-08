@@ -27,10 +27,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.text.TextLayoutResult
 import com.monkopedia.kodemirror.state.EditorState
+import com.monkopedia.kodemirror.state.Extension
+import com.monkopedia.kodemirror.state.ExtensionList
 
 /** Extension to select the draw-selection extension. */
-val drawSelection: com.monkopedia.kodemirror.state.Extension =
-    com.monkopedia.kodemirror.state.ExtensionList(emptyList())
+val drawSelection: Extension =
+    ExtensionList(emptyList())
 
 /**
  * Draw the cursor and selection ranges as a per-line [Modifier] overlay.

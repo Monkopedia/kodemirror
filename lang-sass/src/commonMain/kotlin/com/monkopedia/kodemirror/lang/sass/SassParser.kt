@@ -22,6 +22,7 @@ package com.monkopedia.kodemirror.lang.sass
 
 import com.monkopedia.kodemirror.lezer.lr.ContextTracker
 import com.monkopedia.kodemirror.lezer.lr.ExternalTokenizer
+import com.monkopedia.kodemirror.lezer.lr.InputStream
 import com.monkopedia.kodemirror.lezer.lr.LRParser
 import com.monkopedia.kodemirror.lezer.lr.ParserSpec
 import com.monkopedia.kodemirror.lezer.lr.SpecializerSpec
@@ -76,7 +77,7 @@ private fun isAlpha(ch: Int): Boolean = ch in 65..90 || ch in 97..122 || ch >= 1
 
 private fun isDigit(ch: Int): Boolean = ch in 48..57
 
-private fun startOfComment(input: com.monkopedia.kodemirror.lezer.lr.InputStream): Boolean {
+private fun startOfComment(input: InputStream): Boolean {
     val next: Int
     return input.next == SLASH &&
         run {

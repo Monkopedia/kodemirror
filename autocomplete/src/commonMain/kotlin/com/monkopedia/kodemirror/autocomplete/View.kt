@@ -59,15 +59,16 @@ import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.KeyBinding
 import com.monkopedia.kodemirror.view.LocalContentTextStyle
+import com.monkopedia.kodemirror.view.LocalEditorSession
 import com.monkopedia.kodemirror.view.LocalEditorTheme
 import com.monkopedia.kodemirror.view.PluginValue
 import com.monkopedia.kodemirror.view.ThemeKey
 import com.monkopedia.kodemirror.view.Tooltip
 import com.monkopedia.kodemirror.view.ViewPlugin
 import com.monkopedia.kodemirror.view.ViewUpdate
-import kotlinx.coroutines.launch
 import com.monkopedia.kodemirror.view.keymap
 import com.monkopedia.kodemirror.view.showTooltip
+import kotlinx.coroutines.launch
 
 /** Background color for the completion popup. */
 val completionBackground = ThemeKey(default = Color(0xFF353A42))
@@ -465,7 +466,6 @@ private fun CompletionList(
     }
 }
 
-
 /**
  * Build the popup label as an [AnnotatedString] with the matched-prefix
  * [highlighted] ranges rendered bold, optionally folding [detail] on the end.
@@ -584,7 +584,7 @@ fun autocompletion(config: CompletionConfig = CompletionConfig()): Extension {
         if (cs != null && cs.open && cs.filtered.isNotEmpty() && csFrom != null) {
             // Anchor the popup at the smallest from across the merged sources.
             Tooltip(pos = csFrom.value) {
-                val editorView = com.monkopedia.kodemirror.view.LocalEditorSession.current
+                val editorView = LocalEditorSession.current
                 val currentConfig = editorView.state.facet(completionConfig)
                 val currentCs = editorView.state.field(completionStateField, require = false)
                     ?: cs

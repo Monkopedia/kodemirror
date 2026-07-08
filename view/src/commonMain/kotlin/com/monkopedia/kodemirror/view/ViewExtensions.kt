@@ -18,6 +18,7 @@
  */
 package com.monkopedia.kodemirror.view
 
+import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.Facet
 import com.monkopedia.kodemirror.state.RangeSet
@@ -118,7 +119,7 @@ val exceptionSink: Facet<(Throwable) -> Unit, List<(Throwable) -> Unit>> =
  * Reports to handlers registered via [exceptionSink], or prints
  * to stderr if none are configured.
  */
-fun logException(state: com.monkopedia.kodemirror.state.EditorState, exception: Throwable) {
+fun logException(state: EditorState, exception: Throwable) {
     val handlers = state.facet(exceptionSink)
     if (handlers.isEmpty()) {
         exception.printStackTrace()

@@ -31,6 +31,7 @@ import com.monkopedia.kodemirror.lezer.common.NodeType
 import com.monkopedia.kodemirror.lezer.common.SyntaxNode
 import com.monkopedia.kodemirror.lezer.markdown.Emoji
 import com.monkopedia.kodemirror.lezer.markdown.GFM
+import com.monkopedia.kodemirror.lezer.markdown.MarkdownConfig
 import com.monkopedia.kodemirror.lezer.markdown.MarkdownParser
 import com.monkopedia.kodemirror.lezer.markdown.Subscript
 import com.monkopedia.kodemirror.lezer.markdown.Superscript
@@ -45,7 +46,7 @@ internal val headingProp = NodeProp<Int>()
 
 private val commonmark: MarkdownParser = baseParser.configure(
     markdownExtensionOf(
-        com.monkopedia.kodemirror.lezer.markdown.MarkdownConfig(
+        MarkdownConfig(
             props = listOf(
                 foldNodeProp.add { type ->
                     if (!type.`is`("Block") ||
@@ -121,7 +122,7 @@ private val extended: MarkdownParser = commonmark.configure(
         Superscript,
         Emoji,
         markdownExtensionOf(
-            com.monkopedia.kodemirror.lezer.markdown.MarkdownConfig(
+            MarkdownConfig(
                 props = listOf(
                     foldNodeProp.add { type ->
                         if (type.name == "Table") {

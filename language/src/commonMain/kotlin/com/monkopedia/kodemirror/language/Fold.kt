@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.lezer.common.NodeProp
 import com.monkopedia.kodemirror.lezer.common.SyntaxNode
+import com.monkopedia.kodemirror.lezer.common.Tree
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
@@ -212,7 +213,7 @@ fun foldable(state: EditorState, lineStart: DocPos): FoldRange? {
 }
 
 private fun syntaxFolding(
-    tree: com.monkopedia.kodemirror.lezer.common.Tree,
+    tree: Tree,
     state: EditorState,
     lineStart: DocPos,
     lineEnd: DocPos

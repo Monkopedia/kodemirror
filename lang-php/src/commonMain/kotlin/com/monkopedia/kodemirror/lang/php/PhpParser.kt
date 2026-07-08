@@ -21,6 +21,7 @@
 package com.monkopedia.kodemirror.lang.php
 
 import com.monkopedia.kodemirror.lezer.lr.ExternalTokenizer
+import com.monkopedia.kodemirror.lezer.lr.InputStream
 import com.monkopedia.kodemirror.lezer.lr.LRParser
 import com.monkopedia.kodemirror.lezer.lr.ParserSpec
 import com.monkopedia.kodemirror.lezer.lr.SpecializerSpec
@@ -270,7 +271,7 @@ private val semicolon = ExternalTokenizer({ input, stack ->
 })
 
 // Helper for escape sequences in interpolated strings
-private fun scanEscape(input: com.monkopedia.kodemirror.lezer.lr.InputStream): Int {
+private fun scanEscape(input: InputStream): Int {
     val after = input.peek(1)
     if (after == 110 ||
         after == 114 ||

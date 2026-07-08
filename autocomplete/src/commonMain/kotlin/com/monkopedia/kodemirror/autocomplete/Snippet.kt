@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
+import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.InsertContent
@@ -203,13 +204,13 @@ fun snippetCompletion(template: String, completion: Completion): Completion =
 // ── Snippet state queries ──
 
 /** Whether there is a next snippet field to navigate to. */
-fun hasNextSnippetField(state: com.monkopedia.kodemirror.state.EditorState): Boolean {
+fun hasNextSnippetField(state: EditorState): Boolean {
     val active = state.field(snippetState, require = false)
     return active != null && active.fieldIndex < active.fields.size - 1
 }
 
 /** Whether there is a previous snippet field to navigate to. */
-fun hasPrevSnippetField(state: com.monkopedia.kodemirror.state.EditorState): Boolean {
+fun hasPrevSnippetField(state: EditorState): Boolean {
     val active = state.field(snippetState, require = false)
     return active != null && active.fieldIndex > 0
 }

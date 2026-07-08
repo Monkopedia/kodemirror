@@ -18,6 +18,7 @@
  */
 package com.monkopedia.kodemirror.legacy.modes
 
+import com.monkopedia.kodemirror.language.IndentContext
 import com.monkopedia.kodemirror.language.StreamParser
 import com.monkopedia.kodemirror.language.StringStream
 
@@ -258,9 +259,6 @@ val cobol: StreamParser<CobolState> = object : StreamParser<CobolState> {
         }
     }
 
-    override fun indent(
-        state: CobolState,
-        textAfter: String,
-        context: com.monkopedia.kodemirror.language.IndentContext
-    ): Int = state.indentStack?.indent ?: state.indentation
+    override fun indent(state: CobolState, textAfter: String, context: IndentContext): Int =
+        state.indentStack?.indent ?: state.indentation
 }

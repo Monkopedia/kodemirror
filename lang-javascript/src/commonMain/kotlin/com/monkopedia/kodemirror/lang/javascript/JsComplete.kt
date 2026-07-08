@@ -26,6 +26,7 @@ import com.monkopedia.kodemirror.language.syntaxTree
 import com.monkopedia.kodemirror.lezer.common.NodeWeakMap
 import com.monkopedia.kodemirror.lezer.common.SyntaxNode
 import com.monkopedia.kodemirror.state.DocPos
+import com.monkopedia.kodemirror.state.Text
 
 private val Identifier = Regex("[\\w$\\xa1-\\uffff]+")
 
@@ -125,10 +126,7 @@ fun completionPath(context: CompletionContext): CompletionPathResult? {
     )
 }
 
-private fun getScope(
-    doc: com.monkopedia.kodemirror.state.Text,
-    node: SyntaxNode
-): List<Completion> {
+private fun getScope(doc: Text, node: SyntaxNode): List<Completion> {
     val completions = mutableListOf<Completion>()
     val seen = mutableSetOf<String>()
     var child = node.firstChild
@@ -140,7 +138,7 @@ private fun getScope(
 }
 
 private fun addCompletions(
-    doc: com.monkopedia.kodemirror.state.Text,
+    doc: Text,
     node: SyntaxNode,
     completions: MutableList<Completion>,
     seen: MutableSet<String>
@@ -178,7 +176,7 @@ private fun addCompletions(
 }
 
 private fun addName(
-    doc: com.monkopedia.kodemirror.state.Text,
+    doc: Text,
     node: SyntaxNode,
     completions: MutableList<Completion>,
     seen: MutableSet<String>,
