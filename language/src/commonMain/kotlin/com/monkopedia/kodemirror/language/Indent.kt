@@ -31,6 +31,7 @@ import com.monkopedia.kodemirror.state.Line
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.TransactionFilterResult
 import com.monkopedia.kodemirror.state.TransactionSpec
+import com.monkopedia.kodemirror.state.countColumn
 import com.monkopedia.kodemirror.state.transactionFilter
 
 /**
@@ -64,38 +65,88 @@ val indentNodeProp: NodeProp<(TreeIndentContext) -> Int?> = NodeProp()
 fun getIndentUnit(state: EditorState): Int = state.facet(indentUnit)
 
 /**
- * Generate an indentation string for the given number of columns,
- * using tabs if the state's [indentUnit] divides evenly, otherwise spaces.
+ * Generate an indentation string for the given number of columns.
+ *
+ * Kodemirror always emits spaces (one space per column); tabs are not
+ * produced. A negative [cols] yields an empty string.
  */
 fun indentString(state: EditorState, cols: Int): String {
-    val unit = getIndentUnit(state)
     if (cols < 0) return ""
-    // Always use spaces for consistency
     return " ".repeat(cols)
 }
 
 /**
  * Context object passed to indent services and node prop strategies.
+ *
+ * Mirrors CodeMirror 6's `IndentContext`. When [simulateBreak] is set, the
+ * context computes indentation as if a line break had been inserted at that
+ * position (used to answer "what indentation would this position get after
+ * pressing Enter"). [simulateDoubleBreak] additionally treats the break
+ * position as an empty line (Enter pressed twice).
  */
 open class IndentContext(
     val state: EditorState,
     val simulateBreak: DocPos? = null,
     val simulateDoubleBreak: Boolean = false
 ) {
-    /** Get the text of a document line by position. */
+    /**
+     * Get the document line at [pos].
+     *
+     * Note: unlike CodeMirror's `lineAt`, this returns the real doc [Line]
+     * for source compatibility with callers that rely on line metadata
+     * ([Line.to], [Line.number], etc.). It therefore cannot represent the
+     * portion of a line produced by a simulated break. The [bias] parameter
+     * is accepted for API parity but does not split the returned [Line];
+     * [textAfterPos], [column] and [lineIndent] honor the simulated break
+     * via the private [lineContentAt] helper instead.
+     */
     fun lineAt(pos: DocPos, bias: Int = 1): Line = state.doc.lineAt(pos)
 
-    /** Get the indentation column at the start of a line. */
+    /**
+     * Return the (text, from) of the line at [pos], splitting the line at
+     * [simulateBreak] when one falls within it — matching CodeMirror's
+     * `lineAt`. [bias] selects which side of the break to return: `bias < 0`
+     * keeps the content strictly before the break when it sits before [pos],
+     * otherwise the content after it.
+     */
+    protected fun lineContentAt(pos: DocPos, bias: Int): Pair<String, Int> {
+        val line = state.doc.lineAt(pos)
+        val sim = simulateBreak
+        if (sim != null && sim >= line.from && sim <= line.to) {
+            if (simulateDoubleBreak && sim == pos) {
+                return "" to pos.value
+            }
+            val afterBreak = if (bias < 0) sim < pos else sim <= pos
+            return if (afterBreak) {
+                line.text.substring(sim.value - line.from.value) to sim.value
+            } else {
+                line.text.substring(0, sim.value - line.from.value) to line.from.value
+            }
+        }
+        return line.text to line.from.value
+    }
+
+    /**
+     * The text on the line at [pos], starting from [pos] and capped at 100
+     * characters. Honors [simulateBreak]/[simulateDoubleBreak] and [bias].
+     * Matches CodeMirror's `textAfterPos`.
+     */
+    fun textAfterPos(pos: DocPos, bias: Int = 1): String {
+        if (simulateDoubleBreak && pos == simulateBreak) return ""
+        val (text, from) = lineContentAt(pos, bias)
+        val start = pos.value - from
+        val end = minOf(text.length, pos.value + 100 - from)
+        return text.substring(start, end)
+    }
+
+    /** Get the indentation column at the start of the line at [pos]. */
     fun lineIndent(pos: DocPos, bias: Int = 1): Int {
-        val line = lineAt(pos, bias)
-        return countIndent(line.text, state.tabSize)
+        val (text, _) = lineContentAt(pos, bias)
+        return countIndent(text, state.tabSize)
     }
 
     /** The indent unit size for this state. */
     val unit: Int get() = getIndentUnit(state)
-
-    /** The text content of the document. */
-    val textAfterPos: String get() = ""
 }
 
 /**
@@ -116,20 +167,18 @@ class TreeIndentContext(
     var node: SyntaxNode = syntaxTree(state).resolveInner(pos.value)
         internal set
 
-    /** Get the column of a given position. */
+    /**
+     * Get the column of a given position, honoring [simulateBreak] and
+     * [bias]. Matches CodeMirror's `column`.
+     */
     fun column(pos: Int, bias: Int = 1): Int {
-        val line = state.doc.lineAt(DocPos(pos))
-        val offset = pos - line.from.value
-        return countIndent(line.text.substring(0, offset), state.tabSize)
+        val (text, from) = lineContentAt(DocPos(pos), bias)
+        return countColumn(text, state.tabSize, pos - from)
     }
 
     /** The text on the line after the indent position. */
     val textAfter: String
-        get() {
-            if (simulateDoubleBreak && pos == simulateBreak) return ""
-            val line = state.doc.lineAt(pos)
-            return line.text.substring(pos - line.from)
-        }
+        get() = textAfterPos(pos, 1)
 
     /** The base indentation of the line the node starts on. */
     val baseIndent: Int

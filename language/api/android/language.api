@@ -121,12 +121,14 @@ public class com/monkopedia/kodemirror/language/IndentContext {
 	public final fun getSimulateBreak-aIaQTD8 ()Lcom/monkopedia/kodemirror/state/DocPos;
 	public final fun getSimulateDoubleBreak ()Z
 	public final fun getState ()Lcom/monkopedia/kodemirror/state/EditorState;
-	public final fun getTextAfterPos ()Ljava/lang/String;
 	public final fun getUnit ()I
 	public final fun lineAt-hDXv4Zw (II)Lcom/monkopedia/kodemirror/state/Line;
 	public static synthetic fun lineAt-hDXv4Zw$default (Lcom/monkopedia/kodemirror/language/IndentContext;IIILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/Line;
+	protected final fun lineContentAt-hDXv4Zw (II)Lkotlin/Pair;
 	public final fun lineIndent-hDXv4Zw (II)I
 	public static synthetic fun lineIndent-hDXv4Zw$default (Lcom/monkopedia/kodemirror/language/IndentContext;IIILjava/lang/Object;)I
+	public final fun textAfterPos-hDXv4Zw (II)Ljava/lang/String;
+	public static synthetic fun textAfterPos-hDXv4Zw$default (Lcom/monkopedia/kodemirror/language/IndentContext;IIILjava/lang/Object;)Ljava/lang/String;
 }
 
 public final class com/monkopedia/kodemirror/language/IndentKt {
