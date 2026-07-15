@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.3.5] - 2026-07-15
+
+### Changed
+- Bumped `com.monkopedia.lsp:lsp` / `lsp-ksrpc` 1.2.0 → 1.2.1 (brings the clean ksrpc 1.1.5 / nanoid@5 baseline transitively).
+- Bumped Kotlin 2.4.0 → 2.4.10 and kotlinx-coroutines 1.10.2 → 1.11.0.
+- Refreshed dependencies to latest stable (#178): kotlinx-serialization 1.10.0 → 1.11.0, atomicfu 0.32.1 → 0.33.0, roborazzi 1.59.0 → 1.68.0, spotless 8.4.0 → 8.8.0, vanniktech-maven-publish 0.36.0 → 0.37.0, and androidx-activity-compose 1.9.3 → 1.13.0 (samples/android only). Compose-Multiplatform is intentionally held at 1.10.3: 1.11.1 drops the published iosX64/macosX64 (Apple-Intel) targets this library ships and turns `Key.Home` into a hard error, so that bump is a separate migration.
+
+### Build
+- Pinned the managed Node.js toolchain (JS + wasm) to 22.11.0. Kotlin 2.4.10 defaults managed Node to v25, which breaks `:kotlinWasmNpmInstall` / `:kotlinNpmInstall`; the pin uses the `NodeJsEnvSpec` / `WasmNodeJsEnvSpec` `version.set(...)` API (the deprecated setter fails under `-Werror`).
+
 ## [0.3.4] - 2026-07-09
 
 ### Added

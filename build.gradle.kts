@@ -20,6 +20,17 @@ dependencies {
     }
 }
 
+// Kotlin 2.4.10 defaults the managed Node.js to v25, which breaks
+// :kotlinWasmNpmInstall / :kotlinNpmInstall. Pin the JS and wasm Node
+// toolchains to a known-good LTS. Must use the EnvSpec API + version.set()
+// — the deprecated NodeJsRootExtension.version= setter fails under -Werror.
+plugins.withType<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsPlugin> {
+    the<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsEnvSpec>().version.set("22.11.0")
+}
+plugins.withType<org.jetbrains.kotlin.gradle.targets.wasm.nodejs.WasmNodeJsPlugin> {
+    the<org.jetbrains.kotlin.gradle.targets.wasm.nodejs.WasmNodeJsEnvSpec>().version.set("22.11.0")
+}
+
 // Add Dokka aggregation only for subprojects that apply the Dokka plugin
 // (excludes :kodemirror-bom, :samples:editor, :kodemirror-test, etc.)
 subprojects {
