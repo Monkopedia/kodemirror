@@ -33,7 +33,7 @@ plugins {
 }
 
 group = "com.monkopedia.kodemirror"
-version = "0.3.5"
+version = "0.3.6-SNAPSHOT"
 
 android {
     namespace = "com.monkopedia.kodemirror.${project.name.replace("-", ".")}"
@@ -58,10 +58,8 @@ kotlin {
 
     // Native targets — compile but largely untested.
     macosArm64()
-    macosX64()
     iosArm64()
     iosSimulatorArm64()
-    iosX64()
 
     applyDefaultHierarchyTemplate()
 

@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+- Bumped Compose-Multiplatform 1.10.3 → 1.11.1 (Skia M138 → M144) and migrated `Key.Home` → `Key.MoveHome` (1.11 removed the `Key.Home` alias).
+
+### Removed
+- **Dropped the `iosX64` and `macosX64` (Apple-Intel) publication targets.** Compose-Multiplatform 1.11.x no longer publishes those two targets (`runtime-macosx64:1.11.x` is absent from Maven Central), so the library follows suit. Apple Silicon (`macosArm64`, `iosArm64`, `iosSimulatorArm64`), JVM, wasmJs, and Android are unaffected. This is a breaking change only for consumers building for Apple-Intel (#182).
+
 ## [0.3.5] - 2026-07-15
 
 ### Changed

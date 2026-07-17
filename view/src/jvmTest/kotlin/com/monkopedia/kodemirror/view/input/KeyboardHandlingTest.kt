@@ -99,8 +99,8 @@ class KeyboardHandlingTest {
         waitForIdle()
 
         onNodeWithTag("KodeMirror_input").performKeyInput {
-            keyDown(Key.Home)
-            keyUp(Key.Home)
+            keyDown(Key.MoveHome)
+            keyUp(Key.MoveHome)
         }
         waitForIdle()
         holder.assertCursorAt(0)

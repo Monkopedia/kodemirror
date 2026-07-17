@@ -491,7 +491,7 @@ private fun composeKeyName(event: KeyEvent): String {
         Key.DirectionRight -> "ArrowRight"
         Key.DirectionUp -> "ArrowUp"
         Key.DirectionDown -> "ArrowDown"
-        Key.Home -> "Home"
+        Key.MoveHome -> "Home"
         Key.MoveEnd -> "End"
         Key.PageUp -> "PageUp"
         Key.PageDown -> "PageDown"
