@@ -14,7 +14,6 @@ kotlin {
             implementation(compose.ui)
             implementation(compose.foundation)
             implementation(compose.runtime)
-            implementation(libs.kotlinx.datetime)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

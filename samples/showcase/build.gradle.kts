@@ -77,13 +77,6 @@ kotlin {
     }
 }
 
-configurations.configureEach {
-    resolutionStrategy {
-        force("org.jetbrains.kotlinx:kotlinx-datetime:0.6.2")
-        force("org.jetbrains.kotlinx:kotlinx-datetime-wasm-js:0.6.2")
-    }
-}
-
 tasks.configureEach {
     if (name.startsWith("wasmJsTest") || name == "wasmJsNodeTest") enabled = false
 }

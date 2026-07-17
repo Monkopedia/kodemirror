@@ -13,7 +13,6 @@ kotlin {
             implementation(compose.foundation)
             implementation(compose.runtime)
             implementation(libs.kotlinx.coroutines.core)
-            implementation(libs.kotlinx.datetime)
         }
         commonTest.dependencies {
             implementation(project(":state"))
