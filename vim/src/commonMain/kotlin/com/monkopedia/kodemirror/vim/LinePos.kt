@@ -53,9 +53,6 @@ internal fun cursorMin(a: LinePos, b: LinePos): LinePos = if (cursorIsBefore(a, 
 /** Returns the later of two positions. */
 internal fun cursorMax(a: LinePos, b: LinePos): LinePos = if (cursorIsBefore(a, b)) b else a
 
-/** Copy a LinePos, optionally overriding line or ch. */
-fun LinePos.copy(line: Int = this.line, ch: Int = this.ch): LinePos = LinePos(line, ch)
-
 // ---------------------------------------------------------------------------
 // Position conversion helpers
 // ---------------------------------------------------------------------------

@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Bumped Compose-Multiplatform 1.10.3 → 1.11.1 (Skia M138 → M144) and migrated `Key.Home` → `Key.MoveHome` (1.11 removed the `Key.Home` alias).
 
 ### Removed
+- Removed the redundant public `fun LinePos.copy(line, ch)` extension in `:vim` (#186). It shadowed the `LinePos` data class's generated `copy()` and silently dropped the `sticky` field — a latent data-loss footgun the moment `sticky` gets wired up (its CM5 sticky-column logic is not yet ported). The extension had zero call sites, so removing it is behaviour-preserving today and leaves the full-fidelity generated `copy()` as the only one.
 - **Dropped the `iosX64` and `macosX64` (Apple-Intel) publication targets.** Compose-Multiplatform 1.11.x no longer publishes those two targets (`runtime-macosx64:1.11.x` is absent from Maven Central), so the library follows suit. Apple Silicon (`macosArm64`, `iosArm64`, `iosSimulatorArm64`), JVM, wasmJs, and Android are unaffected. This is a breaking change only for consumers building for Apple-Intel (#182).
 - Removed the unused `kotlinx-datetime` dependency from `:state`, `:lint`, and `:merge` (#180). Those modules use stdlib `kotlin.time.Clock` for timestamps and never imported `kotlinx.datetime`, so the dependency was dead weight; dropping it also removes the `samples/showcase` `kotlinx-datetime:0.6.2` wasm resolution force-pin that only existed to resolve the transitive artifact.
 

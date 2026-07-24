@@ -173,11 +173,6 @@ public final class com/monkopedia/kodemirror/vim/LinePos : java/lang/Comparable 
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class com/monkopedia/kodemirror/vim/LinePosKt {
-	public static final fun copy (Lcom/monkopedia/kodemirror/vim/LinePos;II)Lcom/monkopedia/kodemirror/vim/LinePos;
-	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/vim/LinePos;IIILjava/lang/Object;)Lcom/monkopedia/kodemirror/vim/LinePos;
-}
-
 public final class com/monkopedia/kodemirror/vim/LinePosRange {
 	public static final field $stable I
 	public fun <init> (Lcom/monkopedia/kodemirror/vim/LinePos;Lcom/monkopedia/kodemirror/vim/LinePos;)V
