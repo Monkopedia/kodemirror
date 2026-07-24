@@ -20,15 +20,31 @@ dependencies {
     }
 }
 
-// Kotlin 2.4.10 defaults the managed Node.js to v25, which breaks
-// :kotlinWasmNpmInstall / :kotlinNpmInstall. Pin the JS and wasm Node
-// toolchains to a known-good LTS. Must use the EnvSpec API + version.set()
-// — the deprecated NodeJsRootExtension.version= setter fails under -Werror.
+// Kotlin 2.4.10 defaults the managed Node.js to v25, which fails to start on
+// the CI runners. Pin the JS and wasm Node toolchains to a known-good LTS.
+//
+// This needs BOTH APIs. The modern EnvSpec.version drives the target-node users
+// (`:kotlinWasmNpmInstall` / yarn), but the wasm *npm tooling* node — the one
+// `wasmJsBrowser*Webpack` launches to run webpack — is resolved from the legacy
+// `WasmNodeJsRootExtension.version` instead, which the EnvSpec does not update.
+// Setting only the EnvSpec leaves webpack on the default v25, so the showcase
+// production build fails while `:check` (which never runs webpack) passes.
+// The RootExtension setter is a scheduled-for-removal deprecation and this build
+// compiles with -Werror, hence the suppression; drop it once the tooling node
+// honours the EnvSpec.
 plugins.withType<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsPlugin> {
     the<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsEnvSpec>().version.set("22.11.0")
 }
 plugins.withType<org.jetbrains.kotlin.gradle.targets.wasm.nodejs.WasmNodeJsPlugin> {
     the<org.jetbrains.kotlin.gradle.targets.wasm.nodejs.WasmNodeJsEnvSpec>().version.set("22.11.0")
+}
+plugins.withType<org.jetbrains.kotlin.gradle.targets.wasm.nodejs.WasmNodeJsRootPlugin> {
+    @Suppress("DEPRECATION", "DEPRECATION_ERROR")
+    fun pinWasmToolingNode() {
+        the<org.jetbrains.kotlin.gradle.targets.wasm.nodejs.WasmNodeJsRootExtension>().version =
+            "22.11.0"
+    }
+    pinWasmToolingNode()
 }
 
 // Add Dokka aggregation only for subprojects that apply the Dokka plugin
