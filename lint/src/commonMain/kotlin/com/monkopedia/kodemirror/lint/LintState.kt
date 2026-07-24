@@ -51,10 +51,7 @@ val setDiagnosticsEffect: StateEffectType<List<Diagnostic>> = StateEffect.define
 internal val forceLintEffect: StateEffectType<Unit> = StateEffect.define()
 
 /** Internal state holding diagnostics and their decorations. */
-internal class LintStateValue(
-    val diagnostics: List<Diagnostic>,
-    val decorations: DecorationSet
-) {
+internal class LintStateValue(val diagnostics: List<Diagnostic>, val decorations: DecorationSet) {
     companion object {
         val empty = LintStateValue(emptyList(), RangeSet.empty())
 

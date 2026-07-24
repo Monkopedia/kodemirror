@@ -624,9 +624,7 @@ internal fun expandSelectionToLine(
     @Suppress("UNUSED_PARAMETER") cm: VimEditor,
     curStart: LinePos,
     curEnd: LinePos
-): Pair<LinePos, LinePos> {
-    return LinePos(curStart.line, 0) to LinePos(curEnd.line + 1, 0)
-}
+): Pair<LinePos, LinePos> = LinePos(curStart.line, 0) to LinePos(curEnd.line + 1, 0)
 
 // ---------------------------------------------------------------------------
 // findFirstNonWhiteSpaceCharacter
@@ -699,18 +697,23 @@ internal fun expandWordUnderCursor(
 
     if (inclusive) {
         val wordEnd = end
-        val startsWithSpace = cur.ch <= start && cur.ch < line.length &&
+        val startsWithSpace = cur.ch <= start &&
+            cur.ch < line.length &&
             Regex("\\s").containsMatchIn(line[cur.ch].toString())
         if (!startsWithSpace) {
             while (end < endLineRef[0].length &&
                 Regex("\\s").containsMatchIn(endLineRef[0][end].toString())
-                ) end++
+            ) {
+                end++
+            }
         }
         if (wordEnd == end || startsWithSpace) {
             val wordStart = start
             while (start > 0 &&
                 Regex("\\s").containsMatchIn(line[start - 1].toString())
-                ) start--
+            ) {
+                start--
+            }
             if (start == 0 && !startsWithSpace) start = wordStart
         }
     }
@@ -797,9 +800,8 @@ internal val findSymbolModes: Map<String, FindSymbolMode> = mapOf(
             state.curMoveThrough = true
             state.symb = if ((if (state.forward == true) "]" else "[") == state.symb) "{" else "}"
         }
-        override fun isComplete(state: FindSymbolState): Boolean {
-            return state.index == 0 && state.nextCh == state.symb
-        }
+        override fun isComplete(state: FindSymbolState): Boolean =
+            state.index == 0 && state.nextCh == state.symb
     },
     "comment" to object : FindSymbolMode {
         override fun isComplete(state: FindSymbolState): Boolean {
@@ -813,9 +815,7 @@ internal val findSymbolModes: Map<String, FindSymbolMode> = mapOf(
             state.symb = if (state.symb == "m") "{" else "}"
             state.reverseSymb = if (state.symb == "{") "}" else "{"
         }
-        override fun isComplete(state: FindSymbolState): Boolean {
-            return state.nextCh == state.symb
-        }
+        override fun isComplete(state: FindSymbolState): Boolean = state.nextCh == state.symb
     },
     "preprocess" to object : FindSymbolMode {
         override fun init(state: FindSymbolState) {
@@ -938,14 +938,17 @@ internal fun findWord(
             for (i in charTests.indices) {
                 if (pos >= 0 && pos < line.length && charTests[i](line[pos].toString())) {
                     wordStart = pos
-                    while (pos != stop && pos >= 0 && pos < line.length &&
+                    while (pos != stop &&
+                        pos >= 0 &&
+                        pos < line.length &&
                         charTests[i](line[pos].toString())
                     ) {
                         pos += dir
                     }
                     wordEnd = pos
                     foundWord = wordStart != wordEnd
-                    if (wordStart == cur.ch && lineNum == cur.line &&
+                    if (wordStart == cur.ch &&
+                        lineNum == cur.line &&
                         wordEnd == wordStart + dir
                     ) {
                         continue
@@ -1264,7 +1267,9 @@ internal fun getSentence(
             nextChar(curr)
         }
         curr.line = line
-        return if (inclusive && curr.line != null && curr.pos < curr.line!!.length &&
+        return if (inclusive &&
+            curr.line != null &&
+            curr.pos < curr.line!!.length &&
             isWhiteSpaceString(curr.line!![curr.pos].toString())
         ) {
             curr.ln to curr.pos
@@ -1294,12 +1299,7 @@ internal fun getSentence(
 // ---------------------------------------------------------------------------
 
 internal fun findSentence(cm: VimEditor, cur: LinePos, repeat: Int, dir: Int): LinePos {
-    data class Idx(
-        var line: String?,
-        var ln: Int,
-        var pos: Int,
-        var dir: Int
-    )
+    data class Idx(var line: String?, var ln: Int, var pos: Int, var dir: Int)
 
     fun nextChar(cm: VimEditor, idx: Idx) {
         if (idx.line == null) return
@@ -1329,13 +1329,15 @@ internal fun findSentence(cm: VimEditor, cur: LinePos, repeat: Int, dir: Int): L
             lastValidPos = curr.pos
             if (curr.line?.isEmpty() == true && !skipEmptyLines) {
                 return curr.ln to curr.pos
-            } else if (stop && curr.line?.isNotEmpty() == true &&
+            } else if (stop &&
+                curr.line?.isNotEmpty() == true &&
                 curr.pos < curr.line!!.length &&
                 !isWhiteSpaceString(curr.line!![curr.pos].toString())
             ) {
                 return curr.ln to curr.pos
             } else if (curr.pos < (curr.line?.length ?: 0) &&
-                isEndOfSentenceSymbol(curr.line!![curr.pos].toString()) && !stop &&
+                isEndOfSentenceSymbol(curr.line!![curr.pos].toString()) &&
+                !stop &&
                 (
                     curr.pos == curr.line!!.length - 1 ||
                         isWhiteSpaceString(curr.line!![curr.pos + 1].toString())
@@ -1371,14 +1373,16 @@ internal fun findSentence(cm: VimEditor, cur: LinePos, repeat: Int, dir: Int): L
                 } else {
                     curr.ln to curr.pos
                 }
-            } else if (curr.pos >= 0 && curr.pos < (curr.line?.length ?: 0) &&
+            } else if (curr.pos >= 0 &&
+                curr.pos < (curr.line?.length ?: 0) &&
                 isEndOfSentenceSymbol(curr.line!![curr.pos].toString()) &&
                 lastValidPos != null &&
                 !(curr.ln == lastValidLn && curr.pos + 1 == lastValidPos)
             ) {
                 return lastValidLn to lastValidPos
             } else if (curr.line?.isNotEmpty() == true &&
-                curr.pos >= 0 && curr.pos < curr.line!!.length &&
+                curr.pos >= 0 &&
+                curr.pos < curr.line!!.length &&
                 !isWhiteSpaceString(curr.line!![curr.pos].toString())
             ) {
                 skipEmptyVar = false
@@ -1791,8 +1795,10 @@ internal fun findNext(cm: VimEditor, prev: Boolean, query: Regex, repeat: Int? =
             if (i == 0 && found != null && atStart) {
                 val lastEndPos = if (prev) cursor.from() else cursor.to()
                 found = cursor.find(prev)
-                if (found != null && found[0]?.isEmpty() == true &&
-                    lastEndPos != null && cursor.from() != null &&
+                if (found != null &&
+                    found[0]?.isEmpty() == true &&
+                    lastEndPos != null &&
+                    cursor.from() != null &&
                     cursorEqual(cursor.from()!!, lastEndPos)
                 ) {
                     if (lastEndPos.ch == cm.getLine(lastEndPos.line).length) {
@@ -1833,8 +1839,10 @@ internal fun findNextFromAndToInclusive(
         // Go back one result
         var found = cursor.find(!prev)
 
-        if (!vim.visualMode && found != null &&
-            cursor.from() != null && cursorEqual(cursor.from()!!, pos)
+        if (!vim.visualMode &&
+            found != null &&
+            cursor.from() != null &&
+            cursorEqual(cursor.from()!!, pos)
         ) {
             cursor.find(!prev)
         }
@@ -1903,9 +1911,7 @@ internal fun getMarkPos(cm: VimEditor, vim: VimState, markName: String): LinePos
     return mark?.find()
 }
 
-internal fun getLastEditPos(cm: VimEditor): LinePos? {
-    return cm.getLastEditEnd()
-}
+internal fun getLastEditPos(cm: VimEditor): LinePos? = cm.getLastEditEnd()
 
 // ---------------------------------------------------------------------------
 // showConfirm / showPrompt (adapted for non-DOM environment)
@@ -2139,8 +2145,10 @@ internal class ExCommandDispatcher {
         }
 
         // Parse optional offset: +N, -N, or bare N (implicit +)
-        while (pos < input.length && (
-                input[pos] == '+' || input[pos] == '-' ||
+        while (pos < input.length &&
+            (
+                input[pos] == '+' ||
+                    input[pos] == '-' ||
                     input[pos].isDigit()
                 )
         ) {
@@ -2617,8 +2625,11 @@ internal fun doReplace(
     fun findNextValidMatch(): List<String?>? {
         val lastMatchTo = if (lastPos != null) searchCursor.to() else null
         val match = searchCursor.findNext()
-        if (match != null && match.isNotEmpty() && match[0]?.isEmpty() == true &&
-            lastMatchTo != null && searchCursor.from() != null &&
+        if (match != null &&
+            match.isNotEmpty() &&
+            match[0]?.isEmpty() == true &&
+            lastMatchTo != null &&
+            searchCursor.from() != null &&
             cursorEqual(searchCursor.from()!!, lastMatchTo)
         ) {
             return searchCursor.findNext()
@@ -2974,7 +2985,9 @@ internal class CircularJumpList {
         pointer += offset
         if (pointer > head) {
             pointer = head
-        } else if (pointer < tail) pointer = tail
+        } else if (pointer < tail) {
+            pointer = tail
+        }
         var mark = buffer[((size + pointer) % size + size) % size]
         if (mark != null && mark.find() == null) {
             val inc = if (offset > 0) 1 else -1

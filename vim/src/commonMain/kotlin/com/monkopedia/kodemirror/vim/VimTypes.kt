@@ -37,10 +37,7 @@ interface LineHandle {
 /**
  * A selection range with anchor and head, using [LinePos] coordinates.
  */
-data class LinePosRange(
-    var anchor: LinePos,
-    var head: LinePos
-) {
+data class LinePosRange(var anchor: LinePos, var head: LinePos) {
     fun from(): LinePos = cursorMin(anchor, head)
     fun empty(): Boolean = cursorEqual(anchor, head)
 }
@@ -195,9 +192,7 @@ internal data class OperatorMotionCommand(
     override val noremap: Boolean? = null
 ) : VimKeyCommand()
 
-internal data class OperatorMotionArgs(
-    val visualLine: Boolean? = null
-)
+internal data class OperatorMotionArgs(val visualLine: Boolean? = null)
 
 internal data class IdleCommand(
     override val keys: String,
@@ -468,10 +463,7 @@ internal data class PromptOptions(
     val selectValueOnOpen: Boolean? = null
 )
 
-internal data class VimKeyEvent(
-    val keyCode: Int = 0,
-    val key: String = ""
-)
+internal data class VimKeyEvent(val keyCode: Int = 0, val key: String = "")
 
 // ---------------------------------------------------------------------------
 // Function type aliases

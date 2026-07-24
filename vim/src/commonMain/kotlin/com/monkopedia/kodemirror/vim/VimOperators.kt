@@ -257,7 +257,8 @@ internal val operators: MutableMap<String, OperatorFn> = mutableMapOf(
         cm.replaceSelections(swapped)
         if (args.shouldMoveCursor == true) {
             newHead
-        } else if (!cm.vim!!.visualMode && args.linewise == true &&
+        } else if (!cm.vim!!.visualMode &&
+            args.linewise == true &&
             ranges[0].anchor.line + 1 == ranges[0].head.line
         ) {
             motions["moveToFirstNonWhiteSpaceCharacter"]?.invoke(
@@ -328,7 +329,8 @@ internal val operators: MutableMap<String, OperatorFn> = mutableMapOf(
         cm.replaceSelections(swapped)
         if (args.shouldMoveCursor == true) {
             newHead
-        } else if (!cm.vim!!.visualMode && args.linewise == true &&
+        } else if (!cm.vim!!.visualMode &&
+            args.linewise == true &&
             ranges[0].anchor.line + 1 == ranges[0].head.line
         ) {
             motions["moveToFirstNonWhiteSpaceCharacter"]?.invoke(

@@ -62,13 +62,11 @@ internal fun hasWordChar(str: String): Boolean {
     return false
 }
 
-fun makeCategorizer(wordChars: String): (String) -> CharCategory {
-    return { char: String ->
-        when {
-            !Regex("\\S").containsMatchIn(char) -> CharCategory.Space
-            hasWordChar(char) -> CharCategory.Word
-            wordChars.any { char.contains(it) } -> CharCategory.Word
-            else -> CharCategory.Other
-        }
+fun makeCategorizer(wordChars: String): (String) -> CharCategory = { char: String ->
+    when {
+        !Regex("\\S").containsMatchIn(char) -> CharCategory.Space
+        hasWordChar(char) -> CharCategory.Word
+        wordChars.any { char.contains(it) } -> CharCategory.Word
+        else -> CharCategory.Other
     }
 }

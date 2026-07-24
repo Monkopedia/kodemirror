@@ -48,8 +48,10 @@ class DeleteTrailingWhitespaceTest {
 
     @Test fun deletesTrailingWhitespace() = assertEquals("foo", run("foo   "))
 
-    @Test fun checksMultipleLines() =
-        assertEquals("one\ntwo\nthree\n", run("one\ntwo \nthree   \n   "))
+    @Test fun checksMultipleLines() = assertEquals(
+        "one\ntwo\nthree\n",
+        run("one\ntwo \nthree   \n   ")
+    )
 
     @Test fun handlesEmptyLines() = assertEquals("one\n\ntwo", run("one  \n\ntwo "))
 }

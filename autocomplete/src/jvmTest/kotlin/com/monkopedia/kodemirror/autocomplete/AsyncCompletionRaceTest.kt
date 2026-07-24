@@ -27,12 +27,12 @@ import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.insertAt
 import com.monkopedia.kodemirror.view.select
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 
 /**
  * Regression tests for the async LSP completion re-open race (#153): a suspend
@@ -128,9 +128,8 @@ class AsyncCompletionRaceTest {
      * real composition-tied scope errors outside a composable, and Unconfined lets
      * the launched async source run/resume inline for deterministic assertions.
      */
-    private class UnconfinedSession(
-        initial: EditorState
-    ) : EditorSession by EditorSession(initial) {
+    private class UnconfinedSession(initial: EditorState) :
+        EditorSession by EditorSession(initial) {
         override val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Unconfined)
     }
 }

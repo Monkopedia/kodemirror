@@ -153,14 +153,9 @@ data class TransactionSpec(
 )
 
 sealed interface SelectionSpec {
-    data class EditorSelectionSpec(
-        val selection: EditorSelection
-    ) : SelectionSpec
+    data class EditorSelectionSpec(val selection: EditorSelection) : SelectionSpec
 
-    data class CursorSpec(
-        val anchor: DocPos,
-        val head: DocPos? = null
-    ) : SelectionSpec
+    data class CursorSpec(val anchor: DocPos, val head: DocPos? = null) : SelectionSpec
 }
 
 /** Create a [SelectionSpec] placing the cursor at [pos]. */
@@ -186,10 +181,10 @@ class Transaction private constructor(
     /** Whether the selection should be scrolled into view. */
     val scrollIntoView: Boolean
 ) {
-    @Suppress("ktlint:standard:property-naming")
+    @Suppress("ktlint:standard:property-naming", "ktlint:standard:backing-property-naming")
     internal var _doc: Text? = null
 
-    @Suppress("ktlint:standard:property-naming")
+    @Suppress("ktlint:standard:property-naming", "ktlint:standard:backing-property-naming")
     internal var _state: EditorState? = null
 
     init {
@@ -250,11 +245,12 @@ class Transaction private constructor(
      */
     fun isUserEvent(event: String): Boolean {
         val e = annotation(userEvent) ?: return false
-        return e == event || (
-            e.length > event.length &&
-                e.substring(0, event.length) == event &&
-                e[event.length] == '.'
-            )
+        return e == event ||
+            (
+                e.length > event.length &&
+                    e.substring(0, event.length) == event &&
+                    e[event.length] == '.'
+                )
     }
 
     companion object {
@@ -500,10 +496,12 @@ private fun filterTransaction(tr: Transaction): Transaction {
             is ChangeFilterResult.Accept -> error("unreachable")
         }
         currentTr = Transaction.create(
-            state, changes,
+            state,
+            changes,
             tr.selection?.map(back),
             StateEffect.mapEffects(tr.effects, back),
-            tr.annotations, tr.scrollIntoView
+            tr.annotations,
+            tr.scrollIntoView
         )
     }
 

@@ -33,9 +33,7 @@ private class Value(
     val name: String? = null,
     val pos: Int? = null
 ) : RangeValue() {
-    override fun equals(other: Any?): Boolean {
-        return other is Value && other.name == name
-    }
+    override fun equals(other: Any?): Boolean = other is Value && other.name == name
 
     override fun hashCode(): Int = name?.hashCode() ?: 0
 
@@ -107,7 +105,7 @@ private val smallRanges: List<Range<Value>> = buildList {
     }
 }
 
-@Suppress("ktlint:standard:property-naming")
+@Suppress("ktlint:standard:property-naming", "ktlint:standard:backing-property-naming")
 private var _set0: RangeSet<Value>? = null
 private fun set0(): RangeSet<Value> {
     if (_set0 == null) _set0 = mkSet(smallRanges)

@@ -66,10 +66,7 @@ import kotlinx.coroutines.launch
  *   When null, a regex derived from the result items' prefixes is used (matching
  *   upstream's `prefixRegexp`).
  */
-data class ServerCompletionConfig(
-    val override: Boolean = false,
-    val validFor: Regex? = null
-)
+data class ServerCompletionConfig(val override: Boolean = false, val validFor: Regex? = null)
 
 /**
  * The kind→type mapping upstream `@codemirror/lsp-client` uses to translate an
@@ -420,7 +417,13 @@ private fun insertWithAdditionalTextEdits(
     val primary = ResolvedEdit(ctx.from.value, ctx.to.value, text)
     val specs = (resolved + primary)
         .sortedBy { it.from }
-        .map { ChangeSpec.Single(DocPos(it.from), DocPos(it.to), InsertContent.StringContent(it.newText)) }
+        .map {
+            ChangeSpec.Single(
+                DocPos(it.from),
+                DocPos(it.to),
+                InsertContent.StringContent(it.newText)
+            )
+        }
     // Net length change from edits ending at or before the primary insertion start
     // shifts the post-insertion cursor.
     val shiftBefore = resolved

@@ -61,10 +61,7 @@ data class Diagnostic(
 )
 
 /** A quick-fix action that can be applied to resolve a diagnostic. */
-data class Action(
-    val name: String,
-    val apply: (EditorSession) -> Unit
-)
+data class Action(val name: String, val apply: (EditorSession) -> Unit)
 
 /** Configuration for the linter. */
 data class LintConfig(

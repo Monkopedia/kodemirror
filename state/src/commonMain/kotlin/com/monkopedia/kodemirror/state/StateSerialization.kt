@@ -52,10 +52,7 @@ data class SelectionRangeData(val anchor: Int, val head: Int)
  * Serializable representation of an [EditorSelection].
  */
 @Serializable
-data class EditorSelectionData(
-    val ranges: List<SelectionRangeData>,
-    val main: Int
-)
+data class EditorSelectionData(val ranges: List<SelectionRangeData>, val main: Int)
 
 /**
  * Serializable representation of an [EditorState].

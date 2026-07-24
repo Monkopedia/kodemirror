@@ -86,7 +86,9 @@ private val changedLineGutterMarker = object : GutterMarker() {
 
 // -- Chunk decoration plugin --
 
-private class ChunkDecoPlugin(view: EditorSession) : PluginValue, DecorationSource {
+private class ChunkDecoPlugin(view: EditorSession) :
+    PluginValue,
+    DecorationSource {
     override var decorations: DecorationSet = RangeSet.empty()
         private set
     var gutterDecos: RangeSet<GutterMarker> = RangeSet.empty()
@@ -198,7 +200,8 @@ private fun getChunkDeco(view: EditorSession): Pair<DecorationSet, RangeSet<Gutt
 
     for (chunk in chunks) {
         val override = conf.overrideChunk
-        if (override == null || !override(
+        if (override == null ||
+            !override(
                 view.state,
                 chunk,
                 builder,
@@ -292,11 +295,10 @@ private val CollapsedRanges: StateField<DecorationSet> = StateField.define(
 /**
  * Collapse unchanged sections in a merge view.
  */
-fun collapseUnchanged(margin: Int = 3, minSize: Int = 4): Extension {
-    return CollapsedRanges.init { state ->
+fun collapseUnchanged(margin: Int = 3, minSize: Int = 4): Extension =
+    CollapsedRanges.init { state ->
         buildCollapsedRanges(state, margin, minSize)
     }
-}
 
 private fun buildCollapsedRanges(state: EditorState, margin: Int, minLines: Int): DecorationSet {
     val builder = RangeSetBuilder<Decoration>()

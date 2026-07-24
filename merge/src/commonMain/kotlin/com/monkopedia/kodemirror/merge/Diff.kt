@@ -27,12 +27,7 @@ import kotlin.math.min
  * A single changed range between two documents, spanning [fromA]..[toA] in
  * document A and [fromB]..[toB] in document B.
  */
-data class Change(
-    val fromA: Int,
-    val toA: Int,
-    val fromB: Int,
-    val toB: Int
-) {
+data class Change(val fromA: Int, val toA: Int, val fromB: Int, val toB: Int) {
     /** Return a new [Change] with both ranges shifted by the given offsets. */
     fun offset(offA: Int, offB: Int = offA): Change =
         Change(fromA + offA, toA + offA, fromB + offB, toB + offB)
@@ -187,8 +182,10 @@ private fun findSnake(
 ): MutableList<Change> {
     val lenA = toA - fromA
     val lenB = toB - fromB
-    if (ctx.scanLimit < 1_000_000_000 && min(lenA, lenB) > ctx.scanLimit.toLong() * 16 ||
-        ctx.timeout > 0 && currentTimeMillis() > ctx.timeout
+    if (ctx.scanLimit < 1_000_000_000 &&
+        min(lenA, lenB) > ctx.scanLimit.toLong() * 16 ||
+        ctx.timeout > 0 &&
+        currentTimeMillis() > ctx.timeout
     ) {
         if (min(lenA, lenB) > ctx.scanLimit.toLong() * 64) {
             return mutableListOf(Change(fromA, toA, fromB, toB))
@@ -204,7 +201,9 @@ private fun findSnake(
     val test2 = if (test1 != null) null else ctx.frontier1
     for (depth in 0 until off) {
         if (depth > ctx.scanLimit ||
-            ctx.timeout > 0 && (depth and 63) == 0 && currentTimeMillis() > ctx.timeout
+            ctx.timeout > 0 &&
+            (depth and 63) == 0 &&
+            currentTimeMillis() > ctx.timeout
         ) {
             return crudeMatch(ctx, a, fromA, toA, b, fromB, toB)
         }

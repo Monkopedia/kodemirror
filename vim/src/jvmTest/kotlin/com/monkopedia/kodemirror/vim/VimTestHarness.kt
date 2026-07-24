@@ -56,10 +56,7 @@ val DEFAULT_CODE = buildString {
 /**
  * Helper class providing vim test utilities, mirroring the upstream `helpers` object.
  */
-internal class VimHelpers(
-    val cm: VimEditor,
-    val vim: VimState
-) {
+internal class VimHelpers(val cm: VimEditor, val vim: VimState) {
     /**
      * Simulate pressing vim keys. Each argument is a single key or a special
      * key in angle brackets like `<Esc>`, `<C-r>`, `<CR>`.
@@ -116,15 +113,13 @@ internal class VimHelpers(
  * Convert vim key notation to a key name.
  * e.g., "C-r" → "Ctrl-r", "CR" → "Return", "BS" → "Backspace"
  */
-private fun vimKeyToKeyName(key: String): String {
-    return key.replace(Regex("[CS]-|CR|BS")) { match ->
-        when (match.value) {
-            "C-" -> "Ctrl-"
-            "S-" -> "Shift-"
-            "CR" -> "Return"
-            "BS" -> "Backspace"
-            else -> match.value
-        }
+private fun vimKeyToKeyName(key: String): String = key.replace(Regex("[CS]-|CR|BS")) { match ->
+    when (match.value) {
+        "C-" -> "Ctrl-"
+        "S-" -> "Shift-"
+        "CR" -> "Return"
+        "BS" -> "Backspace"
+        else -> match.value
     }
 }
 

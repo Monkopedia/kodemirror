@@ -40,11 +40,7 @@ import com.monkopedia.lsp.VersionedTextDocumentIdentifier
  * @param prevDoc The document as last synchronized with the server.
  * @param changes The changes to apply to [prevDoc] to reach [WorkspaceFile.doc].
  */
-data class WorkspaceFileUpdate(
-    val file: WorkspaceFile,
-    val prevDoc: Text,
-    val changes: ChangeSet
-)
+data class WorkspaceFileUpdate(val file: WorkspaceFile, val prevDoc: Text, val changes: ChangeSet)
 
 /**
  * Represents a single document tracked by a [Workspace].
@@ -135,9 +131,7 @@ class WorkspaceFile internal constructor(
  *
  * @param client The owning [LSPClient].
  */
-open class Workspace(
-    val client: LSPClient
-) {
+open class Workspace(val client: LSPClient) {
     private val files = mutableMapOf<String, WorkspaceFile>()
 
     /** All currently-tracked files. */

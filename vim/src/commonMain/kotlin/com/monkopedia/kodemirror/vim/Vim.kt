@@ -81,9 +81,7 @@ object Vim : VimApiInterface {
     }
 
     @Suppress("ktlint:standard:function-naming")
-    internal fun maybeInitVimState_(cm: VimEditor): VimState {
-        return maybeInitVimState(cm)
-    }
+    internal fun maybeInitVimState_(cm: VimEditor): VimState = maybeInitVimState(cm)
 
     override fun handleKey(cm: VimEditor, key: String, origin: String): Boolean {
         // When a virtual prompt is active (test/headless mode), route key input there.
@@ -116,9 +114,8 @@ object Vim : VimApiInterface {
         com.monkopedia.kodemirror.vim.setOption(name, value, cm, cfg)
     }
 
-    fun getOption(name: String, cm: VimEditor? = null, cfg: Map<String, String>? = null): Any? {
-        return com.monkopedia.kodemirror.vim.getOption(name, cm, cfg)
-    }
+    fun getOption(name: String, cm: VimEditor? = null, cfg: Map<String, String>? = null): Any? =
+        com.monkopedia.kodemirror.vim.getOption(name, cm, cfg)
 
     fun defineOption(
         name: String,
@@ -146,17 +143,15 @@ object Vim : VimApiInterface {
         shiftKey: Boolean = false,
         code: String? = null,
         vim: VimState? = null
-    ): String? {
-        return com.monkopedia.kodemirror.vim.vimKeyFromEvent(
-            key,
-            ctrlKey,
-            altKey,
-            metaKey,
-            shiftKey,
-            code,
-            vim
-        )
-    }
+    ): String? = com.monkopedia.kodemirror.vim.vimKeyFromEvent(
+        key,
+        ctrlKey,
+        altKey,
+        metaKey,
+        shiftKey,
+        code,
+        vim
+    )
 
     internal fun defineMotion(name: String, fn: MotionFn) {
         motions[name] = fn
@@ -204,9 +199,7 @@ object Vim : VimApiInterface {
         exCommandDispatcher.map(lhs, rhs, ctx)
     }
 
-    fun unmap(lhs: String, ctx: String? = null): Boolean {
-        return exCommandDispatcher.unmap(lhs, ctx)
-    }
+    fun unmap(lhs: String, ctx: String? = null): Boolean = exCommandDispatcher.unmap(lhs, ctx)
 
     fun noremap(lhs: String, rhs: String, ctx: String? = null) {
         exCommandDispatcher.map(lhs, rhs, ctx, noremap = true)
@@ -407,7 +400,8 @@ object Vim : VimApiInterface {
             val context = if (vim.visualMode) "visual" else "normal"
             var mainKey = keysMatcher.groupValues[2].ifEmpty { keysMatcher.groupValues[1] }
             val opShortcut = vim.inputState.operatorShortcut
-            if (opShortcut != null && opShortcut.isNotEmpty() &&
+            if (opShortcut != null &&
+                opShortcut.isNotEmpty() &&
                 opShortcut.last().toString() == mainKey
             ) {
                 mainKey = opShortcut
@@ -547,24 +541,20 @@ object Vim : VimApiInterface {
 // State init
 // ---------------------------------------------------------------------------
 
-internal fun maybeInitVimState(cm: VimEditor): VimState {
-    return cm.vim ?: VimState().also {
-        cm.vim = it
-        // Register the cursorActivity handler for this editor so that
-        // handleExternalSelection can synchronise vim visual-mode state
-        // when the selection is changed outside of vim operations.
-        if (!Vim.cursorActivityHandlers.containsKey(cm)) {
-            val handler: (Array<out Any?>) -> Unit = { onCursorActivity(cm) }
-            Vim.cursorActivityHandlers[cm] = handler
-            cm.events.on("cursorActivity", handler)
-        }
-        Vim.registerChangeHandler(cm)
+internal fun maybeInitVimState(cm: VimEditor): VimState = cm.vim ?: VimState().also {
+    cm.vim = it
+    // Register the cursorActivity handler for this editor so that
+    // handleExternalSelection can synchronise vim visual-mode state
+    // when the selection is changed outside of vim operations.
+    if (!Vim.cursorActivityHandlers.containsKey(cm)) {
+        val handler: (Array<out Any?>) -> Unit = { onCursorActivity(cm) }
+        Vim.cursorActivityHandlers[cm] = handler
+        cm.events.on("cursorActivity", handler)
     }
+    Vim.registerChangeHandler(cm)
 }
 
-internal fun getVimState(cm: VimEditor): VimState? {
-    return cm.vim
-}
+internal fun getVimState(cm: VimEditor): VimState? = cm.vim
 
 // ---------------------------------------------------------------------------
 // Command dispatcher
@@ -1090,10 +1080,7 @@ internal object VimCommandDispatcher : CommandDispatcherInterface {
 // CmSelectionResult helper type
 // ---------------------------------------------------------------------------
 
-internal data class CmSelectionResult(
-    val ranges: MutableList<LinePosRange>,
-    val primary: Int = 0
-)
+internal data class CmSelectionResult(val ranges: MutableList<LinePosRange>, val primary: Int = 0)
 
 // ---------------------------------------------------------------------------
 // Virtual prompt for key-to-key mappings

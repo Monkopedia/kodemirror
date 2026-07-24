@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Build
+- Bumped ktlint-gradle 12.1.2 → 14.2.0 and reformatted the tree to the newer engine's rules (#179). Purely mechanical `ktlintFormat` output (class-signature / argument-list / condition wrapping, indentation, expression bodies, etc.); the only manual changes are updating five `@Suppress` keys from the now-renamed `property-naming` rule to `backing-property-naming` on intentional `_`-prefixed backing fields. No source-behaviour or public-API change (`apiCheck` unchanged); `spotlessCheck` and the new `ktlintCheck` both pass.
 - Pinned the wasm npm *tooling* Node.js to 22.11.0 so the showcase production webpack build (`wasmJsBrowserProductionWebpack`) stops failing on the Kotlin 2.4.10 default Node v25. The 0.3.5 `WasmNodeJsEnvSpec` pin only covers the target-node users (`:kotlinWasmNpmInstall` / yarn); the webpack tooling node is resolved from the legacy `WasmNodeJsRootExtension.version`, which the EnvSpec doesn't update, so webpack kept launching v25 (green `:check`, red `build-showcase`). The `WasmNodeJsRootExtension.version` setter is now also pinned (deprecation suppressed under `-Werror`).
 
 ### Fixed

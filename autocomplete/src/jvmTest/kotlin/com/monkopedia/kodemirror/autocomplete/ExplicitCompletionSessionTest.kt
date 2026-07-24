@@ -64,8 +64,11 @@ class ExplicitCompletionSessionTest {
         }
     }
 
-    private fun createView(source: CompletionSource, doc: String = "", cursor: Int = doc.length):
-        EditorSession {
+    private fun createView(
+        source: CompletionSource,
+        doc: String = "",
+        cursor: Int = doc.length
+    ): EditorSession {
         val config = CompletionConfig(override = listOf(source))
         val state = EditorState.create(
             EditorStateConfig(

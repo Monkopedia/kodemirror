@@ -36,10 +36,7 @@ val languageData: Facet<
 typealias StateCommand =
     (target: StateCommandTarget) -> Boolean
 
-data class StateCommandTarget(
-    val state: EditorState,
-    val dispatch: (Transaction) -> Unit
-)
+data class StateCommandTarget(val state: EditorState, val dispatch: (Transaction) -> Unit)
 
 /**
  * Facet that controls whether the editor allows multiple selections.

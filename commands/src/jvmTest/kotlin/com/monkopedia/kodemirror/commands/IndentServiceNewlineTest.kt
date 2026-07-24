@@ -40,11 +40,7 @@ import kotlin.test.assertEquals
 class IndentServiceNewlineTest {
 
     /** A view whose indent service always requests [columns] of indentation. */
-    private fun viewWithFixedIndent(
-        doc: String,
-        cursor: Int,
-        columns: Int
-    ): EditorSession {
+    private fun viewWithFixedIndent(doc: String, cursor: Int, columns: Int): EditorSession {
         val state = EditorState.create(
             EditorStateConfig(
                 doc = doc.asDoc(),

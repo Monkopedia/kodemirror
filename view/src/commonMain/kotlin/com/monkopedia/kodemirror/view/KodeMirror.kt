@@ -364,7 +364,8 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                                 textLayoutResults[it.lineNumber.value]
                             }
                             val coordsWidth = editorCoordinates?.size?.width
-                            if (line != null && layout != null &&
+                            if (line != null &&
+                                layout != null &&
                                 coordsWidth != null
                             ) {
                                 // Map the document offset within the line to the
@@ -830,7 +831,8 @@ private fun EditorContent(
                     // — those are shortcuts, not text input.
                     val char = keyEventLayoutKey(event)
                         ?: keyEventCharacter(event)?.toString()
-                    if (char != null && char.length == 1 &&
+                    if (char != null &&
+                        char.length == 1 &&
                         !char[0].isISOControl() &&
                         !event.isCtrlPressed &&
                         !event.isMetaPressed &&
@@ -1261,14 +1263,12 @@ fun rememberEditorSession(
     doc: String = "",
     extensions: Extension? = null,
     onUpdate: (Transaction) -> Unit = {}
-): EditorSession {
-    return remember {
-        val config = EditorStateConfig(
-            doc = doc.asDoc(),
-            extensions = extensions
-        )
-        EditorSession(EditorState.create(config), onUpdate)
-    }
+): EditorSession = remember {
+    val config = EditorStateConfig(
+        doc = doc.asDoc(),
+        extensions = extensions
+    )
+    EditorSession(EditorState.create(config), onUpdate)
 }
 
 /**
@@ -1289,9 +1289,7 @@ fun rememberEditorSession(
 fun rememberEditorSession(
     config: EditorStateConfig,
     onUpdate: (Transaction) -> Unit = {}
-): EditorSession {
-    return remember { EditorSession(EditorState.create(config), onUpdate) }
-}
+): EditorSession = remember { EditorSession(EditorState.create(config), onUpdate) }
 
 /**
  * Scroll [lazyState] the minimal amount needed to bring [targetIndex] fully

@@ -46,20 +46,18 @@ data class HighlightSelectionMatchConfig(
  */
 fun highlightSelectionMatches(
     config: HighlightSelectionMatchConfig = HighlightSelectionMatchConfig()
-): Extension {
-    return ViewPlugin.define(
-        create = { view ->
-            SelectionMatchPlugin(view.state, config)
-        },
-        configure = {
-            copy(
-                decorations = { plugin ->
-                    (plugin as? SelectionMatchPlugin)?.decos ?: RangeSet.empty()
-                }
-            )
-        }
-    ).asExtension()
-}
+): Extension = ViewPlugin.define(
+    create = { view ->
+        SelectionMatchPlugin(view.state, config)
+    },
+    configure = {
+        copy(
+            decorations = { plugin ->
+                (plugin as? SelectionMatchPlugin)?.decos ?: RangeSet.empty()
+            }
+        )
+    }
+).asExtension()
 
 private class SelectionMatchPlugin(
     state: EditorState,

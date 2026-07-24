@@ -55,9 +55,8 @@ class VimDisplayLineMotionTest {
      * An [EditorSession] that delegates everything to a real session but
      * supplies wrap-aware geometry for [coordsAtPos]/[posAtCoords].
      */
-    private class WrappedGeometrySession(
-        private val delegate: EditorSession
-    ) : EditorSession by delegate {
+    private class WrappedGeometrySession(private val delegate: EditorSession) :
+        EditorSession by delegate {
         private val rowHeight = 10f
 
         override fun coordsAtPos(pos: Int, side: Int): Rect {

@@ -171,10 +171,7 @@ internal class Chunk<T : RangeValue>(
         return null
     }
 
-    data class MapResult<T : RangeValue>(
-        val mapped: Chunk<T>?,
-        val pos: Int
-    )
+    data class MapResult<T : RangeValue>(val mapped: Chunk<T>?, val pos: Int)
 
     fun map(offset: Int, changes: ChangeDesc): MapResult<T> {
         val newValue = mutableListOf<T>()
@@ -190,7 +187,9 @@ internal class Chunk<T : RangeValue>(
             val mappedTo: Int
             if (curFrom == curTo) {
                 val mapped = changes.mapPos(
-                    DocPos(curFrom), v.startSide, v.mapMode
+                    DocPos(curFrom),
+                    v.startSide,
+                    v.mapMode
                 )?.value ?: continue
                 mappedFrom = mapped
                 mappedTo = if (v.startSide != v.endSide) {
@@ -385,7 +384,9 @@ class RangeSet<T : RangeValue> internal constructor(
                     filterFrom > cur.to ||
                     filterTo < cur.from ||
                     filter(
-                        cur.from, cur.to, cur.value!!
+                        cur.from,
+                        cur.to,
+                        cur.value!!
                     )
                 ) {
                     if (!builder.addInner(
@@ -474,8 +475,10 @@ class RangeSet<T : RangeValue> internal constructor(
             if (toVal >= start &&
                 fromVal <= start + c.length &&
                 c.between(
-                    start, fromVal - start,
-                    toVal - start, f
+                    start,
+                    fromVal - start,
+                    toVal - start,
+                    f
                 ) == false
             ) {
                 return
@@ -587,7 +590,8 @@ class RangeSet<T : RangeValue> internal constructor(
             while (true) {
                 if (sideA.to != sideB.to ||
                     !sameValues(
-                        sideA.active, sideB.active
+                        sideA.active,
+                        sideB.active
                     ) ||
                     (
                         sideA.point != null &&
@@ -706,7 +710,8 @@ class RangeSet<T : RangeValue> internal constructor(
                 var layer = sets[i]
                 while (!layer.isEmpty) {
                     result = RangeSet(
-                        layer.chunkPos, layer.chunk,
+                        layer.chunkPos,
+                        layer.chunk,
                         result,
                         max(
                             layer.maxPoint,
@@ -801,7 +806,8 @@ class RangeSetBuilder<T : RangeValue> {
                 value.startSide - (last?.endSide ?: 0)
             }
         }
-        if (diff <= 0 && (from - lastFrom).let { d ->
+        if (diff <= 0 &&
+            (from - lastFrom).let { d ->
                 if (d != 0) {
                     d
                 } else {
@@ -944,7 +950,8 @@ internal class LayerCursor<T : RangeValue>(
         while (chunkIndex < layer.chunk.size) {
             val next = layer.chunk[chunkIndex]
             if (!(
-                    skip != null && next in skip ||
+                    skip != null &&
+                        next in skip ||
                         layer.chunkEnd(chunkIndex) < pos ||
                         next.maxPoint < minPoint
                     )
@@ -1013,7 +1020,9 @@ internal class LayerCursor<T : RangeValue>(
                 while (
                     chunkIndex < layer.chunk.size &&
                     layer.chunk[chunkIndex] in skip
-                    ) chunkIndex++
+                ) {
+                    chunkIndex++
+                }
             }
             rangeIndex = 0
         } else {
@@ -1027,25 +1036,23 @@ internal class LayerCursor<T : RangeValue>(
         next()
     }
 
-    fun compare(other: LayerCursor<T>): Int {
-        return (from - other.from).let { d ->
-            if (d != 0) {
-                d
-            } else {
-                (startSide - other.startSide).let { d2 ->
-                    if (d2 != 0) {
-                        d2
-                    } else {
-                        (rank - other.rank).let { d3 ->
-                            if (d3 != 0) {
-                                d3
-                            } else {
-                                (to - other.to).let { d4 ->
-                                    if (d4 != 0) {
-                                        d4
-                                    } else {
-                                        endSide - other.endSide
-                                    }
+    fun compare(other: LayerCursor<T>): Int = (from - other.from).let { d ->
+        if (d != 0) {
+            d
+        } else {
+            (startSide - other.startSide).let { d2 ->
+                if (d2 != 0) {
+                    d2
+                } else {
+                    (rank - other.rank).let { d3 ->
+                        if (d3 != 0) {
+                            d3
+                        } else {
+                            (to - other.to).let { d4 ->
+                                if (d4 != 0) {
+                                    d4
+                                } else {
+                                    endSide - other.endSide
                                 }
                             }
                         }
@@ -1056,9 +1063,7 @@ internal class LayerCursor<T : RangeValue>(
     }
 }
 
-internal class HeapCursor<T : RangeValue>(
-    val heap: MutableList<LayerCursor<T>>
-) : RangeCursor<T> {
+internal class HeapCursor<T : RangeValue>(val heap: MutableList<LayerCursor<T>>) : RangeCursor<T> {
     override var from: Int = 0
     override var to: Int = 0
     override var value: T? = null
@@ -1224,7 +1229,9 @@ internal class SpanCursor<T : RangeValue>(
                     active[minActive].endSide - side
                 }
             } < 0
-            ) removeActive(minActive)
+        ) {
+            removeActive(minActive)
+        }
         cursorAsLayer?.forward(pos, side)
             ?: cursorAsHeap?.forward(pos, side)
     }
@@ -1249,7 +1256,9 @@ internal class SpanCursor<T : RangeValue>(
                     curTo - activeTo[i]
                 }
             } > 0
-            ) i++
+        ) {
+            i++
+        }
         insertAt(active, i, v)
         insertAt(activeTo, i, curTo)
         insertAt(activeRank, i, r)

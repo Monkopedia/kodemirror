@@ -87,8 +87,10 @@ class RegExpCursor(
             val previousEnd = value?.to
             if (matchFrom < to ||
                 (
-                    isZeroWidth && matchFrom == to &&
-                        previousEnd != matchFrom && text.length > 0
+                    isZeroWidth &&
+                        matchFrom == to &&
+                        previousEnd != matchFrom &&
+                        text.length > 0
                     )
             ) {
                 matchGroups = result.groupValues

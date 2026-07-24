@@ -124,7 +124,8 @@ private fun nextClusterBreak(str: String, pos: Int, includeExtending: Boolean): 
     pos += codePointSize(prev)
     while (pos < str.length) {
         val next = codePointAt(str, pos)
-        if (prev == ZWJ || next == ZWJ ||
+        if (prev == ZWJ ||
+            next == ZWJ ||
             (includeExtending && isExtendingChar(next))
         ) {
             pos += codePointSize(next)

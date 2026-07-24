@@ -28,11 +28,11 @@ import com.monkopedia.kodemirror.state.LineNumber
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asDoc
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 
 class CursorMotionTest {
 

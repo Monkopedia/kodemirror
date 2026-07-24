@@ -511,10 +511,14 @@ internal val motions: MutableMap<String, MotionFn> = mutableMapOf(
 
     "textObjectManipulation" to { cm, head, motionArgs, vim, _inputState ->
         val mirroredPairs = mapOf(
-            "(" to ")", ")" to "(",
-            "{" to "}", "}" to "{",
-            "[" to "]", "]" to "[",
-            "<" to ">", ">" to "<"
+            "(" to ")",
+            ")" to "(",
+            "{" to "}",
+            "}" to "{",
+            "[" to "]",
+            "]" to "[",
+            "<" to ">",
+            ">" to "<"
         )
         val selfPaired = setOf("'", "\"", "`")
 
@@ -591,7 +595,8 @@ internal val motions: MutableMap<String, MotionFn> = mutableMapOf(
             // Account for cursor on end of sentence symbol
             var adjustedHead = head
             val content = cm.getLine(head.line)
-            if (head.ch > 0 && head.ch < content.length &&
+            if (head.ch > 0 &&
+                head.ch < content.length &&
                 isEndOfSentenceSymbol(content[head.ch].toString())
             ) {
                 adjustedHead = LinePos(head.line, head.ch - 1)
@@ -605,7 +610,8 @@ internal val motions: MutableMap<String, MotionFn> = mutableMapOf(
             val adjustedStart = if (
                 start.ch < startLine.length &&
                 isWhiteSpaceString(startLine[start.ch].toString()) &&
-                end.ch > 0 && end.ch - 1 < endLine.length &&
+                end.ch > 0 &&
+                end.ch - 1 < endLine.length &&
                 isWhiteSpaceString(endLine[end.ch - 1].toString())
             ) {
                 LinePos(start.line, start.ch + 1)

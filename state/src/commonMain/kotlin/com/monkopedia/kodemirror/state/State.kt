@@ -170,7 +170,9 @@ class EditorState private constructor(
         val startValues: Array<Any?>
         if (conf == null) {
             conf = Configuration.resolve(
-                base, compartments, this
+                base,
+                compartments,
+                this
             )
             val intermediateState = EditorState(
                 conf,
@@ -219,19 +221,17 @@ class EditorState private constructor(
      */
     fun replaceSelection(text: String): TransactionSpec = replaceSelection(toText(text))
 
-    fun replaceSelection(text: Text): TransactionSpec {
-        return changeByRange { range ->
-            ChangeByRangeResult(
-                changes = ChangeSpec.Single(
-                    range.from,
-                    range.to,
-                    InsertContent.TextContent(text)
-                ),
-                range = EditorSelection.cursor(
-                    range.from + text.length
-                )
+    fun replaceSelection(text: Text): TransactionSpec = changeByRange { range ->
+        ChangeByRangeResult(
+            changes = ChangeSpec.Single(
+                range.from,
+                range.to,
+                InsertContent.TextContent(text)
+            ),
+            range = EditorSelection.cursor(
+                range.from + text.length
             )
-        }
+        )
     }
 
     /**
@@ -258,9 +258,11 @@ class EditorState private constructor(
             ranges.add(result.range.map(mapBy))
             changes = changes.compose(newMapped)
             effects = StateEffect.mapEffects(
-                effects, newMapped
+                effects,
+                newMapped
             ) + StateEffect.mapEffects(
-                result.effects ?: emptyList(), mapBy
+                result.effects ?: emptyList(),
+                mapBy
             )
         }
         return TransactionSpec(

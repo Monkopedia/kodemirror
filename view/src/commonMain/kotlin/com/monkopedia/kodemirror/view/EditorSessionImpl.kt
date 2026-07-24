@@ -180,9 +180,8 @@ internal class EditorSessionImpl(
         return autoDirection(line.text, 0, line.text.length)
     }
 
-    override fun bidiSpans(line: Line): List<BidiSpan> {
-        return computeOrder(line.text, textDirectionAt(line.from.value))
-    }
+    override fun bidiSpans(line: Line): List<BidiSpan> =
+        computeOrder(line.text, textDirectionAt(line.from.value))
 
     override fun phrase(phrase: String, vararg insert: Any): String = state.phrase(phrase, *insert)
 }

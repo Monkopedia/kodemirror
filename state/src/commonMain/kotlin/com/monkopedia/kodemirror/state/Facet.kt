@@ -27,9 +27,7 @@ private var nextID = 0
  */
 interface Extension
 
-class ExtensionList(
-    val extensions: List<Extension>
-) : Extension
+class ExtensionList(val extensions: List<Extension>) : Extension
 
 /** Create an [ExtensionList] from the given [extensions]. */
 fun extensionListOf(vararg extensions: Extension): ExtensionList =
@@ -46,12 +44,9 @@ class ExtensionHolder(val extension: Extension) : Extension
  * combines those into a single output value.
  */
 sealed interface FacetEnabler<Input, Output> {
-    data class StaticExtension<Input, Output>(
-        val ext: Extension
-    ) : FacetEnabler<Input, Output>
-    data class DynamicExtension<Input, Output>(
-        val fn: (Facet<Input, Output>) -> Extension
-    ) : FacetEnabler<Input, Output>
+    data class StaticExtension<Input, Output>(val ext: Extension) : FacetEnabler<Input, Output>
+    data class DynamicExtension<Input, Output>(val fn: (Facet<Input, Output>) -> Extension) :
+        FacetEnabler<Input, Output>
 }
 
 class Facet<Input, Output> private constructor(
@@ -95,7 +90,8 @@ class Facet<Input, Output> private constructor(
                 ?: if (combine == null) {
                     { a: Output, b: Output ->
                         sameArray(
-                            a as List<*>, b as List<*>
+                            a as List<*>,
+                            b as List<*>
                         )
                     }
                 } else {
@@ -161,25 +157,19 @@ class Facet<Input, Output> private constructor(
 /**
  * A facet reader can be used to fetch the value of a facet.
  */
-data class FacetReader<Output>(
-    val id: Int,
-    val default: Output
-)
+data class FacetReader<Output>(val id: Int, val default: Output)
 
-private fun sameArray(a: List<*>, b: List<*>): Boolean {
-    return a === b || (
+private fun sameArray(a: List<*>, b: List<*>): Boolean = a === b ||
+    (
         a.size == b.size &&
             a.indices.all { a[it] == b[it] }
         )
-}
 
 sealed class Slot {
     data class FacetSlot(val reader: FacetReader<*>) : Slot() {
         val id: Int get() = reader.id
     }
-    data class FieldSlot(
-        val stateField: StateField<*>
-    ) : Slot() {
+    data class FieldSlot(val stateField: StateField<*>) : Slot() {
         val id: Int get() = stateField.id
     }
     data object Doc : Slot()
@@ -190,12 +180,8 @@ fun <Output> Facet<*, Output>.asSlot(): Slot = Slot.FacetSlot(FacetReader(id, de
 
 internal sealed interface ProviderValue<Input> {
     data class Static<Input>(val value: Input) : ProviderValue<Input>
-    data class Single<Input>(
-        val fn: (EditorState) -> Input
-    ) : ProviderValue<Input>
-    data class Multi<Input>(
-        val fn: (EditorState) -> List<Input>
-    ) : ProviderValue<Input>
+    data class Single<Input>(val fn: (EditorState) -> Input) : ProviderValue<Input>
+    data class Multi<Input>(val fn: (EditorState) -> List<Input>) : ProviderValue<Input>
 }
 
 internal class FacetProvider<Input>(
@@ -248,10 +234,11 @@ internal class FacetProvider<Input>(
             override fun update(scope: SlotInitScope, tr: Transaction): SlotStatus {
                 if ((depDoc && tr.docChanged) ||
                     (
-                        depSel && (
-                            tr.docChanged ||
-                                tr.selection != null
-                            )
+                        depSel &&
+                            (
+                                tr.docChanged ||
+                                    tr.selection != null
+                                )
                         ) ||
                     scope.ensureAll(depAddrs)
                 ) {
@@ -293,14 +280,16 @@ internal class FacetProvider<Input>(
                                         scope.facet(dep.reader)
                                 is Slot.FieldSlot ->
                                     oldState.field(
-                                        dep.stateField, false
+                                        dep.stateField,
+                                        false
                                     ) ==
                                         scope.field(
                                             dep.stateField
                                         )
                                 else -> true
                             }
-                        } || run {
+                        } ||
+                        run {
                             newVal = getter(scope.state)
                             if (multi) {
                                 compareArray(
@@ -392,7 +381,8 @@ internal fun <Input, Output> dynamicFacetSlot(
             val oldProviders =
                 oldState.config.facets[facet.id]
             val oldValue = oldState.facet(facet)
-            if (oldProviders != null && !depChanged &&
+            if (oldProviders != null &&
+                !depChanged &&
                 sameArray(providers, oldProviders)
             ) {
                 scope.state.values[idx] = oldValue
@@ -412,10 +402,7 @@ internal fun <Input, Output> dynamicFacetSlot(
 internal val initField: Facet<FieldInit, List<FieldInit>> =
     Facet.define(static = true)
 
-internal data class FieldInit(
-    val field: StateField<*>,
-    val create: (EditorState) -> Any?
-)
+internal data class FieldInit(val field: StateField<*>, val create: (EditorState) -> Any?)
 
 /**
  * Fields can store additional information in an editor state, and
@@ -557,9 +544,8 @@ sealed interface FieldSerialization<V> {
      * }
      * ```
      */
-    data class Serializer<V>(
-        val serializer: kotlinx.serialization.KSerializer<V>
-    ) : FieldSerialization<V>
+    data class Serializer<V>(val serializer: kotlinx.serialization.KSerializer<V>) :
+        FieldSerialization<V>
 
     /** The field is not serializable. This is the default. */
     class None<V> internal constructor() : FieldSerialization<V>
@@ -643,15 +629,13 @@ class StateFieldBuilder<Value> @PublishedApi internal constructor() {
     }
 
     @PublishedApi
-    internal fun build(): StateFieldSpec<Value> {
-        return StateFieldSpec(
-            create = requireNotNull(createFn) { "StateField requires a create {} block" },
-            update = requireNotNull(updateFn) { "StateField requires an update {} block" },
-            compare = compareFn,
-            provide = provideFn,
-            serialization = serializationVal
-        )
-    }
+    internal fun build(): StateFieldSpec<Value> = StateFieldSpec(
+        create = requireNotNull(createFn) { "StateField requires a create {} block" },
+        update = requireNotNull(updateFn) { "StateField requires an update {} block" },
+        compare = compareFn,
+        provide = provideFn,
+        serialization = serializationVal
+    )
 }
 
 /** Marks DSL scope for [StateFieldBuilder] to prevent accidental scope leaking. */
@@ -693,10 +677,7 @@ object Prec {
     fun lowest(ext: Extension): Extension = PrecExtension(ext, PrecValue.LOWEST)
 }
 
-internal class PrecExtension(
-    val inner: Extension,
-    val prec: Int
-) : Extension
+internal class PrecExtension(val inner: Extension, val prec: Int) : Extension
 
 /**
  * Extension compartments can be used to make a configuration
@@ -727,15 +708,9 @@ class Compartment : Extension {
     }
 }
 
-data class CompartmentReconfigure(
-    val compartment: Compartment,
-    val extension: Extension
-)
+data class CompartmentReconfigure(val compartment: Compartment, val extension: Extension)
 
-internal class CompartmentInstance(
-    val compartment: Compartment,
-    val inner: Extension
-) : Extension
+internal class CompartmentInstance(val compartment: Compartment, val inner: Extension) : Extension
 
 internal interface DynamicSlot {
     fun create(scope: SlotInitScope): SlotStatus
@@ -841,17 +816,11 @@ internal sealed class SlotInitScope(val state: EditorState) {
         override fun computeSlot(slot: DynamicSlot) = slot.create(this)
     }
 
-    class Update(
-        state: EditorState,
-        val tr: Transaction
-    ) : SlotInitScope(state) {
+    class Update(state: EditorState, val tr: Transaction) : SlotInitScope(state) {
         override fun computeSlot(slot: DynamicSlot) = slot.update(this, tr)
     }
 
-    class Reconfigure(
-        state: EditorState,
-        val oldState: EditorState
-    ) : SlotInitScope(state) {
+    class Reconfigure(state: EditorState, val oldState: EditorState) : SlotInitScope(state) {
         override fun computeSlot(slot: DynamicSlot) = slot.reconfigure(this, oldState)
     }
 }
@@ -1082,10 +1051,8 @@ internal fun ensureAddr(state: EditorState, addr: Int): SlotStatus {
     )
 }
 
-internal fun getAddr(state: EditorState, addr: Int): Any? {
-    return if (addr and 1 != 0) {
-        state.config.staticValues[addr shr 1]
-    } else {
-        state.values[addr shr 1]
-    }
+internal fun getAddr(state: EditorState, addr: Int): Any? = if (addr and 1 != 0) {
+    state.config.staticValues[addr shr 1]
+} else {
+    state.values[addr shr 1]
 }

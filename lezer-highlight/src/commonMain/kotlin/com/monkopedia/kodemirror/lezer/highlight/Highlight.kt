@@ -85,8 +85,10 @@ val ruleNodeProp = NodeProp<Rule>(
                 take = curA
                 curA = curA.next
             }
-            if (cur != null && cur.mode == take.mode &&
-                take.context == null && cur.context == null
+            if (cur != null &&
+                cur.mode == take.mode &&
+                take.context == null &&
+                cur.context == null
             ) {
                 continue
             }
@@ -191,10 +193,7 @@ fun getStyleTags(node: SyntaxNodeRef): Rule? {
 
 // ---- tagHighlighter ----
 
-data class TagStyleRule(
-    val tags: List<Tag>,
-    val `class`: String
-)
+data class TagStyleRule(val tags: List<Tag>, val `class`: String)
 
 fun TagStyleRule(tag: Tag, `class`: String): TagStyleRule = TagStyleRule(listOf(tag), `class`)
 
@@ -227,9 +226,7 @@ fun tagHighlighter(
             return cls
         }
 
-        override fun scope(node: NodeType): Boolean {
-            return scope?.invoke(node) ?: true
-        }
+        override fun scope(node: NodeType): Boolean = scope?.invoke(node) ?: true
     }
 }
 

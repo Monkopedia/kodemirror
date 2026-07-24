@@ -12,6 +12,9 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Originally based on CodeMirror 6 by Marijn Haverbeke, licensed under MIT.
+ * See NOTICE file for details.
  */
 package com.monkopedia.kodemirror.view.input
 
@@ -60,14 +63,11 @@ class HitTestVerticalAnchorTest {
         }
 
     @Test
-    fun clickBelowGlyphBottom_line2_staysOnLine2() =
-        clickJustBelowGlyphResolvesToSameLine(2)
+    fun clickBelowGlyphBottom_line2_staysOnLine2() = clickJustBelowGlyphResolvesToSameLine(2)
 
     @Test
-    fun clickBelowGlyphBottom_line3_staysOnLine3() =
-        clickJustBelowGlyphResolvesToSameLine(3)
+    fun clickBelowGlyphBottom_line3_staysOnLine3() = clickJustBelowGlyphResolvesToSameLine(3)
 
     @Test
-    fun clickBelowGlyphBottom_line4_staysOnLine4() =
-        clickJustBelowGlyphResolvesToSameLine(4)
+    fun clickBelowGlyphBottom_line4_staysOnLine4() = clickJustBelowGlyphResolvesToSameLine(4)
 }

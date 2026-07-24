@@ -524,11 +524,8 @@ internal class SimulatedStack(val start: Stack) {
     }
 }
 
-internal class StackBufferCursor(
-    var stack: Stack,
-    override var pos: Int,
-    var index: Int
-) : BufferCursor {
+internal class StackBufferCursor(var stack: Stack, override var pos: Int, var index: Int) :
+    BufferCursor {
     var buffer: MutableList<Int> = stack.buffer
 
     init {
@@ -539,9 +536,7 @@ internal class StackBufferCursor(
         fun create(
             stack: Stack,
             pos: Int = stack.bufferBase + stack.buffer.size
-        ): StackBufferCursor {
-            return StackBufferCursor(stack, pos, pos - stack.bufferBase)
-        }
+        ): StackBufferCursor = StackBufferCursor(stack, pos, pos - stack.bufferBase)
     }
 
     fun maybeNext() {

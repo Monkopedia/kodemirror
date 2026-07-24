@@ -876,7 +876,7 @@ internal class BufferNode(val context: BufferContext, val _parent: BufferNode?, 
  * [Tree] and [TreeBuffer] children.
  */
 class TreeCursor internal constructor(root: Tree, internal val mode: Int = 0) : SyntaxNodeRef {
-    @Suppress("ktlint:standard:property-naming")
+    @Suppress("ktlint:standard:property-naming", "ktlint:standard:backing-property-naming")
     internal var _tree: TreeNode = TreeNode(root, 0, null, 0)
     internal var buffer: BufferContext? = null
     private val stack = mutableListOf<Int>()

@@ -129,14 +129,12 @@ val updateOriginalDoc: StateEffectType<OriginalDocUpdate> = StateEffect.define()
 fun originalDocChangeEffect(
     state: EditorState,
     changes: ChangeSet
-): StateEffect<OriginalDocUpdate> {
-    return updateOriginalDoc.of(
-        OriginalDocUpdate(
-            doc = changes.apply(getOriginalDoc(state)),
-            changes = changes
-        )
+): StateEffect<OriginalDocUpdate> = updateOriginalDoc.of(
+    OriginalDocUpdate(
+        doc = changes.apply(getOriginalDoc(state)),
+        changes = changes
     )
-}
+)
 
 private val originalDoc: StateField<Text> = StateField.define(
     StateFieldSpec(
@@ -154,16 +152,12 @@ private val originalDoc: StateField<Text> = StateField.define(
 /**
  * Get the original document from a unified merge editor's state.
  */
-fun getOriginalDoc(state: EditorState): Text {
-    return state.field(originalDoc)
-}
+fun getOriginalDoc(state: EditorState): Text = state.field(originalDoc)
 
 // -- Deletion widget --
 
-private class DeletionWidget(
-    private val chunk: Chunk,
-    private val state: EditorState
-) : WidgetType() {
+private class DeletionWidget(private val chunk: Chunk, private val state: EditorState) :
+    WidgetType() {
     override fun equals(other: Any?): Boolean =
         other is DeletionWidget && other.chunk.changes === chunk.changes
 

@@ -18,10 +18,6 @@
  */
 package com.monkopedia.kodemirror.lezer.lr
 
-class Dialect(
-    val source: String?,
-    val flags: List<Boolean>,
-    val disabled: IntArray?
-) {
+class Dialect(val source: String?, val flags: List<Boolean>, val disabled: IntArray?) {
     fun allows(term: Int): Boolean = disabled == null || disabled[term] == 0
 }

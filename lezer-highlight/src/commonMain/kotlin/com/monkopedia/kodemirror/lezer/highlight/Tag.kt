@@ -108,9 +108,10 @@ internal class Modifier(val name: String? = null) {
     }
 }
 
-private fun <T> sameArray(a: List<T>, b: List<T>): Boolean {
-    return a.size == b.size && a.indices.all { a[it] == b[it] }
-}
+private fun <T> sameArray(a: List<T>, b: List<T>): Boolean = a.size == b.size &&
+    a.indices.all {
+        a[it] == b[it]
+    }
 
 private fun <T> powerSet(array: List<T>): List<List<T>> {
     var sets = mutableListOf<List<T>>(emptyList())

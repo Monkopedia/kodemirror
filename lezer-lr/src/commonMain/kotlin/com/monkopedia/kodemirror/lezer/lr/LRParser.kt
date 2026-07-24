@@ -76,10 +76,7 @@ data class ParserConfig(
 )
 
 data class TokenizerReplacement(val from: ExternalTokenizer, val to: ExternalTokenizer)
-data class SpecializerReplacement(
-    val from: (String, Stack) -> Int,
-    val to: (String, Stack) -> Int
-)
+data class SpecializerReplacement(val from: (String, Stack) -> Int, val to: (String, Stack) -> Int)
 
 typealias ParseWrapper = com.monkopedia.kodemirror.lezer.common.ParseWrapper
 
@@ -186,17 +183,14 @@ class LRParser private constructor(
         return 0
     }
 
-    fun stateSlot(state: Int, slot: Int): Int {
-        return states[(state * ParseState.SIZE) + slot]
-    }
+    fun stateSlot(state: Int, slot: Int): Int = states[(state * ParseState.SIZE) + slot]
 
-    fun stateFlag(state: Int, flag: Int): Boolean {
-        return (stateSlot(state, ParseState.FLAGS) and flag) > 0
-    }
+    fun stateFlag(state: Int, flag: Int): Boolean =
+        (stateSlot(state, ParseState.FLAGS) and flag) > 0
 
-    fun validAction(state: Int, action: Int): Boolean {
-        return allActions(state) { a -> if (a == action) true else null } == true
-    }
+    fun validAction(state: Int, action: Int): Boolean = allActions(state) { a ->
+        if (a == action) true else null
+    } == true
 
     fun <T> allActions(state: Int, action: (Int) -> T?): T? {
         val deflt = stateSlot(state, ParseState.DEFAULT_REDUCE)
@@ -307,23 +301,19 @@ class LRParser private constructor(
 
     fun hasWrappers(): Boolean = wrappers.isNotEmpty()
 
-    fun getName(term: Int): String {
-        return termNames?.get(term) ?: (
-            if (term <= maxNode) {
-                nodeSet.types[term].name.ifEmpty { term.toString() }
-            } else {
-                term.toString()
-            }
-            )
-    }
+    fun getName(term: Int): String = termNames?.get(term) ?: (
+        if (term <= maxNode) {
+            nodeSet.types[term].name.ifEmpty { term.toString() }
+        } else {
+            term.toString()
+        }
+        )
 
     val eofTerm: Int get() = maxNode + 1
 
     val topNode: NodeType get() = nodeSet.types[top[1]]
 
-    fun dynamicPrecedence(term: Int): Int {
-        return dynamicPrecedences?.get(term) ?: 0
-    }
+    fun dynamicPrecedence(term: Int): Int = dynamicPrecedences?.get(term) ?: 0
 
     fun parseDialect(dialect: String? = null): Dialect {
         val values = dialects.keys.toList()
@@ -479,18 +469,16 @@ internal fun getSpecializer(spec: SpecializerSpec): (String, Stack) -> Int {
 }
 
 @Suppress("UNCHECKED_CAST")
-internal fun getNodePropByName(name: String): NodeProp<Any?> {
-    return when (name) {
-        "group" -> NodeProp.group as NodeProp<Any?>
-        "closedBy" -> NodeProp.closedBy as NodeProp<Any?>
-        "openedBy" -> NodeProp.openedBy as NodeProp<Any?>
-        "top" -> NodeProp.top as NodeProp<Any?>
-        "contextHash" -> NodeProp.contextHash as NodeProp<Any?>
-        "lookAhead" -> NodeProp.lookAhead as NodeProp<Any?>
-        "skipped" -> NodeProp.skipped as NodeProp<Any?>
-        "isolate" -> NodeProp.isolate as NodeProp<Any?>
-        else -> throw IllegalArgumentException("Unknown node prop: $name")
-    }
+internal fun getNodePropByName(name: String): NodeProp<Any?> = when (name) {
+    "group" -> NodeProp.group as NodeProp<Any?>
+    "closedBy" -> NodeProp.closedBy as NodeProp<Any?>
+    "openedBy" -> NodeProp.openedBy as NodeProp<Any?>
+    "top" -> NodeProp.top as NodeProp<Any?>
+    "contextHash" -> NodeProp.contextHash as NodeProp<Any?>
+    "lookAhead" -> NodeProp.lookAhead as NodeProp<Any?>
+    "skipped" -> NodeProp.skipped as NodeProp<Any?>
+    "isolate" -> NodeProp.isolate as NodeProp<Any?>
+    else -> throw IllegalArgumentException("Unknown node prop: $name")
 }
 
 private fun setProp(

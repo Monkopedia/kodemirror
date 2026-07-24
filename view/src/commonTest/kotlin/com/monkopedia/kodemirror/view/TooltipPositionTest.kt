@@ -112,7 +112,13 @@ class TooltipPositionTest {
         // editor area at (200, 100) in the window; caret-relative coords add onto it.
         assertEquals(
             IntOffset(210, 140),
-            offset(anchorLeft = 200, anchorTop = 100, coordsLeft = 10, coordsTop = 20, coordsBottom = 36)
+            offset(
+                anchorLeft = 200,
+                anchorTop = 100,
+                coordsLeft = 10,
+                coordsTop = 20,
+                coordsBottom = 36
+            )
         )
     }
 }

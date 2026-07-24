@@ -40,12 +40,10 @@ class Chunk(
     val toB: DocPos,
     val precise: Boolean = true
 ) {
-    fun offset(offA: Int, offB: Int): Chunk {
-        return if (offA == 0 && offB == 0) {
-            this
-        } else {
-            Chunk(changes, fromA + offA, toA + offA, fromB + offB, toB + offB, precise)
-        }
+    fun offset(offA: Int, offB: Int): Chunk = if (offA == 0 && offB == 0) {
+        this
+    } else {
+        Chunk(changes, fromA + offA, toA + offA, fromB + offB, toB + offB, precise)
     }
 
     val endA: DocPos get() = maxOf(fromA, toA - 1)
@@ -70,15 +68,13 @@ class Chunk(
             b: Text,
             changes: ChangeDesc,
             conf: DiffConfig = defaultDiffConfig
-        ): List<Chunk> {
-            return updateChunks(
-                findRangesForChange(chunks, changes, isA = true, otherLen = b.length),
-                chunks,
-                a,
-                b,
-                conf
-            )
-        }
+        ): List<Chunk> = updateChunks(
+            findRangesForChange(chunks, changes, isA = true, otherLen = b.length),
+            chunks,
+            a,
+            b,
+            conf
+        )
 
         /**
          * Update a set of chunks for changes in document B.
@@ -89,15 +85,13 @@ class Chunk(
             b: Text,
             changes: ChangeDesc,
             conf: DiffConfig = defaultDiffConfig
-        ): List<Chunk> {
-            return updateChunks(
-                findRangesForChange(chunks, changes, isA = false, otherLen = a.length),
-                chunks,
-                a,
-                b,
-                conf
-            )
-        }
+        ): List<Chunk> = updateChunks(
+            findRangesForChange(chunks, changes, isA = false, otherLen = a.length),
+            chunks,
+            a,
+            b,
+            conf
+        )
     }
 }
 
@@ -237,8 +231,12 @@ private fun findRangesForChange(
             if (ranges.isNotEmpty() && ranges.last().toA >= fromA) {
                 val last = ranges.last()
                 ranges[ranges.size - 1] = UpdateRange(
-                    last.fromA, toA, last.fromB, toB,
-                    last.diffA + diffA, last.diffB + diffB
+                    last.fromA,
+                    toA,
+                    last.fromB,
+                    toB,
+                    last.diffA + diffA,
+                    last.diffB + diffB
                 )
             } else {
                 ranges.add(UpdateRange(fromA, toA, fromB, toB, diffA, diffB))

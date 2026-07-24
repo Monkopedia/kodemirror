@@ -41,9 +41,7 @@ import com.monkopedia.lsp.Position
  *
  * @param uri The URI of the file whose positions this mapping translates.
  */
-class WorkspaceMapping internal constructor(
-    val uri: String
-) {
+class WorkspaceMapping internal constructor(val uri: String) {
     private var changes: ChangeDesc? = null
 
     /**

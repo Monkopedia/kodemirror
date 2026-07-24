@@ -34,10 +34,7 @@ import com.monkopedia.kodemirror.state.Facet
  * @param top     If true, show above the editor; otherwise below.
  * @param content The composable to render inside the panel.
  */
-data class Panel(
-    val top: Boolean = false,
-    val content: @Composable BoxScope.() -> Unit
-)
+data class Panel(val top: Boolean = false, val content: @Composable BoxScope.() -> Unit)
 
 /** Facet that provides panels to display around the editor. */
 val showPanel: Facet<Panel?, Panel?> = Facet.define(

@@ -287,8 +287,10 @@ internal fun handleKeyEvent(view: EditorSession, event: KeyEvent): Boolean {
 
         // Shift variant: event has Shift, and the base key (without Shift)
         // matches. Call binding.shift if available.
-        if (isShift && nameWithoutShift != null &&
-            binding.shift != null && bindingKey == nameWithoutShift
+        if (isShift &&
+            nameWithoutShift != null &&
+            binding.shift != null &&
+            bindingKey == nameWithoutShift
         ) {
             val result = binding.shift.invoke(view)
             if (result) return true
@@ -392,7 +394,8 @@ internal fun handleRawKeyEvent(
     // is a shifted symbol (e.g., "|" from Shift+\), try the unshifted
     // base character with explicit Shift (e.g., "Ctrl-Shift-\").
     val physicalName: String? = if (
-        shift && (ctrl || alt || meta) &&
+        shift &&
+        (ctrl || alt || meta) &&
         normalizedKey.length == 1
     ) {
         val base = UNSHIFTED_SYMBOLS[normalizedKey[0]]
@@ -450,8 +453,10 @@ internal fun handleRawKeyEvent(
         }
 
         // Shift variant: key matches without Shift, call binding.shift
-        if (shift && nameWithoutShift != null &&
-            binding.shift != null && bindingKey == nameWithoutShift
+        if (shift &&
+            nameWithoutShift != null &&
+            binding.shift != null &&
+            bindingKey == nameWithoutShift
         ) {
             val result = binding.shift.invoke(view)
             if (result) return true
@@ -461,9 +466,12 @@ internal fun handleRawKeyEvent(
     // Not consumed by keymap -- check if it should be inserted as text
     if (!view.state.facet(editable)) return false
     val shouldSuppress = view.state.facet(inputSuppressor).any { it.invoke() }
-    if (!shouldSuppress && normalizedKey.length == 1 &&
+    if (!shouldSuppress &&
+        normalizedKey.length == 1 &&
         !normalizedKey[0].isISOControl() &&
-        !ctrl && !alt && !meta
+        !ctrl &&
+        !alt &&
+        !meta
     ) {
         val sel = view.state.selection.main
         val newCursor = DocPos(sel.from.value + normalizedKey.length)

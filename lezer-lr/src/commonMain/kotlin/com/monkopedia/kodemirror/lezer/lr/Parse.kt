@@ -67,11 +67,17 @@ internal class TokenCache(parser: LRParser, val stream: InputStream) {
                 val startIndex = actionIndex
                 if (token.extended > -1) {
                     actionIndex = addActions(
-                        stack, token.extended, token.end, actionIndex
+                        stack,
+                        token.extended,
+                        token.end,
+                        actionIndex
                     )
                 }
                 actionIndex = addActions(
-                    stack, token.value, token.end, actionIndex
+                    stack,
+                    token.value,
+                    token.end,
+                    actionIndex
                 )
                 if (!tokenizer.extend) {
                     main = token
@@ -87,7 +93,10 @@ internal class TokenCache(parser: LRParser, val stream: InputStream) {
             main.start = stack.pos
             main.end = stack.pos
             actionIndex = addActions(
-                stack, main.value, main.end, actionIndex
+                stack,
+                main.value,
+                main.end,
+                actionIndex
             )
             while (actions.size > actionIndex) {
                 actions.removeAt(actions.size - 1)
@@ -168,7 +177,10 @@ internal class TokenCache(parser: LRParser, val stream: InputStream) {
                     } else {
                         if (idx == 0 && data[i + 1] == Seq.OTHER) {
                             idx = putAction(
-                                pair(data, i + 2), token, end, idx
+                                pair(data, i + 2),
+                                token,
+                                end,
+                                idx
                             )
                         }
                         break
@@ -599,7 +611,8 @@ internal fun findFinished(stacks: List<Stack>): Stack? {
         val stopped = stack.p.stoppedAt
         if ((
                 stack.pos == stack.p.stream.end ||
-                    stopped != null && stack.pos > stopped
+                    stopped != null &&
+                    stack.pos > stopped
                 ) &&
             stack.p.parser.stateFlag(stack.state, StateFlag.ACCEPTING)
         ) {

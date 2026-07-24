@@ -28,12 +28,10 @@ import kotlin.test.assertTrue
 
 class TextTest {
 
-    private fun depth(node: Text): Int {
-        return when (node) {
-            is TextLeaf -> 1
-            is TextNode -> 1 + node.children.maxOf { depth(it) }
-            else -> error("Unknown Text subclass")
-        }
+    private fun depth(node: Text): Int = when (node) {
+        is TextLeaf -> 1
+        is TextNode -> 1 + node.children.maxOf { depth(it) }
+        else -> error("Unknown Text subclass")
     }
 
     private val line = "1234567890".repeat(10)

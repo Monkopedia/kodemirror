@@ -90,10 +90,7 @@ val ChunkField: StateField<List<Chunk>> = StateField.define(
 /**
  * Result of [getChunks].
  */
-data class ChunkResult(
-    val chunks: List<Chunk>,
-    val side: MergeSide?
-)
+data class ChunkResult(val chunks: List<Chunk>, val side: MergeSide?)
 
 /**
  * Get the changed chunks for the merge view that this editor is part

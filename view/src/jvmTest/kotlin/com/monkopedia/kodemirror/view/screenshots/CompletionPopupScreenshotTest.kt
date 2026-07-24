@@ -112,6 +112,8 @@ class CompletionPopupScreenshotTest {
         waitForIdle()
         // The popup is a separate Compose root (a Popup), so capture it directly
         // by its testTag rather than onRoot() (which is ambiguous with >1 root).
-        onNodeWithTag("completionPopup").captureScreenshot("screenshots/compose/completion-popup.png")
+        onNodeWithTag(
+            "completionPopup"
+        ).captureScreenshot("screenshots/compose/completion-popup.png")
     }
 }

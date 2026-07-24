@@ -86,10 +86,8 @@ val highlightTrailingWhitespace: Extension = run {
     ).asExtension()
 }
 
-private class WhitespacePlugin(
-    view: EditorSession,
-    private val decorator: MatchDecorator
-) : PluginValue {
+private class WhitespacePlugin(view: EditorSession, private val decorator: MatchDecorator) :
+    PluginValue {
     var decos: DecorationSet = decorator.createDeco(view)
 
     override fun update(update: ViewUpdate) {

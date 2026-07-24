@@ -72,9 +72,7 @@ import kotlinx.coroutines.launch
  *   are installed at high precedence. Pass false to bind the
  *   [showSignatureHelp]/[nextSignature]/[prevSignature] commands yourself.
  */
-data class SignatureHelpConfig(
-    val keymap: Boolean = true
-)
+data class SignatureHelpConfig(val keymap: Boolean = true)
 
 /**
  * The per-editor signature-help server binding: the [client] wrapping the
@@ -188,11 +186,7 @@ internal fun prevActive(active: Int): Int = if (active > 0) active - 1 else acti
  * [nextSignature]/[prevSignature]), and the document [pos] the tooltip anchors
  * to.
  */
-internal data class SignatureState(
-    val data: SignatureHelp,
-    val active: Int,
-    val pos: Int
-)
+internal data class SignatureState(val data: SignatureHelp, val active: Int, val pos: Int)
 
 /**
  * The new state produced by a [signatureEffect]: either a full [SignatureState]
@@ -268,8 +262,10 @@ internal fun SignatureContent(data: SignatureHelp, active: Int) {
  * parameter) bolded. When [range] is null the label is returned verbatim.
  */
 internal fun signatureLabel(label: String, range: ActiveParamRange?) = buildAnnotatedString {
-    if (range == null || range.to <= range.from ||
-        range.from !in 0..label.length || range.to !in 0..label.length
+    if (range == null ||
+        range.to <= range.from ||
+        range.from !in 0..label.length ||
+        range.to !in 0..label.length
     ) {
         append(label)
         return@buildAnnotatedString
@@ -307,9 +303,7 @@ internal fun signatureLabel(label: String, range: ActiveParamRange?) = buildAnno
  * cooperatively through structured concurrency, consistent with
  * [serverHover]/[serverCompletionSource].
  */
-internal class SignatureHelpPlugin(
-    private val session: EditorSession
-) : PluginValue {
+internal class SignatureHelpPlugin(private val session: EditorSession) : PluginValue {
     private val job = SupervisorJob(session.coroutineScope.coroutineContext[Job])
     private val scope: CoroutineScope =
         CoroutineScope(session.coroutineScope.coroutineContext + job)
@@ -337,8 +331,10 @@ internal class SignatureHelpPlugin(
                 update.changes.iterChanges({ _, _, _, _, inserted ->
                     val ins = inserted.toString()
                     if (ins.isNotEmpty()) {
-                        for (ch in triggers) if (ch.isNotEmpty() && ins.contains(ch)) {
-                            triggerCharacter = ch
+                        for (ch in triggers) {
+                            if (ch.isNotEmpty() && ins.contains(ch)) {
+                                triggerCharacter = ch
+                            }
                         }
                     }
                 })

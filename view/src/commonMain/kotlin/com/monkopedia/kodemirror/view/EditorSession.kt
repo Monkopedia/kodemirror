@@ -309,12 +309,7 @@ private class AsyncSelectionPlugin(
 }
 
 /** A simple axis-aligned rectangle used for coordinate results. */
-data class Rect(
-    val left: Float,
-    val top: Float,
-    val right: Float,
-    val bottom: Float
-) {
+data class Rect(val left: Float, val top: Float, val right: Float, val bottom: Float) {
     val width: Float get() = right - left
     val height: Float get() = bottom - top
     val centerX: Float get() = (left + right) / 2f

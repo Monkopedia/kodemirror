@@ -187,7 +187,9 @@ internal fun computeOrder(
             if (types[i] == T_CS) {
                 if (prevType == T_EN && nextType == T_EN) {
                     types[i] = T_EN
-                } else if (prevType == T_AN && nextType == T_AN) types[i] = T_AN
+                } else if (prevType == T_AN && nextType == T_AN) {
+                    types[i] = T_AN
+                }
             } else { // T_ET
                 if (prevType == T_EN && nextType == T_EN) types[i] = T_EN
             }

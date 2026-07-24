@@ -77,10 +77,7 @@ data class LSPClientConfig(
  * @param server The language server implementation supplied by the consumer.
  * @param config Client configuration. See [LSPClientConfig].
  */
-class LSPClient(
-    val server: LanguageServer,
-    val config: LSPClientConfig = LSPClientConfig()
-) {
+class LSPClient(val server: LanguageServer, val config: LSPClientConfig = LSPClientConfig()) {
     private val initMutex = Mutex()
     private val syncMutex = Mutex()
 

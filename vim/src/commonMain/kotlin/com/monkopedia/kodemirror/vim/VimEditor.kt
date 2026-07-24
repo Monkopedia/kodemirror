@@ -111,9 +111,7 @@ internal class Operation {
     var startSelectionHead: DocPos? = null
 }
 
-internal class Change(
-    val text: List<String>
-) {
+internal class Change(val text: List<String>) {
     var next: Change? = null
 }
 
@@ -136,11 +134,7 @@ private val BRACKET_MATCHING = mapOf(
 // Search cursor wrapper
 // ---------------------------------------------------------------------------
 
-internal class VimSearchCursor(
-    private val cm: VimEditor,
-    query: Regex,
-    pos: LinePos
-) {
+internal class VimSearchCursor(private val cm: VimEditor, query: Regex, pos: LinePos) {
     private var last: SearchMatch? = null
     private var lastCM5Result: CM5SearchMatch? = null
     private var afterEmptyMatch = false
@@ -173,9 +167,7 @@ internal class VimSearchCursor(
         doc: Text,
         from: DocPos = DocPos.ZERO,
         to: DocPos = doc.endPos
-    ): RegExpCursor {
-        return RegExpCursor(doc, source, queryOptions, from, to)
-    }
+    ): RegExpCursor = RegExpCursor(doc, source, queryOptions, from, to)
 
     private fun nextMatch(from: DocPos): SearchMatch? {
         val doc = cm.session.state.doc
@@ -358,7 +350,9 @@ private fun VimEditor.findMatchingBracketByText(pos: LinePos): BracketMatch {
     val maxDist = 10000
 
     // Track string/comment state by rescanning from the beginning of each line
-    while (depth > 0 && scanPos >= 0 && scanPos < doc.length &&
+    while (depth > 0 &&
+        scanPos >= 0 &&
+        scanPos < doc.length &&
         kotlin.math.abs(scanPos - startOffset) < maxDist
     ) {
         val scanLinePos = posFromIndex(state.doc, DocPos(scanPos))
@@ -556,7 +550,8 @@ private fun findSpace(line: String, max: Int, min: Int): SpaceResult? {
     }
     if (start != 0) return SpaceResult(start, end)
 
-    if (spaceBefore != null && spaceBefore.groupValues[2].isNotEmpty() &&
+    if (spaceBefore != null &&
+        spaceBefore.groupValues[2].isNotEmpty() &&
         spaceBefore.range.first > min
     ) {
         return SpaceResult(
@@ -650,16 +645,12 @@ internal fun VimEditor.openDialog(
     template: String,
     callback: ((String) -> Unit)?,
     options: Map<String, Any?> = emptyMap()
-): () -> Unit {
-    return openDialogFn?.invoke(template, callback ?: {}, options) ?: {}
-}
+): () -> Unit = openDialogFn?.invoke(template, callback ?: {}, options) ?: {}
 
 internal fun VimEditor.openNotification(
     template: String,
     options: Map<String, Any?> = emptyMap()
-): () -> Unit {
-    return openNotificationFn?.invoke(template, options) ?: {}
-}
+): () -> Unit = openNotificationFn?.invoke(template, options) ?: {}
 
 internal fun VimEditor.firstLine(): Int = 0
 internal fun VimEditor.lastLine(): Int = session.state.doc.lines - 1
@@ -728,10 +719,8 @@ internal fun VimEditor.listSelections(): List<LinePosRange> {
 
 internal fun VimEditor.getSelection(): String = getSelections().joinToString("\n")
 
-internal fun VimEditor.getSelections(): List<String> {
-    return session.state.selection.ranges.map { r ->
-        session.state.sliceDoc(r.from, r.to)
-    }
+internal fun VimEditor.getSelections(): List<String> = session.state.selection.ranges.map { r ->
+    session.state.sliceDoc(r.from, r.to)
 }
 
 internal fun VimEditor.somethingSelected(): Boolean = session.state.selection.ranges.any {

@@ -166,7 +166,7 @@ class VimScrollIntoViewTest {
         assertEquals(
             destination,
             produced.last().target,
-            "j should reveal the destination head (${destination}), not offset 0"
+            "j should reveal the destination head ($destination), not offset 0"
         )
     }
 
@@ -184,7 +184,7 @@ class VimScrollIntoViewTest {
         assertEquals(
             destination,
             produced.last().target,
-            "k should reveal the destination head (${destination}), not offset 0"
+            "k should reveal the destination head ($destination), not offset 0"
         )
     }
 

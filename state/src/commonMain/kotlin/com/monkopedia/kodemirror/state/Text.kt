@@ -130,9 +130,7 @@ abstract class Text {
     }
 
     /** Append another document to this one. */
-    fun append(other: Text): Text {
-        return replace(endPos, endPos, other)
-    }
+    fun append(other: Text): Text = replace(endPos, endPos, other)
 
     /** Retrieve the text between the given points. */
     fun slice(from: DocPos, to: DocPos = endPos): Text {
@@ -296,10 +294,8 @@ abstract class Text {
 // Leaves store an array of line strings. There are always line
 // breaks between these strings. Leaves are limited in size and
 // have to be contained in TextNode instances for bigger documents.
-internal class TextLeaf(
-    val text: List<String>,
-    override val length: Int = textLength(text)
-) : Text() {
+internal class TextLeaf(val text: List<String>, override val length: Int = textLength(text)) :
+    Text() {
     override val lines: Int get() = text.size
 
     override val children: List<Text>? get() = null
@@ -421,10 +417,7 @@ internal class TextLeaf(
 // themselves on changes. There are implied line breaks _between_
 // the children of a node (but not before the first or after the
 // last child).
-internal class TextNode(
-    override val children: List<Text>,
-    override val length: Int
-) : Text() {
+internal class TextNode(override val children: List<Text>, override val length: Int) : Text() {
     override var lines: Int = 0
         private set
 
@@ -466,7 +459,8 @@ internal class TextNode(
                             (if (end >= to) Open.To.value else 0)
                         )
                 )
-                if (pos >= from && end <= to &&
+                if (pos >= from &&
+                    end <= to &&
                     childOpen == Open.None
                 ) {
                     target.add(child)
@@ -709,14 +703,10 @@ private fun appendText(
     return target
 }
 
-private fun sliceText(text: List<String>, from: Int, to: Int): MutableList<String> {
-    return appendText(text, mutableListOf(""), from, to)
-}
+private fun sliceText(text: List<String>, from: Int, to: Int): MutableList<String> =
+    appendText(text, mutableListOf(""), from, to)
 
-internal class RawTextCursor(
-    text: Text,
-    val dir: Int = 1
-) : TextIterator {
+internal class RawTextCursor(text: Text, val dir: Int = 1) : TextIterator {
     override var done: Boolean = false
         private set
     override var lineBreak: Boolean = false
@@ -780,7 +770,8 @@ internal class RawTextCursor(
                         remaining == 0 -> next
                         dir > 0 -> next.substring(remaining)
                         else -> next.substring(
-                            0, next.length - remaining
+                            0,
+                            next.length - remaining
                         )
                     }
                     return this
@@ -821,11 +812,7 @@ internal class RawTextCursor(
     }
 }
 
-private class PartialTextCursor(
-    text: Text,
-    start: Int,
-    end: Int
-) : TextIterator {
+private class PartialTextCursor(text: Text, start: Int, end: Int) : TextIterator {
     private val cursor: RawTextCursor =
         RawTextCursor(text, if (start > end) -1 else 1)
     override var value: String = ""
@@ -876,9 +863,7 @@ private class PartialTextCursor(
         get() = cursor.lineBreak && value.isNotEmpty()
 }
 
-private class LineCursor(
-    private val inner: TextIterator
-) : TextIterator {
+private class LineCursor(private val inner: TextIterator) : TextIterator {
     private var afterBreak = true
     override var value: String = ""
         private set

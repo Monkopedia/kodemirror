@@ -56,19 +56,17 @@ import com.monkopedia.kodemirror.view.showPanel
  *   vim mode. If false (default), only show a panel when a dialog is active
  *   (e.g., ex command line, search prompt).
  */
-fun vim(status: Boolean = false): Extension {
-    return extensionListOf(
-        vimContextField,
-        vimKeymap,
-        vimPlugin.asExtension(),
-        vimInputSuppressor,
-        vimBlockCursorProvider,
-        vimModeField,
-        vimStatusField,
-        virtualPromptField,
-        if (status) showPanel.of(createStatusPanel()) else vimPanelField
-    )
-}
+fun vim(status: Boolean = false): Extension = extensionListOf(
+    vimContextField,
+    vimKeymap,
+    vimPlugin.asExtension(),
+    vimInputSuppressor,
+    vimBlockCursorProvider,
+    vimModeField,
+    vimStatusField,
+    virtualPromptField,
+    if (status) showPanel.of(createStatusPanel()) else vimPanelField
+)
 
 /**
  * Provide block cursor positions to the selection overlay for rendering.
@@ -121,9 +119,7 @@ internal var activeVimPlugin: VimPluginValue? = null
  * Get the [VimEditor] associated with an [EditorSession], or null
  * if vim mode is not active.
  */
-fun getVimEditor(view: EditorSession): VimEditor? {
-    return view.plugin(vimPlugin)?.cm
-}
+fun getVimEditor(view: EditorSession): VimEditor? = view.plugin(vimPlugin)?.cm
 
 /** @see getVimEditor */
 @Deprecated("Use getVimEditor()", ReplaceWith("getVimEditor(view)"))

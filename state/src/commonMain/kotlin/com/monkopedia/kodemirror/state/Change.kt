@@ -53,9 +53,7 @@ enum class MapMode {
  * store the inserted text. As such, it can't be applied, but is
  * cheaper to store and manipulate.
  */
-open class ChangeDesc internal constructor(
-    internal val sections: IntArray
-) {
+open class ChangeDesc internal constructor(internal val sections: IntArray) {
     /**
      * The length of the document before the change.
      */
@@ -198,10 +196,12 @@ open class ChangeDesc internal constructor(
                 if (endA > pos) return posB + (pos - posA)
                 posB += len
             } else {
-                if (mode != MapMode.Simple && endA >= pos &&
+                if (mode != MapMode.Simple &&
+                    endA >= pos &&
                     (
                         mode == MapMode.TrackDel &&
-                            posA < pos && endA > pos ||
+                            posA < pos &&
+                            endA > pos ||
                             mode == MapMode.TrackBefore &&
                             posA < pos ||
                             mode == MapMode.TrackAfter &&
@@ -306,11 +306,8 @@ enum class TouchesResult {
  * document changes.
  */
 sealed interface ChangeSpec {
-    data class Single(
-        val from: DocPos,
-        val to: DocPos? = null,
-        val insert: InsertContent? = null
-    ) : ChangeSpec
+    data class Single(val from: DocPos, val to: DocPos? = null, val insert: InsertContent? = null) :
+        ChangeSpec
 
     data class Multi(val specs: List<ChangeSpec>) : ChangeSpec
 
@@ -328,10 +325,7 @@ fun String.asInsert(): InsertContent = InsertContent.StringContent(this)
 sealed interface ChangeSetJsonPart {
     data class Kept(val length: Int) : ChangeSetJsonPart
     data class Deleted(val length: Int) : ChangeSetJsonPart
-    data class Inserted(
-        val length: Int,
-        val text: List<String>
-    ) : ChangeSetJsonPart
+    data class Inserted(val length: Int, val text: List<String>) : ChangeSetJsonPart
 }
 
 /**
@@ -339,10 +333,8 @@ sealed interface ChangeSetJsonPart {
  * It stores the document length, and can only be applied to
  * documents with exactly that length.
  */
-class ChangeSet private constructor(
-    sections: IntArray,
-    internal val inserted: List<Text>
-) : ChangeDesc(sections) {
+class ChangeSet private constructor(sections: IntArray, internal val inserted: List<Text>) :
+    ChangeDesc(sections) {
 
     /**
      * Apply the changes to a document, returning the modified
@@ -360,7 +352,9 @@ class ChangeSet private constructor(
             this,
             { fromA, toA, fromB, _, text ->
                 result = result.replace(
-                    DocPos(fromB), DocPos(fromB + (toA - fromA)), text
+                    DocPos(fromB),
+                    DocPos(fromB + (toA - fromA)),
+                    text
                 )
             },
             false
@@ -479,7 +473,11 @@ class ChangeSet private constructor(
                 addSection(filteredSections, len, -1)
                 val ins = if (iter.ins == -1) {
                     -1
-                } else if (iter.off == 0) iter.ins else 0
+                } else if (iter.off == 0) {
+                    iter.ins
+                } else {
+                    0
+                }
                 addSection(resultSections, len, ins)
                 if (ins > 0) {
                     addInsert(
@@ -501,7 +499,11 @@ class ChangeSet private constructor(
                     len,
                     if (iter.ins == -1) {
                         -1
-                    } else if (iter.off == 0) iter.ins else 0
+                    } else if (iter.off == 0) {
+                        iter.ins
+                    } else {
+                        0
+                    }
                 )
                 iter.forward(len)
                 pos += len
@@ -680,10 +682,7 @@ class ChangeSet private constructor(
     }
 }
 
-data class FilterResult(
-    val changes: ChangeSet,
-    val filtered: ChangeDesc
-)
+data class FilterResult(val changes: ChangeSet, val filtered: ChangeDesc)
 
 private fun addSection(sections: MutableList<Int>, len: Int, ins: Int, forceJoin: Boolean = false) {
     if (len == 0 && ins <= 0) return
@@ -800,11 +799,13 @@ private fun mapSet(
             b.forward(len)
         } else if (b.ins >= 0 &&
             (
-                a.ins < 0 || inserted == a.i ||
+                a.ins < 0 ||
+                    inserted == a.i ||
                     a.off == 0 &&
                     (
                         b.len < a.len ||
-                            b.len == a.len && !before
+                            b.len == a.len &&
+                            !before
                         )
                 )
         ) {
@@ -813,7 +814,8 @@ private fun mapSet(
             var remaining = len
             while (remaining > 0) {
                 val piece = min(a.len, remaining)
-                if (a.ins >= 0 && inserted < a.i &&
+                if (a.ins >= 0 &&
+                    inserted < a.i &&
                     a.len <= piece
                 ) {
                     addSection(sections, 0, a.ins)
@@ -905,7 +907,11 @@ private fun composeSets(setA: ChangeDesc, setB: ChangeDesc, mkSet: Boolean = fal
             if (a.ins == -1) {
                 val insB = if (b.ins == -1) {
                     -1
-                } else if (b.off != 0) 0 else b.ins
+                } else if (b.off != 0) {
+                    0
+                } else {
+                    b.ins
+                }
                 addSection(sections, len, insB, open)
                 if (insert != null && insB != 0) {
                     addInsert(insert, sections, b.text)
@@ -933,7 +939,8 @@ private fun composeSets(setA: ChangeDesc, setB: ChangeDesc, mkSet: Boolean = fal
             }
             open = (
                 a.ins > len ||
-                    b.ins >= 0 && b.len > len
+                    b.ins >= 0 &&
+                    b.len > len
                 ) &&
                 (open || sections.size > sectionLen)
             a.forward2(len)

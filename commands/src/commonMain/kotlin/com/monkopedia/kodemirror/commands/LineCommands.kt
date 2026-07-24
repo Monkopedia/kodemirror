@@ -63,11 +63,7 @@ val copyLineDown: (EditorSession) -> Boolean = { view ->
  * ranges. Adjacent/overlapping ranges (whose line spans touch) merge
  * into a single block.
  */
-private class LineBlock(
-    var from: DocPos,
-    var to: DocPos,
-    val ranges: MutableList<SelectionRange>
-)
+private class LineBlock(var from: DocPos, var to: DocPos, val ranges: MutableList<SelectionRange>)
 
 /**
  * Group all selection ranges into contiguous line-blocks, mirroring

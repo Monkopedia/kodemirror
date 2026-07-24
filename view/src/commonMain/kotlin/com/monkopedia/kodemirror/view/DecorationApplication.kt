@@ -124,10 +124,7 @@ internal fun unmapTabOffset(expandedOffset: Int, tabOffsetMap: IntArray?): Int {
 /**
  * Result of building line content with tab expansion info.
  */
-internal data class LineContentResult(
-    val content: AnnotatedString,
-    val offsetMap: IntArray?
-) {
+internal data class LineContentResult(val content: AnnotatedString, val offsetMap: IntArray?) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is LineContentResult) return false

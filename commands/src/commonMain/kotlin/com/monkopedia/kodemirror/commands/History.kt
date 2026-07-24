@@ -395,6 +395,7 @@ internal class HistoryState(
     }
 }
 
+@Suppress("ktlint:standard:backing-property-naming")
 private val _historyField: StateField<HistoryState> = StateField.define(
     StateFieldSpec(
         create = { HistoryState(emptyList(), emptyList()) },

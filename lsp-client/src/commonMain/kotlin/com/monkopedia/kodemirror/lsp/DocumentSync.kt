@@ -88,10 +88,7 @@ internal fun toRange(from: Int, to: Int, doc: Text): Range =
  * @param change How content changes are synced ([TextDocumentSyncKind.NONE],
  *   [TextDocumentSyncKind.FULL], or [TextDocumentSyncKind.INCREMENTAL]).
  */
-data class DocumentSyncMode(
-    val openClose: Boolean,
-    val change: TextDocumentSyncKind
-) {
+data class DocumentSyncMode(val openClose: Boolean, val change: TextDocumentSyncKind) {
     /** True when content changes should be synchronized at all. */
     val syncsChanges: Boolean
         get() = change != TextDocumentSyncKind.NONE

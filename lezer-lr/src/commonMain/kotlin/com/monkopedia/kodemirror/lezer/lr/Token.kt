@@ -47,10 +47,7 @@ interface Tokenizer {
  * input as a stream of characters, tracking lookahead and hiding the complexity
  * of ranges from tokenizer code.
  */
-class InputStream internal constructor(
-    val input: Input,
-    val ranges: List<TextRange>
-) {
+class InputStream internal constructor(val input: Input, val ranges: List<TextRange>) {
     var chunk: String = ""
         internal set
     var chunkOff: Int = 0
@@ -289,11 +286,7 @@ internal class TokenGroup(val data: IntArray, val id: Int) : Tokenizer {
     }
 }
 
-class LocalTokenGroup(
-    data: Any,
-    val precTable: Int,
-    val elseToken: Int? = null
-) : Tokenizer {
+class LocalTokenGroup(data: Any, val precTable: Int, val elseToken: Int? = null) : Tokenizer {
     val data: IntArray = if (data is String) decodeArray(data) else data as IntArray
     override val contextual: Boolean = false
     override val fallback: Boolean = false
@@ -373,7 +366,8 @@ internal fun readToken(
                 val term = data[i]
                 if (dialect.allows(term) &&
                     (
-                        input.token.value == -1 || input.token.value == term ||
+                        input.token.value == -1 ||
+                            input.token.value == term ||
                             overrides(term, input.token.value, precTable, precOffset)
                         )
                 ) {

@@ -26,7 +26,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.sp
 import com.github.takahirom.roborazzi.RoborazziOptions
-import io.github.takahirom.roborazzi.captureRoboImage
 import com.monkopedia.kodemirror.lang.javascript.javascriptLanguage
 import com.monkopedia.kodemirror.language.FoldRange
 import com.monkopedia.kodemirror.language.HighlightStyle
@@ -46,6 +45,7 @@ import com.monkopedia.kodemirror.state.extensionListOf
 import com.monkopedia.kodemirror.view.EditorTheme
 import com.monkopedia.kodemirror.view.editorContentStyle
 import com.monkopedia.kodemirror.view.editorTheme
+import io.github.takahirom.roborazzi.captureRoboImage
 
 /**
  * Shared sample content strings for screenshot tests.

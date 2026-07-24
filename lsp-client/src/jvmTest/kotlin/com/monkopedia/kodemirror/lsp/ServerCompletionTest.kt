@@ -44,16 +44,16 @@ import com.monkopedia.lsp.ServerCapabilities
 import com.monkopedia.lsp.StringOr
 import com.monkopedia.lsp.TextDocumentCompletionResult
 import com.monkopedia.lsp.TextEdit
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 
 class ServerCompletionTest {
     private fun doc(vararg lines: String): Text = Text.of(lines.toList())
@@ -427,7 +427,10 @@ class ServerCompletionTest {
                 label = "w",
                 insertText = "w",
                 additionalTextEdits = listOf(
-                    TextEdit(range = Range(Position(0u, 0u), Position(0u, 0u)), newText = "import x\n")
+                    TextEdit(
+                        range = Range(Position(0u, 0u), Position(0u, 0u)),
+                        newText = "import x\n"
+                    )
                 )
             ).needsResolve()
         )
@@ -582,9 +585,8 @@ class ServerCompletionTest {
     private fun recordingSession(doc: String): EditorSession =
         DelegatingSession(EditorState.create(doc))
 
-    private class DelegatingSession(
-        initial: EditorState
-    ) : EditorSession by EditorSession(initial) {
+    private class DelegatingSession(initial: EditorState) :
+        EditorSession by EditorSession(initial) {
         override val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Unconfined)
     }
 }

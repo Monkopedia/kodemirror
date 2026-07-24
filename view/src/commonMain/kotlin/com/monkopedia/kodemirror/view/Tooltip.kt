@@ -183,16 +183,14 @@ internal fun computeTooltipOffset(
  * @param source Function that, given a session and position, returns a tooltip
  *               or null.
  */
-fun hoverTooltip(source: (EditorSession, Int) -> Tooltip?): Extension {
-    return ViewPlugin.define(
-        create = { session -> HoverTooltipPlugin(session, syncSource = source) },
-        configure = {
-            copy(
-                decorations = { _ -> RangeSet.empty() }
-            )
-        }
-    ).asExtension()
-}
+fun hoverTooltip(source: (EditorSession, Int) -> Tooltip?): Extension = ViewPlugin.define(
+    create = { session -> HoverTooltipPlugin(session, syncSource = source) },
+    configure = {
+        copy(
+            decorations = { _ -> RangeSet.empty() }
+        )
+    }
+).asExtension()
 
 /**
  * Default hover delay, in milliseconds, used by the async [hoverTooltip]
@@ -227,8 +225,8 @@ const val DEFAULT_HOVER_TIME: Long = 300
  * @param source Suspending function returning a tooltip for the position, or
  *               null.
  */
-fun hoverTooltip(hoverTime: Long, source: suspend (EditorSession, Int) -> Tooltip?): Extension {
-    return ViewPlugin.define(
+fun hoverTooltip(hoverTime: Long, source: suspend (EditorSession, Int) -> Tooltip?): Extension =
+    ViewPlugin.define(
         create = { session ->
             HoverTooltipPlugin(session, asyncSource = source, hoverTime = hoverTime)
         },
@@ -238,7 +236,6 @@ fun hoverTooltip(hoverTime: Long, source: suspend (EditorSession, Int) -> Toolti
             )
         }
     ).asExtension()
-}
 
 /**
  * Check whether any hover tooltips are currently active in the

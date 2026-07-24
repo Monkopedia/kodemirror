@@ -308,7 +308,8 @@ fun insertCompletionText(
         // Secondary ranges only get the completion when the text immediately around
         // them matches what's being replaced at the primary range. Empty primary
         // spans (from == to) always apply (nothing distinguishing to match).
-        if (range != main && from != to &&
+        if (range != main &&
+            from != to &&
             state.sliceDoc(range.from + fromOff, range.from + toOff) != state.sliceDoc(from, to)
         ) {
             ChangeByRangeResult(range = range)

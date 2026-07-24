@@ -43,10 +43,7 @@ val setSelectedCompletion: StateEffectType<Int> = StateEffect.define()
  * (Ctrl-Space / [startCompletion]) rather than implicitly by typing. The
  * [explicit][CompletionState.explicit] flag governs the session lifecycle.
  */
-internal data class StartCompletion(
-    val results: List<CompletionResult>,
-    val explicit: Boolean
-)
+internal data class StartCompletion(val results: List<CompletionResult>, val explicit: Boolean)
 
 /**
  * Effect to open the completion list with one or more source results plus whether
@@ -145,7 +142,8 @@ internal val completionStateField: StateField<CompletionState> = StateField.defi
                 } else {
                     result.results.filter { cr ->
                         val validFor = cr.validFor
-                        head >= cr.from && validFor != null &&
+                        head >= cr.from &&
+                            validFor != null &&
                             validFor.matches(tr.state.doc.sliceString(cr.from, head))
                     }
                 }

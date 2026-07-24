@@ -138,12 +138,10 @@ class SelectionRange private constructor(
      * Compare this range to another range, optionally including
      * cursor association.
      */
-    fun eq(other: SelectionRange, includeAssoc: Boolean): Boolean {
-        return anchor == other.anchor &&
-            head == other.head &&
-            goalColumn == other.goalColumn &&
-            (!includeAssoc || empty || assoc == other.assoc)
-    }
+    fun eq(other: SelectionRange, includeAssoc: Boolean): Boolean = anchor == other.anchor &&
+        head == other.head &&
+        goalColumn == other.goalColumn &&
+        (!includeAssoc || empty || assoc == other.assoc)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

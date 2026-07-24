@@ -47,10 +47,7 @@ data class WidgetDecorationSpec(
 )
 
 /** Spec for a line decoration (whole-line styling). */
-data class LineDecorationSpec(
-    val cssClass: String? = null,
-    val style: SpanStyle? = null
-)
+data class LineDecorationSpec(val cssClass: String? = null, val style: SpanStyle? = null)
 
 /** Spec for a replace decoration (hides/replaces a range). */
 data class ReplaceDecorationSpec(

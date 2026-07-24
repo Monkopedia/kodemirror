@@ -104,13 +104,12 @@ fun search(panelModifier: (BoxScope.() -> Modifier)? = null): Extension {
     )
 }
 
-private class SearchHighlightPlugin(
-    state: EditorState
-) : PluginValue {
+private class SearchHighlightPlugin(state: EditorState) : PluginValue {
     var decos: DecorationSet = buildDecos(state)
 
     override fun update(update: ViewUpdate) {
-        if (update.docChanged || update.selectionSet ||
+        if (update.docChanged ||
+            update.selectionSet ||
             update.transactions.any { tr ->
                 tr.effects.any {
                     it.asType(toggleSearchPanel) != null || it.asType(setSearchQuery) != null

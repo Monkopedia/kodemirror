@@ -20,6 +20,7 @@ package com.monkopedia.kodemirror.lsp
 
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.view.EditorSession
+import com.monkopedia.lsp.Hover as LSPHover
 import com.monkopedia.lsp.HoverContents
 import com.monkopedia.lsp.HoverParams
 import com.monkopedia.lsp.MarkupContent
@@ -30,7 +31,6 @@ import com.monkopedia.lsp.ServerCapabilities
 import com.monkopedia.lsp.TextDocumentIdentifier
 import com.monkopedia.lsp.TextDocumentSyncKind
 import com.monkopedia.lsp.TextDocumentSyncOptions
-import com.monkopedia.lsp.Hover as LSPHover
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -219,7 +219,9 @@ class LSPClientTest {
         val fixture = TestLanguageServer()
         val client = LSPClient(fixture.server)
         val lc = client.languageClient
-        assertFalse(lc.windowShowDocument(com.monkopedia.lsp.ShowDocumentParams(uri = "file:///x")).success)
+        assertFalse(
+            lc.windowShowDocument(com.monkopedia.lsp.ShowDocumentParams(uri = "file:///x")).success
+        )
         assertFalse(
             lc.workspaceApplyEdit(
                 com.monkopedia.lsp.ApplyWorkspaceEditParams(

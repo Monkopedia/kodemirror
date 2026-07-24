@@ -131,14 +131,18 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
                 }
                 "charAfter" -> {
                     val newPosition = updateSelectionForSurrogateCharacters(
-                        cm, head, offsetCursor(head, 0, 1)
+                        cm,
+                        head,
+                        offsetCursor(head, 0, 1)
                     )
                     head = newPosition.end
                 }
                 "firstNonBlank" -> {
                     val fns = findFirstNonWhiteSpaceCharacter(cm.getLine(head.line))
                     val newPosition = updateSelectionForSurrogateCharacters(
-                        cm, head, LinePos(head.line, fns)
+                        cm,
+                        head,
+                        LinePos(head.line, fns)
                     )
                     head = newPosition.end
                 }

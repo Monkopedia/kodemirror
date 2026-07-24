@@ -153,7 +153,8 @@ internal val exCommands: MutableMap<String, ExFn> = mutableMapOf(
     // -----------------------------------------------------------------------
     "move" to { cm, params ->
         commandDispatcher.processCommand(
-            cm, cm.vim!!,
+            cm,
+            cm.vim!!,
             MotionCommand(
                 keys = "",
                 motion = "moveToLineOrEdgeOfDocument",
@@ -428,7 +429,13 @@ internal val exCommands: MutableMap<String, ExFn> = mutableMapOf(
                 val bnum = bStr.lowercase().toIntOrNull(radix) ?: 0
                 return@Comparator anum - bnum
             }
-            if (sa < sb) -1 else if (sa > sb) 1 else 0
+            if (sa < sb) {
+                -1
+            } else if (sa > sb) {
+                1
+            } else {
+                0
+            }
         }
 
         val comparePatternFn = Comparator<Pair<String, String>> { a, b ->
@@ -587,7 +594,8 @@ internal val exCommands: MutableMap<String, ExFn> = mutableMapOf(
                     }
                     val command = "${lineNum + 1}$cmd"
                     exCommandDispatcher.processCommand(
-                        cm, command,
+                        cm,
+                        command,
                         ExParams(
                             callback = { nextCommand() }
                         )
@@ -744,7 +752,11 @@ internal val exCommands: MutableMap<String, ExFn> = mutableMapOf(
         val text = cm.getRange(LinePos(line, 0), LinePos(lineEnd + 1, 0))
         val registerName = params.args?.getOrNull(0) ?: "0"
         cm.vimContext.registerController.pushText(
-            registerName, "yank", text, true, false
+            registerName,
+            "yank",
+            text,
+            true,
+            false
         )
         val count = lineEnd + 1 - line
         val regMsg = if (registerName.isNotEmpty()) {

@@ -29,8 +29,8 @@ import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.KodeMirror
 import com.monkopedia.kodemirror.view.highlightActiveLine
-import com.monkopedia.kodemirror.view.screenshots.TestScenarios.jsLanguageExtensions
 import com.monkopedia.kodemirror.view.screenshots.TestScenarios.captureScreenshot
+import com.monkopedia.kodemirror.view.screenshots.TestScenarios.jsLanguageExtensions
 import org.junit.Test
 
 @OptIn(ExperimentalTestApi::class)
