@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- A click could occasionally teleport the caret to the start of the line instead of landing under the pointer (#171). `posFromVisibleItems` clamped the resolved character offset to the `ColumnItem`'s `[from, to)` span, but that `columnItems` snapshot can lag the `TextLayoutResult` by a frame after a content change: `BasicText` recomposes and writes its new layout (via `onTextLayout`) before the snapshot catches up, so `item.to - item.from` is momentarily stale — e.g. `0` on a just-populated line — while the layout (and thus the resolved offset) is already correct. Clamping a correct offset to that stale span collapsed every hit in that window to `item.from`, i.e. the line start. The offset is now clamped to the layout's own text length — the domain the offset was resolved against — so a hit during the stale frame lands correctly; when the snapshot is fresh the two lengths agree and behaviour is unchanged.
+
 ### Changed
 - Bumped Compose-Multiplatform 1.10.3 → 1.11.1 (Skia M138 → M144) and migrated `Key.Home` → `Key.MoveHome` (1.11 removed the `Key.Home` alias).
 

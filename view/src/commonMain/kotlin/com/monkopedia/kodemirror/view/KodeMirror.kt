@@ -1452,6 +1452,18 @@ private fun posFromVisibleItems(
         .coerceAtLeast(0f)
     val expandedOffset = layout.getOffsetForPosition(Offset(localX, localY))
     val charOffset = unmapTabOffset(expandedOffset, item.tabOffsetMap)
-    return item.from.value +
-        charOffset.coerceIn(0, item.to.value - item.from.value)
+    // Clamp to the LAYOUT's char length, not the ColumnItem's [from, to) span.
+    // `charOffset` was resolved against `layout`, so the layout's own text
+    // length is its natural domain. The `columnItems` snapshot can lag the
+    // TextLayoutResult by a frame after a content change: BasicText recomposes
+    // and writes its new layout (via onTextLayout) before this snapshot catches
+    // up, leaving item.to-item.from stale — e.g. 0 on a just-populated line
+    // while the layout already holds the full text. Clamping a correctly
+    // resolved offset to that stale span collapses every hit to item.from,
+    // teleporting the caret to the line start (#171). The layout, being the
+    // source `charOffset` came from, is the consistent bound. When the snapshot
+    // is fresh the two lengths agree, so this only changes behaviour in the
+    // stale window.
+    val layoutCharLen = unmapTabOffset(layout.layoutInput.text.length, item.tabOffsetMap)
+    return item.from.value + charOffset.coerceIn(0, layoutCharLen)
 }
