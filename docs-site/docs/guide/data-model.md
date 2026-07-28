@@ -73,7 +73,7 @@ The simplest way is through `ChangeSpec`:
 ```kotlin
 // Replace positions 5..10 with "world"
 val spec = ChangeSpec.Single(
-    from = 5, to = 10,
+    from = DocPos(5), to = DocPos(10),
     insert = InsertContent.StringContent("world")
 )
 
@@ -135,15 +135,15 @@ a cursor.
 
 ```kotlin
 // Single cursor at position 5
-val sel = EditorSelection.single(5)
+val sel = EditorSelection.single(DocPos(5))
 
 // Cursor with explicit anchor and head
-val range = EditorSelection.range(anchor = 10, head = 20)
+val range = EditorSelection.range(anchor = DocPos(10), head = DocPos(20))
 
 // Multiple cursors
 val multi = EditorSelection.create(listOf(
-    EditorSelection.cursor(5),
-    EditorSelection.cursor(15)
+    EditorSelection.cursor(DocPos(5)),
+    EditorSelection.cursor(DocPos(15))
 ))
 ```
 
@@ -183,9 +183,9 @@ The primary API is `EditorState.update()`:
 ```kotlin
 val tr = state.update(
     TransactionSpec(
-        changes = ChangeSpec.Single(from = 0, to = 5,
+        changes = ChangeSpec.Single(from = DocPos(0), to = DocPos(5),
             insert = InsertContent.StringContent("Hello")),
-        selection = SelectionSpec.CursorSpec(anchor = 5),
+        selection = SelectionSpec.CursorSpec(anchor = DocPos(5)),
         scrollIntoView = true,
         userEvent = "input"
     )
@@ -330,8 +330,8 @@ and all extension-provided values.
 ```kotlin
 val state = EditorState.create(EditorStateConfig(
     doc = "fun main() {}".asDoc(),
-    selection = SelectionSpec.CursorSpec(0),
-    extensions = EditorState.tabSize.of(2) + javascript() + oneDark
+    selection = SelectionSpec.CursorSpec(DocPos(0)),
+    extensions = EditorState.tabSize.of(2) + javascript().extension + oneDark
 ))
 ```
 
@@ -352,7 +352,7 @@ state.wordAt(pos)          // find the word at a position
 
 ```kotlin
 val tr = state.update(TransactionSpec(
-    changes = ChangeSpec.Single(0, 0,
+    changes = ChangeSpec.Single(DocPos(0), DocPos(0),
         insert = InsertContent.StringContent("// header\n"))
 ))
 val newState = tr.state

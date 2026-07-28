@@ -18,24 +18,24 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             // Core (always needed)
-            implementation("com.monkopedia.kodemirror:state:0.1.0")
-            implementation("com.monkopedia.kodemirror:view:0.1.0")
+            implementation("com.monkopedia.kodemirror:state:0.3.5")
+            implementation("com.monkopedia.kodemirror:view:0.3.5")
 
             // Common features
-            implementation("com.monkopedia.kodemirror:commands:0.1.0")
-            implementation("com.monkopedia.kodemirror:language:0.1.0")
-            implementation("com.monkopedia.kodemirror:search:0.1.0")
+            implementation("com.monkopedia.kodemirror:commands:0.3.5")
+            implementation("com.monkopedia.kodemirror:language:0.3.5")
+            implementation("com.monkopedia.kodemirror:search:0.3.5")
 
             // Language support (pick what you need)
-            implementation("com.monkopedia.kodemirror:lang-javascript:0.1.0")
-            implementation("com.monkopedia.kodemirror:lang-python:0.1.0")
+            implementation("com.monkopedia.kodemirror:lang-javascript:0.3.5")
+            implementation("com.monkopedia.kodemirror:lang-python:0.3.5")
 
             // Optional features
-            implementation("com.monkopedia.kodemirror:autocomplete:0.1.0")
-            implementation("com.monkopedia.kodemirror:lint:0.1.0")
+            implementation("com.monkopedia.kodemirror:autocomplete:0.3.5")
+            implementation("com.monkopedia.kodemirror:lint:0.3.5")
 
             // Theme
-            implementation("com.monkopedia.kodemirror:theme-one-dark:0.1.0")
+            implementation("com.monkopedia.kodemirror:theme-one-dark:0.3.5")
         }
     }
 }
@@ -79,11 +79,11 @@ kotlin {
     androidTarget()
     sourceSets {
         androidMain.dependencies {
-            implementation("com.monkopedia.kodemirror:state:0.1.0")
-            implementation("com.monkopedia.kodemirror:view:0.1.0")
-            implementation("com.monkopedia.kodemirror:commands:0.1.0")
-            implementation("com.monkopedia.kodemirror:language:0.1.0")
-            implementation("com.monkopedia.kodemirror:lang-javascript:0.1.0")
+            implementation("com.monkopedia.kodemirror:state:0.3.5")
+            implementation("com.monkopedia.kodemirror:view:0.3.5")
+            implementation("com.monkopedia.kodemirror:commands:0.3.5")
+            implementation("com.monkopedia.kodemirror:language:0.3.5")
+            implementation("com.monkopedia.kodemirror:lang-javascript:0.3.5")
         }
     }
 }
@@ -106,11 +106,11 @@ kotlin {
     sourceSets {
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
-            implementation("com.monkopedia.kodemirror:state:0.1.0")
-            implementation("com.monkopedia.kodemirror:view:0.1.0")
-            implementation("com.monkopedia.kodemirror:commands:0.1.0")
-            implementation("com.monkopedia.kodemirror:language:0.1.0")
-            implementation("com.monkopedia.kodemirror:lang-javascript:0.1.0")
+            implementation("com.monkopedia.kodemirror:state:0.3.5")
+            implementation("com.monkopedia.kodemirror:view:0.3.5")
+            implementation("com.monkopedia.kodemirror:commands:0.3.5")
+            implementation("com.monkopedia.kodemirror:language:0.3.5")
+            implementation("com.monkopedia.kodemirror:lang-javascript:0.3.5")
         }
     }
 }

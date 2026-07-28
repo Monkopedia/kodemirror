@@ -22,7 +22,7 @@ Create a session with `rememberEditorSession` and pass it to `KodeMirror`:
 ```kotlin
 val session = rememberEditorSession(
     doc = "fun main() {}",
-    extensions = javascript() + oneDark
+    extensions = javascript().extension + oneDark
 )
 
 KodeMirror(

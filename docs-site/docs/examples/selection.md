@@ -17,19 +17,19 @@ import com.monkopedia.kodemirror.state.*
 
 // Move cursor to position 10
 view.dispatch(TransactionSpec(
-    selection = SelectionSpec.CursorSpec(anchor = 10)
+    selection = SelectionSpec.CursorSpec(anchor = DocPos(10))
 ))
 ```
 
 ## Selecting a range
 
-Use `EditorSelection.range()` to create a range with an anchor and head:
+Use `EditorSelection.single()` to create a selection with an anchor and head:
 
 ```kotlin
 // Select characters 5..15
 view.dispatch(TransactionSpec(
     selection = SelectionSpec.EditorSelectionSpec(
-        EditorSelection.single(anchor = 5, head = 15)
+        EditorSelection.single(anchor = DocPos(5), head = DocPos(15))
     )
 ))
 ```
@@ -47,9 +47,9 @@ basicSetup + allowMultipleSelections.of(true)
 view.dispatch(TransactionSpec(
     selection = SelectionSpec.EditorSelectionSpec(
         EditorSelection.create(listOf(
-            EditorSelection.cursor(5),
-            EditorSelection.cursor(20),
-            EditorSelection.cursor(35)
+            EditorSelection.cursor(DocPos(5)),
+            EditorSelection.cursor(DocPos(20)),
+            EditorSelection.cursor(DocPos(35))
         ))
     )
 ))

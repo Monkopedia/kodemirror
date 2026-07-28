@@ -200,7 +200,7 @@ If an extension seems to have no effect:
 ```kotlin
 val oldState = session.state
 session.dispatch(TransactionSpec(
-    changes = ChangeSpec.Single(0, 0, InsertContent.StringContent("hi"))
+    changes = ChangeSpec.Single(DocPos(0), DocPos(0), InsertContent.StringContent("hi"))
 ))
 val newState = session.state  // Different from oldState
 ```

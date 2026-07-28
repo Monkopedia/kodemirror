@@ -33,13 +33,14 @@ fun testDeleteLine() {
     val session = EditorSession(
         EditorState.create(EditorStateConfig(
             doc = DocSpec.StringDoc("line 1\nline 2\nline 3"),
-            extensions = basicSetup
+            // basicSetup requires a language extension — it throws otherwise
+            extensions = basicSetup + javascript().extension
         ))
     )
 
     // Place cursor on line 2
     session.dispatch(TransactionSpec(
-        selection = SelectionSpec.CursorSpec(7)
+        selection = SelectionSpec.CursorSpec(DocPos(7))
     ))
 
     // Run the command
@@ -62,7 +63,7 @@ fun testInsertAt() {
         ))
     )
 
-    session.insertAt(5, " beautiful")
+    session.insertAt(DocPos(5), " beautiful")
     assertEquals("hello beautiful world", session.state.sliceDoc())
 }
 ```
@@ -88,12 +89,12 @@ fun testMyCompletionSource() {
     val state = EditorState.create(EditorStateConfig(
         doc = DocSpec.StringDoc("hel")
     ))
-    val ctx = CompletionContext(state, pos = 3, explicit = true)
+    val ctx = CompletionContext(state, pos = DocPos(3), explicit = true)
     val result = source(ctx)
 
     assertNotNull(result)
     assertEquals(2, result.options.size)
-    assertEquals(0, result.from)
+    assertEquals(DocPos(0), result.from)
 }
 ```
 
@@ -108,8 +109,8 @@ fun testMyLinter() {
         val pattern = Regex("TODO")
         for (match in pattern.findAll(text)) {
             diagnostics.add(Diagnostic(
-                from = match.range.first,
-                to = match.range.last + 1,
+                from = DocPos(match.range.first),
+                to = DocPos(match.range.last + 1),
                 message = "Unresolved TODO",
                 severity = Severity.WARNING
             ))

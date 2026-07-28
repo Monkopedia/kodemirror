@@ -38,7 +38,7 @@ Omit `insert` to delete a range:
 ```kotlin
 // Delete characters 0..5
 view.dispatch(TransactionSpec(
-    changes = ChangeSpec.Single(from = 0, to = 5)
+    changes = ChangeSpec.Single(from = DocPos(0), to = DocPos(5))
 ))
 ```
 
@@ -50,8 +50,8 @@ to the original document — the system handles offsetting:
 ```kotlin
 view.dispatch(TransactionSpec(
     changes = ChangeSpec.Multi(listOf(
-        ChangeSpec.Single(from = 0, insert = InsertContent.StringContent("// header\n")),
-        ChangeSpec.Single(from = 20, to = 25, insert = InsertContent.StringContent("new"))
+        ChangeSpec.Single(from = DocPos(0), insert = InsertContent.StringContent("// header\n")),
+        ChangeSpec.Single(from = DocPos(20), to = DocPos(25), insert = InsertContent.StringContent("new"))
     ))
 ))
 ```
@@ -96,7 +96,7 @@ view.dispatch(spec)
 ```kotlin
 // Build a ChangeSet
 val changes = state.changes(
-    ChangeSpec.Single(from = 0, to = 5, insert = InsertContent.StringContent("Hi"))
+    ChangeSpec.Single(from = DocPos(0), to = DocPos(5), insert = InsertContent.StringContent("Hi"))
 )
 
 // Apply to get a new document

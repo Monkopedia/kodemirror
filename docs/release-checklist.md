@@ -33,10 +33,23 @@ grep -r "SNAPSHOT" --include="*.gradle.kts" .
 - `convention-plugins/src/main/kotlin/kodemirror.library.gradle.kts` — `version = "X.Y.Z-SNAPSHOT"`
 - `kodemirror-bom/build.gradle.kts` — `version = "X.Y.Z-SNAPSHOT"`
 
-Remove `-SNAPSHOT` from both. Also verify docs reference the release version:
+Remove `-SNAPSHOT` from both.
+
+The docs hardcode Maven coordinates (`com.monkopedia.kodemirror:<module>:X.Y.Z`)
+in install snippets, so grepping for `SNAPSHOT` never finds them. Grep for the
+*previous* released version instead and bump every hit to the new one:
 
 ```bash
-grep -r "SNAPSHOT" docs-site/docs/ README.md CHANGELOG.md
+# Replace 0.3.5 with the version being superseded
+grep -rn "0\.3\.5" docs-site/docs/ README.md
+```
+
+Then confirm nothing stale is left — the only versions these files should
+mention are the one being released and historical CHANGELOG entries:
+
+```bash
+grep -rEn "com\.monkopedia\.kodemirror:[a-z-]+:[0-9]" docs-site/docs/ README.md
+grep -rn "SNAPSHOT" docs-site/docs/ README.md
 ```
 
 ### 3. Changelog

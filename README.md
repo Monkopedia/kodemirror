@@ -16,7 +16,7 @@ Compose Multiplatform doesn't ship a code editor. Your options are embedding a W
 - **Vim mode** with 600+ ported upstream tests
 - **Search/replace**, **autocompletion**, **linting**, **code folding**
 - **Collaborative editing** and **side-by-side diff/merge**
-- **Themes** — One Dark, Dracula, GitHub Light, Material Design
+- **Themes** — 17 built-in themes (One Dark, Dracula, Solarized Light, Tomorrow, …) plus Material Design integration
 - **Real keyboard input pipeline** — layout-aware key handling, no platform hacks
 
 All from shared Kotlin code across every Compose target.
@@ -39,7 +39,7 @@ All from shared Kotlin code across every Compose target.
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation(platform("com.monkopedia.kodemirror:kodemirror-bom:0.1.0"))
+            implementation(platform("com.monkopedia.kodemirror:kodemirror-bom:0.3.5"))
             implementation("com.monkopedia.kodemirror:view")
             implementation("com.monkopedia.kodemirror:commands")
             implementation("com.monkopedia.kodemirror:basic-setup")
@@ -63,12 +63,14 @@ fun Editor() {
 
 ### With Vim mode and a theme
 
+Also add `com.monkopedia.kodemirror:vim`, `:theme-one-dark`, and `:lang-python`:
+
 ```kotlin
 @Composable
 fun VimEditor() {
     val session = rememberEditorSession(
-        doc = "println(\"Hello, KodeMirror!\")",
-        extensions = basicSetup + kotlin().extension + vim() + oneDark
+        doc = "print(\"Hello, KodeMirror!\")",
+        extensions = basicSetup + python().extension + vim() + oneDark
     )
     KodeMirror(session = session, modifier = Modifier.fillMaxSize())
 }
@@ -97,18 +99,16 @@ fun VimEditor() {
 
 ### Languages
 
-JavaScript, TypeScript, HTML, CSS, Python, Java, Kotlin, Go, Rust, Markdown, JSON, YAML, XML, SQL, C++, PHP, and more — 20+ dedicated modules plus 100+ via `legacy-modes`.
+JavaScript, TypeScript, HTML, CSS, Python, Java, Go, Rust, Markdown, JSON, YAML, XML, SQL, C++, PHP, and more — 20+ dedicated modules plus 100+ (including Kotlin) via `legacy-modes`.
 
 ### Themes
 
-One Dark, Dracula, GitHub Light, and Material Design integration.
+One Dark, Dracula, Solarized Light, Tomorrow, Cobalt, Espresso, and 11 more, plus Material Design integration.
 
 ## Known Limitations
 
-This is v0.1.0 — the API may evolve. Known issues to be aware of:
+This is v0.3.5 — the API may evolve. Known issues to be aware of:
 
-- **Single editor per window** — multiple simultaneous `KodeMirror` instances share global state ([#6](https://github.com/Monkopedia/kodemirror/issues/6))
-- **Large files** — parsing is synchronous, so very large documents may lag on keystroke ([#7](https://github.com/Monkopedia/kodemirror/issues/7))
 - **Mobile/native** — Android and iOS targets compile and pass unit tests but are not battle-tested on real devices yet
 
 See [all open issues](https://github.com/Monkopedia/kodemirror/issues) for the full list.

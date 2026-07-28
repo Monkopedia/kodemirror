@@ -21,20 +21,23 @@ In your module's `build.gradle.kts`, add the Kodemirror dependencies:
 ```kotlin
 dependencies {
     // Core
-    implementation("com.monkopedia.kodemirror:state:0.1.0")
-    implementation("com.monkopedia.kodemirror:view:0.1.0")
+    implementation("com.monkopedia.kodemirror:state:0.3.5")
+    implementation("com.monkopedia.kodemirror:view:0.3.5")
 
     // Commands (undo, redo, indentation, etc.)
-    implementation("com.monkopedia.kodemirror:commands:0.1.0")
+    implementation("com.monkopedia.kodemirror:commands:0.3.5")
+
+    // Language infrastructure (syntax highlighting, bracket matching)
+    implementation("com.monkopedia.kodemirror:language:0.3.5")
 
     // Language support (pick the languages you need)
-    implementation("com.monkopedia.kodemirror:lang-javascript:0.1.0")
+    implementation("com.monkopedia.kodemirror:lang-javascript:0.3.5")
 
     // Optional: theme
-    implementation("com.monkopedia.kodemirror:theme-one-dark:0.1.0")
+    implementation("com.monkopedia.kodemirror:theme-one-dark:0.3.5")
 
     // Optional: all-in-one setup bundle
-    // implementation("com.monkopedia.kodemirror:basic-setup:0.1.0")
+    // implementation("com.monkopedia.kodemirror:basic-setup:0.3.5")
 }
 ```
 
@@ -46,6 +49,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.monkopedia.kodemirror.commands.*
 import com.monkopedia.kodemirror.lang.javascript.javascript
+import com.monkopedia.kodemirror.language.defaultHighlightStyle
+import com.monkopedia.kodemirror.language.syntaxHighlighting
 import com.monkopedia.kodemirror.state.plus
 import com.monkopedia.kodemirror.view.*
 
@@ -53,10 +58,11 @@ import com.monkopedia.kodemirror.view.*
 fun MyEditor() {
     val session = rememberEditorSession(
         doc = "console.log(\"Hello, Kodemirror!\")",
-        extensions = lineNumbers() +
+        extensions = lineNumbers +
             history() +
-            javascript() +
-            keymapOf(defaultKeymap + historyKeymap)
+            javascript().extension +
+            syntaxHighlighting(defaultHighlightStyle) +
+            keymapOf(defaultKeymap)
     )
 
     KodeMirror(
@@ -69,8 +75,13 @@ fun MyEditor() {
 This gives you:
 - A JavaScript-aware editor with syntax highlighting
 - Line numbers in the gutter
-- Undo/redo with Ctrl-Z / Ctrl-Shift-Z
+- Undo/redo with Ctrl-Z / Ctrl-Y / Ctrl-Shift-Z — `history()` installs its own
+  key bindings, so there is nothing extra to add to the keymap
 - Standard cursor movement and selection commands
+
+Note that `lineNumbers` is a value, not a function, and that language
+factories such as `javascript()` return a `LanguageSupport` — use its
+`.extension` property to combine it with other extensions.
 
 Or use `basicSetup` for a batteries-included experience:
 
@@ -84,7 +95,7 @@ import com.monkopedia.kodemirror.view.*
 fun MyEditor() {
     val session = rememberEditorSession(
         doc = "console.log(\"Hello!\")",
-        extensions = basicSetup + javascript()
+        extensions = basicSetup + javascript().extension
     )
     KodeMirror(session = session, modifier = Modifier.fillMaxSize())
 }
@@ -107,7 +118,7 @@ User action → Transaction → EditorSession updates state → recomposition
 Extensions are combined using the `+` operator:
 
 ```kotlin
-val extensions = lineNumbers() + history() + javascript()
+val extensions = lineNumbers + history() + javascript().extension
 ```
 
 ## 5. Adding more features
@@ -118,7 +129,7 @@ val extensions = lineNumbers() + history() + javascript()
 import com.monkopedia.kodemirror.language.bracketMatching
 
 // Add to your extensions:
-basicSetup + javascript() + bracketMatching()
+basicSetup + javascript().extension + bracketMatching()
 ```
 
 ### Autocompletion
@@ -222,23 +233,26 @@ val session = rememberEditorSession(
 
 ## 7. Programmatic changes
 
-Use the convenience methods on `EditorSession`:
+Use the convenience methods on `EditorSession`. Document offsets are
+passed as `DocPos` (`com.monkopedia.kodemirror.state.DocPos`), an inline
+value class over `Int` that keeps positions from being confused with line
+numbers or counts:
 
 ```kotlin
 // Replace entire document
 session.setDoc("new content")
 
 // Insert text at a position
-session.insertAt(0, "// Header\n")
+session.insertAt(DocPos(0), "// Header\n")
 
 // Delete a range
-session.deleteRange(from = 0, to = 10)
+session.deleteRange(from = DocPos(0), to = DocPos(10))
 
 // Set cursor position
-session.select(anchor = 5)
+session.select(anchor = DocPos(5))
 
 // Set selection range
-session.select(anchor = 0, head = 10)
+session.select(anchor = DocPos(0), head = DocPos(10))
 
 // Select all
 session.selectAll()
@@ -248,8 +262,8 @@ For more complex changes, use `dispatch` with a transaction spec:
 
 ```kotlin
 session.dispatch {
-    insert(0, "Hello")
-    selection(5)
+    insert(DocPos(0), "Hello")
+    selection(DocPos(5))
     scrollIntoView()
 }
 ```

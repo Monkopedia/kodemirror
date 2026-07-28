@@ -100,7 +100,7 @@ produces a new state:
 ```kotlin
 val tr = state.update(
     TransactionSpec(
-        changes = ChangeSpec.Single(from = 0, to = 5,
+        changes = ChangeSpec.Single(from = DocPos(0), to = DocPos(5),
             insert = InsertContent.StringContent("Hello"))
     )
 )
@@ -119,7 +119,7 @@ of extensions, and the system flattens them during configuration:
 ```kotlin
 val session = rememberEditorSession(
     doc = "fun main() {}",
-    extensions = javascript() + oneDark + search() + keymap.of(defaultKeymap)
+    extensions = javascript().extension + oneDark + search() + keymap.of(defaultKeymap)
 )
 ```
 

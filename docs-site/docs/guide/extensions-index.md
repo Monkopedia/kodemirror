@@ -19,8 +19,10 @@ Quick reference showing which module provides each common extension.
 |-----------|--------|--------|
 | `history()` | `:commands` | `com.monkopedia.kodemirror.commands.history` |
 | `defaultKeymap` | `:commands` | `com.monkopedia.kodemirror.commands.defaultKeymap` |
-| `historyKeymap` | `:commands` | `com.monkopedia.kodemirror.commands.historyKeymap` |
 | `indentWithTab` | `:commands` | `com.monkopedia.kodemirror.commands.indentWithTab` |
+
+`history()` already installs its own undo/redo key bindings, so there is no
+separate history keymap to add.
 
 ## Language
 
@@ -29,8 +31,8 @@ Quick reference showing which module provides each common extension.
 | `bracketMatching()` | `:language` | `com.monkopedia.kodemirror.language.bracketMatching` |
 | `codeFolding()` | `:language` | `com.monkopedia.kodemirror.language.codeFolding` |
 | `syntaxHighlighting(...)` | `:language` | `com.monkopedia.kodemirror.language.syntaxHighlighting` |
-| `indentOnInput()` | `:language` | `com.monkopedia.kodemirror.language.indentOnInput` |
-| Language functions (e.g. `javascript()`) | `:lang-*` | `com.monkopedia.kodemirror.lang.javascript.javascript` |
+| `indentOnInput` | `:language` | `com.monkopedia.kodemirror.language.indentOnInput` |
+| Language functions (e.g. `javascript().extension`) | `:lang-*` | `com.monkopedia.kodemirror.lang.javascript.javascript` |
 
 ## Features
 
@@ -47,7 +49,15 @@ Quick reference showing which module provides each common extension.
 
 | Extension | Module | Import |
 |-----------|--------|--------|
-| `oneDark` | `:theme-one-dark` | `com.monkopedia.kodemirror.theme.onedark.oneDark` |
+| `oneDark` | `:theme-one-dark` | `com.monkopedia.kodemirror.themonedark.oneDark` |
+| `dracula` | `:theme-dracula` | `com.monkopedia.kodemirror.themedracula.dracula` |
+
+The remaining 15 themes follow the same pattern: module `:theme-<name>`
+exposes an `Extension` named after the theme in package
+`com.monkopedia.kodemirror.theme<name>` (e.g. `:theme-solarized-light` →
+`com.monkopedia.kodemirror.themesolarizedlight.solarizedLight`).
+`:theme-one-dark` is the one exception — its package is `themonedark`, not
+`themeonedark`.
 
 ## Gradle dependencies
 
