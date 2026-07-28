@@ -114,17 +114,14 @@ subprojects {
     }
 }
 
-tasks.register<Exec>("captureReferenceScreenshots") {
-    description = "Capture CodeMirror 6 reference screenshots using Playwright"
-    group = "verification"
-    workingDir = file("reference-screenshots")
-    commandLine("npx", "playwright", "test")
-}
-
 tasks.register<Exec>("runGapAnalysis") {
     description = "Run Playwright gap analysis tests against CM6 and Kodemirror"
     group = "verification"
-    dependsOn(":samples:showcase:wasmJsBrowserDevelopmentWebpack")
+    // The Playwright config serves samples/showcase/build/dist/wasmJs/developmentExecutable and
+    // probes it for index.html to decide whether to start the Kodemirror web server at all. The
+    // webpack task alone emits only the .js/.wasm bundle into build/kotlin-webpack/, no
+    // index.html, so depending on it left every Kodemirror-side assertion silently skipped.
+    dependsOn(":samples:showcase:wasmJsBrowserDevelopmentExecutableDistribution")
     workingDir = file("gap-analysis")
     commandLine("npx", "playwright", "test")
 }

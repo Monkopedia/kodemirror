@@ -1,5 +1,18 @@
 # Task Workflow: Work → Review → Merge
 
+> **SUPERSEDED — do not follow this document.**
+>
+> The authoritative workflow is `CLAUDE.md` § *Task Workflow: implement → automated review →
+> merge*: implement on a branch, open a PR as `monkopedia-coder` via the coderbot wrapper with
+> `--reviewer monkopedia-reviewer`, and let the reviewer merge.
+>
+> Specifically, the merge steps below are now **forbidden**. Do NOT `git checkout main`, do NOT
+> `git merge` a branch into `main`, and do NOT `git push` to `main` — pushing directly to `main`
+> and self-merging are both prohibited, and `main` is branch-protected requiring CI to be green.
+>
+> This file is retained only as a record of the older two-phase (work agent → review agent,
+> no PR) pattern.
+
 ## Overview
 
 All implementation work follows a two-phase agent workflow:
