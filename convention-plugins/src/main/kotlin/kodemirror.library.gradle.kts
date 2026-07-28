@@ -89,8 +89,21 @@ apiValidation {
     )
 }
 
-tasks.configureEach {
-    if (name.startsWith("wasmJsTest") || name == "wasmJsNodeTest") enabled = false
+// wasmJs tests are off by default because the wasm Node test environment cannot load
+// `skiko.mjs`, which every Compose-reaching module needs (see #202). Compose-free modules
+// opt back in with `kodemirrorLibrary { wasmJsTests.set(true) }` — see #197 and the
+// KodemirrorLibraryExtension docs. The flag is read in `afterEvaluate` so the module's own
+// build script has already run by the time the decision is made.
+val kodemirrorLibrary = extensions.create<KodemirrorLibraryExtension>("kodemirrorLibrary")
+kodemirrorLibrary.wasmJsTests.convention(false)
+
+afterEvaluate {
+    val wasmJsTestsEnabled = kodemirrorLibrary.wasmJsTests.get()
+    tasks.configureEach {
+        if (name.startsWith("wasmJsTest") || name == "wasmJsNodeTest") {
+            enabled = wasmJsTestsEnabled
+        }
+    }
 }
 
 ktlint {

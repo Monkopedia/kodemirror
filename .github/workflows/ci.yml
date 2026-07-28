@@ -17,6 +17,10 @@ jobs:
           distribution: temurin
           java-version: 21
       - uses: gradle/actions/setup-gradle@v4
+      # The wasmJsTest tasks below are exactly the modules that opt in via
+      # `kodemirrorLibrary { wasmJsTests.set(true) }`. Every other module's wasm test binary
+      # reaches Compose (directly or through :language / :view) and cannot load skiko.mjs
+      # under Node, so its wasmJsTest task is disabled and would be a silent no-op here (#202).
       - name: Lint and test (JVM + wasmJs + Android)
         run: >-
           ./gradlew apiCheck jvmTest
