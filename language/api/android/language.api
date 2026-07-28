@@ -1,5 +1,4 @@
 public final class com/monkopedia/kodemirror/language/BracketMatchingConfig {
-	public static final field $stable I
 	public fun <init> ()V
 	public fun <init> (ZLjava/lang/String;ILkotlin/jvm/functions/Function1;)V
 	public synthetic fun <init> (ZLjava/lang/String;ILkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -19,7 +18,6 @@ public final class com/monkopedia/kodemirror/language/BracketMatchingConfig {
 }
 
 public final class com/monkopedia/kodemirror/language/CommentTokens {
-	public static final field $stable I
 	public fun <init> ()V
 	public fun <init> (Ljava/lang/String;Lcom/monkopedia/kodemirror/language/CommentTokens$BlockComment;)V
 	public synthetic fun <init> (Ljava/lang/String;Lcom/monkopedia/kodemirror/language/CommentTokens$BlockComment;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -35,7 +33,6 @@ public final class com/monkopedia/kodemirror/language/CommentTokens {
 }
 
 public final class com/monkopedia/kodemirror/language/CommentTokens$BlockComment {
-	public static final field $stable I
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Ljava/lang/String;
@@ -68,7 +65,6 @@ public final class com/monkopedia/kodemirror/language/FoldKt {
 }
 
 public final class com/monkopedia/kodemirror/language/FoldRange {
-	public static final field $stable I
 	public synthetic fun <init> (IILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1-8dfawaI ()I
 	public final fun component2-8dfawaI ()I
@@ -82,7 +78,6 @@ public final class com/monkopedia/kodemirror/language/FoldRange {
 }
 
 public final class com/monkopedia/kodemirror/language/HighlightStyle : com/monkopedia/kodemirror/lezer/highlight/Highlighter {
-	public static final field $stable I
 	public static final field Companion Lcom/monkopedia/kodemirror/language/HighlightStyle$Companion;
 	public synthetic fun <init> (Ljava/util/List;Lcom/monkopedia/kodemirror/lezer/highlight/Highlighter;Ljava/util/Map;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getSpecs ()Ljava/util/List;
@@ -99,7 +94,6 @@ public final class com/monkopedia/kodemirror/language/HighlightStyle$Companion {
 }
 
 public final class com/monkopedia/kodemirror/language/HighlightStyleBuilder {
-	public static final field $stable I
 	public fun <init> ()V
 	public final fun getSpecs ()Ljava/util/List;
 	public final fun styles (Lcom/monkopedia/kodemirror/lezer/highlight/Tag;Landroidx/compose/ui/text/SpanStyle;)V
@@ -115,7 +109,6 @@ public final class com/monkopedia/kodemirror/language/HighlightStyleKt {
 }
 
 public class com/monkopedia/kodemirror/language/IndentContext {
-	public static final field $stable I
 	public synthetic fun <init> (Lcom/monkopedia/kodemirror/state/EditorState;Lcom/monkopedia/kodemirror/state/DocPos;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (Lcom/monkopedia/kodemirror/state/EditorState;Lcom/monkopedia/kodemirror/state/DocPos;ZLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getSimulateBreak-aIaQTD8 ()Lcom/monkopedia/kodemirror/state/DocPos;
@@ -149,7 +142,6 @@ public final class com/monkopedia/kodemirror/language/IndentKt {
 }
 
 public final class com/monkopedia/kodemirror/language/LRLanguage : com/monkopedia/kodemirror/language/Language {
-	public static final field $stable I
 	public static final field Companion Lcom/monkopedia/kodemirror/language/LRLanguage$Companion;
 	public fun <init> (Lcom/monkopedia/kodemirror/lezer/common/Parser;Ljava/lang/String;)V
 	public synthetic fun <init> (Lcom/monkopedia/kodemirror/lezer/common/Parser;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -161,7 +153,6 @@ public final class com/monkopedia/kodemirror/language/LRLanguage$Companion {
 }
 
 public class com/monkopedia/kodemirror/language/Language {
-	public static final field $stable I
 	public fun <init> (Lcom/monkopedia/kodemirror/lezer/common/Parser;Ljava/lang/String;)V
 	public synthetic fun <init> (Lcom/monkopedia/kodemirror/lezer/common/Parser;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun getAllowsNesting ()Z
@@ -174,7 +165,6 @@ public class com/monkopedia/kodemirror/language/Language {
 }
 
 public final class com/monkopedia/kodemirror/language/LanguageDescription {
-	public static final field $stable I
 	public static final field Companion Lcom/monkopedia/kodemirror/language/LanguageDescription$Companion;
 	public fun <init> (Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/util/List;Lkotlin/jvm/functions/Function0;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/util/List;Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -219,7 +209,6 @@ public final class com/monkopedia/kodemirror/language/LanguageKt {
 }
 
 public final class com/monkopedia/kodemirror/language/LanguageSupport {
-	public static final field $stable I
 	public fun <init> (Lcom/monkopedia/kodemirror/language/Language;Lcom/monkopedia/kodemirror/state/Extension;)V
 	public synthetic fun <init> (Lcom/monkopedia/kodemirror/language/Language;Lcom/monkopedia/kodemirror/state/Extension;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getExtension ()Lcom/monkopedia/kodemirror/state/Extension;
@@ -236,7 +225,6 @@ public final class com/monkopedia/kodemirror/language/MatchBracketsKt {
 }
 
 public final class com/monkopedia/kodemirror/language/MatchResult {
-	public static final field $stable I
 	public fun <init> (Lcom/monkopedia/kodemirror/state/SelectionRange;Lcom/monkopedia/kodemirror/state/SelectionRange;Z)V
 	public final fun component1 ()Lcom/monkopedia/kodemirror/state/SelectionRange;
 	public final fun component2 ()Lcom/monkopedia/kodemirror/state/SelectionRange;
@@ -257,7 +245,6 @@ public final class com/monkopedia/kodemirror/language/StandardHighlightStylesKt 
 }
 
 public final class com/monkopedia/kodemirror/language/StreamLanguage : com/monkopedia/kodemirror/language/Language {
-	public static final field $stable I
 	public static final field Companion Lcom/monkopedia/kodemirror/language/StreamLanguage$Companion;
 	public synthetic fun <init> (Lcom/monkopedia/kodemirror/lezer/common/Parser;Ljava/lang/String;Lcom/monkopedia/kodemirror/language/StreamParser;Lcom/monkopedia/kodemirror/lezer/common/NodeProp;Lcom/monkopedia/kodemirror/language/TokenTable;Lcom/monkopedia/kodemirror/lezer/common/NodeType;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun getAllowsNesting ()Z
@@ -290,7 +277,6 @@ public final class com/monkopedia/kodemirror/language/StreamParser$DefaultImpls 
 }
 
 public final class com/monkopedia/kodemirror/language/StringStream {
-	public static final field $stable I
 	public fun <init> (Ljava/lang/String;IILjava/lang/Integer;)V
 	public synthetic fun <init> (Ljava/lang/String;IILjava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun backUp (I)V
@@ -328,7 +314,6 @@ public final class com/monkopedia/kodemirror/language/SyntaxHighlightingKt {
 }
 
 public final class com/monkopedia/kodemirror/language/TagStyleSpec {
-	public static final field $stable I
 	public fun <init> (Ljava/util/List;Landroidx/compose/ui/text/SpanStyle;)V
 	public final fun component1 ()Ljava/util/List;
 	public final fun component2 ()Landroidx/compose/ui/text/SpanStyle;
@@ -342,7 +327,6 @@ public final class com/monkopedia/kodemirror/language/TagStyleSpec {
 }
 
 public final class com/monkopedia/kodemirror/language/TreeIndentContext : com/monkopedia/kodemirror/language/IndentContext {
-	public static final field $stable I
 	public synthetic fun <init> (Lcom/monkopedia/kodemirror/state/EditorState;ILcom/monkopedia/kodemirror/state/DocPos;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (Lcom/monkopedia/kodemirror/state/EditorState;ILcom/monkopedia/kodemirror/state/DocPos;ZLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun column (II)I

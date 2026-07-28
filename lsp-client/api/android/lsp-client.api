@@ -4,7 +4,6 @@ public final class com/monkopedia/kodemirror/lsp/DocumentSyncKt {
 }
 
 public final class com/monkopedia/kodemirror/lsp/DocumentSyncMode {
-	public static final field $stable I
 	public static final field Companion Lcom/monkopedia/kodemirror/lsp/DocumentSyncMode$Companion;
 	public synthetic fun <init> (ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Z
@@ -24,7 +23,6 @@ public final class com/monkopedia/kodemirror/lsp/DocumentSyncMode$Companion {
 }
 
 public final class com/monkopedia/kodemirror/lsp/LSPClient {
-	public static final field $stable I
 	public fun <init> (Lcom/monkopedia/lsp/LanguageServer;Lcom/monkopedia/kodemirror/lsp/LSPClientConfig;)V
 	public synthetic fun <init> (Lcom/monkopedia/lsp/LanguageServer;Lcom/monkopedia/kodemirror/lsp/LSPClientConfig;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getConfig ()Lcom/monkopedia/kodemirror/lsp/LSPClientConfig;
@@ -41,7 +39,6 @@ public final class com/monkopedia/kodemirror/lsp/LSPClient {
 }
 
 public final class com/monkopedia/kodemirror/lsp/LSPClientConfig {
-	public static final field $stable I
 	public static final field Companion Lcom/monkopedia/kodemirror/lsp/LSPClientConfig$Companion;
 	public fun <init> ()V
 	public fun <init> (Ljava/lang/String;Ljava/util/List;Lcom/monkopedia/lsp/InitializeParamsClientInfo;Lcom/monkopedia/lsp/ClientCapabilities;Lkotlinx/serialization/json/JsonElement;Lkotlin/jvm/functions/Function1;)V
@@ -70,7 +67,6 @@ public final class com/monkopedia/kodemirror/lsp/LSPClientConfig$Companion {
 }
 
 public final class com/monkopedia/kodemirror/lsp/LSPPlugin : com/monkopedia/kodemirror/view/PluginValue {
-	public static final field $stable I
 	public static final field Companion Lcom/monkopedia/kodemirror/lsp/LSPPlugin$Companion;
 	public fun destroy ()V
 	public final fun getClient ()Lcom/monkopedia/kodemirror/lsp/LSPClient;
@@ -91,7 +87,6 @@ public final class com/monkopedia/kodemirror/lsp/LanguageServerSupportKt {
 }
 
 public final class com/monkopedia/kodemirror/lsp/ReferenceLocation {
-	public static final field $stable I
 	public fun <init> (Ljava/lang/String;Lcom/monkopedia/lsp/Range;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Lcom/monkopedia/lsp/Range;
@@ -105,7 +100,6 @@ public final class com/monkopedia/kodemirror/lsp/ReferenceLocation {
 }
 
 public final class com/monkopedia/kodemirror/lsp/ServerCompletionConfig {
-	public static final field $stable I
 	public fun <init> ()V
 	public fun <init> (ZLkotlin/text/Regex;)V
 	public synthetic fun <init> (ZLkotlin/text/Regex;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -178,7 +172,6 @@ public final class com/monkopedia/kodemirror/lsp/ServerSignatureHelpKt {
 }
 
 public final class com/monkopedia/kodemirror/lsp/SignatureHelpConfig {
-	public static final field $stable I
 	public fun <init> ()V
 	public fun <init> (Z)V
 	public synthetic fun <init> (ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -192,7 +185,6 @@ public final class com/monkopedia/kodemirror/lsp/SignatureHelpConfig {
 }
 
 public class com/monkopedia/kodemirror/lsp/Workspace {
-	public static final field $stable I
 	public fun <init> (Lcom/monkopedia/kodemirror/lsp/LSPClient;)V
 	public fun closeFile (Ljava/lang/String;)V
 	public fun didCloseFile (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
@@ -209,7 +201,6 @@ public class com/monkopedia/kodemirror/lsp/Workspace {
 }
 
 public final class com/monkopedia/kodemirror/lsp/WorkspaceFile {
-	public static final field $stable I
 	public final fun getDoc ()Lcom/monkopedia/kodemirror/state/Text;
 	public final fun getLanguageId ()Ljava/lang/String;
 	public final fun getSession ()Lcom/monkopedia/kodemirror/view/EditorSession;
@@ -219,7 +210,6 @@ public final class com/monkopedia/kodemirror/lsp/WorkspaceFile {
 }
 
 public final class com/monkopedia/kodemirror/lsp/WorkspaceFileUpdate {
-	public static final field $stable I
 	public fun <init> (Lcom/monkopedia/kodemirror/lsp/WorkspaceFile;Lcom/monkopedia/kodemirror/state/Text;Lcom/monkopedia/kodemirror/state/ChangeSet;)V
 	public final fun component1 ()Lcom/monkopedia/kodemirror/lsp/WorkspaceFile;
 	public final fun component2 ()Lcom/monkopedia/kodemirror/state/Text;
@@ -235,7 +225,6 @@ public final class com/monkopedia/kodemirror/lsp/WorkspaceFileUpdate {
 }
 
 public final class com/monkopedia/kodemirror/lsp/WorkspaceMapping {
-	public static final field $stable I
 	public final fun getUri ()Ljava/lang/String;
 	public final fun mapPos (II)I
 	public static synthetic fun mapPos$default (Lcom/monkopedia/kodemirror/lsp/WorkspaceMapping;IIILjava/lang/Object;)I

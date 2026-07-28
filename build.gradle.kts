@@ -65,8 +65,9 @@ tasks.register("stripStableFromApiDumps") {
     description = "Strip Compose compiler \$stable fields from .api dump files"
     group = "verification"
     doLast {
+        // BCV writes per-target dumps as <module>/api/<target>/<module>.api.
         fileTree(rootDir) {
-            include("*/api/*.api")
+            include("*/api/*/*.api")
         }.forEach { file ->
             val original = file.readText()
             val filtered = original.lineSequence()
@@ -91,10 +92,14 @@ subprojects {
     tasks.matching { it.name == "apiDump" }.configureEach {
         finalizedBy(rootProject.tasks.named("stripStableFromApiDumps"))
     }
-    // Strip $stable from build API output before apiCheck compares against committed files
-    tasks.matching { it.name == "jvmApiCheck" }.configureEach {
+    // Strip $stable from build API output before apiCheck compares against committed files.
+    // Every dumped target needs this, and each check task must confine itself to its own
+    // build/api/<target>/ directory: widening the tree to all of build/api would have one
+    // target's check rewrite another target's not-yet-compared api build output.
+    tasks.matching { it.name == "jvmApiCheck" || it.name == "androidApiCheck" }.configureEach {
+        val target = name.removeSuffix("ApiCheck")
         doFirst {
-            project.fileTree(project.layout.buildDirectory.dir("api")) {
+            project.fileTree(project.layout.buildDirectory.dir("api/$target")) {
                 include("*.api")
             }.forEach { file ->
                 val original = file.readText()
