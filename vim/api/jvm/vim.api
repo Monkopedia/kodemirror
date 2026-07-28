@@ -1,5 +1,4 @@
 public final class com/monkopedia/kodemirror/vim/ActionArgs {
-	public static final field $stable I
 	public fun <init> ()V
 	public fun <init> (ILjava/lang/Boolean;Lcom/monkopedia/kodemirror/vim/LinePos;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;)V
 	public synthetic fun <init> (ILjava/lang/Boolean;Lcom/monkopedia/kodemirror/vim/LinePos;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -75,7 +74,6 @@ public final class com/monkopedia/kodemirror/vim/ComposableSingletons$VimPanelKt
 }
 
 public final class com/monkopedia/kodemirror/vim/ExParams {
-	public static final field $stable I
 	public fun <init> ()V
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;ILjava/lang/Integer;ZILjava/lang/Integer;Ljava/util/Map;Lkotlin/jvm/functions/Function0;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;ILjava/lang/Integer;ZILjava/lang/Integer;Ljava/util/Map;Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -120,7 +118,6 @@ public final class com/monkopedia/kodemirror/vim/ExParams {
 }
 
 public final class com/monkopedia/kodemirror/vim/InsertModeKey {
-	public static final field $stable I
 	public fun <init> (Ljava/lang/String;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun copy (Ljava/lang/String;)Lcom/monkopedia/kodemirror/vim/InsertModeKey;
@@ -132,7 +129,6 @@ public final class com/monkopedia/kodemirror/vim/InsertModeKey {
 }
 
 public final class com/monkopedia/kodemirror/vim/LastSelection {
-	public static final field $stable I
 	public fun <init> (Lcom/monkopedia/kodemirror/vim/LinePos;Lcom/monkopedia/kodemirror/vim/LinePos;ZZ)V
 	public final fun component1 ()Lcom/monkopedia/kodemirror/vim/LinePos;
 	public final fun component2 ()Lcom/monkopedia/kodemirror/vim/LinePos;
@@ -155,7 +151,6 @@ public abstract interface class com/monkopedia/kodemirror/vim/LineHandle {
 }
 
 public final class com/monkopedia/kodemirror/vim/LinePos : java/lang/Comparable {
-	public static final field $stable I
 	public fun <init> (IILjava/lang/String;)V
 	public synthetic fun <init> (IILjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun compareTo (Lcom/monkopedia/kodemirror/vim/LinePos;)I
@@ -174,7 +169,6 @@ public final class com/monkopedia/kodemirror/vim/LinePos : java/lang/Comparable 
 }
 
 public final class com/monkopedia/kodemirror/vim/LinePosRange {
-	public static final field $stable I
 	public fun <init> (Lcom/monkopedia/kodemirror/vim/LinePos;Lcom/monkopedia/kodemirror/vim/LinePos;)V
 	public final fun component1 ()Lcom/monkopedia/kodemirror/vim/LinePos;
 	public final fun component2 ()Lcom/monkopedia/kodemirror/vim/LinePos;
@@ -197,7 +191,6 @@ public abstract interface class com/monkopedia/kodemirror/vim/Marker {
 }
 
 public final class com/monkopedia/kodemirror/vim/MotionArgs {
-	public static final field $stable I
 	public fun <init> ()V
 	public fun <init> (ILjava/lang/Boolean;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Integer;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;)V
 	public synthetic fun <init> (ILjava/lang/Boolean;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Integer;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -254,7 +247,6 @@ public final class com/monkopedia/kodemirror/vim/MotionArgs {
 }
 
 public abstract class com/monkopedia/kodemirror/vim/MotionResult {
-	public static final field $stable I
 	public static final field Companion Lcom/monkopedia/kodemirror/vim/MotionResult$Companion;
 }
 
@@ -264,7 +256,6 @@ public final class com/monkopedia/kodemirror/vim/MotionResult$Companion {
 }
 
 public final class com/monkopedia/kodemirror/vim/MotionResult$Range : com/monkopedia/kodemirror/vim/MotionResult {
-	public static final field $stable I
 	public fun <init> (Lcom/monkopedia/kodemirror/vim/LinePos;Lcom/monkopedia/kodemirror/vim/LinePos;)V
 	public final fun component1 ()Lcom/monkopedia/kodemirror/vim/LinePos;
 	public final fun component2 ()Lcom/monkopedia/kodemirror/vim/LinePos;
@@ -278,7 +269,6 @@ public final class com/monkopedia/kodemirror/vim/MotionResult$Range : com/monkop
 }
 
 public final class com/monkopedia/kodemirror/vim/MotionResult$SinglePos : com/monkopedia/kodemirror/vim/MotionResult {
-	public static final field $stable I
 	public fun <init> (Lcom/monkopedia/kodemirror/vim/LinePos;)V
 	public final fun component1 ()Lcom/monkopedia/kodemirror/vim/LinePos;
 	public final fun copy (Lcom/monkopedia/kodemirror/vim/LinePos;)Lcom/monkopedia/kodemirror/vim/MotionResult$SinglePos;
@@ -290,7 +280,6 @@ public final class com/monkopedia/kodemirror/vim/MotionResult$SinglePos : com/mo
 }
 
 public final class com/monkopedia/kodemirror/vim/OperatorArgs {
-	public static final field $stable I
 	public fun <init> ()V
 	public fun <init> (ILjava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Lcom/monkopedia/kodemirror/vim/LastSelection;Ljava/lang/Boolean;)V
 	public synthetic fun <init> (ILjava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Lcom/monkopedia/kodemirror/vim/LastSelection;Ljava/lang/Boolean;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -335,7 +324,6 @@ public final class com/monkopedia/kodemirror/vim/OperatorArgs {
 }
 
 public final class com/monkopedia/kodemirror/vim/SearchArgs {
-	public static final field $stable I
 	public fun <init> ()V
 	public fun <init> (Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;)V
 	public synthetic fun <init> (Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -355,7 +343,6 @@ public final class com/monkopedia/kodemirror/vim/SearchArgs {
 }
 
 public final class com/monkopedia/kodemirror/vim/SearchOverlay {
-	public static final field $stable I
 	public fun <init> (Lkotlin/text/Regex;)V
 	public final fun component1 ()Lkotlin/text/Regex;
 	public final fun copy (Lkotlin/text/Regex;)Lcom/monkopedia/kodemirror/vim/SearchOverlay;
@@ -367,7 +354,6 @@ public final class com/monkopedia/kodemirror/vim/SearchOverlay {
 }
 
 public final class com/monkopedia/kodemirror/vim/Vim : com/monkopedia/kodemirror/vim/VimApiInterface {
-	public static final field $stable I
 	public static final field INSTANCE Lcom/monkopedia/kodemirror/vim/Vim;
 	public final fun defineEx (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function2;)V
 	public final fun defineOption (Ljava/lang/String;Ljava/lang/Object;Ljava/lang/String;Ljava/util/List;Lkotlin/jvm/functions/Function2;)V
@@ -400,7 +386,6 @@ public final class com/monkopedia/kodemirror/vim/Vim : com/monkopedia/kodemirror
 }
 
 public final class com/monkopedia/kodemirror/vim/VimEditor {
-	public static final field $stable I
 	public fun <init> (Lcom/monkopedia/kodemirror/view/EditorSession;)V
 	public final fun getCloseVimNotification ()Lkotlin/jvm/functions/Function0;
 	public final fun getCurrentNotificationClose ()Lkotlin/jvm/functions/Function0;

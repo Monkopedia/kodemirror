@@ -1,5 +1,4 @@
 public final class com/monkopedia/kodemirror/themedracula/DraculaColors {
-	public static final field $stable I
 	public static final field INSTANCE Lcom/monkopedia/kodemirror/themedracula/DraculaColors;
 	public final fun getBackground-0d7_KjU ()J
 	public final fun getCaret-0d7_KjU ()J
