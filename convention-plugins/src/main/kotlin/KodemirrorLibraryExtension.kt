@@ -21,21 +21,22 @@ import org.gradle.api.provider.Property
  */
 abstract class KodemirrorLibraryExtension {
     /**
-     * Whether this module's `wasmJsTest` / `wasmJsNodeTest` tasks should actually run.
+     * Whether this module's `wasmJsTest` / `wasmJsBrowserTest` tasks should actually run.
      *
-     * Defaults to `false`. The wasm Node test environment cannot load `skiko.mjs`, so any
-     * module whose wasmJs *test* binary reaches Compose — directly, or transitively through
-     * `:view` / `:language` — fails at module load with `ERR_MODULE_NOT_FOUND`. Unblocking
-     * those modules is tracked in #202.
-     *
-     * Modules that are Compose-free all the way down opt back in with:
+     * Defaults to `false`, so a module only gets a wasm test run once someone has confirmed
+     * it passes there. Modules opt in with:
      * ```
      * kodemirrorLibrary {
      *     wasmJsTests.set(true)
      * }
      * ```
+     * The runner is Karma driving headless Chrome (#202), not Node: skiko ships a
+     * browser-only emscripten build of `skiko.mjs`, so under Node any module whose wasmJs
+     * test binary reaches Compose — directly, or transitively through `:view` / `:language`
+     * — aborts with "both async and sync fetching of the wasm failed".
+     *
      * Verify before flipping this on: run the task and check the executed test counts in the
-     * `build/test-results/wasmJsNodeTest` XML, since a disabled task also builds green.
+     * `build/test-results/wasmJsBrowserTest` XML, since a disabled task also builds green.
      */
     abstract val wasmJsTests: Property<Boolean>
 }

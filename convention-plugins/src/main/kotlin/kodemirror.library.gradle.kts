@@ -17,6 +17,7 @@
  * See NOTICE file for details.
  */
 
+import java.util.concurrent.Callable
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
@@ -53,7 +54,13 @@ kotlin {
 
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
-        nodejs()
+        browser {
+            testTask {
+                useKarma {
+                    useChromeHeadless()
+                }
+            }
+        }
     }
 
     // Native targets — compile but largely untested.
@@ -89,19 +96,57 @@ apiValidation {
     )
 }
 
-// wasmJs tests are off by default because the wasm Node test environment cannot load
-// `skiko.mjs`, which every Compose-reaching module needs (see #202). Compose-free modules
-// opt back in with `kodemirrorLibrary { wasmJsTests.set(true) }` — see #197 and the
-// KodemirrorLibraryExtension docs. The flag is read in `afterEvaluate` so the module's own
-// build script has already run by the time the decision is made.
+// wasmJs tests are opt-in per module: a module only gets a wasm test run once someone has
+// confirmed it actually passes there. The flag is read in `afterEvaluate` so the module's own
+// build script has already run by the time the decision is made. See #197 (the flag) and #202
+// (moving the runner from Node to a headless browser). The runner is Karma/Chrome-headless
+// rather than Node because skiko ships a browser-only emscripten build of `skiko.mjs`: under
+// Node it aborts with "both async and sync fetching of the wasm failed", so every
+// Compose-reaching module needs a real browser environment.
 val kodemirrorLibrary = extensions.create<KodemirrorLibraryExtension>("kodemirrorLibrary")
 kodemirrorLibrary.wasmJsTests.convention(false)
 
 afterEvaluate {
     val wasmJsTestsEnabled = kodemirrorLibrary.wasmJsTests.get()
     tasks.configureEach {
-        if (name.startsWith("wasmJsTest") || name == "wasmJsNodeTest") {
+        if (name.startsWith("wasmJsTest") || name == "wasmJsBrowserTest") {
             enabled = wasmJsTestsEnabled
+        }
+    }
+
+    // A Compose-reaching wasm test bundle imports `./skiko.mjs` from its own package
+    // directory. The Compose Gradle plugin puts that file there (`processSkikoRuntimeForKWasm`)
+    // only for the modules that apply it directly, so modules that reach Compose transitively
+    // — every `:lang-*`, `:legacy-modes` — have to unpack the same artifact themselves or
+    // webpack fails with "Can't resolve './skiko.mjs'". The skiko version is taken from the
+    // module's own resolved wasm test classpath, so Compose-free modules add nothing.
+    if (wasmJsTestsEnabled && !pluginManager.hasPlugin("org.jetbrains.compose")) {
+        val unpackSkiko = tasks.register<Copy>("unpackSkikoWasmRuntimeForWasmJsTest") {
+            description = "Unpacks the skiko web runtime into the wasmJs test resources."
+            from(
+                Callable {
+                    val skikoVersion = configurations.getByName("wasmJsTestRuntimeClasspath")
+                        .incoming.resolutionResult.allComponents
+                        .firstNotNullOfOrNull { component ->
+                            component.moduleVersion
+                                ?.takeIf { it.group == "org.jetbrains.skiko" }
+                                ?.version
+                        }
+                    skikoVersion?.let { version ->
+                        zipTree(
+                            configurations.detachedConfiguration(
+                                dependencies.create(
+                                    "org.jetbrains.skiko:skiko-js-wasm-runtime:$version"
+                                )
+                            ).singleFile
+                        )
+                    } ?: emptyList<Any>()
+                }
+            )
+            into(layout.buildDirectory.dir("kodemirror/skiko-wasm-test-runtime"))
+        }
+        tasks.named<ProcessResources>("wasmJsTestProcessResources") {
+            from(unpackSkiko)
         }
     }
 }

@@ -77,11 +77,11 @@ kotlin {
     }
 }
 
-// The showcase is a Compose app, so its wasmJs test binary cannot load skiko.mjs under Node.
-// This mirrors the default in the `kodemirror.library` convention plugin, which the showcase
-// does not apply. See #197; unblocking Compose modules on wasm is tracked in #202.
+// The showcase has no common/wasmJs test sources, so there is nothing to run on wasm. This
+// mirrors the `wasmJsTests` default in the `kodemirror.library` convention plugin, which the
+// showcase does not apply. See #197 and #202.
 tasks.configureEach {
-    if (name.startsWith("wasmJsTest") || name == "wasmJsNodeTest") enabled = false
+    if (name.startsWith("wasmJsTest") || name == "wasmJsBrowserTest") enabled = false
 }
 
 compose.desktop {

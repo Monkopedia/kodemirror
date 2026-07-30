@@ -2,7 +2,7 @@ plugins {
     id("kodemirror.library")
 }
 
-// Compose-free all the way down, so wasmJs tests actually run here (#197).
+// wasmJs tests verified green on the headless-browser runner (#202).
 kodemirrorLibrary {
     wasmJsTests.set(true)
 }

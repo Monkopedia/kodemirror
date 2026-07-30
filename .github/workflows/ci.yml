@@ -18,16 +18,42 @@ jobs:
           java-version: 21
       - uses: gradle/actions/setup-gradle@v4
       # The wasmJsTest tasks below are exactly the modules that opt in via
-      # `kodemirrorLibrary { wasmJsTests.set(true) }`. Every other module's wasm test binary
-      # reaches Compose (directly or through :language / :view) and cannot load skiko.mjs
-      # under Node, so its wasmJsTest task is disabled and would be a silent no-op here (#202).
+      # `kodemirrorLibrary { wasmJsTests.set(true) }`; they are listed one by one so that a
+      # module dropping out of the opt-in set shows up as a diff here rather than as a silent
+      # no-op. They run on Karma + headless Chrome (preinstalled on ubuntu-latest), not Node,
+      # because skiko's `skiko.mjs` is a browser-only build (#202). The heap bump matches
+      # docs.yml: linking ~27 wasm test binaries OOMs the Kotlin daemon at the 2g default.
       - name: Lint and test (JVM + wasmJs + Android)
         run: >-
           ./gradlew apiCheck jvmTest
+          -Dkotlin.daemon.jvmargs="-Xmx4g"
+          -Dorg.gradle.jvmargs="-Xmx4g -Dfile.encoding=UTF-8"
           :view:verifyRoborazziJvm
           testDebugUnitTest
-          :state:wasmJsTest
+          :autocomplete:wasmJsTest
           :collab:wasmJsTest
+          :lang-cpp:wasmJsTest
+          :lang-css:wasmJsTest
+          :lang-go:wasmJsTest
+          :lang-html:wasmJsTest
+          :lang-java:wasmJsTest
+          :lang-javascript:wasmJsTest
+          :lang-json:wasmJsTest
+          :lang-markdown:wasmJsTest
+          :lang-php:wasmJsTest
+          :lang-python:wasmJsTest
+          :lang-rust:wasmJsTest
+          :lang-sass:wasmJsTest
+          :lang-xml:wasmJsTest
+          :lang-yaml:wasmJsTest
+          :language:wasmJsTest
+          :legacy-modes:wasmJsTest
           :lezer-common:wasmJsTest
           :lezer-highlight:wasmJsTest
           :lezer-lr:wasmJsTest
+          :lint:wasmJsTest
+          :merge:wasmJsTest
+          :search:wasmJsTest
+          :state:wasmJsTest
+          :view:wasmJsTest
+          :vim:wasmJsTest
