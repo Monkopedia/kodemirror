@@ -421,7 +421,7 @@ internal val exCommands: MutableMap<String, ExFn> = mutableMapOf(
                 val amatch = numberRegex.find(sa)
                 val bmatch = numberRegex.find(sb)
                 if (amatch == null || bmatch == null) {
-                    return@Comparator if (sa < sb) -1 else 1
+                    return@Comparator sa.compareTo(sb)
                 }
                 val aStr = amatch.groupValues.drop(1).joinToString("")
                 val bStr = bmatch.groupValues.drop(1).joinToString("")
@@ -450,7 +450,16 @@ internal val exCommands: MutableMap<String, ExFn> = mutableMapOf(
                 sa = sa.lowercase()
                 sb = sb.lowercase()
             }
-            if (sa < sb) -1 else 1
+            // Must return 0 for equal keys. Answering "greater than" for equal
+            // elements breaks the comparator contract, and the order of tied
+            // keys then depends on the platform's sort algorithm: JVM TimSort
+            // keeps ties in place, while Kotlin/Native's merge sort takes from
+            // the right run whenever compare(left, right) > 0 and so reverses
+            // them. That made `:sort r/in/` — where every key is the literal
+            // match "in" — produce different text on macOS/iOS than on JVM.
+            // With a consistent comparator, sortWith is stable on every target
+            // and ties keep their original order, which is what vim does.
+            sa.compareTo(sb)
         }
 
         if (pattern != null) {
