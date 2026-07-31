@@ -77,8 +77,7 @@ fun runEditorTest(
     width: Int = 800,
     height: Int = 600,
     block: ComposeUiTest.(SessionHolder) -> Unit
-) {
-    val holder = SessionHolder()
+) = SessionHolder().let { holder ->
     runComposeUiTest {
         setContent {
             CompositionLocalProvider(

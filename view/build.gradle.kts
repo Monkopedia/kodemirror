@@ -21,6 +21,7 @@ kotlin {
         commonTest.dependencies {
             // Needed by the Compose UI interaction tests in `commonTest/.../input`.
             implementation(project(":language"))
+            implementation(project(":lezer-common"))
             implementation(project(":lezer-highlight"))
             implementation(project(":lang-javascript"))
             implementation(project(":commands"))

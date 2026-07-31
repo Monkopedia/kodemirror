@@ -62,9 +62,14 @@ class MixedContentScrollTest {
         val before = holder.session.state.selection.main.head.value
 
         // Scroll the long line horizontally, then click the same screen point.
+        // The scroll delta is deliberately larger than the line's scrollable
+        // range so the scroll saturates: the wheel-unit-to-pixel factor is
+        // platform-specific (a 600-unit scroll moves ~3200px on desktop but
+        // ~550px in a browser), and this test is about the long line being
+        // scrollable at all (#67), not about the wheel's step size.
         onNodeWithTag("KodeMirror").performMouseInput {
             moveTo(Offset(150f, 10f))
-            scroll(600f, ScrollWheel.Horizontal)
+            scroll(5000f, ScrollWheel.Horizontal)
         }
         waitForIdle()
 

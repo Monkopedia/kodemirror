@@ -166,7 +166,7 @@ class TextInputTest {
     }
 
     @Test
-    fun pluginSeesNewStateDuringUpdate() {
+    fun pluginSeesNewStateDuringUpdate() = run {
         // Verify that a ViewPlugin's update() callback sees the new state
         // on session.state (not the stale pre-dispatch state).
         var sessionStateDuringUpdate: String? = null

@@ -40,7 +40,7 @@ import kotlin.test.Test
 class HoverTooltipMountTest {
     @OptIn(ExperimentalTestApi::class)
     @Test
-    fun editorWithHoverTooltipMountsWithoutCrashing() {
+    fun editorWithHoverTooltipMountsWithoutCrashing() = run {
         runEditorTest(
             doc = "hello world",
             // Minimal hover source that never produces a tooltip; the trigger

@@ -108,7 +108,7 @@ class HighlightingTest {
     )
 
     @Test
-    fun highlightPositionsShiftAfterInsertion() {
+    fun highlightPositionsShiftAfterInsertion() = run {
         lateinit var trackerInstance: HighlightTracker
         val tracker = ViewPlugin.define(
             PluginSpec(
@@ -167,7 +167,7 @@ class HighlightingTest {
     }
 
     @Test
-    fun highlightPositionsCorrectAfterMultipleEdits() {
+    fun highlightPositionsCorrectAfterMultipleEdits() = run {
         lateinit var trackerInstance: HighlightTracker
         val tracker = ViewPlugin.define(
             PluginSpec(
@@ -213,7 +213,7 @@ class HighlightingTest {
     }
 
     @Test
-    fun highlightPositionsCorrectAfterMidDocumentInsert() {
+    fun highlightPositionsCorrectAfterMidDocumentInsert() = run {
         lateinit var trackerInstance: HighlightTracker
         val tracker = ViewPlugin.define(
             PluginSpec(
@@ -310,7 +310,7 @@ class HighlightingTest {
     }
 
     @Test
-    fun streamLanguageHighlightingProducesDecorations() {
+    fun streamLanguageHighlightingProducesDecorations() = run {
         val simpleLang = StreamLanguage.define(simpleStreamParser)
 
         lateinit var trackerInstance: HighlightTracker
@@ -349,7 +349,7 @@ class HighlightingTest {
     }
 
     @Test
-    fun streamLanguageAnnotatedStringHasSpanStyles() {
+    fun streamLanguageAnnotatedStringHasSpanStyles() = run {
         val simpleLang = StreamLanguage.define(simpleStreamParser)
 
         runEditorTest(
