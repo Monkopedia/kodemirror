@@ -10,10 +10,6 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(project(":state"))
-        }
-        jvmTest.dependencies {
-            implementation(kotlin("test"))
-            implementation(project(":state"))
             implementation(project(":view"))
             implementation(project(":commands"))
         }
