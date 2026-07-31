@@ -22,7 +22,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performMouseInput
-import org.junit.Test
+import kotlin.test.Test
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalTestApi::class)
 class DragSelectionTest {
@@ -89,9 +90,10 @@ class DragSelectionTest {
         val sel = holder.session.state.selection.main
         val doc = holder.session.state.doc
         val selLength = sel.to.value - sel.from.value
-        assert(selLength < doc.length) {
+        assertTrue(
+            selLength < doc.length,
             "Selection covers the entire document ($selLength chars out of " +
                 "${doc.length}). Expected partial selection from bottom-to-top drag."
-        }
+        )
     }
 }

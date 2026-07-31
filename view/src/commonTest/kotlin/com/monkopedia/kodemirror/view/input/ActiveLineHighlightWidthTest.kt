@@ -20,7 +20,8 @@ package com.monkopedia.kodemirror.view.input
 
 import androidx.compose.ui.test.ExperimentalTestApi
 import com.monkopedia.kodemirror.view.highlightActiveLine
-import org.junit.Test
+import kotlin.test.Test
+import kotlin.test.assertTrue
 
 /**
  * Regression guard for #85: in no-wrap mode the active-line (and any
@@ -50,10 +51,11 @@ class ActiveLineHighlightWidthTest {
     ) { holder ->
         waitForIdle()
         val contentWidth = holder.activeLineContentWidthPx()
-        assert(contentWidth > 600) {
+        assertTrue(
+            contentWidth > 600,
             "Expected the active-line highlight content box to fill ~the 800px " +
                 "viewport in no-wrap mode, but it was only ${contentWidth}px wide " +
                 "(stopping at the text width — regression #85)."
-        }
+        )
     }
 }

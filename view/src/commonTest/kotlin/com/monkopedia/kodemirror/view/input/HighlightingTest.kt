@@ -46,7 +46,8 @@ import com.monkopedia.kodemirror.view.PluginValue
 import com.monkopedia.kodemirror.view.ViewPlugin
 import com.monkopedia.kodemirror.view.ViewUpdate
 import com.monkopedia.kodemirror.view.keymapOf
-import org.junit.Test
+import kotlin.test.Test
+import kotlin.test.assertTrue
 
 /**
  * Integration tests verifying that syntax highlighting decorations
@@ -129,10 +130,11 @@ class HighlightingTest {
             // Before typing: find the "var" keyword highlight (0-3)
             val before = trackerInstance.ranges
             val varBefore = before.find { it.from == 0 && it.to == 3 }
-            assert(varBefore != null) {
+            assertTrue(
+                varBefore != null,
                 "Expected keyword highlight at 0-3 for 'var', " +
                     "got: $before"
-            }
+            )
 
             // Move cursor to position 0 and type a space
             holder.session.dispatch(
@@ -149,16 +151,18 @@ class HighlightingTest {
             // After typing: "var" keyword should now be at 1-4
             val after = trackerInstance.ranges
             val varAfter = after.find { it.from == 1 && it.to == 4 }
-            assert(varAfter != null) {
+            assertTrue(
+                varAfter != null,
                 "Expected keyword highlight at 1-4 for 'var' after " +
                     "inserting space, got: $after"
-            }
+            )
             // The old position should NOT still be present
             val staleVar = after.find { it.from == 0 && it.to == 3 }
-            assert(staleVar == null) {
+            assertTrue(
+                staleVar == null,
                 "Found stale keyword highlight at 0-3 after insertion — " +
                     "decorations were not rebuilt from new state"
-            }
+            )
         }
     }
 
@@ -200,10 +204,11 @@ class HighlightingTest {
             // "var" should now be at positions 3-6
             val ranges = trackerInstance.ranges
             val varRange = ranges.find { it.from == 3 && it.to == 6 }
-            assert(varRange != null) {
+            assertTrue(
+                varRange != null,
                 "Expected keyword highlight at 3-6 for 'var' after " +
                     "inserting 3 spaces, got: $ranges"
-            }
+            )
         }
     }
 
@@ -235,9 +240,7 @@ class HighlightingTest {
                     .sliceString(DocPos(it.from), DocPos(it.to)) ==
                     "return"
             }
-            assert(returnBefore != null) {
-                "Expected highlight range for 'return', got: $before"
-            }
+            assertTrue(returnBefore != null, "Expected highlight range for 'return', got: $before")
             val returnPos = returnBefore!!.from
 
             // Insert "Z" at position 5 (middle of first line)
@@ -257,13 +260,15 @@ class HighlightingTest {
                     .sliceString(DocPos(it.from), DocPos(it.to)) ==
                     "return"
             }
-            assert(returnAfter != null) {
+            assertTrue(
+                returnAfter != null,
                 "Expected highlight for 'return' after edit, got: $after"
-            }
-            assert(returnAfter!!.from == returnPos + 1) {
+            )
+            assertTrue(
+                returnAfter!!.from == returnPos + 1,
                 "Expected 'return' at ${returnPos + 1} but was at " +
                     "${returnAfter.from}"
-            }
+            )
         }
     }
 
@@ -326,18 +331,20 @@ class HighlightingTest {
             waitForIdle()
 
             val ranges = trackerInstance.ranges
-            assert(ranges.isNotEmpty()) {
+            assertTrue(
+                ranges.isNotEmpty(),
                 "StreamLanguage highlighting should produce decoration " +
                     "ranges, got empty list. Tree: " +
                     syntaxTree(holder.session.state)
-            }
+            )
 
             // "fn" keyword at position 0-2
             val fnRange = ranges.find { it.from == 0 && it.to == 2 }
-            assert(fnRange != null) {
+            assertTrue(
+                fnRange != null,
                 "Expected highlight for 'fn' keyword at 0-2, " +
                     "got: $ranges"
-            }
+            )
         }
     }
 
@@ -372,11 +379,12 @@ class HighlightingTest {
                 .first()
             val annotated = textLine.content
             val styles = annotated.spanStyles
-            assert(styles.isNotEmpty()) {
+            assertTrue(
+                styles.isNotEmpty(),
                 "Expected AnnotatedString to have SpanStyles from " +
                     "highlighting, got none. Text='${annotated.text}', " +
                     "allDecos=$allDecos, pluginDecos=$pluginDecos"
-            }
+            )
         }
     }
 }

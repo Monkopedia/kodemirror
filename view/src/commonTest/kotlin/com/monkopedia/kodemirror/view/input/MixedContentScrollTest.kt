@@ -24,7 +24,8 @@ import androidx.compose.ui.test.ScrollWheel
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performMouseInput
-import org.junit.Test
+import kotlin.test.Test
+import kotlin.test.assertTrue
 
 /**
  * Regression guards for #67: a long line mixed among short lines must still
@@ -73,10 +74,11 @@ class MixedContentScrollTest {
         waitForIdle()
         val after = holder.session.state.selection.main.head.value
 
-        assert(after > before + 100) {
+        assertTrue(
+            after > before + 100,
             "Expected click offset to advance well past the viewport after " +
                 "horizontal scroll on a long line among short lines, " +
                 "but before=$before after=$after"
-        }
+        )
     }
 }

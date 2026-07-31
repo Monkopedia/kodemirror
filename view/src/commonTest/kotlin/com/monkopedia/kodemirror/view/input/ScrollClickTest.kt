@@ -25,7 +25,8 @@ import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performMouseInput
 import androidx.compose.ui.test.performScrollToIndex
-import org.junit.Test
+import kotlin.test.Test
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalTestApi::class)
 class ScrollClickTest {
@@ -50,9 +51,10 @@ class ScrollClickTest {
         val cursorLine = holder.session.state.doc.lineAt(
             holder.session.state.selection.main.head
         ).number.value
-        assert(cursorLine > 1) {
+        assertTrue(
+            cursorLine > 1,
             "Expected cursor past line 1 after scrolling, but was on line $cursorLine"
-        }
+        )
     }
 
     @Test
@@ -73,9 +75,10 @@ class ScrollClickTest {
         val cursorLine = holder.session.state.doc.lineAt(
             holder.session.state.selection.main.head
         ).number.value
-        assert(cursorLine > 30) {
+        assertTrue(
+            cursorLine > 30,
             "Expected cursor near end of document after scrolling to bottom, " +
                 "but was on line $cursorLine"
-        }
+        )
     }
 }

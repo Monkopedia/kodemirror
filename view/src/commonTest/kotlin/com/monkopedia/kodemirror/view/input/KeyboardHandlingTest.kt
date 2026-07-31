@@ -34,7 +34,8 @@ import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asInsert
 import com.monkopedia.kodemirror.view.insertAt
 import com.monkopedia.kodemirror.view.keymapOf
-import org.junit.Test
+import kotlin.test.Test
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalTestApi::class)
 class KeyboardHandlingTest {
@@ -61,10 +62,11 @@ class KeyboardHandlingTest {
         }
         waitForIdle()
         val posAfter = holder.session.state.selection.main.head.value
-        assert(posAfter == posBefore + 1) {
+        assertTrue(
+            posAfter == posBefore + 1,
             "Expected cursor to move right by 1 (from $posBefore to ${posBefore + 1}), " +
                 "but got $posAfter"
-        }
+        )
     }
 
     @Test

@@ -34,7 +34,8 @@ import com.monkopedia.kodemirror.view.PluginValue
 import com.monkopedia.kodemirror.view.ViewPlugin
 import com.monkopedia.kodemirror.view.ViewUpdate
 import com.monkopedia.kodemirror.view.keymapOf
-import org.junit.Test
+import kotlin.test.Test
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalTestApi::class)
 class TextInputTest {
@@ -57,9 +58,7 @@ class TextInputTest {
         waitForIdle()
 
         val doc = holder.session.state.doc.toString()
-        assert(doc.contains("a")) {
-            "Expected 'a' to be inserted into document, but doc is: $doc"
-        }
+        assertTrue(doc.contains("a"), "Expected 'a' to be inserted into document, but doc is: $doc")
     }
 
     @Test
@@ -207,14 +206,16 @@ class TextInputTest {
             onNodeWithTag("KodeMirror_input").performTextInput("X")
             waitForIdle()
 
-            assert(sessionStateDuringUpdate == updateStateDuringUpdate) {
+            assertTrue(
+                sessionStateDuringUpdate == updateStateDuringUpdate,
                 "session.state during update() was " +
                     "'$sessionStateDuringUpdate' but update.state was " +
                     "'$updateStateDuringUpdate'"
-            }
-            assert(updateStateDuringUpdate == "XHello") {
+            )
+            assertTrue(
+                updateStateDuringUpdate == "XHello",
                 "Expected doc 'XHello' but got '$updateStateDuringUpdate'"
-            }
+            )
         }
     }
 

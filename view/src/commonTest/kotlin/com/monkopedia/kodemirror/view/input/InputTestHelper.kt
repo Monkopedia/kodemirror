@@ -18,10 +18,17 @@
  */
 package com.monkopedia.kodemirror.view.input
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
-import androidx.compose.ui.test.DesktopComposeUiTest
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.runDesktopComposeUiTest
+import androidx.compose.ui.test.runComposeUiTest
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
@@ -32,6 +39,7 @@ import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.EditorSessionImpl
 import com.monkopedia.kodemirror.view.KodeMirror
 import com.monkopedia.kodemirror.view.lineNumbers
+import kotlin.test.assertTrue
 
 /**
  * Holder for the editor session created inside the Compose test, so test
@@ -46,7 +54,20 @@ class SessionHolder {
  *
  * Sets up a [KodeMirror] composable with the given document content and
  * extensions, waits for layout, and then runs [block] with access to
- * the [DesktopComposeUiTest] scope and a [SessionHolder] for assertions.
+ * the [ComposeUiTest] scope and a [SessionHolder] for assertions.
+ *
+ * The multiplatform [runComposeUiTest] has no `width`/`height` parameters —
+ * unlike the desktop-only harness it replaces, which sized the test surface in
+ * raw pixels. The viewport is instead established by a [requiredSize] frame
+ * around the editor, with [LocalDensity] pinned to `Density(1f, 1f)`.
+ *
+ * Pinning the density is what makes this portable: `requiredSize` takes dp, and
+ * the ambient density differs per platform (desktop ~1.0, Android/iOS
+ * device-dependent, wasm follows `devicePixelRatio`). Without the pin,
+ * `800.dp` would be a different pixel count on every target and each
+ * `Offset(...)` in the tests below would silently mean something different.
+ * At `Density(1f, 1f)` dp == px, so the raw-pixel offsets carry over unchanged.
+ * `fontScale = 1f` keeps accessibility text scaling from perturbing line heights.
  */
 @OptIn(ExperimentalTestApi::class)
 fun runEditorTest(
@@ -55,27 +76,33 @@ fun runEditorTest(
     withGutters: Boolean = false,
     width: Int = 800,
     height: Int = 600,
-    block: DesktopComposeUiTest.(SessionHolder) -> Unit
+    block: ComposeUiTest.(SessionHolder) -> Unit
 ) {
     val holder = SessionHolder()
-    runDesktopComposeUiTest(width = width, height = height) {
+    runComposeUiTest {
         setContent {
-            val allExtensions = buildList {
-                if (withGutters) add(lineNumbers)
-                extensions?.let { add(it) }
+            CompositionLocalProvider(
+                LocalDensity provides Density(density = 1f, fontScale = 1f)
+            ) {
+                Box(Modifier.requiredSize(width.dp, height.dp)) {
+                    val allExtensions = buildList {
+                        if (withGutters) add(lineNumbers)
+                        extensions?.let { add(it) }
+                    }
+                    val ext = if (allExtensions.isEmpty()) null else ExtensionList(allExtensions)
+                    val state = remember {
+                        EditorState.create(
+                            EditorStateConfig(
+                                doc = doc.asDoc(),
+                                extensions = ext
+                            )
+                        )
+                    }
+                    val session = remember(state) { EditorSession(state) }
+                    holder.session = session
+                    KodeMirror(session = session)
+                }
             }
-            val ext = if (allExtensions.isEmpty()) null else ExtensionList(allExtensions)
-            val state = remember {
-                EditorState.create(
-                    EditorStateConfig(
-                        doc = doc.asDoc(),
-                        extensions = ext
-                    )
-                )
-            }
-            val session = remember(state) { EditorSession(state) }
-            holder.session = session
-            KodeMirror(session = session)
         }
         waitForIdle()
         block(holder)
@@ -90,10 +117,11 @@ fun SessionHolder.assertCursorOnLine(expectedLine: Int) {
     val state = session.state
     val cursorPos = state.selection.main.head
     val line = state.doc.lineAt(cursorPos)
-    assert(line.number.value == expectedLine) {
+    assertTrue(
+        line.number.value == expectedLine,
         "Expected cursor on line $expectedLine but was on line ${line.number.value} " +
             "(head=${cursorPos.value})"
-    }
+    )
 }
 
 /**
@@ -101,9 +129,7 @@ fun SessionHolder.assertCursorOnLine(expectedLine: Int) {
  */
 fun SessionHolder.assertSelectionNotEmpty() {
     val sel = session.state.selection.main
-    assert(!sel.empty) {
-        "Expected non-empty selection but got cursor at ${sel.head.value}"
-    }
+    assertTrue(!sel.empty, "Expected non-empty selection but got cursor at ${sel.head.value}")
 }
 
 /**
@@ -111,9 +137,7 @@ fun SessionHolder.assertSelectionNotEmpty() {
  */
 fun SessionHolder.assertDoc(expected: String) {
     val actual = session.state.doc.toString()
-    assert(actual == expected) {
-        "Expected doc:\n$expected\nActual doc:\n$actual"
-    }
+    assertTrue(actual == expected, "Expected doc:\n$expected\nActual doc:\n$actual")
 }
 
 /**
@@ -121,9 +145,7 @@ fun SessionHolder.assertDoc(expected: String) {
  */
 fun SessionHolder.assertCursorAt(pos: Int) {
     val head = session.state.selection.main.head
-    assert(head == DocPos(pos)) {
-        "Expected cursor at $pos but was at ${head.value}"
-    }
+    assertTrue(head == DocPos(pos), "Expected cursor at $pos but was at ${head.value}")
 }
 
 /** Index of the first item currently laid out in the editor's line list. */

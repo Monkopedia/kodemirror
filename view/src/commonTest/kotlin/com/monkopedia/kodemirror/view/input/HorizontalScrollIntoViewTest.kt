@@ -23,7 +23,8 @@ import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.view.lineWrapping
-import org.junit.Test
+import kotlin.test.Test
+import kotlin.test.assertTrue
 
 /**
  * Regression tests for horizontal scroll-into-view in no-wrap mode (#69). A
@@ -57,19 +58,18 @@ class HorizontalScrollIntoViewTest {
         moveCursor(holder, 0)
         waitForIdle()
         val before = holder.horizontalScrollPx()
-        assert(before == 0) {
-            "Expected no horizontal scroll at line start, but was $before"
-        }
+        assertTrue(before == 0, "Expected no horizontal scroll at line start, but was $before")
 
         // Jump the caret near the end of the long line.
         moveCursor(holder, longLine.length)
         waitForIdle()
         val after = holder.horizontalScrollPx()
         // The far-right caret must pull the viewport substantially right.
-        assert(after > 200) {
+        assertTrue(
+            after > 200,
             "Expected viewport to scroll right (>200px) to reveal the " +
                 "far-right caret, but horizontalScrollPx=$after (before=$before)"
-        }
+        )
     }
 
     @Test
@@ -81,19 +81,21 @@ class HorizontalScrollIntoViewTest {
         moveCursor(holder, longLine.length)
         waitForIdle()
         val scrolledRight = holder.horizontalScrollPx()
-        assert(scrolledRight > 200) {
+        assertTrue(
+            scrolledRight > 200,
             "Precondition: expected viewport scrolled right, but was $scrolledRight"
-        }
+        )
 
         // Now jump back to the start of the line.
         moveCursor(holder, 0)
         waitForIdle()
         val backLeft = holder.horizontalScrollPx()
         // The viewport must return to (approximately) the start.
-        assert(backLeft <= 24) {
+        assertTrue(
+            backLeft <= 24,
             "Expected viewport to scroll back to line start (<=24px), " +
                 "but horizontalScrollPx=$backLeft (was $scrolledRight)"
-        }
+        )
     }
 
     @Test
@@ -105,15 +107,16 @@ class HorizontalScrollIntoViewTest {
         // still resolve the caret x correctly so the viewport follows it.
         moveCursor(holder, 0)
         waitForIdle()
-        assert(holder.horizontalScrollPx() == 0)
+        assertTrue(holder.horizontalScrollPx() == 0)
 
         moveCursor(holder, longLine.length + 3)
         waitForIdle()
         val after = holder.horizontalScrollPx()
-        assert(after > 200) {
+        assertTrue(
+            after > 200,
             "Expected viewport to scroll right past tab-expanded content, " +
                 "but horizontalScrollPx=$after"
-        }
+        )
     }
 
     @Test
@@ -125,8 +128,6 @@ class HorizontalScrollIntoViewTest {
         moveCursor(holder, longLine.length)
         waitForIdle()
         val after = holder.horizontalScrollPx()
-        assert(after == 0) {
-            "Wrap mode must never scroll horizontally, but was $after"
-        }
+        assertTrue(after == 0, "Wrap mode must never scroll horizontally, but was $after")
     }
 }

@@ -28,7 +28,8 @@ import androidx.compose.ui.test.performMouseInput
 import com.monkopedia.kodemirror.commands.standardKeymap
 import com.monkopedia.kodemirror.view.EditorSessionImpl
 import com.monkopedia.kodemirror.view.keymapOf
-import org.junit.Test
+import kotlin.test.Test
+import kotlin.test.assertTrue
 
 /**
  * Tests for focus management after canvas/editor clicks.
@@ -99,12 +100,13 @@ class FocusManagementTest {
      */
     private fun SessionHolder.assertHasFocus() {
         val impl = session as EditorSessionImpl
-        assert(impl.hasFocus) {
+        assertTrue(
+            impl.hasFocus,
             "Expected editor to have focus (BasicTextField.onFocusChanged isFocused=true), " +
                 "but hasFocus=${impl.hasFocus}. " +
                 "focusRequester.requestFocus() was not called after the click, " +
                 "leaving the keyboard handler inactive."
-        }
+        )
     }
 
     // -------------------------------------------------------------------------
@@ -154,11 +156,12 @@ class FocusManagementTest {
         }
         waitForIdle()
         val posAfter = holder.session.state.selection.main.head.value
-        assert(posAfter == posBefore + 1) {
+        assertTrue(
+            posAfter == posBefore + 1,
             "Expected cursor to move right by 1 after click (from $posBefore to " +
                 "${posBefore + 1}), but got $posAfter. " +
                 "This suggests focus was not properly restored after the click."
-        }
+        )
     }
 
     /**
@@ -222,11 +225,12 @@ class FocusManagementTest {
         }
         waitForIdle()
         val posAfter = holder.session.state.selection.main.head.value
-        assert(posAfter == posBefore + 1) {
+        assertTrue(
+            posAfter == posBefore + 1,
             "Expected cursor to move right by 1 after drag (from $posBefore to " +
                 "${posBefore + 1}), but got $posAfter. " +
                 "This suggests drag did not properly focus the editor."
-        }
+        )
     }
 
     /**
@@ -272,12 +276,13 @@ class FocusManagementTest {
         }
         waitForIdle()
         val posAfter = holder.session.state.selection.main.head.value
-        assert(posAfter == posBefore - 1) {
+        assertTrue(
+            posAfter == posBefore - 1,
             "Expected cursor to move left by 1 after click-after-drag " +
                 "(from $posBefore to ${posBefore - 1}), but got $posAfter. " +
                 "This suggests `recentlyDragged` was still true when the tap fired, " +
                 "causing requestFocus() to be skipped."
-        }
+        )
     }
 
     /**

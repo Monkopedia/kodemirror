@@ -33,7 +33,8 @@ import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.KodeMirror
-import org.junit.Test
+import kotlin.test.Test
+import kotlin.test.assertTrue
 
 /**
  * Regression test for #33: placing [KodeMirror] under an UNBOUNDED vertical
@@ -74,9 +75,10 @@ class UnboundedHeightTest {
             // grow to its (finite) content height: well beyond the 300px surface
             // for a 100-line document.
             val height = editorHeight.value
-            assert(height > 300) {
+            assertTrue(
+                height > 300,
                 "Expected editor to grow to its content height under an " +
                     "unbounded parent, but measured height was $height"
-            }
+            )
         }
 }

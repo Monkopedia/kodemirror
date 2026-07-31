@@ -23,7 +23,8 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performMouseInput
-import org.junit.Test
+import kotlin.test.Test
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalTestApi::class)
 class ClickTargetingTest {
@@ -108,10 +109,11 @@ class ClickTargetingTest {
         waitForIdle()
         holder.assertCursorOnLine(1)
         val col = holder.session.state.selection.main.head.value
-        assert(col > 10) {
+        assertTrue(
+            col > 10,
             "Expected click near right edge to resolve to a column past the " +
                 "start of the line, but landed at offset $col"
-        }
+        )
     }
 
     @Test
@@ -124,8 +126,9 @@ class ClickTargetingTest {
         val line = holder.session.state.doc.lineAt(
             holder.session.state.selection.main.head
         )
-        assert(line.number.value >= 2) {
+        assertTrue(
+            line.number.value >= 2,
             "Expected cursor on last line but was on line ${line.number.value}"
-        }
+        )
     }
 }

@@ -26,7 +26,8 @@ import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.LineNumber
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.TransactionSpec
-import org.junit.Test
+import kotlin.test.Test
+import kotlin.test.assertTrue
 
 /**
  * Regression tests for scroll-into-view on dispatched selection jumps
@@ -49,9 +50,10 @@ class ScrollIntoViewTest {
         height = 300
     ) { holder ->
         // Initially the viewport is at the top.
-        assert(holder.firstVisibleIndex() == 0) {
+        assertTrue(
+            holder.firstVisibleIndex() == 0,
             "Expected to start at top, but firstVisible=${holder.firstVisibleIndex()}"
-        }
+        )
 
         // Jump the selection to a line far below the fold WITH scrollIntoView.
         val target = lineStart(holder.session.state, 80)
@@ -65,15 +67,17 @@ class ScrollIntoViewTest {
 
         // The viewport must have scrolled down to reveal the target line.
         val first = holder.firstVisibleIndex()
-        assert(first > 0) {
+        assertTrue(
+            first > 0,
             "Expected viewport to scroll down to reveal line 80, " +
                 "but firstVisible=$first"
-        }
+        )
         // The target line (index 79) should now be within the visible window.
-        assert(holder.isIndexVisible(79)) {
+        assertTrue(
+            holder.isIndexVisible(79),
             "Expected target line index 79 to be visible after scrollIntoView, " +
                 "visible range first=$first"
-        }
+        )
     }
 
     @Test
@@ -84,9 +88,10 @@ class ScrollIntoViewTest {
         // Scroll near the bottom first.
         onNode(hasScrollToIndexAction()).performScrollToIndex(90)
         waitForIdle()
-        assert(holder.firstVisibleIndex() > 50) {
+        assertTrue(
+            holder.firstVisibleIndex() > 50,
             "Expected to be scrolled down, firstVisible=${holder.firstVisibleIndex()}"
-        }
+        )
 
         // Jump back up to line 5 with scrollIntoView.
         val target = lineStart(holder.session.state, 5)
@@ -98,10 +103,11 @@ class ScrollIntoViewTest {
         )
         waitForIdle()
 
-        assert(holder.isIndexVisible(4)) {
+        assertTrue(
+            holder.isIndexVisible(4),
             "Expected target line index 4 to be visible after scrolling up, " +
                 "first=${holder.firstVisibleIndex()}"
-        }
+        )
     }
 
     @Test
@@ -118,9 +124,10 @@ class ScrollIntoViewTest {
             )
         )
         waitForIdle()
-        assert(holder.firstVisibleIndex() == before) {
+        assertTrue(
+            holder.firstVisibleIndex() == before,
             "Viewport should not move without scrollIntoView, " +
                 "before=$before after=${holder.firstVisibleIndex()}"
-        }
+        )
     }
 }

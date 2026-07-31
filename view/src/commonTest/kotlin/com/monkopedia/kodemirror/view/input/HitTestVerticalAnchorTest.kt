@@ -24,7 +24,7 @@ import androidx.compose.ui.test.click
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performMouseInput
 import com.monkopedia.kodemirror.state.LineNumber
-import org.junit.Test
+import kotlin.test.Test
 
 /**
  * Regression guard for #169: the click hit-test must use the same vertical

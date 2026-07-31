@@ -1,3 +1,5 @@
+import org.jetbrains.compose.ExperimentalComposeLibrary
+
 plugins {
     id("kodemirror.library")
     alias(libs.plugins.jetbrainsCompose)
@@ -16,17 +18,22 @@ kotlin {
             implementation(compose.foundation)
             implementation(compose.runtime)
         }
-        jvmTest.dependencies {
+        commonTest.dependencies {
+            // Needed by the Compose UI interaction tests in `commonTest/.../input`.
             implementation(project(":language"))
+            implementation(project(":lezer-highlight"))
+            implementation(project(":lang-javascript"))
+            implementation(project(":commands"))
+            implementation(project(":basic-setup"))
+            @OptIn(ExperimentalComposeLibrary::class)
+            implementation(compose.uiTest)
+        }
+        jvmTest.dependencies {
             implementation(project(":autocomplete"))
             implementation(project(":search"))
             implementation(project(":lezer-common"))
-            implementation(project(":lezer-highlight"))
             implementation(project(":lezer-lr"))
-            implementation(project(":lang-javascript"))
             implementation(project(":kodemirror-test"))
-            implementation(project(":commands"))
-            implementation(project(":basic-setup"))
             implementation(libs.roborazzi.compose.desktop)
             implementation(compose.desktop.uiTestJUnit4)
             implementation(compose.desktop.currentOs)

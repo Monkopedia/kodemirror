@@ -25,7 +25,8 @@ import androidx.compose.ui.test.click
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performMouseInput
 import com.monkopedia.kodemirror.view.lineWrapping
-import org.junit.Test
+import kotlin.test.Test
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalTestApi::class)
 class HorizontalScrollTest {
@@ -57,10 +58,11 @@ class HorizontalScrollTest {
         waitForIdle()
         val after = holder.session.state.selection.main.head.value
 
-        assert(after > before + 50) {
+        assertTrue(
+            after > before + 50,
             "Expected click offset to advance after horizontal scroll, " +
                 "but before=$before after=$after"
-        }
+        )
     }
 
     @Test
