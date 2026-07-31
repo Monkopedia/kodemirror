@@ -47,6 +47,13 @@ class MixedContentScrollTest {
         onNodeWithTag("KodeMirror_hscroll").assertExists()
     }
 
+    /**
+     * Not run on macOS native: the test harness cannot deliver a wheel event there, because
+     * Compose's `MacOsScrollConfig` reads the scroll delta off the underlying AppKit `NSEvent`
+     * and a synthesized one carries none. It is a harness limitation, not an editor or a
+     * Compose-on-macOS one — real wheel and trackpad gestures scroll normally, and iOS, whose
+     * `UiKitScrollConfig` needs no native event, runs this test. See `view/build.gradle.kts`.
+     */
     @Test
     fun longLineScrollsAmongShortLines() = runEditorTest(
         doc = mixed,
