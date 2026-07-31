@@ -667,6 +667,7 @@ class ChangeSetTest {
     }
 
     @Test
+    @Suppress("DEPRECATION")
     fun canBeSerializedToJSON() {
         for (i in 0 until 100) {
             val size = r(20) + 1

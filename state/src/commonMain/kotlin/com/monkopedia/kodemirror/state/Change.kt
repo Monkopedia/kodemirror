@@ -522,7 +522,21 @@ class ChangeSet private constructor(sections: IntArray, internal val inserted: L
 
     /**
      * Serialize this change set to a JSON-representable value.
+     *
+     * Part of the legacy `toJSON`/`fromJSON` cluster scheduled for coordinated
+     * removal in the next major release, together with `EditorState.toJSON`
+     * (`State.kt`), `EditorState.fromJSON` (`State.kt`),
+     * `SelectionRange.toJSON`/`SelectionRange.fromJSON` and
+     * `EditorSelection.toJSON`/`EditorSelection.fromJSON` (`Selection.kt`), and
+     * [Text.toJSON] (`Text.kt`).
      */
+    @Deprecated(
+        "Legacy JSON serialization, removed in the next major release. Serialize " +
+            "the change set with kotlinx.serialization instead."
+    )
+    // The suppression stays: Kotlin still reports DEPRECATION for a deprecated
+    // caller of a deprecated callee ([Text.toJSON] below). It goes away with the
+    // coordinated removal, not with this deprecation.
     @Suppress("DEPRECATION")
     fun toChangeSetJSON(): List<ChangeSetJsonPart> {
         val parts = mutableListOf<ChangeSetJsonPart>()
@@ -644,7 +658,14 @@ class ChangeSet private constructor(sections: IntArray, internal val inserted: L
 
         /**
          * Create a changeset from its JSON representation.
+         *
+         * The symmetric counterpart of [toChangeSetJSON], and removed with it
+         * as part of the legacy `toJSON`/`fromJSON` cluster.
          */
+        @Deprecated(
+            "Legacy JSON serialization, removed in the next major release. Deserialize " +
+                "the change set with kotlinx.serialization instead."
+        )
         fun changeSetFromJSON(json: List<ChangeSetJsonPart>): ChangeSet {
             val sections = mutableListOf<Int>()
             val inserted = mutableListOf<Text>()
