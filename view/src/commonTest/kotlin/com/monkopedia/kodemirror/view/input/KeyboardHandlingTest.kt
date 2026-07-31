@@ -20,6 +20,7 @@ package com.monkopedia.kodemirror.view.input
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.onNodeWithTag
@@ -32,10 +33,21 @@ import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asInsert
+import com.monkopedia.kodemirror.view.currentOs
 import com.monkopedia.kodemirror.view.insertAt
 import com.monkopedia.kodemirror.view.keymapOf
 import kotlin.test.Test
 import kotlin.test.assertTrue
+
+/**
+ * The modifier the standard keymap binds clipboard commands to on this platform: Meta where
+ * `platformOsName()` reports `"Mac"` (every Kotlin/Native target, and a real Mac on JVM),
+ * Ctrl everywhere else.
+ */
+private val cutModifier: Key = if (currentOs == "Mac") Key.MetaLeft else Key.CtrlLeft
+
+/** The modifier this platform deliberately does *not* bind clipboard commands to. */
+private val otherModifier: Key = if (currentOs == "Mac") Key.CtrlLeft else Key.MetaLeft
 
 @OptIn(ExperimentalTestApi::class)
 class KeyboardHandlingTest {
@@ -167,8 +179,18 @@ class KeyboardHandlingTest {
         holder.assertCursorOnLine(1)
     }
 
+    /**
+     * Cut is bound to the platform's own modifier, and only to that one.
+     *
+     * `standardKeymap` declares `KeyBinding(key = "Ctrl-x", mac = "Meta-x")`, and the view
+     * picks the `mac` override off [currentOs] — which `platformOsName()` reports as `"Mac"`
+     * on every Kotlin/Native target. So Ctrl+X genuinely does not cut on macOS/iOS, exactly
+     * as it does not in CodeMirror 6 or in any other Mac editor. [cutModifier] is derived
+     * from the same value the product reads rather than hard-coded, and both branches are
+     * asserted: the modifier this platform does *not* bind must leave the document alone.
+     */
     @Test
-    fun ctrlX_cutsSelectedText() = runEditorTest(
+    fun modX_cutsSelectedText() = runEditorTest(
         doc = "Hello World",
         extensions = keymapExt
     ) { holder ->
@@ -189,17 +211,26 @@ class KeyboardHandlingTest {
         waitForIdle()
         holder.assertSelectionNotEmpty()
 
-        // Press Ctrl+X
+        // The modifier this platform does NOT bind must be inert — not a cut, and not a
+        // literal "x" either (the printable-character fallback skips modified keys).
+        pressX(with = otherModifier)
+        waitForIdle()
+        holder.assertDoc("Hello World")
+        holder.assertSelectionNotEmpty()
+
+        // The bound one cuts.
+        pressX(with = cutModifier)
+        waitForIdle()
+        holder.assertDoc(" World")
+    }
+
+    private fun ComposeUiTest.pressX(with: Key) {
         onNodeWithTag("KodeMirror_input").performKeyInput {
-            keyDown(Key.CtrlLeft)
+            keyDown(with)
             keyDown(Key.X)
             keyUp(Key.X)
-            keyUp(Key.CtrlLeft)
+            keyUp(with)
         }
-        waitForIdle()
-
-        // "Hello" should have been cut
-        holder.assertDoc(" World")
     }
 
     @Test

@@ -20,7 +20,6 @@ package com.monkopedia.kodemirror.view.input
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.ScrollWheel
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performMouseInput
@@ -45,12 +44,10 @@ class HorizontalScrollTest {
         waitForIdle()
         val before = holder.session.state.selection.main.head.value
 
-        // Scroll horizontally with the wheel, then click the same screen point.
-        onNodeWithTag("KodeMirror").performMouseInput {
-            moveTo(Offset(150f, 15f))
-            scroll(600f, ScrollWheel.Horizontal)
-        }
-        waitForIdle()
+        // Scroll horizontally with the wheel, then click the same screen point. The wheel
+        // delta needed to travel a given number of pixels differs per platform, so this
+        // scrolls until the content stops moving rather than assuming one event suffices.
+        wheelScrollRightToEnd(holder, Offset(150f, 15f))
 
         onNodeWithTag("KodeMirror").performMouseInput {
             click(Offset(250f, 15f))

@@ -23,9 +23,13 @@ import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.ScrollWheel
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performMouseInput
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
@@ -170,4 +174,39 @@ fun SessionHolder.isIndexVisible(index: Int): Boolean {
     val first = impl.lastFirstVisibleItem
     val count = impl.lastVisibleItemCount
     return index in first until (first + count)
+}
+
+/** Wheel delta, in scroll units, sent by one step of [wheelScrollRightToEnd]. */
+private const val WHEEL_SCROLL_STEP = 600f
+
+/** Upper bound on the steps [wheelScrollRightToEnd] will take before giving up. */
+private const val MAX_WHEEL_SCROLL_STEPS = 60
+
+/**
+ * Scroll the content horizontally with the mouse wheel, from [at], until it stops moving.
+ *
+ * One wheel event is not a portable way to reach a given scroll offset: the scroll-unit to
+ * pixel factor is platform specific. The same 600-unit horizontal scroll moves roughly 3200px
+ * on desktop JVM but only about 550px in a headless browser, so a delta chosen to travel "far
+ * enough" on one target falls short on another and the difference shows up as a failed
+ * assertion about a *click offset*, which reads like an editor bug and is not one. Repeating
+ * until [horizontalScrollPx] stops changing saturates the scrollable range everywhere, which
+ * is what the scroll regressions this exercises (#67) are actually about.
+ *
+ * Returns having made at least one scroll attempt, so a platform that ignores horizontal wheel
+ * events altogether still fails the caller's assertion rather than being papered over here.
+ */
+@OptIn(ExperimentalTestApi::class)
+fun ComposeUiTest.wheelScrollRightToEnd(holder: SessionHolder, at: Offset) {
+    var previous = Int.MIN_VALUE
+    repeat(MAX_WHEEL_SCROLL_STEPS) {
+        val current = holder.horizontalScrollPx()
+        if (current == previous) return
+        previous = current
+        onNodeWithTag("KodeMirror").performMouseInput {
+            moveTo(at)
+            scroll(WHEEL_SCROLL_STEP, ScrollWheel.Horizontal)
+        }
+        waitForIdle()
+    }
 }

@@ -18,6 +18,7 @@
  */
 
 import java.util.concurrent.Callable
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
@@ -148,6 +149,21 @@ afterEvaluate {
         tasks.named<ProcessResources>("wasmJsTestProcessResources") {
             from(unpackSkiko)
         }
+    }
+}
+
+// Print the exception — message included — for every failed test. Gradle's default listener
+// prints only `<exception class> at <file>:<line>`, which on Kotlin/Native reads
+// `kotlin.AssertionError at null:-1` and throws away the assertion message the test author
+// wrote. That makes a CI-only failure on a host you cannot reproduce locally (the Apple
+// targets, from a Linux box) essentially undiagnosable without re-running the job.
+tasks.withType<AbstractTestTask>().configureEach {
+    testLogging {
+        events("failed")
+        exceptionFormat = TestExceptionFormat.FULL
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
     }
 }
 
