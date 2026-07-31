@@ -14,10 +14,15 @@ kotlin {
             implementation(compose.ui)
             implementation(compose.runtime)
         }
-        jvmTest.dependencies {
+        commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(project(":state"))
             implementation(project(":view"))
         }
     }
+}
+
+// wasmJs tests verified green on the headless-browser runner (#202).
+kodemirrorLibrary {
+    wasmJsTests.set(true)
 }
