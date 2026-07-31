@@ -26,17 +26,30 @@ import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asDoc
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import org.junit.Test
+
+/**
+ * True on the platforms where a clipboard write falls back to Compose's
+ * [ClipboardManager] — JVM, Android and native, whose [platformWriteClipboard]
+ * declines the write. On wasmJs the platform performs the write itself through
+ * `navigator.clipboard`, so the Compose fallback is deliberately skipped and
+ * the manager stays untouched.
+ *
+ * Probed from the `expect`/`actual` under test rather than hard-coded, so the
+ * expectation tracks the real wiring. The probe writes an empty string, which
+ * no assertion observes.
+ */
+private val usesComposeClipboardFallback: Boolean = !platformWriteClipboard("")
 
 /**
  * Unit tests for the clipboard commands' platform-independent logic.
  *
  * The wasmJs browser-clipboard path (`navigator.clipboard`) can only be
- * verified in a real browser. These tests cover the JVM/Compose path and the
- * internal-buffer fallback that the wasmJs path also relies on for paste.
+ * verified in a real browser. These tests cover the Compose fallback path and
+ * the internal-buffer fallback that the wasmJs path also relies on for paste.
  */
 class ClipboardCommandsTest {
 
@@ -47,6 +60,20 @@ class ClipboardCommandsTest {
             stored = annotatedString
         }
         override fun getText(): AnnotatedString? = stored
+    }
+
+    /**
+     * Assert the system-clipboard write landed on exactly the path this
+     * platform uses: Compose's [ClipboardManager] where the platform declines
+     * the write, and nowhere near it where the platform handles the write
+     * itself (the async `navigator.clipboard` call is not observable here).
+     */
+    private fun assertClipboardWrite(expected: String, cm: FakeClipboardManager) {
+        if (usesComposeClipboardFallback) {
+            assertEquals(expected, cm.stored?.text)
+        } else {
+            assertNull(cm.stored, "platform handled the write; Compose fallback must not run")
+        }
     }
 
     private fun session(doc: String): EditorSessionImpl {
@@ -71,9 +98,7 @@ class ClipboardCommandsTest {
 
         assertTrue(clipboardCopy(s))
 
-        // On JVM platformWriteClipboard is a no-op, so the Compose
-        // ClipboardManager receives the text, and the internal buffer mirrors it.
-        assertEquals("Hello", cm.stored?.text)
+        assertClipboardWrite("Hello", cm)
         assertEquals("Hello", s.internalClipboard)
         // Copy must not mutate the document.
         assertEquals("Hello world", s.state.doc.toString())
@@ -101,7 +126,7 @@ class ClipboardCommandsTest {
 
         assertTrue(clipboardCut(s))
 
-        assertEquals("Hello ", cm.stored?.text)
+        assertClipboardWrite("Hello ", cm)
         assertEquals("Hello ", s.internalClipboard)
         assertEquals("world", s.state.doc.toString())
     }
