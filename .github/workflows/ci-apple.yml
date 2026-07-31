@@ -17,6 +17,13 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Test (macOS native)
         run: ./gradlew macosArm64Test
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-macos
+          path: '**/build/test-results/**/*.xml'
+          if-no-files-found: error
 
   check-ios:
     runs-on: macos-latest
@@ -29,3 +36,10 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Test (iOS simulator)
         run: ./gradlew iosSimulatorArm64Test
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-ios
+          path: '**/build/test-results/**/*.xml'
+          if-no-files-found: error
