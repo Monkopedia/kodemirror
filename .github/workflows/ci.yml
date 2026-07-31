@@ -22,7 +22,7 @@ jobs:
       # module dropping out of the opt-in set shows up as a diff here rather than as a silent
       # no-op. They run on Karma + headless Chrome (preinstalled on ubuntu-latest), not Node,
       # because skiko's `skiko.mjs` is a browser-only build (#202). The heap bump matches
-      # docs.yml: linking ~27 wasm test binaries OOMs the Kotlin daemon at the 2g default.
+      # docs.yml: linking ~29 wasm test binaries OOMs the Kotlin daemon at the 2g default.
       - name: Lint and test (JVM + wasmJs + Android)
         run: >-
           ./gradlew apiCheck jvmTest
@@ -32,6 +32,7 @@ jobs:
           testDebugUnitTest
           :autocomplete:wasmJsTest
           :collab:wasmJsTest
+          :commands:wasmJsTest
           :lang-cpp:wasmJsTest
           :lang-css:wasmJsTest
           :lang-go:wasmJsTest
@@ -52,6 +53,7 @@ jobs:
           :lezer-highlight:wasmJsTest
           :lezer-lr:wasmJsTest
           :lint:wasmJsTest
+          :lsp-client:wasmJsTest
           :merge:wasmJsTest
           :search:wasmJsTest
           :state:wasmJsTest
