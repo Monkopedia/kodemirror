@@ -29,6 +29,43 @@ internal expect fun platformOsName(): String
 internal expect fun keyEventCharacter(event: KeyEvent): Char?
 
 /**
+ * Convert a key event's UTF-16 code point into an insertable character, or null
+ * when the code point does not denote one.
+ *
+ * Platforms report a code point for every key press, including presses that
+ * produce no text at all. AWT uses `java.awt.event.KeyEvent.CHAR_UNDEFINED`
+ * — U+FFFF — for those, which is how a bare Shift press ended up inserting a
+ * stray glyph at the caret (#220). U+FFFF is a Unicode *noncharacter*, not a
+ * control character, so an `isISOControl()` guard alone lets it through.
+ *
+ * Rejected here:
+ *  - anything outside the BMP, since the result is a single [Char] and a wider
+ *    code point could only be delivered truncated (Android additionally packs
+ *    flag bits above the BMP for dead keys, e.g. `COMBINING_ACCENT`);
+ *  - surrogates, which are only meaningful as a pair and would leave an
+ *    unpaired half in the document;
+ *  - noncharacters — U+FDD0..U+FDEF and U+FFFE/U+FFFF — which are permanently
+ *    reserved and never denote text;
+ *  - ISO control characters, including U+0000, which callers handle as key
+ *    bindings rather than as input.
+ *
+ * `Char.isDefined()` would cover the noncharacter case, but it also rejects
+ * every code point merely *unassigned* in the platform's Unicode tables. Those
+ * tables differ between Kotlin/JVM and Kotlin/Native and lag the standard, so
+ * it would silently drop characters a user can legitimately type and would do
+ * so differently per target. The structural classes above are fixed by the
+ * standard, so testing them directly is both stable and portable.
+ */
+internal fun keyCharFromCodePoint(codePoint: Int): Char? {
+    if (codePoint < Char.MIN_VALUE.code || codePoint > Char.MAX_VALUE.code) return null
+    val char = codePoint.toChar()
+    if (char.isISOControl()) return null
+    if (char.isSurrogate()) return null
+    if (codePoint in 0xFDD0..0xFDEF || (codePoint and 0xFFFE) == 0xFFFE) return null
+    return char
+}
+
+/**
  * Extract the layout-aware key name from a [KeyEvent] for shortcut matching.
  *
  * On a Dvorak layout, pressing the physical QWERTY 'B' key (which produces 'x'
