@@ -42,6 +42,26 @@ The legacy two-phase pattern (work agent in a worktree → separate review agent
 without a PR) in `docs/post-task-workflow.md` is superseded by this automated PR review for
 routine work.
 
+### Parity tests — a binding obligation on BOTH the coder and the reviewer
+
+Some tests carry a `parity:` comment naming a counterpart in the other suite (a `commonTest` twin
+names a Playwright test, and the Playwright test names the twin). The full rules and the harness
+split are in `docs/testing-strategy.md`; the obligation itself is here because it binds every PR.
+
+- **Coder:** if your PR changes, renames or deletes a test carrying a `parity:` comment, you MUST
+  open its named counterpart in the same PR and state in the PR body whether the counterpart needed
+  to change. Exactly three answers are acceptable — both updated; counterpart deliberately unchanged
+  *with the reason*; or parity intentionally broken and the `parity:` comments removed from both
+  sides in that same PR. **"I didn't look" is not one of them.**
+- **Reviewer:** for any PR touching a file containing `parity:` comments, you MUST `grep` for the
+  named counterparts yourself and confirm the PR body addresses them. A PR that changes a
+  parity-annotated test without mentioning its counterpart is `request_changes` — not a nit. **Do
+  not accept the author's assertion that the counterpart is unaffected without checking it**; that
+  is the same verify-don't-relay standard this pipeline applies everywhere else.
+
+An orphaned `parity:` comment — one whose named counterpart no longer exists or no longer matches —
+is the specific decay this rule exists to prevent, and is itself grounds for `request_changes`.
+
 ### Screenshot Compare & Fix
 
 When the user asks to compare screenshots or fix visual differences, follow the workflow in
