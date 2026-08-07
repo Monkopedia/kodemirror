@@ -48,7 +48,11 @@ export default defineConfig({
         ...devices["Desktop Chrome"],
         ...(hasDisplay ? { launchOptions: { headless: false } } : {}),
       },
-      testIgnore: ["**/performance.spec.ts", "**/cm6-reference-capture.spec.ts"],
+      testIgnore: [
+        "**/performance.spec.ts",
+        "**/cm6-reference-capture.spec.ts",
+        "**/keymap-expectations-capture.spec.ts",
+      ],
     },
     {
       name: "performance",
@@ -62,6 +66,18 @@ export default defineConfig({
     {
       name: "cm6-reference",
       testMatch: "tests/cm6-reference-capture.spec.ts",
+      use: {
+        viewport: { width: 800, height: 600 },
+        browserName: "chromium",
+      },
+    },
+    {
+      // Captures absolute CM6 expectations for the commonTest twins (#201).
+      // CM6 only — a plain file:// page with no KodeMirror, so this needs
+      // neither the showcase wasm build nor a display, unlike the
+      // differential projects above.
+      name: "keymap-expectations",
+      testMatch: "tests/keymap-expectations-capture.spec.ts",
       use: {
         viewport: { width: 800, height: 600 },
         browserName: "chromium",
