@@ -117,19 +117,37 @@ raw pixel offsets mean the same thing on every target; see #200 for why that pin
 ### `keymap-commands` (the proof batch)
 
 The 60 tests are the largest single portable spec and are the proof that the pattern works. They
-divide as:
+landed (#233) as:
 
-- **Layout-dependent — `runEditorTest`.** `PageUp` / `PageDown` (viewport-sized), and the vertical
-  motions whose result depends on visual rather than logical lines. The Playwright versions of
-  PageUp/PageDown already assert only a *direction* rather than a position, precisely because the
-  page size differs between CM6's DOM viewport and KodeMirror's Compose canvas; a twin should assert
-  the same direction property, not a frozen offset.
-- **Everything else — plain `commonTest`.** Arrow keys, `Home`/`End`, `Ctrl-Home`/`Ctrl-End`, word
-  motion and word delete, `Enter`, `Backspace`/`Delete`, line move/copy/delete, indent/dedent,
-  bracket matching, transpose, the ten Shift-selection variants, select-all, and undo/redo are all
-  state transitions. They are exercised by resolving the binding through the keymap and running the
-  resulting command against an `EditorState` — the same probe-the-wiring pattern `ClipboardCommandsTest`
-  uses, which asserts against the binding the platform actually has rather than a hardcoded modifier.
+- **32 in plain `commonTest`** — `view/src/commonTest/.../KeymapParityTest.kt`
+- **28 under `runEditorTest`** — `view/src/commonTest/.../input/KeymapLayoutParityTest.kt`
+
+**The deciding factor is the setup sequence, not the assertion.** This is the correction the proof
+batch produced, and it is worth stating plainly because the first estimate here was wrong: it
+predicted only `PageUp`/`PageDown` and the vertical motions would need the Compose harness, and
+nearly half the batch ended up there instead.
+
+`moveVertically` steps by *visual* row and **returns its input unchanged when `coordsAtPos` has
+nothing to report.** So a headless `ArrowDown` does not fail — it silently does nothing, and any twin
+built on it passes while proving the opposite of what it claims. Many of these sequences reach their
+starting position with `ArrowDown` (`Home moves to line start` presses it twice before anything
+interesting happens), so **fidelity to the spec's exact sequence pulls the whole test into the
+Compose harness even when its final assertion is pure state.**
+
+That is the rule for the remaining areas: *if reproducing the Playwright sequence requires vertical
+motion or the viewport at any point, the twin needs `runEditorTest`* — regardless of what it
+ultimately asserts. Reproducing the sequence faithfully matters more than reaching the cheaper
+harness; a twin that takes a shortcut to the same starting offset is no longer the same test.
+
+`PageUp`/`PageDown` remain a separate case: the Playwright versions assert only a *direction* rather
+than a position, because page size differs between CM6's DOM viewport and KodeMirror's Compose
+canvas, and the twins assert that same direction property rather than a frozen offset.
+
+Twins that genuinely have no vertical motion in their sequence — word movement, word delete,
+transpose, select-all, undo/redo, the Shift-selection variants anchored at document start — stay in
+plain `commonTest`, resolving the binding through the keymap and running the resulting command
+against an `EditorState`. That is the probe-the-wiring pattern `ClipboardCommandsTest` uses, which
+asserts against the binding the platform actually has rather than a hardcoded modifier.
 
 **Derive the modifier, never hardcode it.** `standardKeymap` declares bindings such as
 `KeyBinding(key = "Ctrl-x", mac = "Meta-x")`, and `platformOsName()` reports `"Mac"` on *every*
