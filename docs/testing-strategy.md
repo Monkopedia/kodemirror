@@ -144,6 +144,13 @@ must act.
 `commonTest` in #198 to be measured before any vim twin was written. It was, and the answer is that
 **the twins would be redundant.**
 
+> **Recounting gives 629, and 626 is still the right number.** `grep -c '@Test'` over
+> `vim/src/commonTest` returns 629: it counts one `@Test` inside a KDoc code sample in
+> `VimTestHarness.kt` and two commented-out `// @Test` in `VimOperatorTest.kt`. Those two carry no
+> `@Ignore`, so no runner reports them as skipped either — they are invisible to every count and to
+> CI, which is why the bugs they document had to be filed separately as #229 and #230. Read executed
+> counts from `build/test-results/<task>/*.xml`, never from a `grep`.
+
 The four vim specs hold **69** tests, not the 83 the issue estimated (`vim-extended` 31,
 `vim-functional` 19, `vim-keyboard` 14, `vim-visual` 5). Matching each test's key sequence against
 the vim `commonTest` sources — which spell sequences as individual keys, `h.doKeys("d", "d")`, not as
