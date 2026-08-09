@@ -7,7 +7,9 @@ Tracked in #196. The parity convention below is the deliverable of #201.
 
 ## Two suites, two different questions
 
-`gap-analysis/` holds 214 Playwright tests. They are **differential**: each drives the same input
+`gap-analysis/` holds 188 behavioural Playwright tests, plus two capture specs that are tooling
+rather than assertions (`cm6-reference-capture`, whose single `test()` expands over 13 fixture files,
+and `keymap-expectations-capture`). The 188 are **differential**: each drives the same input
 into real CodeMirror 6 and into KodeMirror in the same browser, then compares the results.
 
 ```ts
@@ -162,11 +164,25 @@ coverage, which is exactly what the measurement was for.
 
 ## What stays Playwright-only, by design
 
-`visual`, `tab-render-compare`, `search-panel-compare`, `vim-prompt-compare`, `vim-cursor-compare`,
-`completion-popup-paint`, `cm6-reference-capture`, `performance`, and the `hittest-*` probes. All are
-rendering-, comparison- or browser-bound, and none can be expressed as an absolute expectation on
-another platform. **These never carry `parity:` comments**, and their absence from the twin suite is
-intentional rather than an omission.
+Eighteen tests, all rendering-, comparison- or browser-bound, none expressible as an absolute
+expectation on another platform:
+
+| spec | tests |
+|---|---|
+| `vim-prompt-compare` | 5 |
+| `performance` | 3 |
+| `search-panel-compare` | 3 |
+| `visual` | 3 |
+| `tab-render-compare` | 2 |
+| `completion-popup-paint` | 1 |
+| `vim-cursor-compare` | 1 |
+
+**These never carry `parity:` comments**, and their absence from the twin suite is intentional rather
+than an omission. `188 = 170 portable + 18` exactly, which is the arithmetic that keeps this
+document honest — if those two numbers stop summing, one of them is stale.
+
+The two capture specs (`cm6-reference-capture`, `keymap-expectations-capture`) are also Playwright-only
+but are excluded from both counts: they generate reference data rather than assert behaviour.
 
 One caveat that limits what the twin suite can be asked to prove: the headless CanvasKit runner
 renders a fallback font rather than the bundled Compose-Resources one (#210), so pixel and screenshot
