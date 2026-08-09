@@ -56,6 +56,7 @@ test.describe("Keymap: Standard - Arrow Keys", () => {
     if (km) await km.focus();
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/KeymapParityTest.kt arrowLeftMovesCursorLeft
   test("ArrowLeft moves cursor left", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "ArrowRight", 5);
@@ -63,12 +64,14 @@ test.describe("Keymap: Standard - Arrow Keys", () => {
     await expectMatch(cm6, km);
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/KeymapParityTest.kt arrowRightMovesCursorRight
   test("ArrowRight moves cursor right", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "ArrowRight");
     await expectMatch(cm6, km);
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/input/KeymapLayoutParityTest.kt arrowUpMovesCursorUp
   test("ArrowUp moves cursor up", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "ArrowDown", 3);
@@ -76,6 +79,7 @@ test.describe("Keymap: Standard - Arrow Keys", () => {
     await expectMatch(cm6, km);
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/input/KeymapLayoutParityTest.kt arrowDownMovesCursorDown
   test("ArrowDown moves cursor down", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "ArrowDown");
@@ -89,6 +93,7 @@ test.describe("Keymap: Standard - Home/End", () => {
     if (km) await km.focus();
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/input/KeymapLayoutParityTest.kt homeMovesToLineStart
   test("Home moves to line start", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "ArrowDown", 2);
@@ -97,6 +102,7 @@ test.describe("Keymap: Standard - Home/End", () => {
     await expectMatch(cm6, km);
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/input/KeymapLayoutParityTest.kt endMovesToLineEnd
   test("End moves to line end", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "ArrowDown", 2);
@@ -104,12 +110,14 @@ test.describe("Keymap: Standard - Home/End", () => {
     await expectMatch(cm6, km);
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/KeymapParityTest.kt ctrlHomeMovesToDocumentStart
   test("Ctrl-Home moves to document start", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+End");
     await pressOnBoth(cm6, km, "Control+Home");
     await expectMatch(cm6, km);
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/KeymapParityTest.kt ctrlEndMovesToDocumentEnd
   test("Ctrl-End moves to document end", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "Control+End");
@@ -127,6 +135,7 @@ test.describe("Keymap: Standard - PageUp/PageDown", () => {
   // visible line count, which differs between CM6 (DOM viewport) and KM
   // (Compose canvas). We verify that each editor moves the cursor by at
   // least one line in the expected direction.
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/input/KeymapLayoutParityTest.kt pageDownMovesCursorDownAPage
   test("PageDown moves cursor down a page", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     const beforeCm6 = await cm6.getState();
@@ -145,6 +154,7 @@ test.describe("Keymap: Standard - PageUp/PageDown", () => {
     }
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/input/KeymapLayoutParityTest.kt pageUpMovesCursorUpAPage
   test("PageUp moves cursor up a page", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+End");
     const beforeCm6 = await cm6.getState();
@@ -170,6 +180,7 @@ test.describe("Keymap: Standard - Enter", () => {
     if (km) await km.focus();
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/KeymapParityTest.kt enterInsertsNewline
   test("Enter inserts newline", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+End");
     await pressOnBoth(cm6, km, "Enter");
@@ -183,6 +194,7 @@ test.describe("Keymap: Standard - Backspace/Delete", () => {
     if (km) await km.focus();
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/KeymapParityTest.kt backspaceDeletesCharBackward
   test("Backspace deletes char backward", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "ArrowRight", 5);
@@ -190,6 +202,7 @@ test.describe("Keymap: Standard - Backspace/Delete", () => {
     await expectMatch(cm6, km);
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/KeymapParityTest.kt deleteDeletesCharForward
   test("Delete deletes char forward", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "Delete");
@@ -203,18 +216,21 @@ test.describe("Keymap: Standard - Word Movement", () => {
     if (km) await km.focus();
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/KeymapParityTest.kt ctrlArrowRightMovesWordRight
   test("Ctrl-ArrowRight moves word right", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "Control+ArrowRight");
     await expectMatch(cm6, km);
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/KeymapParityTest.kt ctrlArrowRightTwice
   test("Ctrl-ArrowRight twice", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "Control+ArrowRight", 2);
     await expectMatch(cm6, km);
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/KeymapParityTest.kt ctrlArrowLeftMovesWordLeft
   test("Ctrl-ArrowLeft moves word left", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "End");
@@ -222,6 +238,7 @@ test.describe("Keymap: Standard - Word Movement", () => {
     await expectMatch(cm6, km);
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/KeymapParityTest.kt ctrlArrowLeftTwice
   test("Ctrl-ArrowLeft twice", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "End");
@@ -236,6 +253,7 @@ test.describe("Keymap: Standard - Word Delete", () => {
     if (km) await km.focus();
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/KeymapParityTest.kt ctrlBackspaceDeletesWordBackward
   test("Ctrl-Backspace deletes word backward", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+End");
     await pressOnBoth(cm6, km, "Enter");
@@ -244,6 +262,7 @@ test.describe("Keymap: Standard - Word Delete", () => {
     await expectMatch(cm6, km);
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/KeymapParityTest.kt ctrlBackspaceOnTypedTextMultipleTimes
   test("Ctrl-Backspace on typed text multiple times", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+End");
     await pressOnBoth(cm6, km, "Enter");
@@ -254,12 +273,14 @@ test.describe("Keymap: Standard - Word Delete", () => {
     await expectMatch(cm6, km);
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/KeymapParityTest.kt ctrlDeleteDeletesWordForward
   test("Ctrl-Delete deletes word forward", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "Control+Delete");
     await expectMatch(cm6, km);
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/KeymapParityTest.kt ctrlDeleteTwice
   test("Ctrl-Delete twice", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "Control+Delete");
@@ -267,6 +288,7 @@ test.describe("Keymap: Standard - Word Delete", () => {
     await expectMatch(cm6, km);
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/input/KeymapLayoutParityTest.kt ctrlBackspaceAtLineStartCrossesLineBoundary
   test("Ctrl-Backspace at line start crosses line boundary", async ({
     cm6,
     km,
@@ -278,6 +300,7 @@ test.describe("Keymap: Standard - Word Delete", () => {
     await expectMatch(cm6, km);
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/KeymapParityTest.kt ctrlDeleteAtLineEndCrossesLineBoundary
   test("Ctrl-Delete at line end crosses line boundary", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "End");
@@ -294,6 +317,7 @@ test.describe("Keymap: Default - Move Line", () => {
     if (km) await km.focus();
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/input/KeymapLayoutParityTest.kt altArrowUpMovesLineUp
   test("Alt-ArrowUp moves line up", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "ArrowDown", 2);
@@ -301,6 +325,7 @@ test.describe("Keymap: Default - Move Line", () => {
     await expectMatch(cm6, km);
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/input/KeymapLayoutParityTest.kt altArrowDownMovesLineDown
   test("Alt-ArrowDown moves line down", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "ArrowDown");
@@ -315,6 +340,7 @@ test.describe("Keymap: Default - Copy Line", () => {
     if (km) await km.focus();
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/input/KeymapLayoutParityTest.kt shiftAltArrowUpCopiesLineUp
   test("Shift-Alt-ArrowUp copies line up", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "ArrowDown", 2);
@@ -322,6 +348,7 @@ test.describe("Keymap: Default - Copy Line", () => {
     await expectMatch(cm6, km);
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/input/KeymapLayoutParityTest.kt shiftAltArrowDownCopiesLineDown
   test("Shift-Alt-ArrowDown copies line down", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "ArrowDown");
@@ -336,6 +363,7 @@ test.describe("Keymap: Default - Delete Line", () => {
     if (km) await km.focus();
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/input/KeymapLayoutParityTest.kt ctrlShiftKDeletesCurrentLine
   test("Ctrl-Shift-k deletes current line", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "ArrowDown");
@@ -350,6 +378,7 @@ test.describe("Keymap: Default - Indent", () => {
     if (km) await km.focus();
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/input/KeymapLayoutParityTest.kt ctrlBracketRightIndentsLine
   test("Ctrl-] indents line", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "ArrowDown", 2);
@@ -357,6 +386,7 @@ test.describe("Keymap: Default - Indent", () => {
     await expectMatch(cm6, km);
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/input/KeymapLayoutParityTest.kt ctrlBracketLeftDedentsLine
   test("Ctrl-[ dedents line", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "ArrowDown", 2);
@@ -373,6 +403,7 @@ test.describe("Keymap: Default - Bracket Matching", () => {
     if (km) await km.focus();
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/input/KeymapLayoutParityTest.kt ctrlShiftBackslashGoesToMatchingBracket
   test("Ctrl-Shift-\\ goes to matching bracket", async ({ cm6, km }) => {
     // Position cursor on an opening bracket: line 2 has "fibonacci(n) {"
     // Move to the opening paren
@@ -394,6 +425,7 @@ test.describe("Keymap: Default - Transpose", () => {
     if (km) await km.focus();
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/KeymapParityTest.kt ctrlTTransposesCharacters
   test("Ctrl-t transposes characters", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "ArrowRight", 3);
@@ -410,6 +442,7 @@ test.describe("Keymap: Tab/Shift-Tab", () => {
     if (km) await km.focus();
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/input/KeymapLayoutParityTest.kt tabIndentsOrInsertsTabDependingOnConfig
   test("Tab indents (or inserts tab depending on config)", async ({
     cm6,
     km,
@@ -422,6 +455,7 @@ test.describe("Keymap: Tab/Shift-Tab", () => {
     await expectMatch(cm6, km);
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/input/KeymapLayoutParityTest.kt shiftTabDedents
   test("Shift-Tab dedents", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "ArrowDown", 2);
@@ -440,6 +474,7 @@ test.describe("Keymap: Emacs - Navigation", () => {
     if (km) await km.focus();
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/input/KeymapLayoutParityTest.kt ctrlAGoesToLineStart
   test("Ctrl-a goes to line start", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "ArrowDown", 2);
@@ -448,6 +483,7 @@ test.describe("Keymap: Emacs - Navigation", () => {
     await expectMatch(cm6, km);
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/input/KeymapLayoutParityTest.kt ctrlEGoesToLineEnd
   test("Ctrl-e goes to line end", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "ArrowDown", 2);
@@ -455,12 +491,14 @@ test.describe("Keymap: Emacs - Navigation", () => {
     await expectMatch(cm6, km);
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/KeymapParityTest.kt ctrlFMovesCharRight
   test("Ctrl-f moves char right", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "Control+f");
     await expectMatch(cm6, km);
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/KeymapParityTest.kt ctrlBMovesCharLeft
   test("Ctrl-b moves char left", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "ArrowRight", 5);
@@ -468,6 +506,7 @@ test.describe("Keymap: Emacs - Navigation", () => {
     await expectMatch(cm6, km);
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/input/KeymapLayoutParityTest.kt ctrlPMovesLineUp
   test("Ctrl-p moves line up", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "ArrowDown", 3);
@@ -475,6 +514,7 @@ test.describe("Keymap: Emacs - Navigation", () => {
     await expectMatch(cm6, km);
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/input/KeymapLayoutParityTest.kt ctrlNMovesLineDown
   test("Ctrl-n moves line down", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "Control+n");
@@ -488,12 +528,14 @@ test.describe("Keymap: Emacs - Editing", () => {
     if (km) await km.focus();
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/KeymapParityTest.kt ctrlDDeletesCharForward
   test("Ctrl-d deletes char forward", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "Control+d");
     await expectMatch(cm6, km);
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/KeymapParityTest.kt ctrlHDeletesCharBackward
   test("Ctrl-h deletes char backward", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "ArrowRight", 5);
@@ -501,6 +543,7 @@ test.describe("Keymap: Emacs - Editing", () => {
     await expectMatch(cm6, km);
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/KeymapParityTest.kt ctrlKKillsToEndOfLine
   test("Ctrl-k kills to end of line", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "ArrowRight", 3);
@@ -508,6 +551,7 @@ test.describe("Keymap: Emacs - Editing", () => {
     await expectMatch(cm6, km);
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/KeymapParityTest.kt ctrlTTransposesCharactersEmacs
   test("Ctrl-t transposes characters (emacs)", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "ArrowRight", 2);
@@ -524,6 +568,7 @@ test.describe("Keymap: Standard - Selection with Shift", () => {
     if (km) await km.focus();
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/KeymapParityTest.kt shiftArrowRightExtendsSelectionRight
   test("Shift-ArrowRight extends selection right", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "Shift+ArrowRight", 5);
@@ -535,6 +580,7 @@ test.describe("Keymap: Standard - Selection with Shift", () => {
     }
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/KeymapParityTest.kt shiftArrowLeftExtendsSelectionLeft
   test("Shift-ArrowLeft extends selection left", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "ArrowRight", 10);
@@ -547,6 +593,7 @@ test.describe("Keymap: Standard - Selection with Shift", () => {
     }
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/input/KeymapLayoutParityTest.kt shiftArrowDownExtendsSelectionDown
   test("Shift-ArrowDown extends selection down", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "Shift+ArrowDown");
@@ -558,6 +605,7 @@ test.describe("Keymap: Standard - Selection with Shift", () => {
     }
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/input/KeymapLayoutParityTest.kt shiftArrowUpExtendsSelectionUp
   test("Shift-ArrowUp extends selection up", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "ArrowDown", 3);
@@ -570,6 +618,7 @@ test.describe("Keymap: Standard - Selection with Shift", () => {
     }
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/input/KeymapLayoutParityTest.kt shiftHomeSelectsToLineStart
   test("Shift-Home selects to line start", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "ArrowDown");
@@ -583,6 +632,7 @@ test.describe("Keymap: Standard - Selection with Shift", () => {
     }
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/input/KeymapLayoutParityTest.kt shiftEndSelectsToLineEnd
   test("Shift-End selects to line end", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "ArrowDown");
@@ -596,6 +646,7 @@ test.describe("Keymap: Standard - Selection with Shift", () => {
     }
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/KeymapParityTest.kt ctrlShiftArrowRightSelectsWordRight
   test("Ctrl-Shift-ArrowRight selects word right", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "Control+Shift+ArrowRight");
@@ -607,6 +658,7 @@ test.describe("Keymap: Standard - Selection with Shift", () => {
     }
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/KeymapParityTest.kt ctrlShiftArrowLeftSelectsWordLeft
   test("Ctrl-Shift-ArrowLeft selects word left", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "End");
@@ -619,6 +671,7 @@ test.describe("Keymap: Standard - Selection with Shift", () => {
     }
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/KeymapParityTest.kt ctrlShiftHomeSelectsToDocStart
   test("Ctrl-Shift-Home selects to doc start", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+End");
     await pressOnBoth(cm6, km, "Control+Shift+Home");
@@ -630,6 +683,7 @@ test.describe("Keymap: Standard - Selection with Shift", () => {
     }
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/KeymapParityTest.kt ctrlShiftEndSelectsToDocEnd
   test("Ctrl-Shift-End selects to doc end", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "Control+Shift+End");
@@ -650,6 +704,7 @@ test.describe("Keymap: Standard - Select All", () => {
     if (km) await km.focus();
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/KeymapParityTest.kt ctrlASelectsAllText
   test("Ctrl-a selects all text", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+a");
     const cm6State = await cm6.getState();
@@ -669,6 +724,7 @@ test.describe("Keymap: Standard - Undo/Redo", () => {
     if (km) await km.focus();
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/KeymapParityTest.kt ctrlZUndoesLastChange
   test("Ctrl-z undoes last change", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+End");
     await typeOnBoth(cm6, km, "X");
@@ -676,6 +732,7 @@ test.describe("Keymap: Standard - Undo/Redo", () => {
     await expectMatch(cm6, km);
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/KeymapParityTest.kt ctrlShiftZRedoesAfterUndo
   test("Ctrl-Shift-z redoes after undo", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+End");
     await typeOnBoth(cm6, km, "Y");
@@ -693,6 +750,7 @@ test.describe("Tab Handling", () => {
     if (km) await km.focus();
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/input/KeymapLayoutParityTest.kt tabKeyBehaviorMatchesBetweenCm6AndKm
   test("Tab key behavior matches between CM6 and KM", async ({
     cm6,
     km,
@@ -708,6 +766,7 @@ test.describe("Tab Handling", () => {
     await expectMatch(cm6, km);
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/input/KeymapLayoutParityTest.kt tabThenShiftTabRoundTrips
   test("Tab then Shift-Tab round-trips", async ({ cm6, km }) => {
     await pressOnBoth(cm6, km, "Control+Home");
     await pressOnBoth(cm6, km, "ArrowDown", 2);
@@ -722,6 +781,7 @@ test.describe("Tab Handling", () => {
     await expectMatch(cm6, km);
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/input/KeymapLayoutParityTest.kt multipleTabPressesIncreaseIndentConsistently
   test("multiple Tab presses increase indent consistently", async ({
     cm6,
     km,

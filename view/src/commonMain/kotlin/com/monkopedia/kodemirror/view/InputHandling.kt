@@ -154,15 +154,19 @@ private fun isSpecialKey(key: Key): Boolean = when (key) {
  * falling back to the generic [KeyBinding.key]. The `Mod-` prefix is
  * resolved to `Meta-` on macOS and `Ctrl-` on other platforms, matching
  * the CodeMirror convention.
+ *
+ * @param os The operating-system name to resolve against. Defaults to the
+ *   detected [currentOs]; callers pass an explicit value to ask what a binding
+ *   would resolve to on another platform.
  */
-private fun resolveBindingKey(binding: KeyBinding): String? {
-    val isMac = currentOs.contains("mac", ignoreCase = true) ||
-        currentOs.contains("darwin", ignoreCase = true)
+internal fun resolveBindingKey(binding: KeyBinding, os: String = currentOs): String? {
+    val isMac = os.contains("mac", ignoreCase = true) ||
+        os.contains("darwin", ignoreCase = true)
     val platformKey = when {
         isMac -> binding.mac
-        currentOs.contains("win", ignoreCase = true) -> binding.win
-        currentOs.contains("linux", ignoreCase = true) ||
-            currentOs.contains("nux", ignoreCase = true) -> binding.linux
+        os.contains("win", ignoreCase = true) -> binding.win
+        os.contains("linux", ignoreCase = true) ||
+            os.contains("nux", ignoreCase = true) -> binding.linux
         else -> null
     }
     val key = platformKey ?: binding.key ?: return null
@@ -219,9 +223,6 @@ internal fun handleKeyEvent(view: EditorSession, event: KeyEvent): Boolean {
     if (event.type != KeyEventType.KeyDown) return false
     val name = keyEventToName(event)
     val isShift = event.isShiftPressed
-    // Reverse so later extensions (higher precedence) are checked first,
-    // matching CM6's behavior where later keymap extensions override earlier ones.
-    val bindings = view.state.facet(keymap).asReversed()
 
     // Build the name without Shift for shift-variant matching
     val nameWithoutShift = if (isShift) {
@@ -261,12 +262,46 @@ internal fun handleKeyEvent(view: EditorSession, event: KeyEvent): Boolean {
         null
     }
 
+    return runKeyBindings(view, name, nameWithoutShift, physicalKeyName, isShift, event)
+}
+
+/**
+ * Run the view's key bindings against an already-resolved key *name*.
+ *
+ * This is the whole of [handleKeyEvent]'s binding-resolution order, split out
+ * so a caller that has a key name but no Compose [KeyEvent] — a keymap parity
+ * test, say — can exercise the production path instead of re-implementing it.
+ * A parallel copy of this loop would drift from the real one silently, and the
+ * drift would show up as a test that agrees with itself.
+ *
+ * @param name The full key name, modifiers first in `Alt-Ctrl-Meta-Shift`
+ *   order, e.g. `"Ctrl-Shift-ArrowRight"`.
+ * @param nameWithoutShift [name] with `Shift-` removed, or null when Shift is
+ *   not held. Used to reach [KeyBinding.shift].
+ * @param physicalKeyName Optional fallback name built from the *unshifted*
+ *   base character (e.g. `"Ctrl-Shift-\"` for a `Ctrl-Shift-|` event).
+ * @param isShift Whether Shift is held.
+ * @param event The originating event, or null when there is none. [KeyBinding.any]
+ *   handlers need it and are skipped when it is absent.
+ */
+internal fun runKeyBindings(
+    view: EditorSession,
+    name: String,
+    nameWithoutShift: String?,
+    physicalKeyName: String?,
+    isShift: Boolean,
+    event: KeyEvent?
+): Boolean {
+    // Reverse so later extensions (higher precedence) are checked first,
+    // matching CM6's behavior where later keymap extensions override earlier ones.
+    val bindings = view.state.facet(keymap).asReversed()
+
     for (binding in bindings) {
         val bindingKey = resolveBindingKey(binding)
 
         // Catch-all: when `any` is set but no key is specified, call for every event
         if (bindingKey == null) {
-            if (binding.any != null) {
+            if (binding.any != null && event != null) {
                 val result = binding.any.invoke(view, event)
                 if (result) return true
             }
@@ -297,7 +332,7 @@ internal fun handleKeyEvent(view: EditorSession, event: KeyEvent): Boolean {
         }
 
         // Any handler: called for every key event matching the base key
-        if (binding.any != null && bindingKey == name) {
+        if (binding.any != null && event != null && bindingKey == name) {
             val result = binding.any.invoke(view, event)
             if (result) return true
         }
