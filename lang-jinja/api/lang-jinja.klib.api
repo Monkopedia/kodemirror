@@ -1,0 +1,45 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:lang-jinja>
+final class com.monkopedia.kodemirror.lang.jinja/JinjaCompletionConfig { // com.monkopedia.kodemirror.lang.jinja/JinjaCompletionConfig|null[0]
+    constructor <init>(kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion>? = ..., kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion>? = ..., kotlin/Function3<kotlin.collections/List<kotlin/String>, com.monkopedia.kodemirror.state/EditorState, com.monkopedia.kodemirror.autocomplete/CompletionContext, kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion>>? = ...) // com.monkopedia.kodemirror.lang.jinja/JinjaCompletionConfig.<init>|<init>(kotlin.collections.List<com.monkopedia.kodemirror.autocomplete.Completion>?;kotlin.collections.List<com.monkopedia.kodemirror.autocomplete.Completion>?;kotlin.Function3<kotlin.collections.List<kotlin.String>,com.monkopedia.kodemirror.state.EditorState,com.monkopedia.kodemirror.autocomplete.CompletionContext,kotlin.collections.List<com.monkopedia.kodemirror.autocomplete.Completion>>?){}[0]
+
+    final val properties // com.monkopedia.kodemirror.lang.jinja/JinjaCompletionConfig.properties|{}properties[0]
+        final fun <get-properties>(): kotlin/Function3<kotlin.collections/List<kotlin/String>, com.monkopedia.kodemirror.state/EditorState, com.monkopedia.kodemirror.autocomplete/CompletionContext, kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion>>? // com.monkopedia.kodemirror.lang.jinja/JinjaCompletionConfig.properties.<get-properties>|<get-properties>(){}[0]
+    final val tags // com.monkopedia.kodemirror.lang.jinja/JinjaCompletionConfig.tags|{}tags[0]
+        final fun <get-tags>(): kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion>? // com.monkopedia.kodemirror.lang.jinja/JinjaCompletionConfig.tags.<get-tags>|<get-tags>(){}[0]
+    final val variables // com.monkopedia.kodemirror.lang.jinja/JinjaCompletionConfig.variables|{}variables[0]
+        final fun <get-variables>(): kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion>? // com.monkopedia.kodemirror.lang.jinja/JinjaCompletionConfig.variables.<get-variables>|<get-variables>(){}[0]
+
+    final fun component1(): kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion>? // com.monkopedia.kodemirror.lang.jinja/JinjaCompletionConfig.component1|component1(){}[0]
+    final fun component2(): kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion>? // com.monkopedia.kodemirror.lang.jinja/JinjaCompletionConfig.component2|component2(){}[0]
+    final fun component3(): kotlin/Function3<kotlin.collections/List<kotlin/String>, com.monkopedia.kodemirror.state/EditorState, com.monkopedia.kodemirror.autocomplete/CompletionContext, kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion>>? // com.monkopedia.kodemirror.lang.jinja/JinjaCompletionConfig.component3|component3(){}[0]
+    final fun copy(kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion>? = ..., kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion>? = ..., kotlin/Function3<kotlin.collections/List<kotlin/String>, com.monkopedia.kodemirror.state/EditorState, com.monkopedia.kodemirror.autocomplete/CompletionContext, kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion>>? = ...): com.monkopedia.kodemirror.lang.jinja/JinjaCompletionConfig // com.monkopedia.kodemirror.lang.jinja/JinjaCompletionConfig.copy|copy(kotlin.collections.List<com.monkopedia.kodemirror.autocomplete.Completion>?;kotlin.collections.List<com.monkopedia.kodemirror.autocomplete.Completion>?;kotlin.Function3<kotlin.collections.List<kotlin.String>,com.monkopedia.kodemirror.state.EditorState,com.monkopedia.kodemirror.autocomplete.CompletionContext,kotlin.collections.List<com.monkopedia.kodemirror.autocomplete.Completion>>?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.lang.jinja/JinjaCompletionConfig.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.lang.jinja/JinjaCompletionConfig.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.lang.jinja/JinjaCompletionConfig.toString|toString(){}[0]
+}
+
+final val com.monkopedia.kodemirror.lang.jinja/Expressions // com.monkopedia.kodemirror.lang.jinja/Expressions|{}Expressions[0]
+    final fun <get-Expressions>(): kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion> // com.monkopedia.kodemirror.lang.jinja/Expressions.<get-Expressions>|<get-Expressions>(){}[0]
+final val com.monkopedia.kodemirror.lang.jinja/Filters // com.monkopedia.kodemirror.lang.jinja/Filters|{}Filters[0]
+    final fun <get-Filters>(): kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion> // com.monkopedia.kodemirror.lang.jinja/Filters.<get-Filters>|<get-Filters>(){}[0]
+final val com.monkopedia.kodemirror.lang.jinja/Functions // com.monkopedia.kodemirror.lang.jinja/Functions|{}Functions[0]
+    final fun <get-Functions>(): kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion> // com.monkopedia.kodemirror.lang.jinja/Functions.<get-Functions>|<get-Functions>(){}[0]
+final val com.monkopedia.kodemirror.lang.jinja/Globals // com.monkopedia.kodemirror.lang.jinja/Globals|{}Globals[0]
+    final fun <get-Globals>(): kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion> // com.monkopedia.kodemirror.lang.jinja/Globals.<get-Globals>|<get-Globals>(){}[0]
+final val com.monkopedia.kodemirror.lang.jinja/Tags // com.monkopedia.kodemirror.lang.jinja/Tags|{}Tags[0]
+    final fun <get-Tags>(): kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion> // com.monkopedia.kodemirror.lang.jinja/Tags.<get-Tags>|<get-Tags>(){}[0]
+final val com.monkopedia.kodemirror.lang.jinja/jinjaLanguage // com.monkopedia.kodemirror.lang.jinja/jinjaLanguage|{}jinjaLanguage[0]
+    final fun <get-jinjaLanguage>(): com.monkopedia.kodemirror.language/LRLanguage // com.monkopedia.kodemirror.lang.jinja/jinjaLanguage.<get-jinjaLanguage>|<get-jinjaLanguage>(){}[0]
+final val com.monkopedia.kodemirror.lang.jinja/jinjaTagLanguage // com.monkopedia.kodemirror.lang.jinja/jinjaTagLanguage|{}jinjaTagLanguage[0]
+    final fun <get-jinjaTagLanguage>(): com.monkopedia.kodemirror.language/LRLanguage // com.monkopedia.kodemirror.lang.jinja/jinjaTagLanguage.<get-jinjaTagLanguage>|<get-jinjaTagLanguage>(){}[0]
+
+final fun com.monkopedia.kodemirror.lang.jinja/jinja(com.monkopedia.kodemirror.lang.jinja/JinjaCompletionConfig = ..., com.monkopedia.kodemirror.language/LanguageSupport = ...): com.monkopedia.kodemirror.language/LanguageSupport // com.monkopedia.kodemirror.lang.jinja/jinja|jinja(com.monkopedia.kodemirror.lang.jinja.JinjaCompletionConfig;com.monkopedia.kodemirror.language.LanguageSupport){}[0]
+final fun com.monkopedia.kodemirror.lang.jinja/jinjaCompletionSource(com.monkopedia.kodemirror.lang.jinja/JinjaCompletionConfig = ...): kotlin/Function1<com.monkopedia.kodemirror.autocomplete/CompletionContext, com.monkopedia.kodemirror.autocomplete/CompletionResult?> // com.monkopedia.kodemirror.lang.jinja/jinjaCompletionSource|jinjaCompletionSource(com.monkopedia.kodemirror.lang.jinja.JinjaCompletionConfig){}[0]
+final fun com.monkopedia.kodemirror.lang.jinja/makeJinja(com.monkopedia.kodemirror.language/Language): com.monkopedia.kodemirror.language/LRLanguage // com.monkopedia.kodemirror.lang.jinja/makeJinja|makeJinja(com.monkopedia.kodemirror.language.Language){}[0]

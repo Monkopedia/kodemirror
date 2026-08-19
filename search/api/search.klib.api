@@ -1,0 +1,154 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:search>
+final class com.monkopedia.kodemirror.search/HighlightSelectionMatchConfig { // com.monkopedia.kodemirror.search/HighlightSelectionMatchConfig|null[0]
+    constructor <init>(kotlin/Int = ..., kotlin/Int = ..., kotlin/Boolean = ...) // com.monkopedia.kodemirror.search/HighlightSelectionMatchConfig.<init>|<init>(kotlin.Int;kotlin.Int;kotlin.Boolean){}[0]
+
+    final val maxMatches // com.monkopedia.kodemirror.search/HighlightSelectionMatchConfig.maxMatches|{}maxMatches[0]
+        final fun <get-maxMatches>(): kotlin/Int // com.monkopedia.kodemirror.search/HighlightSelectionMatchConfig.maxMatches.<get-maxMatches>|<get-maxMatches>(){}[0]
+    final val minSelectionLength // com.monkopedia.kodemirror.search/HighlightSelectionMatchConfig.minSelectionLength|{}minSelectionLength[0]
+        final fun <get-minSelectionLength>(): kotlin/Int // com.monkopedia.kodemirror.search/HighlightSelectionMatchConfig.minSelectionLength.<get-minSelectionLength>|<get-minSelectionLength>(){}[0]
+    final val wholeWords // com.monkopedia.kodemirror.search/HighlightSelectionMatchConfig.wholeWords|{}wholeWords[0]
+        final fun <get-wholeWords>(): kotlin/Boolean // com.monkopedia.kodemirror.search/HighlightSelectionMatchConfig.wholeWords.<get-wholeWords>|<get-wholeWords>(){}[0]
+
+    final fun component1(): kotlin/Int // com.monkopedia.kodemirror.search/HighlightSelectionMatchConfig.component1|component1(){}[0]
+    final fun component2(): kotlin/Int // com.monkopedia.kodemirror.search/HighlightSelectionMatchConfig.component2|component2(){}[0]
+    final fun component3(): kotlin/Boolean // com.monkopedia.kodemirror.search/HighlightSelectionMatchConfig.component3|component3(){}[0]
+    final fun copy(kotlin/Int = ..., kotlin/Int = ..., kotlin/Boolean = ...): com.monkopedia.kodemirror.search/HighlightSelectionMatchConfig // com.monkopedia.kodemirror.search/HighlightSelectionMatchConfig.copy|copy(kotlin.Int;kotlin.Int;kotlin.Boolean){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.search/HighlightSelectionMatchConfig.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.search/HighlightSelectionMatchConfig.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.search/HighlightSelectionMatchConfig.toString|toString(){}[0]
+}
+
+final class com.monkopedia.kodemirror.search/RegExpCursor : kotlin.collections/Iterator<com.monkopedia.kodemirror.search/SearchMatch> { // com.monkopedia.kodemirror.search/RegExpCursor|null[0]
+    constructor <init>(com.monkopedia.kodemirror.state/Text, kotlin/String, kotlin.collections/Set<kotlin.text/RegexOption> = ..., com.monkopedia.kodemirror.state/DocPos = ..., com.monkopedia.kodemirror.state/DocPos = ...) // com.monkopedia.kodemirror.search/RegExpCursor.<init>|<init>(com.monkopedia.kodemirror.state.Text;kotlin.String;kotlin.collections.Set<kotlin.text.RegexOption>;com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos){}[0]
+
+    final var done // com.monkopedia.kodemirror.search/RegExpCursor.done|{}done[0]
+        final fun <get-done>(): kotlin/Boolean // com.monkopedia.kodemirror.search/RegExpCursor.done.<get-done>|<get-done>(){}[0]
+    final var matchGroups // com.monkopedia.kodemirror.search/RegExpCursor.matchGroups|{}matchGroups[0]
+        final fun <get-matchGroups>(): kotlin.collections/List<kotlin/String?> // com.monkopedia.kodemirror.search/RegExpCursor.matchGroups.<get-matchGroups>|<get-matchGroups>(){}[0]
+    final var value // com.monkopedia.kodemirror.search/RegExpCursor.value|{}value[0]
+        final fun <get-value>(): com.monkopedia.kodemirror.search/SearchMatch? // com.monkopedia.kodemirror.search/RegExpCursor.value.<get-value>|<get-value>(){}[0]
+
+    final fun hasNext(): kotlin/Boolean // com.monkopedia.kodemirror.search/RegExpCursor.hasNext|hasNext(){}[0]
+    final fun next(): com.monkopedia.kodemirror.search/SearchMatch // com.monkopedia.kodemirror.search/RegExpCursor.next|next(){}[0]
+    final fun nextMatch(): com.monkopedia.kodemirror.search/SearchMatch? // com.monkopedia.kodemirror.search/RegExpCursor.nextMatch|nextMatch(){}[0]
+}
+
+final class com.monkopedia.kodemirror.search/SearchCursor : kotlin.collections/Iterator<com.monkopedia.kodemirror.search/SearchMatch> { // com.monkopedia.kodemirror.search/SearchCursor|null[0]
+    constructor <init>(com.monkopedia.kodemirror.state/Text, kotlin/String, com.monkopedia.kodemirror.state/DocPos = ..., com.monkopedia.kodemirror.state/DocPos = ..., kotlin/Function1<kotlin/String, kotlin/String> = ...) // com.monkopedia.kodemirror.search/SearchCursor.<init>|<init>(com.monkopedia.kodemirror.state.Text;kotlin.String;com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos;kotlin.Function1<kotlin.String,kotlin.String>){}[0]
+
+    final var done // com.monkopedia.kodemirror.search/SearchCursor.done|{}done[0]
+        final fun <get-done>(): kotlin/Boolean // com.monkopedia.kodemirror.search/SearchCursor.done.<get-done>|<get-done>(){}[0]
+    final var value // com.monkopedia.kodemirror.search/SearchCursor.value|{}value[0]
+        final fun <get-value>(): com.monkopedia.kodemirror.search/SearchMatch? // com.monkopedia.kodemirror.search/SearchCursor.value.<get-value>|<get-value>(){}[0]
+
+    final fun hasNext(): kotlin/Boolean // com.monkopedia.kodemirror.search/SearchCursor.hasNext|hasNext(){}[0]
+    final fun next(): com.monkopedia.kodemirror.search/SearchMatch // com.monkopedia.kodemirror.search/SearchCursor.next|next(){}[0]
+    final fun nextMatch(): com.monkopedia.kodemirror.search/SearchMatch? // com.monkopedia.kodemirror.search/SearchCursor.nextMatch|nextMatch(){}[0]
+}
+
+final class com.monkopedia.kodemirror.search/SearchMatch { // com.monkopedia.kodemirror.search/SearchMatch|null[0]
+    constructor <init>(com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos) // com.monkopedia.kodemirror.search/SearchMatch.<init>|<init>(com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos){}[0]
+
+    final val from // com.monkopedia.kodemirror.search/SearchMatch.from|{}from[0]
+        final fun <get-from>(): com.monkopedia.kodemirror.state/DocPos // com.monkopedia.kodemirror.search/SearchMatch.from.<get-from>|<get-from>(){}[0]
+    final val to // com.monkopedia.kodemirror.search/SearchMatch.to|{}to[0]
+        final fun <get-to>(): com.monkopedia.kodemirror.state/DocPos // com.monkopedia.kodemirror.search/SearchMatch.to.<get-to>|<get-to>(){}[0]
+
+    final fun component1(): com.monkopedia.kodemirror.state/DocPos // com.monkopedia.kodemirror.search/SearchMatch.component1|component1(){}[0]
+    final fun component2(): com.monkopedia.kodemirror.state/DocPos // com.monkopedia.kodemirror.search/SearchMatch.component2|component2(){}[0]
+    final fun copy(com.monkopedia.kodemirror.state/DocPos = ..., com.monkopedia.kodemirror.state/DocPos = ...): com.monkopedia.kodemirror.search/SearchMatch // com.monkopedia.kodemirror.search/SearchMatch.copy|copy(com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.search/SearchMatch.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.search/SearchMatch.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.search/SearchMatch.toString|toString(){}[0]
+}
+
+final class com.monkopedia.kodemirror.search/SearchQuery { // com.monkopedia.kodemirror.search/SearchQuery|null[0]
+    constructor <init>(kotlin/String = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/String = ..., kotlin/Boolean = ..., kotlin/Function3<com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/EditorState, kotlin/Boolean>? = ...) // com.monkopedia.kodemirror.search/SearchQuery.<init>|<init>(kotlin.String;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.String;kotlin.Boolean;kotlin.Function3<com.monkopedia.kodemirror.state.DocPos,com.monkopedia.kodemirror.state.DocPos,com.monkopedia.kodemirror.state.EditorState,kotlin.Boolean>?){}[0]
+
+    final val caseSensitive // com.monkopedia.kodemirror.search/SearchQuery.caseSensitive|{}caseSensitive[0]
+        final fun <get-caseSensitive>(): kotlin/Boolean // com.monkopedia.kodemirror.search/SearchQuery.caseSensitive.<get-caseSensitive>|<get-caseSensitive>(){}[0]
+    final val literal // com.monkopedia.kodemirror.search/SearchQuery.literal|{}literal[0]
+        final fun <get-literal>(): kotlin/Boolean // com.monkopedia.kodemirror.search/SearchQuery.literal.<get-literal>|<get-literal>(){}[0]
+    final val regexp // com.monkopedia.kodemirror.search/SearchQuery.regexp|{}regexp[0]
+        final fun <get-regexp>(): kotlin/Boolean // com.monkopedia.kodemirror.search/SearchQuery.regexp.<get-regexp>|<get-regexp>(){}[0]
+    final val replace // com.monkopedia.kodemirror.search/SearchQuery.replace|{}replace[0]
+        final fun <get-replace>(): kotlin/String // com.monkopedia.kodemirror.search/SearchQuery.replace.<get-replace>|<get-replace>(){}[0]
+    final val search // com.monkopedia.kodemirror.search/SearchQuery.search|{}search[0]
+        final fun <get-search>(): kotlin/String // com.monkopedia.kodemirror.search/SearchQuery.search.<get-search>|<get-search>(){}[0]
+    final val test // com.monkopedia.kodemirror.search/SearchQuery.test|{}test[0]
+        final fun <get-test>(): kotlin/Function3<com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/EditorState, kotlin/Boolean>? // com.monkopedia.kodemirror.search/SearchQuery.test.<get-test>|<get-test>(){}[0]
+    final val valid // com.monkopedia.kodemirror.search/SearchQuery.valid|{}valid[0]
+        final fun <get-valid>(): kotlin/Boolean // com.monkopedia.kodemirror.search/SearchQuery.valid.<get-valid>|<get-valid>(){}[0]
+    final val wholeWord // com.monkopedia.kodemirror.search/SearchQuery.wholeWord|{}wholeWord[0]
+        final fun <get-wholeWord>(): kotlin/Boolean // com.monkopedia.kodemirror.search/SearchQuery.wholeWord.<get-wholeWord>|<get-wholeWord>(){}[0]
+
+    final fun component1(): kotlin/String // com.monkopedia.kodemirror.search/SearchQuery.component1|component1(){}[0]
+    final fun component2(): kotlin/Boolean // com.monkopedia.kodemirror.search/SearchQuery.component2|component2(){}[0]
+    final fun component3(): kotlin/Boolean // com.monkopedia.kodemirror.search/SearchQuery.component3|component3(){}[0]
+    final fun component4(): kotlin/Boolean // com.monkopedia.kodemirror.search/SearchQuery.component4|component4(){}[0]
+    final fun component5(): kotlin/String // com.monkopedia.kodemirror.search/SearchQuery.component5|component5(){}[0]
+    final fun component6(): kotlin/Boolean // com.monkopedia.kodemirror.search/SearchQuery.component6|component6(){}[0]
+    final fun component7(): kotlin/Function3<com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/EditorState, kotlin/Boolean>? // com.monkopedia.kodemirror.search/SearchQuery.component7|component7(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/String = ..., kotlin/Boolean = ..., kotlin/Function3<com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/EditorState, kotlin/Boolean>? = ...): com.monkopedia.kodemirror.search/SearchQuery // com.monkopedia.kodemirror.search/SearchQuery.copy|copy(kotlin.String;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.String;kotlin.Boolean;kotlin.Function3<com.monkopedia.kodemirror.state.DocPos,com.monkopedia.kodemirror.state.DocPos,com.monkopedia.kodemirror.state.EditorState,kotlin.Boolean>?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.search/SearchQuery.equals|equals(kotlin.Any?){}[0]
+    final fun expandReplace(): kotlin/String // com.monkopedia.kodemirror.search/SearchQuery.expandReplace|expandReplace(){}[0]
+    final fun expandReplace(com.monkopedia.kodemirror.search/RegExpCursor): kotlin/String // com.monkopedia.kodemirror.search/SearchQuery.expandReplace|expandReplace(com.monkopedia.kodemirror.search.RegExpCursor){}[0]
+    final fun getCursor(com.monkopedia.kodemirror.state/EditorState, com.monkopedia.kodemirror.state/DocPos = ..., com.monkopedia.kodemirror.state/DocPos = ...): kotlin.collections/Iterator<com.monkopedia.kodemirror.search/SearchMatch> // com.monkopedia.kodemirror.search/SearchQuery.getCursor|getCursor(com.monkopedia.kodemirror.state.EditorState;com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.search/SearchQuery.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.search/SearchQuery.toString|toString(){}[0]
+
+    final object Companion { // com.monkopedia.kodemirror.search/SearchQuery.Companion|null[0]
+        final fun validOrNull(kotlin/String, kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/String = ..., kotlin/Boolean = ..., kotlin/Function3<com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/EditorState, kotlin/Boolean>? = ...): com.monkopedia.kodemirror.search/SearchQuery? // com.monkopedia.kodemirror.search/SearchQuery.Companion.validOrNull|validOrNull(kotlin.String;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.String;kotlin.Boolean;kotlin.Function3<com.monkopedia.kodemirror.state.DocPos,com.monkopedia.kodemirror.state.DocPos,com.monkopedia.kodemirror.state.EditorState,kotlin.Boolean>?){}[0]
+    }
+}
+
+final val com.monkopedia.kodemirror.search/closeSearchPanel // com.monkopedia.kodemirror.search/closeSearchPanel|{}closeSearchPanel[0]
+    final fun <get-closeSearchPanel>(): kotlin/Function1<com.monkopedia.kodemirror.view/EditorSession, kotlin/Boolean> // com.monkopedia.kodemirror.search/closeSearchPanel.<get-closeSearchPanel>|<get-closeSearchPanel>(){}[0]
+final val com.monkopedia.kodemirror.search/com_monkopedia_kodemirror_search_HighlightSelectionMatchConfig$stableprop // com.monkopedia.kodemirror.search/com_monkopedia_kodemirror_search_HighlightSelectionMatchConfig$stableprop|#static{}com_monkopedia_kodemirror_search_HighlightSelectionMatchConfig$stableprop[0]
+final val com.monkopedia.kodemirror.search/com_monkopedia_kodemirror_search_RegExpCursor$stableprop // com.monkopedia.kodemirror.search/com_monkopedia_kodemirror_search_RegExpCursor$stableprop|#static{}com_monkopedia_kodemirror_search_RegExpCursor$stableprop[0]
+final val com.monkopedia.kodemirror.search/com_monkopedia_kodemirror_search_SearchCursor$stableprop // com.monkopedia.kodemirror.search/com_monkopedia_kodemirror_search_SearchCursor$stableprop|#static{}com_monkopedia_kodemirror_search_SearchCursor$stableprop[0]
+final val com.monkopedia.kodemirror.search/com_monkopedia_kodemirror_search_SearchMatch$stableprop // com.monkopedia.kodemirror.search/com_monkopedia_kodemirror_search_SearchMatch$stableprop|#static{}com_monkopedia_kodemirror_search_SearchMatch$stableprop[0]
+final val com.monkopedia.kodemirror.search/com_monkopedia_kodemirror_search_SearchQuery$stableprop // com.monkopedia.kodemirror.search/com_monkopedia_kodemirror_search_SearchQuery$stableprop|#static{}com_monkopedia_kodemirror_search_SearchQuery$stableprop[0]
+final val com.monkopedia.kodemirror.search/findNext // com.monkopedia.kodemirror.search/findNext|{}findNext[0]
+    final fun <get-findNext>(): kotlin/Function1<com.monkopedia.kodemirror.view/EditorSession, kotlin/Boolean> // com.monkopedia.kodemirror.search/findNext.<get-findNext>|<get-findNext>(){}[0]
+final val com.monkopedia.kodemirror.search/findPrevious // com.monkopedia.kodemirror.search/findPrevious|{}findPrevious[0]
+    final fun <get-findPrevious>(): kotlin/Function1<com.monkopedia.kodemirror.view/EditorSession, kotlin/Boolean> // com.monkopedia.kodemirror.search/findPrevious.<get-findPrevious>|<get-findPrevious>(){}[0]
+final val com.monkopedia.kodemirror.search/gotoLine // com.monkopedia.kodemirror.search/gotoLine|{}gotoLine[0]
+    final fun <get-gotoLine>(): kotlin/Function1<com.monkopedia.kodemirror.view/EditorSession, kotlin/Boolean> // com.monkopedia.kodemirror.search/gotoLine.<get-gotoLine>|<get-gotoLine>(){}[0]
+final val com.monkopedia.kodemirror.search/openSearchPanel // com.monkopedia.kodemirror.search/openSearchPanel|{}openSearchPanel[0]
+    final fun <get-openSearchPanel>(): kotlin/Function1<com.monkopedia.kodemirror.view/EditorSession, kotlin/Boolean> // com.monkopedia.kodemirror.search/openSearchPanel.<get-openSearchPanel>|<get-openSearchPanel>(){}[0]
+final val com.monkopedia.kodemirror.search/replaceAll // com.monkopedia.kodemirror.search/replaceAll|{}replaceAll[0]
+    final fun <get-replaceAll>(): kotlin/Function1<com.monkopedia.kodemirror.view/EditorSession, kotlin/Boolean> // com.monkopedia.kodemirror.search/replaceAll.<get-replaceAll>|<get-replaceAll>(){}[0]
+final val com.monkopedia.kodemirror.search/replaceNext // com.monkopedia.kodemirror.search/replaceNext|{}replaceNext[0]
+    final fun <get-replaceNext>(): kotlin/Function1<com.monkopedia.kodemirror.view/EditorSession, kotlin/Boolean> // com.monkopedia.kodemirror.search/replaceNext.<get-replaceNext>|<get-replaceNext>(){}[0]
+final val com.monkopedia.kodemirror.search/searchKeymap // com.monkopedia.kodemirror.search/searchKeymap|{}searchKeymap[0]
+    final fun <get-searchKeymap>(): kotlin.collections/List<com.monkopedia.kodemirror.view/KeyBinding> // com.monkopedia.kodemirror.search/searchKeymap.<get-searchKeymap>|<get-searchKeymap>(){}[0]
+final val com.monkopedia.kodemirror.search/searchPanelOpenField // com.monkopedia.kodemirror.search/searchPanelOpenField|{}searchPanelOpenField[0]
+    final fun <get-searchPanelOpenField>(): com.monkopedia.kodemirror.state/StateField<kotlin/Boolean> // com.monkopedia.kodemirror.search/searchPanelOpenField.<get-searchPanelOpenField>|<get-searchPanelOpenField>(){}[0]
+final val com.monkopedia.kodemirror.search/searchQueryField // com.monkopedia.kodemirror.search/searchQueryField|{}searchQueryField[0]
+    final fun <get-searchQueryField>(): com.monkopedia.kodemirror.state/StateField<com.monkopedia.kodemirror.search/SearchQuery> // com.monkopedia.kodemirror.search/searchQueryField.<get-searchQueryField>|<get-searchQueryField>(){}[0]
+final val com.monkopedia.kodemirror.search/selectMatches // com.monkopedia.kodemirror.search/selectMatches|{}selectMatches[0]
+    final fun <get-selectMatches>(): kotlin/Function1<com.monkopedia.kodemirror.view/EditorSession, kotlin/Boolean> // com.monkopedia.kodemirror.search/selectMatches.<get-selectMatches>|<get-selectMatches>(){}[0]
+final val com.monkopedia.kodemirror.search/selectSelectionMatches // com.monkopedia.kodemirror.search/selectSelectionMatches|{}selectSelectionMatches[0]
+    final fun <get-selectSelectionMatches>(): kotlin/Function1<com.monkopedia.kodemirror.view/EditorSession, kotlin/Boolean> // com.monkopedia.kodemirror.search/selectSelectionMatches.<get-selectSelectionMatches>|<get-selectSelectionMatches>(){}[0]
+final val com.monkopedia.kodemirror.search/setSearchQuery // com.monkopedia.kodemirror.search/setSearchQuery|{}setSearchQuery[0]
+    final fun <get-setSearchQuery>(): com.monkopedia.kodemirror.state/StateEffectType<com.monkopedia.kodemirror.search/SearchQuery> // com.monkopedia.kodemirror.search/setSearchQuery.<get-setSearchQuery>|<get-setSearchQuery>(){}[0]
+final val com.monkopedia.kodemirror.search/toggleSearchPanel // com.monkopedia.kodemirror.search/toggleSearchPanel|{}toggleSearchPanel[0]
+    final fun <get-toggleSearchPanel>(): com.monkopedia.kodemirror.state/StateEffectType<kotlin/Boolean> // com.monkopedia.kodemirror.search/toggleSearchPanel.<get-toggleSearchPanel>|<get-toggleSearchPanel>(){}[0]
+
+final fun com.monkopedia.kodemirror.search/com_monkopedia_kodemirror_search_HighlightSelectionMatchConfig$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.search/com_monkopedia_kodemirror_search_HighlightSelectionMatchConfig$stableprop_getter|com_monkopedia_kodemirror_search_HighlightSelectionMatchConfig$stableprop_getter(){}[0]
+final fun com.monkopedia.kodemirror.search/com_monkopedia_kodemirror_search_RegExpCursor$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.search/com_monkopedia_kodemirror_search_RegExpCursor$stableprop_getter|com_monkopedia_kodemirror_search_RegExpCursor$stableprop_getter(){}[0]
+final fun com.monkopedia.kodemirror.search/com_monkopedia_kodemirror_search_SearchCursor$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.search/com_monkopedia_kodemirror_search_SearchCursor$stableprop_getter|com_monkopedia_kodemirror_search_SearchCursor$stableprop_getter(){}[0]
+final fun com.monkopedia.kodemirror.search/com_monkopedia_kodemirror_search_SearchMatch$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.search/com_monkopedia_kodemirror_search_SearchMatch$stableprop_getter|com_monkopedia_kodemirror_search_SearchMatch$stableprop_getter(){}[0]
+final fun com.monkopedia.kodemirror.search/com_monkopedia_kodemirror_search_SearchQuery$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.search/com_monkopedia_kodemirror_search_SearchQuery$stableprop_getter|com_monkopedia_kodemirror_search_SearchQuery$stableprop_getter(){}[0]
+final fun com.monkopedia.kodemirror.search/getSearchQuery(com.monkopedia.kodemirror.state/EditorState): com.monkopedia.kodemirror.search/SearchQuery // com.monkopedia.kodemirror.search/getSearchQuery|getSearchQuery(com.monkopedia.kodemirror.state.EditorState){}[0]
+final fun com.monkopedia.kodemirror.search/highlightSelectionMatches(com.monkopedia.kodemirror.search/HighlightSelectionMatchConfig = ...): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.search/highlightSelectionMatches|highlightSelectionMatches(com.monkopedia.kodemirror.search.HighlightSelectionMatchConfig){}[0]
+final fun com.monkopedia.kodemirror.search/search(kotlin/Function1<androidx.compose.foundation.layout/BoxScope, androidx.compose.ui/Modifier>? = ...): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.search/search|search(kotlin.Function1<androidx.compose.foundation.layout.BoxScope,androidx.compose.ui.Modifier>?){}[0]
+final fun com.monkopedia.kodemirror.search/searchPanelOpen(com.monkopedia.kodemirror.state/EditorState): kotlin/Boolean // com.monkopedia.kodemirror.search/searchPanelOpen|searchPanelOpen(com.monkopedia.kodemirror.state.EditorState){}[0]

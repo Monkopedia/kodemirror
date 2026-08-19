@@ -1,0 +1,14 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:theme-cool-glow>
+final val com.monkopedia.kodemirror.themecoolglow/coolGlow // com.monkopedia.kodemirror.themecoolglow/coolGlow|{}coolGlow[0]
+    final fun <get-coolGlow>(): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.themecoolglow/coolGlow.<get-coolGlow>|<get-coolGlow>(){}[0]
+final val com.monkopedia.kodemirror.themecoolglow/coolGlowHighlightStyle // com.monkopedia.kodemirror.themecoolglow/coolGlowHighlightStyle|{}coolGlowHighlightStyle[0]
+    final fun <get-coolGlowHighlightStyle>(): com.monkopedia.kodemirror.language/HighlightStyle // com.monkopedia.kodemirror.themecoolglow/coolGlowHighlightStyle.<get-coolGlowHighlightStyle>|<get-coolGlowHighlightStyle>(){}[0]
+final val com.monkopedia.kodemirror.themecoolglow/coolGlowTheme // com.monkopedia.kodemirror.themecoolglow/coolGlowTheme|{}coolGlowTheme[0]
+    final fun <get-coolGlowTheme>(): com.monkopedia.kodemirror.view/EditorTheme // com.monkopedia.kodemirror.themecoolglow/coolGlowTheme.<get-coolGlowTheme>|<get-coolGlowTheme>(){}[0]

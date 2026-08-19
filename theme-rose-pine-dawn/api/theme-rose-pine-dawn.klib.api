@@ -1,0 +1,14 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:theme-rose-pine-dawn>
+final val com.monkopedia.kodemirror.themerosepinedawn/rosePineDawn // com.monkopedia.kodemirror.themerosepinedawn/rosePineDawn|{}rosePineDawn[0]
+    final fun <get-rosePineDawn>(): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.themerosepinedawn/rosePineDawn.<get-rosePineDawn>|<get-rosePineDawn>(){}[0]
+final val com.monkopedia.kodemirror.themerosepinedawn/rosePineDawnHighlightStyle // com.monkopedia.kodemirror.themerosepinedawn/rosePineDawnHighlightStyle|{}rosePineDawnHighlightStyle[0]
+    final fun <get-rosePineDawnHighlightStyle>(): com.monkopedia.kodemirror.language/HighlightStyle // com.monkopedia.kodemirror.themerosepinedawn/rosePineDawnHighlightStyle.<get-rosePineDawnHighlightStyle>|<get-rosePineDawnHighlightStyle>(){}[0]
+final val com.monkopedia.kodemirror.themerosepinedawn/rosePineDawnTheme // com.monkopedia.kodemirror.themerosepinedawn/rosePineDawnTheme|{}rosePineDawnTheme[0]
+    final fun <get-rosePineDawnTheme>(): com.monkopedia.kodemirror.view/EditorTheme // com.monkopedia.kodemirror.themerosepinedawn/rosePineDawnTheme.<get-rosePineDawnTheme>|<get-rosePineDawnTheme>(){}[0]

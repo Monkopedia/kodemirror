@@ -1,0 +1,14 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:theme-tomorrow>
+final val com.monkopedia.kodemirror.themetomorrow/tomorrow // com.monkopedia.kodemirror.themetomorrow/tomorrow|{}tomorrow[0]
+    final fun <get-tomorrow>(): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.themetomorrow/tomorrow.<get-tomorrow>|<get-tomorrow>(){}[0]
+final val com.monkopedia.kodemirror.themetomorrow/tomorrowHighlightStyle // com.monkopedia.kodemirror.themetomorrow/tomorrowHighlightStyle|{}tomorrowHighlightStyle[0]
+    final fun <get-tomorrowHighlightStyle>(): com.monkopedia.kodemirror.language/HighlightStyle // com.monkopedia.kodemirror.themetomorrow/tomorrowHighlightStyle.<get-tomorrowHighlightStyle>|<get-tomorrowHighlightStyle>(){}[0]
+final val com.monkopedia.kodemirror.themetomorrow/tomorrowTheme // com.monkopedia.kodemirror.themetomorrow/tomorrowTheme|{}tomorrowTheme[0]
+    final fun <get-tomorrowTheme>(): com.monkopedia.kodemirror.view/EditorTheme // com.monkopedia.kodemirror.themetomorrow/tomorrowTheme.<get-tomorrowTheme>|<get-tomorrowTheme>(){}[0]

@@ -1,0 +1,16 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:lang-wast>
+final val com.monkopedia.kodemirror.lang.wast/wastHighlighting // com.monkopedia.kodemirror.lang.wast/wastHighlighting|{}wastHighlighting[0]
+    final fun <get-wastHighlighting>(): com.monkopedia.kodemirror.lezer.common/NodePropSource<com.monkopedia.kodemirror.lezer.highlight/Rule> // com.monkopedia.kodemirror.lang.wast/wastHighlighting.<get-wastHighlighting>|<get-wastHighlighting>(){}[0]
+final val com.monkopedia.kodemirror.lang.wast/wastLanguage // com.monkopedia.kodemirror.lang.wast/wastLanguage|{}wastLanguage[0]
+    final fun <get-wastLanguage>(): com.monkopedia.kodemirror.language/LRLanguage // com.monkopedia.kodemirror.lang.wast/wastLanguage.<get-wastLanguage>|<get-wastLanguage>(){}[0]
+final val com.monkopedia.kodemirror.lang.wast/wastParser // com.monkopedia.kodemirror.lang.wast/wastParser|{}wastParser[0]
+    final fun <get-wastParser>(): com.monkopedia.kodemirror.lezer.lr/LRParser // com.monkopedia.kodemirror.lang.wast/wastParser.<get-wastParser>|<get-wastParser>(){}[0]
+
+final fun com.monkopedia.kodemirror.lang.wast/wast(): com.monkopedia.kodemirror.language/LanguageSupport // com.monkopedia.kodemirror.lang.wast/wast|wast(){}[0]

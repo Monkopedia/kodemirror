@@ -1,0 +1,44 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:lang-liquid>
+final class com.monkopedia.kodemirror.lang.liquid/LiquidCompletionConfig { // com.monkopedia.kodemirror.lang.liquid/LiquidCompletionConfig|null[0]
+    constructor <init>(kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion>? = ..., kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion>? = ..., kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion>? = ..., kotlin/Function3<kotlin.collections/List<kotlin/String>, com.monkopedia.kodemirror.state/EditorState, com.monkopedia.kodemirror.autocomplete/CompletionContext, kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion>>? = ...) // com.monkopedia.kodemirror.lang.liquid/LiquidCompletionConfig.<init>|<init>(kotlin.collections.List<com.monkopedia.kodemirror.autocomplete.Completion>?;kotlin.collections.List<com.monkopedia.kodemirror.autocomplete.Completion>?;kotlin.collections.List<com.monkopedia.kodemirror.autocomplete.Completion>?;kotlin.Function3<kotlin.collections.List<kotlin.String>,com.monkopedia.kodemirror.state.EditorState,com.monkopedia.kodemirror.autocomplete.CompletionContext,kotlin.collections.List<com.monkopedia.kodemirror.autocomplete.Completion>>?){}[0]
+
+    final val filters // com.monkopedia.kodemirror.lang.liquid/LiquidCompletionConfig.filters|{}filters[0]
+        final fun <get-filters>(): kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion>? // com.monkopedia.kodemirror.lang.liquid/LiquidCompletionConfig.filters.<get-filters>|<get-filters>(){}[0]
+    final val properties // com.monkopedia.kodemirror.lang.liquid/LiquidCompletionConfig.properties|{}properties[0]
+        final fun <get-properties>(): kotlin/Function3<kotlin.collections/List<kotlin/String>, com.monkopedia.kodemirror.state/EditorState, com.monkopedia.kodemirror.autocomplete/CompletionContext, kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion>>? // com.monkopedia.kodemirror.lang.liquid/LiquidCompletionConfig.properties.<get-properties>|<get-properties>(){}[0]
+    final val tags // com.monkopedia.kodemirror.lang.liquid/LiquidCompletionConfig.tags|{}tags[0]
+        final fun <get-tags>(): kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion>? // com.monkopedia.kodemirror.lang.liquid/LiquidCompletionConfig.tags.<get-tags>|<get-tags>(){}[0]
+    final val variables // com.monkopedia.kodemirror.lang.liquid/LiquidCompletionConfig.variables|{}variables[0]
+        final fun <get-variables>(): kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion>? // com.monkopedia.kodemirror.lang.liquid/LiquidCompletionConfig.variables.<get-variables>|<get-variables>(){}[0]
+
+    final fun component1(): kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion>? // com.monkopedia.kodemirror.lang.liquid/LiquidCompletionConfig.component1|component1(){}[0]
+    final fun component2(): kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion>? // com.monkopedia.kodemirror.lang.liquid/LiquidCompletionConfig.component2|component2(){}[0]
+    final fun component3(): kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion>? // com.monkopedia.kodemirror.lang.liquid/LiquidCompletionConfig.component3|component3(){}[0]
+    final fun component4(): kotlin/Function3<kotlin.collections/List<kotlin/String>, com.monkopedia.kodemirror.state/EditorState, com.monkopedia.kodemirror.autocomplete/CompletionContext, kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion>>? // com.monkopedia.kodemirror.lang.liquid/LiquidCompletionConfig.component4|component4(){}[0]
+    final fun copy(kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion>? = ..., kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion>? = ..., kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion>? = ..., kotlin/Function3<kotlin.collections/List<kotlin/String>, com.monkopedia.kodemirror.state/EditorState, com.monkopedia.kodemirror.autocomplete/CompletionContext, kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion>>? = ...): com.monkopedia.kodemirror.lang.liquid/LiquidCompletionConfig // com.monkopedia.kodemirror.lang.liquid/LiquidCompletionConfig.copy|copy(kotlin.collections.List<com.monkopedia.kodemirror.autocomplete.Completion>?;kotlin.collections.List<com.monkopedia.kodemirror.autocomplete.Completion>?;kotlin.collections.List<com.monkopedia.kodemirror.autocomplete.Completion>?;kotlin.Function3<kotlin.collections.List<kotlin.String>,com.monkopedia.kodemirror.state.EditorState,com.monkopedia.kodemirror.autocomplete.CompletionContext,kotlin.collections.List<com.monkopedia.kodemirror.autocomplete.Completion>>?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.lang.liquid/LiquidCompletionConfig.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.lang.liquid/LiquidCompletionConfig.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.lang.liquid/LiquidCompletionConfig.toString|toString(){}[0]
+}
+
+final val com.monkopedia.kodemirror.lang.liquid/Expressions // com.monkopedia.kodemirror.lang.liquid/Expressions|{}Expressions[0]
+    final fun <get-Expressions>(): kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion> // com.monkopedia.kodemirror.lang.liquid/Expressions.<get-Expressions>|<get-Expressions>(){}[0]
+final val com.monkopedia.kodemirror.lang.liquid/Filters // com.monkopedia.kodemirror.lang.liquid/Filters|{}Filters[0]
+    final fun <get-Filters>(): kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion> // com.monkopedia.kodemirror.lang.liquid/Filters.<get-Filters>|<get-Filters>(){}[0]
+final val com.monkopedia.kodemirror.lang.liquid/Tags // com.monkopedia.kodemirror.lang.liquid/Tags|{}Tags[0]
+    final fun <get-Tags>(): kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion> // com.monkopedia.kodemirror.lang.liquid/Tags.<get-Tags>|<get-Tags>(){}[0]
+final val com.monkopedia.kodemirror.lang.liquid/liquidLanguage // com.monkopedia.kodemirror.lang.liquid/liquidLanguage|{}liquidLanguage[0]
+    final fun <get-liquidLanguage>(): com.monkopedia.kodemirror.language/LRLanguage // com.monkopedia.kodemirror.lang.liquid/liquidLanguage.<get-liquidLanguage>|<get-liquidLanguage>(){}[0]
+final val com.monkopedia.kodemirror.lang.liquid/liquidTagLanguage // com.monkopedia.kodemirror.lang.liquid/liquidTagLanguage|{}liquidTagLanguage[0]
+    final fun <get-liquidTagLanguage>(): com.monkopedia.kodemirror.language/LRLanguage // com.monkopedia.kodemirror.lang.liquid/liquidTagLanguage.<get-liquidTagLanguage>|<get-liquidTagLanguage>(){}[0]
+
+final fun com.monkopedia.kodemirror.lang.liquid/liquid(com.monkopedia.kodemirror.lang.liquid/LiquidCompletionConfig = ..., com.monkopedia.kodemirror.language/LanguageSupport = ...): com.monkopedia.kodemirror.language/LanguageSupport // com.monkopedia.kodemirror.lang.liquid/liquid|liquid(com.monkopedia.kodemirror.lang.liquid.LiquidCompletionConfig;com.monkopedia.kodemirror.language.LanguageSupport){}[0]
+final fun com.monkopedia.kodemirror.lang.liquid/liquidCompletionSource(com.monkopedia.kodemirror.lang.liquid/LiquidCompletionConfig = ...): kotlin/Function1<com.monkopedia.kodemirror.autocomplete/CompletionContext, com.monkopedia.kodemirror.autocomplete/CompletionResult?> // com.monkopedia.kodemirror.lang.liquid/liquidCompletionSource|liquidCompletionSource(com.monkopedia.kodemirror.lang.liquid.LiquidCompletionConfig){}[0]
+final fun com.monkopedia.kodemirror.lang.liquid/makeLiquid(com.monkopedia.kodemirror.language/Language): com.monkopedia.kodemirror.language/LRLanguage // com.monkopedia.kodemirror.lang.liquid/makeLiquid|makeLiquid(com.monkopedia.kodemirror.language.Language){}[0]

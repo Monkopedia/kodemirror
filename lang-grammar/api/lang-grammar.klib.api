@@ -1,0 +1,16 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:lang-grammar>
+final val com.monkopedia.kodemirror.lang.grammar/lezerGrammarLanguage // com.monkopedia.kodemirror.lang.grammar/lezerGrammarLanguage|{}lezerGrammarLanguage[0]
+    final fun <get-lezerGrammarLanguage>(): com.monkopedia.kodemirror.language/LRLanguage // com.monkopedia.kodemirror.lang.grammar/lezerGrammarLanguage.<get-lezerGrammarLanguage>|<get-lezerGrammarLanguage>(){}[0]
+final val com.monkopedia.kodemirror.lang.grammar/lezerHighlighting // com.monkopedia.kodemirror.lang.grammar/lezerHighlighting|{}lezerHighlighting[0]
+    final fun <get-lezerHighlighting>(): com.monkopedia.kodemirror.lezer.common/NodePropSource<com.monkopedia.kodemirror.lezer.highlight/Rule> // com.monkopedia.kodemirror.lang.grammar/lezerHighlighting.<get-lezerHighlighting>|<get-lezerHighlighting>(){}[0]
+final val com.monkopedia.kodemirror.lang.grammar/lezerParser // com.monkopedia.kodemirror.lang.grammar/lezerParser|{}lezerParser[0]
+    final fun <get-lezerParser>(): com.monkopedia.kodemirror.lezer.lr/LRParser // com.monkopedia.kodemirror.lang.grammar/lezerParser.<get-lezerParser>|<get-lezerParser>(){}[0]
+
+final fun com.monkopedia.kodemirror.lang.grammar/lezerGrammar(): com.monkopedia.kodemirror.language/LanguageSupport // com.monkopedia.kodemirror.lang.grammar/lezerGrammar|lezerGrammar(){}[0]

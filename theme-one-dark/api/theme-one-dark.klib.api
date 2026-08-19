@@ -1,0 +1,50 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:theme-one-dark>
+final object com.monkopedia.kodemirror.themonedark/OneDarkColors { // com.monkopedia.kodemirror.themonedark/OneDarkColors|null[0]
+    final val background // com.monkopedia.kodemirror.themonedark/OneDarkColors.background|{}background[0]
+        final fun <get-background>(): androidx.compose.ui.graphics/Color // com.monkopedia.kodemirror.themonedark/OneDarkColors.background.<get-background>|<get-background>(){}[0]
+    final val chalky // com.monkopedia.kodemirror.themonedark/OneDarkColors.chalky|{}chalky[0]
+        final fun <get-chalky>(): androidx.compose.ui.graphics/Color // com.monkopedia.kodemirror.themonedark/OneDarkColors.chalky.<get-chalky>|<get-chalky>(){}[0]
+    final val coral // com.monkopedia.kodemirror.themonedark/OneDarkColors.coral|{}coral[0]
+        final fun <get-coral>(): androidx.compose.ui.graphics/Color // com.monkopedia.kodemirror.themonedark/OneDarkColors.coral.<get-coral>|<get-coral>(){}[0]
+    final val cursor // com.monkopedia.kodemirror.themonedark/OneDarkColors.cursor|{}cursor[0]
+        final fun <get-cursor>(): androidx.compose.ui.graphics/Color // com.monkopedia.kodemirror.themonedark/OneDarkColors.cursor.<get-cursor>|<get-cursor>(){}[0]
+    final val cyan // com.monkopedia.kodemirror.themonedark/OneDarkColors.cyan|{}cyan[0]
+        final fun <get-cyan>(): androidx.compose.ui.graphics/Color // com.monkopedia.kodemirror.themonedark/OneDarkColors.cyan.<get-cyan>|<get-cyan>(){}[0]
+    final val darkBackground // com.monkopedia.kodemirror.themonedark/OneDarkColors.darkBackground|{}darkBackground[0]
+        final fun <get-darkBackground>(): androidx.compose.ui.graphics/Color // com.monkopedia.kodemirror.themonedark/OneDarkColors.darkBackground.<get-darkBackground>|<get-darkBackground>(){}[0]
+    final val highlightBackground // com.monkopedia.kodemirror.themonedark/OneDarkColors.highlightBackground|{}highlightBackground[0]
+        final fun <get-highlightBackground>(): androidx.compose.ui.graphics/Color // com.monkopedia.kodemirror.themonedark/OneDarkColors.highlightBackground.<get-highlightBackground>|<get-highlightBackground>(){}[0]
+    final val invalid // com.monkopedia.kodemirror.themonedark/OneDarkColors.invalid|{}invalid[0]
+        final fun <get-invalid>(): androidx.compose.ui.graphics/Color // com.monkopedia.kodemirror.themonedark/OneDarkColors.invalid.<get-invalid>|<get-invalid>(){}[0]
+    final val ivory // com.monkopedia.kodemirror.themonedark/OneDarkColors.ivory|{}ivory[0]
+        final fun <get-ivory>(): androidx.compose.ui.graphics/Color // com.monkopedia.kodemirror.themonedark/OneDarkColors.ivory.<get-ivory>|<get-ivory>(){}[0]
+    final val malibu // com.monkopedia.kodemirror.themonedark/OneDarkColors.malibu|{}malibu[0]
+        final fun <get-malibu>(): androidx.compose.ui.graphics/Color // com.monkopedia.kodemirror.themonedark/OneDarkColors.malibu.<get-malibu>|<get-malibu>(){}[0]
+    final val sage // com.monkopedia.kodemirror.themonedark/OneDarkColors.sage|{}sage[0]
+        final fun <get-sage>(): androidx.compose.ui.graphics/Color // com.monkopedia.kodemirror.themonedark/OneDarkColors.sage.<get-sage>|<get-sage>(){}[0]
+    final val selection // com.monkopedia.kodemirror.themonedark/OneDarkColors.selection|{}selection[0]
+        final fun <get-selection>(): androidx.compose.ui.graphics/Color // com.monkopedia.kodemirror.themonedark/OneDarkColors.selection.<get-selection>|<get-selection>(){}[0]
+    final val stone // com.monkopedia.kodemirror.themonedark/OneDarkColors.stone|{}stone[0]
+        final fun <get-stone>(): androidx.compose.ui.graphics/Color // com.monkopedia.kodemirror.themonedark/OneDarkColors.stone.<get-stone>|<get-stone>(){}[0]
+    final val tooltipBackground // com.monkopedia.kodemirror.themonedark/OneDarkColors.tooltipBackground|{}tooltipBackground[0]
+        final fun <get-tooltipBackground>(): androidx.compose.ui.graphics/Color // com.monkopedia.kodemirror.themonedark/OneDarkColors.tooltipBackground.<get-tooltipBackground>|<get-tooltipBackground>(){}[0]
+    final val violet // com.monkopedia.kodemirror.themonedark/OneDarkColors.violet|{}violet[0]
+        final fun <get-violet>(): androidx.compose.ui.graphics/Color // com.monkopedia.kodemirror.themonedark/OneDarkColors.violet.<get-violet>|<get-violet>(){}[0]
+    final val whiskey // com.monkopedia.kodemirror.themonedark/OneDarkColors.whiskey|{}whiskey[0]
+        final fun <get-whiskey>(): androidx.compose.ui.graphics/Color // com.monkopedia.kodemirror.themonedark/OneDarkColors.whiskey.<get-whiskey>|<get-whiskey>(){}[0]
+}
+
+final val com.monkopedia.kodemirror.themonedark/com_monkopedia_kodemirror_themonedark_OneDarkColors$stableprop // com.monkopedia.kodemirror.themonedark/com_monkopedia_kodemirror_themonedark_OneDarkColors$stableprop|#static{}com_monkopedia_kodemirror_themonedark_OneDarkColors$stableprop[0]
+final val com.monkopedia.kodemirror.themonedark/oneDark // com.monkopedia.kodemirror.themonedark/oneDark|{}oneDark[0]
+    final fun <get-oneDark>(): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.themonedark/oneDark.<get-oneDark>|<get-oneDark>(){}[0]
+final val com.monkopedia.kodemirror.themonedark/oneDarkTheme // com.monkopedia.kodemirror.themonedark/oneDarkTheme|{}oneDarkTheme[0]
+    final fun <get-oneDarkTheme>(): com.monkopedia.kodemirror.view/EditorTheme // com.monkopedia.kodemirror.themonedark/oneDarkTheme.<get-oneDarkTheme>|<get-oneDarkTheme>(){}[0]
+
+final fun com.monkopedia.kodemirror.themonedark/com_monkopedia_kodemirror_themonedark_OneDarkColors$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.themonedark/com_monkopedia_kodemirror_themonedark_OneDarkColors$stableprop_getter|com_monkopedia_kodemirror_themonedark_OneDarkColors$stableprop_getter(){}[0]

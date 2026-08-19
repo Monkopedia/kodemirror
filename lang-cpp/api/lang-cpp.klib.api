@@ -1,0 +1,16 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:lang-cpp>
+final val com.monkopedia.kodemirror.lang.cpp/cppHighlighting // com.monkopedia.kodemirror.lang.cpp/cppHighlighting|{}cppHighlighting[0]
+    final fun <get-cppHighlighting>(): com.monkopedia.kodemirror.lezer.common/NodePropSource<com.monkopedia.kodemirror.lezer.highlight/Rule> // com.monkopedia.kodemirror.lang.cpp/cppHighlighting.<get-cppHighlighting>|<get-cppHighlighting>(){}[0]
+final val com.monkopedia.kodemirror.lang.cpp/cppLanguage // com.monkopedia.kodemirror.lang.cpp/cppLanguage|{}cppLanguage[0]
+    final fun <get-cppLanguage>(): com.monkopedia.kodemirror.language/LRLanguage // com.monkopedia.kodemirror.lang.cpp/cppLanguage.<get-cppLanguage>|<get-cppLanguage>(){}[0]
+final val com.monkopedia.kodemirror.lang.cpp/cppParser // com.monkopedia.kodemirror.lang.cpp/cppParser|{}cppParser[0]
+    final fun <get-cppParser>(): com.monkopedia.kodemirror.lezer.lr/LRParser // com.monkopedia.kodemirror.lang.cpp/cppParser.<get-cppParser>|<get-cppParser>(){}[0]
+
+final fun com.monkopedia.kodemirror.lang.cpp/cpp(): com.monkopedia.kodemirror.language/LanguageSupport // com.monkopedia.kodemirror.lang.cpp/cpp|cpp(){}[0]

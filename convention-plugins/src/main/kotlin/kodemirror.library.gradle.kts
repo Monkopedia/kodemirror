@@ -83,9 +83,18 @@ kotlin {
 }
 
 apiValidation {
+    // Six platform coordinates are published (jvm, android, wasmJs, macosArm64, iosArm64,
+    // iosSimulatorArm64) but the plain `.api` dumps only cover the two JVM-family ones. With klib
+    // validation off, `klibApiCheck` still sat in the task graph, was still invoked by `apiCheck`,
+    // and still reported green — while every one of its tasks was SKIPPED, so four of the six
+    // published ABIs were unvalidated and "apiCheck passes" did not mean what it read as. See #222.
+    // Enabling it adds one `<module>.klib.api` per module alongside the jvm/android dumps. The
+    // Apple targets are NOT host-gated here the way `macosArm64Test` is: BCV builds the klibs it
+    // can on the current host and infers the rest (`klibApiMergeInferred`), so the dumps are
+    // generated and checked identically on Linux and macOS.
     @OptIn(kotlinx.validation.ExperimentalBCVApi::class)
     klib {
-        enabled = false
+        enabled = true
     }
     // Filter Compose compiler-generated ComposableSingletons from public API.
     // These have hash-based method names that change with any code modification.

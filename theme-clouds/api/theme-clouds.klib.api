@@ -1,0 +1,14 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:theme-clouds>
+final val com.monkopedia.kodemirror.themeclouds/clouds // com.monkopedia.kodemirror.themeclouds/clouds|{}clouds[0]
+    final fun <get-clouds>(): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.themeclouds/clouds.<get-clouds>|<get-clouds>(){}[0]
+final val com.monkopedia.kodemirror.themeclouds/cloudsHighlightStyle // com.monkopedia.kodemirror.themeclouds/cloudsHighlightStyle|{}cloudsHighlightStyle[0]
+    final fun <get-cloudsHighlightStyle>(): com.monkopedia.kodemirror.language/HighlightStyle // com.monkopedia.kodemirror.themeclouds/cloudsHighlightStyle.<get-cloudsHighlightStyle>|<get-cloudsHighlightStyle>(){}[0]
+final val com.monkopedia.kodemirror.themeclouds/cloudsTheme // com.monkopedia.kodemirror.themeclouds/cloudsTheme|{}cloudsTheme[0]
+    final fun <get-cloudsTheme>(): com.monkopedia.kodemirror.view/EditorTheme // com.monkopedia.kodemirror.themeclouds/cloudsTheme.<get-cloudsTheme>|<get-cloudsTheme>(){}[0]

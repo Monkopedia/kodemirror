@@ -1,0 +1,14 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:theme-cobalt>
+final val com.monkopedia.kodemirror.themecobalt/cobalt // com.monkopedia.kodemirror.themecobalt/cobalt|{}cobalt[0]
+    final fun <get-cobalt>(): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.themecobalt/cobalt.<get-cobalt>|<get-cobalt>(){}[0]
+final val com.monkopedia.kodemirror.themecobalt/cobaltHighlightStyle // com.monkopedia.kodemirror.themecobalt/cobaltHighlightStyle|{}cobaltHighlightStyle[0]
+    final fun <get-cobaltHighlightStyle>(): com.monkopedia.kodemirror.language/HighlightStyle // com.monkopedia.kodemirror.themecobalt/cobaltHighlightStyle.<get-cobaltHighlightStyle>|<get-cobaltHighlightStyle>(){}[0]
+final val com.monkopedia.kodemirror.themecobalt/cobaltTheme // com.monkopedia.kodemirror.themecobalt/cobaltTheme|{}cobaltTheme[0]
+    final fun <get-cobaltTheme>(): com.monkopedia.kodemirror.view/EditorTheme // com.monkopedia.kodemirror.themecobalt/cobaltTheme.<get-cobaltTheme>|<get-cobaltTheme>(){}[0]

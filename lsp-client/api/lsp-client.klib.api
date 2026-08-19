@@ -1,0 +1,275 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:lsp-client>
+final class com.monkopedia.kodemirror.lsp/DocumentSyncMode { // com.monkopedia.kodemirror.lsp/DocumentSyncMode|null[0]
+    constructor <init>(kotlin/Boolean, com.monkopedia.lsp/TextDocumentSyncKind) // com.monkopedia.kodemirror.lsp/DocumentSyncMode.<init>|<init>(kotlin.Boolean;com.monkopedia.lsp.TextDocumentSyncKind){}[0]
+
+    final val change // com.monkopedia.kodemirror.lsp/DocumentSyncMode.change|{}change[0]
+        final fun <get-change>(): com.monkopedia.lsp/TextDocumentSyncKind // com.monkopedia.kodemirror.lsp/DocumentSyncMode.change.<get-change>|<get-change>(){}[0]
+    final val openClose // com.monkopedia.kodemirror.lsp/DocumentSyncMode.openClose|{}openClose[0]
+        final fun <get-openClose>(): kotlin/Boolean // com.monkopedia.kodemirror.lsp/DocumentSyncMode.openClose.<get-openClose>|<get-openClose>(){}[0]
+    final val syncsChanges // com.monkopedia.kodemirror.lsp/DocumentSyncMode.syncsChanges|{}syncsChanges[0]
+        final fun <get-syncsChanges>(): kotlin/Boolean // com.monkopedia.kodemirror.lsp/DocumentSyncMode.syncsChanges.<get-syncsChanges>|<get-syncsChanges>(){}[0]
+
+    final fun component1(): kotlin/Boolean // com.monkopedia.kodemirror.lsp/DocumentSyncMode.component1|component1(){}[0]
+    final fun component2(): com.monkopedia.lsp/TextDocumentSyncKind // com.monkopedia.kodemirror.lsp/DocumentSyncMode.component2|component2(){}[0]
+    final fun copy(kotlin/Boolean = ..., com.monkopedia.lsp/TextDocumentSyncKind = ...): com.monkopedia.kodemirror.lsp/DocumentSyncMode // com.monkopedia.kodemirror.lsp/DocumentSyncMode.copy|copy(kotlin.Boolean;com.monkopedia.lsp.TextDocumentSyncKind){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.lsp/DocumentSyncMode.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.lsp/DocumentSyncMode.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.lsp/DocumentSyncMode.toString|toString(){}[0]
+
+    final object Companion { // com.monkopedia.kodemirror.lsp/DocumentSyncMode.Companion|null[0]
+        final fun forCapabilities(com.monkopedia.lsp/ServerCapabilities?): com.monkopedia.kodemirror.lsp/DocumentSyncMode // com.monkopedia.kodemirror.lsp/DocumentSyncMode.Companion.forCapabilities|forCapabilities(com.monkopedia.lsp.ServerCapabilities?){}[0]
+    }
+}
+
+final class com.monkopedia.kodemirror.lsp/LSPClient { // com.monkopedia.kodemirror.lsp/LSPClient|null[0]
+    constructor <init>(com.monkopedia.lsp/LanguageServer, com.monkopedia.kodemirror.lsp/LSPClientConfig = ...) // com.monkopedia.kodemirror.lsp/LSPClient.<init>|<init>(com.monkopedia.lsp.LanguageServer;com.monkopedia.kodemirror.lsp.LSPClientConfig){}[0]
+
+    final val config // com.monkopedia.kodemirror.lsp/LSPClient.config|{}config[0]
+        final fun <get-config>(): com.monkopedia.kodemirror.lsp/LSPClientConfig // com.monkopedia.kodemirror.lsp/LSPClient.config.<get-config>|<get-config>(){}[0]
+    final val isInitialized // com.monkopedia.kodemirror.lsp/LSPClient.isInitialized|{}isInitialized[0]
+        final fun <get-isInitialized>(): kotlin/Boolean // com.monkopedia.kodemirror.lsp/LSPClient.isInitialized.<get-isInitialized>|<get-isInitialized>(){}[0]
+    final val languageClient // com.monkopedia.kodemirror.lsp/LSPClient.languageClient|{}languageClient[0]
+        final fun <get-languageClient>(): com.monkopedia.lsp/LanguageClient // com.monkopedia.kodemirror.lsp/LSPClient.languageClient.<get-languageClient>|<get-languageClient>(){}[0]
+    final val scope // com.monkopedia.kodemirror.lsp/LSPClient.scope|{}scope[0]
+        final fun <get-scope>(): kotlinx.coroutines/CoroutineScope // com.monkopedia.kodemirror.lsp/LSPClient.scope.<get-scope>|<get-scope>(){}[0]
+    final val server // com.monkopedia.kodemirror.lsp/LSPClient.server|{}server[0]
+        final fun <get-server>(): com.monkopedia.lsp/LanguageServer // com.monkopedia.kodemirror.lsp/LSPClient.server.<get-server>|<get-server>(){}[0]
+    final val serverCapabilities // com.monkopedia.kodemirror.lsp/LSPClient.serverCapabilities|{}serverCapabilities[0]
+        final fun <get-serverCapabilities>(): com.monkopedia.lsp/ServerCapabilities? // com.monkopedia.kodemirror.lsp/LSPClient.serverCapabilities.<get-serverCapabilities>|<get-serverCapabilities>(){}[0]
+    final val workspace // com.monkopedia.kodemirror.lsp/LSPClient.workspace|{}workspace[0]
+        final fun <get-workspace>(): com.monkopedia.kodemirror.lsp/Workspace // com.monkopedia.kodemirror.lsp/LSPClient.workspace.<get-workspace>|<get-workspace>(){}[0]
+
+    final var initializeResult // com.monkopedia.kodemirror.lsp/LSPClient.initializeResult|{}initializeResult[0]
+        final fun <get-initializeResult>(): com.monkopedia.lsp/InitializeResult? // com.monkopedia.kodemirror.lsp/LSPClient.initializeResult.<get-initializeResult>|<get-initializeResult>(){}[0]
+
+    final suspend fun initialize(): com.monkopedia.lsp/InitializeResult // com.monkopedia.kodemirror.lsp/LSPClient.initialize|initialize(){}[0]
+    final suspend fun shutdown() // com.monkopedia.kodemirror.lsp/LSPClient.shutdown|shutdown(){}[0]
+    final suspend fun sync() // com.monkopedia.kodemirror.lsp/LSPClient.sync|sync(){}[0]
+}
+
+final class com.monkopedia.kodemirror.lsp/LSPClientConfig { // com.monkopedia.kodemirror.lsp/LSPClientConfig|null[0]
+    constructor <init>(kotlin/String? = ..., kotlin.collections/List<com.monkopedia.lsp/WorkspaceFolder>? = ..., com.monkopedia.lsp/InitializeParamsClientInfo? = ..., com.monkopedia.lsp/ClientCapabilities = ..., kotlinx.serialization.json/JsonElement? = ..., kotlin/Function1<com.monkopedia.kodemirror.lsp/LSPClient, com.monkopedia.kodemirror.lsp/Workspace> = ...) // com.monkopedia.kodemirror.lsp/LSPClientConfig.<init>|<init>(kotlin.String?;kotlin.collections.List<com.monkopedia.lsp.WorkspaceFolder>?;com.monkopedia.lsp.InitializeParamsClientInfo?;com.monkopedia.lsp.ClientCapabilities;kotlinx.serialization.json.JsonElement?;kotlin.Function1<com.monkopedia.kodemirror.lsp.LSPClient,com.monkopedia.kodemirror.lsp.Workspace>){}[0]
+
+    final val capabilities // com.monkopedia.kodemirror.lsp/LSPClientConfig.capabilities|{}capabilities[0]
+        final fun <get-capabilities>(): com.monkopedia.lsp/ClientCapabilities // com.monkopedia.kodemirror.lsp/LSPClientConfig.capabilities.<get-capabilities>|<get-capabilities>(){}[0]
+    final val clientInfo // com.monkopedia.kodemirror.lsp/LSPClientConfig.clientInfo|{}clientInfo[0]
+        final fun <get-clientInfo>(): com.monkopedia.lsp/InitializeParamsClientInfo? // com.monkopedia.kodemirror.lsp/LSPClientConfig.clientInfo.<get-clientInfo>|<get-clientInfo>(){}[0]
+    final val createWorkspace // com.monkopedia.kodemirror.lsp/LSPClientConfig.createWorkspace|{}createWorkspace[0]
+        final fun <get-createWorkspace>(): kotlin/Function1<com.monkopedia.kodemirror.lsp/LSPClient, com.monkopedia.kodemirror.lsp/Workspace> // com.monkopedia.kodemirror.lsp/LSPClientConfig.createWorkspace.<get-createWorkspace>|<get-createWorkspace>(){}[0]
+    final val initializationOptions // com.monkopedia.kodemirror.lsp/LSPClientConfig.initializationOptions|{}initializationOptions[0]
+        final fun <get-initializationOptions>(): kotlinx.serialization.json/JsonElement? // com.monkopedia.kodemirror.lsp/LSPClientConfig.initializationOptions.<get-initializationOptions>|<get-initializationOptions>(){}[0]
+    final val rootUri // com.monkopedia.kodemirror.lsp/LSPClientConfig.rootUri|{}rootUri[0]
+        final fun <get-rootUri>(): kotlin/String? // com.monkopedia.kodemirror.lsp/LSPClientConfig.rootUri.<get-rootUri>|<get-rootUri>(){}[0]
+    final val workspaceFolders // com.monkopedia.kodemirror.lsp/LSPClientConfig.workspaceFolders|{}workspaceFolders[0]
+        final fun <get-workspaceFolders>(): kotlin.collections/List<com.monkopedia.lsp/WorkspaceFolder>? // com.monkopedia.kodemirror.lsp/LSPClientConfig.workspaceFolders.<get-workspaceFolders>|<get-workspaceFolders>(){}[0]
+
+    final fun component1(): kotlin/String? // com.monkopedia.kodemirror.lsp/LSPClientConfig.component1|component1(){}[0]
+    final fun component2(): kotlin.collections/List<com.monkopedia.lsp/WorkspaceFolder>? // com.monkopedia.kodemirror.lsp/LSPClientConfig.component2|component2(){}[0]
+    final fun component3(): com.monkopedia.lsp/InitializeParamsClientInfo? // com.monkopedia.kodemirror.lsp/LSPClientConfig.component3|component3(){}[0]
+    final fun component4(): com.monkopedia.lsp/ClientCapabilities // com.monkopedia.kodemirror.lsp/LSPClientConfig.component4|component4(){}[0]
+    final fun component5(): kotlinx.serialization.json/JsonElement? // com.monkopedia.kodemirror.lsp/LSPClientConfig.component5|component5(){}[0]
+    final fun component6(): kotlin/Function1<com.monkopedia.kodemirror.lsp/LSPClient, com.monkopedia.kodemirror.lsp/Workspace> // com.monkopedia.kodemirror.lsp/LSPClientConfig.component6|component6(){}[0]
+    final fun copy(kotlin/String? = ..., kotlin.collections/List<com.monkopedia.lsp/WorkspaceFolder>? = ..., com.monkopedia.lsp/InitializeParamsClientInfo? = ..., com.monkopedia.lsp/ClientCapabilities = ..., kotlinx.serialization.json/JsonElement? = ..., kotlin/Function1<com.monkopedia.kodemirror.lsp/LSPClient, com.monkopedia.kodemirror.lsp/Workspace> = ...): com.monkopedia.kodemirror.lsp/LSPClientConfig // com.monkopedia.kodemirror.lsp/LSPClientConfig.copy|copy(kotlin.String?;kotlin.collections.List<com.monkopedia.lsp.WorkspaceFolder>?;com.monkopedia.lsp.InitializeParamsClientInfo?;com.monkopedia.lsp.ClientCapabilities;kotlinx.serialization.json.JsonElement?;kotlin.Function1<com.monkopedia.kodemirror.lsp.LSPClient,com.monkopedia.kodemirror.lsp.Workspace>){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.lsp/LSPClientConfig.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.lsp/LSPClientConfig.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.lsp/LSPClientConfig.toString|toString(){}[0]
+
+    final object Companion { // com.monkopedia.kodemirror.lsp/LSPClientConfig.Companion|null[0]
+        final val DEFAULT_CLIENT_INFO // com.monkopedia.kodemirror.lsp/LSPClientConfig.Companion.DEFAULT_CLIENT_INFO|{}DEFAULT_CLIENT_INFO[0]
+            final fun <get-DEFAULT_CLIENT_INFO>(): com.monkopedia.lsp/InitializeParamsClientInfo // com.monkopedia.kodemirror.lsp/LSPClientConfig.Companion.DEFAULT_CLIENT_INFO.<get-DEFAULT_CLIENT_INFO>|<get-DEFAULT_CLIENT_INFO>(){}[0]
+    }
+}
+
+final class com.monkopedia.kodemirror.lsp/LSPPlugin : com.monkopedia.kodemirror.view/PluginValue { // com.monkopedia.kodemirror.lsp/LSPPlugin|null[0]
+    final val client // com.monkopedia.kodemirror.lsp/LSPPlugin.client|{}client[0]
+        final fun <get-client>(): com.monkopedia.kodemirror.lsp/LSPClient // com.monkopedia.kodemirror.lsp/LSPPlugin.client.<get-client>|<get-client>(){}[0]
+    final val file // com.monkopedia.kodemirror.lsp/LSPPlugin.file|{}file[0]
+        final fun <get-file>(): com.monkopedia.kodemirror.lsp/WorkspaceFile // com.monkopedia.kodemirror.lsp/LSPPlugin.file.<get-file>|<get-file>(){}[0]
+    final val languageId // com.monkopedia.kodemirror.lsp/LSPPlugin.languageId|{}languageId[0]
+        final fun <get-languageId>(): kotlin/String // com.monkopedia.kodemirror.lsp/LSPPlugin.languageId.<get-languageId>|<get-languageId>(){}[0]
+    final val scope // com.monkopedia.kodemirror.lsp/LSPPlugin.scope|{}scope[0]
+        final fun <get-scope>(): kotlinx.coroutines/CoroutineScope // com.monkopedia.kodemirror.lsp/LSPPlugin.scope.<get-scope>|<get-scope>(){}[0]
+    final val session // com.monkopedia.kodemirror.lsp/LSPPlugin.session|{}session[0]
+        final fun <get-session>(): com.monkopedia.kodemirror.view/EditorSession // com.monkopedia.kodemirror.lsp/LSPPlugin.session.<get-session>|<get-session>(){}[0]
+    final val uri // com.monkopedia.kodemirror.lsp/LSPPlugin.uri|{}uri[0]
+        final fun <get-uri>(): kotlin/String // com.monkopedia.kodemirror.lsp/LSPPlugin.uri.<get-uri>|<get-uri>(){}[0]
+
+    final fun destroy() // com.monkopedia.kodemirror.lsp/LSPPlugin.destroy|destroy(){}[0]
+    final fun update(com.monkopedia.kodemirror.view/ViewUpdate) // com.monkopedia.kodemirror.lsp/LSPPlugin.update|update(com.monkopedia.kodemirror.view.ViewUpdate){}[0]
+
+    final object Companion { // com.monkopedia.kodemirror.lsp/LSPPlugin.Companion|null[0]
+        final fun get(com.monkopedia.kodemirror.view/EditorSession, com.monkopedia.kodemirror.view/ViewPlugin<com.monkopedia.kodemirror.lsp/LSPPlugin>): com.monkopedia.kodemirror.lsp/LSPPlugin? // com.monkopedia.kodemirror.lsp/LSPPlugin.Companion.get|get(com.monkopedia.kodemirror.view.EditorSession;com.monkopedia.kodemirror.view.ViewPlugin<com.monkopedia.kodemirror.lsp.LSPPlugin>){}[0]
+    }
+}
+
+final class com.monkopedia.kodemirror.lsp/ReferenceLocation { // com.monkopedia.kodemirror.lsp/ReferenceLocation|null[0]
+    constructor <init>(kotlin/String, com.monkopedia.lsp/Range) // com.monkopedia.kodemirror.lsp/ReferenceLocation.<init>|<init>(kotlin.String;com.monkopedia.lsp.Range){}[0]
+
+    final val range // com.monkopedia.kodemirror.lsp/ReferenceLocation.range|{}range[0]
+        final fun <get-range>(): com.monkopedia.lsp/Range // com.monkopedia.kodemirror.lsp/ReferenceLocation.range.<get-range>|<get-range>(){}[0]
+    final val uri // com.monkopedia.kodemirror.lsp/ReferenceLocation.uri|{}uri[0]
+        final fun <get-uri>(): kotlin/String // com.monkopedia.kodemirror.lsp/ReferenceLocation.uri.<get-uri>|<get-uri>(){}[0]
+
+    final fun component1(): kotlin/String // com.monkopedia.kodemirror.lsp/ReferenceLocation.component1|component1(){}[0]
+    final fun component2(): com.monkopedia.lsp/Range // com.monkopedia.kodemirror.lsp/ReferenceLocation.component2|component2(){}[0]
+    final fun copy(kotlin/String = ..., com.monkopedia.lsp/Range = ...): com.monkopedia.kodemirror.lsp/ReferenceLocation // com.monkopedia.kodemirror.lsp/ReferenceLocation.copy|copy(kotlin.String;com.monkopedia.lsp.Range){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.lsp/ReferenceLocation.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.lsp/ReferenceLocation.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.lsp/ReferenceLocation.toString|toString(){}[0]
+}
+
+final class com.monkopedia.kodemirror.lsp/ServerCompletionConfig { // com.monkopedia.kodemirror.lsp/ServerCompletionConfig|null[0]
+    constructor <init>(kotlin/Boolean = ..., kotlin.text/Regex? = ...) // com.monkopedia.kodemirror.lsp/ServerCompletionConfig.<init>|<init>(kotlin.Boolean;kotlin.text.Regex?){}[0]
+
+    final val override // com.monkopedia.kodemirror.lsp/ServerCompletionConfig.override|{}override[0]
+        final fun <get-override>(): kotlin/Boolean // com.monkopedia.kodemirror.lsp/ServerCompletionConfig.override.<get-override>|<get-override>(){}[0]
+    final val validFor // com.monkopedia.kodemirror.lsp/ServerCompletionConfig.validFor|{}validFor[0]
+        final fun <get-validFor>(): kotlin.text/Regex? // com.monkopedia.kodemirror.lsp/ServerCompletionConfig.validFor.<get-validFor>|<get-validFor>(){}[0]
+
+    final fun component1(): kotlin/Boolean // com.monkopedia.kodemirror.lsp/ServerCompletionConfig.component1|component1(){}[0]
+    final fun component2(): kotlin.text/Regex? // com.monkopedia.kodemirror.lsp/ServerCompletionConfig.component2|component2(){}[0]
+    final fun copy(kotlin/Boolean = ..., kotlin.text/Regex? = ...): com.monkopedia.kodemirror.lsp/ServerCompletionConfig // com.monkopedia.kodemirror.lsp/ServerCompletionConfig.copy|copy(kotlin.Boolean;kotlin.text.Regex?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.lsp/ServerCompletionConfig.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.lsp/ServerCompletionConfig.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.lsp/ServerCompletionConfig.toString|toString(){}[0]
+}
+
+final class com.monkopedia.kodemirror.lsp/SignatureHelpConfig { // com.monkopedia.kodemirror.lsp/SignatureHelpConfig|null[0]
+    constructor <init>(kotlin/Boolean = ...) // com.monkopedia.kodemirror.lsp/SignatureHelpConfig.<init>|<init>(kotlin.Boolean){}[0]
+
+    final val keymap // com.monkopedia.kodemirror.lsp/SignatureHelpConfig.keymap|{}keymap[0]
+        final fun <get-keymap>(): kotlin/Boolean // com.monkopedia.kodemirror.lsp/SignatureHelpConfig.keymap.<get-keymap>|<get-keymap>(){}[0]
+
+    final fun component1(): kotlin/Boolean // com.monkopedia.kodemirror.lsp/SignatureHelpConfig.component1|component1(){}[0]
+    final fun copy(kotlin/Boolean = ...): com.monkopedia.kodemirror.lsp/SignatureHelpConfig // com.monkopedia.kodemirror.lsp/SignatureHelpConfig.copy|copy(kotlin.Boolean){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.lsp/SignatureHelpConfig.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.lsp/SignatureHelpConfig.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.lsp/SignatureHelpConfig.toString|toString(){}[0]
+}
+
+final class com.monkopedia.kodemirror.lsp/WorkspaceFile { // com.monkopedia.kodemirror.lsp/WorkspaceFile|null[0]
+    final val languageId // com.monkopedia.kodemirror.lsp/WorkspaceFile.languageId|{}languageId[0]
+        final fun <get-languageId>(): kotlin/String // com.monkopedia.kodemirror.lsp/WorkspaceFile.languageId.<get-languageId>|<get-languageId>(){}[0]
+    final val session // com.monkopedia.kodemirror.lsp/WorkspaceFile.session|{}session[0]
+        final fun <get-session>(): com.monkopedia.kodemirror.view/EditorSession? // com.monkopedia.kodemirror.lsp/WorkspaceFile.session.<get-session>|<get-session>(){}[0]
+    final val uri // com.monkopedia.kodemirror.lsp/WorkspaceFile.uri|{}uri[0]
+        final fun <get-uri>(): kotlin/String // com.monkopedia.kodemirror.lsp/WorkspaceFile.uri.<get-uri>|<get-uri>(){}[0]
+
+    final var doc // com.monkopedia.kodemirror.lsp/WorkspaceFile.doc|{}doc[0]
+        final fun <get-doc>(): com.monkopedia.kodemirror.state/Text // com.monkopedia.kodemirror.lsp/WorkspaceFile.doc.<get-doc>|<get-doc>(){}[0]
+    final var version // com.monkopedia.kodemirror.lsp/WorkspaceFile.version|{}version[0]
+        final fun <get-version>(): kotlin/Int // com.monkopedia.kodemirror.lsp/WorkspaceFile.version.<get-version>|<get-version>(){}[0]
+
+    final fun getText(): kotlin/String? // com.monkopedia.kodemirror.lsp/WorkspaceFile.getText|getText(){}[0]
+}
+
+final class com.monkopedia.kodemirror.lsp/WorkspaceFileUpdate { // com.monkopedia.kodemirror.lsp/WorkspaceFileUpdate|null[0]
+    constructor <init>(com.monkopedia.kodemirror.lsp/WorkspaceFile, com.monkopedia.kodemirror.state/Text, com.monkopedia.kodemirror.state/ChangeSet) // com.monkopedia.kodemirror.lsp/WorkspaceFileUpdate.<init>|<init>(com.monkopedia.kodemirror.lsp.WorkspaceFile;com.monkopedia.kodemirror.state.Text;com.monkopedia.kodemirror.state.ChangeSet){}[0]
+
+    final val changes // com.monkopedia.kodemirror.lsp/WorkspaceFileUpdate.changes|{}changes[0]
+        final fun <get-changes>(): com.monkopedia.kodemirror.state/ChangeSet // com.monkopedia.kodemirror.lsp/WorkspaceFileUpdate.changes.<get-changes>|<get-changes>(){}[0]
+    final val file // com.monkopedia.kodemirror.lsp/WorkspaceFileUpdate.file|{}file[0]
+        final fun <get-file>(): com.monkopedia.kodemirror.lsp/WorkspaceFile // com.monkopedia.kodemirror.lsp/WorkspaceFileUpdate.file.<get-file>|<get-file>(){}[0]
+    final val prevDoc // com.monkopedia.kodemirror.lsp/WorkspaceFileUpdate.prevDoc|{}prevDoc[0]
+        final fun <get-prevDoc>(): com.monkopedia.kodemirror.state/Text // com.monkopedia.kodemirror.lsp/WorkspaceFileUpdate.prevDoc.<get-prevDoc>|<get-prevDoc>(){}[0]
+
+    final fun component1(): com.monkopedia.kodemirror.lsp/WorkspaceFile // com.monkopedia.kodemirror.lsp/WorkspaceFileUpdate.component1|component1(){}[0]
+    final fun component2(): com.monkopedia.kodemirror.state/Text // com.monkopedia.kodemirror.lsp/WorkspaceFileUpdate.component2|component2(){}[0]
+    final fun component3(): com.monkopedia.kodemirror.state/ChangeSet // com.monkopedia.kodemirror.lsp/WorkspaceFileUpdate.component3|component3(){}[0]
+    final fun copy(com.monkopedia.kodemirror.lsp/WorkspaceFile = ..., com.monkopedia.kodemirror.state/Text = ..., com.monkopedia.kodemirror.state/ChangeSet = ...): com.monkopedia.kodemirror.lsp/WorkspaceFileUpdate // com.monkopedia.kodemirror.lsp/WorkspaceFileUpdate.copy|copy(com.monkopedia.kodemirror.lsp.WorkspaceFile;com.monkopedia.kodemirror.state.Text;com.monkopedia.kodemirror.state.ChangeSet){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.lsp/WorkspaceFileUpdate.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.lsp/WorkspaceFileUpdate.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.lsp/WorkspaceFileUpdate.toString|toString(){}[0]
+}
+
+final class com.monkopedia.kodemirror.lsp/WorkspaceMapping { // com.monkopedia.kodemirror.lsp/WorkspaceMapping|null[0]
+    final val uri // com.monkopedia.kodemirror.lsp/WorkspaceMapping.uri|{}uri[0]
+        final fun <get-uri>(): kotlin/String // com.monkopedia.kodemirror.lsp/WorkspaceMapping.uri.<get-uri>|<get-uri>(){}[0]
+
+    final fun mapPos(kotlin/Int, kotlin/Int = ...): kotlin/Int // com.monkopedia.kodemirror.lsp/WorkspaceMapping.mapPos|mapPos(kotlin.Int;kotlin.Int){}[0]
+    final fun mapPosition(com.monkopedia.lsp/Position, com.monkopedia.kodemirror.state/Text, kotlin/Int = ...): kotlin/Int // com.monkopedia.kodemirror.lsp/WorkspaceMapping.mapPosition|mapPosition(com.monkopedia.lsp.Position;com.monkopedia.kodemirror.state.Text;kotlin.Int){}[0]
+}
+
+open class com.monkopedia.kodemirror.lsp/Workspace { // com.monkopedia.kodemirror.lsp/Workspace|null[0]
+    constructor <init>(com.monkopedia.kodemirror.lsp/LSPClient) // com.monkopedia.kodemirror.lsp/Workspace.<init>|<init>(com.monkopedia.kodemirror.lsp.LSPClient){}[0]
+
+    final val client // com.monkopedia.kodemirror.lsp/Workspace.client|{}client[0]
+        final fun <get-client>(): com.monkopedia.kodemirror.lsp/LSPClient // com.monkopedia.kodemirror.lsp/Workspace.client.<get-client>|<get-client>(){}[0]
+    final val openFiles // com.monkopedia.kodemirror.lsp/Workspace.openFiles|{}openFiles[0]
+        final fun <get-openFiles>(): kotlin.collections/List<com.monkopedia.kodemirror.lsp/WorkspaceFile> // com.monkopedia.kodemirror.lsp/Workspace.openFiles.<get-openFiles>|<get-openFiles>(){}[0]
+
+    final fun getFile(kotlin/String): com.monkopedia.kodemirror.lsp/WorkspaceFile? // com.monkopedia.kodemirror.lsp/Workspace.getFile|getFile(kotlin.String){}[0]
+    final fun getMapping(kotlin/String): com.monkopedia.kodemirror.lsp/WorkspaceMapping? // com.monkopedia.kodemirror.lsp/Workspace.getMapping|getMapping(kotlin.String){}[0]
+    final fun releaseMapping(com.monkopedia.kodemirror.lsp/WorkspaceMapping) // com.monkopedia.kodemirror.lsp/Workspace.releaseMapping|releaseMapping(com.monkopedia.kodemirror.lsp.WorkspaceMapping){}[0]
+    open fun closeFile(kotlin/String) // com.monkopedia.kodemirror.lsp/Workspace.closeFile|closeFile(kotlin.String){}[0]
+    open fun displayFile(kotlin/String): com.monkopedia.kodemirror.view/EditorSession? // com.monkopedia.kodemirror.lsp/Workspace.displayFile|displayFile(kotlin.String){}[0]
+    open fun openFile(kotlin/String, kotlin/String, com.monkopedia.kodemirror.view/EditorSession?): com.monkopedia.kodemirror.lsp/WorkspaceFile // com.monkopedia.kodemirror.lsp/Workspace.openFile|openFile(kotlin.String;kotlin.String;com.monkopedia.kodemirror.view.EditorSession?){}[0]
+    open fun syncFiles(): kotlin.collections/List<com.monkopedia.kodemirror.lsp/WorkspaceFileUpdate> // com.monkopedia.kodemirror.lsp/Workspace.syncFiles|syncFiles(){}[0]
+    open fun updateFile(kotlin/String, com.monkopedia.kodemirror.state/ChangeSet) // com.monkopedia.kodemirror.lsp/Workspace.updateFile|updateFile(kotlin.String;com.monkopedia.kodemirror.state.ChangeSet){}[0]
+    open suspend fun didCloseFile(kotlin/String) // com.monkopedia.kodemirror.lsp/Workspace.didCloseFile|didCloseFile(kotlin.String){}[0]
+    open suspend fun didOpenFile(kotlin/String) // com.monkopedia.kodemirror.lsp/Workspace.didOpenFile|didOpenFile(kotlin.String){}[0]
+}
+
+final val com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_DocumentSyncMode$stableprop // com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_DocumentSyncMode$stableprop|#static{}com_monkopedia_kodemirror_lsp_DocumentSyncMode$stableprop[0]
+final val com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_LSPClient$stableprop // com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_LSPClient$stableprop|#static{}com_monkopedia_kodemirror_lsp_LSPClient$stableprop[0]
+final val com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_LSPClientConfig$stableprop // com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_LSPClientConfig$stableprop|#static{}com_monkopedia_kodemirror_lsp_LSPClientConfig$stableprop[0]
+final val com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_LSPPlugin$stableprop // com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_LSPPlugin$stableprop|#static{}com_monkopedia_kodemirror_lsp_LSPPlugin$stableprop[0]
+final val com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_ReferenceLocation$stableprop // com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_ReferenceLocation$stableprop|#static{}com_monkopedia_kodemirror_lsp_ReferenceLocation$stableprop[0]
+final val com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_ServerCompletionConfig$stableprop // com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_ServerCompletionConfig$stableprop|#static{}com_monkopedia_kodemirror_lsp_ServerCompletionConfig$stableprop[0]
+final val com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_SignatureHelpConfig$stableprop // com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_SignatureHelpConfig$stableprop|#static{}com_monkopedia_kodemirror_lsp_SignatureHelpConfig$stableprop[0]
+final val com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_Workspace$stableprop // com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_Workspace$stableprop|#static{}com_monkopedia_kodemirror_lsp_Workspace$stableprop[0]
+final val com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_WorkspaceFile$stableprop // com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_WorkspaceFile$stableprop|#static{}com_monkopedia_kodemirror_lsp_WorkspaceFile$stableprop[0]
+final val com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_WorkspaceFileUpdate$stableprop // com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_WorkspaceFileUpdate$stableprop|#static{}com_monkopedia_kodemirror_lsp_WorkspaceFileUpdate$stableprop[0]
+final val com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_WorkspaceMapping$stableprop // com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_WorkspaceMapping$stableprop|#static{}com_monkopedia_kodemirror_lsp_WorkspaceMapping$stableprop[0]
+final val com.monkopedia.kodemirror.lsp/findReferencesKeymap // com.monkopedia.kodemirror.lsp/findReferencesKeymap|{}findReferencesKeymap[0]
+    final fun <get-findReferencesKeymap>(): kotlin.collections/List<com.monkopedia.kodemirror.view/KeyBinding> // com.monkopedia.kodemirror.lsp/findReferencesKeymap.<get-findReferencesKeymap>|<get-findReferencesKeymap>(){}[0]
+final val com.monkopedia.kodemirror.lsp/formatKeymap // com.monkopedia.kodemirror.lsp/formatKeymap|{}formatKeymap[0]
+    final fun <get-formatKeymap>(): kotlin.collections/List<com.monkopedia.kodemirror.view/KeyBinding> // com.monkopedia.kodemirror.lsp/formatKeymap.<get-formatKeymap>|<get-formatKeymap>(){}[0]
+final val com.monkopedia.kodemirror.lsp/jumpToDefinitionKeymap // com.monkopedia.kodemirror.lsp/jumpToDefinitionKeymap|{}jumpToDefinitionKeymap[0]
+    final fun <get-jumpToDefinitionKeymap>(): kotlin.collections/List<com.monkopedia.kodemirror.view/KeyBinding> // com.monkopedia.kodemirror.lsp/jumpToDefinitionKeymap.<get-jumpToDefinitionKeymap>|<get-jumpToDefinitionKeymap>(){}[0]
+final val com.monkopedia.kodemirror.lsp/renameKeymap // com.monkopedia.kodemirror.lsp/renameKeymap|{}renameKeymap[0]
+    final fun <get-renameKeymap>(): kotlin.collections/List<com.monkopedia.kodemirror.view/KeyBinding> // com.monkopedia.kodemirror.lsp/renameKeymap.<get-renameKeymap>|<get-renameKeymap>(){}[0]
+final val com.monkopedia.kodemirror.lsp/signatureKeymap // com.monkopedia.kodemirror.lsp/signatureKeymap|{}signatureKeymap[0]
+    final fun <get-signatureKeymap>(): kotlin.collections/List<com.monkopedia.kodemirror.view/KeyBinding> // com.monkopedia.kodemirror.lsp/signatureKeymap.<get-signatureKeymap>|<get-signatureKeymap>(){}[0]
+
+final fun com.monkopedia.kodemirror.lsp/closeReferencePanel(com.monkopedia.kodemirror.view/EditorSession): kotlin/Boolean // com.monkopedia.kodemirror.lsp/closeReferencePanel|closeReferencePanel(com.monkopedia.kodemirror.view.EditorSession){}[0]
+final fun com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_DocumentSyncMode$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_DocumentSyncMode$stableprop_getter|com_monkopedia_kodemirror_lsp_DocumentSyncMode$stableprop_getter(){}[0]
+final fun com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_LSPClient$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_LSPClient$stableprop_getter|com_monkopedia_kodemirror_lsp_LSPClient$stableprop_getter(){}[0]
+final fun com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_LSPClientConfig$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_LSPClientConfig$stableprop_getter|com_monkopedia_kodemirror_lsp_LSPClientConfig$stableprop_getter(){}[0]
+final fun com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_LSPPlugin$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_LSPPlugin$stableprop_getter|com_monkopedia_kodemirror_lsp_LSPPlugin$stableprop_getter(){}[0]
+final fun com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_ReferenceLocation$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_ReferenceLocation$stableprop_getter|com_monkopedia_kodemirror_lsp_ReferenceLocation$stableprop_getter(){}[0]
+final fun com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_ServerCompletionConfig$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_ServerCompletionConfig$stableprop_getter|com_monkopedia_kodemirror_lsp_ServerCompletionConfig$stableprop_getter(){}[0]
+final fun com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_SignatureHelpConfig$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_SignatureHelpConfig$stableprop_getter|com_monkopedia_kodemirror_lsp_SignatureHelpConfig$stableprop_getter(){}[0]
+final fun com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_Workspace$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_Workspace$stableprop_getter|com_monkopedia_kodemirror_lsp_Workspace$stableprop_getter(){}[0]
+final fun com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_WorkspaceFile$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_WorkspaceFile$stableprop_getter|com_monkopedia_kodemirror_lsp_WorkspaceFile$stableprop_getter(){}[0]
+final fun com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_WorkspaceFileUpdate$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_WorkspaceFileUpdate$stableprop_getter|com_monkopedia_kodemirror_lsp_WorkspaceFileUpdate$stableprop_getter(){}[0]
+final fun com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_WorkspaceMapping$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.lsp/com_monkopedia_kodemirror_lsp_WorkspaceMapping$stableprop_getter|com_monkopedia_kodemirror_lsp_WorkspaceMapping$stableprop_getter(){}[0]
+final fun com.monkopedia.kodemirror.lsp/definitionJumps(com.monkopedia.kodemirror.lsp/LSPClient, kotlin/String, kotlin/Boolean = ...): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.lsp/definitionJumps|definitionJumps(com.monkopedia.kodemirror.lsp.LSPClient;kotlin.String;kotlin.Boolean){}[0]
+final fun com.monkopedia.kodemirror.lsp/findReferences(com.monkopedia.kodemirror.view/EditorSession): kotlin/Boolean // com.monkopedia.kodemirror.lsp/findReferences|findReferences(com.monkopedia.kodemirror.view.EditorSession){}[0]
+final fun com.monkopedia.kodemirror.lsp/findReferencesExtension(com.monkopedia.kodemirror.lsp/LSPClient, kotlin/String, kotlin/Boolean = ...): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.lsp/findReferencesExtension|findReferencesExtension(com.monkopedia.kodemirror.lsp.LSPClient;kotlin.String;kotlin.Boolean){}[0]
+final fun com.monkopedia.kodemirror.lsp/formatDocument(com.monkopedia.kodemirror.view/EditorSession): kotlin/Boolean // com.monkopedia.kodemirror.lsp/formatDocument|formatDocument(com.monkopedia.kodemirror.view.EditorSession){}[0]
+final fun com.monkopedia.kodemirror.lsp/formatDocumentExtension(com.monkopedia.kodemirror.lsp/LSPClient, kotlin/String, kotlin/Boolean = ...): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.lsp/formatDocumentExtension|formatDocumentExtension(com.monkopedia.kodemirror.lsp.LSPClient;kotlin.String;kotlin.Boolean){}[0]
+final fun com.monkopedia.kodemirror.lsp/fromPosition(com.monkopedia.lsp/Position, com.monkopedia.kodemirror.state/Text): kotlin/Int // com.monkopedia.kodemirror.lsp/fromPosition|fromPosition(com.monkopedia.lsp.Position;com.monkopedia.kodemirror.state.Text){}[0]
+final fun com.monkopedia.kodemirror.lsp/jumpToDeclaration(com.monkopedia.kodemirror.view/EditorSession): kotlin/Boolean // com.monkopedia.kodemirror.lsp/jumpToDeclaration|jumpToDeclaration(com.monkopedia.kodemirror.view.EditorSession){}[0]
+final fun com.monkopedia.kodemirror.lsp/jumpToDefinition(com.monkopedia.kodemirror.view/EditorSession): kotlin/Boolean // com.monkopedia.kodemirror.lsp/jumpToDefinition|jumpToDefinition(com.monkopedia.kodemirror.view.EditorSession){}[0]
+final fun com.monkopedia.kodemirror.lsp/jumpToImplementation(com.monkopedia.kodemirror.view/EditorSession): kotlin/Boolean // com.monkopedia.kodemirror.lsp/jumpToImplementation|jumpToImplementation(com.monkopedia.kodemirror.view.EditorSession){}[0]
+final fun com.monkopedia.kodemirror.lsp/jumpToTypeDefinition(com.monkopedia.kodemirror.view/EditorSession): kotlin/Boolean // com.monkopedia.kodemirror.lsp/jumpToTypeDefinition|jumpToTypeDefinition(com.monkopedia.kodemirror.view.EditorSession){}[0]
+final fun com.monkopedia.kodemirror.lsp/languageServerSupport(com.monkopedia.kodemirror.lsp/LSPClient, kotlin/String, kotlin/String): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.lsp/languageServerSupport|languageServerSupport(com.monkopedia.kodemirror.lsp.LSPClient;kotlin.String;kotlin.String){}[0]
+final fun com.monkopedia.kodemirror.lsp/nextSignature(com.monkopedia.kodemirror.view/EditorSession): kotlin/Boolean // com.monkopedia.kodemirror.lsp/nextSignature|nextSignature(com.monkopedia.kodemirror.view.EditorSession){}[0]
+final fun com.monkopedia.kodemirror.lsp/prevSignature(com.monkopedia.kodemirror.view/EditorSession): kotlin/Boolean // com.monkopedia.kodemirror.lsp/prevSignature|prevSignature(com.monkopedia.kodemirror.view.EditorSession){}[0]
+final fun com.monkopedia.kodemirror.lsp/renameSymbol(com.monkopedia.kodemirror.view/EditorSession): kotlin/Boolean // com.monkopedia.kodemirror.lsp/renameSymbol|renameSymbol(com.monkopedia.kodemirror.view.EditorSession){}[0]
+final fun com.monkopedia.kodemirror.lsp/renameSymbolExtension(com.monkopedia.kodemirror.lsp/LSPClient, kotlin/String, kotlin/Boolean = ...): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.lsp/renameSymbolExtension|renameSymbolExtension(com.monkopedia.kodemirror.lsp.LSPClient;kotlin.String;kotlin.Boolean){}[0]
+final fun com.monkopedia.kodemirror.lsp/serverCompletion(com.monkopedia.kodemirror.lsp/LSPClient, kotlin/String, com.monkopedia.kodemirror.lsp/ServerCompletionConfig = ...): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.lsp/serverCompletion|serverCompletion(com.monkopedia.kodemirror.lsp.LSPClient;kotlin.String;com.monkopedia.kodemirror.lsp.ServerCompletionConfig){}[0]
+final fun com.monkopedia.kodemirror.lsp/serverCompletionSource(com.monkopedia.kodemirror.lsp/LSPClient, kotlin/String, com.monkopedia.kodemirror.lsp/ServerCompletionConfig = ...): kotlin.coroutines/SuspendFunction1<com.monkopedia.kodemirror.autocomplete/CompletionContext, com.monkopedia.kodemirror.autocomplete/CompletionResult?> // com.monkopedia.kodemirror.lsp/serverCompletionSource|serverCompletionSource(com.monkopedia.kodemirror.lsp.LSPClient;kotlin.String;com.monkopedia.kodemirror.lsp.ServerCompletionConfig){}[0]
+final fun com.monkopedia.kodemirror.lsp/serverDiagnostics(): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.lsp/serverDiagnostics|serverDiagnostics(){}[0]
+final fun com.monkopedia.kodemirror.lsp/serverHover(com.monkopedia.kodemirror.lsp/LSPClient, kotlin/String, kotlin/Long = ...): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.lsp/serverHover|serverHover(com.monkopedia.kodemirror.lsp.LSPClient;kotlin.String;kotlin.Long){}[0]
+final fun com.monkopedia.kodemirror.lsp/showSignatureHelp(com.monkopedia.kodemirror.view/EditorSession): kotlin/Boolean // com.monkopedia.kodemirror.lsp/showSignatureHelp|showSignatureHelp(com.monkopedia.kodemirror.view.EditorSession){}[0]
+final fun com.monkopedia.kodemirror.lsp/signatureHelp(com.monkopedia.kodemirror.lsp/LSPClient, kotlin/String, com.monkopedia.kodemirror.lsp/SignatureHelpConfig = ...): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.lsp/signatureHelp|signatureHelp(com.monkopedia.kodemirror.lsp.LSPClient;kotlin.String;com.monkopedia.kodemirror.lsp.SignatureHelpConfig){}[0]
+final fun com.monkopedia.kodemirror.lsp/toPosition(kotlin/Int, com.monkopedia.kodemirror.state/Text): com.monkopedia.lsp/Position // com.monkopedia.kodemirror.lsp/toPosition|toPosition(kotlin.Int;com.monkopedia.kodemirror.state.Text){}[0]

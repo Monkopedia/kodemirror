@@ -1,0 +1,14 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:theme-ayu-light>
+final val com.monkopedia.kodemirror.themeayulight/ayuLight // com.monkopedia.kodemirror.themeayulight/ayuLight|{}ayuLight[0]
+    final fun <get-ayuLight>(): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.themeayulight/ayuLight.<get-ayuLight>|<get-ayuLight>(){}[0]
+final val com.monkopedia.kodemirror.themeayulight/ayuLightHighlightStyle // com.monkopedia.kodemirror.themeayulight/ayuLightHighlightStyle|{}ayuLightHighlightStyle[0]
+    final fun <get-ayuLightHighlightStyle>(): com.monkopedia.kodemirror.language/HighlightStyle // com.monkopedia.kodemirror.themeayulight/ayuLightHighlightStyle.<get-ayuLightHighlightStyle>|<get-ayuLightHighlightStyle>(){}[0]
+final val com.monkopedia.kodemirror.themeayulight/ayuLightTheme // com.monkopedia.kodemirror.themeayulight/ayuLightTheme|{}ayuLightTheme[0]
+    final fun <get-ayuLightTheme>(): com.monkopedia.kodemirror.view/EditorTheme // com.monkopedia.kodemirror.themeayulight/ayuLightTheme.<get-ayuLightTheme>|<get-ayuLightTheme>(){}[0]

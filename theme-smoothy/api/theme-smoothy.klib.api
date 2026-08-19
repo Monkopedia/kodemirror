@@ -1,0 +1,14 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:theme-smoothy>
+final val com.monkopedia.kodemirror.themesmoothy/smoothy // com.monkopedia.kodemirror.themesmoothy/smoothy|{}smoothy[0]
+    final fun <get-smoothy>(): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.themesmoothy/smoothy.<get-smoothy>|<get-smoothy>(){}[0]
+final val com.monkopedia.kodemirror.themesmoothy/smoothyHighlightStyle // com.monkopedia.kodemirror.themesmoothy/smoothyHighlightStyle|{}smoothyHighlightStyle[0]
+    final fun <get-smoothyHighlightStyle>(): com.monkopedia.kodemirror.language/HighlightStyle // com.monkopedia.kodemirror.themesmoothy/smoothyHighlightStyle.<get-smoothyHighlightStyle>|<get-smoothyHighlightStyle>(){}[0]
+final val com.monkopedia.kodemirror.themesmoothy/smoothyTheme // com.monkopedia.kodemirror.themesmoothy/smoothyTheme|{}smoothyTheme[0]
+    final fun <get-smoothyTheme>(): com.monkopedia.kodemirror.view/EditorTheme // com.monkopedia.kodemirror.themesmoothy/smoothyTheme.<get-smoothyTheme>|<get-smoothyTheme>(){}[0]

@@ -1,0 +1,9 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:material-theme>
+final fun com.monkopedia.kodemirror.materialtheme/rememberMaterialEditorTheme(androidx.compose.runtime/Composer?, kotlin/Int): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.materialtheme/rememberMaterialEditorTheme|rememberMaterialEditorTheme(androidx.compose.runtime.Composer?;kotlin.Int){}[0]

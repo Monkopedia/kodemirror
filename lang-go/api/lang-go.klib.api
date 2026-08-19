@@ -1,0 +1,16 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:lang-go>
+final val com.monkopedia.kodemirror.lang.go/goHighlighting // com.monkopedia.kodemirror.lang.go/goHighlighting|{}goHighlighting[0]
+    final fun <get-goHighlighting>(): com.monkopedia.kodemirror.lezer.common/NodePropSource<com.monkopedia.kodemirror.lezer.highlight/Rule> // com.monkopedia.kodemirror.lang.go/goHighlighting.<get-goHighlighting>|<get-goHighlighting>(){}[0]
+final val com.monkopedia.kodemirror.lang.go/goLanguage // com.monkopedia.kodemirror.lang.go/goLanguage|{}goLanguage[0]
+    final fun <get-goLanguage>(): com.monkopedia.kodemirror.language/LRLanguage // com.monkopedia.kodemirror.lang.go/goLanguage.<get-goLanguage>|<get-goLanguage>(){}[0]
+final val com.monkopedia.kodemirror.lang.go/goParser // com.monkopedia.kodemirror.lang.go/goParser|{}goParser[0]
+    final fun <get-goParser>(): com.monkopedia.kodemirror.lezer.lr/LRParser // com.monkopedia.kodemirror.lang.go/goParser.<get-goParser>|<get-goParser>(){}[0]
+
+final fun com.monkopedia.kodemirror.lang.go/go(): com.monkopedia.kodemirror.language/LanguageSupport // com.monkopedia.kodemirror.lang.go/go|go(){}[0]

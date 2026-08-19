@@ -1,0 +1,16 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:lang-rust>
+final val com.monkopedia.kodemirror.lang.rust/rustHighlighting // com.monkopedia.kodemirror.lang.rust/rustHighlighting|{}rustHighlighting[0]
+    final fun <get-rustHighlighting>(): com.monkopedia.kodemirror.lezer.common/NodePropSource<com.monkopedia.kodemirror.lezer.highlight/Rule> // com.monkopedia.kodemirror.lang.rust/rustHighlighting.<get-rustHighlighting>|<get-rustHighlighting>(){}[0]
+final val com.monkopedia.kodemirror.lang.rust/rustLanguage // com.monkopedia.kodemirror.lang.rust/rustLanguage|{}rustLanguage[0]
+    final fun <get-rustLanguage>(): com.monkopedia.kodemirror.language/LRLanguage // com.monkopedia.kodemirror.lang.rust/rustLanguage.<get-rustLanguage>|<get-rustLanguage>(){}[0]
+final val com.monkopedia.kodemirror.lang.rust/rustParser // com.monkopedia.kodemirror.lang.rust/rustParser|{}rustParser[0]
+    final fun <get-rustParser>(): com.monkopedia.kodemirror.lezer.lr/LRParser // com.monkopedia.kodemirror.lang.rust/rustParser.<get-rustParser>|<get-rustParser>(){}[0]
+
+final fun com.monkopedia.kodemirror.lang.rust/rust(): com.monkopedia.kodemirror.language/LanguageSupport // com.monkopedia.kodemirror.lang.rust/rust|rust(){}[0]

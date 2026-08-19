@@ -1,0 +1,14 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:lang-vue>
+final val com.monkopedia.kodemirror.lang.vue/vueHighlighting // com.monkopedia.kodemirror.lang.vue/vueHighlighting|{}vueHighlighting[0]
+    final fun <get-vueHighlighting>(): com.monkopedia.kodemirror.lezer.common/NodePropSource<com.monkopedia.kodemirror.lezer.highlight/Rule> // com.monkopedia.kodemirror.lang.vue/vueHighlighting.<get-vueHighlighting>|<get-vueHighlighting>(){}[0]
+final val com.monkopedia.kodemirror.lang.vue/vueLanguage // com.monkopedia.kodemirror.lang.vue/vueLanguage|{}vueLanguage[0]
+    final fun <get-vueLanguage>(): com.monkopedia.kodemirror.language/LRLanguage // com.monkopedia.kodemirror.lang.vue/vueLanguage.<get-vueLanguage>|<get-vueLanguage>(){}[0]
+
+final fun com.monkopedia.kodemirror.lang.vue/vue(): com.monkopedia.kodemirror.language/LanguageSupport // com.monkopedia.kodemirror.lang.vue/vue|vue(){}[0]

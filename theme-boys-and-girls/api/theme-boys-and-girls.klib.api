@@ -1,0 +1,14 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:theme-boys-and-girls>
+final val com.monkopedia.kodemirror.themeboysandgirls/boysAndGirls // com.monkopedia.kodemirror.themeboysandgirls/boysAndGirls|{}boysAndGirls[0]
+    final fun <get-boysAndGirls>(): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.themeboysandgirls/boysAndGirls.<get-boysAndGirls>|<get-boysAndGirls>(){}[0]
+final val com.monkopedia.kodemirror.themeboysandgirls/boysAndGirlsHighlightStyle // com.monkopedia.kodemirror.themeboysandgirls/boysAndGirlsHighlightStyle|{}boysAndGirlsHighlightStyle[0]
+    final fun <get-boysAndGirlsHighlightStyle>(): com.monkopedia.kodemirror.language/HighlightStyle // com.monkopedia.kodemirror.themeboysandgirls/boysAndGirlsHighlightStyle.<get-boysAndGirlsHighlightStyle>|<get-boysAndGirlsHighlightStyle>(){}[0]
+final val com.monkopedia.kodemirror.themeboysandgirls/boysAndGirlsTheme // com.monkopedia.kodemirror.themeboysandgirls/boysAndGirlsTheme|{}boysAndGirlsTheme[0]
+    final fun <get-boysAndGirlsTheme>(): com.monkopedia.kodemirror.view/EditorTheme // com.monkopedia.kodemirror.themeboysandgirls/boysAndGirlsTheme.<get-boysAndGirlsTheme>|<get-boysAndGirlsTheme>(){}[0]

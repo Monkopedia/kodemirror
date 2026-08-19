@@ -1,0 +1,14 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:theme-noctis-lilac>
+final val com.monkopedia.kodemirror.themenoctislilac/noctisLilac // com.monkopedia.kodemirror.themenoctislilac/noctisLilac|{}noctisLilac[0]
+    final fun <get-noctisLilac>(): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.themenoctislilac/noctisLilac.<get-noctisLilac>|<get-noctisLilac>(){}[0]
+final val com.monkopedia.kodemirror.themenoctislilac/noctisLilacHighlightStyle // com.monkopedia.kodemirror.themenoctislilac/noctisLilacHighlightStyle|{}noctisLilacHighlightStyle[0]
+    final fun <get-noctisLilacHighlightStyle>(): com.monkopedia.kodemirror.language/HighlightStyle // com.monkopedia.kodemirror.themenoctislilac/noctisLilacHighlightStyle.<get-noctisLilacHighlightStyle>|<get-noctisLilacHighlightStyle>(){}[0]
+final val com.monkopedia.kodemirror.themenoctislilac/noctisLilacTheme // com.monkopedia.kodemirror.themenoctislilac/noctisLilacTheme|{}noctisLilacTheme[0]
+    final fun <get-noctisLilacTheme>(): com.monkopedia.kodemirror.view/EditorTheme // com.monkopedia.kodemirror.themenoctislilac/noctisLilacTheme.<get-noctisLilacTheme>|<get-noctisLilacTheme>(){}[0]

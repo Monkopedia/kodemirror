@@ -1,0 +1,14 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:theme-solarized-light>
+final val com.monkopedia.kodemirror.themesolarizedlight/solarizedLight // com.monkopedia.kodemirror.themesolarizedlight/solarizedLight|{}solarizedLight[0]
+    final fun <get-solarizedLight>(): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.themesolarizedlight/solarizedLight.<get-solarizedLight>|<get-solarizedLight>(){}[0]
+final val com.monkopedia.kodemirror.themesolarizedlight/solarizedLightHighlightStyle // com.monkopedia.kodemirror.themesolarizedlight/solarizedLightHighlightStyle|{}solarizedLightHighlightStyle[0]
+    final fun <get-solarizedLightHighlightStyle>(): com.monkopedia.kodemirror.language/HighlightStyle // com.monkopedia.kodemirror.themesolarizedlight/solarizedLightHighlightStyle.<get-solarizedLightHighlightStyle>|<get-solarizedLightHighlightStyle>(){}[0]
+final val com.monkopedia.kodemirror.themesolarizedlight/solarizedLightTheme // com.monkopedia.kodemirror.themesolarizedlight/solarizedLightTheme|{}solarizedLightTheme[0]
+    final fun <get-solarizedLightTheme>(): com.monkopedia.kodemirror.view/EditorTheme // com.monkopedia.kodemirror.themesolarizedlight/solarizedLightTheme.<get-solarizedLightTheme>|<get-solarizedLightTheme>(){}[0]
