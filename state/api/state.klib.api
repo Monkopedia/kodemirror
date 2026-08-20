@@ -1,0 +1,1367 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:state>
+open annotation class com.monkopedia.kodemirror.state/EditorStateDsl : kotlin/Annotation { // com.monkopedia.kodemirror.state/EditorStateDsl|null[0]
+    constructor <init>() // com.monkopedia.kodemirror.state/EditorStateDsl.<init>|<init>(){}[0]
+}
+
+open annotation class com.monkopedia.kodemirror.state/StateFieldDsl : kotlin/Annotation { // com.monkopedia.kodemirror.state/StateFieldDsl|null[0]
+    constructor <init>() // com.monkopedia.kodemirror.state/StateFieldDsl.<init>|<init>(){}[0]
+}
+
+open annotation class com.monkopedia.kodemirror.state/TransactionDsl : kotlin/Annotation { // com.monkopedia.kodemirror.state/TransactionDsl|null[0]
+    constructor <init>() // com.monkopedia.kodemirror.state/TransactionDsl.<init>|<init>(){}[0]
+}
+
+final enum class com.monkopedia.kodemirror.state/CharCategory : kotlin/Enum<com.monkopedia.kodemirror.state/CharCategory> { // com.monkopedia.kodemirror.state/CharCategory|null[0]
+    enum entry Other // com.monkopedia.kodemirror.state/CharCategory.Other|null[0]
+    enum entry Space // com.monkopedia.kodemirror.state/CharCategory.Space|null[0]
+    enum entry Word // com.monkopedia.kodemirror.state/CharCategory.Word|null[0]
+
+    final val entries // com.monkopedia.kodemirror.state/CharCategory.entries|#static{}entries[0]
+        final fun <get-entries>(): kotlin.enums/EnumEntries<com.monkopedia.kodemirror.state/CharCategory> // com.monkopedia.kodemirror.state/CharCategory.entries.<get-entries>|<get-entries>#static(){}[0]
+
+    final fun valueOf(kotlin/String): com.monkopedia.kodemirror.state/CharCategory // com.monkopedia.kodemirror.state/CharCategory.valueOf|valueOf#static(kotlin.String){}[0]
+    final fun values(): kotlin/Array<com.monkopedia.kodemirror.state/CharCategory> // com.monkopedia.kodemirror.state/CharCategory.values|values#static(){}[0]
+}
+
+final enum class com.monkopedia.kodemirror.state/MapMode : kotlin/Enum<com.monkopedia.kodemirror.state/MapMode> { // com.monkopedia.kodemirror.state/MapMode|null[0]
+    enum entry Simple // com.monkopedia.kodemirror.state/MapMode.Simple|null[0]
+    enum entry TrackAfter // com.monkopedia.kodemirror.state/MapMode.TrackAfter|null[0]
+    enum entry TrackBefore // com.monkopedia.kodemirror.state/MapMode.TrackBefore|null[0]
+    enum entry TrackDel // com.monkopedia.kodemirror.state/MapMode.TrackDel|null[0]
+
+    final val entries // com.monkopedia.kodemirror.state/MapMode.entries|#static{}entries[0]
+        final fun <get-entries>(): kotlin.enums/EnumEntries<com.monkopedia.kodemirror.state/MapMode> // com.monkopedia.kodemirror.state/MapMode.entries.<get-entries>|<get-entries>#static(){}[0]
+
+    final fun valueOf(kotlin/String): com.monkopedia.kodemirror.state/MapMode // com.monkopedia.kodemirror.state/MapMode.valueOf|valueOf#static(kotlin.String){}[0]
+    final fun values(): kotlin/Array<com.monkopedia.kodemirror.state/MapMode> // com.monkopedia.kodemirror.state/MapMode.values|values#static(){}[0]
+}
+
+final enum class com.monkopedia.kodemirror.state/TouchesResult : kotlin/Enum<com.monkopedia.kodemirror.state/TouchesResult> { // com.monkopedia.kodemirror.state/TouchesResult|null[0]
+    enum entry Cover // com.monkopedia.kodemirror.state/TouchesResult.Cover|null[0]
+    enum entry No // com.monkopedia.kodemirror.state/TouchesResult.No|null[0]
+    enum entry Yes // com.monkopedia.kodemirror.state/TouchesResult.Yes|null[0]
+
+    final val entries // com.monkopedia.kodemirror.state/TouchesResult.entries|#static{}entries[0]
+        final fun <get-entries>(): kotlin.enums/EnumEntries<com.monkopedia.kodemirror.state/TouchesResult> // com.monkopedia.kodemirror.state/TouchesResult.entries.<get-entries>|<get-entries>#static(){}[0]
+
+    final fun toBoolean(): kotlin/Boolean // com.monkopedia.kodemirror.state/TouchesResult.toBoolean|toBoolean(){}[0]
+    final fun valueOf(kotlin/String): com.monkopedia.kodemirror.state/TouchesResult // com.monkopedia.kodemirror.state/TouchesResult.valueOf|valueOf#static(kotlin.String){}[0]
+    final fun values(): kotlin/Array<com.monkopedia.kodemirror.state/TouchesResult> // com.monkopedia.kodemirror.state/TouchesResult.values|values#static(){}[0]
+}
+
+abstract interface <#A: com.monkopedia.kodemirror.state/RangeValue> com.monkopedia.kodemirror.state/RangeComparator { // com.monkopedia.kodemirror.state/RangeComparator|null[0]
+    abstract fun comparePoint(com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos, #A?, #A?) // com.monkopedia.kodemirror.state/RangeComparator.comparePoint|comparePoint(com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos;1:0?;1:0?){}[0]
+    abstract fun compareRange(com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos, kotlin.collections/List<#A>, kotlin.collections/List<#A>) // com.monkopedia.kodemirror.state/RangeComparator.compareRange|compareRange(com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos;kotlin.collections.List<1:0>;kotlin.collections.List<1:0>){}[0]
+    open fun boundChange(com.monkopedia.kodemirror.state/DocPos) // com.monkopedia.kodemirror.state/RangeComparator.boundChange|boundChange(com.monkopedia.kodemirror.state.DocPos){}[0]
+}
+
+abstract interface <#A: com.monkopedia.kodemirror.state/RangeValue> com.monkopedia.kodemirror.state/SpanIterator { // com.monkopedia.kodemirror.state/SpanIterator|null[0]
+    abstract fun point(com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos, #A, kotlin.collections/List<#A>, kotlin/Int, kotlin/Int) // com.monkopedia.kodemirror.state/SpanIterator.point|point(com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos;1:0;kotlin.collections.List<1:0>;kotlin.Int;kotlin.Int){}[0]
+    abstract fun span(com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos, kotlin.collections/List<#A>, kotlin/Int) // com.monkopedia.kodemirror.state/SpanIterator.span|span(com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos;kotlin.collections.List<1:0>;kotlin.Int){}[0]
+}
+
+abstract interface <#A: kotlin/Any?> com.monkopedia.kodemirror.state/RangeCursor { // com.monkopedia.kodemirror.state/RangeCursor|null[0]
+    abstract var from // com.monkopedia.kodemirror.state/RangeCursor.from|{}from[0]
+        abstract fun <get-from>(): kotlin/Int // com.monkopedia.kodemirror.state/RangeCursor.from.<get-from>|<get-from>(){}[0]
+        abstract fun <set-from>(kotlin/Int) // com.monkopedia.kodemirror.state/RangeCursor.from.<set-from>|<set-from>(kotlin.Int){}[0]
+    abstract var rank // com.monkopedia.kodemirror.state/RangeCursor.rank|{}rank[0]
+        abstract fun <get-rank>(): kotlin/Int // com.monkopedia.kodemirror.state/RangeCursor.rank.<get-rank>|<get-rank>(){}[0]
+        abstract fun <set-rank>(kotlin/Int) // com.monkopedia.kodemirror.state/RangeCursor.rank.<set-rank>|<set-rank>(kotlin.Int){}[0]
+    abstract var to // com.monkopedia.kodemirror.state/RangeCursor.to|{}to[0]
+        abstract fun <get-to>(): kotlin/Int // com.monkopedia.kodemirror.state/RangeCursor.to.<get-to>|<get-to>(){}[0]
+        abstract fun <set-to>(kotlin/Int) // com.monkopedia.kodemirror.state/RangeCursor.to.<set-to>|<set-to>(kotlin.Int){}[0]
+    abstract var value // com.monkopedia.kodemirror.state/RangeCursor.value|{}value[0]
+        abstract fun <get-value>(): #A? // com.monkopedia.kodemirror.state/RangeCursor.value.<get-value>|<get-value>(){}[0]
+        abstract fun <set-value>(#A?) // com.monkopedia.kodemirror.state/RangeCursor.value.<set-value>|<set-value>(1:0?){}[0]
+
+    abstract fun goto(kotlin/Int, kotlin/Int = ...): com.monkopedia.kodemirror.state/RangeCursor<#A> // com.monkopedia.kodemirror.state/RangeCursor.goto|goto(kotlin.Int;kotlin.Int){}[0]
+    abstract fun next() // com.monkopedia.kodemirror.state/RangeCursor.next|next(){}[0]
+}
+
+abstract interface com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.state/Extension|null[0]
+
+abstract interface com.monkopedia.kodemirror.state/TextIterator { // com.monkopedia.kodemirror.state/TextIterator|null[0]
+    abstract val done // com.monkopedia.kodemirror.state/TextIterator.done|{}done[0]
+        abstract fun <get-done>(): kotlin/Boolean // com.monkopedia.kodemirror.state/TextIterator.done.<get-done>|<get-done>(){}[0]
+    abstract val lineBreak // com.monkopedia.kodemirror.state/TextIterator.lineBreak|{}lineBreak[0]
+        abstract fun <get-lineBreak>(): kotlin/Boolean // com.monkopedia.kodemirror.state/TextIterator.lineBreak.<get-lineBreak>|<get-lineBreak>(){}[0]
+    abstract val value // com.monkopedia.kodemirror.state/TextIterator.value|{}value[0]
+        abstract fun <get-value>(): kotlin/String // com.monkopedia.kodemirror.state/TextIterator.value.<get-value>|<get-value>(){}[0]
+
+    abstract fun next(kotlin/Int = ...): com.monkopedia.kodemirror.state/TextIterator // com.monkopedia.kodemirror.state/TextIterator.next|next(kotlin.Int){}[0]
+}
+
+sealed interface <#A: kotlin/Any?, #B: kotlin/Any?> com.monkopedia.kodemirror.state/FacetEnabler { // com.monkopedia.kodemirror.state/FacetEnabler|null[0]
+    final class <#A1: kotlin/Any?, #B1: kotlin/Any?> DynamicExtension : com.monkopedia.kodemirror.state/FacetEnabler<#A1, #B1> { // com.monkopedia.kodemirror.state/FacetEnabler.DynamicExtension|null[0]
+        constructor <init>(kotlin/Function1<com.monkopedia.kodemirror.state/Facet<#A1, #B1>, com.monkopedia.kodemirror.state/Extension>) // com.monkopedia.kodemirror.state/FacetEnabler.DynamicExtension.<init>|<init>(kotlin.Function1<com.monkopedia.kodemirror.state.Facet<1:0,1:1>,com.monkopedia.kodemirror.state.Extension>){}[0]
+
+        final val fn // com.monkopedia.kodemirror.state/FacetEnabler.DynamicExtension.fn|{}fn[0]
+            final fun <get-fn>(): kotlin/Function1<com.monkopedia.kodemirror.state/Facet<#A1, #B1>, com.monkopedia.kodemirror.state/Extension> // com.monkopedia.kodemirror.state/FacetEnabler.DynamicExtension.fn.<get-fn>|<get-fn>(){}[0]
+
+        final fun component1(): kotlin/Function1<com.monkopedia.kodemirror.state/Facet<#A1, #B1>, com.monkopedia.kodemirror.state/Extension> // com.monkopedia.kodemirror.state/FacetEnabler.DynamicExtension.component1|component1(){}[0]
+        final fun copy(kotlin/Function1<com.monkopedia.kodemirror.state/Facet<#A1, #B1>, com.monkopedia.kodemirror.state/Extension> = ...): com.monkopedia.kodemirror.state/FacetEnabler.DynamicExtension<#A1, #B1> // com.monkopedia.kodemirror.state/FacetEnabler.DynamicExtension.copy|copy(kotlin.Function1<com.monkopedia.kodemirror.state.Facet<1:0,1:1>,com.monkopedia.kodemirror.state.Extension>){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/FacetEnabler.DynamicExtension.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/FacetEnabler.DynamicExtension.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/FacetEnabler.DynamicExtension.toString|toString(){}[0]
+    }
+
+    final class <#A1: kotlin/Any?, #B1: kotlin/Any?> StaticExtension : com.monkopedia.kodemirror.state/FacetEnabler<#A1, #B1> { // com.monkopedia.kodemirror.state/FacetEnabler.StaticExtension|null[0]
+        constructor <init>(com.monkopedia.kodemirror.state/Extension) // com.monkopedia.kodemirror.state/FacetEnabler.StaticExtension.<init>|<init>(com.monkopedia.kodemirror.state.Extension){}[0]
+
+        final val ext // com.monkopedia.kodemirror.state/FacetEnabler.StaticExtension.ext|{}ext[0]
+            final fun <get-ext>(): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.state/FacetEnabler.StaticExtension.ext.<get-ext>|<get-ext>(){}[0]
+
+        final fun component1(): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.state/FacetEnabler.StaticExtension.component1|component1(){}[0]
+        final fun copy(com.monkopedia.kodemirror.state/Extension = ...): com.monkopedia.kodemirror.state/FacetEnabler.StaticExtension<#A1, #B1> // com.monkopedia.kodemirror.state/FacetEnabler.StaticExtension.copy|copy(com.monkopedia.kodemirror.state.Extension){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/FacetEnabler.StaticExtension.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/FacetEnabler.StaticExtension.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/FacetEnabler.StaticExtension.toString|toString(){}[0]
+    }
+}
+
+sealed interface <#A: kotlin/Any?> com.monkopedia.kodemirror.state/FieldSerialization { // com.monkopedia.kodemirror.state/FieldSerialization|null[0]
+    final class <#A1: kotlin/Any?> Custom : com.monkopedia.kodemirror.state/FieldSerialization<#A1> { // com.monkopedia.kodemirror.state/FieldSerialization.Custom|null[0]
+        constructor <init>(kotlin/Function2<#A1, com.monkopedia.kodemirror.state/EditorState, kotlin/Any?>, kotlin/Function2<kotlin/Any?, com.monkopedia.kodemirror.state/EditorState, #A1>) // com.monkopedia.kodemirror.state/FieldSerialization.Custom.<init>|<init>(kotlin.Function2<1:0,com.monkopedia.kodemirror.state.EditorState,kotlin.Any?>;kotlin.Function2<kotlin.Any?,com.monkopedia.kodemirror.state.EditorState,1:0>){}[0]
+
+        final val fromJSON // com.monkopedia.kodemirror.state/FieldSerialization.Custom.fromJSON|{}fromJSON[0]
+            final fun <get-fromJSON>(): kotlin/Function2<kotlin/Any?, com.monkopedia.kodemirror.state/EditorState, #A1> // com.monkopedia.kodemirror.state/FieldSerialization.Custom.fromJSON.<get-fromJSON>|<get-fromJSON>(){}[0]
+        final val toJSON // com.monkopedia.kodemirror.state/FieldSerialization.Custom.toJSON|{}toJSON[0]
+            final fun <get-toJSON>(): kotlin/Function2<#A1, com.monkopedia.kodemirror.state/EditorState, kotlin/Any?> // com.monkopedia.kodemirror.state/FieldSerialization.Custom.toJSON.<get-toJSON>|<get-toJSON>(){}[0]
+
+        final fun component1(): kotlin/Function2<#A1, com.monkopedia.kodemirror.state/EditorState, kotlin/Any?> // com.monkopedia.kodemirror.state/FieldSerialization.Custom.component1|component1(){}[0]
+        final fun component2(): kotlin/Function2<kotlin/Any?, com.monkopedia.kodemirror.state/EditorState, #A1> // com.monkopedia.kodemirror.state/FieldSerialization.Custom.component2|component2(){}[0]
+        final fun copy(kotlin/Function2<#A1, com.monkopedia.kodemirror.state/EditorState, kotlin/Any?> = ..., kotlin/Function2<kotlin/Any?, com.monkopedia.kodemirror.state/EditorState, #A1> = ...): com.monkopedia.kodemirror.state/FieldSerialization.Custom<#A1> // com.monkopedia.kodemirror.state/FieldSerialization.Custom.copy|copy(kotlin.Function2<1:0,com.monkopedia.kodemirror.state.EditorState,kotlin.Any?>;kotlin.Function2<kotlin.Any?,com.monkopedia.kodemirror.state.EditorState,1:0>){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/FieldSerialization.Custom.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/FieldSerialization.Custom.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/FieldSerialization.Custom.toString|toString(){}[0]
+    }
+
+    final class <#A1: kotlin/Any?> None : com.monkopedia.kodemirror.state/FieldSerialization<#A1> // com.monkopedia.kodemirror.state/FieldSerialization.None|null[0]
+
+    final class <#A1: kotlin/Any?> Serializer : com.monkopedia.kodemirror.state/FieldSerialization<#A1> { // com.monkopedia.kodemirror.state/FieldSerialization.Serializer|null[0]
+        constructor <init>(kotlinx.serialization/KSerializer<#A1>) // com.monkopedia.kodemirror.state/FieldSerialization.Serializer.<init>|<init>(kotlinx.serialization.KSerializer<1:0>){}[0]
+
+        final val serializer // com.monkopedia.kodemirror.state/FieldSerialization.Serializer.serializer|{}serializer[0]
+            final fun <get-serializer>(): kotlinx.serialization/KSerializer<#A1> // com.monkopedia.kodemirror.state/FieldSerialization.Serializer.serializer.<get-serializer>|<get-serializer>(){}[0]
+
+        final fun component1(): kotlinx.serialization/KSerializer<#A1> // com.monkopedia.kodemirror.state/FieldSerialization.Serializer.component1|component1(){}[0]
+        final fun copy(kotlinx.serialization/KSerializer<#A1> = ...): com.monkopedia.kodemirror.state/FieldSerialization.Serializer<#A1> // com.monkopedia.kodemirror.state/FieldSerialization.Serializer.copy|copy(kotlinx.serialization.KSerializer<1:0>){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/FieldSerialization.Serializer.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/FieldSerialization.Serializer.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/FieldSerialization.Serializer.toString|toString(){}[0]
+    }
+
+    final object Companion { // com.monkopedia.kodemirror.state/FieldSerialization.Companion|null[0]
+        final fun <#A2: kotlin/Any?> none(): com.monkopedia.kodemirror.state/FieldSerialization<#A2> // com.monkopedia.kodemirror.state/FieldSerialization.Companion.none|none(){0§<kotlin.Any?>}[0]
+    }
+}
+
+sealed interface com.monkopedia.kodemirror.state/ChangeFilterResult { // com.monkopedia.kodemirror.state/ChangeFilterResult|null[0]
+    final class Ranges : com.monkopedia.kodemirror.state/ChangeFilterResult { // com.monkopedia.kodemirror.state/ChangeFilterResult.Ranges|null[0]
+        constructor <init>(kotlin/IntArray) // com.monkopedia.kodemirror.state/ChangeFilterResult.Ranges.<init>|<init>(kotlin.IntArray){}[0]
+
+        final val ranges // com.monkopedia.kodemirror.state/ChangeFilterResult.Ranges.ranges|{}ranges[0]
+            final fun <get-ranges>(): kotlin/IntArray // com.monkopedia.kodemirror.state/ChangeFilterResult.Ranges.ranges.<get-ranges>|<get-ranges>(){}[0]
+
+        final fun component1(): kotlin/IntArray // com.monkopedia.kodemirror.state/ChangeFilterResult.Ranges.component1|component1(){}[0]
+        final fun copy(kotlin/IntArray = ...): com.monkopedia.kodemirror.state/ChangeFilterResult.Ranges // com.monkopedia.kodemirror.state/ChangeFilterResult.Ranges.copy|copy(kotlin.IntArray){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/ChangeFilterResult.Ranges.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/ChangeFilterResult.Ranges.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/ChangeFilterResult.Ranges.toString|toString(){}[0]
+    }
+
+    final object Accept : com.monkopedia.kodemirror.state/ChangeFilterResult { // com.monkopedia.kodemirror.state/ChangeFilterResult.Accept|null[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/ChangeFilterResult.Accept.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/ChangeFilterResult.Accept.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/ChangeFilterResult.Accept.toString|toString(){}[0]
+    }
+
+    final object Reject : com.monkopedia.kodemirror.state/ChangeFilterResult { // com.monkopedia.kodemirror.state/ChangeFilterResult.Reject|null[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/ChangeFilterResult.Reject.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/ChangeFilterResult.Reject.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/ChangeFilterResult.Reject.toString|toString(){}[0]
+    }
+}
+
+sealed interface com.monkopedia.kodemirror.state/ChangeSetJsonPart { // com.monkopedia.kodemirror.state/ChangeSetJsonPart|null[0]
+    final class Deleted : com.monkopedia.kodemirror.state/ChangeSetJsonPart { // com.monkopedia.kodemirror.state/ChangeSetJsonPart.Deleted|null[0]
+        constructor <init>(kotlin/Int) // com.monkopedia.kodemirror.state/ChangeSetJsonPart.Deleted.<init>|<init>(kotlin.Int){}[0]
+
+        final val length // com.monkopedia.kodemirror.state/ChangeSetJsonPart.Deleted.length|{}length[0]
+            final fun <get-length>(): kotlin/Int // com.monkopedia.kodemirror.state/ChangeSetJsonPart.Deleted.length.<get-length>|<get-length>(){}[0]
+
+        final fun component1(): kotlin/Int // com.monkopedia.kodemirror.state/ChangeSetJsonPart.Deleted.component1|component1(){}[0]
+        final fun copy(kotlin/Int = ...): com.monkopedia.kodemirror.state/ChangeSetJsonPart.Deleted // com.monkopedia.kodemirror.state/ChangeSetJsonPart.Deleted.copy|copy(kotlin.Int){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/ChangeSetJsonPart.Deleted.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/ChangeSetJsonPart.Deleted.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/ChangeSetJsonPart.Deleted.toString|toString(){}[0]
+    }
+
+    final class Inserted : com.monkopedia.kodemirror.state/ChangeSetJsonPart { // com.monkopedia.kodemirror.state/ChangeSetJsonPart.Inserted|null[0]
+        constructor <init>(kotlin/Int, kotlin.collections/List<kotlin/String>) // com.monkopedia.kodemirror.state/ChangeSetJsonPart.Inserted.<init>|<init>(kotlin.Int;kotlin.collections.List<kotlin.String>){}[0]
+
+        final val length // com.monkopedia.kodemirror.state/ChangeSetJsonPart.Inserted.length|{}length[0]
+            final fun <get-length>(): kotlin/Int // com.monkopedia.kodemirror.state/ChangeSetJsonPart.Inserted.length.<get-length>|<get-length>(){}[0]
+        final val text // com.monkopedia.kodemirror.state/ChangeSetJsonPart.Inserted.text|{}text[0]
+            final fun <get-text>(): kotlin.collections/List<kotlin/String> // com.monkopedia.kodemirror.state/ChangeSetJsonPart.Inserted.text.<get-text>|<get-text>(){}[0]
+
+        final fun component1(): kotlin/Int // com.monkopedia.kodemirror.state/ChangeSetJsonPart.Inserted.component1|component1(){}[0]
+        final fun component2(): kotlin.collections/List<kotlin/String> // com.monkopedia.kodemirror.state/ChangeSetJsonPart.Inserted.component2|component2(){}[0]
+        final fun copy(kotlin/Int = ..., kotlin.collections/List<kotlin/String> = ...): com.monkopedia.kodemirror.state/ChangeSetJsonPart.Inserted // com.monkopedia.kodemirror.state/ChangeSetJsonPart.Inserted.copy|copy(kotlin.Int;kotlin.collections.List<kotlin.String>){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/ChangeSetJsonPart.Inserted.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/ChangeSetJsonPart.Inserted.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/ChangeSetJsonPart.Inserted.toString|toString(){}[0]
+    }
+
+    final class Kept : com.monkopedia.kodemirror.state/ChangeSetJsonPart { // com.monkopedia.kodemirror.state/ChangeSetJsonPart.Kept|null[0]
+        constructor <init>(kotlin/Int) // com.monkopedia.kodemirror.state/ChangeSetJsonPart.Kept.<init>|<init>(kotlin.Int){}[0]
+
+        final val length // com.monkopedia.kodemirror.state/ChangeSetJsonPart.Kept.length|{}length[0]
+            final fun <get-length>(): kotlin/Int // com.monkopedia.kodemirror.state/ChangeSetJsonPart.Kept.length.<get-length>|<get-length>(){}[0]
+
+        final fun component1(): kotlin/Int // com.monkopedia.kodemirror.state/ChangeSetJsonPart.Kept.component1|component1(){}[0]
+        final fun copy(kotlin/Int = ...): com.monkopedia.kodemirror.state/ChangeSetJsonPart.Kept // com.monkopedia.kodemirror.state/ChangeSetJsonPart.Kept.copy|copy(kotlin.Int){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/ChangeSetJsonPart.Kept.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/ChangeSetJsonPart.Kept.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/ChangeSetJsonPart.Kept.toString|toString(){}[0]
+    }
+}
+
+sealed interface com.monkopedia.kodemirror.state/ChangeSpec { // com.monkopedia.kodemirror.state/ChangeSpec|null[0]
+    final class Multi : com.monkopedia.kodemirror.state/ChangeSpec { // com.monkopedia.kodemirror.state/ChangeSpec.Multi|null[0]
+        constructor <init>(kotlin.collections/List<com.monkopedia.kodemirror.state/ChangeSpec>) // com.monkopedia.kodemirror.state/ChangeSpec.Multi.<init>|<init>(kotlin.collections.List<com.monkopedia.kodemirror.state.ChangeSpec>){}[0]
+
+        final val specs // com.monkopedia.kodemirror.state/ChangeSpec.Multi.specs|{}specs[0]
+            final fun <get-specs>(): kotlin.collections/List<com.monkopedia.kodemirror.state/ChangeSpec> // com.monkopedia.kodemirror.state/ChangeSpec.Multi.specs.<get-specs>|<get-specs>(){}[0]
+
+        final fun component1(): kotlin.collections/List<com.monkopedia.kodemirror.state/ChangeSpec> // com.monkopedia.kodemirror.state/ChangeSpec.Multi.component1|component1(){}[0]
+        final fun copy(kotlin.collections/List<com.monkopedia.kodemirror.state/ChangeSpec> = ...): com.monkopedia.kodemirror.state/ChangeSpec.Multi // com.monkopedia.kodemirror.state/ChangeSpec.Multi.copy|copy(kotlin.collections.List<com.monkopedia.kodemirror.state.ChangeSpec>){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/ChangeSpec.Multi.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/ChangeSpec.Multi.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/ChangeSpec.Multi.toString|toString(){}[0]
+    }
+
+    final class Set : com.monkopedia.kodemirror.state/ChangeSpec { // com.monkopedia.kodemirror.state/ChangeSpec.Set|null[0]
+        constructor <init>(com.monkopedia.kodemirror.state/ChangeSet) // com.monkopedia.kodemirror.state/ChangeSpec.Set.<init>|<init>(com.monkopedia.kodemirror.state.ChangeSet){}[0]
+
+        final val changeSet // com.monkopedia.kodemirror.state/ChangeSpec.Set.changeSet|{}changeSet[0]
+            final fun <get-changeSet>(): com.monkopedia.kodemirror.state/ChangeSet // com.monkopedia.kodemirror.state/ChangeSpec.Set.changeSet.<get-changeSet>|<get-changeSet>(){}[0]
+    }
+
+    final class Single : com.monkopedia.kodemirror.state/ChangeSpec { // com.monkopedia.kodemirror.state/ChangeSpec.Single|null[0]
+        constructor <init>(com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos? = ..., com.monkopedia.kodemirror.state/InsertContent? = ...) // com.monkopedia.kodemirror.state/ChangeSpec.Single.<init>|<init>(com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos?;com.monkopedia.kodemirror.state.InsertContent?){}[0]
+
+        final val from // com.monkopedia.kodemirror.state/ChangeSpec.Single.from|{}from[0]
+            final fun <get-from>(): com.monkopedia.kodemirror.state/DocPos // com.monkopedia.kodemirror.state/ChangeSpec.Single.from.<get-from>|<get-from>(){}[0]
+        final val insert // com.monkopedia.kodemirror.state/ChangeSpec.Single.insert|{}insert[0]
+            final fun <get-insert>(): com.monkopedia.kodemirror.state/InsertContent? // com.monkopedia.kodemirror.state/ChangeSpec.Single.insert.<get-insert>|<get-insert>(){}[0]
+        final val to // com.monkopedia.kodemirror.state/ChangeSpec.Single.to|{}to[0]
+            final fun <get-to>(): com.monkopedia.kodemirror.state/DocPos? // com.monkopedia.kodemirror.state/ChangeSpec.Single.to.<get-to>|<get-to>(){}[0]
+
+        final fun component1(): com.monkopedia.kodemirror.state/DocPos // com.monkopedia.kodemirror.state/ChangeSpec.Single.component1|component1(){}[0]
+        final fun component2(): com.monkopedia.kodemirror.state/DocPos? // com.monkopedia.kodemirror.state/ChangeSpec.Single.component2|component2(){}[0]
+        final fun component3(): com.monkopedia.kodemirror.state/InsertContent? // com.monkopedia.kodemirror.state/ChangeSpec.Single.component3|component3(){}[0]
+        final fun copy(com.monkopedia.kodemirror.state/DocPos = ..., com.monkopedia.kodemirror.state/DocPos? = ..., com.monkopedia.kodemirror.state/InsertContent? = ...): com.monkopedia.kodemirror.state/ChangeSpec.Single // com.monkopedia.kodemirror.state/ChangeSpec.Single.copy|copy(com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos?;com.monkopedia.kodemirror.state.InsertContent?){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/ChangeSpec.Single.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/ChangeSpec.Single.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/ChangeSpec.Single.toString|toString(){}[0]
+    }
+}
+
+sealed interface com.monkopedia.kodemirror.state/DocSpec { // com.monkopedia.kodemirror.state/DocSpec|null[0]
+    final class StringDoc : com.monkopedia.kodemirror.state/DocSpec { // com.monkopedia.kodemirror.state/DocSpec.StringDoc|null[0]
+        constructor <init>(kotlin/String) // com.monkopedia.kodemirror.state/DocSpec.StringDoc.<init>|<init>(kotlin.String){}[0]
+
+        final val content // com.monkopedia.kodemirror.state/DocSpec.StringDoc.content|{}content[0]
+            final fun <get-content>(): kotlin/String // com.monkopedia.kodemirror.state/DocSpec.StringDoc.content.<get-content>|<get-content>(){}[0]
+
+        final fun component1(): kotlin/String // com.monkopedia.kodemirror.state/DocSpec.StringDoc.component1|component1(){}[0]
+        final fun copy(kotlin/String = ...): com.monkopedia.kodemirror.state/DocSpec.StringDoc // com.monkopedia.kodemirror.state/DocSpec.StringDoc.copy|copy(kotlin.String){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/DocSpec.StringDoc.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/DocSpec.StringDoc.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/DocSpec.StringDoc.toString|toString(){}[0]
+    }
+
+    final class TextDoc : com.monkopedia.kodemirror.state/DocSpec { // com.monkopedia.kodemirror.state/DocSpec.TextDoc|null[0]
+        constructor <init>(com.monkopedia.kodemirror.state/Text) // com.monkopedia.kodemirror.state/DocSpec.TextDoc.<init>|<init>(com.monkopedia.kodemirror.state.Text){}[0]
+
+        final val text // com.monkopedia.kodemirror.state/DocSpec.TextDoc.text|{}text[0]
+            final fun <get-text>(): com.monkopedia.kodemirror.state/Text // com.monkopedia.kodemirror.state/DocSpec.TextDoc.text.<get-text>|<get-text>(){}[0]
+
+        final fun component1(): com.monkopedia.kodemirror.state/Text // com.monkopedia.kodemirror.state/DocSpec.TextDoc.component1|component1(){}[0]
+        final fun copy(com.monkopedia.kodemirror.state/Text = ...): com.monkopedia.kodemirror.state/DocSpec.TextDoc // com.monkopedia.kodemirror.state/DocSpec.TextDoc.copy|copy(com.monkopedia.kodemirror.state.Text){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/DocSpec.TextDoc.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/DocSpec.TextDoc.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/DocSpec.TextDoc.toString|toString(){}[0]
+    }
+}
+
+sealed interface com.monkopedia.kodemirror.state/InsertContent { // com.monkopedia.kodemirror.state/InsertContent|null[0]
+    final class StringContent : com.monkopedia.kodemirror.state/InsertContent { // com.monkopedia.kodemirror.state/InsertContent.StringContent|null[0]
+        constructor <init>(kotlin/String) // com.monkopedia.kodemirror.state/InsertContent.StringContent.<init>|<init>(kotlin.String){}[0]
+
+        final val value // com.monkopedia.kodemirror.state/InsertContent.StringContent.value|{}value[0]
+            final fun <get-value>(): kotlin/String // com.monkopedia.kodemirror.state/InsertContent.StringContent.value.<get-value>|<get-value>(){}[0]
+
+        final fun component1(): kotlin/String // com.monkopedia.kodemirror.state/InsertContent.StringContent.component1|component1(){}[0]
+        final fun copy(kotlin/String = ...): com.monkopedia.kodemirror.state/InsertContent.StringContent // com.monkopedia.kodemirror.state/InsertContent.StringContent.copy|copy(kotlin.String){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/InsertContent.StringContent.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/InsertContent.StringContent.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/InsertContent.StringContent.toString|toString(){}[0]
+    }
+
+    final class TextContent : com.monkopedia.kodemirror.state/InsertContent { // com.monkopedia.kodemirror.state/InsertContent.TextContent|null[0]
+        constructor <init>(com.monkopedia.kodemirror.state/Text) // com.monkopedia.kodemirror.state/InsertContent.TextContent.<init>|<init>(com.monkopedia.kodemirror.state.Text){}[0]
+
+        final val value // com.monkopedia.kodemirror.state/InsertContent.TextContent.value|{}value[0]
+            final fun <get-value>(): com.monkopedia.kodemirror.state/Text // com.monkopedia.kodemirror.state/InsertContent.TextContent.value.<get-value>|<get-value>(){}[0]
+
+        final fun component1(): com.monkopedia.kodemirror.state/Text // com.monkopedia.kodemirror.state/InsertContent.TextContent.component1|component1(){}[0]
+        final fun copy(com.monkopedia.kodemirror.state/Text = ...): com.monkopedia.kodemirror.state/InsertContent.TextContent // com.monkopedia.kodemirror.state/InsertContent.TextContent.copy|copy(com.monkopedia.kodemirror.state.Text){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/InsertContent.TextContent.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/InsertContent.TextContent.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/InsertContent.TextContent.toString|toString(){}[0]
+    }
+}
+
+sealed interface com.monkopedia.kodemirror.state/SelectionSpec { // com.monkopedia.kodemirror.state/SelectionSpec|null[0]
+    final class CursorSpec : com.monkopedia.kodemirror.state/SelectionSpec { // com.monkopedia.kodemirror.state/SelectionSpec.CursorSpec|null[0]
+        constructor <init>(com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos? = ...) // com.monkopedia.kodemirror.state/SelectionSpec.CursorSpec.<init>|<init>(com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos?){}[0]
+
+        final val anchor // com.monkopedia.kodemirror.state/SelectionSpec.CursorSpec.anchor|{}anchor[0]
+            final fun <get-anchor>(): com.monkopedia.kodemirror.state/DocPos // com.monkopedia.kodemirror.state/SelectionSpec.CursorSpec.anchor.<get-anchor>|<get-anchor>(){}[0]
+        final val head // com.monkopedia.kodemirror.state/SelectionSpec.CursorSpec.head|{}head[0]
+            final fun <get-head>(): com.monkopedia.kodemirror.state/DocPos? // com.monkopedia.kodemirror.state/SelectionSpec.CursorSpec.head.<get-head>|<get-head>(){}[0]
+
+        final fun component1(): com.monkopedia.kodemirror.state/DocPos // com.monkopedia.kodemirror.state/SelectionSpec.CursorSpec.component1|component1(){}[0]
+        final fun component2(): com.monkopedia.kodemirror.state/DocPos? // com.monkopedia.kodemirror.state/SelectionSpec.CursorSpec.component2|component2(){}[0]
+        final fun copy(com.monkopedia.kodemirror.state/DocPos = ..., com.monkopedia.kodemirror.state/DocPos? = ...): com.monkopedia.kodemirror.state/SelectionSpec.CursorSpec // com.monkopedia.kodemirror.state/SelectionSpec.CursorSpec.copy|copy(com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos?){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/SelectionSpec.CursorSpec.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/SelectionSpec.CursorSpec.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/SelectionSpec.CursorSpec.toString|toString(){}[0]
+    }
+
+    final class EditorSelectionSpec : com.monkopedia.kodemirror.state/SelectionSpec { // com.monkopedia.kodemirror.state/SelectionSpec.EditorSelectionSpec|null[0]
+        constructor <init>(com.monkopedia.kodemirror.state/EditorSelection) // com.monkopedia.kodemirror.state/SelectionSpec.EditorSelectionSpec.<init>|<init>(com.monkopedia.kodemirror.state.EditorSelection){}[0]
+
+        final val selection // com.monkopedia.kodemirror.state/SelectionSpec.EditorSelectionSpec.selection|{}selection[0]
+            final fun <get-selection>(): com.monkopedia.kodemirror.state/EditorSelection // com.monkopedia.kodemirror.state/SelectionSpec.EditorSelectionSpec.selection.<get-selection>|<get-selection>(){}[0]
+
+        final fun component1(): com.monkopedia.kodemirror.state/EditorSelection // com.monkopedia.kodemirror.state/SelectionSpec.EditorSelectionSpec.component1|component1(){}[0]
+        final fun copy(com.monkopedia.kodemirror.state/EditorSelection = ...): com.monkopedia.kodemirror.state/SelectionSpec.EditorSelectionSpec // com.monkopedia.kodemirror.state/SelectionSpec.EditorSelectionSpec.copy|copy(com.monkopedia.kodemirror.state.EditorSelection){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/SelectionSpec.EditorSelectionSpec.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/SelectionSpec.EditorSelectionSpec.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/SelectionSpec.EditorSelectionSpec.toString|toString(){}[0]
+    }
+}
+
+sealed interface com.monkopedia.kodemirror.state/TransactionFilterResult { // com.monkopedia.kodemirror.state/TransactionFilterResult|null[0]
+    final class Filtered : com.monkopedia.kodemirror.state/TransactionFilterResult { // com.monkopedia.kodemirror.state/TransactionFilterResult.Filtered|null[0]
+        constructor <init>(com.monkopedia.kodemirror.state/Transaction) // com.monkopedia.kodemirror.state/TransactionFilterResult.Filtered.<init>|<init>(com.monkopedia.kodemirror.state.Transaction){}[0]
+
+        final val transaction // com.monkopedia.kodemirror.state/TransactionFilterResult.Filtered.transaction|{}transaction[0]
+            final fun <get-transaction>(): com.monkopedia.kodemirror.state/Transaction // com.monkopedia.kodemirror.state/TransactionFilterResult.Filtered.transaction.<get-transaction>|<get-transaction>(){}[0]
+
+        final fun component1(): com.monkopedia.kodemirror.state/Transaction // com.monkopedia.kodemirror.state/TransactionFilterResult.Filtered.component1|component1(){}[0]
+        final fun copy(com.monkopedia.kodemirror.state/Transaction = ...): com.monkopedia.kodemirror.state/TransactionFilterResult.Filtered // com.monkopedia.kodemirror.state/TransactionFilterResult.Filtered.copy|copy(com.monkopedia.kodemirror.state.Transaction){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/TransactionFilterResult.Filtered.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/TransactionFilterResult.Filtered.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/TransactionFilterResult.Filtered.toString|toString(){}[0]
+    }
+
+    final class Specs : com.monkopedia.kodemirror.state/TransactionFilterResult { // com.monkopedia.kodemirror.state/TransactionFilterResult.Specs|null[0]
+        constructor <init>(kotlin.collections/List<com.monkopedia.kodemirror.state/TransactionSpec>) // com.monkopedia.kodemirror.state/TransactionFilterResult.Specs.<init>|<init>(kotlin.collections.List<com.monkopedia.kodemirror.state.TransactionSpec>){}[0]
+
+        final val specs // com.monkopedia.kodemirror.state/TransactionFilterResult.Specs.specs|{}specs[0]
+            final fun <get-specs>(): kotlin.collections/List<com.monkopedia.kodemirror.state/TransactionSpec> // com.monkopedia.kodemirror.state/TransactionFilterResult.Specs.specs.<get-specs>|<get-specs>(){}[0]
+
+        final fun component1(): kotlin.collections/List<com.monkopedia.kodemirror.state/TransactionSpec> // com.monkopedia.kodemirror.state/TransactionFilterResult.Specs.component1|component1(){}[0]
+        final fun copy(kotlin.collections/List<com.monkopedia.kodemirror.state/TransactionSpec> = ...): com.monkopedia.kodemirror.state/TransactionFilterResult.Specs // com.monkopedia.kodemirror.state/TransactionFilterResult.Specs.copy|copy(kotlin.collections.List<com.monkopedia.kodemirror.state.TransactionSpec>){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/TransactionFilterResult.Specs.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/TransactionFilterResult.Specs.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/TransactionFilterResult.Specs.toString|toString(){}[0]
+    }
+}
+
+abstract class com.monkopedia.kodemirror.state/RangeValue { // com.monkopedia.kodemirror.state/RangeValue|null[0]
+    constructor <init>() // com.monkopedia.kodemirror.state/RangeValue.<init>|<init>(){}[0]
+
+    open val endSide // com.monkopedia.kodemirror.state/RangeValue.endSide|{}endSide[0]
+        open fun <get-endSide>(): kotlin/Int // com.monkopedia.kodemirror.state/RangeValue.endSide.<get-endSide>|<get-endSide>(){}[0]
+    open val mapMode // com.monkopedia.kodemirror.state/RangeValue.mapMode|{}mapMode[0]
+        open fun <get-mapMode>(): com.monkopedia.kodemirror.state/MapMode // com.monkopedia.kodemirror.state/RangeValue.mapMode.<get-mapMode>|<get-mapMode>(){}[0]
+    open val point // com.monkopedia.kodemirror.state/RangeValue.point|{}point[0]
+        open fun <get-point>(): kotlin/Boolean // com.monkopedia.kodemirror.state/RangeValue.point.<get-point>|<get-point>(){}[0]
+    open val startSide // com.monkopedia.kodemirror.state/RangeValue.startSide|{}startSide[0]
+        open fun <get-startSide>(): kotlin/Int // com.monkopedia.kodemirror.state/RangeValue.startSide.<get-startSide>|<get-startSide>(){}[0]
+
+    final fun range(com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos = ...): com.monkopedia.kodemirror.state/Range<kotlin/Nothing> // com.monkopedia.kodemirror.state/RangeValue.range|range(com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos){}[0]
+    open fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/RangeValue.equals|equals(kotlin.Any?){}[0]
+}
+
+abstract class com.monkopedia.kodemirror.state/Text { // com.monkopedia.kodemirror.state/Text|null[0]
+    constructor <init>() // com.monkopedia.kodemirror.state/Text.<init>|<init>(){}[0]
+
+    abstract val children // com.monkopedia.kodemirror.state/Text.children|{}children[0]
+        abstract fun <get-children>(): kotlin.collections/List<com.monkopedia.kodemirror.state/Text>? // com.monkopedia.kodemirror.state/Text.children.<get-children>|<get-children>(){}[0]
+    abstract val length // com.monkopedia.kodemirror.state/Text.length|{}length[0]
+        abstract fun <get-length>(): kotlin/Int // com.monkopedia.kodemirror.state/Text.length.<get-length>|<get-length>(){}[0]
+    abstract val lines // com.monkopedia.kodemirror.state/Text.lines|{}lines[0]
+        abstract fun <get-lines>(): kotlin/Int // com.monkopedia.kodemirror.state/Text.lines.<get-lines>|<get-lines>(){}[0]
+    final val isEmpty // com.monkopedia.kodemirror.state/Text.isEmpty|{}isEmpty[0]
+        final fun <get-isEmpty>(): kotlin/Boolean // com.monkopedia.kodemirror.state/Text.isEmpty.<get-isEmpty>|<get-isEmpty>(){}[0]
+    final val isNotEmpty // com.monkopedia.kodemirror.state/Text.isNotEmpty|{}isNotEmpty[0]
+        final fun <get-isNotEmpty>(): kotlin/Boolean // com.monkopedia.kodemirror.state/Text.isNotEmpty.<get-isNotEmpty>|<get-isNotEmpty>(){}[0]
+
+    abstract fun sliceString(com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos = ..., kotlin/String = ...): kotlin/String // com.monkopedia.kodemirror.state/Text.sliceString|sliceString(com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos;kotlin.String){}[0]
+    final fun append(com.monkopedia.kodemirror.state/Text): com.monkopedia.kodemirror.state/Text // com.monkopedia.kodemirror.state/Text.append|append(com.monkopedia.kodemirror.state.Text){}[0]
+    final fun get(kotlin.ranges/IntRange): kotlin/String // com.monkopedia.kodemirror.state/Text.get|get(kotlin.ranges.IntRange){}[0]
+    final fun iter(kotlin/Int = ...): com.monkopedia.kodemirror.state/TextIterator // com.monkopedia.kodemirror.state/Text.iter|iter(kotlin.Int){}[0]
+    final fun iterLines(com.monkopedia.kodemirror.state/LineNumber? = ..., com.monkopedia.kodemirror.state/LineNumber? = ...): com.monkopedia.kodemirror.state/TextIterator // com.monkopedia.kodemirror.state/Text.iterLines|iterLines(com.monkopedia.kodemirror.state.LineNumber?;com.monkopedia.kodemirror.state.LineNumber?){}[0]
+    final fun iterRange(com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos = ...): com.monkopedia.kodemirror.state/TextIterator // com.monkopedia.kodemirror.state/Text.iterRange|iterRange(com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos){}[0]
+    final fun line(com.monkopedia.kodemirror.state/LineNumber): com.monkopedia.kodemirror.state/Line // com.monkopedia.kodemirror.state/Text.line|line(com.monkopedia.kodemirror.state.LineNumber){}[0]
+    final fun lineAt(com.monkopedia.kodemirror.state/DocPos): com.monkopedia.kodemirror.state/Line // com.monkopedia.kodemirror.state/Text.lineAt|lineAt(com.monkopedia.kodemirror.state.DocPos){}[0]
+    final fun lineSequence(): kotlin.sequences/Sequence<com.monkopedia.kodemirror.state/Line> // com.monkopedia.kodemirror.state/Text.lineSequence|lineSequence(){}[0]
+    final fun slice(com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos = ...): com.monkopedia.kodemirror.state/Text // com.monkopedia.kodemirror.state/Text.slice|slice(com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos){}[0]
+    final fun toJSON(): kotlin.collections/List<kotlin/String> // com.monkopedia.kodemirror.state/Text.toJSON|toJSON(){}[0]
+    open fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/Text.equals|equals(kotlin.Any?){}[0]
+    open fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/Text.hashCode|hashCode(){}[0]
+    open fun replace(com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/Text): com.monkopedia.kodemirror.state/Text // com.monkopedia.kodemirror.state/Text.replace|replace(com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.Text){}[0]
+    open fun toString(): kotlin/String // com.monkopedia.kodemirror.state/Text.toString|toString(){}[0]
+
+    final object Companion { // com.monkopedia.kodemirror.state/Text.Companion|null[0]
+        final val empty // com.monkopedia.kodemirror.state/Text.Companion.empty|{}empty[0]
+            final fun <get-empty>(): com.monkopedia.kodemirror.state/Text // com.monkopedia.kodemirror.state/Text.Companion.empty.<get-empty>|<get-empty>(){}[0]
+
+        final fun of(kotlin.collections/List<kotlin/String>): com.monkopedia.kodemirror.state/Text // com.monkopedia.kodemirror.state/Text.Companion.of|of(kotlin.collections.List<kotlin.String>){}[0]
+    }
+}
+
+final class <#A: com.monkopedia.kodemirror.state/RangeValue> com.monkopedia.kodemirror.state/RangeSet { // com.monkopedia.kodemirror.state/RangeSet|null[0]
+    final val isEmpty // com.monkopedia.kodemirror.state/RangeSet.isEmpty|{}isEmpty[0]
+        final fun <get-isEmpty>(): kotlin/Boolean // com.monkopedia.kodemirror.state/RangeSet.isEmpty.<get-isEmpty>|<get-isEmpty>(){}[0]
+    final val size // com.monkopedia.kodemirror.state/RangeSet.size|{}size[0]
+        final fun <get-size>(): kotlin/Int // com.monkopedia.kodemirror.state/RangeSet.size.<get-size>|<get-size>(){}[0]
+
+    final fun <#A1: #A> update(com.monkopedia.kodemirror.state/RangeSetUpdate<#A1>): com.monkopedia.kodemirror.state/RangeSet<#A> // com.monkopedia.kodemirror.state/RangeSet.update|update(com.monkopedia.kodemirror.state.RangeSetUpdate<0:0>){0§<1:0>}[0]
+    final fun between(com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos, kotlin/Function3<kotlin/Int, kotlin/Int, #A, kotlin/Boolean?>) // com.monkopedia.kodemirror.state/RangeSet.between|between(com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos;kotlin.Function3<kotlin.Int,kotlin.Int,1:0,kotlin.Boolean?>){}[0]
+    final fun iter(kotlin/Int = ...): com.monkopedia.kodemirror.state/RangeCursor<#A> // com.monkopedia.kodemirror.state/RangeSet.iter|iter(kotlin.Int){}[0]
+    final fun map(com.monkopedia.kodemirror.state/ChangeDesc): com.monkopedia.kodemirror.state/RangeSet<#A> // com.monkopedia.kodemirror.state/RangeSet.map|map(com.monkopedia.kodemirror.state.ChangeDesc){}[0]
+
+    final object Companion { // com.monkopedia.kodemirror.state/RangeSet.Companion|null[0]
+        final fun <#A2: com.monkopedia.kodemirror.state/RangeValue> compare(kotlin.collections/List<com.monkopedia.kodemirror.state/RangeSet<#A2>>, kotlin.collections/List<com.monkopedia.kodemirror.state/RangeSet<#A2>>, com.monkopedia.kodemirror.state/ChangeDesc, com.monkopedia.kodemirror.state/RangeComparator<#A2>, kotlin/Int = ...) // com.monkopedia.kodemirror.state/RangeSet.Companion.compare|compare(kotlin.collections.List<com.monkopedia.kodemirror.state.RangeSet<0:0>>;kotlin.collections.List<com.monkopedia.kodemirror.state.RangeSet<0:0>>;com.monkopedia.kodemirror.state.ChangeDesc;com.monkopedia.kodemirror.state.RangeComparator<0:0>;kotlin.Int){0§<com.monkopedia.kodemirror.state.RangeValue>}[0]
+        final fun <#A2: com.monkopedia.kodemirror.state/RangeValue> empty(): com.monkopedia.kodemirror.state/RangeSet<#A2> // com.monkopedia.kodemirror.state/RangeSet.Companion.empty|empty(){0§<com.monkopedia.kodemirror.state.RangeValue>}[0]
+        final fun <#A2: com.monkopedia.kodemirror.state/RangeValue> eq(kotlin.collections/List<com.monkopedia.kodemirror.state/RangeSet<#A2>>, kotlin.collections/List<com.monkopedia.kodemirror.state/RangeSet<#A2>>, kotlin/Int = ..., kotlin/Int = ...): kotlin/Boolean // com.monkopedia.kodemirror.state/RangeSet.Companion.eq|eq(kotlin.collections.List<com.monkopedia.kodemirror.state.RangeSet<0:0>>;kotlin.collections.List<com.monkopedia.kodemirror.state.RangeSet<0:0>>;kotlin.Int;kotlin.Int){0§<com.monkopedia.kodemirror.state.RangeValue>}[0]
+        final fun <#A2: com.monkopedia.kodemirror.state/RangeValue> iter(kotlin.collections/List<com.monkopedia.kodemirror.state/RangeSet<#A2>>, kotlin/Int = ...): com.monkopedia.kodemirror.state/RangeCursor<#A2> // com.monkopedia.kodemirror.state/RangeSet.Companion.iter|iter(kotlin.collections.List<com.monkopedia.kodemirror.state.RangeSet<0:0>>;kotlin.Int){0§<com.monkopedia.kodemirror.state.RangeValue>}[0]
+        final fun <#A2: com.monkopedia.kodemirror.state/RangeValue> join(kotlin.collections/List<com.monkopedia.kodemirror.state/RangeSet<#A2>>): com.monkopedia.kodemirror.state/RangeSet<#A2> // com.monkopedia.kodemirror.state/RangeSet.Companion.join|join(kotlin.collections.List<com.monkopedia.kodemirror.state.RangeSet<0:0>>){0§<com.monkopedia.kodemirror.state.RangeValue>}[0]
+        final fun <#A2: com.monkopedia.kodemirror.state/RangeValue> of(com.monkopedia.kodemirror.state/Range<#A2>, kotlin/Boolean = ...): com.monkopedia.kodemirror.state/RangeSet<#A2> // com.monkopedia.kodemirror.state/RangeSet.Companion.of|of(com.monkopedia.kodemirror.state.Range<0:0>;kotlin.Boolean){0§<com.monkopedia.kodemirror.state.RangeValue>}[0]
+        final fun <#A2: com.monkopedia.kodemirror.state/RangeValue> of(kotlin.collections/List<com.monkopedia.kodemirror.state/Range<#A2>>, kotlin/Boolean = ...): com.monkopedia.kodemirror.state/RangeSet<#A2> // com.monkopedia.kodemirror.state/RangeSet.Companion.of|of(kotlin.collections.List<com.monkopedia.kodemirror.state.Range<0:0>>;kotlin.Boolean){0§<com.monkopedia.kodemirror.state.RangeValue>}[0]
+        final fun <#A2: com.monkopedia.kodemirror.state/RangeValue> spans(kotlin.collections/List<com.monkopedia.kodemirror.state/RangeSet<#A2>>, kotlin/Int, kotlin/Int, com.monkopedia.kodemirror.state/SpanIterator<#A2>, kotlin/Int = ...): kotlin/Int // com.monkopedia.kodemirror.state/RangeSet.Companion.spans|spans(kotlin.collections.List<com.monkopedia.kodemirror.state.RangeSet<0:0>>;kotlin.Int;kotlin.Int;com.monkopedia.kodemirror.state.SpanIterator<0:0>;kotlin.Int){0§<com.monkopedia.kodemirror.state.RangeValue>}[0]
+    }
+}
+
+final class <#A: com.monkopedia.kodemirror.state/RangeValue> com.monkopedia.kodemirror.state/RangeSetBuilder { // com.monkopedia.kodemirror.state/RangeSetBuilder|null[0]
+    constructor <init>() // com.monkopedia.kodemirror.state/RangeSetBuilder.<init>|<init>(){}[0]
+
+    final fun add(com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos, #A) // com.monkopedia.kodemirror.state/RangeSetBuilder.add|add(com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos;1:0){}[0]
+    final fun finish(): com.monkopedia.kodemirror.state/RangeSet<#A> // com.monkopedia.kodemirror.state/RangeSetBuilder.finish|finish(){}[0]
+}
+
+final class <#A: com.monkopedia.kodemirror.state/RangeValue> com.monkopedia.kodemirror.state/RangeSetUpdate { // com.monkopedia.kodemirror.state/RangeSetUpdate|null[0]
+    constructor <init>(kotlin.collections/List<com.monkopedia.kodemirror.state/Range<#A>> = ..., kotlin/Boolean = ..., kotlin/Function3<kotlin/Int, kotlin/Int, #A, kotlin/Boolean>? = ..., kotlin/Int = ..., kotlin/Int = ...) // com.monkopedia.kodemirror.state/RangeSetUpdate.<init>|<init>(kotlin.collections.List<com.monkopedia.kodemirror.state.Range<1:0>>;kotlin.Boolean;kotlin.Function3<kotlin.Int,kotlin.Int,1:0,kotlin.Boolean>?;kotlin.Int;kotlin.Int){}[0]
+
+    final val add // com.monkopedia.kodemirror.state/RangeSetUpdate.add|{}add[0]
+        final fun <get-add>(): kotlin.collections/List<com.monkopedia.kodemirror.state/Range<#A>> // com.monkopedia.kodemirror.state/RangeSetUpdate.add.<get-add>|<get-add>(){}[0]
+    final val filter // com.monkopedia.kodemirror.state/RangeSetUpdate.filter|{}filter[0]
+        final fun <get-filter>(): kotlin/Function3<kotlin/Int, kotlin/Int, #A, kotlin/Boolean>? // com.monkopedia.kodemirror.state/RangeSetUpdate.filter.<get-filter>|<get-filter>(){}[0]
+    final val filterFrom // com.monkopedia.kodemirror.state/RangeSetUpdate.filterFrom|{}filterFrom[0]
+        final fun <get-filterFrom>(): kotlin/Int // com.monkopedia.kodemirror.state/RangeSetUpdate.filterFrom.<get-filterFrom>|<get-filterFrom>(){}[0]
+    final val filterTo // com.monkopedia.kodemirror.state/RangeSetUpdate.filterTo|{}filterTo[0]
+        final fun <get-filterTo>(): kotlin/Int // com.monkopedia.kodemirror.state/RangeSetUpdate.filterTo.<get-filterTo>|<get-filterTo>(){}[0]
+    final val sort // com.monkopedia.kodemirror.state/RangeSetUpdate.sort|{}sort[0]
+        final fun <get-sort>(): kotlin/Boolean // com.monkopedia.kodemirror.state/RangeSetUpdate.sort.<get-sort>|<get-sort>(){}[0]
+}
+
+final class <#A: kotlin/Any?, #B: kotlin/Any?> com.monkopedia.kodemirror.state/Facet : com.monkopedia.kodemirror.state/Extension { // com.monkopedia.kodemirror.state/Facet|null[0]
+    final val reader // com.monkopedia.kodemirror.state/Facet.reader|{}reader[0]
+        final fun <get-reader>(): com.monkopedia.kodemirror.state/FacetReader<#B> // com.monkopedia.kodemirror.state/Facet.reader.<get-reader>|<get-reader>(){}[0]
+
+    final fun <#A1: kotlin/Any?> from(com.monkopedia.kodemirror.state/StateField<#A1>, kotlin/Function1<#A1, #A>? = ...): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.state/Facet.from|from(com.monkopedia.kodemirror.state.StateField<0:0>;kotlin.Function1<0:0,1:0>?){0§<kotlin.Any?>}[0]
+    final fun compute(kotlin.collections/List<com.monkopedia.kodemirror.state/Slot>, kotlin/Function1<com.monkopedia.kodemirror.state/EditorState, #A>): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.state/Facet.compute|compute(kotlin.collections.List<com.monkopedia.kodemirror.state.Slot>;kotlin.Function1<com.monkopedia.kodemirror.state.EditorState,1:0>){}[0]
+    final fun computeN(kotlin.collections/List<com.monkopedia.kodemirror.state/Slot>, kotlin/Function1<com.monkopedia.kodemirror.state/EditorState, kotlin.collections/List<#A>>): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.state/Facet.computeN|computeN(kotlin.collections.List<com.monkopedia.kodemirror.state.Slot>;kotlin.Function1<com.monkopedia.kodemirror.state.EditorState,kotlin.collections.List<1:0>>){}[0]
+    final fun of(#A): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.state/Facet.of|of(1:0){}[0]
+
+    final object Companion { // com.monkopedia.kodemirror.state/Facet.Companion|null[0]
+        final fun <#A2: kotlin/Any?, #B2: kotlin/Any?> define(kotlin/Function1<kotlin.collections/List<#A2>, #B2>? = ..., kotlin/Function2<#B2, #B2, kotlin/Boolean>? = ..., kotlin/Function2<#A2, #A2, kotlin/Boolean>? = ..., kotlin/Boolean = ..., com.monkopedia.kodemirror.state/FacetEnabler<#A2, #B2>? = ...): com.monkopedia.kodemirror.state/Facet<#A2, #B2> // com.monkopedia.kodemirror.state/Facet.Companion.define|define(kotlin.Function1<kotlin.collections.List<0:0>,0:1>?;kotlin.Function2<0:1,0:1,kotlin.Boolean>?;kotlin.Function2<0:0,0:0,kotlin.Boolean>?;kotlin.Boolean;com.monkopedia.kodemirror.state.FacetEnabler<0:0,0:1>?){0§<kotlin.Any?>;1§<kotlin.Any?>}[0]
+    }
+}
+
+final class <#A: kotlin/Any?> com.monkopedia.kodemirror.state/Annotation { // com.monkopedia.kodemirror.state/Annotation|null[0]
+    final val type // com.monkopedia.kodemirror.state/Annotation.type|{}type[0]
+        final fun <get-type>(): com.monkopedia.kodemirror.state/AnnotationType<#A> // com.monkopedia.kodemirror.state/Annotation.type.<get-type>|<get-type>(){}[0]
+    final val value // com.monkopedia.kodemirror.state/Annotation.value|{}value[0]
+        final fun <get-value>(): #A // com.monkopedia.kodemirror.state/Annotation.value.<get-value>|<get-value>(){}[0]
+
+    final object Companion { // com.monkopedia.kodemirror.state/Annotation.Companion|null[0]
+        final fun <#A2: kotlin/Any?> define(): com.monkopedia.kodemirror.state/AnnotationType<#A2> // com.monkopedia.kodemirror.state/Annotation.Companion.define|define(){0§<kotlin.Any?>}[0]
+    }
+}
+
+final class <#A: kotlin/Any?> com.monkopedia.kodemirror.state/AnnotationType { // com.monkopedia.kodemirror.state/AnnotationType|null[0]
+    final fun of(#A): com.monkopedia.kodemirror.state/Annotation<#A> // com.monkopedia.kodemirror.state/AnnotationType.of|of(1:0){}[0]
+}
+
+final class <#A: kotlin/Any?> com.monkopedia.kodemirror.state/FacetReader { // com.monkopedia.kodemirror.state/FacetReader|null[0]
+    constructor <init>(kotlin/Int, #A) // com.monkopedia.kodemirror.state/FacetReader.<init>|<init>(kotlin.Int;1:0){}[0]
+
+    final val default // com.monkopedia.kodemirror.state/FacetReader.default|{}default[0]
+        final fun <get-default>(): #A // com.monkopedia.kodemirror.state/FacetReader.default.<get-default>|<get-default>(){}[0]
+    final val id // com.monkopedia.kodemirror.state/FacetReader.id|{}id[0]
+        final fun <get-id>(): kotlin/Int // com.monkopedia.kodemirror.state/FacetReader.id.<get-id>|<get-id>(){}[0]
+
+    final fun component1(): kotlin/Int // com.monkopedia.kodemirror.state/FacetReader.component1|component1(){}[0]
+    final fun component2(): #A // com.monkopedia.kodemirror.state/FacetReader.component2|component2(){}[0]
+    final fun copy(kotlin/Int = ..., #A = ...): com.monkopedia.kodemirror.state/FacetReader<#A> // com.monkopedia.kodemirror.state/FacetReader.copy|copy(kotlin.Int;1:0){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/FacetReader.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/FacetReader.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/FacetReader.toString|toString(){}[0]
+}
+
+final class <#A: kotlin/Any?> com.monkopedia.kodemirror.state/LanguageDataEntry { // com.monkopedia.kodemirror.state/LanguageDataEntry|null[0]
+    constructor <init>(com.monkopedia.kodemirror.state/LanguageDataKey<#A>, #A) // com.monkopedia.kodemirror.state/LanguageDataEntry.<init>|<init>(com.monkopedia.kodemirror.state.LanguageDataKey<1:0>;1:0){}[0]
+
+    final val key // com.monkopedia.kodemirror.state/LanguageDataEntry.key|{}key[0]
+        final fun <get-key>(): com.monkopedia.kodemirror.state/LanguageDataKey<#A> // com.monkopedia.kodemirror.state/LanguageDataEntry.key.<get-key>|<get-key>(){}[0]
+    final val value // com.monkopedia.kodemirror.state/LanguageDataEntry.value|{}value[0]
+        final fun <get-value>(): #A // com.monkopedia.kodemirror.state/LanguageDataEntry.value.<get-value>|<get-value>(){}[0]
+
+    final fun component1(): com.monkopedia.kodemirror.state/LanguageDataKey<#A> // com.monkopedia.kodemirror.state/LanguageDataEntry.component1|component1(){}[0]
+    final fun component2(): #A // com.monkopedia.kodemirror.state/LanguageDataEntry.component2|component2(){}[0]
+    final fun copy(com.monkopedia.kodemirror.state/LanguageDataKey<#A> = ..., #A = ...): com.monkopedia.kodemirror.state/LanguageDataEntry<#A> // com.monkopedia.kodemirror.state/LanguageDataEntry.copy|copy(com.monkopedia.kodemirror.state.LanguageDataKey<1:0>;1:0){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/LanguageDataEntry.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/LanguageDataEntry.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/LanguageDataEntry.toString|toString(){}[0]
+}
+
+final class <#A: kotlin/Any?> com.monkopedia.kodemirror.state/LanguageDataKey { // com.monkopedia.kodemirror.state/LanguageDataKey|null[0]
+    constructor <init>(kotlin/String) // com.monkopedia.kodemirror.state/LanguageDataKey.<init>|<init>(kotlin.String){}[0]
+
+    final val name // com.monkopedia.kodemirror.state/LanguageDataKey.name|{}name[0]
+        final fun <get-name>(): kotlin/String // com.monkopedia.kodemirror.state/LanguageDataKey.name.<get-name>|<get-name>(){}[0]
+
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/LanguageDataKey.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/LanguageDataKey.hashCode|hashCode(){}[0]
+    final fun of(#A): com.monkopedia.kodemirror.state/LanguageDataEntry<#A> // com.monkopedia.kodemirror.state/LanguageDataKey.of|of(1:0){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/LanguageDataKey.toString|toString(){}[0]
+
+    final object Companion { // com.monkopedia.kodemirror.state/LanguageDataKey.Companion|null[0]
+        final val AUTOCOMPLETE // com.monkopedia.kodemirror.state/LanguageDataKey.Companion.AUTOCOMPLETE|{}AUTOCOMPLETE[0]
+            final fun <get-AUTOCOMPLETE>(): com.monkopedia.kodemirror.state/LanguageDataKey<kotlin.collections/List<kotlin/String>> // com.monkopedia.kodemirror.state/LanguageDataKey.Companion.AUTOCOMPLETE.<get-AUTOCOMPLETE>|<get-AUTOCOMPLETE>(){}[0]
+        final val CLOSE_BRACKETS // com.monkopedia.kodemirror.state/LanguageDataKey.Companion.CLOSE_BRACKETS|{}CLOSE_BRACKETS[0]
+            final fun <get-CLOSE_BRACKETS>(): com.monkopedia.kodemirror.state/LanguageDataKey<kotlin.collections/Map<kotlin/String, kotlin.collections/List<kotlin/String>>> // com.monkopedia.kodemirror.state/LanguageDataKey.Companion.CLOSE_BRACKETS.<get-CLOSE_BRACKETS>|<get-CLOSE_BRACKETS>(){}[0]
+        final val COMMENT_TOKENS // com.monkopedia.kodemirror.state/LanguageDataKey.Companion.COMMENT_TOKENS|{}COMMENT_TOKENS[0]
+            final fun <get-COMMENT_TOKENS>(): com.monkopedia.kodemirror.state/LanguageDataKey<kotlin.collections/Map<kotlin/String, kotlin/Any>> // com.monkopedia.kodemirror.state/LanguageDataKey.Companion.COMMENT_TOKENS.<get-COMMENT_TOKENS>|<get-COMMENT_TOKENS>(){}[0]
+        final val DONT_INDENT_STATES // com.monkopedia.kodemirror.state/LanguageDataKey.Companion.DONT_INDENT_STATES|{}DONT_INDENT_STATES[0]
+            final fun <get-DONT_INDENT_STATES>(): com.monkopedia.kodemirror.state/LanguageDataKey<kotlin.collections/List<kotlin/String>> // com.monkopedia.kodemirror.state/LanguageDataKey.Companion.DONT_INDENT_STATES.<get-DONT_INDENT_STATES>|<get-DONT_INDENT_STATES>(){}[0]
+        final val INDENT_ON_INPUT // com.monkopedia.kodemirror.state/LanguageDataKey.Companion.INDENT_ON_INPUT|{}INDENT_ON_INPUT[0]
+            final fun <get-INDENT_ON_INPUT>(): com.monkopedia.kodemirror.state/LanguageDataKey<kotlin.text/Regex> // com.monkopedia.kodemirror.state/LanguageDataKey.Companion.INDENT_ON_INPUT.<get-INDENT_ON_INPUT>|<get-INDENT_ON_INPUT>(){}[0]
+        final val WORD_CHARS // com.monkopedia.kodemirror.state/LanguageDataKey.Companion.WORD_CHARS|{}WORD_CHARS[0]
+            final fun <get-WORD_CHARS>(): com.monkopedia.kodemirror.state/LanguageDataKey<kotlin/String> // com.monkopedia.kodemirror.state/LanguageDataKey.Companion.WORD_CHARS.<get-WORD_CHARS>|<get-WORD_CHARS>(){}[0]
+    }
+}
+
+final class <#A: kotlin/Any?> com.monkopedia.kodemirror.state/SetFieldHandle { // com.monkopedia.kodemirror.state/SetFieldHandle|null[0]
+    constructor <init>(com.monkopedia.kodemirror.state/StateField<kotlin.collections/Set<#A>>, com.monkopedia.kodemirror.state/StateEffectType<#A>, com.monkopedia.kodemirror.state/StateEffectType<#A>, com.monkopedia.kodemirror.state/StateEffectType<kotlin/Unit>) // com.monkopedia.kodemirror.state/SetFieldHandle.<init>|<init>(com.monkopedia.kodemirror.state.StateField<kotlin.collections.Set<1:0>>;com.monkopedia.kodemirror.state.StateEffectType<1:0>;com.monkopedia.kodemirror.state.StateEffectType<1:0>;com.monkopedia.kodemirror.state.StateEffectType<kotlin.Unit>){}[0]
+
+    final val add // com.monkopedia.kodemirror.state/SetFieldHandle.add|{}add[0]
+        final fun <get-add>(): com.monkopedia.kodemirror.state/StateEffectType<#A> // com.monkopedia.kodemirror.state/SetFieldHandle.add.<get-add>|<get-add>(){}[0]
+    final val clear // com.monkopedia.kodemirror.state/SetFieldHandle.clear|{}clear[0]
+        final fun <get-clear>(): com.monkopedia.kodemirror.state/StateEffectType<kotlin/Unit> // com.monkopedia.kodemirror.state/SetFieldHandle.clear.<get-clear>|<get-clear>(){}[0]
+    final val field // com.monkopedia.kodemirror.state/SetFieldHandle.field|{}field[0]
+        final fun <get-field>(): com.monkopedia.kodemirror.state/StateField<kotlin.collections/Set<#A>> // com.monkopedia.kodemirror.state/SetFieldHandle.field.<get-field>|<get-field>(){}[0]
+    final val remove // com.monkopedia.kodemirror.state/SetFieldHandle.remove|{}remove[0]
+        final fun <get-remove>(): com.monkopedia.kodemirror.state/StateEffectType<#A> // com.monkopedia.kodemirror.state/SetFieldHandle.remove.<get-remove>|<get-remove>(){}[0]
+
+    final fun component1(): com.monkopedia.kodemirror.state/StateField<kotlin.collections/Set<#A>> // com.monkopedia.kodemirror.state/SetFieldHandle.component1|component1(){}[0]
+    final fun component2(): com.monkopedia.kodemirror.state/StateEffectType<#A> // com.monkopedia.kodemirror.state/SetFieldHandle.component2|component2(){}[0]
+    final fun component3(): com.monkopedia.kodemirror.state/StateEffectType<#A> // com.monkopedia.kodemirror.state/SetFieldHandle.component3|component3(){}[0]
+    final fun component4(): com.monkopedia.kodemirror.state/StateEffectType<kotlin/Unit> // com.monkopedia.kodemirror.state/SetFieldHandle.component4|component4(){}[0]
+    final fun copy(com.monkopedia.kodemirror.state/StateField<kotlin.collections/Set<#A>> = ..., com.monkopedia.kodemirror.state/StateEffectType<#A> = ..., com.monkopedia.kodemirror.state/StateEffectType<#A> = ..., com.monkopedia.kodemirror.state/StateEffectType<kotlin/Unit> = ...): com.monkopedia.kodemirror.state/SetFieldHandle<#A> // com.monkopedia.kodemirror.state/SetFieldHandle.copy|copy(com.monkopedia.kodemirror.state.StateField<kotlin.collections.Set<1:0>>;com.monkopedia.kodemirror.state.StateEffectType<1:0>;com.monkopedia.kodemirror.state.StateEffectType<1:0>;com.monkopedia.kodemirror.state.StateEffectType<kotlin.Unit>){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/SetFieldHandle.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/SetFieldHandle.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/SetFieldHandle.toString|toString(){}[0]
+}
+
+final class <#A: kotlin/Any?> com.monkopedia.kodemirror.state/StateEffect { // com.monkopedia.kodemirror.state/StateEffect|null[0]
+    final val value // com.monkopedia.kodemirror.state/StateEffect.value|{}value[0]
+        final fun <get-value>(): #A // com.monkopedia.kodemirror.state/StateEffect.value.<get-value>|<get-value>(){}[0]
+
+    final fun <#A1: kotlin/Any?> asType(com.monkopedia.kodemirror.state/StateEffectType<#A1>): com.monkopedia.kodemirror.state/StateEffect<#A1>? // com.monkopedia.kodemirror.state/StateEffect.asType|asType(com.monkopedia.kodemirror.state.StateEffectType<0:0>){0§<kotlin.Any?>}[0]
+    final fun map(com.monkopedia.kodemirror.state/ChangeDesc): com.monkopedia.kodemirror.state/StateEffect<#A>? // com.monkopedia.kodemirror.state/StateEffect.map|map(com.monkopedia.kodemirror.state.ChangeDesc){}[0]
+
+    final object Companion { // com.monkopedia.kodemirror.state/StateEffect.Companion|null[0]
+        final val appendConfig // com.monkopedia.kodemirror.state/StateEffect.Companion.appendConfig|{}appendConfig[0]
+            final fun <get-appendConfig>(): com.monkopedia.kodemirror.state/StateEffectType<com.monkopedia.kodemirror.state/Extension> // com.monkopedia.kodemirror.state/StateEffect.Companion.appendConfig.<get-appendConfig>|<get-appendConfig>(){}[0]
+        final val reconfigure // com.monkopedia.kodemirror.state/StateEffect.Companion.reconfigure|{}reconfigure[0]
+            final fun <get-reconfigure>(): com.monkopedia.kodemirror.state/StateEffectType<com.monkopedia.kodemirror.state/Extension> // com.monkopedia.kodemirror.state/StateEffect.Companion.reconfigure.<get-reconfigure>|<get-reconfigure>(){}[0]
+
+        final fun <#A2: kotlin/Any?> define(kotlin/Function2<#A2, com.monkopedia.kodemirror.state/ChangeDesc, #A2?>? = ...): com.monkopedia.kodemirror.state/StateEffectType<#A2> // com.monkopedia.kodemirror.state/StateEffect.Companion.define|define(kotlin.Function2<0:0,com.monkopedia.kodemirror.state.ChangeDesc,0:0?>?){0§<kotlin.Any?>}[0]
+        final fun mapEffects(kotlin.collections/List<com.monkopedia.kodemirror.state/StateEffect<*>>, com.monkopedia.kodemirror.state/ChangeDesc): kotlin.collections/List<com.monkopedia.kodemirror.state/StateEffect<*>> // com.monkopedia.kodemirror.state/StateEffect.Companion.mapEffects|mapEffects(kotlin.collections.List<com.monkopedia.kodemirror.state.StateEffect<*>>;com.monkopedia.kodemirror.state.ChangeDesc){}[0]
+    }
+}
+
+final class <#A: kotlin/Any?> com.monkopedia.kodemirror.state/StateEffectType { // com.monkopedia.kodemirror.state/StateEffectType|null[0]
+    final fun of(#A): com.monkopedia.kodemirror.state/StateEffect<#A> // com.monkopedia.kodemirror.state/StateEffectType.of|of(1:0){}[0]
+}
+
+final class <#A: kotlin/Any?> com.monkopedia.kodemirror.state/StateField : com.monkopedia.kodemirror.state/Extension { // com.monkopedia.kodemirror.state/StateField|null[0]
+    final fun init(kotlin/Function1<com.monkopedia.kodemirror.state/EditorState, #A>): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.state/StateField.init|init(kotlin.Function1<com.monkopedia.kodemirror.state.EditorState,1:0>){}[0]
+
+    final object Companion { // com.monkopedia.kodemirror.state/StateField.Companion|null[0]
+        final fun <#A2: kotlin/Any?> define(com.monkopedia.kodemirror.state/StateFieldSpec<#A2>): com.monkopedia.kodemirror.state/StateField<#A2> // com.monkopedia.kodemirror.state/StateField.Companion.define|define(com.monkopedia.kodemirror.state.StateFieldSpec<0:0>){0§<kotlin.Any?>}[0]
+    }
+}
+
+final class <#A: kotlin/Any?> com.monkopedia.kodemirror.state/StateFieldBuilder { // com.monkopedia.kodemirror.state/StateFieldBuilder|null[0]
+    constructor <init>() // com.monkopedia.kodemirror.state/StateFieldBuilder.<init>|<init>(){}[0]
+
+    final fun build(): com.monkopedia.kodemirror.state/StateFieldSpec<#A> // com.monkopedia.kodemirror.state/StateFieldBuilder.build|build(){}[0]
+    final fun compare(kotlin/Function2<#A, #A, kotlin/Boolean>) // com.monkopedia.kodemirror.state/StateFieldBuilder.compare|compare(kotlin.Function2<1:0,1:0,kotlin.Boolean>){}[0]
+    final fun create(kotlin/Function1<com.monkopedia.kodemirror.state/EditorState, #A>) // com.monkopedia.kodemirror.state/StateFieldBuilder.create|create(kotlin.Function1<com.monkopedia.kodemirror.state.EditorState,1:0>){}[0]
+    final fun provide(kotlin/Function1<com.monkopedia.kodemirror.state/StateField<#A>, com.monkopedia.kodemirror.state/Extension>) // com.monkopedia.kodemirror.state/StateFieldBuilder.provide|provide(kotlin.Function1<com.monkopedia.kodemirror.state.StateField<1:0>,com.monkopedia.kodemirror.state.Extension>){}[0]
+    final fun serialization(kotlin/Function2<#A, com.monkopedia.kodemirror.state/EditorState, kotlin/Any?>, kotlin/Function2<kotlin/Any?, com.monkopedia.kodemirror.state/EditorState, #A>) // com.monkopedia.kodemirror.state/StateFieldBuilder.serialization|serialization(kotlin.Function2<1:0,com.monkopedia.kodemirror.state.EditorState,kotlin.Any?>;kotlin.Function2<kotlin.Any?,com.monkopedia.kodemirror.state.EditorState,1:0>){}[0]
+    final fun serialization(kotlinx.serialization/KSerializer<#A>) // com.monkopedia.kodemirror.state/StateFieldBuilder.serialization|serialization(kotlinx.serialization.KSerializer<1:0>){}[0]
+    final fun update(kotlin/Function2<#A, com.monkopedia.kodemirror.state/Transaction, #A>) // com.monkopedia.kodemirror.state/StateFieldBuilder.update|update(kotlin.Function2<1:0,com.monkopedia.kodemirror.state.Transaction,1:0>){}[0]
+}
+
+final class <#A: kotlin/Any?> com.monkopedia.kodemirror.state/StateFieldSpec { // com.monkopedia.kodemirror.state/StateFieldSpec|null[0]
+    constructor <init>(kotlin/Function1<com.monkopedia.kodemirror.state/EditorState, #A>, kotlin/Function2<#A, com.monkopedia.kodemirror.state/Transaction, #A>, kotlin/Function2<#A, #A, kotlin/Boolean>? = ..., kotlin/Function1<com.monkopedia.kodemirror.state/StateField<#A>, com.monkopedia.kodemirror.state/Extension>? = ..., com.monkopedia.kodemirror.state/FieldSerialization<#A> = ...) // com.monkopedia.kodemirror.state/StateFieldSpec.<init>|<init>(kotlin.Function1<com.monkopedia.kodemirror.state.EditorState,1:0>;kotlin.Function2<1:0,com.monkopedia.kodemirror.state.Transaction,1:0>;kotlin.Function2<1:0,1:0,kotlin.Boolean>?;kotlin.Function1<com.monkopedia.kodemirror.state.StateField<1:0>,com.monkopedia.kodemirror.state.Extension>?;com.monkopedia.kodemirror.state.FieldSerialization<1:0>){}[0]
+
+    final val compare // com.monkopedia.kodemirror.state/StateFieldSpec.compare|{}compare[0]
+        final fun <get-compare>(): kotlin/Function2<#A, #A, kotlin/Boolean>? // com.monkopedia.kodemirror.state/StateFieldSpec.compare.<get-compare>|<get-compare>(){}[0]
+    final val create // com.monkopedia.kodemirror.state/StateFieldSpec.create|{}create[0]
+        final fun <get-create>(): kotlin/Function1<com.monkopedia.kodemirror.state/EditorState, #A> // com.monkopedia.kodemirror.state/StateFieldSpec.create.<get-create>|<get-create>(){}[0]
+    final val provide // com.monkopedia.kodemirror.state/StateFieldSpec.provide|{}provide[0]
+        final fun <get-provide>(): kotlin/Function1<com.monkopedia.kodemirror.state/StateField<#A>, com.monkopedia.kodemirror.state/Extension>? // com.monkopedia.kodemirror.state/StateFieldSpec.provide.<get-provide>|<get-provide>(){}[0]
+    final val serialization // com.monkopedia.kodemirror.state/StateFieldSpec.serialization|{}serialization[0]
+        final fun <get-serialization>(): com.monkopedia.kodemirror.state/FieldSerialization<#A> // com.monkopedia.kodemirror.state/StateFieldSpec.serialization.<get-serialization>|<get-serialization>(){}[0]
+    final val update // com.monkopedia.kodemirror.state/StateFieldSpec.update|{}update[0]
+        final fun <get-update>(): kotlin/Function2<#A, com.monkopedia.kodemirror.state/Transaction, #A> // com.monkopedia.kodemirror.state/StateFieldSpec.update.<get-update>|<get-update>(){}[0]
+
+    final fun component1(): kotlin/Function1<com.monkopedia.kodemirror.state/EditorState, #A> // com.monkopedia.kodemirror.state/StateFieldSpec.component1|component1(){}[0]
+    final fun component2(): kotlin/Function2<#A, com.monkopedia.kodemirror.state/Transaction, #A> // com.monkopedia.kodemirror.state/StateFieldSpec.component2|component2(){}[0]
+    final fun component3(): kotlin/Function2<#A, #A, kotlin/Boolean>? // com.monkopedia.kodemirror.state/StateFieldSpec.component3|component3(){}[0]
+    final fun component4(): kotlin/Function1<com.monkopedia.kodemirror.state/StateField<#A>, com.monkopedia.kodemirror.state/Extension>? // com.monkopedia.kodemirror.state/StateFieldSpec.component4|component4(){}[0]
+    final fun component5(): com.monkopedia.kodemirror.state/FieldSerialization<#A> // com.monkopedia.kodemirror.state/StateFieldSpec.component5|component5(){}[0]
+    final fun copy(kotlin/Function1<com.monkopedia.kodemirror.state/EditorState, #A> = ..., kotlin/Function2<#A, com.monkopedia.kodemirror.state/Transaction, #A> = ..., kotlin/Function2<#A, #A, kotlin/Boolean>? = ..., kotlin/Function1<com.monkopedia.kodemirror.state/StateField<#A>, com.monkopedia.kodemirror.state/Extension>? = ..., com.monkopedia.kodemirror.state/FieldSerialization<#A> = ...): com.monkopedia.kodemirror.state/StateFieldSpec<#A> // com.monkopedia.kodemirror.state/StateFieldSpec.copy|copy(kotlin.Function1<com.monkopedia.kodemirror.state.EditorState,1:0>;kotlin.Function2<1:0,com.monkopedia.kodemirror.state.Transaction,1:0>;kotlin.Function2<1:0,1:0,kotlin.Boolean>?;kotlin.Function1<com.monkopedia.kodemirror.state.StateField<1:0>,com.monkopedia.kodemirror.state.Extension>?;com.monkopedia.kodemirror.state.FieldSerialization<1:0>){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/StateFieldSpec.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/StateFieldSpec.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/StateFieldSpec.toString|toString(){}[0]
+}
+
+final class <#A: out com.monkopedia.kodemirror.state/RangeValue> com.monkopedia.kodemirror.state/Range { // com.monkopedia.kodemirror.state/Range|null[0]
+    final val from // com.monkopedia.kodemirror.state/Range.from|{}from[0]
+        final fun <get-from>(): com.monkopedia.kodemirror.state/DocPos // com.monkopedia.kodemirror.state/Range.from.<get-from>|<get-from>(){}[0]
+    final val to // com.monkopedia.kodemirror.state/Range.to|{}to[0]
+        final fun <get-to>(): com.monkopedia.kodemirror.state/DocPos // com.monkopedia.kodemirror.state/Range.to.<get-to>|<get-to>(){}[0]
+    final val value // com.monkopedia.kodemirror.state/Range.value|{}value[0]
+        final fun <get-value>(): #A // com.monkopedia.kodemirror.state/Range.value.<get-value>|<get-value>(){}[0]
+
+    final object Companion // com.monkopedia.kodemirror.state/Range.Companion|null[0]
+}
+
+final class com.monkopedia.kodemirror.state/ChangeByRangeResult { // com.monkopedia.kodemirror.state/ChangeByRangeResult|null[0]
+    constructor <init>(com.monkopedia.kodemirror.state/SelectionRange, com.monkopedia.kodemirror.state/ChangeSpec? = ..., kotlin.collections/List<com.monkopedia.kodemirror.state/StateEffect<*>>? = ...) // com.monkopedia.kodemirror.state/ChangeByRangeResult.<init>|<init>(com.monkopedia.kodemirror.state.SelectionRange;com.monkopedia.kodemirror.state.ChangeSpec?;kotlin.collections.List<com.monkopedia.kodemirror.state.StateEffect<*>>?){}[0]
+
+    final val changes // com.monkopedia.kodemirror.state/ChangeByRangeResult.changes|{}changes[0]
+        final fun <get-changes>(): com.monkopedia.kodemirror.state/ChangeSpec? // com.monkopedia.kodemirror.state/ChangeByRangeResult.changes.<get-changes>|<get-changes>(){}[0]
+    final val effects // com.monkopedia.kodemirror.state/ChangeByRangeResult.effects|{}effects[0]
+        final fun <get-effects>(): kotlin.collections/List<com.monkopedia.kodemirror.state/StateEffect<*>>? // com.monkopedia.kodemirror.state/ChangeByRangeResult.effects.<get-effects>|<get-effects>(){}[0]
+    final val range // com.monkopedia.kodemirror.state/ChangeByRangeResult.range|{}range[0]
+        final fun <get-range>(): com.monkopedia.kodemirror.state/SelectionRange // com.monkopedia.kodemirror.state/ChangeByRangeResult.range.<get-range>|<get-range>(){}[0]
+
+    final fun component1(): com.monkopedia.kodemirror.state/SelectionRange // com.monkopedia.kodemirror.state/ChangeByRangeResult.component1|component1(){}[0]
+    final fun component2(): com.monkopedia.kodemirror.state/ChangeSpec? // com.monkopedia.kodemirror.state/ChangeByRangeResult.component2|component2(){}[0]
+    final fun component3(): kotlin.collections/List<com.monkopedia.kodemirror.state/StateEffect<*>>? // com.monkopedia.kodemirror.state/ChangeByRangeResult.component3|component3(){}[0]
+    final fun copy(com.monkopedia.kodemirror.state/SelectionRange = ..., com.monkopedia.kodemirror.state/ChangeSpec? = ..., kotlin.collections/List<com.monkopedia.kodemirror.state/StateEffect<*>>? = ...): com.monkopedia.kodemirror.state/ChangeByRangeResult // com.monkopedia.kodemirror.state/ChangeByRangeResult.copy|copy(com.monkopedia.kodemirror.state.SelectionRange;com.monkopedia.kodemirror.state.ChangeSpec?;kotlin.collections.List<com.monkopedia.kodemirror.state.StateEffect<*>>?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/ChangeByRangeResult.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/ChangeByRangeResult.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/ChangeByRangeResult.toString|toString(){}[0]
+}
+
+final class com.monkopedia.kodemirror.state/ChangeSet : com.monkopedia.kodemirror.state/ChangeDesc { // com.monkopedia.kodemirror.state/ChangeSet|null[0]
+    final val desc // com.monkopedia.kodemirror.state/ChangeSet.desc|{}desc[0]
+        final fun <get-desc>(): com.monkopedia.kodemirror.state/ChangeDesc // com.monkopedia.kodemirror.state/ChangeSet.desc.<get-desc>|<get-desc>(){}[0]
+
+    final fun apply(com.monkopedia.kodemirror.state/Text): com.monkopedia.kodemirror.state/Text // com.monkopedia.kodemirror.state/ChangeSet.apply|apply(com.monkopedia.kodemirror.state.Text){}[0]
+    final fun compose(com.monkopedia.kodemirror.state/ChangeSet): com.monkopedia.kodemirror.state/ChangeSet // com.monkopedia.kodemirror.state/ChangeSet.compose|compose(com.monkopedia.kodemirror.state.ChangeSet){}[0]
+    final fun invert(com.monkopedia.kodemirror.state/Text): com.monkopedia.kodemirror.state/ChangeSet // com.monkopedia.kodemirror.state/ChangeSet.invert|invert(com.monkopedia.kodemirror.state.Text){}[0]
+    final fun iterChanges(kotlin/Function5<com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/Text, kotlin/Unit>, kotlin/Boolean = ...) // com.monkopedia.kodemirror.state/ChangeSet.iterChanges|iterChanges(kotlin.Function5<com.monkopedia.kodemirror.state.DocPos,com.monkopedia.kodemirror.state.DocPos,com.monkopedia.kodemirror.state.DocPos,com.monkopedia.kodemirror.state.DocPos,com.monkopedia.kodemirror.state.Text,kotlin.Unit>;kotlin.Boolean){}[0]
+    final fun map(com.monkopedia.kodemirror.state/ChangeDesc, kotlin/Boolean = ...): com.monkopedia.kodemirror.state/ChangeSet // com.monkopedia.kodemirror.state/ChangeSet.map|map(com.monkopedia.kodemirror.state.ChangeDesc;kotlin.Boolean){}[0]
+    final fun mapDesc(com.monkopedia.kodemirror.state/ChangeDesc, kotlin/Boolean): com.monkopedia.kodemirror.state/ChangeDesc // com.monkopedia.kodemirror.state/ChangeSet.mapDesc|mapDesc(com.monkopedia.kodemirror.state.ChangeDesc;kotlin.Boolean){}[0]
+    final fun toChangeSetJSON(): kotlin.collections/List<com.monkopedia.kodemirror.state/ChangeSetJsonPart> // com.monkopedia.kodemirror.state/ChangeSet.toChangeSetJSON|toChangeSetJSON(){}[0]
+
+    final object Companion { // com.monkopedia.kodemirror.state/ChangeSet.Companion|null[0]
+        final fun changeSetFromJSON(kotlin.collections/List<com.monkopedia.kodemirror.state/ChangeSetJsonPart>): com.monkopedia.kodemirror.state/ChangeSet // com.monkopedia.kodemirror.state/ChangeSet.Companion.changeSetFromJSON|changeSetFromJSON(kotlin.collections.List<com.monkopedia.kodemirror.state.ChangeSetJsonPart>){}[0]
+        final fun empty(kotlin/Int): com.monkopedia.kodemirror.state/ChangeSet // com.monkopedia.kodemirror.state/ChangeSet.Companion.empty|empty(kotlin.Int){}[0]
+        final fun of(com.monkopedia.kodemirror.state/ChangeSpec, kotlin/Int, kotlin/String? = ...): com.monkopedia.kodemirror.state/ChangeSet // com.monkopedia.kodemirror.state/ChangeSet.Companion.of|of(com.monkopedia.kodemirror.state.ChangeSpec;kotlin.Int;kotlin.String?){}[0]
+    }
+}
+
+final class com.monkopedia.kodemirror.state/Compartment : com.monkopedia.kodemirror.state/Extension { // com.monkopedia.kodemirror.state/Compartment|null[0]
+    constructor <init>() // com.monkopedia.kodemirror.state/Compartment.<init>|<init>(){}[0]
+
+    final fun get(com.monkopedia.kodemirror.state/EditorState): com.monkopedia.kodemirror.state/Extension? // com.monkopedia.kodemirror.state/Compartment.get|get(com.monkopedia.kodemirror.state.EditorState){}[0]
+    final fun of(com.monkopedia.kodemirror.state/Extension): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.state/Compartment.of|of(com.monkopedia.kodemirror.state.Extension){}[0]
+    final fun reconfigure(com.monkopedia.kodemirror.state/Extension): com.monkopedia.kodemirror.state/StateEffect<*> // com.monkopedia.kodemirror.state/Compartment.reconfigure|reconfigure(com.monkopedia.kodemirror.state.Extension){}[0]
+
+    final object Companion // com.monkopedia.kodemirror.state/Compartment.Companion|null[0]
+}
+
+final class com.monkopedia.kodemirror.state/CompartmentReconfigure { // com.monkopedia.kodemirror.state/CompartmentReconfigure|null[0]
+    constructor <init>(com.monkopedia.kodemirror.state/Compartment, com.monkopedia.kodemirror.state/Extension) // com.monkopedia.kodemirror.state/CompartmentReconfigure.<init>|<init>(com.monkopedia.kodemirror.state.Compartment;com.monkopedia.kodemirror.state.Extension){}[0]
+
+    final val compartment // com.monkopedia.kodemirror.state/CompartmentReconfigure.compartment|{}compartment[0]
+        final fun <get-compartment>(): com.monkopedia.kodemirror.state/Compartment // com.monkopedia.kodemirror.state/CompartmentReconfigure.compartment.<get-compartment>|<get-compartment>(){}[0]
+    final val extension // com.monkopedia.kodemirror.state/CompartmentReconfigure.extension|{}extension[0]
+        final fun <get-extension>(): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.state/CompartmentReconfigure.extension.<get-extension>|<get-extension>(){}[0]
+
+    final fun component1(): com.monkopedia.kodemirror.state/Compartment // com.monkopedia.kodemirror.state/CompartmentReconfigure.component1|component1(){}[0]
+    final fun component2(): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.state/CompartmentReconfigure.component2|component2(){}[0]
+    final fun copy(com.monkopedia.kodemirror.state/Compartment = ..., com.monkopedia.kodemirror.state/Extension = ...): com.monkopedia.kodemirror.state/CompartmentReconfigure // com.monkopedia.kodemirror.state/CompartmentReconfigure.copy|copy(com.monkopedia.kodemirror.state.Compartment;com.monkopedia.kodemirror.state.Extension){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/CompartmentReconfigure.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/CompartmentReconfigure.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/CompartmentReconfigure.toString|toString(){}[0]
+}
+
+final class com.monkopedia.kodemirror.state/EditorSelection { // com.monkopedia.kodemirror.state/EditorSelection|null[0]
+    final val main // com.monkopedia.kodemirror.state/EditorSelection.main|{}main[0]
+        final fun <get-main>(): com.monkopedia.kodemirror.state/SelectionRange // com.monkopedia.kodemirror.state/EditorSelection.main.<get-main>|<get-main>(){}[0]
+    final val mainIndex // com.monkopedia.kodemirror.state/EditorSelection.mainIndex|{}mainIndex[0]
+        final fun <get-mainIndex>(): kotlin/Int // com.monkopedia.kodemirror.state/EditorSelection.mainIndex.<get-mainIndex>|<get-mainIndex>(){}[0]
+    final val ranges // com.monkopedia.kodemirror.state/EditorSelection.ranges|{}ranges[0]
+        final fun <get-ranges>(): kotlin.collections/List<com.monkopedia.kodemirror.state/SelectionRange> // com.monkopedia.kodemirror.state/EditorSelection.ranges.<get-ranges>|<get-ranges>(){}[0]
+
+    final fun addRange(com.monkopedia.kodemirror.state/SelectionRange, kotlin/Boolean = ...): com.monkopedia.kodemirror.state/EditorSelection // com.monkopedia.kodemirror.state/EditorSelection.addRange|addRange(com.monkopedia.kodemirror.state.SelectionRange;kotlin.Boolean){}[0]
+    final fun asSingle(): com.monkopedia.kodemirror.state/EditorSelection // com.monkopedia.kodemirror.state/EditorSelection.asSingle|asSingle(){}[0]
+    final fun eq(com.monkopedia.kodemirror.state/EditorSelection, kotlin/Boolean): kotlin/Boolean // com.monkopedia.kodemirror.state/EditorSelection.eq|eq(com.monkopedia.kodemirror.state.EditorSelection;kotlin.Boolean){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/EditorSelection.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/EditorSelection.hashCode|hashCode(){}[0]
+    final fun map(com.monkopedia.kodemirror.state/ChangeDesc, kotlin/Int = ...): com.monkopedia.kodemirror.state/EditorSelection // com.monkopedia.kodemirror.state/EditorSelection.map|map(com.monkopedia.kodemirror.state.ChangeDesc;kotlin.Int){}[0]
+    final fun replaceRange(com.monkopedia.kodemirror.state/SelectionRange, kotlin/Int = ...): com.monkopedia.kodemirror.state/EditorSelection // com.monkopedia.kodemirror.state/EditorSelection.replaceRange|replaceRange(com.monkopedia.kodemirror.state.SelectionRange;kotlin.Int){}[0]
+    final fun toJSON(): kotlin.collections/Map<kotlin/String, kotlin/Any> // com.monkopedia.kodemirror.state/EditorSelection.toJSON|toJSON(){}[0]
+
+    final object Companion { // com.monkopedia.kodemirror.state/EditorSelection.Companion|null[0]
+        final fun create(kotlin.collections/List<com.monkopedia.kodemirror.state/SelectionRange>, kotlin/Int = ...): com.monkopedia.kodemirror.state/EditorSelection // com.monkopedia.kodemirror.state/EditorSelection.Companion.create|create(kotlin.collections.List<com.monkopedia.kodemirror.state.SelectionRange>;kotlin.Int){}[0]
+        final fun cursor(com.monkopedia.kodemirror.state/DocPos, kotlin/Int = ..., kotlin/Int? = ..., kotlin/Int? = ...): com.monkopedia.kodemirror.state/SelectionRange // com.monkopedia.kodemirror.state/EditorSelection.Companion.cursor|cursor(com.monkopedia.kodemirror.state.DocPos;kotlin.Int;kotlin.Int?;kotlin.Int?){}[0]
+        final fun fromJSON(kotlin.collections/Map<kotlin/String, kotlin/Any?>): com.monkopedia.kodemirror.state/EditorSelection // com.monkopedia.kodemirror.state/EditorSelection.Companion.fromJSON|fromJSON(kotlin.collections.Map<kotlin.String,kotlin.Any?>){}[0]
+        final fun range(com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos, kotlin/Int? = ..., kotlin/Int? = ...): com.monkopedia.kodemirror.state/SelectionRange // com.monkopedia.kodemirror.state/EditorSelection.Companion.range|range(com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos;kotlin.Int?;kotlin.Int?){}[0]
+        final fun single(com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos = ...): com.monkopedia.kodemirror.state/EditorSelection // com.monkopedia.kodemirror.state/EditorSelection.Companion.single|single(com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos){}[0]
+    }
+}
+
+final class com.monkopedia.kodemirror.state/EditorSelectionData { // com.monkopedia.kodemirror.state/EditorSelectionData|null[0]
+    constructor <init>(kotlin.collections/List<com.monkopedia.kodemirror.state/SelectionRangeData>, kotlin/Int) // com.monkopedia.kodemirror.state/EditorSelectionData.<init>|<init>(kotlin.collections.List<com.monkopedia.kodemirror.state.SelectionRangeData>;kotlin.Int){}[0]
+
+    final val main // com.monkopedia.kodemirror.state/EditorSelectionData.main|{}main[0]
+        final fun <get-main>(): kotlin/Int // com.monkopedia.kodemirror.state/EditorSelectionData.main.<get-main>|<get-main>(){}[0]
+    final val ranges // com.monkopedia.kodemirror.state/EditorSelectionData.ranges|{}ranges[0]
+        final fun <get-ranges>(): kotlin.collections/List<com.monkopedia.kodemirror.state/SelectionRangeData> // com.monkopedia.kodemirror.state/EditorSelectionData.ranges.<get-ranges>|<get-ranges>(){}[0]
+
+    final fun component1(): kotlin.collections/List<com.monkopedia.kodemirror.state/SelectionRangeData> // com.monkopedia.kodemirror.state/EditorSelectionData.component1|component1(){}[0]
+    final fun component2(): kotlin/Int // com.monkopedia.kodemirror.state/EditorSelectionData.component2|component2(){}[0]
+    final fun copy(kotlin.collections/List<com.monkopedia.kodemirror.state/SelectionRangeData> = ..., kotlin/Int = ...): com.monkopedia.kodemirror.state/EditorSelectionData // com.monkopedia.kodemirror.state/EditorSelectionData.copy|copy(kotlin.collections.List<com.monkopedia.kodemirror.state.SelectionRangeData>;kotlin.Int){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/EditorSelectionData.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/EditorSelectionData.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/EditorSelectionData.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<com.monkopedia.kodemirror.state/EditorSelectionData> { // com.monkopedia.kodemirror.state/EditorSelectionData.$serializer|null[0]
+        final val descriptor // com.monkopedia.kodemirror.state/EditorSelectionData.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // com.monkopedia.kodemirror.state/EditorSelectionData.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // com.monkopedia.kodemirror.state/EditorSelectionData.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): com.monkopedia.kodemirror.state/EditorSelectionData // com.monkopedia.kodemirror.state/EditorSelectionData.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, com.monkopedia.kodemirror.state/EditorSelectionData) // com.monkopedia.kodemirror.state/EditorSelectionData.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;com.monkopedia.kodemirror.state.EditorSelectionData){}[0]
+    }
+
+    final object Companion { // com.monkopedia.kodemirror.state/EditorSelectionData.Companion|null[0]
+        final val $childSerializers // com.monkopedia.kodemirror.state/EditorSelectionData.Companion.$childSerializers|{}$childSerializers[0]
+
+        final fun serializer(): kotlinx.serialization/KSerializer<com.monkopedia.kodemirror.state/EditorSelectionData> // com.monkopedia.kodemirror.state/EditorSelectionData.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class com.monkopedia.kodemirror.state/EditorState { // com.monkopedia.kodemirror.state/EditorState|null[0]
+    final val currentLine // com.monkopedia.kodemirror.state/EditorState.currentLine|{}currentLine[0]
+        final fun <get-currentLine>(): com.monkopedia.kodemirror.state/Line // com.monkopedia.kodemirror.state/EditorState.currentLine.<get-currentLine>|<get-currentLine>(){}[0]
+    final val cursorPosition // com.monkopedia.kodemirror.state/EditorState.cursorPosition|{}cursorPosition[0]
+        final fun <get-cursorPosition>(): com.monkopedia.kodemirror.state/DocPos // com.monkopedia.kodemirror.state/EditorState.cursorPosition.<get-cursorPosition>|<get-cursorPosition>(){}[0]
+    final val doc // com.monkopedia.kodemirror.state/EditorState.doc|{}doc[0]
+        final fun <get-doc>(): com.monkopedia.kodemirror.state/Text // com.monkopedia.kodemirror.state/EditorState.doc.<get-doc>|<get-doc>(){}[0]
+    final val lineBreak // com.monkopedia.kodemirror.state/EditorState.lineBreak|{}lineBreak[0]
+        final fun <get-lineBreak>(): kotlin/String // com.monkopedia.kodemirror.state/EditorState.lineBreak.<get-lineBreak>|<get-lineBreak>(){}[0]
+    final val readOnly // com.monkopedia.kodemirror.state/EditorState.readOnly|{}readOnly[0]
+        final fun <get-readOnly>(): kotlin/Boolean // com.monkopedia.kodemirror.state/EditorState.readOnly.<get-readOnly>|<get-readOnly>(){}[0]
+    final val selectedText // com.monkopedia.kodemirror.state/EditorState.selectedText|{}selectedText[0]
+        final fun <get-selectedText>(): kotlin/String // com.monkopedia.kodemirror.state/EditorState.selectedText.<get-selectedText>|<get-selectedText>(){}[0]
+    final val selection // com.monkopedia.kodemirror.state/EditorState.selection|{}selection[0]
+        final fun <get-selection>(): com.monkopedia.kodemirror.state/EditorSelection // com.monkopedia.kodemirror.state/EditorState.selection.<get-selection>|<get-selection>(){}[0]
+    final val tabSize // com.monkopedia.kodemirror.state/EditorState.tabSize|{}tabSize[0]
+        final fun <get-tabSize>(): kotlin/Int // com.monkopedia.kodemirror.state/EditorState.tabSize.<get-tabSize>|<get-tabSize>(){}[0]
+
+    final fun <#A1: kotlin/Any?> facet(com.monkopedia.kodemirror.state/Facet<*, #A1>): #A1 // com.monkopedia.kodemirror.state/EditorState.facet|facet(com.monkopedia.kodemirror.state.Facet<*,0:0>){0§<kotlin.Any?>}[0]
+    final fun <#A1: kotlin/Any?> facet(com.monkopedia.kodemirror.state/FacetReader<#A1>): #A1 // com.monkopedia.kodemirror.state/EditorState.facet|facet(com.monkopedia.kodemirror.state.FacetReader<0:0>){0§<kotlin.Any?>}[0]
+    final fun <#A1: kotlin/Any?> field(com.monkopedia.kodemirror.state/StateField<#A1>): #A1 // com.monkopedia.kodemirror.state/EditorState.field|field(com.monkopedia.kodemirror.state.StateField<0:0>){0§<kotlin.Any?>}[0]
+    final fun <#A1: kotlin/Any?> field(com.monkopedia.kodemirror.state/StateField<#A1>, kotlin/Boolean): #A1? // com.monkopedia.kodemirror.state/EditorState.field|field(com.monkopedia.kodemirror.state.StateField<0:0>;kotlin.Boolean){0§<kotlin.Any?>}[0]
+    final fun <#A1: kotlin/Any?> get(com.monkopedia.kodemirror.state/StateField<#A1>): #A1 // com.monkopedia.kodemirror.state/EditorState.get|get(com.monkopedia.kodemirror.state.StateField<0:0>){0§<kotlin.Any?>}[0]
+    final fun <#A1: kotlin/Any?> languageDataAt(com.monkopedia.kodemirror.state/LanguageDataKey<#A1>, com.monkopedia.kodemirror.state/DocPos, kotlin/Int = ...): kotlin.collections/List<#A1> // com.monkopedia.kodemirror.state/EditorState.languageDataAt|languageDataAt(com.monkopedia.kodemirror.state.LanguageDataKey<0:0>;com.monkopedia.kodemirror.state.DocPos;kotlin.Int){0§<kotlin.Any?>}[0]
+    final fun <#A1: kotlin/Any?> languageDataAt(kotlin/String, com.monkopedia.kodemirror.state/DocPos, kotlin/Int = ...): kotlin.collections/List<#A1> // com.monkopedia.kodemirror.state/EditorState.languageDataAt|languageDataAt(kotlin.String;com.monkopedia.kodemirror.state.DocPos;kotlin.Int){0§<kotlin.Any?>}[0]
+    final fun changeByRange(kotlin/Function1<com.monkopedia.kodemirror.state/SelectionRange, com.monkopedia.kodemirror.state/ChangeByRangeResult>): com.monkopedia.kodemirror.state/TransactionSpec // com.monkopedia.kodemirror.state/EditorState.changeByRange|changeByRange(kotlin.Function1<com.monkopedia.kodemirror.state.SelectionRange,com.monkopedia.kodemirror.state.ChangeByRangeResult>){}[0]
+    final fun changes(com.monkopedia.kodemirror.state/ChangeSpec? = ...): com.monkopedia.kodemirror.state/ChangeSet // com.monkopedia.kodemirror.state/EditorState.changes|changes(com.monkopedia.kodemirror.state.ChangeSpec?){}[0]
+    final fun charCategorizer(com.monkopedia.kodemirror.state/DocPos): kotlin/Function1<kotlin/String, com.monkopedia.kodemirror.state/CharCategory> // com.monkopedia.kodemirror.state/EditorState.charCategorizer|charCategorizer(com.monkopedia.kodemirror.state.DocPos){}[0]
+    final fun phrase(kotlin/String, kotlin/Array<out kotlin/Any>...): kotlin/String // com.monkopedia.kodemirror.state/EditorState.phrase|phrase(kotlin.String;kotlin.Array<out|kotlin.Any>...){}[0]
+    final fun replaceSelection(com.monkopedia.kodemirror.state/Text): com.monkopedia.kodemirror.state/TransactionSpec // com.monkopedia.kodemirror.state/EditorState.replaceSelection|replaceSelection(com.monkopedia.kodemirror.state.Text){}[0]
+    final fun replaceSelection(kotlin/String): com.monkopedia.kodemirror.state/TransactionSpec // com.monkopedia.kodemirror.state/EditorState.replaceSelection|replaceSelection(kotlin.String){}[0]
+    final fun sliceDoc(com.monkopedia.kodemirror.state/DocPos = ..., com.monkopedia.kodemirror.state/DocPos = ...): kotlin/String // com.monkopedia.kodemirror.state/EditorState.sliceDoc|sliceDoc(com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos){}[0]
+    final fun toJSON(kotlin.collections/Map<kotlin/String, com.monkopedia.kodemirror.state/StateField<*>>? = ...): kotlin.collections/Map<kotlin/String, kotlin/Any?> // com.monkopedia.kodemirror.state/EditorState.toJSON|toJSON(kotlin.collections.Map<kotlin.String,com.monkopedia.kodemirror.state.StateField<*>>?){}[0]
+    final fun toText(kotlin/String): com.monkopedia.kodemirror.state/Text // com.monkopedia.kodemirror.state/EditorState.toText|toText(kotlin.String){}[0]
+    final fun update(kotlin/Array<out com.monkopedia.kodemirror.state/TransactionSpec>...): com.monkopedia.kodemirror.state/Transaction // com.monkopedia.kodemirror.state/EditorState.update|update(kotlin.Array<out|com.monkopedia.kodemirror.state.TransactionSpec>...){}[0]
+    final fun wordAt(com.monkopedia.kodemirror.state/DocPos): com.monkopedia.kodemirror.state/SelectionRange? // com.monkopedia.kodemirror.state/EditorState.wordAt|wordAt(com.monkopedia.kodemirror.state.DocPos){}[0]
+
+    final object Companion { // com.monkopedia.kodemirror.state/EditorState.Companion|null[0]
+        final val allowMultipleSelections // com.monkopedia.kodemirror.state/EditorState.Companion.allowMultipleSelections|{}allowMultipleSelections[0]
+            final fun <get-allowMultipleSelections>(): com.monkopedia.kodemirror.state/Facet<kotlin/Boolean, kotlin/Boolean> // com.monkopedia.kodemirror.state/EditorState.Companion.allowMultipleSelections.<get-allowMultipleSelections>|<get-allowMultipleSelections>(){}[0]
+        final val changeFilter // com.monkopedia.kodemirror.state/EditorState.Companion.changeFilter|{}changeFilter[0]
+            final fun <get-changeFilter>(): com.monkopedia.kodemirror.state/Facet<kotlin/Function1<com.monkopedia.kodemirror.state/Transaction, com.monkopedia.kodemirror.state/ChangeFilterResult>, kotlin.collections/List<kotlin/Function1<com.monkopedia.kodemirror.state/Transaction, com.monkopedia.kodemirror.state/ChangeFilterResult>>> // com.monkopedia.kodemirror.state/EditorState.Companion.changeFilter.<get-changeFilter>|<get-changeFilter>(){}[0]
+        final val languageData // com.monkopedia.kodemirror.state/EditorState.Companion.languageData|{}languageData[0]
+            final fun <get-languageData>(): com.monkopedia.kodemirror.state/Facet<kotlin/Function3<com.monkopedia.kodemirror.state/EditorState, com.monkopedia.kodemirror.state/DocPos, kotlin/Int, kotlin.collections/List<kotlin.collections/Map<kotlin/String, kotlin/Any?>>>, kotlin.collections/List<kotlin/Function3<com.monkopedia.kodemirror.state/EditorState, com.monkopedia.kodemirror.state/DocPos, kotlin/Int, kotlin.collections/List<kotlin.collections/Map<kotlin/String, kotlin/Any?>>>>> // com.monkopedia.kodemirror.state/EditorState.Companion.languageData.<get-languageData>|<get-languageData>(){}[0]
+        final val lineSeparator // com.monkopedia.kodemirror.state/EditorState.Companion.lineSeparator|{}lineSeparator[0]
+            final fun <get-lineSeparator>(): com.monkopedia.kodemirror.state/Facet<kotlin/String, kotlin/String?> // com.monkopedia.kodemirror.state/EditorState.Companion.lineSeparator.<get-lineSeparator>|<get-lineSeparator>(){}[0]
+        final val phrases // com.monkopedia.kodemirror.state/EditorState.Companion.phrases|{}phrases[0]
+            final fun <get-phrases>(): com.monkopedia.kodemirror.state/Facet<kotlin.collections/Map<kotlin/String, kotlin/String>, kotlin.collections/List<kotlin.collections/Map<kotlin/String, kotlin/String>>> // com.monkopedia.kodemirror.state/EditorState.Companion.phrases.<get-phrases>|<get-phrases>(){}[0]
+        final val readOnly // com.monkopedia.kodemirror.state/EditorState.Companion.readOnly|{}readOnly[0]
+            final fun <get-readOnly>(): com.monkopedia.kodemirror.state/Facet<kotlin/Boolean, kotlin/Boolean> // com.monkopedia.kodemirror.state/EditorState.Companion.readOnly.<get-readOnly>|<get-readOnly>(){}[0]
+        final val tabSize // com.monkopedia.kodemirror.state/EditorState.Companion.tabSize|{}tabSize[0]
+            final fun <get-tabSize>(): com.monkopedia.kodemirror.state/Facet<kotlin/Int, kotlin/Int> // com.monkopedia.kodemirror.state/EditorState.Companion.tabSize.<get-tabSize>|<get-tabSize>(){}[0]
+        final val transactionExtender // com.monkopedia.kodemirror.state/EditorState.Companion.transactionExtender|{}transactionExtender[0]
+            final fun <get-transactionExtender>(): com.monkopedia.kodemirror.state/Facet<kotlin/Function1<com.monkopedia.kodemirror.state/Transaction, com.monkopedia.kodemirror.state/TransactionExtenderResult?>, kotlin.collections/List<kotlin/Function1<com.monkopedia.kodemirror.state/Transaction, com.monkopedia.kodemirror.state/TransactionExtenderResult?>>> // com.monkopedia.kodemirror.state/EditorState.Companion.transactionExtender.<get-transactionExtender>|<get-transactionExtender>(){}[0]
+        final val transactionFilter // com.monkopedia.kodemirror.state/EditorState.Companion.transactionFilter|{}transactionFilter[0]
+            final fun <get-transactionFilter>(): com.monkopedia.kodemirror.state/Facet<kotlin/Function1<com.monkopedia.kodemirror.state/Transaction, com.monkopedia.kodemirror.state/TransactionFilterResult>, kotlin.collections/List<kotlin/Function1<com.monkopedia.kodemirror.state/Transaction, com.monkopedia.kodemirror.state/TransactionFilterResult>>> // com.monkopedia.kodemirror.state/EditorState.Companion.transactionFilter.<get-transactionFilter>|<get-transactionFilter>(){}[0]
+
+        final fun create(com.monkopedia.kodemirror.state/EditorStateConfig = ...): com.monkopedia.kodemirror.state/EditorState // com.monkopedia.kodemirror.state/EditorState.Companion.create|create(com.monkopedia.kodemirror.state.EditorStateConfig){}[0]
+        final fun create(kotlin/String, com.monkopedia.kodemirror.state/Extension? = ..., com.monkopedia.kodemirror.state/SelectionSpec? = ...): com.monkopedia.kodemirror.state/EditorState // com.monkopedia.kodemirror.state/EditorState.Companion.create|create(kotlin.String;com.monkopedia.kodemirror.state.Extension?;com.monkopedia.kodemirror.state.SelectionSpec?){}[0]
+        final fun fromJSON(kotlin.collections/Map<kotlin/String, kotlin/Any?>, com.monkopedia.kodemirror.state/EditorStateConfig = ..., kotlin.collections/Map<kotlin/String, com.monkopedia.kodemirror.state/StateField<*>>? = ...): com.monkopedia.kodemirror.state/EditorState // com.monkopedia.kodemirror.state/EditorState.Companion.fromJSON|fromJSON(kotlin.collections.Map<kotlin.String,kotlin.Any?>;com.monkopedia.kodemirror.state.EditorStateConfig;kotlin.collections.Map<kotlin.String,com.monkopedia.kodemirror.state.StateField<*>>?){}[0]
+    }
+}
+
+final class com.monkopedia.kodemirror.state/EditorStateBuilder { // com.monkopedia.kodemirror.state/EditorStateBuilder|null[0]
+    constructor <init>() // com.monkopedia.kodemirror.state/EditorStateBuilder.<init>|<init>(){}[0]
+
+    final fun build(): com.monkopedia.kodemirror.state/EditorStateConfig // com.monkopedia.kodemirror.state/EditorStateBuilder.build|build(){}[0]
+    final fun doc(com.monkopedia.kodemirror.state/Text) // com.monkopedia.kodemirror.state/EditorStateBuilder.doc|doc(com.monkopedia.kodemirror.state.Text){}[0]
+    final fun doc(kotlin/String) // com.monkopedia.kodemirror.state/EditorStateBuilder.doc|doc(kotlin.String){}[0]
+    final fun extension(com.monkopedia.kodemirror.state/Extension) // com.monkopedia.kodemirror.state/EditorStateBuilder.extension|extension(com.monkopedia.kodemirror.state.Extension){}[0]
+    final fun extensions(kotlin/Function1<com.monkopedia.kodemirror.state/ExtensionListBuilder, kotlin/Unit>) // com.monkopedia.kodemirror.state/EditorStateBuilder.extensions|extensions(kotlin.Function1<com.monkopedia.kodemirror.state.ExtensionListBuilder,kotlin.Unit>){}[0]
+    final fun selection(com.monkopedia.kodemirror.state/DocPos) // com.monkopedia.kodemirror.state/EditorStateBuilder.selection|selection(com.monkopedia.kodemirror.state.DocPos){}[0]
+    final fun selection(com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos) // com.monkopedia.kodemirror.state/EditorStateBuilder.selection|selection(com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos){}[0]
+    final fun selection(com.monkopedia.kodemirror.state/EditorSelection) // com.monkopedia.kodemirror.state/EditorStateBuilder.selection|selection(com.monkopedia.kodemirror.state.EditorSelection){}[0]
+}
+
+final class com.monkopedia.kodemirror.state/EditorStateConfig { // com.monkopedia.kodemirror.state/EditorStateConfig|null[0]
+    constructor <init>(com.monkopedia.kodemirror.state/DocSpec? = ..., com.monkopedia.kodemirror.state/SelectionSpec? = ..., com.monkopedia.kodemirror.state/Extension? = ...) // com.monkopedia.kodemirror.state/EditorStateConfig.<init>|<init>(com.monkopedia.kodemirror.state.DocSpec?;com.monkopedia.kodemirror.state.SelectionSpec?;com.monkopedia.kodemirror.state.Extension?){}[0]
+
+    final val doc // com.monkopedia.kodemirror.state/EditorStateConfig.doc|{}doc[0]
+        final fun <get-doc>(): com.monkopedia.kodemirror.state/DocSpec? // com.monkopedia.kodemirror.state/EditorStateConfig.doc.<get-doc>|<get-doc>(){}[0]
+    final val extensions // com.monkopedia.kodemirror.state/EditorStateConfig.extensions|{}extensions[0]
+        final fun <get-extensions>(): com.monkopedia.kodemirror.state/Extension? // com.monkopedia.kodemirror.state/EditorStateConfig.extensions.<get-extensions>|<get-extensions>(){}[0]
+    final val selection // com.monkopedia.kodemirror.state/EditorStateConfig.selection|{}selection[0]
+        final fun <get-selection>(): com.monkopedia.kodemirror.state/SelectionSpec? // com.monkopedia.kodemirror.state/EditorStateConfig.selection.<get-selection>|<get-selection>(){}[0]
+
+    final fun component1(): com.monkopedia.kodemirror.state/DocSpec? // com.monkopedia.kodemirror.state/EditorStateConfig.component1|component1(){}[0]
+    final fun component2(): com.monkopedia.kodemirror.state/SelectionSpec? // com.monkopedia.kodemirror.state/EditorStateConfig.component2|component2(){}[0]
+    final fun component3(): com.monkopedia.kodemirror.state/Extension? // com.monkopedia.kodemirror.state/EditorStateConfig.component3|component3(){}[0]
+    final fun copy(com.monkopedia.kodemirror.state/DocSpec? = ..., com.monkopedia.kodemirror.state/SelectionSpec? = ..., com.monkopedia.kodemirror.state/Extension? = ...): com.monkopedia.kodemirror.state/EditorStateConfig // com.monkopedia.kodemirror.state/EditorStateConfig.copy|copy(com.monkopedia.kodemirror.state.DocSpec?;com.monkopedia.kodemirror.state.SelectionSpec?;com.monkopedia.kodemirror.state.Extension?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/EditorStateConfig.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/EditorStateConfig.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/EditorStateConfig.toString|toString(){}[0]
+}
+
+final class com.monkopedia.kodemirror.state/EditorStateData { // com.monkopedia.kodemirror.state/EditorStateData|null[0]
+    constructor <init>(kotlin/String, com.monkopedia.kodemirror.state/EditorSelectionData, kotlin.collections/Map<kotlin/String, kotlinx.serialization.json/JsonElement> = ...) // com.monkopedia.kodemirror.state/EditorStateData.<init>|<init>(kotlin.String;com.monkopedia.kodemirror.state.EditorSelectionData;kotlin.collections.Map<kotlin.String,kotlinx.serialization.json.JsonElement>){}[0]
+
+    final val doc // com.monkopedia.kodemirror.state/EditorStateData.doc|{}doc[0]
+        final fun <get-doc>(): kotlin/String // com.monkopedia.kodemirror.state/EditorStateData.doc.<get-doc>|<get-doc>(){}[0]
+    final val fields // com.monkopedia.kodemirror.state/EditorStateData.fields|{}fields[0]
+        final fun <get-fields>(): kotlin.collections/Map<kotlin/String, kotlinx.serialization.json/JsonElement> // com.monkopedia.kodemirror.state/EditorStateData.fields.<get-fields>|<get-fields>(){}[0]
+    final val selection // com.monkopedia.kodemirror.state/EditorStateData.selection|{}selection[0]
+        final fun <get-selection>(): com.monkopedia.kodemirror.state/EditorSelectionData // com.monkopedia.kodemirror.state/EditorStateData.selection.<get-selection>|<get-selection>(){}[0]
+
+    final fun component1(): kotlin/String // com.monkopedia.kodemirror.state/EditorStateData.component1|component1(){}[0]
+    final fun component2(): com.monkopedia.kodemirror.state/EditorSelectionData // com.monkopedia.kodemirror.state/EditorStateData.component2|component2(){}[0]
+    final fun component3(): kotlin.collections/Map<kotlin/String, kotlinx.serialization.json/JsonElement> // com.monkopedia.kodemirror.state/EditorStateData.component3|component3(){}[0]
+    final fun copy(kotlin/String = ..., com.monkopedia.kodemirror.state/EditorSelectionData = ..., kotlin.collections/Map<kotlin/String, kotlinx.serialization.json/JsonElement> = ...): com.monkopedia.kodemirror.state/EditorStateData // com.monkopedia.kodemirror.state/EditorStateData.copy|copy(kotlin.String;com.monkopedia.kodemirror.state.EditorSelectionData;kotlin.collections.Map<kotlin.String,kotlinx.serialization.json.JsonElement>){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/EditorStateData.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/EditorStateData.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/EditorStateData.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<com.monkopedia.kodemirror.state/EditorStateData> { // com.monkopedia.kodemirror.state/EditorStateData.$serializer|null[0]
+        final val descriptor // com.monkopedia.kodemirror.state/EditorStateData.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // com.monkopedia.kodemirror.state/EditorStateData.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // com.monkopedia.kodemirror.state/EditorStateData.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): com.monkopedia.kodemirror.state/EditorStateData // com.monkopedia.kodemirror.state/EditorStateData.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, com.monkopedia.kodemirror.state/EditorStateData) // com.monkopedia.kodemirror.state/EditorStateData.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;com.monkopedia.kodemirror.state.EditorStateData){}[0]
+    }
+
+    final object Companion { // com.monkopedia.kodemirror.state/EditorStateData.Companion|null[0]
+        final val $childSerializers // com.monkopedia.kodemirror.state/EditorStateData.Companion.$childSerializers|{}$childSerializers[0]
+
+        final fun serializer(): kotlinx.serialization/KSerializer<com.monkopedia.kodemirror.state/EditorStateData> // com.monkopedia.kodemirror.state/EditorStateData.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class com.monkopedia.kodemirror.state/ExtensionHolder : com.monkopedia.kodemirror.state/Extension { // com.monkopedia.kodemirror.state/ExtensionHolder|null[0]
+    constructor <init>(com.monkopedia.kodemirror.state/Extension) // com.monkopedia.kodemirror.state/ExtensionHolder.<init>|<init>(com.monkopedia.kodemirror.state.Extension){}[0]
+
+    final val extension // com.monkopedia.kodemirror.state/ExtensionHolder.extension|{}extension[0]
+        final fun <get-extension>(): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.state/ExtensionHolder.extension.<get-extension>|<get-extension>(){}[0]
+}
+
+final class com.monkopedia.kodemirror.state/ExtensionList : com.monkopedia.kodemirror.state/Extension { // com.monkopedia.kodemirror.state/ExtensionList|null[0]
+    constructor <init>(kotlin.collections/List<com.monkopedia.kodemirror.state/Extension>) // com.monkopedia.kodemirror.state/ExtensionList.<init>|<init>(kotlin.collections.List<com.monkopedia.kodemirror.state.Extension>){}[0]
+
+    final val extensions // com.monkopedia.kodemirror.state/ExtensionList.extensions|{}extensions[0]
+        final fun <get-extensions>(): kotlin.collections/List<com.monkopedia.kodemirror.state/Extension> // com.monkopedia.kodemirror.state/ExtensionList.extensions.<get-extensions>|<get-extensions>(){}[0]
+}
+
+final class com.monkopedia.kodemirror.state/ExtensionListBuilder { // com.monkopedia.kodemirror.state/ExtensionListBuilder|null[0]
+    constructor <init>() // com.monkopedia.kodemirror.state/ExtensionListBuilder.<init>|<init>(){}[0]
+
+    final val list // com.monkopedia.kodemirror.state/ExtensionListBuilder.list|{}list[0]
+        final fun <get-list>(): kotlin.collections/MutableList<com.monkopedia.kodemirror.state/Extension> // com.monkopedia.kodemirror.state/ExtensionListBuilder.list.<get-list>|<get-list>(){}[0]
+
+    final fun (com.monkopedia.kodemirror.state/Extension).unaryPlus() // com.monkopedia.kodemirror.state/ExtensionListBuilder.unaryPlus|unaryPlus@com.monkopedia.kodemirror.state.Extension(){}[0]
+    final fun build(): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.state/ExtensionListBuilder.build|build(){}[0]
+}
+
+final class com.monkopedia.kodemirror.state/FilterResult { // com.monkopedia.kodemirror.state/FilterResult|null[0]
+    constructor <init>(com.monkopedia.kodemirror.state/ChangeSet, com.monkopedia.kodemirror.state/ChangeDesc) // com.monkopedia.kodemirror.state/FilterResult.<init>|<init>(com.monkopedia.kodemirror.state.ChangeSet;com.monkopedia.kodemirror.state.ChangeDesc){}[0]
+
+    final val changes // com.monkopedia.kodemirror.state/FilterResult.changes|{}changes[0]
+        final fun <get-changes>(): com.monkopedia.kodemirror.state/ChangeSet // com.monkopedia.kodemirror.state/FilterResult.changes.<get-changes>|<get-changes>(){}[0]
+    final val filtered // com.monkopedia.kodemirror.state/FilterResult.filtered|{}filtered[0]
+        final fun <get-filtered>(): com.monkopedia.kodemirror.state/ChangeDesc // com.monkopedia.kodemirror.state/FilterResult.filtered.<get-filtered>|<get-filtered>(){}[0]
+
+    final fun component1(): com.monkopedia.kodemirror.state/ChangeSet // com.monkopedia.kodemirror.state/FilterResult.component1|component1(){}[0]
+    final fun component2(): com.monkopedia.kodemirror.state/ChangeDesc // com.monkopedia.kodemirror.state/FilterResult.component2|component2(){}[0]
+    final fun copy(com.monkopedia.kodemirror.state/ChangeSet = ..., com.monkopedia.kodemirror.state/ChangeDesc = ...): com.monkopedia.kodemirror.state/FilterResult // com.monkopedia.kodemirror.state/FilterResult.copy|copy(com.monkopedia.kodemirror.state.ChangeSet;com.monkopedia.kodemirror.state.ChangeDesc){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/FilterResult.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/FilterResult.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/FilterResult.toString|toString(){}[0]
+}
+
+final class com.monkopedia.kodemirror.state/LanguageDataMap { // com.monkopedia.kodemirror.state/LanguageDataMap|null[0]
+    constructor <init>(kotlin.collections/Map<kotlin/String, kotlin/Any?>) // com.monkopedia.kodemirror.state/LanguageDataMap.<init>|<init>(kotlin.collections.Map<kotlin.String,kotlin.Any?>){}[0]
+
+    final fun <#A1: kotlin/Any?> contains(com.monkopedia.kodemirror.state/LanguageDataKey<#A1>): kotlin/Boolean // com.monkopedia.kodemirror.state/LanguageDataMap.contains|contains(com.monkopedia.kodemirror.state.LanguageDataKey<0:0>){0§<kotlin.Any?>}[0]
+    final fun <#A1: kotlin/Any?> get(com.monkopedia.kodemirror.state/LanguageDataKey<#A1>): #A1? // com.monkopedia.kodemirror.state/LanguageDataMap.get|get(com.monkopedia.kodemirror.state.LanguageDataKey<0:0>){0§<kotlin.Any?>}[0]
+    final fun toMap(): kotlin.collections/Map<kotlin/String, kotlin/Any?> // com.monkopedia.kodemirror.state/LanguageDataMap.toMap|toMap(){}[0]
+}
+
+final class com.monkopedia.kodemirror.state/Line { // com.monkopedia.kodemirror.state/Line|null[0]
+    final val from // com.monkopedia.kodemirror.state/Line.from|{}from[0]
+        final fun <get-from>(): com.monkopedia.kodemirror.state/DocPos // com.monkopedia.kodemirror.state/Line.from.<get-from>|<get-from>(){}[0]
+    final val length // com.monkopedia.kodemirror.state/Line.length|{}length[0]
+        final fun <get-length>(): kotlin/Int // com.monkopedia.kodemirror.state/Line.length.<get-length>|<get-length>(){}[0]
+    final val number // com.monkopedia.kodemirror.state/Line.number|{}number[0]
+        final fun <get-number>(): com.monkopedia.kodemirror.state/LineNumber // com.monkopedia.kodemirror.state/Line.number.<get-number>|<get-number>(){}[0]
+    final val text // com.monkopedia.kodemirror.state/Line.text|{}text[0]
+        final fun <get-text>(): kotlin/String // com.monkopedia.kodemirror.state/Line.text.<get-text>|<get-text>(){}[0]
+    final val to // com.monkopedia.kodemirror.state/Line.to|{}to[0]
+        final fun <get-to>(): com.monkopedia.kodemirror.state/DocPos // com.monkopedia.kodemirror.state/Line.to.<get-to>|<get-to>(){}[0]
+}
+
+final class com.monkopedia.kodemirror.state/SelectionRange { // com.monkopedia.kodemirror.state/SelectionRange|null[0]
+    final val anchor // com.monkopedia.kodemirror.state/SelectionRange.anchor|{}anchor[0]
+        final fun <get-anchor>(): com.monkopedia.kodemirror.state/DocPos // com.monkopedia.kodemirror.state/SelectionRange.anchor.<get-anchor>|<get-anchor>(){}[0]
+    final val assoc // com.monkopedia.kodemirror.state/SelectionRange.assoc|{}assoc[0]
+        final fun <get-assoc>(): kotlin/Int // com.monkopedia.kodemirror.state/SelectionRange.assoc.<get-assoc>|<get-assoc>(){}[0]
+    final val bidiLevel // com.monkopedia.kodemirror.state/SelectionRange.bidiLevel|{}bidiLevel[0]
+        final fun <get-bidiLevel>(): kotlin/Int? // com.monkopedia.kodemirror.state/SelectionRange.bidiLevel.<get-bidiLevel>|<get-bidiLevel>(){}[0]
+    final val empty // com.monkopedia.kodemirror.state/SelectionRange.empty|{}empty[0]
+        final fun <get-empty>(): kotlin/Boolean // com.monkopedia.kodemirror.state/SelectionRange.empty.<get-empty>|<get-empty>(){}[0]
+    final val from // com.monkopedia.kodemirror.state/SelectionRange.from|{}from[0]
+        final fun <get-from>(): com.monkopedia.kodemirror.state/DocPos // com.monkopedia.kodemirror.state/SelectionRange.from.<get-from>|<get-from>(){}[0]
+    final val goalColumn // com.monkopedia.kodemirror.state/SelectionRange.goalColumn|{}goalColumn[0]
+        final fun <get-goalColumn>(): kotlin/Int? // com.monkopedia.kodemirror.state/SelectionRange.goalColumn.<get-goalColumn>|<get-goalColumn>(){}[0]
+    final val head // com.monkopedia.kodemirror.state/SelectionRange.head|{}head[0]
+        final fun <get-head>(): com.monkopedia.kodemirror.state/DocPos // com.monkopedia.kodemirror.state/SelectionRange.head.<get-head>|<get-head>(){}[0]
+    final val to // com.monkopedia.kodemirror.state/SelectionRange.to|{}to[0]
+        final fun <get-to>(): com.monkopedia.kodemirror.state/DocPos // com.monkopedia.kodemirror.state/SelectionRange.to.<get-to>|<get-to>(){}[0]
+
+    final fun eq(com.monkopedia.kodemirror.state/SelectionRange, kotlin/Boolean): kotlin/Boolean // com.monkopedia.kodemirror.state/SelectionRange.eq|eq(com.monkopedia.kodemirror.state.SelectionRange;kotlin.Boolean){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/SelectionRange.equals|equals(kotlin.Any?){}[0]
+    final fun extend(com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos = ...): com.monkopedia.kodemirror.state/SelectionRange // com.monkopedia.kodemirror.state/SelectionRange.extend|extend(com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/SelectionRange.hashCode|hashCode(){}[0]
+    final fun map(com.monkopedia.kodemirror.state/ChangeDesc, kotlin/Int = ...): com.monkopedia.kodemirror.state/SelectionRange // com.monkopedia.kodemirror.state/SelectionRange.map|map(com.monkopedia.kodemirror.state.ChangeDesc;kotlin.Int){}[0]
+    final fun toJSON(): kotlin.collections/Map<kotlin/String, kotlin/Int> // com.monkopedia.kodemirror.state/SelectionRange.toJSON|toJSON(){}[0]
+
+    final object Companion { // com.monkopedia.kodemirror.state/SelectionRange.Companion|null[0]
+        final fun fromJSON(kotlin.collections/Map<kotlin/String, kotlin/Any?>): com.monkopedia.kodemirror.state/SelectionRange // com.monkopedia.kodemirror.state/SelectionRange.Companion.fromJSON|fromJSON(kotlin.collections.Map<kotlin.String,kotlin.Any?>){}[0]
+    }
+}
+
+final class com.monkopedia.kodemirror.state/SelectionRangeData { // com.monkopedia.kodemirror.state/SelectionRangeData|null[0]
+    constructor <init>(kotlin/Int, kotlin/Int) // com.monkopedia.kodemirror.state/SelectionRangeData.<init>|<init>(kotlin.Int;kotlin.Int){}[0]
+
+    final val anchor // com.monkopedia.kodemirror.state/SelectionRangeData.anchor|{}anchor[0]
+        final fun <get-anchor>(): kotlin/Int // com.monkopedia.kodemirror.state/SelectionRangeData.anchor.<get-anchor>|<get-anchor>(){}[0]
+    final val head // com.monkopedia.kodemirror.state/SelectionRangeData.head|{}head[0]
+        final fun <get-head>(): kotlin/Int // com.monkopedia.kodemirror.state/SelectionRangeData.head.<get-head>|<get-head>(){}[0]
+
+    final fun component1(): kotlin/Int // com.monkopedia.kodemirror.state/SelectionRangeData.component1|component1(){}[0]
+    final fun component2(): kotlin/Int // com.monkopedia.kodemirror.state/SelectionRangeData.component2|component2(){}[0]
+    final fun copy(kotlin/Int = ..., kotlin/Int = ...): com.monkopedia.kodemirror.state/SelectionRangeData // com.monkopedia.kodemirror.state/SelectionRangeData.copy|copy(kotlin.Int;kotlin.Int){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/SelectionRangeData.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/SelectionRangeData.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/SelectionRangeData.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<com.monkopedia.kodemirror.state/SelectionRangeData> { // com.monkopedia.kodemirror.state/SelectionRangeData.$serializer|null[0]
+        final val descriptor // com.monkopedia.kodemirror.state/SelectionRangeData.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // com.monkopedia.kodemirror.state/SelectionRangeData.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // com.monkopedia.kodemirror.state/SelectionRangeData.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): com.monkopedia.kodemirror.state/SelectionRangeData // com.monkopedia.kodemirror.state/SelectionRangeData.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, com.monkopedia.kodemirror.state/SelectionRangeData) // com.monkopedia.kodemirror.state/SelectionRangeData.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;com.monkopedia.kodemirror.state.SelectionRangeData){}[0]
+    }
+
+    final object Companion { // com.monkopedia.kodemirror.state/SelectionRangeData.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<com.monkopedia.kodemirror.state/SelectionRangeData> // com.monkopedia.kodemirror.state/SelectionRangeData.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class com.monkopedia.kodemirror.state/StateCommandTarget { // com.monkopedia.kodemirror.state/StateCommandTarget|null[0]
+    constructor <init>(com.monkopedia.kodemirror.state/EditorState, kotlin/Function1<com.monkopedia.kodemirror.state/Transaction, kotlin/Unit>) // com.monkopedia.kodemirror.state/StateCommandTarget.<init>|<init>(com.monkopedia.kodemirror.state.EditorState;kotlin.Function1<com.monkopedia.kodemirror.state.Transaction,kotlin.Unit>){}[0]
+
+    final val dispatch // com.monkopedia.kodemirror.state/StateCommandTarget.dispatch|{}dispatch[0]
+        final fun <get-dispatch>(): kotlin/Function1<com.monkopedia.kodemirror.state/Transaction, kotlin/Unit> // com.monkopedia.kodemirror.state/StateCommandTarget.dispatch.<get-dispatch>|<get-dispatch>(){}[0]
+    final val state // com.monkopedia.kodemirror.state/StateCommandTarget.state|{}state[0]
+        final fun <get-state>(): com.monkopedia.kodemirror.state/EditorState // com.monkopedia.kodemirror.state/StateCommandTarget.state.<get-state>|<get-state>(){}[0]
+
+    final fun component1(): com.monkopedia.kodemirror.state/EditorState // com.monkopedia.kodemirror.state/StateCommandTarget.component1|component1(){}[0]
+    final fun component2(): kotlin/Function1<com.monkopedia.kodemirror.state/Transaction, kotlin/Unit> // com.monkopedia.kodemirror.state/StateCommandTarget.component2|component2(){}[0]
+    final fun copy(com.monkopedia.kodemirror.state/EditorState = ..., kotlin/Function1<com.monkopedia.kodemirror.state/Transaction, kotlin/Unit> = ...): com.monkopedia.kodemirror.state/StateCommandTarget // com.monkopedia.kodemirror.state/StateCommandTarget.copy|copy(com.monkopedia.kodemirror.state.EditorState;kotlin.Function1<com.monkopedia.kodemirror.state.Transaction,kotlin.Unit>){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/StateCommandTarget.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/StateCommandTarget.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/StateCommandTarget.toString|toString(){}[0]
+}
+
+final class com.monkopedia.kodemirror.state/ToggleFieldHandle { // com.monkopedia.kodemirror.state/ToggleFieldHandle|null[0]
+    constructor <init>(com.monkopedia.kodemirror.state/StateField<kotlin/Boolean>, com.monkopedia.kodemirror.state/StateEffectType<kotlin/Unit>, com.monkopedia.kodemirror.state/StateEffectType<kotlin/Boolean>) // com.monkopedia.kodemirror.state/ToggleFieldHandle.<init>|<init>(com.monkopedia.kodemirror.state.StateField<kotlin.Boolean>;com.monkopedia.kodemirror.state.StateEffectType<kotlin.Unit>;com.monkopedia.kodemirror.state.StateEffectType<kotlin.Boolean>){}[0]
+
+    final val field // com.monkopedia.kodemirror.state/ToggleFieldHandle.field|{}field[0]
+        final fun <get-field>(): com.monkopedia.kodemirror.state/StateField<kotlin/Boolean> // com.monkopedia.kodemirror.state/ToggleFieldHandle.field.<get-field>|<get-field>(){}[0]
+    final val set // com.monkopedia.kodemirror.state/ToggleFieldHandle.set|{}set[0]
+        final fun <get-set>(): com.monkopedia.kodemirror.state/StateEffectType<kotlin/Boolean> // com.monkopedia.kodemirror.state/ToggleFieldHandle.set.<get-set>|<get-set>(){}[0]
+    final val toggle // com.monkopedia.kodemirror.state/ToggleFieldHandle.toggle|{}toggle[0]
+        final fun <get-toggle>(): com.monkopedia.kodemirror.state/StateEffectType<kotlin/Unit> // com.monkopedia.kodemirror.state/ToggleFieldHandle.toggle.<get-toggle>|<get-toggle>(){}[0]
+
+    final fun component1(): com.monkopedia.kodemirror.state/StateField<kotlin/Boolean> // com.monkopedia.kodemirror.state/ToggleFieldHandle.component1|component1(){}[0]
+    final fun component2(): com.monkopedia.kodemirror.state/StateEffectType<kotlin/Unit> // com.monkopedia.kodemirror.state/ToggleFieldHandle.component2|component2(){}[0]
+    final fun component3(): com.monkopedia.kodemirror.state/StateEffectType<kotlin/Boolean> // com.monkopedia.kodemirror.state/ToggleFieldHandle.component3|component3(){}[0]
+    final fun copy(com.monkopedia.kodemirror.state/StateField<kotlin/Boolean> = ..., com.monkopedia.kodemirror.state/StateEffectType<kotlin/Unit> = ..., com.monkopedia.kodemirror.state/StateEffectType<kotlin/Boolean> = ...): com.monkopedia.kodemirror.state/ToggleFieldHandle // com.monkopedia.kodemirror.state/ToggleFieldHandle.copy|copy(com.monkopedia.kodemirror.state.StateField<kotlin.Boolean>;com.monkopedia.kodemirror.state.StateEffectType<kotlin.Unit>;com.monkopedia.kodemirror.state.StateEffectType<kotlin.Boolean>){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/ToggleFieldHandle.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/ToggleFieldHandle.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/ToggleFieldHandle.toString|toString(){}[0]
+}
+
+final class com.monkopedia.kodemirror.state/Transaction { // com.monkopedia.kodemirror.state/Transaction|null[0]
+    final val annotations // com.monkopedia.kodemirror.state/Transaction.annotations|{}annotations[0]
+        final fun <get-annotations>(): kotlin.collections/List<com.monkopedia.kodemirror.state/Annotation<*>> // com.monkopedia.kodemirror.state/Transaction.annotations.<get-annotations>|<get-annotations>(){}[0]
+    final val changes // com.monkopedia.kodemirror.state/Transaction.changes|{}changes[0]
+        final fun <get-changes>(): com.monkopedia.kodemirror.state/ChangeSet // com.monkopedia.kodemirror.state/Transaction.changes.<get-changes>|<get-changes>(){}[0]
+    final val docChanged // com.monkopedia.kodemirror.state/Transaction.docChanged|{}docChanged[0]
+        final fun <get-docChanged>(): kotlin/Boolean // com.monkopedia.kodemirror.state/Transaction.docChanged.<get-docChanged>|<get-docChanged>(){}[0]
+    final val effects // com.monkopedia.kodemirror.state/Transaction.effects|{}effects[0]
+        final fun <get-effects>(): kotlin.collections/List<com.monkopedia.kodemirror.state/StateEffect<*>> // com.monkopedia.kodemirror.state/Transaction.effects.<get-effects>|<get-effects>(){}[0]
+    final val newDoc // com.monkopedia.kodemirror.state/Transaction.newDoc|{}newDoc[0]
+        final fun <get-newDoc>(): com.monkopedia.kodemirror.state/Text // com.monkopedia.kodemirror.state/Transaction.newDoc.<get-newDoc>|<get-newDoc>(){}[0]
+    final val newSelection // com.monkopedia.kodemirror.state/Transaction.newSelection|{}newSelection[0]
+        final fun <get-newSelection>(): com.monkopedia.kodemirror.state/EditorSelection // com.monkopedia.kodemirror.state/Transaction.newSelection.<get-newSelection>|<get-newSelection>(){}[0]
+    final val reconfigured // com.monkopedia.kodemirror.state/Transaction.reconfigured|{}reconfigured[0]
+        final fun <get-reconfigured>(): kotlin/Boolean // com.monkopedia.kodemirror.state/Transaction.reconfigured.<get-reconfigured>|<get-reconfigured>(){}[0]
+    final val scrollIntoView // com.monkopedia.kodemirror.state/Transaction.scrollIntoView|{}scrollIntoView[0]
+        final fun <get-scrollIntoView>(): kotlin/Boolean // com.monkopedia.kodemirror.state/Transaction.scrollIntoView.<get-scrollIntoView>|<get-scrollIntoView>(){}[0]
+    final val selection // com.monkopedia.kodemirror.state/Transaction.selection|{}selection[0]
+        final fun <get-selection>(): com.monkopedia.kodemirror.state/EditorSelection? // com.monkopedia.kodemirror.state/Transaction.selection.<get-selection>|<get-selection>(){}[0]
+    final val startState // com.monkopedia.kodemirror.state/Transaction.startState|{}startState[0]
+        final fun <get-startState>(): com.monkopedia.kodemirror.state/EditorState // com.monkopedia.kodemirror.state/Transaction.startState.<get-startState>|<get-startState>(){}[0]
+    final val state // com.monkopedia.kodemirror.state/Transaction.state|{}state[0]
+        final fun <get-state>(): com.monkopedia.kodemirror.state/EditorState // com.monkopedia.kodemirror.state/Transaction.state.<get-state>|<get-state>(){}[0]
+
+    final fun <#A1: kotlin/Any?> annotation(com.monkopedia.kodemirror.state/AnnotationType<#A1>): #A1? // com.monkopedia.kodemirror.state/Transaction.annotation|annotation(com.monkopedia.kodemirror.state.AnnotationType<0:0>){0§<kotlin.Any?>}[0]
+    final fun isUserEvent(kotlin/String): kotlin/Boolean // com.monkopedia.kodemirror.state/Transaction.isUserEvent|isUserEvent(kotlin.String){}[0]
+
+    final object Companion { // com.monkopedia.kodemirror.state/Transaction.Companion|null[0]
+        final val addToHistory // com.monkopedia.kodemirror.state/Transaction.Companion.addToHistory|{}addToHistory[0]
+            final fun <get-addToHistory>(): com.monkopedia.kodemirror.state/AnnotationType<kotlin/Boolean> // com.monkopedia.kodemirror.state/Transaction.Companion.addToHistory.<get-addToHistory>|<get-addToHistory>(){}[0]
+        final val remote // com.monkopedia.kodemirror.state/Transaction.Companion.remote|{}remote[0]
+            final fun <get-remote>(): com.monkopedia.kodemirror.state/AnnotationType<kotlin/Boolean> // com.monkopedia.kodemirror.state/Transaction.Companion.remote.<get-remote>|<get-remote>(){}[0]
+        final val time // com.monkopedia.kodemirror.state/Transaction.Companion.time|{}time[0]
+            final fun <get-time>(): com.monkopedia.kodemirror.state/AnnotationType<kotlin/Long> // com.monkopedia.kodemirror.state/Transaction.Companion.time.<get-time>|<get-time>(){}[0]
+        final val userEvent // com.monkopedia.kodemirror.state/Transaction.Companion.userEvent|{}userEvent[0]
+            final fun <get-userEvent>(): com.monkopedia.kodemirror.state/AnnotationType<kotlin/String> // com.monkopedia.kodemirror.state/Transaction.Companion.userEvent.<get-userEvent>|<get-userEvent>(){}[0]
+    }
+}
+
+final class com.monkopedia.kodemirror.state/TransactionExtenderResult { // com.monkopedia.kodemirror.state/TransactionExtenderResult|null[0]
+    constructor <init>(kotlin.collections/List<com.monkopedia.kodemirror.state/StateEffect<*>>? = ..., kotlin.collections/List<com.monkopedia.kodemirror.state/Annotation<*>>? = ...) // com.monkopedia.kodemirror.state/TransactionExtenderResult.<init>|<init>(kotlin.collections.List<com.monkopedia.kodemirror.state.StateEffect<*>>?;kotlin.collections.List<com.monkopedia.kodemirror.state.Annotation<*>>?){}[0]
+
+    final val annotations // com.monkopedia.kodemirror.state/TransactionExtenderResult.annotations|{}annotations[0]
+        final fun <get-annotations>(): kotlin.collections/List<com.monkopedia.kodemirror.state/Annotation<*>>? // com.monkopedia.kodemirror.state/TransactionExtenderResult.annotations.<get-annotations>|<get-annotations>(){}[0]
+    final val effects // com.monkopedia.kodemirror.state/TransactionExtenderResult.effects|{}effects[0]
+        final fun <get-effects>(): kotlin.collections/List<com.monkopedia.kodemirror.state/StateEffect<*>>? // com.monkopedia.kodemirror.state/TransactionExtenderResult.effects.<get-effects>|<get-effects>(){}[0]
+
+    final fun component1(): kotlin.collections/List<com.monkopedia.kodemirror.state/StateEffect<*>>? // com.monkopedia.kodemirror.state/TransactionExtenderResult.component1|component1(){}[0]
+    final fun component2(): kotlin.collections/List<com.monkopedia.kodemirror.state/Annotation<*>>? // com.monkopedia.kodemirror.state/TransactionExtenderResult.component2|component2(){}[0]
+    final fun copy(kotlin.collections/List<com.monkopedia.kodemirror.state/StateEffect<*>>? = ..., kotlin.collections/List<com.monkopedia.kodemirror.state/Annotation<*>>? = ...): com.monkopedia.kodemirror.state/TransactionExtenderResult // com.monkopedia.kodemirror.state/TransactionExtenderResult.copy|copy(kotlin.collections.List<com.monkopedia.kodemirror.state.StateEffect<*>>?;kotlin.collections.List<com.monkopedia.kodemirror.state.Annotation<*>>?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/TransactionExtenderResult.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/TransactionExtenderResult.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/TransactionExtenderResult.toString|toString(){}[0]
+}
+
+final class com.monkopedia.kodemirror.state/TransactionSpec { // com.monkopedia.kodemirror.state/TransactionSpec|null[0]
+    constructor <init>(com.monkopedia.kodemirror.state/ChangeSpec? = ..., com.monkopedia.kodemirror.state/SelectionSpec? = ..., kotlin.collections/List<com.monkopedia.kodemirror.state/StateEffect<*>>? = ..., kotlin.collections/List<com.monkopedia.kodemirror.state/Annotation<*>>? = ..., kotlin/String? = ..., kotlin/Boolean = ..., kotlin/Boolean? = ..., kotlin/Boolean = ...) // com.monkopedia.kodemirror.state/TransactionSpec.<init>|<init>(com.monkopedia.kodemirror.state.ChangeSpec?;com.monkopedia.kodemirror.state.SelectionSpec?;kotlin.collections.List<com.monkopedia.kodemirror.state.StateEffect<*>>?;kotlin.collections.List<com.monkopedia.kodemirror.state.Annotation<*>>?;kotlin.String?;kotlin.Boolean;kotlin.Boolean?;kotlin.Boolean){}[0]
+
+    final val annotations // com.monkopedia.kodemirror.state/TransactionSpec.annotations|{}annotations[0]
+        final fun <get-annotations>(): kotlin.collections/List<com.monkopedia.kodemirror.state/Annotation<*>>? // com.monkopedia.kodemirror.state/TransactionSpec.annotations.<get-annotations>|<get-annotations>(){}[0]
+    final val changes // com.monkopedia.kodemirror.state/TransactionSpec.changes|{}changes[0]
+        final fun <get-changes>(): com.monkopedia.kodemirror.state/ChangeSpec? // com.monkopedia.kodemirror.state/TransactionSpec.changes.<get-changes>|<get-changes>(){}[0]
+    final val effects // com.monkopedia.kodemirror.state/TransactionSpec.effects|{}effects[0]
+        final fun <get-effects>(): kotlin.collections/List<com.monkopedia.kodemirror.state/StateEffect<*>>? // com.monkopedia.kodemirror.state/TransactionSpec.effects.<get-effects>|<get-effects>(){}[0]
+    final val filter // com.monkopedia.kodemirror.state/TransactionSpec.filter|{}filter[0]
+        final fun <get-filter>(): kotlin/Boolean? // com.monkopedia.kodemirror.state/TransactionSpec.filter.<get-filter>|<get-filter>(){}[0]
+    final val scrollIntoView // com.monkopedia.kodemirror.state/TransactionSpec.scrollIntoView|{}scrollIntoView[0]
+        final fun <get-scrollIntoView>(): kotlin/Boolean // com.monkopedia.kodemirror.state/TransactionSpec.scrollIntoView.<get-scrollIntoView>|<get-scrollIntoView>(){}[0]
+    final val selection // com.monkopedia.kodemirror.state/TransactionSpec.selection|{}selection[0]
+        final fun <get-selection>(): com.monkopedia.kodemirror.state/SelectionSpec? // com.monkopedia.kodemirror.state/TransactionSpec.selection.<get-selection>|<get-selection>(){}[0]
+    final val sequential // com.monkopedia.kodemirror.state/TransactionSpec.sequential|{}sequential[0]
+        final fun <get-sequential>(): kotlin/Boolean // com.monkopedia.kodemirror.state/TransactionSpec.sequential.<get-sequential>|<get-sequential>(){}[0]
+    final val userEvent // com.monkopedia.kodemirror.state/TransactionSpec.userEvent|{}userEvent[0]
+        final fun <get-userEvent>(): kotlin/String? // com.monkopedia.kodemirror.state/TransactionSpec.userEvent.<get-userEvent>|<get-userEvent>(){}[0]
+
+    final fun component1(): com.monkopedia.kodemirror.state/ChangeSpec? // com.monkopedia.kodemirror.state/TransactionSpec.component1|component1(){}[0]
+    final fun component2(): com.monkopedia.kodemirror.state/SelectionSpec? // com.monkopedia.kodemirror.state/TransactionSpec.component2|component2(){}[0]
+    final fun component3(): kotlin.collections/List<com.monkopedia.kodemirror.state/StateEffect<*>>? // com.monkopedia.kodemirror.state/TransactionSpec.component3|component3(){}[0]
+    final fun component4(): kotlin.collections/List<com.monkopedia.kodemirror.state/Annotation<*>>? // com.monkopedia.kodemirror.state/TransactionSpec.component4|component4(){}[0]
+    final fun component5(): kotlin/String? // com.monkopedia.kodemirror.state/TransactionSpec.component5|component5(){}[0]
+    final fun component6(): kotlin/Boolean // com.monkopedia.kodemirror.state/TransactionSpec.component6|component6(){}[0]
+    final fun component7(): kotlin/Boolean? // com.monkopedia.kodemirror.state/TransactionSpec.component7|component7(){}[0]
+    final fun component8(): kotlin/Boolean // com.monkopedia.kodemirror.state/TransactionSpec.component8|component8(){}[0]
+    final fun copy(com.monkopedia.kodemirror.state/ChangeSpec? = ..., com.monkopedia.kodemirror.state/SelectionSpec? = ..., kotlin.collections/List<com.monkopedia.kodemirror.state/StateEffect<*>>? = ..., kotlin.collections/List<com.monkopedia.kodemirror.state/Annotation<*>>? = ..., kotlin/String? = ..., kotlin/Boolean = ..., kotlin/Boolean? = ..., kotlin/Boolean = ...): com.monkopedia.kodemirror.state/TransactionSpec // com.monkopedia.kodemirror.state/TransactionSpec.copy|copy(com.monkopedia.kodemirror.state.ChangeSpec?;com.monkopedia.kodemirror.state.SelectionSpec?;kotlin.collections.List<com.monkopedia.kodemirror.state.StateEffect<*>>?;kotlin.collections.List<com.monkopedia.kodemirror.state.Annotation<*>>?;kotlin.String?;kotlin.Boolean;kotlin.Boolean?;kotlin.Boolean){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/TransactionSpec.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/TransactionSpec.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/TransactionSpec.toString|toString(){}[0]
+}
+
+final class com.monkopedia.kodemirror.state/TransactionSpecBuilder { // com.monkopedia.kodemirror.state/TransactionSpecBuilder|null[0]
+    constructor <init>() // com.monkopedia.kodemirror.state/TransactionSpecBuilder.<init>|<init>(){}[0]
+
+    final fun <#A1: kotlin/Any?> annotate(com.monkopedia.kodemirror.state/Annotation<#A1>) // com.monkopedia.kodemirror.state/TransactionSpecBuilder.annotate|annotate(com.monkopedia.kodemirror.state.Annotation<0:0>){0§<kotlin.Any?>}[0]
+    final fun <#A1: kotlin/Any?> effect(com.monkopedia.kodemirror.state/StateEffect<#A1>) // com.monkopedia.kodemirror.state/TransactionSpecBuilder.effect|effect(com.monkopedia.kodemirror.state.StateEffect<0:0>){0§<kotlin.Any?>}[0]
+    final fun build(): com.monkopedia.kodemirror.state/TransactionSpec // com.monkopedia.kodemirror.state/TransactionSpecBuilder.build|build(){}[0]
+    final fun delete(com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos) // com.monkopedia.kodemirror.state/TransactionSpecBuilder.delete|delete(com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos){}[0]
+    final fun filter(kotlin/Boolean) // com.monkopedia.kodemirror.state/TransactionSpecBuilder.filter|filter(kotlin.Boolean){}[0]
+    final fun insert(com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/Text) // com.monkopedia.kodemirror.state/TransactionSpecBuilder.insert|insert(com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.Text){}[0]
+    final fun insert(com.monkopedia.kodemirror.state/DocPos, kotlin/String) // com.monkopedia.kodemirror.state/TransactionSpecBuilder.insert|insert(com.monkopedia.kodemirror.state.DocPos;kotlin.String){}[0]
+    final fun replace(com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/Text) // com.monkopedia.kodemirror.state/TransactionSpecBuilder.replace|replace(com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.Text){}[0]
+    final fun replace(com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos, kotlin/String) // com.monkopedia.kodemirror.state/TransactionSpecBuilder.replace|replace(com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos;kotlin.String){}[0]
+    final fun scrollIntoView() // com.monkopedia.kodemirror.state/TransactionSpecBuilder.scrollIntoView|scrollIntoView(){}[0]
+    final fun selection(com.monkopedia.kodemirror.state/DocPos) // com.monkopedia.kodemirror.state/TransactionSpecBuilder.selection|selection(com.monkopedia.kodemirror.state.DocPos){}[0]
+    final fun selection(com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos) // com.monkopedia.kodemirror.state/TransactionSpecBuilder.selection|selection(com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos){}[0]
+    final fun selection(com.monkopedia.kodemirror.state/EditorSelection) // com.monkopedia.kodemirror.state/TransactionSpecBuilder.selection|selection(com.monkopedia.kodemirror.state.EditorSelection){}[0]
+    final fun sequential() // com.monkopedia.kodemirror.state/TransactionSpecBuilder.sequential|sequential(){}[0]
+    final fun userEvent(kotlin/String) // com.monkopedia.kodemirror.state/TransactionSpecBuilder.userEvent|userEvent(kotlin.String){}[0]
+}
+
+final value class com.monkopedia.kodemirror.state/DocPos : kotlin/Comparable<com.monkopedia.kodemirror.state/DocPos> { // com.monkopedia.kodemirror.state/DocPos|null[0]
+    constructor <init>(kotlin/Int) // com.monkopedia.kodemirror.state/DocPos.<init>|<init>(kotlin.Int){}[0]
+
+    final val value // com.monkopedia.kodemirror.state/DocPos.value|{}value[0]
+        final fun <get-value>(): kotlin/Int // com.monkopedia.kodemirror.state/DocPos.value.<get-value>|<get-value>(){}[0]
+
+    final fun compareTo(com.monkopedia.kodemirror.state/DocPos): kotlin/Int // com.monkopedia.kodemirror.state/DocPos.compareTo|compareTo(com.monkopedia.kodemirror.state.DocPos){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/DocPos.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/DocPos.hashCode|hashCode(){}[0]
+    final fun minus(com.monkopedia.kodemirror.state/DocPos): kotlin/Int // com.monkopedia.kodemirror.state/DocPos.minus|minus(com.monkopedia.kodemirror.state.DocPos){}[0]
+    final fun minus(kotlin/Int): com.monkopedia.kodemirror.state/DocPos // com.monkopedia.kodemirror.state/DocPos.minus|minus(kotlin.Int){}[0]
+    final fun plus(kotlin/Int): com.monkopedia.kodemirror.state/DocPos // com.monkopedia.kodemirror.state/DocPos.plus|plus(kotlin.Int){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/DocPos.toString|toString(){}[0]
+
+    final object Companion { // com.monkopedia.kodemirror.state/DocPos.Companion|null[0]
+        final val ZERO // com.monkopedia.kodemirror.state/DocPos.Companion.ZERO|{}ZERO[0]
+            final fun <get-ZERO>(): com.monkopedia.kodemirror.state/DocPos // com.monkopedia.kodemirror.state/DocPos.Companion.ZERO.<get-ZERO>|<get-ZERO>(){}[0]
+    }
+}
+
+final value class com.monkopedia.kodemirror.state/LineNumber : kotlin/Comparable<com.monkopedia.kodemirror.state/LineNumber> { // com.monkopedia.kodemirror.state/LineNumber|null[0]
+    constructor <init>(kotlin/Int) // com.monkopedia.kodemirror.state/LineNumber.<init>|<init>(kotlin.Int){}[0]
+
+    final val value // com.monkopedia.kodemirror.state/LineNumber.value|{}value[0]
+        final fun <get-value>(): kotlin/Int // com.monkopedia.kodemirror.state/LineNumber.value.<get-value>|<get-value>(){}[0]
+
+    final fun compareTo(com.monkopedia.kodemirror.state/LineNumber): kotlin/Int // com.monkopedia.kodemirror.state/LineNumber.compareTo|compareTo(com.monkopedia.kodemirror.state.LineNumber){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/LineNumber.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/LineNumber.hashCode|hashCode(){}[0]
+    final fun minus(com.monkopedia.kodemirror.state/LineNumber): kotlin/Int // com.monkopedia.kodemirror.state/LineNumber.minus|minus(com.monkopedia.kodemirror.state.LineNumber){}[0]
+    final fun minus(kotlin/Int): com.monkopedia.kodemirror.state/LineNumber // com.monkopedia.kodemirror.state/LineNumber.minus|minus(kotlin.Int){}[0]
+    final fun plus(kotlin/Int): com.monkopedia.kodemirror.state/LineNumber // com.monkopedia.kodemirror.state/LineNumber.plus|plus(kotlin.Int){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/LineNumber.toString|toString(){}[0]
+
+    final object Companion { // com.monkopedia.kodemirror.state/LineNumber.Companion|null[0]
+        final val FIRST // com.monkopedia.kodemirror.state/LineNumber.Companion.FIRST|{}FIRST[0]
+            final fun <get-FIRST>(): com.monkopedia.kodemirror.state/LineNumber // com.monkopedia.kodemirror.state/LineNumber.Companion.FIRST.<get-FIRST>|<get-FIRST>(){}[0]
+    }
+}
+
+open class com.monkopedia.kodemirror.state/ChangeDesc { // com.monkopedia.kodemirror.state/ChangeDesc|null[0]
+    final val empty // com.monkopedia.kodemirror.state/ChangeDesc.empty|{}empty[0]
+        final fun <get-empty>(): kotlin/Boolean // com.monkopedia.kodemirror.state/ChangeDesc.empty.<get-empty>|<get-empty>(){}[0]
+    final val invertedDesc // com.monkopedia.kodemirror.state/ChangeDesc.invertedDesc|{}invertedDesc[0]
+        final fun <get-invertedDesc>(): com.monkopedia.kodemirror.state/ChangeDesc // com.monkopedia.kodemirror.state/ChangeDesc.invertedDesc.<get-invertedDesc>|<get-invertedDesc>(){}[0]
+    final val length // com.monkopedia.kodemirror.state/ChangeDesc.length|{}length[0]
+        final fun <get-length>(): kotlin/Int // com.monkopedia.kodemirror.state/ChangeDesc.length.<get-length>|<get-length>(){}[0]
+    final val newLength // com.monkopedia.kodemirror.state/ChangeDesc.newLength|{}newLength[0]
+        final fun <get-newLength>(): kotlin/Int // com.monkopedia.kodemirror.state/ChangeDesc.newLength.<get-newLength>|<get-newLength>(){}[0]
+
+    final fun composeDesc(com.monkopedia.kodemirror.state/ChangeDesc): com.monkopedia.kodemirror.state/ChangeDesc // com.monkopedia.kodemirror.state/ChangeDesc.composeDesc|composeDesc(com.monkopedia.kodemirror.state.ChangeDesc){}[0]
+    final fun iterChangedRanges(kotlin/Function4<com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos, kotlin/Unit>, kotlin/Boolean = ...) // com.monkopedia.kodemirror.state/ChangeDesc.iterChangedRanges|iterChangedRanges(kotlin.Function4<com.monkopedia.kodemirror.state.DocPos,com.monkopedia.kodemirror.state.DocPos,com.monkopedia.kodemirror.state.DocPos,com.monkopedia.kodemirror.state.DocPos,kotlin.Unit>;kotlin.Boolean){}[0]
+    final fun iterGaps(kotlin/Function3<com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos, kotlin/Int, kotlin/Unit>) // com.monkopedia.kodemirror.state/ChangeDesc.iterGaps|iterGaps(kotlin.Function3<com.monkopedia.kodemirror.state.DocPos,com.monkopedia.kodemirror.state.DocPos,kotlin.Int,kotlin.Unit>){}[0]
+    final fun mapPos(com.monkopedia.kodemirror.state/DocPos, kotlin/Int = ...): com.monkopedia.kodemirror.state/DocPos // com.monkopedia.kodemirror.state/ChangeDesc.mapPos|mapPos(com.monkopedia.kodemirror.state.DocPos;kotlin.Int){}[0]
+    final fun mapPos(com.monkopedia.kodemirror.state/DocPos, kotlin/Int, com.monkopedia.kodemirror.state/MapMode): com.monkopedia.kodemirror.state/DocPos? // com.monkopedia.kodemirror.state/ChangeDesc.mapPos|mapPos(com.monkopedia.kodemirror.state.DocPos;kotlin.Int;com.monkopedia.kodemirror.state.MapMode){}[0]
+    final fun toJSON(): kotlin.collections/List<kotlin/Int> // com.monkopedia.kodemirror.state/ChangeDesc.toJSON|toJSON(){}[0]
+    final fun touchesRange(com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos = ...): com.monkopedia.kodemirror.state/TouchesResult // com.monkopedia.kodemirror.state/ChangeDesc.touchesRange|touchesRange(com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos){}[0]
+    open fun mapDesc(com.monkopedia.kodemirror.state/ChangeDesc, kotlin/Boolean = ...): com.monkopedia.kodemirror.state/ChangeDesc // com.monkopedia.kodemirror.state/ChangeDesc.mapDesc|mapDesc(com.monkopedia.kodemirror.state.ChangeDesc;kotlin.Boolean){}[0]
+    open fun toString(): kotlin/String // com.monkopedia.kodemirror.state/ChangeDesc.toString|toString(){}[0]
+
+    final object Companion { // com.monkopedia.kodemirror.state/ChangeDesc.Companion|null[0]
+        final fun fromJSON(kotlin.collections/List<kotlin/Int>): com.monkopedia.kodemirror.state/ChangeDesc // com.monkopedia.kodemirror.state/ChangeDesc.Companion.fromJSON|fromJSON(kotlin.collections.List<kotlin.Int>){}[0]
+    }
+}
+
+sealed class com.monkopedia.kodemirror.state/Slot { // com.monkopedia.kodemirror.state/Slot|null[0]
+    final class FacetSlot : com.monkopedia.kodemirror.state/Slot { // com.monkopedia.kodemirror.state/Slot.FacetSlot|null[0]
+        constructor <init>(com.monkopedia.kodemirror.state/FacetReader<*>) // com.monkopedia.kodemirror.state/Slot.FacetSlot.<init>|<init>(com.monkopedia.kodemirror.state.FacetReader<*>){}[0]
+
+        final val id // com.monkopedia.kodemirror.state/Slot.FacetSlot.id|{}id[0]
+            final fun <get-id>(): kotlin/Int // com.monkopedia.kodemirror.state/Slot.FacetSlot.id.<get-id>|<get-id>(){}[0]
+        final val reader // com.monkopedia.kodemirror.state/Slot.FacetSlot.reader|{}reader[0]
+            final fun <get-reader>(): com.monkopedia.kodemirror.state/FacetReader<*> // com.monkopedia.kodemirror.state/Slot.FacetSlot.reader.<get-reader>|<get-reader>(){}[0]
+
+        final fun component1(): com.monkopedia.kodemirror.state/FacetReader<*> // com.monkopedia.kodemirror.state/Slot.FacetSlot.component1|component1(){}[0]
+        final fun copy(com.monkopedia.kodemirror.state/FacetReader<*> = ...): com.monkopedia.kodemirror.state/Slot.FacetSlot // com.monkopedia.kodemirror.state/Slot.FacetSlot.copy|copy(com.monkopedia.kodemirror.state.FacetReader<*>){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/Slot.FacetSlot.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/Slot.FacetSlot.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/Slot.FacetSlot.toString|toString(){}[0]
+    }
+
+    final class FieldSlot : com.monkopedia.kodemirror.state/Slot { // com.monkopedia.kodemirror.state/Slot.FieldSlot|null[0]
+        constructor <init>(com.monkopedia.kodemirror.state/StateField<*>) // com.monkopedia.kodemirror.state/Slot.FieldSlot.<init>|<init>(com.monkopedia.kodemirror.state.StateField<*>){}[0]
+
+        final val id // com.monkopedia.kodemirror.state/Slot.FieldSlot.id|{}id[0]
+            final fun <get-id>(): kotlin/Int // com.monkopedia.kodemirror.state/Slot.FieldSlot.id.<get-id>|<get-id>(){}[0]
+        final val stateField // com.monkopedia.kodemirror.state/Slot.FieldSlot.stateField|{}stateField[0]
+            final fun <get-stateField>(): com.monkopedia.kodemirror.state/StateField<*> // com.monkopedia.kodemirror.state/Slot.FieldSlot.stateField.<get-stateField>|<get-stateField>(){}[0]
+
+        final fun component1(): com.monkopedia.kodemirror.state/StateField<*> // com.monkopedia.kodemirror.state/Slot.FieldSlot.component1|component1(){}[0]
+        final fun copy(com.monkopedia.kodemirror.state/StateField<*> = ...): com.monkopedia.kodemirror.state/Slot.FieldSlot // com.monkopedia.kodemirror.state/Slot.FieldSlot.copy|copy(com.monkopedia.kodemirror.state.StateField<*>){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/Slot.FieldSlot.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/Slot.FieldSlot.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/Slot.FieldSlot.toString|toString(){}[0]
+    }
+
+    final object Doc : com.monkopedia.kodemirror.state/Slot { // com.monkopedia.kodemirror.state/Slot.Doc|null[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/Slot.Doc.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/Slot.Doc.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/Slot.Doc.toString|toString(){}[0]
+    }
+
+    final object Selection : com.monkopedia.kodemirror.state/Slot { // com.monkopedia.kodemirror.state/Slot.Selection|null[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.state/Slot.Selection.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.state/Slot.Selection.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.monkopedia.kodemirror.state/Slot.Selection.toString|toString(){}[0]
+    }
+}
+
+final object com.monkopedia.kodemirror.state/Prec { // com.monkopedia.kodemirror.state/Prec|null[0]
+    final fun default(com.monkopedia.kodemirror.state/Extension): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.state/Prec.default|default(com.monkopedia.kodemirror.state.Extension){}[0]
+    final fun high(com.monkopedia.kodemirror.state/Extension): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.state/Prec.high|high(com.monkopedia.kodemirror.state.Extension){}[0]
+    final fun highest(com.monkopedia.kodemirror.state/Extension): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.state/Prec.highest|highest(com.monkopedia.kodemirror.state.Extension){}[0]
+    final fun low(com.monkopedia.kodemirror.state/Extension): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.state/Prec.low|low(com.monkopedia.kodemirror.state.Extension){}[0]
+    final fun lowest(com.monkopedia.kodemirror.state/Extension): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.state/Prec.lowest|lowest(com.monkopedia.kodemirror.state.Extension){}[0]
+}
+
+final val com.monkopedia.kodemirror.state/DefaultSplit // com.monkopedia.kodemirror.state/DefaultSplit|{}DefaultSplit[0]
+    final fun <get-DefaultSplit>(): kotlin.text/Regex // com.monkopedia.kodemirror.state/DefaultSplit.<get-DefaultSplit>|<get-DefaultSplit>(){}[0]
+final val com.monkopedia.kodemirror.state/StateJson // com.monkopedia.kodemirror.state/StateJson|{}StateJson[0]
+    final fun <get-StateJson>(): kotlinx.serialization.json/Json // com.monkopedia.kodemirror.state/StateJson.<get-StateJson>|<get-StateJson>(){}[0]
+final val com.monkopedia.kodemirror.state/allowMultipleSelections // com.monkopedia.kodemirror.state/allowMultipleSelections|{}allowMultipleSelections[0]
+    final fun <get-allowMultipleSelections>(): com.monkopedia.kodemirror.state/Facet<kotlin/Boolean, kotlin/Boolean> // com.monkopedia.kodemirror.state/allowMultipleSelections.<get-allowMultipleSelections>|<get-allowMultipleSelections>(){}[0]
+final val com.monkopedia.kodemirror.state/changeFilter // com.monkopedia.kodemirror.state/changeFilter|{}changeFilter[0]
+    final fun <get-changeFilter>(): com.monkopedia.kodemirror.state/Facet<kotlin/Function1<com.monkopedia.kodemirror.state/Transaction, com.monkopedia.kodemirror.state/ChangeFilterResult>, kotlin.collections/List<kotlin/Function1<com.monkopedia.kodemirror.state/Transaction, com.monkopedia.kodemirror.state/ChangeFilterResult>>> // com.monkopedia.kodemirror.state/changeFilter.<get-changeFilter>|<get-changeFilter>(){}[0]
+final val com.monkopedia.kodemirror.state/endPos // com.monkopedia.kodemirror.state/endPos|@com.monkopedia.kodemirror.state.Text{}endPos[0]
+    final fun (com.monkopedia.kodemirror.state/Text).<get-endPos>(): com.monkopedia.kodemirror.state/DocPos // com.monkopedia.kodemirror.state/endPos.<get-endPos>|<get-endPos>@com.monkopedia.kodemirror.state.Text(){}[0]
+final val com.monkopedia.kodemirror.state/invertedEffects // com.monkopedia.kodemirror.state/invertedEffects|{}invertedEffects[0]
+    final fun <get-invertedEffects>(): com.monkopedia.kodemirror.state/Facet<kotlin/Function1<com.monkopedia.kodemirror.state/Transaction, kotlin.collections/List<com.monkopedia.kodemirror.state/StateEffect<*>>>, kotlin.collections/List<kotlin/Function1<com.monkopedia.kodemirror.state/Transaction, kotlin.collections/List<com.monkopedia.kodemirror.state/StateEffect<*>>>>> // com.monkopedia.kodemirror.state/invertedEffects.<get-invertedEffects>|<get-invertedEffects>(){}[0]
+final val com.monkopedia.kodemirror.state/languageData // com.monkopedia.kodemirror.state/languageData|{}languageData[0]
+    final fun <get-languageData>(): com.monkopedia.kodemirror.state/Facet<kotlin/Function3<com.monkopedia.kodemirror.state/EditorState, com.monkopedia.kodemirror.state/DocPos, kotlin/Int, kotlin.collections/List<kotlin.collections/Map<kotlin/String, kotlin/Any?>>>, kotlin.collections/List<kotlin/Function3<com.monkopedia.kodemirror.state/EditorState, com.monkopedia.kodemirror.state/DocPos, kotlin/Int, kotlin.collections/List<kotlin.collections/Map<kotlin/String, kotlin/Any?>>>>> // com.monkopedia.kodemirror.state/languageData.<get-languageData>|<get-languageData>(){}[0]
+final val com.monkopedia.kodemirror.state/lineSeparator // com.monkopedia.kodemirror.state/lineSeparator|{}lineSeparator[0]
+    final fun <get-lineSeparator>(): com.monkopedia.kodemirror.state/Facet<kotlin/String, kotlin/String?> // com.monkopedia.kodemirror.state/lineSeparator.<get-lineSeparator>|<get-lineSeparator>(){}[0]
+final val com.monkopedia.kodemirror.state/readOnly // com.monkopedia.kodemirror.state/readOnly|{}readOnly[0]
+    final fun <get-readOnly>(): com.monkopedia.kodemirror.state/Facet<kotlin/Boolean, kotlin/Boolean> // com.monkopedia.kodemirror.state/readOnly.<get-readOnly>|<get-readOnly>(){}[0]
+final val com.monkopedia.kodemirror.state/transactionExtender // com.monkopedia.kodemirror.state/transactionExtender|{}transactionExtender[0]
+    final fun <get-transactionExtender>(): com.monkopedia.kodemirror.state/Facet<kotlin/Function1<com.monkopedia.kodemirror.state/Transaction, com.monkopedia.kodemirror.state/TransactionExtenderResult?>, kotlin.collections/List<kotlin/Function1<com.monkopedia.kodemirror.state/Transaction, com.monkopedia.kodemirror.state/TransactionExtenderResult?>>> // com.monkopedia.kodemirror.state/transactionExtender.<get-transactionExtender>|<get-transactionExtender>(){}[0]
+final val com.monkopedia.kodemirror.state/transactionFilter // com.monkopedia.kodemirror.state/transactionFilter|{}transactionFilter[0]
+    final fun <get-transactionFilter>(): com.monkopedia.kodemirror.state/Facet<kotlin/Function1<com.monkopedia.kodemirror.state/Transaction, com.monkopedia.kodemirror.state/TransactionFilterResult>, kotlin.collections/List<kotlin/Function1<com.monkopedia.kodemirror.state/Transaction, com.monkopedia.kodemirror.state/TransactionFilterResult>>> // com.monkopedia.kodemirror.state/transactionFilter.<get-transactionFilter>|<get-transactionFilter>(){}[0]
+
+final fun (com.monkopedia.kodemirror.state/DocPos).com.monkopedia.kodemirror.state/asCursor(): com.monkopedia.kodemirror.state/SelectionSpec // com.monkopedia.kodemirror.state/asCursor|asCursor@com.monkopedia.kodemirror.state.DocPos(){}[0]
+final fun (com.monkopedia.kodemirror.state/EditorSelection).com.monkopedia.kodemirror.state/asSpec(): com.monkopedia.kodemirror.state/SelectionSpec // com.monkopedia.kodemirror.state/asSpec|asSpec@com.monkopedia.kodemirror.state.EditorSelection(){}[0]
+final fun (com.monkopedia.kodemirror.state/EditorSelection).com.monkopedia.kodemirror.state/toData(): com.monkopedia.kodemirror.state/EditorSelectionData // com.monkopedia.kodemirror.state/toData|toData@com.monkopedia.kodemirror.state.EditorSelection(){}[0]
+final fun (com.monkopedia.kodemirror.state/EditorSelectionData).com.monkopedia.kodemirror.state/toEditorSelection(): com.monkopedia.kodemirror.state/EditorSelection // com.monkopedia.kodemirror.state/toEditorSelection|toEditorSelection@com.monkopedia.kodemirror.state.EditorSelectionData(){}[0]
+final fun (com.monkopedia.kodemirror.state/EditorState).com.monkopedia.kodemirror.state/toData(kotlin.collections/Map<kotlin/String, com.monkopedia.kodemirror.state/StateField<*>>? = ...): com.monkopedia.kodemirror.state/EditorStateData // com.monkopedia.kodemirror.state/toData|toData@com.monkopedia.kodemirror.state.EditorState(kotlin.collections.Map<kotlin.String,com.monkopedia.kodemirror.state.StateField<*>>?){}[0]
+final fun (com.monkopedia.kodemirror.state/EditorState.Companion).com.monkopedia.kodemirror.state/fromData(com.monkopedia.kodemirror.state/EditorStateData, com.monkopedia.kodemirror.state/EditorStateConfig = ..., kotlin.collections/Map<kotlin/String, com.monkopedia.kodemirror.state/StateField<*>>? = ...): com.monkopedia.kodemirror.state/EditorState // com.monkopedia.kodemirror.state/fromData|fromData@com.monkopedia.kodemirror.state.EditorState.Companion(com.monkopedia.kodemirror.state.EditorStateData;com.monkopedia.kodemirror.state.EditorStateConfig;kotlin.collections.Map<kotlin.String,com.monkopedia.kodemirror.state.StateField<*>>?){}[0]
+final fun (com.monkopedia.kodemirror.state/Extension).com.monkopedia.kodemirror.state/plus(com.monkopedia.kodemirror.state/Extension): com.monkopedia.kodemirror.state/ExtensionList // com.monkopedia.kodemirror.state/plus|plus@com.monkopedia.kodemirror.state.Extension(com.monkopedia.kodemirror.state.Extension){}[0]
+final fun (com.monkopedia.kodemirror.state/SelectionRange).com.monkopedia.kodemirror.state/toData(): com.monkopedia.kodemirror.state/SelectionRangeData // com.monkopedia.kodemirror.state/toData|toData@com.monkopedia.kodemirror.state.SelectionRange(){}[0]
+final fun (com.monkopedia.kodemirror.state/SelectionRangeData).com.monkopedia.kodemirror.state/toSelectionRange(): com.monkopedia.kodemirror.state/SelectionRange // com.monkopedia.kodemirror.state/toSelectionRange|toSelectionRange@com.monkopedia.kodemirror.state.SelectionRangeData(){}[0]
+final fun (kotlin/String).com.monkopedia.kodemirror.state/asDoc(): com.monkopedia.kodemirror.state/DocSpec // com.monkopedia.kodemirror.state/asDoc|asDoc@kotlin.String(){}[0]
+final fun (kotlin/String).com.monkopedia.kodemirror.state/asInsert(): com.monkopedia.kodemirror.state/InsertContent // com.monkopedia.kodemirror.state/asInsert|asInsert@kotlin.String(){}[0]
+final fun <#A: com.monkopedia.kodemirror.state/RangeValue> (com.monkopedia.kodemirror.state/RangeSet<#A>).com.monkopedia.kodemirror.state/asSequence(): kotlin.sequences/Sequence<com.monkopedia.kodemirror.state/Range<#A>> // com.monkopedia.kodemirror.state/asSequence|asSequence@com.monkopedia.kodemirror.state.RangeSet<0:0>(){0§<com.monkopedia.kodemirror.state.RangeValue>}[0]
+final fun <#A: com.monkopedia.kodemirror.state/RangeValue> (com.monkopedia.kodemirror.state/RangeSet<#A>).com.monkopedia.kodemirror.state/filter(kotlin/Function1<com.monkopedia.kodemirror.state/Range<#A>, kotlin/Boolean>): com.monkopedia.kodemirror.state/RangeSet<#A> // com.monkopedia.kodemirror.state/filter|filter@com.monkopedia.kodemirror.state.RangeSet<0:0>(kotlin.Function1<com.monkopedia.kodemirror.state.Range<0:0>,kotlin.Boolean>){0§<com.monkopedia.kodemirror.state.RangeValue>}[0]
+final fun <#A: com.monkopedia.kodemirror.state/RangeValue> (com.monkopedia.kodemirror.state/RangeSet<#A>).com.monkopedia.kodemirror.state/forEach(kotlin/Function1<com.monkopedia.kodemirror.state/Range<#A>, kotlin/Unit>) // com.monkopedia.kodemirror.state/forEach|forEach@com.monkopedia.kodemirror.state.RangeSet<0:0>(kotlin.Function1<com.monkopedia.kodemirror.state.Range<0:0>,kotlin.Unit>){0§<com.monkopedia.kodemirror.state.RangeValue>}[0]
+final fun <#A: kotlin/Any?> (com.monkopedia.kodemirror.state/Facet<*, #A>).com.monkopedia.kodemirror.state/asSlot(): com.monkopedia.kodemirror.state/Slot // com.monkopedia.kodemirror.state/asSlot|asSlot@com.monkopedia.kodemirror.state.Facet<*,0:0>(){0§<kotlin.Any?>}[0]
+final fun <#A: kotlin/Any?> (com.monkopedia.kodemirror.state/StateField<#A>).com.monkopedia.kodemirror.state/getValue(com.monkopedia.kodemirror.state/EditorState, kotlin.reflect/KProperty<*>): #A // com.monkopedia.kodemirror.state/getValue|getValue@com.monkopedia.kodemirror.state.StateField<0:0>(com.monkopedia.kodemirror.state.EditorState;kotlin.reflect.KProperty<*>){0§<kotlin.Any?>}[0]
+final fun <#A: kotlin/Any?> com.monkopedia.kodemirror.state/combineConfig(kotlin.collections/List<kotlin.collections/Map<kotlin/String, kotlin/Any?>>, kotlin.collections/Map<kotlin/String, kotlin/Any?>, kotlin.collections/Map<kotlin/String, kotlin/Function2<kotlin/Any?, kotlin/Any?, kotlin/Any?>> = ...): kotlin.collections/Map<kotlin/String, kotlin/Any?> // com.monkopedia.kodemirror.state/combineConfig|combineConfig(kotlin.collections.List<kotlin.collections.Map<kotlin.String,kotlin.Any?>>;kotlin.collections.Map<kotlin.String,kotlin.Any?>;kotlin.collections.Map<kotlin.String,kotlin.Function2<kotlin.Any?,kotlin.Any?,kotlin.Any?>>){0§<kotlin.Any?>}[0]
+final fun <#A: kotlin/Any?> com.monkopedia.kodemirror.state/setField(kotlin.collections/Set<#A> = ...): com.monkopedia.kodemirror.state/SetFieldHandle<#A> // com.monkopedia.kodemirror.state/setField|setField(kotlin.collections.Set<0:0>){0§<kotlin.Any?>}[0]
+final fun com.monkopedia.kodemirror.state/checkSelection(com.monkopedia.kodemirror.state/EditorSelection, kotlin/Int) // com.monkopedia.kodemirror.state/checkSelection|checkSelection(com.monkopedia.kodemirror.state.EditorSelection;kotlin.Int){}[0]
+final fun com.monkopedia.kodemirror.state/codePointAt(kotlin/String, kotlin/Int): kotlin/Int // com.monkopedia.kodemirror.state/codePointAt|codePointAt(kotlin.String;kotlin.Int){}[0]
+final fun com.monkopedia.kodemirror.state/codePointSize(kotlin/Int): kotlin/Int // com.monkopedia.kodemirror.state/codePointSize|codePointSize(kotlin.Int){}[0]
+final fun com.monkopedia.kodemirror.state/countColumn(kotlin/String, kotlin/Int, kotlin/Int = ...): kotlin/Int // com.monkopedia.kodemirror.state/countColumn|countColumn(kotlin.String;kotlin.Int;kotlin.Int){}[0]
+final fun com.monkopedia.kodemirror.state/extensionListOf(kotlin/Array<out com.monkopedia.kodemirror.state/Extension>...): com.monkopedia.kodemirror.state/ExtensionList // com.monkopedia.kodemirror.state/extensionListOf|extensionListOf(kotlin.Array<out|com.monkopedia.kodemirror.state.Extension>...){}[0]
+final fun com.monkopedia.kodemirror.state/findClusterBreak(kotlin/String, kotlin/Int, kotlin/Boolean = ..., kotlin/Boolean = ...): kotlin/Int // com.monkopedia.kodemirror.state/findClusterBreak|findClusterBreak(kotlin.String;kotlin.Int;kotlin.Boolean;kotlin.Boolean){}[0]
+final fun com.monkopedia.kodemirror.state/findColumn(kotlin/String, kotlin/Int, kotlin/Int, kotlin/Boolean = ...): kotlin/Int // com.monkopedia.kodemirror.state/findColumn|findColumn(kotlin.String;kotlin.Int;kotlin.Int;kotlin.Boolean){}[0]
+final fun com.monkopedia.kodemirror.state/fromCodePoint(kotlin/Int): kotlin/String // com.monkopedia.kodemirror.state/fromCodePoint|fromCodePoint(kotlin.Int){}[0]
+final fun com.monkopedia.kodemirror.state/isExtendingChar(kotlin/Int): kotlin/Boolean // com.monkopedia.kodemirror.state/isExtendingChar|isExtendingChar(kotlin.Int){}[0]
+final fun com.monkopedia.kodemirror.state/languageDataMapOf(kotlin/Array<out com.monkopedia.kodemirror.state/LanguageDataEntry<*>>...): com.monkopedia.kodemirror.state/LanguageDataMap // com.monkopedia.kodemirror.state/languageDataMapOf|languageDataMapOf(kotlin.Array<out|com.monkopedia.kodemirror.state.LanguageDataEntry<*>>...){}[0]
+final fun com.monkopedia.kodemirror.state/makeCategorizer(kotlin/String): kotlin/Function1<kotlin/String, com.monkopedia.kodemirror.state/CharCategory> // com.monkopedia.kodemirror.state/makeCategorizer|makeCategorizer(kotlin.String){}[0]
+final fun com.monkopedia.kodemirror.state/toggleField(kotlin/Boolean = ...): com.monkopedia.kodemirror.state/ToggleFieldHandle // com.monkopedia.kodemirror.state/toggleField|toggleField(kotlin.Boolean){}[0]
+final inline fun <#A: com.monkopedia.kodemirror.state/RangeValue> com.monkopedia.kodemirror.state/rangeSetOf(kotlin/Function1<com.monkopedia.kodemirror.state/RangeSetBuilder<#A>, kotlin/Unit>): com.monkopedia.kodemirror.state/RangeSet<#A> // com.monkopedia.kodemirror.state/rangeSetOf|rangeSetOf(kotlin.Function1<com.monkopedia.kodemirror.state.RangeSetBuilder<0:0>,kotlin.Unit>){0§<com.monkopedia.kodemirror.state.RangeValue>}[0]
+final inline fun <#A: kotlin/Any?> (com.monkopedia.kodemirror.state/StateField.Companion).com.monkopedia.kodemirror.state/define(kotlin/Function1<com.monkopedia.kodemirror.state/StateFieldBuilder<#A>, kotlin/Unit>): com.monkopedia.kodemirror.state/StateField<#A> // com.monkopedia.kodemirror.state/define|define@com.monkopedia.kodemirror.state.StateField.Companion(kotlin.Function1<com.monkopedia.kodemirror.state.StateFieldBuilder<0:0>,kotlin.Unit>){0§<kotlin.Any?>}[0]
+final inline fun com.monkopedia.kodemirror.state/editorState(kotlin/Function1<com.monkopedia.kodemirror.state/EditorStateBuilder, kotlin/Unit>): com.monkopedia.kodemirror.state/EditorState // com.monkopedia.kodemirror.state/editorState|editorState(kotlin.Function1<com.monkopedia.kodemirror.state.EditorStateBuilder,kotlin.Unit>){}[0]
+final inline fun com.monkopedia.kodemirror.state/transactionSpec(kotlin/Function1<com.monkopedia.kodemirror.state/TransactionSpecBuilder, kotlin/Unit>): com.monkopedia.kodemirror.state/TransactionSpec // com.monkopedia.kodemirror.state/transactionSpec|transactionSpec(kotlin.Function1<com.monkopedia.kodemirror.state.TransactionSpecBuilder,kotlin.Unit>){}[0]

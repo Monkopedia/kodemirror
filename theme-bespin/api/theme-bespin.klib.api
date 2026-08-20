@@ -1,0 +1,14 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:theme-bespin>
+final val com.monkopedia.kodemirror.themebespin/bespin // com.monkopedia.kodemirror.themebespin/bespin|{}bespin[0]
+    final fun <get-bespin>(): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.themebespin/bespin.<get-bespin>|<get-bespin>(){}[0]
+final val com.monkopedia.kodemirror.themebespin/bespinHighlightStyle // com.monkopedia.kodemirror.themebespin/bespinHighlightStyle|{}bespinHighlightStyle[0]
+    final fun <get-bespinHighlightStyle>(): com.monkopedia.kodemirror.language/HighlightStyle // com.monkopedia.kodemirror.themebespin/bespinHighlightStyle.<get-bespinHighlightStyle>|<get-bespinHighlightStyle>(){}[0]
+final val com.monkopedia.kodemirror.themebespin/bespinTheme // com.monkopedia.kodemirror.themebespin/bespinTheme|{}bespinTheme[0]
+    final fun <get-bespinTheme>(): com.monkopedia.kodemirror.view/EditorTheme // com.monkopedia.kodemirror.themebespin/bespinTheme.<get-bespinTheme>|<get-bespinTheme>(){}[0]

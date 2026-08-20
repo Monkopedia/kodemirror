@@ -1,0 +1,70 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:lang-html>
+final class com.monkopedia.kodemirror.lang.html/HtmlCompletionConfig { // com.monkopedia.kodemirror.lang.html/HtmlCompletionConfig|null[0]
+    constructor <init>(kotlin.collections/Map<kotlin/String, com.monkopedia.kodemirror.lang.html/TagSpec>? = ..., kotlin.collections/Map<kotlin/String, kotlin.collections/List<kotlin/String>?>? = ...) // com.monkopedia.kodemirror.lang.html/HtmlCompletionConfig.<init>|<init>(kotlin.collections.Map<kotlin.String,com.monkopedia.kodemirror.lang.html.TagSpec>?;kotlin.collections.Map<kotlin.String,kotlin.collections.List<kotlin.String>?>?){}[0]
+
+    final val extraGlobalAttributes // com.monkopedia.kodemirror.lang.html/HtmlCompletionConfig.extraGlobalAttributes|{}extraGlobalAttributes[0]
+        final fun <get-extraGlobalAttributes>(): kotlin.collections/Map<kotlin/String, kotlin.collections/List<kotlin/String>?>? // com.monkopedia.kodemirror.lang.html/HtmlCompletionConfig.extraGlobalAttributes.<get-extraGlobalAttributes>|<get-extraGlobalAttributes>(){}[0]
+    final val extraTags // com.monkopedia.kodemirror.lang.html/HtmlCompletionConfig.extraTags|{}extraTags[0]
+        final fun <get-extraTags>(): kotlin.collections/Map<kotlin/String, com.monkopedia.kodemirror.lang.html/TagSpec>? // com.monkopedia.kodemirror.lang.html/HtmlCompletionConfig.extraTags.<get-extraTags>|<get-extraTags>(){}[0]
+
+    final fun component1(): kotlin.collections/Map<kotlin/String, com.monkopedia.kodemirror.lang.html/TagSpec>? // com.monkopedia.kodemirror.lang.html/HtmlCompletionConfig.component1|component1(){}[0]
+    final fun component2(): kotlin.collections/Map<kotlin/String, kotlin.collections/List<kotlin/String>?>? // com.monkopedia.kodemirror.lang.html/HtmlCompletionConfig.component2|component2(){}[0]
+    final fun copy(kotlin.collections/Map<kotlin/String, com.monkopedia.kodemirror.lang.html/TagSpec>? = ..., kotlin.collections/Map<kotlin/String, kotlin.collections/List<kotlin/String>?>? = ...): com.monkopedia.kodemirror.lang.html/HtmlCompletionConfig // com.monkopedia.kodemirror.lang.html/HtmlCompletionConfig.copy|copy(kotlin.collections.Map<kotlin.String,com.monkopedia.kodemirror.lang.html.TagSpec>?;kotlin.collections.Map<kotlin.String,kotlin.collections.List<kotlin.String>?>?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.lang.html/HtmlCompletionConfig.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.lang.html/HtmlCompletionConfig.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.lang.html/HtmlCompletionConfig.toString|toString(){}[0]
+}
+
+final class com.monkopedia.kodemirror.lang.html/HtmlSchema { // com.monkopedia.kodemirror.lang.html/HtmlSchema|null[0]
+    constructor <init>(kotlin.collections/Map<kotlin/String, com.monkopedia.kodemirror.lang.html/TagSpec>? = ..., kotlin.collections/Map<kotlin/String, kotlin.collections/List<kotlin/String>?>? = ...) // com.monkopedia.kodemirror.lang.html/HtmlSchema.<init>|<init>(kotlin.collections.Map<kotlin.String,com.monkopedia.kodemirror.lang.html.TagSpec>?;kotlin.collections.Map<kotlin.String,kotlin.collections.List<kotlin.String>?>?){}[0]
+
+    final val allTags // com.monkopedia.kodemirror.lang.html/HtmlSchema.allTags|{}allTags[0]
+        final fun <get-allTags>(): kotlin.collections/List<kotlin/String> // com.monkopedia.kodemirror.lang.html/HtmlSchema.allTags.<get-allTags>|<get-allTags>(){}[0]
+    final val globalAttrNames // com.monkopedia.kodemirror.lang.html/HtmlSchema.globalAttrNames|{}globalAttrNames[0]
+        final fun <get-globalAttrNames>(): kotlin.collections/List<kotlin/String> // com.monkopedia.kodemirror.lang.html/HtmlSchema.globalAttrNames.<get-globalAttrNames>|<get-globalAttrNames>(){}[0]
+    final val globalAttrs // com.monkopedia.kodemirror.lang.html/HtmlSchema.globalAttrs|{}globalAttrs[0]
+        final fun <get-globalAttrs>(): kotlin.collections/Map<kotlin/String, kotlin.collections/List<kotlin/String>?> // com.monkopedia.kodemirror.lang.html/HtmlSchema.globalAttrs.<get-globalAttrs>|<get-globalAttrs>(){}[0]
+    final val tags // com.monkopedia.kodemirror.lang.html/HtmlSchema.tags|{}tags[0]
+        final fun <get-tags>(): kotlin.collections/Map<kotlin/String, com.monkopedia.kodemirror.lang.html/TagSpec> // com.monkopedia.kodemirror.lang.html/HtmlSchema.tags.<get-tags>|<get-tags>(){}[0]
+
+    final object Companion { // com.monkopedia.kodemirror.lang.html/HtmlSchema.Companion|null[0]
+        final val default // com.monkopedia.kodemirror.lang.html/HtmlSchema.Companion.default|{}default[0]
+            final fun <get-default>(): com.monkopedia.kodemirror.lang.html/HtmlSchema // com.monkopedia.kodemirror.lang.html/HtmlSchema.Companion.default.<get-default>|<get-default>(){}[0]
+    }
+}
+
+final class com.monkopedia.kodemirror.lang.html/TagSpec { // com.monkopedia.kodemirror.lang.html/TagSpec|null[0]
+    constructor <init>(kotlin.collections/Map<kotlin/String, kotlin.collections/List<kotlin/String>?>? = ..., kotlin/Boolean = ..., kotlin.collections/List<kotlin/String>? = ...) // com.monkopedia.kodemirror.lang.html/TagSpec.<init>|<init>(kotlin.collections.Map<kotlin.String,kotlin.collections.List<kotlin.String>?>?;kotlin.Boolean;kotlin.collections.List<kotlin.String>?){}[0]
+
+    final val attrs // com.monkopedia.kodemirror.lang.html/TagSpec.attrs|{}attrs[0]
+        final fun <get-attrs>(): kotlin.collections/Map<kotlin/String, kotlin.collections/List<kotlin/String>?>? // com.monkopedia.kodemirror.lang.html/TagSpec.attrs.<get-attrs>|<get-attrs>(){}[0]
+    final val children // com.monkopedia.kodemirror.lang.html/TagSpec.children|{}children[0]
+        final fun <get-children>(): kotlin.collections/List<kotlin/String>? // com.monkopedia.kodemirror.lang.html/TagSpec.children.<get-children>|<get-children>(){}[0]
+    final val globalAttrs // com.monkopedia.kodemirror.lang.html/TagSpec.globalAttrs|{}globalAttrs[0]
+        final fun <get-globalAttrs>(): kotlin/Boolean // com.monkopedia.kodemirror.lang.html/TagSpec.globalAttrs.<get-globalAttrs>|<get-globalAttrs>(){}[0]
+
+    final fun component1(): kotlin.collections/Map<kotlin/String, kotlin.collections/List<kotlin/String>?>? // com.monkopedia.kodemirror.lang.html/TagSpec.component1|component1(){}[0]
+    final fun component2(): kotlin/Boolean // com.monkopedia.kodemirror.lang.html/TagSpec.component2|component2(){}[0]
+    final fun component3(): kotlin.collections/List<kotlin/String>? // com.monkopedia.kodemirror.lang.html/TagSpec.component3|component3(){}[0]
+    final fun copy(kotlin.collections/Map<kotlin/String, kotlin.collections/List<kotlin/String>?>? = ..., kotlin/Boolean = ..., kotlin.collections/List<kotlin/String>? = ...): com.monkopedia.kodemirror.lang.html/TagSpec // com.monkopedia.kodemirror.lang.html/TagSpec.copy|copy(kotlin.collections.Map<kotlin.String,kotlin.collections.List<kotlin.String>?>?;kotlin.Boolean;kotlin.collections.List<kotlin.String>?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.lang.html/TagSpec.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.lang.html/TagSpec.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.lang.html/TagSpec.toString|toString(){}[0]
+}
+
+final val com.monkopedia.kodemirror.lang.html/autoCloseTags // com.monkopedia.kodemirror.lang.html/autoCloseTags|{}autoCloseTags[0]
+    final fun <get-autoCloseTags>(): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.lang.html/autoCloseTags.<get-autoCloseTags>|<get-autoCloseTags>(){}[0]
+final val com.monkopedia.kodemirror.lang.html/htmlCompletionSource // com.monkopedia.kodemirror.lang.html/htmlCompletionSource|{}htmlCompletionSource[0]
+    final fun <get-htmlCompletionSource>(): kotlin/Function1<com.monkopedia.kodemirror.autocomplete/CompletionContext, com.monkopedia.kodemirror.autocomplete/CompletionResult?> // com.monkopedia.kodemirror.lang.html/htmlCompletionSource.<get-htmlCompletionSource>|<get-htmlCompletionSource>(){}[0]
+final val com.monkopedia.kodemirror.lang.html/htmlLanguage // com.monkopedia.kodemirror.lang.html/htmlLanguage|{}htmlLanguage[0]
+    final fun <get-htmlLanguage>(): com.monkopedia.kodemirror.language/LRLanguage // com.monkopedia.kodemirror.lang.html/htmlLanguage.<get-htmlLanguage>|<get-htmlLanguage>(){}[0]
+
+final fun com.monkopedia.kodemirror.lang.html/html(com.monkopedia.kodemirror.lang.html/HtmlCompletionConfig = ..., kotlin/Boolean = ...): com.monkopedia.kodemirror.language/LanguageSupport // com.monkopedia.kodemirror.lang.html/html|html(com.monkopedia.kodemirror.lang.html.HtmlCompletionConfig;kotlin.Boolean){}[0]
+final fun com.monkopedia.kodemirror.lang.html/htmlCompletionSourceWith(com.monkopedia.kodemirror.lang.html/HtmlCompletionConfig = ...): kotlin/Function1<com.monkopedia.kodemirror.autocomplete/CompletionContext, com.monkopedia.kodemirror.autocomplete/CompletionResult?> // com.monkopedia.kodemirror.lang.html/htmlCompletionSourceWith|htmlCompletionSourceWith(com.monkopedia.kodemirror.lang.html.HtmlCompletionConfig){}[0]

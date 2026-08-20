@@ -1,0 +1,16 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:lang-json>
+final val com.monkopedia.kodemirror.lang.json/jsonHighlighting // com.monkopedia.kodemirror.lang.json/jsonHighlighting|{}jsonHighlighting[0]
+    final fun <get-jsonHighlighting>(): com.monkopedia.kodemirror.lezer.common/NodePropSource<com.monkopedia.kodemirror.lezer.highlight/Rule> // com.monkopedia.kodemirror.lang.json/jsonHighlighting.<get-jsonHighlighting>|<get-jsonHighlighting>(){}[0]
+final val com.monkopedia.kodemirror.lang.json/jsonLanguage // com.monkopedia.kodemirror.lang.json/jsonLanguage|{}jsonLanguage[0]
+    final fun <get-jsonLanguage>(): com.monkopedia.kodemirror.language/LRLanguage // com.monkopedia.kodemirror.lang.json/jsonLanguage.<get-jsonLanguage>|<get-jsonLanguage>(){}[0]
+final val com.monkopedia.kodemirror.lang.json/jsonParser // com.monkopedia.kodemirror.lang.json/jsonParser|{}jsonParser[0]
+    final fun <get-jsonParser>(): com.monkopedia.kodemirror.lezer.lr/LRParser // com.monkopedia.kodemirror.lang.json/jsonParser.<get-jsonParser>|<get-jsonParser>(){}[0]
+
+final fun com.monkopedia.kodemirror.lang.json/json(): com.monkopedia.kodemirror.language/LanguageSupport // com.monkopedia.kodemirror.lang.json/json|json(){}[0]

@@ -1,0 +1,14 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:theme-amy>
+final val com.monkopedia.kodemirror.themeamy/amy // com.monkopedia.kodemirror.themeamy/amy|{}amy[0]
+    final fun <get-amy>(): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.themeamy/amy.<get-amy>|<get-amy>(){}[0]
+final val com.monkopedia.kodemirror.themeamy/amyHighlightStyle // com.monkopedia.kodemirror.themeamy/amyHighlightStyle|{}amyHighlightStyle[0]
+    final fun <get-amyHighlightStyle>(): com.monkopedia.kodemirror.language/HighlightStyle // com.monkopedia.kodemirror.themeamy/amyHighlightStyle.<get-amyHighlightStyle>|<get-amyHighlightStyle>(){}[0]
+final val com.monkopedia.kodemirror.themeamy/amyTheme // com.monkopedia.kodemirror.themeamy/amyTheme|{}amyTheme[0]
+    final fun <get-amyTheme>(): com.monkopedia.kodemirror.view/EditorTheme // com.monkopedia.kodemirror.themeamy/amyTheme.<get-amyTheme>|<get-amyTheme>(){}[0]

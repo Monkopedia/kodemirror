@@ -1,0 +1,74 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:collab>
+final class com.monkopedia.kodemirror.collab/CollabConfig { // com.monkopedia.kodemirror.collab/CollabConfig|null[0]
+    constructor <init>(kotlin/Int = ..., kotlin/String? = ..., kotlin/Function1<com.monkopedia.kodemirror.state/Transaction, kotlin.collections/List<com.monkopedia.kodemirror.state/StateEffect<*>>>? = ...) // com.monkopedia.kodemirror.collab/CollabConfig.<init>|<init>(kotlin.Int;kotlin.String?;kotlin.Function1<com.monkopedia.kodemirror.state.Transaction,kotlin.collections.List<com.monkopedia.kodemirror.state.StateEffect<*>>>?){}[0]
+
+    final val clientID // com.monkopedia.kodemirror.collab/CollabConfig.clientID|{}clientID[0]
+        final fun <get-clientID>(): kotlin/String? // com.monkopedia.kodemirror.collab/CollabConfig.clientID.<get-clientID>|<get-clientID>(){}[0]
+    final val sharedEffects // com.monkopedia.kodemirror.collab/CollabConfig.sharedEffects|{}sharedEffects[0]
+        final fun <get-sharedEffects>(): kotlin/Function1<com.monkopedia.kodemirror.state/Transaction, kotlin.collections/List<com.monkopedia.kodemirror.state/StateEffect<*>>>? // com.monkopedia.kodemirror.collab/CollabConfig.sharedEffects.<get-sharedEffects>|<get-sharedEffects>(){}[0]
+    final val startVersion // com.monkopedia.kodemirror.collab/CollabConfig.startVersion|{}startVersion[0]
+        final fun <get-startVersion>(): kotlin/Int // com.monkopedia.kodemirror.collab/CollabConfig.startVersion.<get-startVersion>|<get-startVersion>(){}[0]
+
+    final fun component1(): kotlin/Int // com.monkopedia.kodemirror.collab/CollabConfig.component1|component1(){}[0]
+    final fun component2(): kotlin/String? // com.monkopedia.kodemirror.collab/CollabConfig.component2|component2(){}[0]
+    final fun component3(): kotlin/Function1<com.monkopedia.kodemirror.state/Transaction, kotlin.collections/List<com.monkopedia.kodemirror.state/StateEffect<*>>>? // com.monkopedia.kodemirror.collab/CollabConfig.component3|component3(){}[0]
+    final fun copy(kotlin/Int = ..., kotlin/String? = ..., kotlin/Function1<com.monkopedia.kodemirror.state/Transaction, kotlin.collections/List<com.monkopedia.kodemirror.state/StateEffect<*>>>? = ...): com.monkopedia.kodemirror.collab/CollabConfig // com.monkopedia.kodemirror.collab/CollabConfig.copy|copy(kotlin.Int;kotlin.String?;kotlin.Function1<com.monkopedia.kodemirror.state.Transaction,kotlin.collections.List<com.monkopedia.kodemirror.state.StateEffect<*>>>?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.collab/CollabConfig.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.collab/CollabConfig.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.collab/CollabConfig.toString|toString(){}[0]
+}
+
+final class com.monkopedia.kodemirror.collab/SendableUpdate { // com.monkopedia.kodemirror.collab/SendableUpdate|null[0]
+    constructor <init>(com.monkopedia.kodemirror.state/ChangeSet, kotlin/String, kotlin.collections/List<com.monkopedia.kodemirror.state/StateEffect<*>> = ..., com.monkopedia.kodemirror.state/Transaction) // com.monkopedia.kodemirror.collab/SendableUpdate.<init>|<init>(com.monkopedia.kodemirror.state.ChangeSet;kotlin.String;kotlin.collections.List<com.monkopedia.kodemirror.state.StateEffect<*>>;com.monkopedia.kodemirror.state.Transaction){}[0]
+
+    final val changes // com.monkopedia.kodemirror.collab/SendableUpdate.changes|{}changes[0]
+        final fun <get-changes>(): com.monkopedia.kodemirror.state/ChangeSet // com.monkopedia.kodemirror.collab/SendableUpdate.changes.<get-changes>|<get-changes>(){}[0]
+    final val clientID // com.monkopedia.kodemirror.collab/SendableUpdate.clientID|{}clientID[0]
+        final fun <get-clientID>(): kotlin/String // com.monkopedia.kodemirror.collab/SendableUpdate.clientID.<get-clientID>|<get-clientID>(){}[0]
+    final val effects // com.monkopedia.kodemirror.collab/SendableUpdate.effects|{}effects[0]
+        final fun <get-effects>(): kotlin.collections/List<com.monkopedia.kodemirror.state/StateEffect<*>> // com.monkopedia.kodemirror.collab/SendableUpdate.effects.<get-effects>|<get-effects>(){}[0]
+    final val origin // com.monkopedia.kodemirror.collab/SendableUpdate.origin|{}origin[0]
+        final fun <get-origin>(): com.monkopedia.kodemirror.state/Transaction // com.monkopedia.kodemirror.collab/SendableUpdate.origin.<get-origin>|<get-origin>(){}[0]
+
+    final fun component1(): com.monkopedia.kodemirror.state/ChangeSet // com.monkopedia.kodemirror.collab/SendableUpdate.component1|component1(){}[0]
+    final fun component2(): kotlin/String // com.monkopedia.kodemirror.collab/SendableUpdate.component2|component2(){}[0]
+    final fun component3(): kotlin.collections/List<com.monkopedia.kodemirror.state/StateEffect<*>> // com.monkopedia.kodemirror.collab/SendableUpdate.component3|component3(){}[0]
+    final fun component4(): com.monkopedia.kodemirror.state/Transaction // com.monkopedia.kodemirror.collab/SendableUpdate.component4|component4(){}[0]
+    final fun copy(com.monkopedia.kodemirror.state/ChangeSet = ..., kotlin/String = ..., kotlin.collections/List<com.monkopedia.kodemirror.state/StateEffect<*>> = ..., com.monkopedia.kodemirror.state/Transaction = ...): com.monkopedia.kodemirror.collab/SendableUpdate // com.monkopedia.kodemirror.collab/SendableUpdate.copy|copy(com.monkopedia.kodemirror.state.ChangeSet;kotlin.String;kotlin.collections.List<com.monkopedia.kodemirror.state.StateEffect<*>>;com.monkopedia.kodemirror.state.Transaction){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.collab/SendableUpdate.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.collab/SendableUpdate.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.collab/SendableUpdate.toString|toString(){}[0]
+}
+
+final class com.monkopedia.kodemirror.collab/Update { // com.monkopedia.kodemirror.collab/Update|null[0]
+    constructor <init>(com.monkopedia.kodemirror.state/ChangeSet, kotlin/String, kotlin.collections/List<com.monkopedia.kodemirror.state/StateEffect<*>> = ...) // com.monkopedia.kodemirror.collab/Update.<init>|<init>(com.monkopedia.kodemirror.state.ChangeSet;kotlin.String;kotlin.collections.List<com.monkopedia.kodemirror.state.StateEffect<*>>){}[0]
+
+    final val changes // com.monkopedia.kodemirror.collab/Update.changes|{}changes[0]
+        final fun <get-changes>(): com.monkopedia.kodemirror.state/ChangeSet // com.monkopedia.kodemirror.collab/Update.changes.<get-changes>|<get-changes>(){}[0]
+    final val clientID // com.monkopedia.kodemirror.collab/Update.clientID|{}clientID[0]
+        final fun <get-clientID>(): kotlin/String // com.monkopedia.kodemirror.collab/Update.clientID.<get-clientID>|<get-clientID>(){}[0]
+    final val effects // com.monkopedia.kodemirror.collab/Update.effects|{}effects[0]
+        final fun <get-effects>(): kotlin.collections/List<com.monkopedia.kodemirror.state/StateEffect<*>> // com.monkopedia.kodemirror.collab/Update.effects.<get-effects>|<get-effects>(){}[0]
+
+    final fun component1(): com.monkopedia.kodemirror.state/ChangeSet // com.monkopedia.kodemirror.collab/Update.component1|component1(){}[0]
+    final fun component2(): kotlin/String // com.monkopedia.kodemirror.collab/Update.component2|component2(){}[0]
+    final fun component3(): kotlin.collections/List<com.monkopedia.kodemirror.state/StateEffect<*>> // com.monkopedia.kodemirror.collab/Update.component3|component3(){}[0]
+    final fun copy(com.monkopedia.kodemirror.state/ChangeSet = ..., kotlin/String = ..., kotlin.collections/List<com.monkopedia.kodemirror.state/StateEffect<*>> = ...): com.monkopedia.kodemirror.collab/Update // com.monkopedia.kodemirror.collab/Update.copy|copy(com.monkopedia.kodemirror.state.ChangeSet;kotlin.String;kotlin.collections.List<com.monkopedia.kodemirror.state.StateEffect<*>>){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.collab/Update.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.collab/Update.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.collab/Update.toString|toString(){}[0]
+}
+
+final fun com.monkopedia.kodemirror.collab/collab(com.monkopedia.kodemirror.collab/CollabConfig = ...): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.collab/collab|collab(com.monkopedia.kodemirror.collab.CollabConfig){}[0]
+final fun com.monkopedia.kodemirror.collab/getClientID(com.monkopedia.kodemirror.state/EditorState): kotlin/String // com.monkopedia.kodemirror.collab/getClientID|getClientID(com.monkopedia.kodemirror.state.EditorState){}[0]
+final fun com.monkopedia.kodemirror.collab/getSyncedVersion(com.monkopedia.kodemirror.state/EditorState): kotlin/Int // com.monkopedia.kodemirror.collab/getSyncedVersion|getSyncedVersion(com.monkopedia.kodemirror.state.EditorState){}[0]
+final fun com.monkopedia.kodemirror.collab/rebaseUpdates(kotlin.collections/List<com.monkopedia.kodemirror.collab/Update>, kotlin.collections/List<com.monkopedia.kodemirror.collab/Update>): kotlin.collections/List<com.monkopedia.kodemirror.collab/Update> // com.monkopedia.kodemirror.collab/rebaseUpdates|rebaseUpdates(kotlin.collections.List<com.monkopedia.kodemirror.collab.Update>;kotlin.collections.List<com.monkopedia.kodemirror.collab.Update>){}[0]
+final fun com.monkopedia.kodemirror.collab/receiveUpdates(com.monkopedia.kodemirror.state/EditorState, kotlin.collections/List<com.monkopedia.kodemirror.collab/Update>): com.monkopedia.kodemirror.state/TransactionSpec // com.monkopedia.kodemirror.collab/receiveUpdates|receiveUpdates(com.monkopedia.kodemirror.state.EditorState;kotlin.collections.List<com.monkopedia.kodemirror.collab.Update>){}[0]
+final fun com.monkopedia.kodemirror.collab/sendableUpdates(com.monkopedia.kodemirror.state/EditorState): kotlin.collections/List<com.monkopedia.kodemirror.collab/SendableUpdate> // com.monkopedia.kodemirror.collab/sendableUpdates|sendableUpdates(com.monkopedia.kodemirror.state.EditorState){}[0]

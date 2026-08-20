@@ -1,0 +1,575 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:lezer-common>
+abstract interface com.monkopedia.kodemirror.lezer.common/BufferCursor { // com.monkopedia.kodemirror.lezer.common/BufferCursor|null[0]
+    abstract val end // com.monkopedia.kodemirror.lezer.common/BufferCursor.end|{}end[0]
+        abstract fun <get-end>(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/BufferCursor.end.<get-end>|<get-end>(){}[0]
+    abstract val id // com.monkopedia.kodemirror.lezer.common/BufferCursor.id|{}id[0]
+        abstract fun <get-id>(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/BufferCursor.id.<get-id>|<get-id>(){}[0]
+    abstract val pos // com.monkopedia.kodemirror.lezer.common/BufferCursor.pos|{}pos[0]
+        abstract fun <get-pos>(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/BufferCursor.pos.<get-pos>|<get-pos>(){}[0]
+    abstract val size // com.monkopedia.kodemirror.lezer.common/BufferCursor.size|{}size[0]
+        abstract fun <get-size>(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/BufferCursor.size.<get-size>|<get-size>(){}[0]
+    abstract val start // com.monkopedia.kodemirror.lezer.common/BufferCursor.start|{}start[0]
+        abstract fun <get-start>(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/BufferCursor.start.<get-start>|<get-start>(){}[0]
+
+    abstract fun fork(): com.monkopedia.kodemirror.lezer.common/BufferCursor // com.monkopedia.kodemirror.lezer.common/BufferCursor.fork|fork(){}[0]
+    abstract fun next() // com.monkopedia.kodemirror.lezer.common/BufferCursor.next|next(){}[0]
+}
+
+abstract interface com.monkopedia.kodemirror.lezer.common/Input { // com.monkopedia.kodemirror.lezer.common/Input|null[0]
+    abstract val length // com.monkopedia.kodemirror.lezer.common/Input.length|{}length[0]
+        abstract fun <get-length>(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/Input.length.<get-length>|<get-length>(){}[0]
+    open val lineChunks // com.monkopedia.kodemirror.lezer.common/Input.lineChunks|{}lineChunks[0]
+        open fun <get-lineChunks>(): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/Input.lineChunks.<get-lineChunks>|<get-lineChunks>(){}[0]
+
+    abstract fun chunk(kotlin/Int): kotlin/String // com.monkopedia.kodemirror.lezer.common/Input.chunk|chunk(kotlin.Int){}[0]
+    abstract fun read(kotlin/Int, kotlin/Int): kotlin/String // com.monkopedia.kodemirror.lezer.common/Input.read|read(kotlin.Int;kotlin.Int){}[0]
+}
+
+abstract interface com.monkopedia.kodemirror.lezer.common/PartialParse { // com.monkopedia.kodemirror.lezer.common/PartialParse|null[0]
+    abstract val parsedPos // com.monkopedia.kodemirror.lezer.common/PartialParse.parsedPos|{}parsedPos[0]
+        abstract fun <get-parsedPos>(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/PartialParse.parsedPos.<get-parsedPos>|<get-parsedPos>(){}[0]
+    abstract val stoppedAt // com.monkopedia.kodemirror.lezer.common/PartialParse.stoppedAt|{}stoppedAt[0]
+        abstract fun <get-stoppedAt>(): kotlin/Int? // com.monkopedia.kodemirror.lezer.common/PartialParse.stoppedAt.<get-stoppedAt>|<get-stoppedAt>(){}[0]
+
+    abstract fun advance(): com.monkopedia.kodemirror.lezer.common/Tree? // com.monkopedia.kodemirror.lezer.common/PartialParse.advance|advance(){}[0]
+    abstract fun stopAt(kotlin/Int) // com.monkopedia.kodemirror.lezer.common/PartialParse.stopAt|stopAt(kotlin.Int){}[0]
+}
+
+abstract interface com.monkopedia.kodemirror.lezer.common/SyntaxNode : com.monkopedia.kodemirror.lezer.common/SyntaxNodeRef { // com.monkopedia.kodemirror.lezer.common/SyntaxNode|null[0]
+    abstract val firstChild // com.monkopedia.kodemirror.lezer.common/SyntaxNode.firstChild|{}firstChild[0]
+        abstract fun <get-firstChild>(): com.monkopedia.kodemirror.lezer.common/SyntaxNode? // com.monkopedia.kodemirror.lezer.common/SyntaxNode.firstChild.<get-firstChild>|<get-firstChild>(){}[0]
+    abstract val lastChild // com.monkopedia.kodemirror.lezer.common/SyntaxNode.lastChild|{}lastChild[0]
+        abstract fun <get-lastChild>(): com.monkopedia.kodemirror.lezer.common/SyntaxNode? // com.monkopedia.kodemirror.lezer.common/SyntaxNode.lastChild.<get-lastChild>|<get-lastChild>(){}[0]
+    abstract val nextSibling // com.monkopedia.kodemirror.lezer.common/SyntaxNode.nextSibling|{}nextSibling[0]
+        abstract fun <get-nextSibling>(): com.monkopedia.kodemirror.lezer.common/SyntaxNode? // com.monkopedia.kodemirror.lezer.common/SyntaxNode.nextSibling.<get-nextSibling>|<get-nextSibling>(){}[0]
+    abstract val parent // com.monkopedia.kodemirror.lezer.common/SyntaxNode.parent|{}parent[0]
+        abstract fun <get-parent>(): com.monkopedia.kodemirror.lezer.common/SyntaxNode? // com.monkopedia.kodemirror.lezer.common/SyntaxNode.parent.<get-parent>|<get-parent>(){}[0]
+    abstract val prevSibling // com.monkopedia.kodemirror.lezer.common/SyntaxNode.prevSibling|{}prevSibling[0]
+        abstract fun <get-prevSibling>(): com.monkopedia.kodemirror.lezer.common/SyntaxNode? // com.monkopedia.kodemirror.lezer.common/SyntaxNode.prevSibling.<get-prevSibling>|<get-prevSibling>(){}[0]
+    abstract val tree // com.monkopedia.kodemirror.lezer.common/SyntaxNode.tree|{}tree[0]
+        abstract fun <get-tree>(): com.monkopedia.kodemirror.lezer.common/Tree? // com.monkopedia.kodemirror.lezer.common/SyntaxNode.tree.<get-tree>|<get-tree>(){}[0]
+
+    abstract fun childAfter(kotlin/Int): com.monkopedia.kodemirror.lezer.common/SyntaxNode? // com.monkopedia.kodemirror.lezer.common/SyntaxNode.childAfter|childAfter(kotlin.Int){}[0]
+    abstract fun childBefore(kotlin/Int): com.monkopedia.kodemirror.lezer.common/SyntaxNode? // com.monkopedia.kodemirror.lezer.common/SyntaxNode.childBefore|childBefore(kotlin.Int){}[0]
+    abstract fun cursor(): com.monkopedia.kodemirror.lezer.common/TreeCursor // com.monkopedia.kodemirror.lezer.common/SyntaxNode.cursor|cursor(){}[0]
+    abstract fun enter(kotlin/Int, kotlin/Int, kotlin/Int = ...): com.monkopedia.kodemirror.lezer.common/SyntaxNode? // com.monkopedia.kodemirror.lezer.common/SyntaxNode.enter|enter(kotlin.Int;kotlin.Int;kotlin.Int){}[0]
+    abstract fun enterUnfinishedNodesBefore(kotlin/Int): com.monkopedia.kodemirror.lezer.common/SyntaxNode // com.monkopedia.kodemirror.lezer.common/SyntaxNode.enterUnfinishedNodesBefore|enterUnfinishedNodesBefore(kotlin.Int){}[0]
+    abstract fun getChild(kotlin/String, kotlin/String? = ..., kotlin/String? = ...): com.monkopedia.kodemirror.lezer.common/SyntaxNode? // com.monkopedia.kodemirror.lezer.common/SyntaxNode.getChild|getChild(kotlin.String;kotlin.String?;kotlin.String?){}[0]
+    abstract fun getChildren(kotlin/String, kotlin/String? = ..., kotlin/String? = ...): kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/SyntaxNode> // com.monkopedia.kodemirror.lezer.common/SyntaxNode.getChildren|getChildren(kotlin.String;kotlin.String?;kotlin.String?){}[0]
+    abstract fun resolve(kotlin/Int, kotlin/Int = ...): com.monkopedia.kodemirror.lezer.common/SyntaxNode // com.monkopedia.kodemirror.lezer.common/SyntaxNode.resolve|resolve(kotlin.Int;kotlin.Int){}[0]
+    abstract fun resolveInner(kotlin/Int, kotlin/Int = ...): com.monkopedia.kodemirror.lezer.common/SyntaxNode // com.monkopedia.kodemirror.lezer.common/SyntaxNode.resolveInner|resolveInner(kotlin.Int;kotlin.Int){}[0]
+    abstract fun toTree(): com.monkopedia.kodemirror.lezer.common/Tree // com.monkopedia.kodemirror.lezer.common/SyntaxNode.toTree|toTree(){}[0]
+}
+
+abstract interface com.monkopedia.kodemirror.lezer.common/SyntaxNodeRef { // com.monkopedia.kodemirror.lezer.common/SyntaxNodeRef|null[0]
+    abstract val from // com.monkopedia.kodemirror.lezer.common/SyntaxNodeRef.from|{}from[0]
+        abstract fun <get-from>(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/SyntaxNodeRef.from.<get-from>|<get-from>(){}[0]
+    abstract val to // com.monkopedia.kodemirror.lezer.common/SyntaxNodeRef.to|{}to[0]
+        abstract fun <get-to>(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/SyntaxNodeRef.to.<get-to>|<get-to>(){}[0]
+    abstract val type // com.monkopedia.kodemirror.lezer.common/SyntaxNodeRef.type|{}type[0]
+        abstract fun <get-type>(): com.monkopedia.kodemirror.lezer.common/NodeType // com.monkopedia.kodemirror.lezer.common/SyntaxNodeRef.type.<get-type>|<get-type>(){}[0]
+    open val name // com.monkopedia.kodemirror.lezer.common/SyntaxNodeRef.name|{}name[0]
+        open fun <get-name>(): kotlin/String // com.monkopedia.kodemirror.lezer.common/SyntaxNodeRef.name.<get-name>|<get-name>(){}[0]
+
+    abstract fun matchContext(kotlin.collections/List<kotlin/String>): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/SyntaxNodeRef.matchContext|matchContext(kotlin.collections.List<kotlin.String>){}[0]
+}
+
+sealed interface com.monkopedia.kodemirror.lezer.common/ParseOverlay { // com.monkopedia.kodemirror.lezer.common/ParseOverlay|null[0]
+    final class Predicate : com.monkopedia.kodemirror.lezer.common/ParseOverlay { // com.monkopedia.kodemirror.lezer.common/ParseOverlay.Predicate|null[0]
+        constructor <init>(kotlin/Function1<com.monkopedia.kodemirror.lezer.common/SyntaxNodeRef, com.monkopedia.kodemirror.lezer.common/ParseOverlayMatch?>) // com.monkopedia.kodemirror.lezer.common/ParseOverlay.Predicate.<init>|<init>(kotlin.Function1<com.monkopedia.kodemirror.lezer.common.SyntaxNodeRef,com.monkopedia.kodemirror.lezer.common.ParseOverlayMatch?>){}[0]
+
+        final val match // com.monkopedia.kodemirror.lezer.common/ParseOverlay.Predicate.match|{}match[0]
+            final fun <get-match>(): kotlin/Function1<com.monkopedia.kodemirror.lezer.common/SyntaxNodeRef, com.monkopedia.kodemirror.lezer.common/ParseOverlayMatch?> // com.monkopedia.kodemirror.lezer.common/ParseOverlay.Predicate.match.<get-match>|<get-match>(){}[0]
+
+        final fun component1(): kotlin/Function1<com.monkopedia.kodemirror.lezer.common/SyntaxNodeRef, com.monkopedia.kodemirror.lezer.common/ParseOverlayMatch?> // com.monkopedia.kodemirror.lezer.common/ParseOverlay.Predicate.component1|component1(){}[0]
+        final fun copy(kotlin/Function1<com.monkopedia.kodemirror.lezer.common/SyntaxNodeRef, com.monkopedia.kodemirror.lezer.common/ParseOverlayMatch?> = ...): com.monkopedia.kodemirror.lezer.common/ParseOverlay.Predicate // com.monkopedia.kodemirror.lezer.common/ParseOverlay.Predicate.copy|copy(kotlin.Function1<com.monkopedia.kodemirror.lezer.common.SyntaxNodeRef,com.monkopedia.kodemirror.lezer.common.ParseOverlayMatch?>){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/ParseOverlay.Predicate.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/ParseOverlay.Predicate.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.monkopedia.kodemirror.lezer.common/ParseOverlay.Predicate.toString|toString(){}[0]
+    }
+
+    final class Ranges : com.monkopedia.kodemirror.lezer.common/ParseOverlay { // com.monkopedia.kodemirror.lezer.common/ParseOverlay.Ranges|null[0]
+        constructor <init>(kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/TextRange>) // com.monkopedia.kodemirror.lezer.common/ParseOverlay.Ranges.<init>|<init>(kotlin.collections.List<com.monkopedia.kodemirror.lezer.common.TextRange>){}[0]
+
+        final val ranges // com.monkopedia.kodemirror.lezer.common/ParseOverlay.Ranges.ranges|{}ranges[0]
+            final fun <get-ranges>(): kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/TextRange> // com.monkopedia.kodemirror.lezer.common/ParseOverlay.Ranges.ranges.<get-ranges>|<get-ranges>(){}[0]
+
+        final fun component1(): kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/TextRange> // com.monkopedia.kodemirror.lezer.common/ParseOverlay.Ranges.component1|component1(){}[0]
+        final fun copy(kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/TextRange> = ...): com.monkopedia.kodemirror.lezer.common/ParseOverlay.Ranges // com.monkopedia.kodemirror.lezer.common/ParseOverlay.Ranges.copy|copy(kotlin.collections.List<com.monkopedia.kodemirror.lezer.common.TextRange>){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/ParseOverlay.Ranges.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/ParseOverlay.Ranges.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.monkopedia.kodemirror.lezer.common/ParseOverlay.Ranges.toString|toString(){}[0]
+    }
+}
+
+sealed interface com.monkopedia.kodemirror.lezer.common/ParseOverlayMatch { // com.monkopedia.kodemirror.lezer.common/ParseOverlayMatch|null[0]
+    final class CustomRange : com.monkopedia.kodemirror.lezer.common/ParseOverlayMatch { // com.monkopedia.kodemirror.lezer.common/ParseOverlayMatch.CustomRange|null[0]
+        constructor <init>(com.monkopedia.kodemirror.lezer.common/TextRange) // com.monkopedia.kodemirror.lezer.common/ParseOverlayMatch.CustomRange.<init>|<init>(com.monkopedia.kodemirror.lezer.common.TextRange){}[0]
+
+        final val range // com.monkopedia.kodemirror.lezer.common/ParseOverlayMatch.CustomRange.range|{}range[0]
+            final fun <get-range>(): com.monkopedia.kodemirror.lezer.common/TextRange // com.monkopedia.kodemirror.lezer.common/ParseOverlayMatch.CustomRange.range.<get-range>|<get-range>(){}[0]
+
+        final fun component1(): com.monkopedia.kodemirror.lezer.common/TextRange // com.monkopedia.kodemirror.lezer.common/ParseOverlayMatch.CustomRange.component1|component1(){}[0]
+        final fun copy(com.monkopedia.kodemirror.lezer.common/TextRange = ...): com.monkopedia.kodemirror.lezer.common/ParseOverlayMatch.CustomRange // com.monkopedia.kodemirror.lezer.common/ParseOverlayMatch.CustomRange.copy|copy(com.monkopedia.kodemirror.lezer.common.TextRange){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/ParseOverlayMatch.CustomRange.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/ParseOverlayMatch.CustomRange.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.monkopedia.kodemirror.lezer.common/ParseOverlayMatch.CustomRange.toString|toString(){}[0]
+    }
+
+    final object FullNode : com.monkopedia.kodemirror.lezer.common/ParseOverlayMatch { // com.monkopedia.kodemirror.lezer.common/ParseOverlayMatch.FullNode|null[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/ParseOverlayMatch.FullNode.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/ParseOverlayMatch.FullNode.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.monkopedia.kodemirror.lezer.common/ParseOverlayMatch.FullNode.toString|toString(){}[0]
+    }
+}
+
+sealed interface com.monkopedia.kodemirror.lezer.common/TreeBuildBuffer { // com.monkopedia.kodemirror.lezer.common/TreeBuildBuffer|null[0]
+    final class CursorBuffer : com.monkopedia.kodemirror.lezer.common/TreeBuildBuffer { // com.monkopedia.kodemirror.lezer.common/TreeBuildBuffer.CursorBuffer|null[0]
+        constructor <init>(com.monkopedia.kodemirror.lezer.common/BufferCursor) // com.monkopedia.kodemirror.lezer.common/TreeBuildBuffer.CursorBuffer.<init>|<init>(com.monkopedia.kodemirror.lezer.common.BufferCursor){}[0]
+
+        final val cursor // com.monkopedia.kodemirror.lezer.common/TreeBuildBuffer.CursorBuffer.cursor|{}cursor[0]
+            final fun <get-cursor>(): com.monkopedia.kodemirror.lezer.common/BufferCursor // com.monkopedia.kodemirror.lezer.common/TreeBuildBuffer.CursorBuffer.cursor.<get-cursor>|<get-cursor>(){}[0]
+
+        final fun component1(): com.monkopedia.kodemirror.lezer.common/BufferCursor // com.monkopedia.kodemirror.lezer.common/TreeBuildBuffer.CursorBuffer.component1|component1(){}[0]
+        final fun copy(com.monkopedia.kodemirror.lezer.common/BufferCursor = ...): com.monkopedia.kodemirror.lezer.common/TreeBuildBuffer.CursorBuffer // com.monkopedia.kodemirror.lezer.common/TreeBuildBuffer.CursorBuffer.copy|copy(com.monkopedia.kodemirror.lezer.common.BufferCursor){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/TreeBuildBuffer.CursorBuffer.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/TreeBuildBuffer.CursorBuffer.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.monkopedia.kodemirror.lezer.common/TreeBuildBuffer.CursorBuffer.toString|toString(){}[0]
+    }
+
+    final class ListBuffer : com.monkopedia.kodemirror.lezer.common/TreeBuildBuffer { // com.monkopedia.kodemirror.lezer.common/TreeBuildBuffer.ListBuffer|null[0]
+        constructor <init>(kotlin.collections/List<kotlin/Int>) // com.monkopedia.kodemirror.lezer.common/TreeBuildBuffer.ListBuffer.<init>|<init>(kotlin.collections.List<kotlin.Int>){}[0]
+
+        final val data // com.monkopedia.kodemirror.lezer.common/TreeBuildBuffer.ListBuffer.data|{}data[0]
+            final fun <get-data>(): kotlin.collections/List<kotlin/Int> // com.monkopedia.kodemirror.lezer.common/TreeBuildBuffer.ListBuffer.data.<get-data>|<get-data>(){}[0]
+
+        final fun component1(): kotlin.collections/List<kotlin/Int> // com.monkopedia.kodemirror.lezer.common/TreeBuildBuffer.ListBuffer.component1|component1(){}[0]
+        final fun copy(kotlin.collections/List<kotlin/Int> = ...): com.monkopedia.kodemirror.lezer.common/TreeBuildBuffer.ListBuffer // com.monkopedia.kodemirror.lezer.common/TreeBuildBuffer.ListBuffer.copy|copy(kotlin.collections.List<kotlin.Int>){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/TreeBuildBuffer.ListBuffer.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/TreeBuildBuffer.ListBuffer.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.monkopedia.kodemirror.lezer.common/TreeBuildBuffer.ListBuffer.toString|toString(){}[0]
+    }
+}
+
+abstract class com.monkopedia.kodemirror.lezer.common/Parser { // com.monkopedia.kodemirror.lezer.common/Parser|null[0]
+    constructor <init>() // com.monkopedia.kodemirror.lezer.common/Parser.<init>|<init>(){}[0]
+
+    abstract fun createParse(com.monkopedia.kodemirror.lezer.common/Input, kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/TreeFragment>, kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/TextRange>): com.monkopedia.kodemirror.lezer.common/PartialParse // com.monkopedia.kodemirror.lezer.common/Parser.createParse|createParse(com.monkopedia.kodemirror.lezer.common.Input;kotlin.collections.List<com.monkopedia.kodemirror.lezer.common.TreeFragment>;kotlin.collections.List<com.monkopedia.kodemirror.lezer.common.TextRange>){}[0]
+    final fun parse(com.monkopedia.kodemirror.lezer.common/Input, kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/TreeFragment> = ..., kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/TextRange>? = ...): com.monkopedia.kodemirror.lezer.common/Tree // com.monkopedia.kodemirror.lezer.common/Parser.parse|parse(com.monkopedia.kodemirror.lezer.common.Input;kotlin.collections.List<com.monkopedia.kodemirror.lezer.common.TreeFragment>;kotlin.collections.List<com.monkopedia.kodemirror.lezer.common.TextRange>?){}[0]
+    final fun parse(kotlin/String, kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/TreeFragment> = ..., kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/TextRange>? = ...): com.monkopedia.kodemirror.lezer.common/Tree // com.monkopedia.kodemirror.lezer.common/Parser.parse|parse(kotlin.String;kotlin.collections.List<com.monkopedia.kodemirror.lezer.common.TreeFragment>;kotlin.collections.List<com.monkopedia.kodemirror.lezer.common.TextRange>?){}[0]
+    final fun startParse(com.monkopedia.kodemirror.lezer.common/Input, kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/TreeFragment> = ..., kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/TextRange>? = ...): com.monkopedia.kodemirror.lezer.common/PartialParse // com.monkopedia.kodemirror.lezer.common/Parser.startParse|startParse(com.monkopedia.kodemirror.lezer.common.Input;kotlin.collections.List<com.monkopedia.kodemirror.lezer.common.TreeFragment>;kotlin.collections.List<com.monkopedia.kodemirror.lezer.common.TextRange>?){}[0]
+    final fun startParse(kotlin/String, kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/TreeFragment> = ..., kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/TextRange>? = ...): com.monkopedia.kodemirror.lezer.common/PartialParse // com.monkopedia.kodemirror.lezer.common/Parser.startParse|startParse(kotlin.String;kotlin.collections.List<com.monkopedia.kodemirror.lezer.common.TreeFragment>;kotlin.collections.List<com.monkopedia.kodemirror.lezer.common.TextRange>?){}[0]
+}
+
+final class <#A: kotlin/Any?> com.monkopedia.kodemirror.lezer.common/NodeProp { // com.monkopedia.kodemirror.lezer.common/NodeProp|null[0]
+    constructor <init>(kotlin/Boolean = ..., kotlin/Function1<kotlin/String, #A>? = ..., kotlin/Function2<#A, #A, #A>? = ...) // com.monkopedia.kodemirror.lezer.common/NodeProp.<init>|<init>(kotlin.Boolean;kotlin.Function1<kotlin.String,1:0>?;kotlin.Function2<1:0,1:0,1:0>?){}[0]
+
+    final val combine // com.monkopedia.kodemirror.lezer.common/NodeProp.combine|{}combine[0]
+        final fun <get-combine>(): kotlin/Function2<#A, #A, #A>? // com.monkopedia.kodemirror.lezer.common/NodeProp.combine.<get-combine>|<get-combine>(){}[0]
+    final val deserialize // com.monkopedia.kodemirror.lezer.common/NodeProp.deserialize|{}deserialize[0]
+        final fun <get-deserialize>(): kotlin/Function1<kotlin/String, #A>? // com.monkopedia.kodemirror.lezer.common/NodeProp.deserialize.<get-deserialize>|<get-deserialize>(){}[0]
+    final val id // com.monkopedia.kodemirror.lezer.common/NodeProp.id|{}id[0]
+        final fun <get-id>(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/NodeProp.id.<get-id>|<get-id>(){}[0]
+    final val perNode // com.monkopedia.kodemirror.lezer.common/NodeProp.perNode|{}perNode[0]
+        final fun <get-perNode>(): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/NodeProp.perNode.<get-perNode>|<get-perNode>(){}[0]
+
+    final fun add(kotlin.collections/Map<kotlin/String, #A>): com.monkopedia.kodemirror.lezer.common/NodePropSource<#A> // com.monkopedia.kodemirror.lezer.common/NodeProp.add|add(kotlin.collections.Map<kotlin.String,1:0>){}[0]
+    final fun add(kotlin/Function1<com.monkopedia.kodemirror.lezer.common/NodeType, #A?>): com.monkopedia.kodemirror.lezer.common/NodePropSource<#A> // com.monkopedia.kodemirror.lezer.common/NodeProp.add|add(kotlin.Function1<com.monkopedia.kodemirror.lezer.common.NodeType,1:0?>){}[0]
+
+    final object Companion { // com.monkopedia.kodemirror.lezer.common/NodeProp.Companion|null[0]
+        final val closedBy // com.monkopedia.kodemirror.lezer.common/NodeProp.Companion.closedBy|{}closedBy[0]
+            final fun <get-closedBy>(): com.monkopedia.kodemirror.lezer.common/NodeProp<kotlin.collections/List<kotlin/String>> // com.monkopedia.kodemirror.lezer.common/NodeProp.Companion.closedBy.<get-closedBy>|<get-closedBy>(){}[0]
+        final val contextHash // com.monkopedia.kodemirror.lezer.common/NodeProp.Companion.contextHash|{}contextHash[0]
+            final fun <get-contextHash>(): com.monkopedia.kodemirror.lezer.common/NodeProp<kotlin/Int> // com.monkopedia.kodemirror.lezer.common/NodeProp.Companion.contextHash.<get-contextHash>|<get-contextHash>(){}[0]
+        final val group // com.monkopedia.kodemirror.lezer.common/NodeProp.Companion.group|{}group[0]
+            final fun <get-group>(): com.monkopedia.kodemirror.lezer.common/NodeProp<kotlin.collections/List<kotlin/String>> // com.monkopedia.kodemirror.lezer.common/NodeProp.Companion.group.<get-group>|<get-group>(){}[0]
+        final val isolate // com.monkopedia.kodemirror.lezer.common/NodeProp.Companion.isolate|{}isolate[0]
+            final fun <get-isolate>(): com.monkopedia.kodemirror.lezer.common/NodeProp<kotlin/String> // com.monkopedia.kodemirror.lezer.common/NodeProp.Companion.isolate.<get-isolate>|<get-isolate>(){}[0]
+        final val lookAhead // com.monkopedia.kodemirror.lezer.common/NodeProp.Companion.lookAhead|{}lookAhead[0]
+            final fun <get-lookAhead>(): com.monkopedia.kodemirror.lezer.common/NodeProp<kotlin/Int> // com.monkopedia.kodemirror.lezer.common/NodeProp.Companion.lookAhead.<get-lookAhead>|<get-lookAhead>(){}[0]
+        final val mounted // com.monkopedia.kodemirror.lezer.common/NodeProp.Companion.mounted|{}mounted[0]
+            final fun <get-mounted>(): com.monkopedia.kodemirror.lezer.common/NodeProp<com.monkopedia.kodemirror.lezer.common/MountedTree> // com.monkopedia.kodemirror.lezer.common/NodeProp.Companion.mounted.<get-mounted>|<get-mounted>(){}[0]
+        final val openedBy // com.monkopedia.kodemirror.lezer.common/NodeProp.Companion.openedBy|{}openedBy[0]
+            final fun <get-openedBy>(): com.monkopedia.kodemirror.lezer.common/NodeProp<kotlin.collections/List<kotlin/String>> // com.monkopedia.kodemirror.lezer.common/NodeProp.Companion.openedBy.<get-openedBy>|<get-openedBy>(){}[0]
+        final val skipped // com.monkopedia.kodemirror.lezer.common/NodeProp.Companion.skipped|{}skipped[0]
+            final fun <get-skipped>(): com.monkopedia.kodemirror.lezer.common/NodeProp<kotlin/Boolean> // com.monkopedia.kodemirror.lezer.common/NodeProp.Companion.skipped.<get-skipped>|<get-skipped>(){}[0]
+        final val top // com.monkopedia.kodemirror.lezer.common/NodeProp.Companion.top|{}top[0]
+            final fun <get-top>(): com.monkopedia.kodemirror.lezer.common/NodeProp<kotlin/Boolean> // com.monkopedia.kodemirror.lezer.common/NodeProp.Companion.top.<get-top>|<get-top>(){}[0]
+    }
+}
+
+final class <#A: kotlin/Any?> com.monkopedia.kodemirror.lezer.common/NodePropSource { // com.monkopedia.kodemirror.lezer.common/NodePropSource|null[0]
+    constructor <init>(com.monkopedia.kodemirror.lezer.common/NodeProp<#A>, kotlin/Function1<com.monkopedia.kodemirror.lezer.common/NodeType, #A?>) // com.monkopedia.kodemirror.lezer.common/NodePropSource.<init>|<init>(com.monkopedia.kodemirror.lezer.common.NodeProp<1:0>;kotlin.Function1<com.monkopedia.kodemirror.lezer.common.NodeType,1:0?>){}[0]
+
+    final val f // com.monkopedia.kodemirror.lezer.common/NodePropSource.f|{}f[0]
+        final fun <get-f>(): kotlin/Function1<com.monkopedia.kodemirror.lezer.common/NodeType, #A?> // com.monkopedia.kodemirror.lezer.common/NodePropSource.f.<get-f>|<get-f>(){}[0]
+    final val prop // com.monkopedia.kodemirror.lezer.common/NodePropSource.prop|{}prop[0]
+        final fun <get-prop>(): com.monkopedia.kodemirror.lezer.common/NodeProp<#A> // com.monkopedia.kodemirror.lezer.common/NodePropSource.prop.<get-prop>|<get-prop>(){}[0]
+}
+
+final class <#A: kotlin/Any?> com.monkopedia.kodemirror.lezer.common/NodeWeakMap { // com.monkopedia.kodemirror.lezer.common/NodeWeakMap|null[0]
+    constructor <init>() // com.monkopedia.kodemirror.lezer.common/NodeWeakMap.<init>|<init>(){}[0]
+
+    final fun cursorGet(com.monkopedia.kodemirror.lezer.common/TreeCursor): #A? // com.monkopedia.kodemirror.lezer.common/NodeWeakMap.cursorGet|cursorGet(com.monkopedia.kodemirror.lezer.common.TreeCursor){}[0]
+    final fun cursorSet(com.monkopedia.kodemirror.lezer.common/TreeCursor, #A) // com.monkopedia.kodemirror.lezer.common/NodeWeakMap.cursorSet|cursorSet(com.monkopedia.kodemirror.lezer.common.TreeCursor;1:0){}[0]
+    final fun get(com.monkopedia.kodemirror.lezer.common/SyntaxNode): #A? // com.monkopedia.kodemirror.lezer.common/NodeWeakMap.get|get(com.monkopedia.kodemirror.lezer.common.SyntaxNode){}[0]
+    final fun set(com.monkopedia.kodemirror.lezer.common/SyntaxNode, #A) // com.monkopedia.kodemirror.lezer.common/NodeWeakMap.set|set(com.monkopedia.kodemirror.lezer.common.SyntaxNode;1:0){}[0]
+}
+
+final class com.monkopedia.kodemirror.lezer.common/BalanceConfig { // com.monkopedia.kodemirror.lezer.common/BalanceConfig|null[0]
+    constructor <init>(kotlin/Function3<kotlin.collections/List<kotlin/Any>, kotlin.collections/List<kotlin/Int>, kotlin/Int, com.monkopedia.kodemirror.lezer.common/Tree>? = ...) // com.monkopedia.kodemirror.lezer.common/BalanceConfig.<init>|<init>(kotlin.Function3<kotlin.collections.List<kotlin.Any>,kotlin.collections.List<kotlin.Int>,kotlin.Int,com.monkopedia.kodemirror.lezer.common.Tree>?){}[0]
+
+    final val makeTree // com.monkopedia.kodemirror.lezer.common/BalanceConfig.makeTree|{}makeTree[0]
+        final fun <get-makeTree>(): kotlin/Function3<kotlin.collections/List<kotlin/Any>, kotlin.collections/List<kotlin/Int>, kotlin/Int, com.monkopedia.kodemirror.lezer.common/Tree>? // com.monkopedia.kodemirror.lezer.common/BalanceConfig.makeTree.<get-makeTree>|<get-makeTree>(){}[0]
+
+    final fun component1(): kotlin/Function3<kotlin.collections/List<kotlin/Any>, kotlin.collections/List<kotlin/Int>, kotlin/Int, com.monkopedia.kodemirror.lezer.common/Tree>? // com.monkopedia.kodemirror.lezer.common/BalanceConfig.component1|component1(){}[0]
+    final fun copy(kotlin/Function3<kotlin.collections/List<kotlin/Any>, kotlin.collections/List<kotlin/Int>, kotlin/Int, com.monkopedia.kodemirror.lezer.common/Tree>? = ...): com.monkopedia.kodemirror.lezer.common/BalanceConfig // com.monkopedia.kodemirror.lezer.common/BalanceConfig.copy|copy(kotlin.Function3<kotlin.collections.List<kotlin.Any>,kotlin.collections.List<kotlin.Int>,kotlin.Int,com.monkopedia.kodemirror.lezer.common.Tree>?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/BalanceConfig.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/BalanceConfig.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.lezer.common/BalanceConfig.toString|toString(){}[0]
+}
+
+final class com.monkopedia.kodemirror.lezer.common/ChangedRange { // com.monkopedia.kodemirror.lezer.common/ChangedRange|null[0]
+    constructor <init>(kotlin/Int, kotlin/Int, kotlin/Int, kotlin/Int) // com.monkopedia.kodemirror.lezer.common/ChangedRange.<init>|<init>(kotlin.Int;kotlin.Int;kotlin.Int;kotlin.Int){}[0]
+
+    final val fromA // com.monkopedia.kodemirror.lezer.common/ChangedRange.fromA|{}fromA[0]
+        final fun <get-fromA>(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/ChangedRange.fromA.<get-fromA>|<get-fromA>(){}[0]
+    final val fromB // com.monkopedia.kodemirror.lezer.common/ChangedRange.fromB|{}fromB[0]
+        final fun <get-fromB>(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/ChangedRange.fromB.<get-fromB>|<get-fromB>(){}[0]
+    final val toA // com.monkopedia.kodemirror.lezer.common/ChangedRange.toA|{}toA[0]
+        final fun <get-toA>(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/ChangedRange.toA.<get-toA>|<get-toA>(){}[0]
+    final val toB // com.monkopedia.kodemirror.lezer.common/ChangedRange.toB|{}toB[0]
+        final fun <get-toB>(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/ChangedRange.toB.<get-toB>|<get-toB>(){}[0]
+
+    final fun component1(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/ChangedRange.component1|component1(){}[0]
+    final fun component2(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/ChangedRange.component2|component2(){}[0]
+    final fun component3(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/ChangedRange.component3|component3(){}[0]
+    final fun component4(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/ChangedRange.component4|component4(){}[0]
+    final fun copy(kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ...): com.monkopedia.kodemirror.lezer.common/ChangedRange // com.monkopedia.kodemirror.lezer.common/ChangedRange.copy|copy(kotlin.Int;kotlin.Int;kotlin.Int;kotlin.Int){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/ChangedRange.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/ChangedRange.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.lezer.common/ChangedRange.toString|toString(){}[0]
+}
+
+final class com.monkopedia.kodemirror.lezer.common/IterateSpec { // com.monkopedia.kodemirror.lezer.common/IterateSpec|null[0]
+    constructor <init>(kotlin/Function1<com.monkopedia.kodemirror.lezer.common/SyntaxNodeRef, kotlin/Boolean?>, kotlin/Function1<com.monkopedia.kodemirror.lezer.common/SyntaxNodeRef, kotlin/Unit>? = ..., kotlin/Int? = ..., kotlin/Int? = ..., kotlin/Int? = ...) // com.monkopedia.kodemirror.lezer.common/IterateSpec.<init>|<init>(kotlin.Function1<com.monkopedia.kodemirror.lezer.common.SyntaxNodeRef,kotlin.Boolean?>;kotlin.Function1<com.monkopedia.kodemirror.lezer.common.SyntaxNodeRef,kotlin.Unit>?;kotlin.Int?;kotlin.Int?;kotlin.Int?){}[0]
+
+    final val enter // com.monkopedia.kodemirror.lezer.common/IterateSpec.enter|{}enter[0]
+        final fun <get-enter>(): kotlin/Function1<com.monkopedia.kodemirror.lezer.common/SyntaxNodeRef, kotlin/Boolean?> // com.monkopedia.kodemirror.lezer.common/IterateSpec.enter.<get-enter>|<get-enter>(){}[0]
+    final val from // com.monkopedia.kodemirror.lezer.common/IterateSpec.from|{}from[0]
+        final fun <get-from>(): kotlin/Int? // com.monkopedia.kodemirror.lezer.common/IterateSpec.from.<get-from>|<get-from>(){}[0]
+    final val leave // com.monkopedia.kodemirror.lezer.common/IterateSpec.leave|{}leave[0]
+        final fun <get-leave>(): kotlin/Function1<com.monkopedia.kodemirror.lezer.common/SyntaxNodeRef, kotlin/Unit>? // com.monkopedia.kodemirror.lezer.common/IterateSpec.leave.<get-leave>|<get-leave>(){}[0]
+    final val mode // com.monkopedia.kodemirror.lezer.common/IterateSpec.mode|{}mode[0]
+        final fun <get-mode>(): kotlin/Int? // com.monkopedia.kodemirror.lezer.common/IterateSpec.mode.<get-mode>|<get-mode>(){}[0]
+    final val to // com.monkopedia.kodemirror.lezer.common/IterateSpec.to|{}to[0]
+        final fun <get-to>(): kotlin/Int? // com.monkopedia.kodemirror.lezer.common/IterateSpec.to.<get-to>|<get-to>(){}[0]
+
+    final fun component1(): kotlin/Function1<com.monkopedia.kodemirror.lezer.common/SyntaxNodeRef, kotlin/Boolean?> // com.monkopedia.kodemirror.lezer.common/IterateSpec.component1|component1(){}[0]
+    final fun component2(): kotlin/Function1<com.monkopedia.kodemirror.lezer.common/SyntaxNodeRef, kotlin/Unit>? // com.monkopedia.kodemirror.lezer.common/IterateSpec.component2|component2(){}[0]
+    final fun component3(): kotlin/Int? // com.monkopedia.kodemirror.lezer.common/IterateSpec.component3|component3(){}[0]
+    final fun component4(): kotlin/Int? // com.monkopedia.kodemirror.lezer.common/IterateSpec.component4|component4(){}[0]
+    final fun component5(): kotlin/Int? // com.monkopedia.kodemirror.lezer.common/IterateSpec.component5|component5(){}[0]
+    final fun copy(kotlin/Function1<com.monkopedia.kodemirror.lezer.common/SyntaxNodeRef, kotlin/Boolean?> = ..., kotlin/Function1<com.monkopedia.kodemirror.lezer.common/SyntaxNodeRef, kotlin/Unit>? = ..., kotlin/Int? = ..., kotlin/Int? = ..., kotlin/Int? = ...): com.monkopedia.kodemirror.lezer.common/IterateSpec // com.monkopedia.kodemirror.lezer.common/IterateSpec.copy|copy(kotlin.Function1<com.monkopedia.kodemirror.lezer.common.SyntaxNodeRef,kotlin.Boolean?>;kotlin.Function1<com.monkopedia.kodemirror.lezer.common.SyntaxNodeRef,kotlin.Unit>?;kotlin.Int?;kotlin.Int?;kotlin.Int?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/IterateSpec.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/IterateSpec.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.lezer.common/IterateSpec.toString|toString(){}[0]
+}
+
+final class com.monkopedia.kodemirror.lezer.common/MountedTree { // com.monkopedia.kodemirror.lezer.common/MountedTree|null[0]
+    constructor <init>(com.monkopedia.kodemirror.lezer.common/Tree, kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/TextRange>?, com.monkopedia.kodemirror.lezer.common/Parser) // com.monkopedia.kodemirror.lezer.common/MountedTree.<init>|<init>(com.monkopedia.kodemirror.lezer.common.Tree;kotlin.collections.List<com.monkopedia.kodemirror.lezer.common.TextRange>?;com.monkopedia.kodemirror.lezer.common.Parser){}[0]
+
+    final val overlay // com.monkopedia.kodemirror.lezer.common/MountedTree.overlay|{}overlay[0]
+        final fun <get-overlay>(): kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/TextRange>? // com.monkopedia.kodemirror.lezer.common/MountedTree.overlay.<get-overlay>|<get-overlay>(){}[0]
+    final val parser // com.monkopedia.kodemirror.lezer.common/MountedTree.parser|{}parser[0]
+        final fun <get-parser>(): com.monkopedia.kodemirror.lezer.common/Parser // com.monkopedia.kodemirror.lezer.common/MountedTree.parser.<get-parser>|<get-parser>(){}[0]
+    final val tree // com.monkopedia.kodemirror.lezer.common/MountedTree.tree|{}tree[0]
+        final fun <get-tree>(): com.monkopedia.kodemirror.lezer.common/Tree // com.monkopedia.kodemirror.lezer.common/MountedTree.tree.<get-tree>|<get-tree>(){}[0]
+
+    final fun component1(): com.monkopedia.kodemirror.lezer.common/Tree // com.monkopedia.kodemirror.lezer.common/MountedTree.component1|component1(){}[0]
+    final fun component2(): kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/TextRange>? // com.monkopedia.kodemirror.lezer.common/MountedTree.component2|component2(){}[0]
+    final fun component3(): com.monkopedia.kodemirror.lezer.common/Parser // com.monkopedia.kodemirror.lezer.common/MountedTree.component3|component3(){}[0]
+    final fun copy(com.monkopedia.kodemirror.lezer.common/Tree = ..., kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/TextRange>? = ..., com.monkopedia.kodemirror.lezer.common/Parser = ...): com.monkopedia.kodemirror.lezer.common/MountedTree // com.monkopedia.kodemirror.lezer.common/MountedTree.copy|copy(com.monkopedia.kodemirror.lezer.common.Tree;kotlin.collections.List<com.monkopedia.kodemirror.lezer.common.TextRange>?;com.monkopedia.kodemirror.lezer.common.Parser){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/MountedTree.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/MountedTree.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.lezer.common/MountedTree.toString|toString(){}[0]
+
+    final object Companion { // com.monkopedia.kodemirror.lezer.common/MountedTree.Companion|null[0]
+        final fun get(com.monkopedia.kodemirror.lezer.common/Tree): com.monkopedia.kodemirror.lezer.common/MountedTree? // com.monkopedia.kodemirror.lezer.common/MountedTree.Companion.get|get(com.monkopedia.kodemirror.lezer.common.Tree){}[0]
+    }
+}
+
+final class com.monkopedia.kodemirror.lezer.common/NestedParse { // com.monkopedia.kodemirror.lezer.common/NestedParse|null[0]
+    constructor <init>(com.monkopedia.kodemirror.lezer.common/Parser, com.monkopedia.kodemirror.lezer.common/ParseOverlay? = ..., kotlin/Boolean = ...) // com.monkopedia.kodemirror.lezer.common/NestedParse.<init>|<init>(com.monkopedia.kodemirror.lezer.common.Parser;com.monkopedia.kodemirror.lezer.common.ParseOverlay?;kotlin.Boolean){}[0]
+
+    final val bracketed // com.monkopedia.kodemirror.lezer.common/NestedParse.bracketed|{}bracketed[0]
+        final fun <get-bracketed>(): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/NestedParse.bracketed.<get-bracketed>|<get-bracketed>(){}[0]
+    final val overlay // com.monkopedia.kodemirror.lezer.common/NestedParse.overlay|{}overlay[0]
+        final fun <get-overlay>(): com.monkopedia.kodemirror.lezer.common/ParseOverlay? // com.monkopedia.kodemirror.lezer.common/NestedParse.overlay.<get-overlay>|<get-overlay>(){}[0]
+    final val parser // com.monkopedia.kodemirror.lezer.common/NestedParse.parser|{}parser[0]
+        final fun <get-parser>(): com.monkopedia.kodemirror.lezer.common/Parser // com.monkopedia.kodemirror.lezer.common/NestedParse.parser.<get-parser>|<get-parser>(){}[0]
+}
+
+final class com.monkopedia.kodemirror.lezer.common/NodeIterator { // com.monkopedia.kodemirror.lezer.common/NodeIterator|null[0]
+    constructor <init>(com.monkopedia.kodemirror.lezer.common/SyntaxNode, com.monkopedia.kodemirror.lezer.common/NodeIterator?) // com.monkopedia.kodemirror.lezer.common/NodeIterator.<init>|<init>(com.monkopedia.kodemirror.lezer.common.SyntaxNode;com.monkopedia.kodemirror.lezer.common.NodeIterator?){}[0]
+
+    final val next // com.monkopedia.kodemirror.lezer.common/NodeIterator.next|{}next[0]
+        final fun <get-next>(): com.monkopedia.kodemirror.lezer.common/NodeIterator? // com.monkopedia.kodemirror.lezer.common/NodeIterator.next.<get-next>|<get-next>(){}[0]
+    final val node // com.monkopedia.kodemirror.lezer.common/NodeIterator.node|{}node[0]
+        final fun <get-node>(): com.monkopedia.kodemirror.lezer.common/SyntaxNode // com.monkopedia.kodemirror.lezer.common/NodeIterator.node.<get-node>|<get-node>(){}[0]
+
+    final fun component1(): com.monkopedia.kodemirror.lezer.common/SyntaxNode // com.monkopedia.kodemirror.lezer.common/NodeIterator.component1|component1(){}[0]
+    final fun component2(): com.monkopedia.kodemirror.lezer.common/NodeIterator? // com.monkopedia.kodemirror.lezer.common/NodeIterator.component2|component2(){}[0]
+    final fun copy(com.monkopedia.kodemirror.lezer.common/SyntaxNode = ..., com.monkopedia.kodemirror.lezer.common/NodeIterator? = ...): com.monkopedia.kodemirror.lezer.common/NodeIterator // com.monkopedia.kodemirror.lezer.common/NodeIterator.copy|copy(com.monkopedia.kodemirror.lezer.common.SyntaxNode;com.monkopedia.kodemirror.lezer.common.NodeIterator?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/NodeIterator.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/NodeIterator.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.lezer.common/NodeIterator.toString|toString(){}[0]
+}
+
+final class com.monkopedia.kodemirror.lezer.common/NodeSet { // com.monkopedia.kodemirror.lezer.common/NodeSet|null[0]
+    constructor <init>(kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/NodeType>) // com.monkopedia.kodemirror.lezer.common/NodeSet.<init>|<init>(kotlin.collections.List<com.monkopedia.kodemirror.lezer.common.NodeType>){}[0]
+
+    final val types // com.monkopedia.kodemirror.lezer.common/NodeSet.types|{}types[0]
+        final fun <get-types>(): kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/NodeType> // com.monkopedia.kodemirror.lezer.common/NodeSet.types.<get-types>|<get-types>(){}[0]
+
+    final fun extend(kotlin/Array<out com.monkopedia.kodemirror.lezer.common/NodePropSource<*>>...): com.monkopedia.kodemirror.lezer.common/NodeSet // com.monkopedia.kodemirror.lezer.common/NodeSet.extend|extend(kotlin.Array<out|com.monkopedia.kodemirror.lezer.common.NodePropSource<*>>...){}[0]
+}
+
+final class com.monkopedia.kodemirror.lezer.common/NodeType { // com.monkopedia.kodemirror.lezer.common/NodeType|null[0]
+    final val id // com.monkopedia.kodemirror.lezer.common/NodeType.id|{}id[0]
+        final fun <get-id>(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/NodeType.id.<get-id>|<get-id>(){}[0]
+    final val isError // com.monkopedia.kodemirror.lezer.common/NodeType.isError|{}isError[0]
+        final fun <get-isError>(): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/NodeType.isError.<get-isError>|<get-isError>(){}[0]
+    final val isSkipped // com.monkopedia.kodemirror.lezer.common/NodeType.isSkipped|{}isSkipped[0]
+        final fun <get-isSkipped>(): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/NodeType.isSkipped.<get-isSkipped>|<get-isSkipped>(){}[0]
+    final val isTop // com.monkopedia.kodemirror.lezer.common/NodeType.isTop|{}isTop[0]
+        final fun <get-isTop>(): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/NodeType.isTop.<get-isTop>|<get-isTop>(){}[0]
+    final val name // com.monkopedia.kodemirror.lezer.common/NodeType.name|{}name[0]
+        final fun <get-name>(): kotlin/String // com.monkopedia.kodemirror.lezer.common/NodeType.name.<get-name>|<get-name>(){}[0]
+
+    final fun <#A1: kotlin/Any?> prop(com.monkopedia.kodemirror.lezer.common/NodeProp<#A1>): #A1? // com.monkopedia.kodemirror.lezer.common/NodeType.prop|prop(com.monkopedia.kodemirror.lezer.common.NodeProp<0:0>){0§<kotlin.Any?>}[0]
+    final fun is(kotlin/String): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/NodeType.is|is(kotlin.String){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.lezer.common/NodeType.toString|toString(){}[0]
+
+    final object Companion { // com.monkopedia.kodemirror.lezer.common/NodeType.Companion|null[0]
+        final val none // com.monkopedia.kodemirror.lezer.common/NodeType.Companion.none|{}none[0]
+            final fun <get-none>(): com.monkopedia.kodemirror.lezer.common/NodeType // com.monkopedia.kodemirror.lezer.common/NodeType.Companion.none.<get-none>|<get-none>(){}[0]
+
+        final fun <#A2: kotlin/Any?> match(kotlin.collections/Map<kotlin/String, #A2>): kotlin/Function1<com.monkopedia.kodemirror.lezer.common/NodeType, #A2?> // com.monkopedia.kodemirror.lezer.common/NodeType.Companion.match|match(kotlin.collections.Map<kotlin.String,0:0>){0§<kotlin.Any?>}[0]
+        final fun define(com.monkopedia.kodemirror.lezer.common/NodeTypeSpec): com.monkopedia.kodemirror.lezer.common/NodeType // com.monkopedia.kodemirror.lezer.common/NodeType.Companion.define|define(com.monkopedia.kodemirror.lezer.common.NodeTypeSpec){}[0]
+    }
+}
+
+final class com.monkopedia.kodemirror.lezer.common/NodeTypeSpec { // com.monkopedia.kodemirror.lezer.common/NodeTypeSpec|null[0]
+    constructor <init>(kotlin/String = ..., kotlin/Int, kotlin.collections/List<kotlin/Pair<com.monkopedia.kodemirror.lezer.common/NodeProp<*>, kotlin/Any?>> = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ...) // com.monkopedia.kodemirror.lezer.common/NodeTypeSpec.<init>|<init>(kotlin.String;kotlin.Int;kotlin.collections.List<kotlin.Pair<com.monkopedia.kodemirror.lezer.common.NodeProp<*>,kotlin.Any?>>;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean){}[0]
+
+    final val error // com.monkopedia.kodemirror.lezer.common/NodeTypeSpec.error|{}error[0]
+        final fun <get-error>(): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/NodeTypeSpec.error.<get-error>|<get-error>(){}[0]
+    final val id // com.monkopedia.kodemirror.lezer.common/NodeTypeSpec.id|{}id[0]
+        final fun <get-id>(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/NodeTypeSpec.id.<get-id>|<get-id>(){}[0]
+    final val name // com.monkopedia.kodemirror.lezer.common/NodeTypeSpec.name|{}name[0]
+        final fun <get-name>(): kotlin/String // com.monkopedia.kodemirror.lezer.common/NodeTypeSpec.name.<get-name>|<get-name>(){}[0]
+    final val props // com.monkopedia.kodemirror.lezer.common/NodeTypeSpec.props|{}props[0]
+        final fun <get-props>(): kotlin.collections/List<kotlin/Pair<com.monkopedia.kodemirror.lezer.common/NodeProp<*>, kotlin/Any?>> // com.monkopedia.kodemirror.lezer.common/NodeTypeSpec.props.<get-props>|<get-props>(){}[0]
+    final val skipped // com.monkopedia.kodemirror.lezer.common/NodeTypeSpec.skipped|{}skipped[0]
+        final fun <get-skipped>(): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/NodeTypeSpec.skipped.<get-skipped>|<get-skipped>(){}[0]
+    final val top // com.monkopedia.kodemirror.lezer.common/NodeTypeSpec.top|{}top[0]
+        final fun <get-top>(): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/NodeTypeSpec.top.<get-top>|<get-top>(){}[0]
+
+    final fun component1(): kotlin/String // com.monkopedia.kodemirror.lezer.common/NodeTypeSpec.component1|component1(){}[0]
+    final fun component2(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/NodeTypeSpec.component2|component2(){}[0]
+    final fun component3(): kotlin.collections/List<kotlin/Pair<com.monkopedia.kodemirror.lezer.common/NodeProp<*>, kotlin/Any?>> // com.monkopedia.kodemirror.lezer.common/NodeTypeSpec.component3|component3(){}[0]
+    final fun component4(): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/NodeTypeSpec.component4|component4(){}[0]
+    final fun component5(): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/NodeTypeSpec.component5|component5(){}[0]
+    final fun component6(): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/NodeTypeSpec.component6|component6(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/Int = ..., kotlin.collections/List<kotlin/Pair<com.monkopedia.kodemirror.lezer.common/NodeProp<*>, kotlin/Any?>> = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ...): com.monkopedia.kodemirror.lezer.common/NodeTypeSpec // com.monkopedia.kodemirror.lezer.common/NodeTypeSpec.copy|copy(kotlin.String;kotlin.Int;kotlin.collections.List<kotlin.Pair<com.monkopedia.kodemirror.lezer.common.NodeProp<*>,kotlin.Any?>>;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/NodeTypeSpec.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/NodeTypeSpec.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.lezer.common/NodeTypeSpec.toString|toString(){}[0]
+}
+
+final class com.monkopedia.kodemirror.lezer.common/StringInput : com.monkopedia.kodemirror.lezer.common/Input { // com.monkopedia.kodemirror.lezer.common/StringInput|null[0]
+    constructor <init>(kotlin/String) // com.monkopedia.kodemirror.lezer.common/StringInput.<init>|<init>(kotlin.String){}[0]
+
+    final val length // com.monkopedia.kodemirror.lezer.common/StringInput.length|{}length[0]
+        final fun <get-length>(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/StringInput.length.<get-length>|<get-length>(){}[0]
+
+    final fun chunk(kotlin/Int): kotlin/String // com.monkopedia.kodemirror.lezer.common/StringInput.chunk|chunk(kotlin.Int){}[0]
+    final fun read(kotlin/Int, kotlin/Int): kotlin/String // com.monkopedia.kodemirror.lezer.common/StringInput.read|read(kotlin.Int;kotlin.Int){}[0]
+}
+
+final class com.monkopedia.kodemirror.lezer.common/TextRange { // com.monkopedia.kodemirror.lezer.common/TextRange|null[0]
+    constructor <init>(kotlin/Int, kotlin/Int) // com.monkopedia.kodemirror.lezer.common/TextRange.<init>|<init>(kotlin.Int;kotlin.Int){}[0]
+
+    final val from // com.monkopedia.kodemirror.lezer.common/TextRange.from|{}from[0]
+        final fun <get-from>(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/TextRange.from.<get-from>|<get-from>(){}[0]
+    final val to // com.monkopedia.kodemirror.lezer.common/TextRange.to|{}to[0]
+        final fun <get-to>(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/TextRange.to.<get-to>|<get-to>(){}[0]
+
+    final fun component1(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/TextRange.component1|component1(){}[0]
+    final fun component2(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/TextRange.component2|component2(){}[0]
+    final fun copy(kotlin/Int = ..., kotlin/Int = ...): com.monkopedia.kodemirror.lezer.common/TextRange // com.monkopedia.kodemirror.lezer.common/TextRange.copy|copy(kotlin.Int;kotlin.Int){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/TextRange.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/TextRange.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.lezer.common/TextRange.toString|toString(){}[0]
+}
+
+final class com.monkopedia.kodemirror.lezer.common/Tree { // com.monkopedia.kodemirror.lezer.common/Tree|null[0]
+    constructor <init>(com.monkopedia.kodemirror.lezer.common/NodeType, kotlin.collections/List<kotlin/Any>, kotlin.collections/List<kotlin/Int>, kotlin/Int, kotlin.collections/Map<kotlin/Int, kotlin/Any?> = ...) // com.monkopedia.kodemirror.lezer.common/Tree.<init>|<init>(com.monkopedia.kodemirror.lezer.common.NodeType;kotlin.collections.List<kotlin.Any>;kotlin.collections.List<kotlin.Int>;kotlin.Int;kotlin.collections.Map<kotlin.Int,kotlin.Any?>){}[0]
+
+    final val children // com.monkopedia.kodemirror.lezer.common/Tree.children|{}children[0]
+        final fun <get-children>(): kotlin.collections/MutableList<kotlin/Any> // com.monkopedia.kodemirror.lezer.common/Tree.children.<get-children>|<get-children>(){}[0]
+    final val length // com.monkopedia.kodemirror.lezer.common/Tree.length|{}length[0]
+        final fun <get-length>(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/Tree.length.<get-length>|<get-length>(){}[0]
+    final val positions // com.monkopedia.kodemirror.lezer.common/Tree.positions|{}positions[0]
+        final fun <get-positions>(): kotlin.collections/List<kotlin/Int> // com.monkopedia.kodemirror.lezer.common/Tree.positions.<get-positions>|<get-positions>(){}[0]
+    final val topNode // com.monkopedia.kodemirror.lezer.common/Tree.topNode|{}topNode[0]
+        final fun <get-topNode>(): com.monkopedia.kodemirror.lezer.common/SyntaxNode // com.monkopedia.kodemirror.lezer.common/Tree.topNode.<get-topNode>|<get-topNode>(){}[0]
+    final val type // com.monkopedia.kodemirror.lezer.common/Tree.type|{}type[0]
+        final fun <get-type>(): com.monkopedia.kodemirror.lezer.common/NodeType // com.monkopedia.kodemirror.lezer.common/Tree.type.<get-type>|<get-type>(){}[0]
+
+    final fun <#A1: kotlin/Any?> prop(com.monkopedia.kodemirror.lezer.common/NodeProp<#A1>): #A1? // com.monkopedia.kodemirror.lezer.common/Tree.prop|prop(com.monkopedia.kodemirror.lezer.common.NodeProp<0:0>){0§<kotlin.Any?>}[0]
+    final fun balance(com.monkopedia.kodemirror.lezer.common/BalanceConfig = ...): com.monkopedia.kodemirror.lezer.common/Tree // com.monkopedia.kodemirror.lezer.common/Tree.balance|balance(com.monkopedia.kodemirror.lezer.common.BalanceConfig){}[0]
+    final fun cursor(kotlin/Int = ...): com.monkopedia.kodemirror.lezer.common/TreeCursor // com.monkopedia.kodemirror.lezer.common/Tree.cursor|cursor(kotlin.Int){}[0]
+    final fun cursorAt(kotlin/Int, kotlin/Int = ..., kotlin/Int = ...): com.monkopedia.kodemirror.lezer.common/TreeCursor // com.monkopedia.kodemirror.lezer.common/Tree.cursorAt|cursorAt(kotlin.Int;kotlin.Int;kotlin.Int){}[0]
+    final fun iterate(com.monkopedia.kodemirror.lezer.common/IterateSpec) // com.monkopedia.kodemirror.lezer.common/Tree.iterate|iterate(com.monkopedia.kodemirror.lezer.common.IterateSpec){}[0]
+    final fun resolve(kotlin/Int, kotlin/Int = ...): com.monkopedia.kodemirror.lezer.common/SyntaxNode // com.monkopedia.kodemirror.lezer.common/Tree.resolve|resolve(kotlin.Int;kotlin.Int){}[0]
+    final fun resolveInner(kotlin/Int, kotlin/Int = ...): com.monkopedia.kodemirror.lezer.common/SyntaxNode // com.monkopedia.kodemirror.lezer.common/Tree.resolveInner|resolveInner(kotlin.Int;kotlin.Int){}[0]
+    final fun resolveStack(kotlin/Int, kotlin/Int = ...): com.monkopedia.kodemirror.lezer.common/NodeIterator // com.monkopedia.kodemirror.lezer.common/Tree.resolveStack|resolveStack(kotlin.Int;kotlin.Int){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.lezer.common/Tree.toString|toString(){}[0]
+
+    final object Companion { // com.monkopedia.kodemirror.lezer.common/Tree.Companion|null[0]
+        final val empty // com.monkopedia.kodemirror.lezer.common/Tree.Companion.empty|{}empty[0]
+            final fun <get-empty>(): com.monkopedia.kodemirror.lezer.common/Tree // com.monkopedia.kodemirror.lezer.common/Tree.Companion.empty.<get-empty>|<get-empty>(){}[0]
+
+        final fun build(com.monkopedia.kodemirror.lezer.common/TreeBuildSpec): com.monkopedia.kodemirror.lezer.common/Tree // com.monkopedia.kodemirror.lezer.common/Tree.Companion.build|build(com.monkopedia.kodemirror.lezer.common.TreeBuildSpec){}[0]
+    }
+}
+
+final class com.monkopedia.kodemirror.lezer.common/TreeBuffer { // com.monkopedia.kodemirror.lezer.common/TreeBuffer|null[0]
+    constructor <init>(kotlin/IntArray, kotlin/Int, com.monkopedia.kodemirror.lezer.common/NodeSet) // com.monkopedia.kodemirror.lezer.common/TreeBuffer.<init>|<init>(kotlin.IntArray;kotlin.Int;com.monkopedia.kodemirror.lezer.common.NodeSet){}[0]
+
+    final val buffer // com.monkopedia.kodemirror.lezer.common/TreeBuffer.buffer|{}buffer[0]
+        final fun <get-buffer>(): kotlin/IntArray // com.monkopedia.kodemirror.lezer.common/TreeBuffer.buffer.<get-buffer>|<get-buffer>(){}[0]
+    final val length // com.monkopedia.kodemirror.lezer.common/TreeBuffer.length|{}length[0]
+        final fun <get-length>(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/TreeBuffer.length.<get-length>|<get-length>(){}[0]
+    final val set // com.monkopedia.kodemirror.lezer.common/TreeBuffer.set|{}set[0]
+        final fun <get-set>(): com.monkopedia.kodemirror.lezer.common/NodeSet // com.monkopedia.kodemirror.lezer.common/TreeBuffer.set.<get-set>|<get-set>(){}[0]
+    final val type // com.monkopedia.kodemirror.lezer.common/TreeBuffer.type|{}type[0]
+        final fun <get-type>(): com.monkopedia.kodemirror.lezer.common/NodeType // com.monkopedia.kodemirror.lezer.common/TreeBuffer.type.<get-type>|<get-type>(){}[0]
+
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.lezer.common/TreeBuffer.toString|toString(){}[0]
+}
+
+final class com.monkopedia.kodemirror.lezer.common/TreeBuildSpec { // com.monkopedia.kodemirror.lezer.common/TreeBuildSpec|null[0]
+    constructor <init>(com.monkopedia.kodemirror.lezer.common/TreeBuildBuffer, com.monkopedia.kodemirror.lezer.common/NodeSet, kotlin/Int, kotlin/Int = ..., kotlin/Int = ..., kotlin/Int? = ..., kotlin/Int = ..., kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/Tree> = ..., kotlin/Int = ...) // com.monkopedia.kodemirror.lezer.common/TreeBuildSpec.<init>|<init>(com.monkopedia.kodemirror.lezer.common.TreeBuildBuffer;com.monkopedia.kodemirror.lezer.common.NodeSet;kotlin.Int;kotlin.Int;kotlin.Int;kotlin.Int?;kotlin.Int;kotlin.collections.List<com.monkopedia.kodemirror.lezer.common.Tree>;kotlin.Int){}[0]
+
+    final val buffer // com.monkopedia.kodemirror.lezer.common/TreeBuildSpec.buffer|{}buffer[0]
+        final fun <get-buffer>(): com.monkopedia.kodemirror.lezer.common/TreeBuildBuffer // com.monkopedia.kodemirror.lezer.common/TreeBuildSpec.buffer.<get-buffer>|<get-buffer>(){}[0]
+    final val bufferStart // com.monkopedia.kodemirror.lezer.common/TreeBuildSpec.bufferStart|{}bufferStart[0]
+        final fun <get-bufferStart>(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/TreeBuildSpec.bufferStart.<get-bufferStart>|<get-bufferStart>(){}[0]
+    final val length // com.monkopedia.kodemirror.lezer.common/TreeBuildSpec.length|{}length[0]
+        final fun <get-length>(): kotlin/Int? // com.monkopedia.kodemirror.lezer.common/TreeBuildSpec.length.<get-length>|<get-length>(){}[0]
+    final val maxBufferLength // com.monkopedia.kodemirror.lezer.common/TreeBuildSpec.maxBufferLength|{}maxBufferLength[0]
+        final fun <get-maxBufferLength>(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/TreeBuildSpec.maxBufferLength.<get-maxBufferLength>|<get-maxBufferLength>(){}[0]
+    final val minRepeatType // com.monkopedia.kodemirror.lezer.common/TreeBuildSpec.minRepeatType|{}minRepeatType[0]
+        final fun <get-minRepeatType>(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/TreeBuildSpec.minRepeatType.<get-minRepeatType>|<get-minRepeatType>(){}[0]
+    final val nodeSet // com.monkopedia.kodemirror.lezer.common/TreeBuildSpec.nodeSet|{}nodeSet[0]
+        final fun <get-nodeSet>(): com.monkopedia.kodemirror.lezer.common/NodeSet // com.monkopedia.kodemirror.lezer.common/TreeBuildSpec.nodeSet.<get-nodeSet>|<get-nodeSet>(){}[0]
+    final val reused // com.monkopedia.kodemirror.lezer.common/TreeBuildSpec.reused|{}reused[0]
+        final fun <get-reused>(): kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/Tree> // com.monkopedia.kodemirror.lezer.common/TreeBuildSpec.reused.<get-reused>|<get-reused>(){}[0]
+    final val start // com.monkopedia.kodemirror.lezer.common/TreeBuildSpec.start|{}start[0]
+        final fun <get-start>(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/TreeBuildSpec.start.<get-start>|<get-start>(){}[0]
+    final val topID // com.monkopedia.kodemirror.lezer.common/TreeBuildSpec.topID|{}topID[0]
+        final fun <get-topID>(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/TreeBuildSpec.topID.<get-topID>|<get-topID>(){}[0]
+
+    final fun component1(): com.monkopedia.kodemirror.lezer.common/TreeBuildBuffer // com.monkopedia.kodemirror.lezer.common/TreeBuildSpec.component1|component1(){}[0]
+    final fun component2(): com.monkopedia.kodemirror.lezer.common/NodeSet // com.monkopedia.kodemirror.lezer.common/TreeBuildSpec.component2|component2(){}[0]
+    final fun component3(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/TreeBuildSpec.component3|component3(){}[0]
+    final fun component4(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/TreeBuildSpec.component4|component4(){}[0]
+    final fun component5(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/TreeBuildSpec.component5|component5(){}[0]
+    final fun component6(): kotlin/Int? // com.monkopedia.kodemirror.lezer.common/TreeBuildSpec.component6|component6(){}[0]
+    final fun component7(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/TreeBuildSpec.component7|component7(){}[0]
+    final fun component8(): kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/Tree> // com.monkopedia.kodemirror.lezer.common/TreeBuildSpec.component8|component8(){}[0]
+    final fun component9(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/TreeBuildSpec.component9|component9(){}[0]
+    final fun copy(com.monkopedia.kodemirror.lezer.common/TreeBuildBuffer = ..., com.monkopedia.kodemirror.lezer.common/NodeSet = ..., kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ..., kotlin/Int? = ..., kotlin/Int = ..., kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/Tree> = ..., kotlin/Int = ...): com.monkopedia.kodemirror.lezer.common/TreeBuildSpec // com.monkopedia.kodemirror.lezer.common/TreeBuildSpec.copy|copy(com.monkopedia.kodemirror.lezer.common.TreeBuildBuffer;com.monkopedia.kodemirror.lezer.common.NodeSet;kotlin.Int;kotlin.Int;kotlin.Int;kotlin.Int?;kotlin.Int;kotlin.collections.List<com.monkopedia.kodemirror.lezer.common.Tree>;kotlin.Int){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/TreeBuildSpec.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/TreeBuildSpec.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.lezer.common/TreeBuildSpec.toString|toString(){}[0]
+}
+
+final class com.monkopedia.kodemirror.lezer.common/TreeCursor : com.monkopedia.kodemirror.lezer.common/SyntaxNodeRef { // com.monkopedia.kodemirror.lezer.common/TreeCursor|null[0]
+    final val name // com.monkopedia.kodemirror.lezer.common/TreeCursor.name|{}name[0]
+        final fun <get-name>(): kotlin/String // com.monkopedia.kodemirror.lezer.common/TreeCursor.name.<get-name>|<get-name>(){}[0]
+    final val node // com.monkopedia.kodemirror.lezer.common/TreeCursor.node|{}node[0]
+        final fun <get-node>(): com.monkopedia.kodemirror.lezer.common/SyntaxNode // com.monkopedia.kodemirror.lezer.common/TreeCursor.node.<get-node>|<get-node>(){}[0]
+    final val tree // com.monkopedia.kodemirror.lezer.common/TreeCursor.tree|{}tree[0]
+        final fun <get-tree>(): com.monkopedia.kodemirror.lezer.common/Tree? // com.monkopedia.kodemirror.lezer.common/TreeCursor.tree.<get-tree>|<get-tree>(){}[0]
+
+    final var from // com.monkopedia.kodemirror.lezer.common/TreeCursor.from|{}from[0]
+        final fun <get-from>(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/TreeCursor.from.<get-from>|<get-from>(){}[0]
+    final var to // com.monkopedia.kodemirror.lezer.common/TreeCursor.to|{}to[0]
+        final fun <get-to>(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/TreeCursor.to.<get-to>|<get-to>(){}[0]
+    final var type // com.monkopedia.kodemirror.lezer.common/TreeCursor.type|{}type[0]
+        final fun <get-type>(): com.monkopedia.kodemirror.lezer.common/NodeType // com.monkopedia.kodemirror.lezer.common/TreeCursor.type.<get-type>|<get-type>(){}[0]
+
+    final fun childAfter(kotlin/Int): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/TreeCursor.childAfter|childAfter(kotlin.Int){}[0]
+    final fun childBefore(kotlin/Int): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/TreeCursor.childBefore|childBefore(kotlin.Int){}[0]
+    final fun enter(kotlin/Int, kotlin/Int, kotlin/Int = ...): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/TreeCursor.enter|enter(kotlin.Int;kotlin.Int;kotlin.Int){}[0]
+    final fun firstChild(): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/TreeCursor.firstChild|firstChild(){}[0]
+    final fun lastChild(): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/TreeCursor.lastChild|lastChild(){}[0]
+    final fun matchContext(kotlin.collections/List<kotlin/String>): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/TreeCursor.matchContext|matchContext(kotlin.collections.List<kotlin.String>){}[0]
+    final fun moveTo(kotlin/Int, kotlin/Int = ...): com.monkopedia.kodemirror.lezer.common/TreeCursor // com.monkopedia.kodemirror.lezer.common/TreeCursor.moveTo|moveTo(kotlin.Int;kotlin.Int){}[0]
+    final fun next(kotlin/Boolean = ...): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/TreeCursor.next|next(kotlin.Boolean){}[0]
+    final fun nextSibling(): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/TreeCursor.nextSibling|nextSibling(){}[0]
+    final fun parent(): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/TreeCursor.parent|parent(){}[0]
+    final fun prev(kotlin/Boolean = ...): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/TreeCursor.prev|prev(kotlin.Boolean){}[0]
+    final fun prevSibling(): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/TreeCursor.prevSibling|prevSibling(){}[0]
+}
+
+final class com.monkopedia.kodemirror.lezer.common/TreeFragment { // com.monkopedia.kodemirror.lezer.common/TreeFragment|null[0]
+    constructor <init>(kotlin/Int, kotlin/Int, com.monkopedia.kodemirror.lezer.common/Tree, kotlin/Int, kotlin/Boolean = ..., kotlin/Boolean = ...) // com.monkopedia.kodemirror.lezer.common/TreeFragment.<init>|<init>(kotlin.Int;kotlin.Int;com.monkopedia.kodemirror.lezer.common.Tree;kotlin.Int;kotlin.Boolean;kotlin.Boolean){}[0]
+
+    final val from // com.monkopedia.kodemirror.lezer.common/TreeFragment.from|{}from[0]
+        final fun <get-from>(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/TreeFragment.from.<get-from>|<get-from>(){}[0]
+    final val offset // com.monkopedia.kodemirror.lezer.common/TreeFragment.offset|{}offset[0]
+        final fun <get-offset>(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/TreeFragment.offset.<get-offset>|<get-offset>(){}[0]
+    final val openEnd // com.monkopedia.kodemirror.lezer.common/TreeFragment.openEnd|{}openEnd[0]
+        final fun <get-openEnd>(): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/TreeFragment.openEnd.<get-openEnd>|<get-openEnd>(){}[0]
+    final val openStart // com.monkopedia.kodemirror.lezer.common/TreeFragment.openStart|{}openStart[0]
+        final fun <get-openStart>(): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/TreeFragment.openStart.<get-openStart>|<get-openStart>(){}[0]
+    final val to // com.monkopedia.kodemirror.lezer.common/TreeFragment.to|{}to[0]
+        final fun <get-to>(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/TreeFragment.to.<get-to>|<get-to>(){}[0]
+    final val tree // com.monkopedia.kodemirror.lezer.common/TreeFragment.tree|{}tree[0]
+        final fun <get-tree>(): com.monkopedia.kodemirror.lezer.common/Tree // com.monkopedia.kodemirror.lezer.common/TreeFragment.tree.<get-tree>|<get-tree>(){}[0]
+
+    final object Companion { // com.monkopedia.kodemirror.lezer.common/TreeFragment.Companion|null[0]
+        final fun addTree(com.monkopedia.kodemirror.lezer.common/Tree, kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/TreeFragment> = ..., kotlin/Boolean = ...): kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/TreeFragment> // com.monkopedia.kodemirror.lezer.common/TreeFragment.Companion.addTree|addTree(com.monkopedia.kodemirror.lezer.common.Tree;kotlin.collections.List<com.monkopedia.kodemirror.lezer.common.TreeFragment>;kotlin.Boolean){}[0]
+        final fun applyChanges(kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/TreeFragment>, kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/ChangedRange>, kotlin/Int = ...): kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/TreeFragment> // com.monkopedia.kodemirror.lezer.common/TreeFragment.Companion.applyChanges|applyChanges(kotlin.collections.List<com.monkopedia.kodemirror.lezer.common.TreeFragment>;kotlin.collections.List<com.monkopedia.kodemirror.lezer.common.ChangedRange>;kotlin.Int){}[0]
+    }
+}
+
+final object com.monkopedia.kodemirror.lezer.common/IterMode { // com.monkopedia.kodemirror.lezer.common/IterMode|null[0]
+    final const val ENTER_BRACKETED // com.monkopedia.kodemirror.lezer.common/IterMode.ENTER_BRACKETED|{}ENTER_BRACKETED[0]
+        final fun <get-ENTER_BRACKETED>(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/IterMode.ENTER_BRACKETED.<get-ENTER_BRACKETED>|<get-ENTER_BRACKETED>(){}[0]
+    final const val EXCLUDE_BUFFERS // com.monkopedia.kodemirror.lezer.common/IterMode.EXCLUDE_BUFFERS|{}EXCLUDE_BUFFERS[0]
+        final fun <get-EXCLUDE_BUFFERS>(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/IterMode.EXCLUDE_BUFFERS.<get-EXCLUDE_BUFFERS>|<get-EXCLUDE_BUFFERS>(){}[0]
+    final const val IGNORE_MOUNTS // com.monkopedia.kodemirror.lezer.common/IterMode.IGNORE_MOUNTS|{}IGNORE_MOUNTS[0]
+        final fun <get-IGNORE_MOUNTS>(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/IterMode.IGNORE_MOUNTS.<get-IGNORE_MOUNTS>|<get-IGNORE_MOUNTS>(){}[0]
+    final const val IGNORE_OVERLAYS // com.monkopedia.kodemirror.lezer.common/IterMode.IGNORE_OVERLAYS|{}IGNORE_OVERLAYS[0]
+        final fun <get-IGNORE_OVERLAYS>(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/IterMode.IGNORE_OVERLAYS.<get-IGNORE_OVERLAYS>|<get-IGNORE_OVERLAYS>(){}[0]
+    final const val INCLUDE_ANONYMOUS // com.monkopedia.kodemirror.lezer.common/IterMode.INCLUDE_ANONYMOUS|{}INCLUDE_ANONYMOUS[0]
+        final fun <get-INCLUDE_ANONYMOUS>(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/IterMode.INCLUDE_ANONYMOUS.<get-INCLUDE_ANONYMOUS>|<get-INCLUDE_ANONYMOUS>(){}[0]
+}
+
+final const val com.monkopedia.kodemirror.lezer.common/DEFAULT_BUFFER_LENGTH // com.monkopedia.kodemirror.lezer.common/DEFAULT_BUFFER_LENGTH|{}DEFAULT_BUFFER_LENGTH[0]
+    final fun <get-DEFAULT_BUFFER_LENGTH>(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/DEFAULT_BUFFER_LENGTH.<get-DEFAULT_BUFFER_LENGTH>|<get-DEFAULT_BUFFER_LENGTH>(){}[0]
+
+final fun com.monkopedia.kodemirror.lezer.common/parseMixed(kotlin/Function2<com.monkopedia.kodemirror.lezer.common/SyntaxNodeRef, com.monkopedia.kodemirror.lezer.common/Input, com.monkopedia.kodemirror.lezer.common/NestedParse?>): kotlin/Function4<com.monkopedia.kodemirror.lezer.common/PartialParse, com.monkopedia.kodemirror.lezer.common/Input, kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/TreeFragment>, kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/TextRange>, com.monkopedia.kodemirror.lezer.common/PartialParse> // com.monkopedia.kodemirror.lezer.common/parseMixed|parseMixed(kotlin.Function2<com.monkopedia.kodemirror.lezer.common.SyntaxNodeRef,com.monkopedia.kodemirror.lezer.common.Input,com.monkopedia.kodemirror.lezer.common.NestedParse?>){}[0]

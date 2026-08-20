@@ -1,0 +1,12 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:basic-setup>
+final val com.monkopedia.kodemirror.basicsetup/basicSetup // com.monkopedia.kodemirror.basicsetup/basicSetup|{}basicSetup[0]
+    final fun <get-basicSetup>(): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.basicsetup/basicSetup.<get-basicSetup>|<get-basicSetup>(){}[0]
+final val com.monkopedia.kodemirror.basicsetup/minimalSetup // com.monkopedia.kodemirror.basicsetup/minimalSetup|{}minimalSetup[0]
+    final fun <get-minimalSetup>(): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.basicsetup/minimalSetup.<get-minimalSetup>|<get-minimalSetup>(){}[0]

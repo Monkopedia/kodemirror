@@ -1,0 +1,145 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:lint>
+final enum class com.monkopedia.kodemirror.lint/Severity : kotlin/Enum<com.monkopedia.kodemirror.lint/Severity> { // com.monkopedia.kodemirror.lint/Severity|null[0]
+    enum entry ERROR // com.monkopedia.kodemirror.lint/Severity.ERROR|null[0]
+    enum entry HINT // com.monkopedia.kodemirror.lint/Severity.HINT|null[0]
+    enum entry INFO // com.monkopedia.kodemirror.lint/Severity.INFO|null[0]
+    enum entry WARNING // com.monkopedia.kodemirror.lint/Severity.WARNING|null[0]
+
+    final val entries // com.monkopedia.kodemirror.lint/Severity.entries|#static{}entries[0]
+        final fun <get-entries>(): kotlin.enums/EnumEntries<com.monkopedia.kodemirror.lint/Severity> // com.monkopedia.kodemirror.lint/Severity.entries.<get-entries>|<get-entries>#static(){}[0]
+
+    final fun valueOf(kotlin/String): com.monkopedia.kodemirror.lint/Severity // com.monkopedia.kodemirror.lint/Severity.valueOf|valueOf#static(kotlin.String){}[0]
+    final fun values(): kotlin/Array<com.monkopedia.kodemirror.lint/Severity> // com.monkopedia.kodemirror.lint/Severity.values|values#static(){}[0]
+}
+
+final class com.monkopedia.kodemirror.lint/Action { // com.monkopedia.kodemirror.lint/Action|null[0]
+    constructor <init>(kotlin/String, kotlin/Function1<com.monkopedia.kodemirror.view/EditorSession, kotlin/Unit>) // com.monkopedia.kodemirror.lint/Action.<init>|<init>(kotlin.String;kotlin.Function1<com.monkopedia.kodemirror.view.EditorSession,kotlin.Unit>){}[0]
+
+    final val apply // com.monkopedia.kodemirror.lint/Action.apply|{}apply[0]
+        final fun <get-apply>(): kotlin/Function1<com.monkopedia.kodemirror.view/EditorSession, kotlin/Unit> // com.monkopedia.kodemirror.lint/Action.apply.<get-apply>|<get-apply>(){}[0]
+    final val name // com.monkopedia.kodemirror.lint/Action.name|{}name[0]
+        final fun <get-name>(): kotlin/String // com.monkopedia.kodemirror.lint/Action.name.<get-name>|<get-name>(){}[0]
+
+    final fun component1(): kotlin/String // com.monkopedia.kodemirror.lint/Action.component1|component1(){}[0]
+    final fun component2(): kotlin/Function1<com.monkopedia.kodemirror.view/EditorSession, kotlin/Unit> // com.monkopedia.kodemirror.lint/Action.component2|component2(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/Function1<com.monkopedia.kodemirror.view/EditorSession, kotlin/Unit> = ...): com.monkopedia.kodemirror.lint/Action // com.monkopedia.kodemirror.lint/Action.copy|copy(kotlin.String;kotlin.Function1<com.monkopedia.kodemirror.view.EditorSession,kotlin.Unit>){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.lint/Action.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.lint/Action.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.lint/Action.toString|toString(){}[0]
+}
+
+final class com.monkopedia.kodemirror.lint/Diagnostic { // com.monkopedia.kodemirror.lint/Diagnostic|null[0]
+    constructor <init>(com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.lint/Severity, kotlin/String, kotlin/String? = ..., kotlin.collections/List<com.monkopedia.kodemirror.lint/Action> = ...) // com.monkopedia.kodemirror.lint/Diagnostic.<init>|<init>(com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.lint.Severity;kotlin.String;kotlin.String?;kotlin.collections.List<com.monkopedia.kodemirror.lint.Action>){}[0]
+
+    final val actions // com.monkopedia.kodemirror.lint/Diagnostic.actions|{}actions[0]
+        final fun <get-actions>(): kotlin.collections/List<com.monkopedia.kodemirror.lint/Action> // com.monkopedia.kodemirror.lint/Diagnostic.actions.<get-actions>|<get-actions>(){}[0]
+    final val from // com.monkopedia.kodemirror.lint/Diagnostic.from|{}from[0]
+        final fun <get-from>(): com.monkopedia.kodemirror.state/DocPos // com.monkopedia.kodemirror.lint/Diagnostic.from.<get-from>|<get-from>(){}[0]
+    final val message // com.monkopedia.kodemirror.lint/Diagnostic.message|{}message[0]
+        final fun <get-message>(): kotlin/String // com.monkopedia.kodemirror.lint/Diagnostic.message.<get-message>|<get-message>(){}[0]
+    final val severity // com.monkopedia.kodemirror.lint/Diagnostic.severity|{}severity[0]
+        final fun <get-severity>(): com.monkopedia.kodemirror.lint/Severity // com.monkopedia.kodemirror.lint/Diagnostic.severity.<get-severity>|<get-severity>(){}[0]
+    final val source // com.monkopedia.kodemirror.lint/Diagnostic.source|{}source[0]
+        final fun <get-source>(): kotlin/String? // com.monkopedia.kodemirror.lint/Diagnostic.source.<get-source>|<get-source>(){}[0]
+    final val to // com.monkopedia.kodemirror.lint/Diagnostic.to|{}to[0]
+        final fun <get-to>(): com.monkopedia.kodemirror.state/DocPos // com.monkopedia.kodemirror.lint/Diagnostic.to.<get-to>|<get-to>(){}[0]
+
+    final fun component1(): com.monkopedia.kodemirror.state/DocPos // com.monkopedia.kodemirror.lint/Diagnostic.component1|component1(){}[0]
+    final fun component2(): com.monkopedia.kodemirror.state/DocPos // com.monkopedia.kodemirror.lint/Diagnostic.component2|component2(){}[0]
+    final fun component3(): com.monkopedia.kodemirror.lint/Severity // com.monkopedia.kodemirror.lint/Diagnostic.component3|component3(){}[0]
+    final fun component4(): kotlin/String // com.monkopedia.kodemirror.lint/Diagnostic.component4|component4(){}[0]
+    final fun component5(): kotlin/String? // com.monkopedia.kodemirror.lint/Diagnostic.component5|component5(){}[0]
+    final fun component6(): kotlin.collections/List<com.monkopedia.kodemirror.lint/Action> // com.monkopedia.kodemirror.lint/Diagnostic.component6|component6(){}[0]
+    final fun copy(com.monkopedia.kodemirror.state/DocPos = ..., com.monkopedia.kodemirror.state/DocPos = ..., com.monkopedia.kodemirror.lint/Severity = ..., kotlin/String = ..., kotlin/String? = ..., kotlin.collections/List<com.monkopedia.kodemirror.lint/Action> = ...): com.monkopedia.kodemirror.lint/Diagnostic // com.monkopedia.kodemirror.lint/Diagnostic.copy|copy(com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.lint.Severity;kotlin.String;kotlin.String?;kotlin.collections.List<com.monkopedia.kodemirror.lint.Action>){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.lint/Diagnostic.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.lint/Diagnostic.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.lint/Diagnostic.toString|toString(){}[0]
+}
+
+final class com.monkopedia.kodemirror.lint/LintConfig { // com.monkopedia.kodemirror.lint/LintConfig|null[0]
+    constructor <init>(kotlin/Long = ..., kotlin/Function1<kotlin.collections/List<com.monkopedia.kodemirror.lint/Diagnostic>, kotlin.collections/List<com.monkopedia.kodemirror.lint/Diagnostic>>? = ..., kotlin/Function1<kotlin.collections/List<com.monkopedia.kodemirror.lint/Diagnostic>, kotlin.collections/List<com.monkopedia.kodemirror.lint/Diagnostic>>? = ..., kotlin/Boolean = ...) // com.monkopedia.kodemirror.lint/LintConfig.<init>|<init>(kotlin.Long;kotlin.Function1<kotlin.collections.List<com.monkopedia.kodemirror.lint.Diagnostic>,kotlin.collections.List<com.monkopedia.kodemirror.lint.Diagnostic>>?;kotlin.Function1<kotlin.collections.List<com.monkopedia.kodemirror.lint.Diagnostic>,kotlin.collections.List<com.monkopedia.kodemirror.lint.Diagnostic>>?;kotlin.Boolean){}[0]
+
+    final val autoPanel // com.monkopedia.kodemirror.lint/LintConfig.autoPanel|{}autoPanel[0]
+        final fun <get-autoPanel>(): kotlin/Boolean // com.monkopedia.kodemirror.lint/LintConfig.autoPanel.<get-autoPanel>|<get-autoPanel>(){}[0]
+    final val delay // com.monkopedia.kodemirror.lint/LintConfig.delay|{}delay[0]
+        final fun <get-delay>(): kotlin/Long // com.monkopedia.kodemirror.lint/LintConfig.delay.<get-delay>|<get-delay>(){}[0]
+    final val markerFilter // com.monkopedia.kodemirror.lint/LintConfig.markerFilter|{}markerFilter[0]
+        final fun <get-markerFilter>(): kotlin/Function1<kotlin.collections/List<com.monkopedia.kodemirror.lint/Diagnostic>, kotlin.collections/List<com.monkopedia.kodemirror.lint/Diagnostic>>? // com.monkopedia.kodemirror.lint/LintConfig.markerFilter.<get-markerFilter>|<get-markerFilter>(){}[0]
+    final val tooltipFilter // com.monkopedia.kodemirror.lint/LintConfig.tooltipFilter|{}tooltipFilter[0]
+        final fun <get-tooltipFilter>(): kotlin/Function1<kotlin.collections/List<com.monkopedia.kodemirror.lint/Diagnostic>, kotlin.collections/List<com.monkopedia.kodemirror.lint/Diagnostic>>? // com.monkopedia.kodemirror.lint/LintConfig.tooltipFilter.<get-tooltipFilter>|<get-tooltipFilter>(){}[0]
+
+    final fun component1(): kotlin/Long // com.monkopedia.kodemirror.lint/LintConfig.component1|component1(){}[0]
+    final fun component2(): kotlin/Function1<kotlin.collections/List<com.monkopedia.kodemirror.lint/Diagnostic>, kotlin.collections/List<com.monkopedia.kodemirror.lint/Diagnostic>>? // com.monkopedia.kodemirror.lint/LintConfig.component2|component2(){}[0]
+    final fun component3(): kotlin/Function1<kotlin.collections/List<com.monkopedia.kodemirror.lint/Diagnostic>, kotlin.collections/List<com.monkopedia.kodemirror.lint/Diagnostic>>? // com.monkopedia.kodemirror.lint/LintConfig.component3|component3(){}[0]
+    final fun component4(): kotlin/Boolean // com.monkopedia.kodemirror.lint/LintConfig.component4|component4(){}[0]
+    final fun copy(kotlin/Long = ..., kotlin/Function1<kotlin.collections/List<com.monkopedia.kodemirror.lint/Diagnostic>, kotlin.collections/List<com.monkopedia.kodemirror.lint/Diagnostic>>? = ..., kotlin/Function1<kotlin.collections/List<com.monkopedia.kodemirror.lint/Diagnostic>, kotlin.collections/List<com.monkopedia.kodemirror.lint/Diagnostic>>? = ..., kotlin/Boolean = ...): com.monkopedia.kodemirror.lint/LintConfig // com.monkopedia.kodemirror.lint/LintConfig.copy|copy(kotlin.Long;kotlin.Function1<kotlin.collections.List<com.monkopedia.kodemirror.lint.Diagnostic>,kotlin.collections.List<com.monkopedia.kodemirror.lint.Diagnostic>>?;kotlin.Function1<kotlin.collections.List<com.monkopedia.kodemirror.lint.Diagnostic>,kotlin.collections.List<com.monkopedia.kodemirror.lint.Diagnostic>>?;kotlin.Boolean){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.lint/LintConfig.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.lint/LintConfig.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.lint/LintConfig.toString|toString(){}[0]
+}
+
+final class com.monkopedia.kodemirror.lint/LintGutterConfig { // com.monkopedia.kodemirror.lint/LintGutterConfig|null[0]
+    constructor <init>(kotlin/Long = ..., kotlin/Function1<kotlin.collections/List<com.monkopedia.kodemirror.lint/Diagnostic>, kotlin.collections/List<com.monkopedia.kodemirror.lint/Diagnostic>>? = ..., kotlin/Function1<kotlin.collections/List<com.monkopedia.kodemirror.lint/Diagnostic>, kotlin.collections/List<com.monkopedia.kodemirror.lint/Diagnostic>>? = ...) // com.monkopedia.kodemirror.lint/LintGutterConfig.<init>|<init>(kotlin.Long;kotlin.Function1<kotlin.collections.List<com.monkopedia.kodemirror.lint.Diagnostic>,kotlin.collections.List<com.monkopedia.kodemirror.lint.Diagnostic>>?;kotlin.Function1<kotlin.collections.List<com.monkopedia.kodemirror.lint.Diagnostic>,kotlin.collections.List<com.monkopedia.kodemirror.lint.Diagnostic>>?){}[0]
+
+    final val hoverTime // com.monkopedia.kodemirror.lint/LintGutterConfig.hoverTime|{}hoverTime[0]
+        final fun <get-hoverTime>(): kotlin/Long // com.monkopedia.kodemirror.lint/LintGutterConfig.hoverTime.<get-hoverTime>|<get-hoverTime>(){}[0]
+    final val markerFilter // com.monkopedia.kodemirror.lint/LintGutterConfig.markerFilter|{}markerFilter[0]
+        final fun <get-markerFilter>(): kotlin/Function1<kotlin.collections/List<com.monkopedia.kodemirror.lint/Diagnostic>, kotlin.collections/List<com.monkopedia.kodemirror.lint/Diagnostic>>? // com.monkopedia.kodemirror.lint/LintGutterConfig.markerFilter.<get-markerFilter>|<get-markerFilter>(){}[0]
+    final val tooltipFilter // com.monkopedia.kodemirror.lint/LintGutterConfig.tooltipFilter|{}tooltipFilter[0]
+        final fun <get-tooltipFilter>(): kotlin/Function1<kotlin.collections/List<com.monkopedia.kodemirror.lint/Diagnostic>, kotlin.collections/List<com.monkopedia.kodemirror.lint/Diagnostic>>? // com.monkopedia.kodemirror.lint/LintGutterConfig.tooltipFilter.<get-tooltipFilter>|<get-tooltipFilter>(){}[0]
+
+    final fun component1(): kotlin/Long // com.monkopedia.kodemirror.lint/LintGutterConfig.component1|component1(){}[0]
+    final fun component2(): kotlin/Function1<kotlin.collections/List<com.monkopedia.kodemirror.lint/Diagnostic>, kotlin.collections/List<com.monkopedia.kodemirror.lint/Diagnostic>>? // com.monkopedia.kodemirror.lint/LintGutterConfig.component2|component2(){}[0]
+    final fun component3(): kotlin/Function1<kotlin.collections/List<com.monkopedia.kodemirror.lint/Diagnostic>, kotlin.collections/List<com.monkopedia.kodemirror.lint/Diagnostic>>? // com.monkopedia.kodemirror.lint/LintGutterConfig.component3|component3(){}[0]
+    final fun copy(kotlin/Long = ..., kotlin/Function1<kotlin.collections/List<com.monkopedia.kodemirror.lint/Diagnostic>, kotlin.collections/List<com.monkopedia.kodemirror.lint/Diagnostic>>? = ..., kotlin/Function1<kotlin.collections/List<com.monkopedia.kodemirror.lint/Diagnostic>, kotlin.collections/List<com.monkopedia.kodemirror.lint/Diagnostic>>? = ...): com.monkopedia.kodemirror.lint/LintGutterConfig // com.monkopedia.kodemirror.lint/LintGutterConfig.copy|copy(kotlin.Long;kotlin.Function1<kotlin.collections.List<com.monkopedia.kodemirror.lint.Diagnostic>,kotlin.collections.List<com.monkopedia.kodemirror.lint.Diagnostic>>?;kotlin.Function1<kotlin.collections.List<com.monkopedia.kodemirror.lint.Diagnostic>,kotlin.collections.List<com.monkopedia.kodemirror.lint.Diagnostic>>?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.lint/LintGutterConfig.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.lint/LintGutterConfig.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.lint/LintGutterConfig.toString|toString(){}[0]
+}
+
+final val com.monkopedia.kodemirror.lint/closeLintPanel // com.monkopedia.kodemirror.lint/closeLintPanel|{}closeLintPanel[0]
+    final fun <get-closeLintPanel>(): kotlin/Function1<com.monkopedia.kodemirror.view/EditorSession, kotlin/Boolean> // com.monkopedia.kodemirror.lint/closeLintPanel.<get-closeLintPanel>|<get-closeLintPanel>(){}[0]
+final val com.monkopedia.kodemirror.lint/com_monkopedia_kodemirror_lint_Action$stableprop // com.monkopedia.kodemirror.lint/com_monkopedia_kodemirror_lint_Action$stableprop|#static{}com_monkopedia_kodemirror_lint_Action$stableprop[0]
+final val com.monkopedia.kodemirror.lint/com_monkopedia_kodemirror_lint_Diagnostic$stableprop // com.monkopedia.kodemirror.lint/com_monkopedia_kodemirror_lint_Diagnostic$stableprop|#static{}com_monkopedia_kodemirror_lint_Diagnostic$stableprop[0]
+final val com.monkopedia.kodemirror.lint/com_monkopedia_kodemirror_lint_LintConfig$stableprop // com.monkopedia.kodemirror.lint/com_monkopedia_kodemirror_lint_LintConfig$stableprop|#static{}com_monkopedia_kodemirror_lint_LintConfig$stableprop[0]
+final val com.monkopedia.kodemirror.lint/com_monkopedia_kodemirror_lint_LintGutterConfig$stableprop // com.monkopedia.kodemirror.lint/com_monkopedia_kodemirror_lint_LintGutterConfig$stableprop|#static{}com_monkopedia_kodemirror_lint_LintGutterConfig$stableprop[0]
+final val com.monkopedia.kodemirror.lint/lintErrorColor // com.monkopedia.kodemirror.lint/lintErrorColor|{}lintErrorColor[0]
+    final fun <get-lintErrorColor>(): com.monkopedia.kodemirror.view/ThemeKey<androidx.compose.ui.graphics/Color> // com.monkopedia.kodemirror.lint/lintErrorColor.<get-lintErrorColor>|<get-lintErrorColor>(){}[0]
+final val com.monkopedia.kodemirror.lint/lintHintColor // com.monkopedia.kodemirror.lint/lintHintColor|{}lintHintColor[0]
+    final fun <get-lintHintColor>(): com.monkopedia.kodemirror.view/ThemeKey<androidx.compose.ui.graphics/Color> // com.monkopedia.kodemirror.lint/lintHintColor.<get-lintHintColor>|<get-lintHintColor>(){}[0]
+final val com.monkopedia.kodemirror.lint/lintInfoColor // com.monkopedia.kodemirror.lint/lintInfoColor|{}lintInfoColor[0]
+    final fun <get-lintInfoColor>(): com.monkopedia.kodemirror.view/ThemeKey<androidx.compose.ui.graphics/Color> // com.monkopedia.kodemirror.lint/lintInfoColor.<get-lintInfoColor>|<get-lintInfoColor>(){}[0]
+final val com.monkopedia.kodemirror.lint/lintKeymap // com.monkopedia.kodemirror.lint/lintKeymap|{}lintKeymap[0]
+    final fun <get-lintKeymap>(): kotlin.collections/List<com.monkopedia.kodemirror.view/KeyBinding> // com.monkopedia.kodemirror.lint/lintKeymap.<get-lintKeymap>|<get-lintKeymap>(){}[0]
+final val com.monkopedia.kodemirror.lint/lintSourceColor // com.monkopedia.kodemirror.lint/lintSourceColor|{}lintSourceColor[0]
+    final fun <get-lintSourceColor>(): com.monkopedia.kodemirror.view/ThemeKey<androidx.compose.ui.graphics/Color> // com.monkopedia.kodemirror.lint/lintSourceColor.<get-lintSourceColor>|<get-lintSourceColor>(){}[0]
+final val com.monkopedia.kodemirror.lint/lintWarningColor // com.monkopedia.kodemirror.lint/lintWarningColor|{}lintWarningColor[0]
+    final fun <get-lintWarningColor>(): com.monkopedia.kodemirror.view/ThemeKey<androidx.compose.ui.graphics/Color> // com.monkopedia.kodemirror.lint/lintWarningColor.<get-lintWarningColor>|<get-lintWarningColor>(){}[0]
+final val com.monkopedia.kodemirror.lint/nextDiagnostic // com.monkopedia.kodemirror.lint/nextDiagnostic|{}nextDiagnostic[0]
+    final fun <get-nextDiagnostic>(): kotlin/Function1<com.monkopedia.kodemirror.view/EditorSession, kotlin/Boolean> // com.monkopedia.kodemirror.lint/nextDiagnostic.<get-nextDiagnostic>|<get-nextDiagnostic>(){}[0]
+final val com.monkopedia.kodemirror.lint/openLintPanel // com.monkopedia.kodemirror.lint/openLintPanel|{}openLintPanel[0]
+    final fun <get-openLintPanel>(): kotlin/Function1<com.monkopedia.kodemirror.view/EditorSession, kotlin/Boolean> // com.monkopedia.kodemirror.lint/openLintPanel.<get-openLintPanel>|<get-openLintPanel>(){}[0]
+final val com.monkopedia.kodemirror.lint/previousDiagnostic // com.monkopedia.kodemirror.lint/previousDiagnostic|{}previousDiagnostic[0]
+    final fun <get-previousDiagnostic>(): kotlin/Function1<com.monkopedia.kodemirror.view/EditorSession, kotlin/Boolean> // com.monkopedia.kodemirror.lint/previousDiagnostic.<get-previousDiagnostic>|<get-previousDiagnostic>(){}[0]
+final val com.monkopedia.kodemirror.lint/setDiagnosticsEffect // com.monkopedia.kodemirror.lint/setDiagnosticsEffect|{}setDiagnosticsEffect[0]
+    final fun <get-setDiagnosticsEffect>(): com.monkopedia.kodemirror.state/StateEffectType<kotlin.collections/List<com.monkopedia.kodemirror.lint/Diagnostic>> // com.monkopedia.kodemirror.lint/setDiagnosticsEffect.<get-setDiagnosticsEffect>|<get-setDiagnosticsEffect>(){}[0]
+
+final fun com.monkopedia.kodemirror.lint/com_monkopedia_kodemirror_lint_Action$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.lint/com_monkopedia_kodemirror_lint_Action$stableprop_getter|com_monkopedia_kodemirror_lint_Action$stableprop_getter(){}[0]
+final fun com.monkopedia.kodemirror.lint/com_monkopedia_kodemirror_lint_Diagnostic$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.lint/com_monkopedia_kodemirror_lint_Diagnostic$stableprop_getter|com_monkopedia_kodemirror_lint_Diagnostic$stableprop_getter(){}[0]
+final fun com.monkopedia.kodemirror.lint/com_monkopedia_kodemirror_lint_LintConfig$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.lint/com_monkopedia_kodemirror_lint_LintConfig$stableprop_getter|com_monkopedia_kodemirror_lint_LintConfig$stableprop_getter(){}[0]
+final fun com.monkopedia.kodemirror.lint/com_monkopedia_kodemirror_lint_LintGutterConfig$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.lint/com_monkopedia_kodemirror_lint_LintGutterConfig$stableprop_getter|com_monkopedia_kodemirror_lint_LintGutterConfig$stableprop_getter(){}[0]
+final fun com.monkopedia.kodemirror.lint/diagnosticCount(com.monkopedia.kodemirror.state/EditorState): kotlin/Int // com.monkopedia.kodemirror.lint/diagnosticCount|diagnosticCount(com.monkopedia.kodemirror.state.EditorState){}[0]
+final fun com.monkopedia.kodemirror.lint/forEachDiagnostic(com.monkopedia.kodemirror.state/EditorState, kotlin/Function1<com.monkopedia.kodemirror.lint/Diagnostic, kotlin/Unit>) // com.monkopedia.kodemirror.lint/forEachDiagnostic|forEachDiagnostic(com.monkopedia.kodemirror.state.EditorState;kotlin.Function1<com.monkopedia.kodemirror.lint.Diagnostic,kotlin.Unit>){}[0]
+final fun com.monkopedia.kodemirror.lint/forceLinting(com.monkopedia.kodemirror.view/EditorSession) // com.monkopedia.kodemirror.lint/forceLinting|forceLinting(com.monkopedia.kodemirror.view.EditorSession){}[0]
+final fun com.monkopedia.kodemirror.lint/lintDisplay(com.monkopedia.kodemirror.lint/LintConfig = ...): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.lint/lintDisplay|lintDisplay(com.monkopedia.kodemirror.lint.LintConfig){}[0]
+final fun com.monkopedia.kodemirror.lint/lintGutter(com.monkopedia.kodemirror.lint/LintGutterConfig = ...): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.lint/lintGutter|lintGutter(com.monkopedia.kodemirror.lint.LintGutterConfig){}[0]
+final fun com.monkopedia.kodemirror.lint/linter(kotlin.coroutines/SuspendFunction1<com.monkopedia.kodemirror.view/EditorSession, kotlin.collections/List<com.monkopedia.kodemirror.lint/Diagnostic>>, com.monkopedia.kodemirror.lint/LintConfig = ...): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.lint/linter|linter(kotlin.coroutines.SuspendFunction1<com.monkopedia.kodemirror.view.EditorSession,kotlin.collections.List<com.monkopedia.kodemirror.lint.Diagnostic>>;com.monkopedia.kodemirror.lint.LintConfig){}[0]
+final fun com.monkopedia.kodemirror.lint/linter(kotlin/Function1<com.monkopedia.kodemirror.view/EditorSession, kotlin.collections/List<com.monkopedia.kodemirror.lint/Diagnostic>>, com.monkopedia.kodemirror.lint/LintConfig = ...): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.lint/linter|linter(kotlin.Function1<com.monkopedia.kodemirror.view.EditorSession,kotlin.collections.List<com.monkopedia.kodemirror.lint.Diagnostic>>;com.monkopedia.kodemirror.lint.LintConfig){}[0]
+final fun com.monkopedia.kodemirror.lint/setDiagnostics(com.monkopedia.kodemirror.view/EditorSession, kotlin.collections/List<com.monkopedia.kodemirror.lint/Diagnostic>) // com.monkopedia.kodemirror.lint/setDiagnostics|setDiagnostics(com.monkopedia.kodemirror.view.EditorSession;kotlin.collections.List<com.monkopedia.kodemirror.lint.Diagnostic>){}[0]

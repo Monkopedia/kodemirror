@@ -1,0 +1,14 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:theme-espresso>
+final val com.monkopedia.kodemirror.themeespresso/espresso // com.monkopedia.kodemirror.themeespresso/espresso|{}espresso[0]
+    final fun <get-espresso>(): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.themeespresso/espresso.<get-espresso>|<get-espresso>(){}[0]
+final val com.monkopedia.kodemirror.themeespresso/espressoHighlightStyle // com.monkopedia.kodemirror.themeespresso/espressoHighlightStyle|{}espressoHighlightStyle[0]
+    final fun <get-espressoHighlightStyle>(): com.monkopedia.kodemirror.language/HighlightStyle // com.monkopedia.kodemirror.themeespresso/espressoHighlightStyle.<get-espressoHighlightStyle>|<get-espressoHighlightStyle>(){}[0]
+final val com.monkopedia.kodemirror.themeespresso/espressoTheme // com.monkopedia.kodemirror.themeespresso/espressoTheme|{}espressoTheme[0]
+    final fun <get-espressoTheme>(): com.monkopedia.kodemirror.view/EditorTheme // com.monkopedia.kodemirror.themeespresso/espressoTheme.<get-espressoTheme>|<get-espressoTheme>(){}[0]

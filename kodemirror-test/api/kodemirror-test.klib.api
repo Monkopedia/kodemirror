@@ -1,0 +1,15 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:kodemirror-test>
+final fun (com.monkopedia.kodemirror.view/EditorSession).com.monkopedia.kodemirror.test/assertCursorAt(com.monkopedia.kodemirror.state/DocPos) // com.monkopedia.kodemirror.test/assertCursorAt|assertCursorAt@com.monkopedia.kodemirror.view.EditorSession(com.monkopedia.kodemirror.state.DocPos){}[0]
+final fun (com.monkopedia.kodemirror.view/EditorSession).com.monkopedia.kodemirror.test/assertDoc(kotlin/String) // com.monkopedia.kodemirror.test/assertDoc|assertDoc@com.monkopedia.kodemirror.view.EditorSession(kotlin.String){}[0]
+final fun (com.monkopedia.kodemirror.view/EditorSession).com.monkopedia.kodemirror.test/assertSelection(com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos) // com.monkopedia.kodemirror.test/assertSelection|assertSelection@com.monkopedia.kodemirror.view.EditorSession(com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos){}[0]
+final fun (com.monkopedia.kodemirror.view/EditorSession).com.monkopedia.kodemirror.test/assertSelectionRange(com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos) // com.monkopedia.kodemirror.test/assertSelectionRange|assertSelectionRange@com.monkopedia.kodemirror.view.EditorSession(com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos){}[0]
+final fun (com.monkopedia.kodemirror.view/EditorSession).com.monkopedia.kodemirror.test/pressKey(kotlin/String) // com.monkopedia.kodemirror.test/pressKey|pressKey@com.monkopedia.kodemirror.view.EditorSession(kotlin.String){}[0]
+final fun (com.monkopedia.kodemirror.view/EditorSession).com.monkopedia.kodemirror.test/typeText(kotlin/String) // com.monkopedia.kodemirror.test/typeText|typeText@com.monkopedia.kodemirror.view.EditorSession(kotlin.String){}[0]
+final fun com.monkopedia.kodemirror.test/testEditorSession(kotlin/String = ..., com.monkopedia.kodemirror.state/DocPos = ..., com.monkopedia.kodemirror.state/Extension? = ...): com.monkopedia.kodemirror.view/EditorSession // com.monkopedia.kodemirror.test/testEditorSession|testEditorSession(kotlin.String;com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.Extension?){}[0]

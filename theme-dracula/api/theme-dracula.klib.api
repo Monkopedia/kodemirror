@@ -1,0 +1,48 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:theme-dracula>
+final object com.monkopedia.kodemirror.themedracula/DraculaColors { // com.monkopedia.kodemirror.themedracula/DraculaColors|null[0]
+    final val background // com.monkopedia.kodemirror.themedracula/DraculaColors.background|{}background[0]
+        final fun <get-background>(): androidx.compose.ui.graphics/Color // com.monkopedia.kodemirror.themedracula/DraculaColors.background.<get-background>|<get-background>(){}[0]
+    final val caret // com.monkopedia.kodemirror.themedracula/DraculaColors.caret|{}caret[0]
+        final fun <get-caret>(): androidx.compose.ui.graphics/Color // com.monkopedia.kodemirror.themedracula/DraculaColors.caret.<get-caret>|<get-caret>(){}[0]
+    final val classPropertyFunctionAttribute // com.monkopedia.kodemirror.themedracula/DraculaColors.classPropertyFunctionAttribute|{}classPropertyFunctionAttribute[0]
+        final fun <get-classPropertyFunctionAttribute>(): androidx.compose.ui.graphics/Color // com.monkopedia.kodemirror.themedracula/DraculaColors.classPropertyFunctionAttribute.<get-classPropertyFunctionAttribute>|<get-classPropertyFunctionAttribute>(){}[0]
+    final val comment // com.monkopedia.kodemirror.themedracula/DraculaColors.comment|{}comment[0]
+        final fun <get-comment>(): androidx.compose.ui.graphics/Color // com.monkopedia.kodemirror.themedracula/DraculaColors.comment.<get-comment>|<get-comment>(){}[0]
+    final val definitionKeywordTypeName // com.monkopedia.kodemirror.themedracula/DraculaColors.definitionKeywordTypeName|{}definitionKeywordTypeName[0]
+        final fun <get-definitionKeywordTypeName>(): androidx.compose.ui.graphics/Color // com.monkopedia.kodemirror.themedracula/DraculaColors.definitionKeywordTypeName.<get-definitionKeywordTypeName>|<get-definitionKeywordTypeName>(){}[0]
+    final val foreground // com.monkopedia.kodemirror.themedracula/DraculaColors.foreground|{}foreground[0]
+        final fun <get-foreground>(): androidx.compose.ui.graphics/Color // com.monkopedia.kodemirror.themedracula/DraculaColors.foreground.<get-foreground>|<get-foreground>(){}[0]
+    final val gutterBackground // com.monkopedia.kodemirror.themedracula/DraculaColors.gutterBackground|{}gutterBackground[0]
+        final fun <get-gutterBackground>(): androidx.compose.ui.graphics/Color // com.monkopedia.kodemirror.themedracula/DraculaColors.gutterBackground.<get-gutterBackground>|<get-gutterBackground>(){}[0]
+    final val gutterForeground // com.monkopedia.kodemirror.themedracula/DraculaColors.gutterForeground|{}gutterForeground[0]
+        final fun <get-gutterForeground>(): androidx.compose.ui.graphics/Color // com.monkopedia.kodemirror.themedracula/DraculaColors.gutterForeground.<get-gutterForeground>|<get-gutterForeground>(){}[0]
+    final val keywordOperator // com.monkopedia.kodemirror.themedracula/DraculaColors.keywordOperator|{}keywordOperator[0]
+        final fun <get-keywordOperator>(): androidx.compose.ui.graphics/Color // com.monkopedia.kodemirror.themedracula/DraculaColors.keywordOperator.<get-keywordOperator>|<get-keywordOperator>(){}[0]
+    final val lineHighlight // com.monkopedia.kodemirror.themedracula/DraculaColors.lineHighlight|{}lineHighlight[0]
+        final fun <get-lineHighlight>(): androidx.compose.ui.graphics/Color // com.monkopedia.kodemirror.themedracula/DraculaColors.lineHighlight.<get-lineHighlight>|<get-lineHighlight>(){}[0]
+    final val numberSelfBoolNull // com.monkopedia.kodemirror.themedracula/DraculaColors.numberSelfBoolNull|{}numberSelfBoolNull[0]
+        final fun <get-numberSelfBoolNull>(): androidx.compose.ui.graphics/Color // com.monkopedia.kodemirror.themedracula/DraculaColors.numberSelfBoolNull.<get-numberSelfBoolNull>|<get-numberSelfBoolNull>(){}[0]
+    final val selection // com.monkopedia.kodemirror.themedracula/DraculaColors.selection|{}selection[0]
+        final fun <get-selection>(): androidx.compose.ui.graphics/Color // com.monkopedia.kodemirror.themedracula/DraculaColors.selection.<get-selection>|<get-selection>(){}[0]
+    final val string // com.monkopedia.kodemirror.themedracula/DraculaColors.string|{}string[0]
+        final fun <get-string>(): androidx.compose.ui.graphics/Color // com.monkopedia.kodemirror.themedracula/DraculaColors.string.<get-string>|<get-string>(){}[0]
+    final val typeDefinition // com.monkopedia.kodemirror.themedracula/DraculaColors.typeDefinition|{}typeDefinition[0]
+        final fun <get-typeDefinition>(): androidx.compose.ui.graphics/Color // com.monkopedia.kodemirror.themedracula/DraculaColors.typeDefinition.<get-typeDefinition>|<get-typeDefinition>(){}[0]
+}
+
+final val com.monkopedia.kodemirror.themedracula/com_monkopedia_kodemirror_themedracula_DraculaColors$stableprop // com.monkopedia.kodemirror.themedracula/com_monkopedia_kodemirror_themedracula_DraculaColors$stableprop|#static{}com_monkopedia_kodemirror_themedracula_DraculaColors$stableprop[0]
+final val com.monkopedia.kodemirror.themedracula/dracula // com.monkopedia.kodemirror.themedracula/dracula|{}dracula[0]
+    final fun <get-dracula>(): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.themedracula/dracula.<get-dracula>|<get-dracula>(){}[0]
+final val com.monkopedia.kodemirror.themedracula/draculaHighlightStyle // com.monkopedia.kodemirror.themedracula/draculaHighlightStyle|{}draculaHighlightStyle[0]
+    final fun <get-draculaHighlightStyle>(): com.monkopedia.kodemirror.language/HighlightStyle // com.monkopedia.kodemirror.themedracula/draculaHighlightStyle.<get-draculaHighlightStyle>|<get-draculaHighlightStyle>(){}[0]
+final val com.monkopedia.kodemirror.themedracula/draculaTheme // com.monkopedia.kodemirror.themedracula/draculaTheme|{}draculaTheme[0]
+    final fun <get-draculaTheme>(): com.monkopedia.kodemirror.view/EditorTheme // com.monkopedia.kodemirror.themedracula/draculaTheme.<get-draculaTheme>|<get-draculaTheme>(){}[0]
+
+final fun com.monkopedia.kodemirror.themedracula/com_monkopedia_kodemirror_themedracula_DraculaColors$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.themedracula/com_monkopedia_kodemirror_themedracula_DraculaColors$stableprop_getter|com_monkopedia_kodemirror_themedracula_DraculaColors$stableprop_getter(){}[0]

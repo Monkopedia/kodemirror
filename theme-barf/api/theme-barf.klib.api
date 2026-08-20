@@ -1,0 +1,14 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:theme-barf>
+final val com.monkopedia.kodemirror.themebarf/barf // com.monkopedia.kodemirror.themebarf/barf|{}barf[0]
+    final fun <get-barf>(): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.themebarf/barf.<get-barf>|<get-barf>(){}[0]
+final val com.monkopedia.kodemirror.themebarf/barfHighlightStyle // com.monkopedia.kodemirror.themebarf/barfHighlightStyle|{}barfHighlightStyle[0]
+    final fun <get-barfHighlightStyle>(): com.monkopedia.kodemirror.language/HighlightStyle // com.monkopedia.kodemirror.themebarf/barfHighlightStyle.<get-barfHighlightStyle>|<get-barfHighlightStyle>(){}[0]
+final val com.monkopedia.kodemirror.themebarf/barfTheme // com.monkopedia.kodemirror.themebarf/barfTheme|{}barfTheme[0]
+    final fun <get-barfTheme>(): com.monkopedia.kodemirror.view/EditorTheme // com.monkopedia.kodemirror.themebarf/barfTheme.<get-barfTheme>|<get-barfTheme>(){}[0]

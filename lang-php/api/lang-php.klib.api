@@ -1,0 +1,16 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:lang-php>
+final val com.monkopedia.kodemirror.lang.php/phpHighlighting // com.monkopedia.kodemirror.lang.php/phpHighlighting|{}phpHighlighting[0]
+    final fun <get-phpHighlighting>(): com.monkopedia.kodemirror.lezer.common/NodePropSource<com.monkopedia.kodemirror.lezer.highlight/Rule> // com.monkopedia.kodemirror.lang.php/phpHighlighting.<get-phpHighlighting>|<get-phpHighlighting>(){}[0]
+final val com.monkopedia.kodemirror.lang.php/phpLanguage // com.monkopedia.kodemirror.lang.php/phpLanguage|{}phpLanguage[0]
+    final fun <get-phpLanguage>(): com.monkopedia.kodemirror.language/LRLanguage // com.monkopedia.kodemirror.lang.php/phpLanguage.<get-phpLanguage>|<get-phpLanguage>(){}[0]
+final val com.monkopedia.kodemirror.lang.php/phpParser // com.monkopedia.kodemirror.lang.php/phpParser|{}phpParser[0]
+    final fun <get-phpParser>(): com.monkopedia.kodemirror.lezer.lr/LRParser // com.monkopedia.kodemirror.lang.php/phpParser.<get-phpParser>|<get-phpParser>(){}[0]
+
+final fun com.monkopedia.kodemirror.lang.php/php(): com.monkopedia.kodemirror.language/LanguageSupport // com.monkopedia.kodemirror.lang.php/php|php(){}[0]

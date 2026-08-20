@@ -1,0 +1,46 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:lang-javascript>
+final class com.monkopedia.kodemirror.lang.javascript/CompletionPathResult { // com.monkopedia.kodemirror.lang.javascript/CompletionPathResult|null[0]
+    constructor <init>(kotlin.collections/List<kotlin/String>, kotlin/String, com.monkopedia.kodemirror.state/DocPos) // com.monkopedia.kodemirror.lang.javascript/CompletionPathResult.<init>|<init>(kotlin.collections.List<kotlin.String>;kotlin.String;com.monkopedia.kodemirror.state.DocPos){}[0]
+
+    final val from // com.monkopedia.kodemirror.lang.javascript/CompletionPathResult.from|{}from[0]
+        final fun <get-from>(): com.monkopedia.kodemirror.state/DocPos // com.monkopedia.kodemirror.lang.javascript/CompletionPathResult.from.<get-from>|<get-from>(){}[0]
+    final val name // com.monkopedia.kodemirror.lang.javascript/CompletionPathResult.name|{}name[0]
+        final fun <get-name>(): kotlin/String // com.monkopedia.kodemirror.lang.javascript/CompletionPathResult.name.<get-name>|<get-name>(){}[0]
+    final val path // com.monkopedia.kodemirror.lang.javascript/CompletionPathResult.path|{}path[0]
+        final fun <get-path>(): kotlin.collections/List<kotlin/String> // com.monkopedia.kodemirror.lang.javascript/CompletionPathResult.path.<get-path>|<get-path>(){}[0]
+
+    final fun component1(): kotlin.collections/List<kotlin/String> // com.monkopedia.kodemirror.lang.javascript/CompletionPathResult.component1|component1(){}[0]
+    final fun component2(): kotlin/String // com.monkopedia.kodemirror.lang.javascript/CompletionPathResult.component2|component2(){}[0]
+    final fun component3(): com.monkopedia.kodemirror.state/DocPos // com.monkopedia.kodemirror.lang.javascript/CompletionPathResult.component3|component3(){}[0]
+    final fun copy(kotlin.collections/List<kotlin/String> = ..., kotlin/String = ..., com.monkopedia.kodemirror.state/DocPos = ...): com.monkopedia.kodemirror.lang.javascript/CompletionPathResult // com.monkopedia.kodemirror.lang.javascript/CompletionPathResult.copy|copy(kotlin.collections.List<kotlin.String>;kotlin.String;com.monkopedia.kodemirror.state.DocPos){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.lang.javascript/CompletionPathResult.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.lang.javascript/CompletionPathResult.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.lang.javascript/CompletionPathResult.toString|toString(){}[0]
+}
+
+final val com.monkopedia.kodemirror.lang.javascript/javascriptLanguage // com.monkopedia.kodemirror.lang.javascript/javascriptLanguage|{}javascriptLanguage[0]
+    final fun <get-javascriptLanguage>(): com.monkopedia.kodemirror.language/LRLanguage // com.monkopedia.kodemirror.lang.javascript/javascriptLanguage.<get-javascriptLanguage>|<get-javascriptLanguage>(){}[0]
+final val com.monkopedia.kodemirror.lang.javascript/jsxLanguage // com.monkopedia.kodemirror.lang.javascript/jsxLanguage|{}jsxLanguage[0]
+    final fun <get-jsxLanguage>(): com.monkopedia.kodemirror.language/LRLanguage // com.monkopedia.kodemirror.lang.javascript/jsxLanguage.<get-jsxLanguage>|<get-jsxLanguage>(){}[0]
+final val com.monkopedia.kodemirror.lang.javascript/localCompletionSource // com.monkopedia.kodemirror.lang.javascript/localCompletionSource|{}localCompletionSource[0]
+    final fun <get-localCompletionSource>(): kotlin/Function1<com.monkopedia.kodemirror.autocomplete/CompletionContext, com.monkopedia.kodemirror.autocomplete/CompletionResult?> // com.monkopedia.kodemirror.lang.javascript/localCompletionSource.<get-localCompletionSource>|<get-localCompletionSource>(){}[0]
+final val com.monkopedia.kodemirror.lang.javascript/snippets // com.monkopedia.kodemirror.lang.javascript/snippets|{}snippets[0]
+    final fun <get-snippets>(): kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion> // com.monkopedia.kodemirror.lang.javascript/snippets.<get-snippets>|<get-snippets>(){}[0]
+final val com.monkopedia.kodemirror.lang.javascript/tsxLanguage // com.monkopedia.kodemirror.lang.javascript/tsxLanguage|{}tsxLanguage[0]
+    final fun <get-tsxLanguage>(): com.monkopedia.kodemirror.language/LRLanguage // com.monkopedia.kodemirror.lang.javascript/tsxLanguage.<get-tsxLanguage>|<get-tsxLanguage>(){}[0]
+final val com.monkopedia.kodemirror.lang.javascript/typescriptLanguage // com.monkopedia.kodemirror.lang.javascript/typescriptLanguage|{}typescriptLanguage[0]
+    final fun <get-typescriptLanguage>(): com.monkopedia.kodemirror.language/LRLanguage // com.monkopedia.kodemirror.lang.javascript/typescriptLanguage.<get-typescriptLanguage>|<get-typescriptLanguage>(){}[0]
+final val com.monkopedia.kodemirror.lang.javascript/typescriptSnippets // com.monkopedia.kodemirror.lang.javascript/typescriptSnippets|{}typescriptSnippets[0]
+    final fun <get-typescriptSnippets>(): kotlin.collections/List<com.monkopedia.kodemirror.autocomplete/Completion> // com.monkopedia.kodemirror.lang.javascript/typescriptSnippets.<get-typescriptSnippets>|<get-typescriptSnippets>(){}[0]
+
+final fun com.monkopedia.kodemirror.lang.javascript/autoCloseTags(): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.lang.javascript/autoCloseTags|autoCloseTags(){}[0]
+final fun com.monkopedia.kodemirror.lang.javascript/completionPath(com.monkopedia.kodemirror.autocomplete/CompletionContext): com.monkopedia.kodemirror.lang.javascript/CompletionPathResult? // com.monkopedia.kodemirror.lang.javascript/completionPath|completionPath(com.monkopedia.kodemirror.autocomplete.CompletionContext){}[0]
+final fun com.monkopedia.kodemirror.lang.javascript/javascript(kotlin/Boolean = ..., kotlin/Boolean = ...): com.monkopedia.kodemirror.language/LanguageSupport // com.monkopedia.kodemirror.lang.javascript/javascript|javascript(kotlin.Boolean;kotlin.Boolean){}[0]
+final fun com.monkopedia.kodemirror.lang.javascript/scopeCompletionSource(kotlin.collections/Map<kotlin/String, kotlin/Any?>): kotlin/Function1<com.monkopedia.kodemirror.autocomplete/CompletionContext, com.monkopedia.kodemirror.autocomplete/CompletionResult?> // com.monkopedia.kodemirror.lang.javascript/scopeCompletionSource|scopeCompletionSource(kotlin.collections.Map<kotlin.String,kotlin.Any?>){}[0]

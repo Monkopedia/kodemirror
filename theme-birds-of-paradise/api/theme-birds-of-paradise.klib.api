@@ -1,0 +1,14 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:theme-birds-of-paradise>
+final val com.monkopedia.kodemirror.themebirdsofparadise/birdsOfParadise // com.monkopedia.kodemirror.themebirdsofparadise/birdsOfParadise|{}birdsOfParadise[0]
+    final fun <get-birdsOfParadise>(): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.themebirdsofparadise/birdsOfParadise.<get-birdsOfParadise>|<get-birdsOfParadise>(){}[0]
+final val com.monkopedia.kodemirror.themebirdsofparadise/birdsOfParadiseHighlightStyle // com.monkopedia.kodemirror.themebirdsofparadise/birdsOfParadiseHighlightStyle|{}birdsOfParadiseHighlightStyle[0]
+    final fun <get-birdsOfParadiseHighlightStyle>(): com.monkopedia.kodemirror.language/HighlightStyle // com.monkopedia.kodemirror.themebirdsofparadise/birdsOfParadiseHighlightStyle.<get-birdsOfParadiseHighlightStyle>|<get-birdsOfParadiseHighlightStyle>(){}[0]
+final val com.monkopedia.kodemirror.themebirdsofparadise/birdsOfParadiseTheme // com.monkopedia.kodemirror.themebirdsofparadise/birdsOfParadiseTheme|{}birdsOfParadiseTheme[0]
+    final fun <get-birdsOfParadiseTheme>(): com.monkopedia.kodemirror.view/EditorTheme // com.monkopedia.kodemirror.themebirdsofparadise/birdsOfParadiseTheme.<get-birdsOfParadiseTheme>|<get-birdsOfParadiseTheme>(){}[0]

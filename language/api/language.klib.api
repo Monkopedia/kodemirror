@@ -1,0 +1,409 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:language>
+open annotation class com.monkopedia.kodemirror.language/HighlightStyleDsl : kotlin/Annotation { // com.monkopedia.kodemirror.language/HighlightStyleDsl|null[0]
+    constructor <init>() // com.monkopedia.kodemirror.language/HighlightStyleDsl.<init>|<init>(){}[0]
+}
+
+abstract interface <#A: kotlin/Any?> com.monkopedia.kodemirror.language/StreamParser { // com.monkopedia.kodemirror.language/StreamParser|null[0]
+    open val languageData // com.monkopedia.kodemirror.language/StreamParser.languageData|{}languageData[0]
+        open fun <get-languageData>(): kotlin.collections/Map<kotlin/String, kotlin/Any> // com.monkopedia.kodemirror.language/StreamParser.languageData.<get-languageData>|<get-languageData>(){}[0]
+    open val mergeTokens // com.monkopedia.kodemirror.language/StreamParser.mergeTokens|{}mergeTokens[0]
+        open fun <get-mergeTokens>(): kotlin/Boolean // com.monkopedia.kodemirror.language/StreamParser.mergeTokens.<get-mergeTokens>|<get-mergeTokens>(){}[0]
+    open val name // com.monkopedia.kodemirror.language/StreamParser.name|{}name[0]
+        open fun <get-name>(): kotlin/String // com.monkopedia.kodemirror.language/StreamParser.name.<get-name>|<get-name>(){}[0]
+    open val tokenTable // com.monkopedia.kodemirror.language/StreamParser.tokenTable|{}tokenTable[0]
+        open fun <get-tokenTable>(): kotlin.collections/Map<kotlin/String, kotlin/Any> // com.monkopedia.kodemirror.language/StreamParser.tokenTable.<get-tokenTable>|<get-tokenTable>(){}[0]
+
+    abstract fun copyState(#A): #A // com.monkopedia.kodemirror.language/StreamParser.copyState|copyState(1:0){}[0]
+    abstract fun startState(kotlin/Int): #A // com.monkopedia.kodemirror.language/StreamParser.startState|startState(kotlin.Int){}[0]
+    abstract fun token(com.monkopedia.kodemirror.language/StringStream, #A): kotlin/String? // com.monkopedia.kodemirror.language/StreamParser.token|token(com.monkopedia.kodemirror.language.StringStream;1:0){}[0]
+    open fun blankLine(#A, kotlin/Int) // com.monkopedia.kodemirror.language/StreamParser.blankLine|blankLine(1:0;kotlin.Int){}[0]
+    open fun indent(#A, kotlin/String, com.monkopedia.kodemirror.language/IndentContext): kotlin/Int? // com.monkopedia.kodemirror.language/StreamParser.indent|indent(1:0;kotlin.String;com.monkopedia.kodemirror.language.IndentContext){}[0]
+}
+
+final class <#A: kotlin/Any?> com.monkopedia.kodemirror.language/StreamLanguage : com.monkopedia.kodemirror.language/Language { // com.monkopedia.kodemirror.language/StreamLanguage|null[0]
+    final val allowsNesting // com.monkopedia.kodemirror.language/StreamLanguage.allowsNesting|{}allowsNesting[0]
+        final fun <get-allowsNesting>(): kotlin/Boolean // com.monkopedia.kodemirror.language/StreamLanguage.allowsNesting.<get-allowsNesting>|<get-allowsNesting>(){}[0]
+
+    final fun getTree(com.monkopedia.kodemirror.state/EditorState): com.monkopedia.kodemirror.lezer.common/Tree // com.monkopedia.kodemirror.language/StreamLanguage.getTree|getTree(com.monkopedia.kodemirror.state.EditorState){}[0]
+
+    final object Companion { // com.monkopedia.kodemirror.language/StreamLanguage.Companion|null[0]
+        final fun <#A2: kotlin/Any?> define(com.monkopedia.kodemirror.language/StreamParser<#A2>): com.monkopedia.kodemirror.language/StreamLanguage<#A2> // com.monkopedia.kodemirror.language/StreamLanguage.Companion.define|define(com.monkopedia.kodemirror.language.StreamParser<0:0>){0§<kotlin.Any?>}[0]
+    }
+}
+
+final class com.monkopedia.kodemirror.language/BracketMatchingConfig { // com.monkopedia.kodemirror.language/BracketMatchingConfig|null[0]
+    constructor <init>(kotlin/Boolean = ..., kotlin/String = ..., kotlin/Int = ..., kotlin/Function1<com.monkopedia.kodemirror.language/MatchResult, com.monkopedia.kodemirror.state/RangeSet<com.monkopedia.kodemirror.view/Decoration>>? = ...) // com.monkopedia.kodemirror.language/BracketMatchingConfig.<init>|<init>(kotlin.Boolean;kotlin.String;kotlin.Int;kotlin.Function1<com.monkopedia.kodemirror.language.MatchResult,com.monkopedia.kodemirror.state.RangeSet<com.monkopedia.kodemirror.view.Decoration>>?){}[0]
+
+    final val afterCursor // com.monkopedia.kodemirror.language/BracketMatchingConfig.afterCursor|{}afterCursor[0]
+        final fun <get-afterCursor>(): kotlin/Boolean // com.monkopedia.kodemirror.language/BracketMatchingConfig.afterCursor.<get-afterCursor>|<get-afterCursor>(){}[0]
+    final val brackets // com.monkopedia.kodemirror.language/BracketMatchingConfig.brackets|{}brackets[0]
+        final fun <get-brackets>(): kotlin/String // com.monkopedia.kodemirror.language/BracketMatchingConfig.brackets.<get-brackets>|<get-brackets>(){}[0]
+    final val maxScanDistance // com.monkopedia.kodemirror.language/BracketMatchingConfig.maxScanDistance|{}maxScanDistance[0]
+        final fun <get-maxScanDistance>(): kotlin/Int // com.monkopedia.kodemirror.language/BracketMatchingConfig.maxScanDistance.<get-maxScanDistance>|<get-maxScanDistance>(){}[0]
+    final val renderMatch // com.monkopedia.kodemirror.language/BracketMatchingConfig.renderMatch|{}renderMatch[0]
+        final fun <get-renderMatch>(): kotlin/Function1<com.monkopedia.kodemirror.language/MatchResult, com.monkopedia.kodemirror.state/RangeSet<com.monkopedia.kodemirror.view/Decoration>>? // com.monkopedia.kodemirror.language/BracketMatchingConfig.renderMatch.<get-renderMatch>|<get-renderMatch>(){}[0]
+
+    final fun component1(): kotlin/Boolean // com.monkopedia.kodemirror.language/BracketMatchingConfig.component1|component1(){}[0]
+    final fun component2(): kotlin/String // com.monkopedia.kodemirror.language/BracketMatchingConfig.component2|component2(){}[0]
+    final fun component3(): kotlin/Int // com.monkopedia.kodemirror.language/BracketMatchingConfig.component3|component3(){}[0]
+    final fun component4(): kotlin/Function1<com.monkopedia.kodemirror.language/MatchResult, com.monkopedia.kodemirror.state/RangeSet<com.monkopedia.kodemirror.view/Decoration>>? // com.monkopedia.kodemirror.language/BracketMatchingConfig.component4|component4(){}[0]
+    final fun copy(kotlin/Boolean = ..., kotlin/String = ..., kotlin/Int = ..., kotlin/Function1<com.monkopedia.kodemirror.language/MatchResult, com.monkopedia.kodemirror.state/RangeSet<com.monkopedia.kodemirror.view/Decoration>>? = ...): com.monkopedia.kodemirror.language/BracketMatchingConfig // com.monkopedia.kodemirror.language/BracketMatchingConfig.copy|copy(kotlin.Boolean;kotlin.String;kotlin.Int;kotlin.Function1<com.monkopedia.kodemirror.language.MatchResult,com.monkopedia.kodemirror.state.RangeSet<com.monkopedia.kodemirror.view.Decoration>>?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.language/BracketMatchingConfig.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.language/BracketMatchingConfig.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.language/BracketMatchingConfig.toString|toString(){}[0]
+}
+
+final class com.monkopedia.kodemirror.language/CommentTokens { // com.monkopedia.kodemirror.language/CommentTokens|null[0]
+    constructor <init>(kotlin/String? = ..., com.monkopedia.kodemirror.language/CommentTokens.BlockComment? = ...) // com.monkopedia.kodemirror.language/CommentTokens.<init>|<init>(kotlin.String?;com.monkopedia.kodemirror.language.CommentTokens.BlockComment?){}[0]
+
+    final val block // com.monkopedia.kodemirror.language/CommentTokens.block|{}block[0]
+        final fun <get-block>(): com.monkopedia.kodemirror.language/CommentTokens.BlockComment? // com.monkopedia.kodemirror.language/CommentTokens.block.<get-block>|<get-block>(){}[0]
+    final val line // com.monkopedia.kodemirror.language/CommentTokens.line|{}line[0]
+        final fun <get-line>(): kotlin/String? // com.monkopedia.kodemirror.language/CommentTokens.line.<get-line>|<get-line>(){}[0]
+
+    final fun component1(): kotlin/String? // com.monkopedia.kodemirror.language/CommentTokens.component1|component1(){}[0]
+    final fun component2(): com.monkopedia.kodemirror.language/CommentTokens.BlockComment? // com.monkopedia.kodemirror.language/CommentTokens.component2|component2(){}[0]
+    final fun copy(kotlin/String? = ..., com.monkopedia.kodemirror.language/CommentTokens.BlockComment? = ...): com.monkopedia.kodemirror.language/CommentTokens // com.monkopedia.kodemirror.language/CommentTokens.copy|copy(kotlin.String?;com.monkopedia.kodemirror.language.CommentTokens.BlockComment?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.language/CommentTokens.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.language/CommentTokens.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.language/CommentTokens.toString|toString(){}[0]
+
+    final class BlockComment { // com.monkopedia.kodemirror.language/CommentTokens.BlockComment|null[0]
+        constructor <init>(kotlin/String, kotlin/String) // com.monkopedia.kodemirror.language/CommentTokens.BlockComment.<init>|<init>(kotlin.String;kotlin.String){}[0]
+
+        final val close // com.monkopedia.kodemirror.language/CommentTokens.BlockComment.close|{}close[0]
+            final fun <get-close>(): kotlin/String // com.monkopedia.kodemirror.language/CommentTokens.BlockComment.close.<get-close>|<get-close>(){}[0]
+        final val open // com.monkopedia.kodemirror.language/CommentTokens.BlockComment.open|{}open[0]
+            final fun <get-open>(): kotlin/String // com.monkopedia.kodemirror.language/CommentTokens.BlockComment.open.<get-open>|<get-open>(){}[0]
+
+        final fun component1(): kotlin/String // com.monkopedia.kodemirror.language/CommentTokens.BlockComment.component1|component1(){}[0]
+        final fun component2(): kotlin/String // com.monkopedia.kodemirror.language/CommentTokens.BlockComment.component2|component2(){}[0]
+        final fun copy(kotlin/String = ..., kotlin/String = ...): com.monkopedia.kodemirror.language/CommentTokens.BlockComment // com.monkopedia.kodemirror.language/CommentTokens.BlockComment.copy|copy(kotlin.String;kotlin.String){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.language/CommentTokens.BlockComment.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.language/CommentTokens.BlockComment.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.monkopedia.kodemirror.language/CommentTokens.BlockComment.toString|toString(){}[0]
+    }
+}
+
+final class com.monkopedia.kodemirror.language/FoldRange { // com.monkopedia.kodemirror.language/FoldRange|null[0]
+    constructor <init>(com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos) // com.monkopedia.kodemirror.language/FoldRange.<init>|<init>(com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos){}[0]
+
+    final val from // com.monkopedia.kodemirror.language/FoldRange.from|{}from[0]
+        final fun <get-from>(): com.monkopedia.kodemirror.state/DocPos // com.monkopedia.kodemirror.language/FoldRange.from.<get-from>|<get-from>(){}[0]
+    final val to // com.monkopedia.kodemirror.language/FoldRange.to|{}to[0]
+        final fun <get-to>(): com.monkopedia.kodemirror.state/DocPos // com.monkopedia.kodemirror.language/FoldRange.to.<get-to>|<get-to>(){}[0]
+
+    final fun component1(): com.monkopedia.kodemirror.state/DocPos // com.monkopedia.kodemirror.language/FoldRange.component1|component1(){}[0]
+    final fun component2(): com.monkopedia.kodemirror.state/DocPos // com.monkopedia.kodemirror.language/FoldRange.component2|component2(){}[0]
+    final fun copy(com.monkopedia.kodemirror.state/DocPos = ..., com.monkopedia.kodemirror.state/DocPos = ...): com.monkopedia.kodemirror.language/FoldRange // com.monkopedia.kodemirror.language/FoldRange.copy|copy(com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.language/FoldRange.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.language/FoldRange.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.language/FoldRange.toString|toString(){}[0]
+}
+
+final class com.monkopedia.kodemirror.language/HighlightStyle : com.monkopedia.kodemirror.lezer.highlight/Highlighter { // com.monkopedia.kodemirror.language/HighlightStyle|null[0]
+    final val specs // com.monkopedia.kodemirror.language/HighlightStyle.specs|{}specs[0]
+        final fun <get-specs>(): kotlin.collections/List<com.monkopedia.kodemirror.language/TagStyleSpec> // com.monkopedia.kodemirror.language/HighlightStyle.specs.<get-specs>|<get-specs>(){}[0]
+
+    final fun scope(com.monkopedia.kodemirror.lezer.common/NodeType): kotlin/Boolean // com.monkopedia.kodemirror.language/HighlightStyle.scope|scope(com.monkopedia.kodemirror.lezer.common.NodeType){}[0]
+    final fun spanStyleFor(kotlin/String): androidx.compose.ui.text/SpanStyle? // com.monkopedia.kodemirror.language/HighlightStyle.spanStyleFor|spanStyleFor(kotlin.String){}[0]
+    final fun style(kotlin.collections/List<com.monkopedia.kodemirror.lezer.highlight/Tag>): kotlin/String? // com.monkopedia.kodemirror.language/HighlightStyle.style|style(kotlin.collections.List<com.monkopedia.kodemirror.lezer.highlight.Tag>){}[0]
+
+    final object Companion { // com.monkopedia.kodemirror.language/HighlightStyle.Companion|null[0]
+        final fun define(kotlin.collections/List<com.monkopedia.kodemirror.language/TagStyleSpec>, kotlin/Function1<com.monkopedia.kodemirror.lezer.common/NodeType, kotlin/Boolean>? = ...): com.monkopedia.kodemirror.language/HighlightStyle // com.monkopedia.kodemirror.language/HighlightStyle.Companion.define|define(kotlin.collections.List<com.monkopedia.kodemirror.language.TagStyleSpec>;kotlin.Function1<com.monkopedia.kodemirror.lezer.common.NodeType,kotlin.Boolean>?){}[0]
+        final inline fun define(noinline kotlin/Function1<com.monkopedia.kodemirror.lezer.common/NodeType, kotlin/Boolean>? = ..., kotlin/Function1<com.monkopedia.kodemirror.language/HighlightStyleBuilder, kotlin/Unit>): com.monkopedia.kodemirror.language/HighlightStyle // com.monkopedia.kodemirror.language/HighlightStyle.Companion.define|define(kotlin.Function1<com.monkopedia.kodemirror.lezer.common.NodeType,kotlin.Boolean>?;kotlin.Function1<com.monkopedia.kodemirror.language.HighlightStyleBuilder,kotlin.Unit>){}[0]
+    }
+}
+
+final class com.monkopedia.kodemirror.language/HighlightStyleBuilder { // com.monkopedia.kodemirror.language/HighlightStyleBuilder|null[0]
+    constructor <init>() // com.monkopedia.kodemirror.language/HighlightStyleBuilder.<init>|<init>(){}[0]
+
+    final val specs // com.monkopedia.kodemirror.language/HighlightStyleBuilder.specs|{}specs[0]
+        final fun <get-specs>(): kotlin.collections/MutableList<com.monkopedia.kodemirror.language/TagStyleSpec> // com.monkopedia.kodemirror.language/HighlightStyleBuilder.specs.<get-specs>|<get-specs>(){}[0]
+
+    final fun (com.monkopedia.kodemirror.lezer.highlight/Tag).styles(androidx.compose.ui.text/SpanStyle) // com.monkopedia.kodemirror.language/HighlightStyleBuilder.styles|styles@com.monkopedia.kodemirror.lezer.highlight.Tag(androidx.compose.ui.text.SpanStyle){}[0]
+    final fun (kotlin.collections/List<com.monkopedia.kodemirror.lezer.highlight/Tag>).styles(androidx.compose.ui.text/SpanStyle) // com.monkopedia.kodemirror.language/HighlightStyleBuilder.styles|styles@kotlin.collections.List<com.monkopedia.kodemirror.lezer.highlight.Tag>(androidx.compose.ui.text.SpanStyle){}[0]
+}
+
+final class com.monkopedia.kodemirror.language/LRLanguage : com.monkopedia.kodemirror.language/Language { // com.monkopedia.kodemirror.language/LRLanguage|null[0]
+    constructor <init>(com.monkopedia.kodemirror.lezer.common/Parser, kotlin/String = ...) // com.monkopedia.kodemirror.language/LRLanguage.<init>|<init>(com.monkopedia.kodemirror.lezer.common.Parser;kotlin.String){}[0]
+
+    final object Companion { // com.monkopedia.kodemirror.language/LRLanguage.Companion|null[0]
+        final fun define(com.monkopedia.kodemirror.lezer.common/Parser, kotlin/String = ...): com.monkopedia.kodemirror.language/LRLanguage // com.monkopedia.kodemirror.language/LRLanguage.Companion.define|define(com.monkopedia.kodemirror.lezer.common.Parser;kotlin.String){}[0]
+    }
+}
+
+final class com.monkopedia.kodemirror.language/LanguageDescription { // com.monkopedia.kodemirror.language/LanguageDescription|null[0]
+    constructor <init>(kotlin/String, kotlin.collections/List<kotlin/String> = ..., kotlin.collections/List<kotlin/String> = ..., kotlin.collections/List<kotlin.text/Regex> = ..., kotlin/Function0<com.monkopedia.kodemirror.language/LanguageSupport>? = ...) // com.monkopedia.kodemirror.language/LanguageDescription.<init>|<init>(kotlin.String;kotlin.collections.List<kotlin.String>;kotlin.collections.List<kotlin.String>;kotlin.collections.List<kotlin.text.Regex>;kotlin.Function0<com.monkopedia.kodemirror.language.LanguageSupport>?){}[0]
+
+    final val alias // com.monkopedia.kodemirror.language/LanguageDescription.alias|{}alias[0]
+        final fun <get-alias>(): kotlin.collections/List<kotlin/String> // com.monkopedia.kodemirror.language/LanguageDescription.alias.<get-alias>|<get-alias>(){}[0]
+    final val extensions // com.monkopedia.kodemirror.language/LanguageDescription.extensions|{}extensions[0]
+        final fun <get-extensions>(): kotlin.collections/List<kotlin/String> // com.monkopedia.kodemirror.language/LanguageDescription.extensions.<get-extensions>|<get-extensions>(){}[0]
+    final val filename // com.monkopedia.kodemirror.language/LanguageDescription.filename|{}filename[0]
+        final fun <get-filename>(): kotlin.collections/List<kotlin.text/Regex> // com.monkopedia.kodemirror.language/LanguageDescription.filename.<get-filename>|<get-filename>(){}[0]
+    final val load // com.monkopedia.kodemirror.language/LanguageDescription.load|{}load[0]
+        final fun <get-load>(): kotlin/Function0<com.monkopedia.kodemirror.language/LanguageSupport>? // com.monkopedia.kodemirror.language/LanguageDescription.load.<get-load>|<get-load>(){}[0]
+    final val name // com.monkopedia.kodemirror.language/LanguageDescription.name|{}name[0]
+        final fun <get-name>(): kotlin/String // com.monkopedia.kodemirror.language/LanguageDescription.name.<get-name>|<get-name>(){}[0]
+
+    final fun component1(): kotlin/String // com.monkopedia.kodemirror.language/LanguageDescription.component1|component1(){}[0]
+    final fun component2(): kotlin.collections/List<kotlin/String> // com.monkopedia.kodemirror.language/LanguageDescription.component2|component2(){}[0]
+    final fun component3(): kotlin.collections/List<kotlin/String> // com.monkopedia.kodemirror.language/LanguageDescription.component3|component3(){}[0]
+    final fun component4(): kotlin.collections/List<kotlin.text/Regex> // com.monkopedia.kodemirror.language/LanguageDescription.component4|component4(){}[0]
+    final fun component5(): kotlin/Function0<com.monkopedia.kodemirror.language/LanguageSupport>? // com.monkopedia.kodemirror.language/LanguageDescription.component5|component5(){}[0]
+    final fun copy(kotlin/String = ..., kotlin.collections/List<kotlin/String> = ..., kotlin.collections/List<kotlin/String> = ..., kotlin.collections/List<kotlin.text/Regex> = ..., kotlin/Function0<com.monkopedia.kodemirror.language/LanguageSupport>? = ...): com.monkopedia.kodemirror.language/LanguageDescription // com.monkopedia.kodemirror.language/LanguageDescription.copy|copy(kotlin.String;kotlin.collections.List<kotlin.String>;kotlin.collections.List<kotlin.String>;kotlin.collections.List<kotlin.text.Regex>;kotlin.Function0<com.monkopedia.kodemirror.language.LanguageSupport>?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.language/LanguageDescription.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.language/LanguageDescription.hashCode|hashCode(){}[0]
+    final fun matchFilename(kotlin/String): kotlin/Boolean // com.monkopedia.kodemirror.language/LanguageDescription.matchFilename|matchFilename(kotlin.String){}[0]
+    final fun matchLanguageName(kotlin/String): kotlin/Boolean // com.monkopedia.kodemirror.language/LanguageDescription.matchLanguageName|matchLanguageName(kotlin.String){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.language/LanguageDescription.toString|toString(){}[0]
+
+    final object Companion { // com.monkopedia.kodemirror.language/LanguageDescription.Companion|null[0]
+        final fun matchFilename(kotlin.collections/List<com.monkopedia.kodemirror.language/LanguageDescription>, kotlin/String): com.monkopedia.kodemirror.language/LanguageDescription? // com.monkopedia.kodemirror.language/LanguageDescription.Companion.matchFilename|matchFilename(kotlin.collections.List<com.monkopedia.kodemirror.language.LanguageDescription>;kotlin.String){}[0]
+        final fun matchLanguageName(kotlin.collections/List<com.monkopedia.kodemirror.language/LanguageDescription>, kotlin/String): com.monkopedia.kodemirror.language/LanguageDescription? // com.monkopedia.kodemirror.language/LanguageDescription.Companion.matchLanguageName|matchLanguageName(kotlin.collections.List<com.monkopedia.kodemirror.language.LanguageDescription>;kotlin.String){}[0]
+    }
+}
+
+final class com.monkopedia.kodemirror.language/LanguageSupport { // com.monkopedia.kodemirror.language/LanguageSupport|null[0]
+    constructor <init>(com.monkopedia.kodemirror.language/Language, com.monkopedia.kodemirror.state/Extension? = ...) // com.monkopedia.kodemirror.language/LanguageSupport.<init>|<init>(com.monkopedia.kodemirror.language.Language;com.monkopedia.kodemirror.state.Extension?){}[0]
+
+    final val extension // com.monkopedia.kodemirror.language/LanguageSupport.extension|{}extension[0]
+        final fun <get-extension>(): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.language/LanguageSupport.extension.<get-extension>|<get-extension>(){}[0]
+    final val language // com.monkopedia.kodemirror.language/LanguageSupport.language|{}language[0]
+        final fun <get-language>(): com.monkopedia.kodemirror.language/Language // com.monkopedia.kodemirror.language/LanguageSupport.language.<get-language>|<get-language>(){}[0]
+    final val support // com.monkopedia.kodemirror.language/LanguageSupport.support|{}support[0]
+        final fun <get-support>(): com.monkopedia.kodemirror.state/Extension? // com.monkopedia.kodemirror.language/LanguageSupport.support.<get-support>|<get-support>(){}[0]
+}
+
+final class com.monkopedia.kodemirror.language/MatchResult { // com.monkopedia.kodemirror.language/MatchResult|null[0]
+    constructor <init>(com.monkopedia.kodemirror.state/SelectionRange, com.monkopedia.kodemirror.state/SelectionRange?, kotlin/Boolean) // com.monkopedia.kodemirror.language/MatchResult.<init>|<init>(com.monkopedia.kodemirror.state.SelectionRange;com.monkopedia.kodemirror.state.SelectionRange?;kotlin.Boolean){}[0]
+
+    final val end // com.monkopedia.kodemirror.language/MatchResult.end|{}end[0]
+        final fun <get-end>(): com.monkopedia.kodemirror.state/SelectionRange? // com.monkopedia.kodemirror.language/MatchResult.end.<get-end>|<get-end>(){}[0]
+    final val matched // com.monkopedia.kodemirror.language/MatchResult.matched|{}matched[0]
+        final fun <get-matched>(): kotlin/Boolean // com.monkopedia.kodemirror.language/MatchResult.matched.<get-matched>|<get-matched>(){}[0]
+    final val start // com.monkopedia.kodemirror.language/MatchResult.start|{}start[0]
+        final fun <get-start>(): com.monkopedia.kodemirror.state/SelectionRange // com.monkopedia.kodemirror.language/MatchResult.start.<get-start>|<get-start>(){}[0]
+
+    final fun component1(): com.monkopedia.kodemirror.state/SelectionRange // com.monkopedia.kodemirror.language/MatchResult.component1|component1(){}[0]
+    final fun component2(): com.monkopedia.kodemirror.state/SelectionRange? // com.monkopedia.kodemirror.language/MatchResult.component2|component2(){}[0]
+    final fun component3(): kotlin/Boolean // com.monkopedia.kodemirror.language/MatchResult.component3|component3(){}[0]
+    final fun copy(com.monkopedia.kodemirror.state/SelectionRange = ..., com.monkopedia.kodemirror.state/SelectionRange? = ..., kotlin/Boolean = ...): com.monkopedia.kodemirror.language/MatchResult // com.monkopedia.kodemirror.language/MatchResult.copy|copy(com.monkopedia.kodemirror.state.SelectionRange;com.monkopedia.kodemirror.state.SelectionRange?;kotlin.Boolean){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.language/MatchResult.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.language/MatchResult.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.language/MatchResult.toString|toString(){}[0]
+}
+
+final class com.monkopedia.kodemirror.language/StringStream { // com.monkopedia.kodemirror.language/StringStream|null[0]
+    constructor <init>(kotlin/String, kotlin/Int, kotlin/Int, kotlin/Int? = ...) // com.monkopedia.kodemirror.language/StringStream.<init>|<init>(kotlin.String;kotlin.Int;kotlin.Int;kotlin.Int?){}[0]
+
+    final val indentUnit // com.monkopedia.kodemirror.language/StringStream.indentUnit|{}indentUnit[0]
+        final fun <get-indentUnit>(): kotlin/Int // com.monkopedia.kodemirror.language/StringStream.indentUnit.<get-indentUnit>|<get-indentUnit>(){}[0]
+    final val string // com.monkopedia.kodemirror.language/StringStream.string|{}string[0]
+        final fun <get-string>(): kotlin/String // com.monkopedia.kodemirror.language/StringStream.string.<get-string>|<get-string>(){}[0]
+
+    final var pos // com.monkopedia.kodemirror.language/StringStream.pos|{}pos[0]
+        final fun <get-pos>(): kotlin/Int // com.monkopedia.kodemirror.language/StringStream.pos.<get-pos>|<get-pos>(){}[0]
+        final fun <set-pos>(kotlin/Int) // com.monkopedia.kodemirror.language/StringStream.pos.<set-pos>|<set-pos>(kotlin.Int){}[0]
+    final var start // com.monkopedia.kodemirror.language/StringStream.start|{}start[0]
+        final fun <get-start>(): kotlin/Int // com.monkopedia.kodemirror.language/StringStream.start.<get-start>|<get-start>(){}[0]
+        final fun <set-start>(kotlin/Int) // com.monkopedia.kodemirror.language/StringStream.start.<set-start>|<set-start>(kotlin.Int){}[0]
+
+    final fun backUp(kotlin/Int) // com.monkopedia.kodemirror.language/StringStream.backUp|backUp(kotlin.Int){}[0]
+    final fun column(): kotlin/Int // com.monkopedia.kodemirror.language/StringStream.column|column(){}[0]
+    final fun current(): kotlin/String // com.monkopedia.kodemirror.language/StringStream.current|current(){}[0]
+    final fun eat(kotlin.text/Regex): kotlin/String? // com.monkopedia.kodemirror.language/StringStream.eat|eat(kotlin.text.Regex){}[0]
+    final fun eat(kotlin/Function1<kotlin/String, kotlin/Boolean>): kotlin/String? // com.monkopedia.kodemirror.language/StringStream.eat|eat(kotlin.Function1<kotlin.String,kotlin.Boolean>){}[0]
+    final fun eat(kotlin/String): kotlin/String? // com.monkopedia.kodemirror.language/StringStream.eat|eat(kotlin.String){}[0]
+    final fun eatSpace(): kotlin/Boolean // com.monkopedia.kodemirror.language/StringStream.eatSpace|eatSpace(){}[0]
+    final fun eatWhile(kotlin.text/Regex): kotlin/Boolean // com.monkopedia.kodemirror.language/StringStream.eatWhile|eatWhile(kotlin.text.Regex){}[0]
+    final fun eatWhile(kotlin/Function1<kotlin/String, kotlin/Boolean>): kotlin/Boolean // com.monkopedia.kodemirror.language/StringStream.eatWhile|eatWhile(kotlin.Function1<kotlin.String,kotlin.Boolean>){}[0]
+    final fun eatWhile(kotlin/String): kotlin/Boolean // com.monkopedia.kodemirror.language/StringStream.eatWhile|eatWhile(kotlin.String){}[0]
+    final fun eol(): kotlin/Boolean // com.monkopedia.kodemirror.language/StringStream.eol|eol(){}[0]
+    final fun indentation(): kotlin/Int // com.monkopedia.kodemirror.language/StringStream.indentation|indentation(){}[0]
+    final fun match(kotlin.text/Regex, kotlin/Boolean = ...): kotlin.text/MatchResult? // com.monkopedia.kodemirror.language/StringStream.match|match(kotlin.text.Regex;kotlin.Boolean){}[0]
+    final fun match(kotlin/String, kotlin/Boolean = ..., kotlin/Boolean = ...): kotlin/Boolean // com.monkopedia.kodemirror.language/StringStream.match|match(kotlin.String;kotlin.Boolean;kotlin.Boolean){}[0]
+    final fun next(): kotlin/String? // com.monkopedia.kodemirror.language/StringStream.next|next(){}[0]
+    final fun peek(): kotlin/String? // com.monkopedia.kodemirror.language/StringStream.peek|peek(){}[0]
+    final fun skipTo(kotlin/String): kotlin/Boolean // com.monkopedia.kodemirror.language/StringStream.skipTo|skipTo(kotlin.String){}[0]
+    final fun skipToEnd() // com.monkopedia.kodemirror.language/StringStream.skipToEnd|skipToEnd(){}[0]
+    final fun sol(): kotlin/Boolean // com.monkopedia.kodemirror.language/StringStream.sol|sol(){}[0]
+}
+
+final class com.monkopedia.kodemirror.language/TagStyleSpec { // com.monkopedia.kodemirror.language/TagStyleSpec|null[0]
+    constructor <init>(kotlin.collections/List<com.monkopedia.kodemirror.lezer.highlight/Tag>, androidx.compose.ui.text/SpanStyle) // com.monkopedia.kodemirror.language/TagStyleSpec.<init>|<init>(kotlin.collections.List<com.monkopedia.kodemirror.lezer.highlight.Tag>;androidx.compose.ui.text.SpanStyle){}[0]
+
+    final val style // com.monkopedia.kodemirror.language/TagStyleSpec.style|{}style[0]
+        final fun <get-style>(): androidx.compose.ui.text/SpanStyle // com.monkopedia.kodemirror.language/TagStyleSpec.style.<get-style>|<get-style>(){}[0]
+    final val tags // com.monkopedia.kodemirror.language/TagStyleSpec.tags|{}tags[0]
+        final fun <get-tags>(): kotlin.collections/List<com.monkopedia.kodemirror.lezer.highlight/Tag> // com.monkopedia.kodemirror.language/TagStyleSpec.tags.<get-tags>|<get-tags>(){}[0]
+
+    final fun component1(): kotlin.collections/List<com.monkopedia.kodemirror.lezer.highlight/Tag> // com.monkopedia.kodemirror.language/TagStyleSpec.component1|component1(){}[0]
+    final fun component2(): androidx.compose.ui.text/SpanStyle // com.monkopedia.kodemirror.language/TagStyleSpec.component2|component2(){}[0]
+    final fun copy(kotlin.collections/List<com.monkopedia.kodemirror.lezer.highlight/Tag> = ..., androidx.compose.ui.text/SpanStyle = ...): com.monkopedia.kodemirror.language/TagStyleSpec // com.monkopedia.kodemirror.language/TagStyleSpec.copy|copy(kotlin.collections.List<com.monkopedia.kodemirror.lezer.highlight.Tag>;androidx.compose.ui.text.SpanStyle){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.language/TagStyleSpec.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.language/TagStyleSpec.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.kodemirror.language/TagStyleSpec.toString|toString(){}[0]
+}
+
+final class com.monkopedia.kodemirror.language/TreeIndentContext : com.monkopedia.kodemirror.language/IndentContext { // com.monkopedia.kodemirror.language/TreeIndentContext|null[0]
+    constructor <init>(com.monkopedia.kodemirror.state/EditorState, com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos? = ..., kotlin/Boolean = ...) // com.monkopedia.kodemirror.language/TreeIndentContext.<init>|<init>(com.monkopedia.kodemirror.state.EditorState;com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos?;kotlin.Boolean){}[0]
+
+    final val baseIndent // com.monkopedia.kodemirror.language/TreeIndentContext.baseIndent|{}baseIndent[0]
+        final fun <get-baseIndent>(): kotlin/Int // com.monkopedia.kodemirror.language/TreeIndentContext.baseIndent.<get-baseIndent>|<get-baseIndent>(){}[0]
+    final val baseIndentFor // com.monkopedia.kodemirror.language/TreeIndentContext.baseIndentFor|{}baseIndentFor[0]
+        final fun <get-baseIndentFor>(): kotlin/Function1<com.monkopedia.kodemirror.lezer.common/SyntaxNode, kotlin/Int> // com.monkopedia.kodemirror.language/TreeIndentContext.baseIndentFor.<get-baseIndentFor>|<get-baseIndentFor>(){}[0]
+    final val pos // com.monkopedia.kodemirror.language/TreeIndentContext.pos|{}pos[0]
+        final fun <get-pos>(): com.monkopedia.kodemirror.state/DocPos // com.monkopedia.kodemirror.language/TreeIndentContext.pos.<get-pos>|<get-pos>(){}[0]
+    final val textAfter // com.monkopedia.kodemirror.language/TreeIndentContext.textAfter|{}textAfter[0]
+        final fun <get-textAfter>(): kotlin/String // com.monkopedia.kodemirror.language/TreeIndentContext.textAfter.<get-textAfter>|<get-textAfter>(){}[0]
+
+    final var node // com.monkopedia.kodemirror.language/TreeIndentContext.node|{}node[0]
+        final fun <get-node>(): com.monkopedia.kodemirror.lezer.common/SyntaxNode // com.monkopedia.kodemirror.language/TreeIndentContext.node.<get-node>|<get-node>(){}[0]
+
+    final fun column(kotlin/Int, kotlin/Int = ...): kotlin/Int // com.monkopedia.kodemirror.language/TreeIndentContext.column|column(kotlin.Int;kotlin.Int){}[0]
+    final fun continueAt(): kotlin/Int? // com.monkopedia.kodemirror.language/TreeIndentContext.continueAt|continueAt(){}[0]
+}
+
+open class com.monkopedia.kodemirror.language/IndentContext { // com.monkopedia.kodemirror.language/IndentContext|null[0]
+    constructor <init>(com.monkopedia.kodemirror.state/EditorState, com.monkopedia.kodemirror.state/DocPos? = ..., kotlin/Boolean = ...) // com.monkopedia.kodemirror.language/IndentContext.<init>|<init>(com.monkopedia.kodemirror.state.EditorState;com.monkopedia.kodemirror.state.DocPos?;kotlin.Boolean){}[0]
+
+    final val simulateBreak // com.monkopedia.kodemirror.language/IndentContext.simulateBreak|{}simulateBreak[0]
+        final fun <get-simulateBreak>(): com.monkopedia.kodemirror.state/DocPos? // com.monkopedia.kodemirror.language/IndentContext.simulateBreak.<get-simulateBreak>|<get-simulateBreak>(){}[0]
+    final val simulateDoubleBreak // com.monkopedia.kodemirror.language/IndentContext.simulateDoubleBreak|{}simulateDoubleBreak[0]
+        final fun <get-simulateDoubleBreak>(): kotlin/Boolean // com.monkopedia.kodemirror.language/IndentContext.simulateDoubleBreak.<get-simulateDoubleBreak>|<get-simulateDoubleBreak>(){}[0]
+    final val state // com.monkopedia.kodemirror.language/IndentContext.state|{}state[0]
+        final fun <get-state>(): com.monkopedia.kodemirror.state/EditorState // com.monkopedia.kodemirror.language/IndentContext.state.<get-state>|<get-state>(){}[0]
+    final val unit // com.monkopedia.kodemirror.language/IndentContext.unit|{}unit[0]
+        final fun <get-unit>(): kotlin/Int // com.monkopedia.kodemirror.language/IndentContext.unit.<get-unit>|<get-unit>(){}[0]
+
+    final fun lineAt(com.monkopedia.kodemirror.state/DocPos, kotlin/Int = ...): com.monkopedia.kodemirror.state/Line // com.monkopedia.kodemirror.language/IndentContext.lineAt|lineAt(com.monkopedia.kodemirror.state.DocPos;kotlin.Int){}[0]
+    final fun lineContentAt(com.monkopedia.kodemirror.state/DocPos, kotlin/Int): kotlin/Pair<kotlin/String, kotlin/Int> // com.monkopedia.kodemirror.language/IndentContext.lineContentAt|lineContentAt(com.monkopedia.kodemirror.state.DocPos;kotlin.Int){}[0]
+    final fun lineIndent(com.monkopedia.kodemirror.state/DocPos, kotlin/Int = ...): kotlin/Int // com.monkopedia.kodemirror.language/IndentContext.lineIndent|lineIndent(com.monkopedia.kodemirror.state.DocPos;kotlin.Int){}[0]
+    final fun textAfterPos(com.monkopedia.kodemirror.state/DocPos, kotlin/Int = ...): kotlin/String // com.monkopedia.kodemirror.language/IndentContext.textAfterPos|textAfterPos(com.monkopedia.kodemirror.state.DocPos;kotlin.Int){}[0]
+}
+
+open class com.monkopedia.kodemirror.language/Language { // com.monkopedia.kodemirror.language/Language|null[0]
+    constructor <init>(com.monkopedia.kodemirror.lezer.common/Parser, kotlin/String = ...) // com.monkopedia.kodemirror.language/Language.<init>|<init>(com.monkopedia.kodemirror.lezer.common.Parser;kotlin.String){}[0]
+
+    final val extension // com.monkopedia.kodemirror.language/Language.extension|{}extension[0]
+        final fun <get-extension>(): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.language/Language.extension.<get-extension>|<get-extension>(){}[0]
+    final val name // com.monkopedia.kodemirror.language/Language.name|{}name[0]
+        final fun <get-name>(): kotlin/String // com.monkopedia.kodemirror.language/Language.name.<get-name>|<get-name>(){}[0]
+    final val parser // com.monkopedia.kodemirror.language/Language.parser|{}parser[0]
+        final fun <get-parser>(): com.monkopedia.kodemirror.lezer.common/Parser // com.monkopedia.kodemirror.language/Language.parser.<get-parser>|<get-parser>(){}[0]
+    open val allowsNesting // com.monkopedia.kodemirror.language/Language.allowsNesting|{}allowsNesting[0]
+        open fun <get-allowsNesting>(): kotlin/Boolean // com.monkopedia.kodemirror.language/Language.allowsNesting.<get-allowsNesting>|<get-allowsNesting>(){}[0]
+
+    open fun getTree(com.monkopedia.kodemirror.state/EditorState): com.monkopedia.kodemirror.lezer.common/Tree // com.monkopedia.kodemirror.language/Language.getTree|getTree(com.monkopedia.kodemirror.state.EditorState){}[0]
+    open fun startParse(com.monkopedia.kodemirror.state/Text, kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/TreeFragment> = ...): com.monkopedia.kodemirror.lezer.common/PartialParse // com.monkopedia.kodemirror.language/Language.startParse|startParse(com.monkopedia.kodemirror.state.Text;kotlin.collections.List<com.monkopedia.kodemirror.lezer.common.TreeFragment>){}[0]
+}
+
+final val com.monkopedia.kodemirror.language/bracketMatchingHandle // com.monkopedia.kodemirror.language/bracketMatchingHandle|{}bracketMatchingHandle[0]
+    final fun <get-bracketMatchingHandle>(): com.monkopedia.kodemirror.lezer.common/NodeProp<kotlin/Function2<com.monkopedia.kodemirror.lezer.common/SyntaxNode, com.monkopedia.kodemirror.state/EditorState, com.monkopedia.kodemirror.language/MatchResult?>> // com.monkopedia.kodemirror.language/bracketMatchingHandle.<get-bracketMatchingHandle>|<get-bracketMatchingHandle>(){}[0]
+final val com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_BracketMatchingConfig$stableprop // com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_BracketMatchingConfig$stableprop|#static{}com_monkopedia_kodemirror_language_BracketMatchingConfig$stableprop[0]
+final val com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_CommentTokens$stableprop // com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_CommentTokens$stableprop|#static{}com_monkopedia_kodemirror_language_CommentTokens$stableprop[0]
+final val com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_CommentTokens_BlockComment$stableprop // com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_CommentTokens_BlockComment$stableprop|#static{}com_monkopedia_kodemirror_language_CommentTokens_BlockComment$stableprop[0]
+final val com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_FoldRange$stableprop // com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_FoldRange$stableprop|#static{}com_monkopedia_kodemirror_language_FoldRange$stableprop[0]
+final val com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_HighlightStyle$stableprop // com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_HighlightStyle$stableprop|#static{}com_monkopedia_kodemirror_language_HighlightStyle$stableprop[0]
+final val com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_HighlightStyleBuilder$stableprop // com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_HighlightStyleBuilder$stableprop|#static{}com_monkopedia_kodemirror_language_HighlightStyleBuilder$stableprop[0]
+final val com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_IndentContext$stableprop // com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_IndentContext$stableprop|#static{}com_monkopedia_kodemirror_language_IndentContext$stableprop[0]
+final val com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_LRLanguage$stableprop // com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_LRLanguage$stableprop|#static{}com_monkopedia_kodemirror_language_LRLanguage$stableprop[0]
+final val com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_Language$stableprop // com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_Language$stableprop|#static{}com_monkopedia_kodemirror_language_Language$stableprop[0]
+final val com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_LanguageDescription$stableprop // com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_LanguageDescription$stableprop|#static{}com_monkopedia_kodemirror_language_LanguageDescription$stableprop[0]
+final val com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_LanguageSupport$stableprop // com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_LanguageSupport$stableprop|#static{}com_monkopedia_kodemirror_language_LanguageSupport$stableprop[0]
+final val com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_MatchResult$stableprop // com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_MatchResult$stableprop|#static{}com_monkopedia_kodemirror_language_MatchResult$stableprop[0]
+final val com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_StreamLanguage$stableprop // com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_StreamLanguage$stableprop|#static{}com_monkopedia_kodemirror_language_StreamLanguage$stableprop[0]
+final val com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_StringStream$stableprop // com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_StringStream$stableprop|#static{}com_monkopedia_kodemirror_language_StringStream$stableprop[0]
+final val com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_TagStyleSpec$stableprop // com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_TagStyleSpec$stableprop|#static{}com_monkopedia_kodemirror_language_TagStyleSpec$stableprop[0]
+final val com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_TreeIndentContext$stableprop // com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_TreeIndentContext$stableprop|#static{}com_monkopedia_kodemirror_language_TreeIndentContext$stableprop[0]
+final val com.monkopedia.kodemirror.language/commentTokens // com.monkopedia.kodemirror.language/commentTokens|{}commentTokens[0]
+    final fun <get-commentTokens>(): com.monkopedia.kodemirror.state/Facet<com.monkopedia.kodemirror.language/CommentTokens, com.monkopedia.kodemirror.language/CommentTokens?> // com.monkopedia.kodemirror.language/commentTokens.<get-commentTokens>|<get-commentTokens>(){}[0]
+final val com.monkopedia.kodemirror.language/defaultHighlightStyle // com.monkopedia.kodemirror.language/defaultHighlightStyle|{}defaultHighlightStyle[0]
+    final fun <get-defaultHighlightStyle>(): com.monkopedia.kodemirror.language/HighlightStyle // com.monkopedia.kodemirror.language/defaultHighlightStyle.<get-defaultHighlightStyle>|<get-defaultHighlightStyle>(){}[0]
+final val com.monkopedia.kodemirror.language/flatIndent // com.monkopedia.kodemirror.language/flatIndent|{}flatIndent[0]
+    final fun <get-flatIndent>(): kotlin/Function1<com.monkopedia.kodemirror.language/TreeIndentContext, kotlin/Int?> // com.monkopedia.kodemirror.language/flatIndent.<get-flatIndent>|<get-flatIndent>(){}[0]
+final val com.monkopedia.kodemirror.language/foldAll // com.monkopedia.kodemirror.language/foldAll|{}foldAll[0]
+    final fun <get-foldAll>(): kotlin/Function1<com.monkopedia.kodemirror.view/EditorSession, kotlin/Boolean> // com.monkopedia.kodemirror.language/foldAll.<get-foldAll>|<get-foldAll>(){}[0]
+final val com.monkopedia.kodemirror.language/foldCode // com.monkopedia.kodemirror.language/foldCode|{}foldCode[0]
+    final fun <get-foldCode>(): kotlin/Function1<com.monkopedia.kodemirror.view/EditorSession, kotlin/Boolean> // com.monkopedia.kodemirror.language/foldCode.<get-foldCode>|<get-foldCode>(){}[0]
+final val com.monkopedia.kodemirror.language/foldEffect // com.monkopedia.kodemirror.language/foldEffect|{}foldEffect[0]
+    final fun <get-foldEffect>(): com.monkopedia.kodemirror.state/StateEffectType<com.monkopedia.kodemirror.language/FoldRange> // com.monkopedia.kodemirror.language/foldEffect.<get-foldEffect>|<get-foldEffect>(){}[0]
+final val com.monkopedia.kodemirror.language/foldKeymap // com.monkopedia.kodemirror.language/foldKeymap|{}foldKeymap[0]
+    final fun <get-foldKeymap>(): kotlin.collections/List<com.monkopedia.kodemirror.view/KeyBinding> // com.monkopedia.kodemirror.language/foldKeymap.<get-foldKeymap>|<get-foldKeymap>(){}[0]
+final val com.monkopedia.kodemirror.language/foldNodeProp // com.monkopedia.kodemirror.language/foldNodeProp|{}foldNodeProp[0]
+    final fun <get-foldNodeProp>(): com.monkopedia.kodemirror.lezer.common/NodeProp<kotlin/Function2<com.monkopedia.kodemirror.lezer.common/SyntaxNode, com.monkopedia.kodemirror.state/EditorState, com.monkopedia.kodemirror.language/FoldRange?>> // com.monkopedia.kodemirror.language/foldNodeProp.<get-foldNodeProp>|<get-foldNodeProp>(){}[0]
+final val com.monkopedia.kodemirror.language/foldService // com.monkopedia.kodemirror.language/foldService|{}foldService[0]
+    final fun <get-foldService>(): com.monkopedia.kodemirror.state/Facet<kotlin/Function2<com.monkopedia.kodemirror.state/EditorState, com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.language/FoldRange?>, kotlin.collections/List<kotlin/Function2<com.monkopedia.kodemirror.state/EditorState, com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.language/FoldRange?>>> // com.monkopedia.kodemirror.language/foldService.<get-foldService>|<get-foldService>(){}[0]
+final val com.monkopedia.kodemirror.language/foldState // com.monkopedia.kodemirror.language/foldState|{}foldState[0]
+    final fun <get-foldState>(): com.monkopedia.kodemirror.state/StateField<com.monkopedia.kodemirror.state/RangeSet<com.monkopedia.kodemirror.view/Decoration>> // com.monkopedia.kodemirror.language/foldState.<get-foldState>|<get-foldState>(){}[0]
+final val com.monkopedia.kodemirror.language/indentNodeProp // com.monkopedia.kodemirror.language/indentNodeProp|{}indentNodeProp[0]
+    final fun <get-indentNodeProp>(): com.monkopedia.kodemirror.lezer.common/NodeProp<kotlin/Function1<com.monkopedia.kodemirror.language/TreeIndentContext, kotlin/Int?>> // com.monkopedia.kodemirror.language/indentNodeProp.<get-indentNodeProp>|<get-indentNodeProp>(){}[0]
+final val com.monkopedia.kodemirror.language/indentOnInput // com.monkopedia.kodemirror.language/indentOnInput|{}indentOnInput[0]
+    final fun <get-indentOnInput>(): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.language/indentOnInput.<get-indentOnInput>|<get-indentOnInput>(){}[0]
+final val com.monkopedia.kodemirror.language/indentService // com.monkopedia.kodemirror.language/indentService|{}indentService[0]
+    final fun <get-indentService>(): com.monkopedia.kodemirror.state/Facet<kotlin/Function2<com.monkopedia.kodemirror.language/IndentContext, com.monkopedia.kodemirror.state/DocPos, kotlin/Int?>, kotlin.collections/List<kotlin/Function2<com.monkopedia.kodemirror.language/IndentContext, com.monkopedia.kodemirror.state/DocPos, kotlin/Int?>>> // com.monkopedia.kodemirror.language/indentService.<get-indentService>|<get-indentService>(){}[0]
+final val com.monkopedia.kodemirror.language/indentUnit // com.monkopedia.kodemirror.language/indentUnit|{}indentUnit[0]
+    final fun <get-indentUnit>(): com.monkopedia.kodemirror.state/Facet<kotlin/Int, kotlin/Int> // com.monkopedia.kodemirror.language/indentUnit.<get-indentUnit>|<get-indentUnit>(){}[0]
+final val com.monkopedia.kodemirror.language/language // com.monkopedia.kodemirror.language/language|{}language[0]
+    final fun <get-language>(): com.monkopedia.kodemirror.state/Facet<com.monkopedia.kodemirror.language/Language, com.monkopedia.kodemirror.language/Language?> // com.monkopedia.kodemirror.language/language.<get-language>|<get-language>(){}[0]
+final val com.monkopedia.kodemirror.language/languageDataProp // com.monkopedia.kodemirror.language/languageDataProp|{}languageDataProp[0]
+    final fun <get-languageDataProp>(): com.monkopedia.kodemirror.lezer.common/NodeProp<com.monkopedia.kodemirror.state/Facet<*, *>> // com.monkopedia.kodemirror.language/languageDataProp.<get-languageDataProp>|<get-languageDataProp>(){}[0]
+final val com.monkopedia.kodemirror.language/oneDarkHighlightStyle // com.monkopedia.kodemirror.language/oneDarkHighlightStyle|{}oneDarkHighlightStyle[0]
+    final fun <get-oneDarkHighlightStyle>(): com.monkopedia.kodemirror.language/HighlightStyle // com.monkopedia.kodemirror.language/oneDarkHighlightStyle.<get-oneDarkHighlightStyle>|<get-oneDarkHighlightStyle>(){}[0]
+final val com.monkopedia.kodemirror.language/toggleFold // com.monkopedia.kodemirror.language/toggleFold|{}toggleFold[0]
+    final fun <get-toggleFold>(): kotlin/Function1<com.monkopedia.kodemirror.view/EditorSession, kotlin/Boolean> // com.monkopedia.kodemirror.language/toggleFold.<get-toggleFold>|<get-toggleFold>(){}[0]
+final val com.monkopedia.kodemirror.language/unfoldAll // com.monkopedia.kodemirror.language/unfoldAll|{}unfoldAll[0]
+    final fun <get-unfoldAll>(): kotlin/Function1<com.monkopedia.kodemirror.view/EditorSession, kotlin/Boolean> // com.monkopedia.kodemirror.language/unfoldAll.<get-unfoldAll>|<get-unfoldAll>(){}[0]
+final val com.monkopedia.kodemirror.language/unfoldCode // com.monkopedia.kodemirror.language/unfoldCode|{}unfoldCode[0]
+    final fun <get-unfoldCode>(): kotlin/Function1<com.monkopedia.kodemirror.view/EditorSession, kotlin/Boolean> // com.monkopedia.kodemirror.language/unfoldCode.<get-unfoldCode>|<get-unfoldCode>(){}[0]
+final val com.monkopedia.kodemirror.language/unfoldEffect // com.monkopedia.kodemirror.language/unfoldEffect|{}unfoldEffect[0]
+    final fun <get-unfoldEffect>(): com.monkopedia.kodemirror.state/StateEffectType<com.monkopedia.kodemirror.language/FoldRange> // com.monkopedia.kodemirror.language/unfoldEffect.<get-unfoldEffect>|<get-unfoldEffect>(){}[0]
+
+final fun <#A: kotlin/Any?> com.monkopedia.kodemirror.language/languageDataAt(com.monkopedia.kodemirror.state/EditorState, com.monkopedia.kodemirror.state/Facet<#A, *>, kotlin/Int): #A? // com.monkopedia.kodemirror.language/languageDataAt|languageDataAt(com.monkopedia.kodemirror.state.EditorState;com.monkopedia.kodemirror.state.Facet<0:0,*>;kotlin.Int){0§<kotlin.Any?>}[0]
+final fun com.monkopedia.kodemirror.language/TagStyleSpec(com.monkopedia.kodemirror.lezer.highlight/Tag, androidx.compose.ui.text/SpanStyle): com.monkopedia.kodemirror.language/TagStyleSpec // com.monkopedia.kodemirror.language/TagStyleSpec|TagStyleSpec(com.monkopedia.kodemirror.lezer.highlight.Tag;androidx.compose.ui.text.SpanStyle){}[0]
+final fun com.monkopedia.kodemirror.language/bracketMatching(com.monkopedia.kodemirror.language/BracketMatchingConfig = ...): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.language/bracketMatching|bracketMatching(com.monkopedia.kodemirror.language.BracketMatchingConfig){}[0]
+final fun com.monkopedia.kodemirror.language/codeFolding(): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.language/codeFolding|codeFolding(){}[0]
+final fun com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_BracketMatchingConfig$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_BracketMatchingConfig$stableprop_getter|com_monkopedia_kodemirror_language_BracketMatchingConfig$stableprop_getter(){}[0]
+final fun com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_CommentTokens$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_CommentTokens$stableprop_getter|com_monkopedia_kodemirror_language_CommentTokens$stableprop_getter(){}[0]
+final fun com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_CommentTokens_BlockComment$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_CommentTokens_BlockComment$stableprop_getter|com_monkopedia_kodemirror_language_CommentTokens_BlockComment$stableprop_getter(){}[0]
+final fun com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_FoldRange$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_FoldRange$stableprop_getter|com_monkopedia_kodemirror_language_FoldRange$stableprop_getter(){}[0]
+final fun com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_HighlightStyle$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_HighlightStyle$stableprop_getter|com_monkopedia_kodemirror_language_HighlightStyle$stableprop_getter(){}[0]
+final fun com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_HighlightStyleBuilder$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_HighlightStyleBuilder$stableprop_getter|com_monkopedia_kodemirror_language_HighlightStyleBuilder$stableprop_getter(){}[0]
+final fun com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_IndentContext$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_IndentContext$stableprop_getter|com_monkopedia_kodemirror_language_IndentContext$stableprop_getter(){}[0]
+final fun com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_LRLanguage$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_LRLanguage$stableprop_getter|com_monkopedia_kodemirror_language_LRLanguage$stableprop_getter(){}[0]
+final fun com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_Language$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_Language$stableprop_getter|com_monkopedia_kodemirror_language_Language$stableprop_getter(){}[0]
+final fun com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_LanguageDescription$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_LanguageDescription$stableprop_getter|com_monkopedia_kodemirror_language_LanguageDescription$stableprop_getter(){}[0]
+final fun com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_LanguageSupport$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_LanguageSupport$stableprop_getter|com_monkopedia_kodemirror_language_LanguageSupport$stableprop_getter(){}[0]
+final fun com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_MatchResult$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_MatchResult$stableprop_getter|com_monkopedia_kodemirror_language_MatchResult$stableprop_getter(){}[0]
+final fun com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_StreamLanguage$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_StreamLanguage$stableprop_getter|com_monkopedia_kodemirror_language_StreamLanguage$stableprop_getter(){}[0]
+final fun com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_StringStream$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_StringStream$stableprop_getter|com_monkopedia_kodemirror_language_StringStream$stableprop_getter(){}[0]
+final fun com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_TagStyleSpec$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_TagStyleSpec$stableprop_getter|com_monkopedia_kodemirror_language_TagStyleSpec$stableprop_getter(){}[0]
+final fun com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_TreeIndentContext$stableprop_getter(): kotlin/Int // com.monkopedia.kodemirror.language/com_monkopedia_kodemirror_language_TreeIndentContext$stableprop_getter|com_monkopedia_kodemirror_language_TreeIndentContext$stableprop_getter(){}[0]
+final fun com.monkopedia.kodemirror.language/continuedIndent(kotlin/Int = ..., kotlin.text/Regex? = ...): kotlin/Function1<com.monkopedia.kodemirror.language/TreeIndentContext, kotlin/Int?> // com.monkopedia.kodemirror.language/continuedIndent|continuedIndent(kotlin.Int;kotlin.text.Regex?){}[0]
+final fun com.monkopedia.kodemirror.language/defineLanguageFacet(kotlin.collections/List<com.monkopedia.kodemirror.state/Extension> = ...): com.monkopedia.kodemirror.state/Facet<com.monkopedia.kodemirror.state/Extension, kotlin.collections/List<com.monkopedia.kodemirror.state/Extension>> // com.monkopedia.kodemirror.language/defineLanguageFacet|defineLanguageFacet(kotlin.collections.List<com.monkopedia.kodemirror.state.Extension>){}[0]
+final fun com.monkopedia.kodemirror.language/delimitedIndent(kotlin/String? = ..., kotlin/Boolean = ..., kotlin/Int = ...): kotlin/Function1<com.monkopedia.kodemirror.language/TreeIndentContext, kotlin/Int?> // com.monkopedia.kodemirror.language/delimitedIndent|delimitedIndent(kotlin.String?;kotlin.Boolean;kotlin.Int){}[0]
+final fun com.monkopedia.kodemirror.language/ensureSyntaxTree(com.monkopedia.kodemirror.state/EditorState, kotlin/Int, kotlin/Int = ...): com.monkopedia.kodemirror.lezer.common/Tree? // com.monkopedia.kodemirror.language/ensureSyntaxTree|ensureSyntaxTree(com.monkopedia.kodemirror.state.EditorState;kotlin.Int;kotlin.Int){}[0]
+final fun com.monkopedia.kodemirror.language/foldGutter(): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.language/foldGutter|foldGutter(){}[0]
+final fun com.monkopedia.kodemirror.language/foldInside(com.monkopedia.kodemirror.lezer.common/SyntaxNode): com.monkopedia.kodemirror.language/FoldRange? // com.monkopedia.kodemirror.language/foldInside|foldInside(com.monkopedia.kodemirror.lezer.common.SyntaxNode){}[0]
+final fun com.monkopedia.kodemirror.language/foldable(com.monkopedia.kodemirror.state/EditorState, com.monkopedia.kodemirror.state/DocPos): com.monkopedia.kodemirror.language/FoldRange? // com.monkopedia.kodemirror.language/foldable|foldable(com.monkopedia.kodemirror.state.EditorState;com.monkopedia.kodemirror.state.DocPos){}[0]
+final fun com.monkopedia.kodemirror.language/foldedRanges(com.monkopedia.kodemirror.state/EditorState): com.monkopedia.kodemirror.state/RangeSet<com.monkopedia.kodemirror.view/Decoration> // com.monkopedia.kodemirror.language/foldedRanges|foldedRanges(com.monkopedia.kodemirror.state.EditorState){}[0]
+final fun com.monkopedia.kodemirror.language/forceParsing(com.monkopedia.kodemirror.state/EditorState): com.monkopedia.kodemirror.lezer.common/Tree // com.monkopedia.kodemirror.language/forceParsing|forceParsing(com.monkopedia.kodemirror.state.EditorState){}[0]
+final fun com.monkopedia.kodemirror.language/getIndentUnit(com.monkopedia.kodemirror.state/EditorState): kotlin/Int // com.monkopedia.kodemirror.language/getIndentUnit|getIndentUnit(com.monkopedia.kodemirror.state.EditorState){}[0]
+final fun com.monkopedia.kodemirror.language/getIndentation(com.monkopedia.kodemirror.state/EditorState, com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos? = ..., kotlin/Boolean = ...): kotlin/Int? // com.monkopedia.kodemirror.language/getIndentation|getIndentation(com.monkopedia.kodemirror.state.EditorState;com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos?;kotlin.Boolean){}[0]
+final fun com.monkopedia.kodemirror.language/highlightingFor(com.monkopedia.kodemirror.language/HighlightStyle, kotlin.collections/List<com.monkopedia.kodemirror.lezer.highlight/Tag>): androidx.compose.ui.text/SpanStyle? // com.monkopedia.kodemirror.language/highlightingFor|highlightingFor(com.monkopedia.kodemirror.language.HighlightStyle;kotlin.collections.List<com.monkopedia.kodemirror.lezer.highlight.Tag>){}[0]
+final fun com.monkopedia.kodemirror.language/indentRange(com.monkopedia.kodemirror.state/EditorState, com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos): com.monkopedia.kodemirror.state/ChangeSpec? // com.monkopedia.kodemirror.language/indentRange|indentRange(com.monkopedia.kodemirror.state.EditorState;com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos){}[0]
+final fun com.monkopedia.kodemirror.language/indentString(com.monkopedia.kodemirror.state/EditorState, kotlin/Int): kotlin/String // com.monkopedia.kodemirror.language/indentString|indentString(com.monkopedia.kodemirror.state.EditorState;kotlin.Int){}[0]
+final fun com.monkopedia.kodemirror.language/matchBrackets(com.monkopedia.kodemirror.state/EditorState, com.monkopedia.kodemirror.state/DocPos, kotlin/Int = ..., com.monkopedia.kodemirror.language/BracketMatchingConfig = ...): com.monkopedia.kodemirror.language/MatchResult? // com.monkopedia.kodemirror.language/matchBrackets|matchBrackets(com.monkopedia.kodemirror.state.EditorState;com.monkopedia.kodemirror.state.DocPos;kotlin.Int;com.monkopedia.kodemirror.language.BracketMatchingConfig){}[0]
+final fun com.monkopedia.kodemirror.language/syntaxHighlighting(com.monkopedia.kodemirror.lezer.highlight/Highlighter, kotlin/Boolean = ...): com.monkopedia.kodemirror.state/Extension // com.monkopedia.kodemirror.language/syntaxHighlighting|syntaxHighlighting(com.monkopedia.kodemirror.lezer.highlight.Highlighter;kotlin.Boolean){}[0]
+final fun com.monkopedia.kodemirror.language/syntaxParserRunning(com.monkopedia.kodemirror.state/EditorState): kotlin/Boolean // com.monkopedia.kodemirror.language/syntaxParserRunning|syntaxParserRunning(com.monkopedia.kodemirror.state.EditorState){}[0]
+final fun com.monkopedia.kodemirror.language/syntaxTree(com.monkopedia.kodemirror.state/EditorState): com.monkopedia.kodemirror.lezer.common/Tree // com.monkopedia.kodemirror.language/syntaxTree|syntaxTree(com.monkopedia.kodemirror.state.EditorState){}[0]
+final fun com.monkopedia.kodemirror.language/syntaxTreeAvailable(com.monkopedia.kodemirror.state/EditorState, kotlin/Int = ...): kotlin/Boolean // com.monkopedia.kodemirror.language/syntaxTreeAvailable|syntaxTreeAvailable(com.monkopedia.kodemirror.state.EditorState;kotlin.Int){}[0]

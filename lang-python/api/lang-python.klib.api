@@ -1,0 +1,16 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.monkopedia.kodemirror:lang-python>
+final val com.monkopedia.kodemirror.lang.python/pythonHighlighting // com.monkopedia.kodemirror.lang.python/pythonHighlighting|{}pythonHighlighting[0]
+    final fun <get-pythonHighlighting>(): com.monkopedia.kodemirror.lezer.common/NodePropSource<com.monkopedia.kodemirror.lezer.highlight/Rule> // com.monkopedia.kodemirror.lang.python/pythonHighlighting.<get-pythonHighlighting>|<get-pythonHighlighting>(){}[0]
+final val com.monkopedia.kodemirror.lang.python/pythonLanguage // com.monkopedia.kodemirror.lang.python/pythonLanguage|{}pythonLanguage[0]
+    final fun <get-pythonLanguage>(): com.monkopedia.kodemirror.language/LRLanguage // com.monkopedia.kodemirror.lang.python/pythonLanguage.<get-pythonLanguage>|<get-pythonLanguage>(){}[0]
+final val com.monkopedia.kodemirror.lang.python/pythonParser // com.monkopedia.kodemirror.lang.python/pythonParser|{}pythonParser[0]
+    final fun <get-pythonParser>(): com.monkopedia.kodemirror.lezer.lr/LRParser // com.monkopedia.kodemirror.lang.python/pythonParser.<get-pythonParser>|<get-pythonParser>(){}[0]
+
+final fun com.monkopedia.kodemirror.lang.python/python(): com.monkopedia.kodemirror.language/LanguageSupport // com.monkopedia.kodemirror.lang.python/python|python(){}[0]
