@@ -108,10 +108,9 @@ class YamlParserTest {
         parse("- Mark McGwire\n- Sammy Sosa\n- Ken Griffey")
     )
 
-    // TODO: Parser produces minor error node — likely context hash or tokenizer porting issue
     @Test
     fun example2_2MappingScalarsToScalars() = assertEquals(
-        "Stream(Document(BlockMapping(\u26A0," +
+        "Stream(Document(BlockMapping(" +
             "Pair(Key(Literal),Literal),Comment," +
             "Pair(Key(Literal),Literal),Comment," +
             "Pair(Key(Literal),Literal))),Comment)",
