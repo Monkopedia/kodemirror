@@ -156,7 +156,11 @@ class Stack internal constructor(
             buffer.add(end)
             buffer.add(size)
         } else {
+            // There may be skipped nodes that have to be moved forward
             var index = buffer.size
+
+            @Suppress("NAME_SHADOWING")
+            var size = size
             if (index > 0 && (buffer[index - 4] != Term.ERR || buffer[index - 1] < 0)) {
                 var mustMove = false
                 var scan = index
@@ -168,18 +172,20 @@ class Stack internal constructor(
                     scan -= 4
                 }
                 if (mustMove) {
-                    @Suppress("NAME_SHADOWING")
-                    var size = size
+                    // JS grows the array implicitly on the first (out of bounds)
+                    // write of the loop below and then writes in place; the
+                    // buffer must therefore grow by exactly one record in total,
+                    // however many records get shifted.
+                    buffer.add(0)
+                    buffer.add(0)
+                    buffer.add(0)
+                    buffer.add(0)
                     while (index > 0 && buffer[index - 2] > end) {
-                        // Shift elements forward by 4
-                        buffer.add(0)
-                        buffer.add(0)
-                        buffer.add(0)
-                        buffer.add(0)
-                        buffer[index + 3] = buffer[index - 1]
-                        buffer[index + 2] = buffer[index - 2]
-                        buffer[index + 1] = buffer[index - 3]
+                        // Move this record forward
                         buffer[index] = buffer[index - 4]
+                        buffer[index + 1] = buffer[index - 3]
+                        buffer[index + 2] = buffer[index - 2]
+                        buffer[index + 3] = buffer[index - 1]
                         index -= 4
                         if (size > 4) size -= 4
                     }

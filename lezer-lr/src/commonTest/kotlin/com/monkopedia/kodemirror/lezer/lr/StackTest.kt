@@ -102,4 +102,64 @@ class StackTest {
         // Just verify it returns a boolean without throwing
         assertTrue(canShiftErr || !canShiftErr)
     }
+
+    // --- storeNode (mustSink) ---
+
+    // Mirrors @lezer/lr's Stack.storeNode "there may be skipped nodes that have
+    // to be moved forward" branch: the buffer must grow by exactly one record
+    // (4 ints) no matter how many skipped records get shifted, and the size
+    // decrement applied while shifting must reach the record that is written.
+    @Test
+    fun storeNodeSinkingPastTwoSkippedNodesGrowsBufferByOneRecord() {
+        val p = createParse("let x = 1\n// a\n// b\n")
+        val stack = Stack.start(p, jsonParser.top[0], 0)
+        stack.pos = 20
+        // [term, start, end, size] * 3: one content node then two skipped nodes
+        // that sit after the reduce's end position.
+        stack.buffer = mutableListOf(
+            10, 0, 9, 4,
+            20, 10, 14, 4,
+            21, 15, 19, 4
+        )
+
+        stack.storeNode(30, 0, 9, 8, mustSink = true)
+
+        assertEquals(
+            listOf(
+                10, 0, 9, 4,
+                30, 0, 9, 4,
+                20, 10, 14, 4,
+                21, 15, 19, 4
+            ),
+            stack.buffer.toList()
+        )
+    }
+
+    @Test
+    fun storeNodeSinkingPastOneSkippedNodeGrowsBufferByOneRecord() {
+        val p = createParse("let x = 1\n// a\n")
+        val stack = Stack.start(p, jsonParser.top[0], 0)
+        stack.pos = 15
+        stack.buffer = mutableListOf(
+            10,
+            0,
+            9,
+            4,
+            20,
+            10,
+            14,
+            4
+        )
+
+        stack.storeNode(30, 0, 9, 8, mustSink = true)
+
+        assertEquals(
+            listOf(
+                10, 0, 9, 4,
+                30, 0, 9, 4,
+                20, 10, 14, 4
+            ),
+            stack.buffer.toList()
+        )
+    }
 }
