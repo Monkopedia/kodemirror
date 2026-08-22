@@ -148,6 +148,26 @@ private fun isSpecialKey(key: Key): Boolean = when (key) {
 }
 
 /**
+ * Whether [os] names a member of the macOS keyboard family — the platforms the
+ * `mac` binding overrides and the `Mod` → `Meta` substitution describe.
+ *
+ * iOS is a member deliberately. `platformOsName()` used to answer `"Mac"` on
+ * *every* Kotlin/Native target, so iOS resolved the `mac` overrides by accident
+ * rather than by decision (#217). Now that iOS answers `"iOS"`, this predicate
+ * is the only thing keeping it there — `"iOS"` matches neither `"mac"` nor
+ * `"darwin"`, so an honest OS name without this widening would silently flip
+ * every iOS user from Cmd bindings to Ctrl bindings. Fixing the name and
+ * widening the family are one change, not two, and their net effect on what
+ * anything binds is nil.
+ *
+ * Whether iOS *should* diverge from macOS is a separate product question; this
+ * predicate deliberately preserves shipped behaviour and forecloses nothing.
+ */
+internal fun isMacFamilyOs(os: String): Boolean = os.contains("mac", ignoreCase = true) ||
+    os.contains("darwin", ignoreCase = true) ||
+    os.contains("ios", ignoreCase = true)
+
+/**
  * Resolve the effective key name for a binding on the current platform.
  *
  * Prefers platform-specific overrides (mac/linux/win) when available,
@@ -160,8 +180,7 @@ private fun isSpecialKey(key: Key): Boolean = when (key) {
  *   would resolve to on another platform.
  */
 internal fun resolveBindingKey(binding: KeyBinding, os: String = currentOs): String? {
-    val isMac = os.contains("mac", ignoreCase = true) ||
-        os.contains("darwin", ignoreCase = true)
+    val isMac = isMacFamilyOs(os)
     val platformKey = when {
         isMac -> binding.mac
         os.contains("win", ignoreCase = true) -> binding.win
@@ -206,7 +225,8 @@ private fun normalizeKeyName(name: String): String {
  * The current operating system name, used to resolve platform-specific
  * key bindings. Set this to override automatic detection.
  *
- * Recognized values: `"Mac"`, `"Linux"`, `"Windows"`.
+ * Recognized values: `"Mac"`, `"iOS"`, `"Linux"`, `"Windows"`. Anything
+ * [isMacFamilyOs] accepts resolves the `mac` overrides.
  */
 internal var currentOs: String = platformOsName()
 

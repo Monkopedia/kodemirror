@@ -22,8 +22,6 @@ import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.utf16CodePoint
 
-internal actual fun platformOsName(): String = "Mac"
-
 internal actual fun keyEventCharacter(event: KeyEvent): Char? =
     keyCharFromCodePoint(event.utf16CodePoint)
 

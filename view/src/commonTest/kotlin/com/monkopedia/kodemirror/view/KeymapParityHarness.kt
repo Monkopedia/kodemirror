@@ -144,9 +144,9 @@ private fun pressSpec(name: String): PressSpec {
  * bindings like `KeyBinding(key = "Ctrl-Home", mac = "Meta-Home")` and
  * `KeyBinding(key = "Ctrl-ArrowRight", mac = "Alt-ArrowRight")` — note the two
  * disagree about *which* modifier Mac substitutes, so a blanket `Mod` rule
- * would be wrong too. `platformOsName()` also reports `"Mac"` on every
- * Kotlin/Native target (#217), so a hardcoded `Ctrl` passes on the JVM and
- * fails on macOS and iOS for a reason that is not a bug.
+ * would be wrong too. The Apple targets report `"Mac"` and `"iOS"`, both of
+ * which resolve the `mac` overrides, so a hardcoded `Ctrl` passes on a Linux
+ * JVM and fails on macOS and iOS for a reason that is not a bug.
  *
  * The translation is therefore read out of the keymap itself: find the binding
  * whose name on the capture platform is the key the spec pressed, and press
@@ -271,21 +271,26 @@ fun EditorSession.assertParityCursorAt(pos: Int, line: Int, col: Int, doc: Strin
 }
 
 /**
- * Which modifier this platform binds for the `Mod`-style commands, derived the
- * same way [resolveBindingKey] derives it. Used by the wiring probe to assert
- * that the *other* modifier is inert here.
+ * Run [body] with [currentOs] forced to [os], restoring it afterwards.
+ *
+ * Lets a test state which modifier an OS binds instead of asking the product
+ * what OS it is on and then agreeing with the answer. The helper this replaced
+ * (`isMacPlatform`, derived from [currentOs]) could not fail whatever
+ * `platformOsName()` returned, which is exactly how a hardcoded `"Mac"` on
+ * every Kotlin/Native target survived (#217).
+ *
+ * [resolveBindingKey] reads [currentOs] at dispatch time, so the override takes
+ * effect for every press inside [body] and for nothing outside it.
  */
-val boundDocStartKey: String
-    get() = normalizeKeyName(if (isMacPlatform) "Meta-Home" else "Ctrl-Home")
-
-/** The modifier this platform does *not* bind for document-start. */
-val unboundDocStartKey: String
-    get() = normalizeKeyName(if (isMacPlatform) "Ctrl-Home" else "Meta-Home")
-
-/** True when [currentOs] resolves Mac-flavoured bindings. */
-val isMacPlatform: Boolean
-    get() = currentOs.contains("mac", ignoreCase = true) ||
-        currentOs.contains("darwin", ignoreCase = true)
+fun <T> withOs(os: String, body: () -> T): T {
+    val previous = currentOs
+    currentOs = os
+    try {
+        return body()
+    } finally {
+        currentOs = previous
+    }
+}
 
 /**
  * Press a fully-resolved key name verbatim, bypassing the capture-platform

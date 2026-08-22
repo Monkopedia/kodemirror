@@ -33,21 +33,11 @@ import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asInsert
-import com.monkopedia.kodemirror.view.currentOs
 import com.monkopedia.kodemirror.view.insertAt
 import com.monkopedia.kodemirror.view.keymapOf
+import com.monkopedia.kodemirror.view.withOs
 import kotlin.test.Test
 import kotlin.test.assertTrue
-
-/**
- * The modifier the standard keymap binds clipboard commands to on this platform: Meta where
- * `platformOsName()` reports `"Mac"` (every Kotlin/Native target, and a real Mac on JVM),
- * Ctrl everywhere else.
- */
-private val cutModifier: Key = if (currentOs == "Mac") Key.MetaLeft else Key.CtrlLeft
-
-/** The modifier this platform deliberately does *not* bind clipboard commands to. */
-private val otherModifier: Key = if (currentOs == "Mac") Key.CtrlLeft else Key.MetaLeft
 
 @OptIn(ExperimentalTestApi::class)
 class KeyboardHandlingTest {
@@ -180,48 +170,74 @@ class KeyboardHandlingTest {
     }
 
     /**
-     * Cut is bound to the platform's own modifier, and only to that one.
+     * Cut on the mac family: Cmd+X cuts, Ctrl+X does not.
      *
-     * `standardKeymap` declares `KeyBinding(key = "Ctrl-x", mac = "Meta-x")`, and the view
-     * picks the `mac` override off [currentOs] — which `platformOsName()` reports as `"Mac"`
-     * on every Kotlin/Native target. So Ctrl+X genuinely does not cut on macOS/iOS, exactly
-     * as it does not in CodeMirror 6 or in any other Mac editor. [cutModifier] is derived
-     * from the same value the product reads rather than hard-coded, and both branches are
-     * asserted: the modifier this platform does *not* bind must leave the document alone.
+     * The OS is `"iOS"` on purpose. `standardKeymap` declares
+     * `KeyBinding(key = "Ctrl-x", mac = "Meta-x")`, and `"iOS"` only reaches that `mac`
+     * override because `isMacFamilyOs` puts the iOS family in the mac family — drop that
+     * widening and this test moves to Ctrl and fails, which is the whole safeguard around
+     * #217. Cmd+X-not-Ctrl+X is also what CodeMirror 6 and every other Mac editor do.
+     *
+     * The expectation is a written-down literal rather than something derived from
+     * `currentOs`. The version this replaced read the modifier off the same value the
+     * product resolves bindings from, so it agreed with `platformOsName()` whatever
+     * `platformOsName()` said — it would have confirmed a wrong OS name rather than caught
+     * it. Which OS name each target reports is pinned separately, per target, by
+     * `PlatformOsNameTest`.
      */
     @Test
-    fun modX_cutsSelectedText() = runEditorTest(
+    fun modX_cutsSelectedText_onMacFamily() = assertCutModifier(
+        os = "iOS",
+        bound = Key.MetaLeft,
+        inert = Key.CtrlLeft
+    )
+
+    /** Cut off the mac family: Ctrl+X cuts, Cmd+X does not. */
+    @Test
+    fun modX_cutsSelectedText_offMacFamily() = assertCutModifier(
+        os = "Linux",
+        bound = Key.CtrlLeft,
+        inert = Key.MetaLeft
+    )
+
+    /**
+     * Drive the real key path on [os] and assert that [bound] cuts the selection while
+     * [inert] leaves the document and the selection exactly as they were.
+     */
+    private fun assertCutModifier(os: String, bound: Key, inert: Key) = runEditorTest(
         doc = "Hello World",
         extensions = keymapExt
     ) { holder ->
-        // Focus
-        onNodeWithTag("KodeMirror").performMouseInput {
-            click(Offset(10f, 15f))
-        }
-        waitForIdle()
+        withOs(os) {
+            // Focus
+            onNodeWithTag("KodeMirror").performMouseInput {
+                click(Offset(10f, 15f))
+            }
+            waitForIdle()
 
-        // Select "Hello" (positions 0-5)
-        holder.session.dispatch(
-            TransactionSpec(
-                selection = SelectionSpec.EditorSelectionSpec(
-                    EditorSelection.single(DocPos(0), DocPos(5))
+            // Select "Hello" (positions 0-5)
+            holder.session.dispatch(
+                TransactionSpec(
+                    selection = SelectionSpec.EditorSelectionSpec(
+                        EditorSelection.single(DocPos(0), DocPos(5))
+                    )
                 )
             )
-        )
-        waitForIdle()
-        holder.assertSelectionNotEmpty()
+            waitForIdle()
+            holder.assertSelectionNotEmpty()
 
-        // The modifier this platform does NOT bind must be inert — not a cut, and not a
-        // literal "x" either (the printable-character fallback skips modified keys).
-        pressX(with = otherModifier)
-        waitForIdle()
-        holder.assertDoc("Hello World")
-        holder.assertSelectionNotEmpty()
+            // The modifier this OS does NOT bind must be inert — not a cut, and not a
+            // literal "x" either (the printable-character fallback skips modified keys).
+            pressX(with = inert)
+            waitForIdle()
+            holder.assertDoc("Hello World")
+            holder.assertSelectionNotEmpty()
 
-        // The bound one cuts.
-        pressX(with = cutModifier)
-        waitForIdle()
-        holder.assertDoc(" World")
+            // The bound one cuts.
+            pressX(with = bound)
+            waitForIdle()
+            holder.assertDoc(" World")
+        }
     }
 
     private fun ComposeUiTest.pressX(with: Key) {

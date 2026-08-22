@@ -59,27 +59,41 @@ class KeymapParityTest {
      * `ClipboardCommandsTest` probes the `expect`/`actual` it depends on.
      *
      * `standardKeymap` binds document-start as `Ctrl-Home` on non-Mac and
-     * `Meta-Home` on Mac, and `platformOsName()` reports `"Mac"` on every
-     * Kotlin/Native target (#217). A twin that hardcoded `Ctrl` would pass on
-     * the JVM and fail on macOS and iOS for a reason that is not a bug — this
-     * exact failure already happened in #200 — so this test states which
-     * modifier is live here and that the other one is inert.
+     * `Meta-Home` on the mac family. A twin that hardcoded `Ctrl` would pass on
+     * a Linux JVM and fail on macOS and iOS for a reason that is not a bug —
+     * this exact failure already happened in #200 — so this test states which
+     * modifier each platform binds and that the other one is inert there.
+     *
+     * The OS is named for each case rather than read out of [currentOs]. The
+     * earlier version derived its expectation from the same value the product
+     * resolves bindings from, so it agreed with `platformOsName()` no matter
+     * what `platformOsName()` said — including the hardcoded `"Mac"` it
+     * returned on every Kotlin/Native target (#217). `"iOS"` is listed
+     * explicitly because it is the case that widening `isMacFamilyOs` keeps
+     * working: without that widening, iOS falls to the `Ctrl` row here.
      */
     @Test
     fun documentStartUsesThePlatformModifier() {
+        assertDocumentStart(os = "Mac", bound = "Meta-Home", inert = "Ctrl-Home")
+        assertDocumentStart(os = "iOS", bound = "Meta-Home", inert = "Ctrl-Home")
+        assertDocumentStart(os = "Linux", bound = "Ctrl-Home", inert = "Meta-Home")
+        assertDocumentStart(os = "Windows", bound = "Ctrl-Home", inert = "Meta-Home")
+    }
+
+    private fun assertDocumentStart(os: String, bound: String, inert: String) = withOs(os) {
         val editor = parityEditor()
         editor.press("Ctrl-End")
-        assertEquals(PARITY_DOC_LENGTH, editor.cursorPos, "setup: cursor at document end")
+        assertEquals(PARITY_DOC_LENGTH, editor.cursorPos, "setup: cursor at document end on $os")
 
-        editor.pressResolved(unboundDocStartKey)
+        editor.pressResolved(inert)
         assertEquals(
             PARITY_DOC_LENGTH,
             editor.cursorPos,
-            "$unboundDocStartKey is not bound on $currentOs and must do nothing"
+            "$inert is not bound on $os and must do nothing"
         )
 
-        editor.pressResolved(boundDocStartKey)
-        assertEquals(0, editor.cursorPos, "$boundDocStartKey is the binding on $currentOs")
+        editor.pressResolved(bound)
+        assertEquals(0, editor.cursorPos, "$bound is the binding on $os")
     }
 
     // ─── Standard: arrow keys ───────────────────────────────────────────────
