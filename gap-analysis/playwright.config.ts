@@ -52,6 +52,7 @@ export default defineConfig({
         "**/performance.spec.ts",
         "**/cm6-reference-capture.spec.ts",
         "**/keymap-expectations-capture.spec.ts",
+        "**/navigation-selection-expectations-capture.spec.ts",
       ],
     },
     {
@@ -78,6 +79,16 @@ export default defineConfig({
       // differential projects above.
       name: "keymap-expectations",
       testMatch: "tests/keymap-expectations-capture.spec.ts",
+      use: {
+        viewport: { width: 800, height: 600 },
+        browserName: "chromium",
+      },
+    },
+    {
+      // Same capture contract as `keymap-expectations`, for the
+      // navigation.spec.ts + selection.spec.ts twin batch (#196).
+      name: "navigation-selection-expectations",
+      testMatch: "tests/navigation-selection-expectations-capture.spec.ts",
       use: {
         viewport: { width: 800, height: 600 },
         browserName: "chromium",

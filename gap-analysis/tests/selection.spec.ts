@@ -8,6 +8,7 @@ test.describe("Selection", () => {
     if (km) await km.press("Control+Home");
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/NavigationSelectionParityTest.kt shiftRightExtendSelectionRight
   test("Shift+Right - extend selection right", async ({ cm6, km }) => {
     await cm6.press("Shift+ArrowRight");
     if (km) await km.press("Shift+ArrowRight");
@@ -23,6 +24,7 @@ test.describe("Selection", () => {
     }
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/NavigationSelectionParityTest.kt shiftLeftExtendSelectionLeft
   test("Shift+Left - extend selection left", async ({ cm6, km }) => {
     for (let i = 0; i < 5; i++) {
       await cm6.press("ArrowRight");
@@ -42,6 +44,7 @@ test.describe("Selection", () => {
     }
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/input/NavigationSelectionLayoutParityTest.kt shiftDownExtendSelectionDown
   test("Shift+Down - extend selection down", async ({ cm6, km }) => {
     await cm6.press("Shift+ArrowDown");
     if (km) await km.press("Shift+ArrowDown");
@@ -56,6 +59,7 @@ test.describe("Selection", () => {
     }
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/NavigationSelectionParityTest.kt ctrlShiftRightSelectWordRight
   test("Ctrl+Shift+Right - select word right", async ({ cm6, km }) => {
     await cm6.press("Control+Shift+ArrowRight");
     if (km) await km.press("Control+Shift+ArrowRight");
@@ -70,6 +74,7 @@ test.describe("Selection", () => {
     }
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/NavigationSelectionParityTest.kt ctrlShiftLeftSelectWordLeft
   test("Ctrl+Shift+Left - select word left", async ({ cm6, km }) => {
     await cm6.press("End");
     if (km) await km.press("End");
@@ -87,6 +92,7 @@ test.describe("Selection", () => {
     }
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/NavigationSelectionParityTest.kt shiftHomeSelectToLineStart
   test("Shift+Home - select to line start", async ({ cm6, km }) => {
     for (let i = 0; i < 10; i++) {
       await cm6.press("ArrowRight");
@@ -106,6 +112,7 @@ test.describe("Selection", () => {
     }
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/NavigationSelectionParityTest.kt shiftEndSelectToLineEnd
   test("Shift+End - select to line end", async ({ cm6, km }) => {
     await cm6.press("Shift+End");
     if (km) await km.press("Shift+End");
@@ -120,6 +127,7 @@ test.describe("Selection", () => {
     }
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/NavigationSelectionParityTest.kt ctrlASelectAll
   test("Ctrl+A - select all", async ({ cm6, km }) => {
     await cm6.press("Control+a");
     if (km) await km.press("Control+a");
@@ -136,6 +144,7 @@ test.describe("Selection", () => {
     }
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/NavigationSelectionParityTest.kt typingReplacesSelection
   test("typing replaces selection", async ({ cm6, km }) => {
     await cm6.press("Control+Shift+ArrowRight");
     if (km) await km.press("Control+Shift+ArrowRight");
