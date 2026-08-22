@@ -6,6 +6,7 @@ test.describe("Navigation", () => {
     if (km) await km.focus();
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/NavigationSelectionParityTest.kt arrowKeysRight
   test("arrow keys - right", async ({ cm6, km }) => {
     await cm6.press("Control+Home");
     if (km) await km.press("Control+Home");
@@ -23,6 +24,7 @@ test.describe("Navigation", () => {
     }
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/NavigationSelectionParityTest.kt arrowKeysLeft
   test("arrow keys - left", async ({ cm6, km }) => {
     await cm6.press("Control+Home");
     if (km) await km.press("Control+Home");
@@ -46,6 +48,7 @@ test.describe("Navigation", () => {
     }
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/input/NavigationSelectionLayoutParityTest.kt arrowKeysDown
   test("arrow keys - down", async ({ cm6, km }) => {
     await cm6.press("Control+Home");
     if (km) await km.press("Control+Home");
@@ -63,6 +66,7 @@ test.describe("Navigation", () => {
     }
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/input/NavigationSelectionLayoutParityTest.kt arrowKeysUp
   test("arrow keys - up", async ({ cm6, km }) => {
     await cm6.press("Control+End");
     if (km) await km.press("Control+End");
@@ -79,6 +83,7 @@ test.describe("Navigation", () => {
     }
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/NavigationSelectionParityTest.kt homeKey
   test("Home key", async ({ cm6, km }) => {
     await cm6.press("Control+Home");
     if (km) await km.press("Control+Home");
@@ -99,6 +104,7 @@ test.describe("Navigation", () => {
     }
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/NavigationSelectionParityTest.kt endKey
   test("End key", async ({ cm6, km }) => {
     await cm6.press("Control+Home");
     if (km) await km.press("Control+Home");
@@ -115,6 +121,7 @@ test.describe("Navigation", () => {
     }
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/NavigationSelectionParityTest.kt ctrlHomeGoToDocumentStart
   test("Ctrl+Home - go to document start", async ({ cm6, km }) => {
     await cm6.press("Control+End");
     if (km) await km.press("Control+End");
@@ -131,6 +138,7 @@ test.describe("Navigation", () => {
     }
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/NavigationSelectionParityTest.kt ctrlEndGoToDocumentEnd
   test("Ctrl+End - go to document end", async ({ cm6, km }) => {
     await cm6.press("Control+Home");
     if (km) await km.press("Control+Home");
@@ -146,6 +154,7 @@ test.describe("Navigation", () => {
     }
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/NavigationSelectionParityTest.kt ctrlRightWordMovementForward
   test("Ctrl+Right - word movement forward", async ({ cm6, km }) => {
     await cm6.press("Control+Home");
     if (km) await km.press("Control+Home");
@@ -162,6 +171,7 @@ test.describe("Navigation", () => {
     }
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/NavigationSelectionParityTest.kt ctrlLeftWordMovementBackward
   test("Ctrl+Left - word movement backward", async ({ cm6, km }) => {
     await cm6.press("Control+Home");
     if (km) await km.press("Control+Home");
@@ -179,6 +189,7 @@ test.describe("Navigation", () => {
     }
   });
 
+  // parity: view/src/commonTest/kotlin/com/monkopedia/kodemirror/view/input/NavigationSelectionLayoutParityTest.kt columnMemoryAcrossLines
   test("column memory across lines", async ({ cm6, km }) => {
     await cm6.press("Control+Home");
     if (km) await km.press("Control+Home");

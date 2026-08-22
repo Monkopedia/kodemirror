@@ -106,8 +106,8 @@ raw pixel offsets mean the same thing on every target; see #200 for why that pin
 | Playwright spec | tests | harness | note |
 |---|---|---|---|
 | `keymap-commands` | 60 | mixed | see the breakdown below |
-| `navigation` | 11 | mostly `commonTest` | `column memory across lines` needs layout |
-| `selection` | 9 | `commonTest` | pure selection arithmetic |
+| `navigation` | 11 | mixed | landed 8 plain + 3 layout — see the breakdown below |
+| `selection` | 9 | mixed | landed 8 plain + 1 layout — see the breakdown below |
 | `editing` | 6 | `commonTest` | doc mutations + history |
 | `typing` | 6 | `runEditorTest` | drives the text-input path |
 | `clipboard` | 5 | `commonTest` | platform-split already exists — see `ClipboardCommandsTest` |
@@ -155,6 +155,44 @@ Kotlin/Native target (#217). A twin that hardcodes `Ctrl` passes on the JVM and 
 iOS for a reason that is not a bug. Read the modifier from the same `currentOs` the product reads,
 and assert both branches: the unbound modifier must leave the document untouched, and the bound one
 must act.
+
+### `navigation` + `selection` (the second batch)
+
+The 20 tests of `navigation.spec.ts` and `selection.spec.ts` landed together as **16 plain
+`commonTest`** (`view/src/commonTest/.../NavigationSelectionParityTest.kt`) and **4 under
+`runEditorTest`** (`view/src/commonTest/.../input/NavigationSelectionLayoutParityTest.kt`), against
+CM6 literals captured into `gap-analysis/fixtures/cm6-navigation-selection-expectations.json` by
+`navigation-selection-expectations-capture.spec.ts`.
+
+The two rows above originally read *"mostly `commonTest`, `column memory across lines` needs
+layout"* and *"`commonTest`, pure selection arithmetic"*. Applying the setup-sequence rule rather
+than the assertion rule moves four tests, not one:
+
+- `arrow keys - down` and `arrow keys - up` are vertical outright.
+- `column memory across lines` was predicted correctly.
+- **`Shift+Down - extend selection down` is the one the "pure selection arithmetic" line missed.**
+  Its assertion is two integers and nothing else, which is exactly the shape that makes a headless
+  twin look safe — and `Shift-ArrowDown` resolves through `moveVertically`, so headless it would
+  have frozen `anchor = 0, head = 0` and passed while asserting the selection never extended.
+
+The remaining 16 have no vertical motion anywhere in their sequence: horizontal arrows, `Home`/`End`
+(both smart and document-wide), word motion, the Shift- and Ctrl-Shift- variants of those, select-all,
+and typing over a selection.
+
+`selection.spec.ts` presses `Control+Home` in its `beforeEach`, and the twins reproduce it rather
+than starting from the document origin implicitly — same reason the batch reproduces every other
+setup step verbatim.
+
+Nine of the 20 sequences are step-for-step identical to a `keymap-commands` sequence, and so to one
+of #233's twins: `arrow keys - right`, `arrow keys - down`, `Ctrl+Home - go to document start`,
+`Ctrl+End - go to document end`, `Ctrl+Right - word movement forward`,
+`Ctrl+Left - word movement backward`, `Shift+Down - extend selection down`,
+`Ctrl+Shift+Right - select word right` and `Ctrl+Shift+Left - select word left`. They are still
+written out per Playwright test rather than deduplicated onto the existing twin, because the
+`parity:` annotation is a **per-test** link: pointing two spec tests at one twin leaves the twin able
+to name only one of them, and deleting either spec test would then silently orphan the other half of
+the link. That is the decay mode the convention exists to prevent, and a duplicated twenty-line test
+is a cheaper price than a link that cannot be audited by `grep`.
 
 ### Do not write vim twins — measured, not assumed
 

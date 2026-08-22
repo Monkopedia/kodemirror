@@ -242,6 +242,35 @@ val EditorSession.cursorPos: Int
     get() = state.selection.main.head.value
 
 /**
+ * The cursor's 1-based line number, the same field the fixture's `getState()`
+ * reports as `cursor.line`.
+ */
+val EditorSession.cursorLine: Int
+    get() = state.doc.lineAt(state.selection.main.head).number.value
+
+/**
+ * The cursor's column, the same field the fixture's `getState()` reports as
+ * `cursor.col`: its offset from the start of its line.
+ */
+val EditorSession.cursorCol: Int
+    get() {
+        val head = state.selection.main.head
+        return head.value - state.doc.lineAt(head).from.value
+    }
+
+/**
+ * [assertParityCursor] for the sequences whose Playwright counterpart compares
+ * `cursor.line` and `cursor.col` as well as the offset — `navigation.spec.ts`
+ * asserts those directly, so a twin that checked only the offset would be
+ * making a weaker claim than the test it twins.
+ */
+fun EditorSession.assertParityCursorAt(pos: Int, line: Int, col: Int, doc: String = PARITY_DOC) {
+    assertParityCursor(pos, doc)
+    assertEquals(line, cursorLine, "cursor line")
+    assertEquals(col, cursorCol, "cursor column")
+}
+
+/**
  * Which modifier this platform binds for the `Mod`-style commands, derived the
  * same way [resolveBindingKey] derives it. Used by the wiring probe to assert
  * that the *other* modifier is inert here.
