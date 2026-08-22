@@ -149,12 +149,22 @@ plain `commonTest`, resolving the binding through the keymap and running the res
 against an `EditorState`. That is the probe-the-wiring pattern `ClipboardCommandsTest` uses, which
 asserts against the binding the platform actually has rather than a hardcoded modifier.
 
-**Derive the modifier, never hardcode it.** `standardKeymap` declares bindings such as
-`KeyBinding(key = "Ctrl-x", mac = "Meta-x")`, and `platformOsName()` reports `"Mac"` on *every*
-Kotlin/Native target (#217). A twin that hardcodes `Ctrl` passes on the JVM and fails on macOS and
-iOS for a reason that is not a bug. Read the modifier from the same `currentOs` the product reads,
-and assert both branches: the unbound modifier must leave the document untouched, and the bound one
-must act.
+**Derive the press from the keymap, never hardcode it.** `standardKeymap` declares bindings
+such as `KeyBinding(key = "Ctrl-x", mac = "Meta-x")`, and the Apple targets report `"Mac"` and
+`"iOS"`, both of which resolve the `mac` overrides. A twin that hardcodes `Ctrl` passes on a Linux
+JVM and fails on macOS and iOS for a reason that is not a bug, so `press()` looks the binding up
+and presses whatever it resolves to here.
+
+**But never derive the *expectation* the same way.** A twin that asks `currentOs` which modifier
+is bound and then asserts that modifier is bound has asserted nothing: it agrees with
+`platformOsName()` whatever `platformOsName()` says, which is how a hardcoded `"Mac"` on every
+Kotlin/Native target went unnoticed (#217) — the same shape as #171, where `coordsAtPos` and the
+click hit-test both read one `TextLayoutResult` and the round-trip could not see a divergence.
+Name the OS per case and write the mapping down (`"Mac"`/`"iOS"` → `Meta`, `"Linux"`/`"Windows"`
+→ `Ctrl`), forcing it with `withOs`, and assert both branches: the unbound modifier must leave the
+document untouched, and the bound one must act. What each *target* must call itself is pinned
+separately and per target, by `PlatformOsNameTest` in `macosTest`/`iosTest` — the only place that
+can catch a wrong OS name, because it is the only one that already knows the answer.
 
 ### `navigation` + `selection` (the second batch)
 
