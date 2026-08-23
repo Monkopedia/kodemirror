@@ -1098,7 +1098,7 @@ class TreeCursor internal constructor(root: Tree, internal val mode: Int = 0) : 
                 }
             )
         }
-        if (stack.isNotEmpty()) return yieldBuf(stack.removeLast())
+        if (stack.isNotEmpty()) return yieldBuf(stack.removeAt(stack.lastIndex))
         val parentNode = if (mode and IterMode.INCLUDE_ANONYMOUS != 0) {
             buffer!!.parent
         } else {
@@ -1451,8 +1451,8 @@ private fun buildTree(spec: TreeBuildSpec): Tree {
         val localChildren = mutableListOf<Any>()
         val localPositions = mutableListOf<Int>()
         while (children.size > i) {
-            localChildren.add(children.removeLast())
-            localPositions.add(positions.removeLast() + base - from)
+            localChildren.add(children.removeAt(children.lastIndex))
+            localPositions.add(positions.removeAt(positions.lastIndex) + base - from)
         }
         children.add(
             makeTree(

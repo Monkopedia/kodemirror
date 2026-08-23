@@ -174,7 +174,7 @@ val nginx: StreamParser<NginxState> = object : StreamParser<NginxState> {
         }
 
         if (context == "rule" && type != null && Regex("^[{};]$").containsMatchIn(type)) {
-            state.stack.removeLast()
+            state.stack.removeAt(state.stack.lastIndex)
         }
         if (type == "{") {
             if (context == "@media") {
@@ -183,7 +183,7 @@ val nginx: StreamParser<NginxState> = object : StreamParser<NginxState> {
                 state.stack.add("{")
             }
         } else if (type == "}") {
-            if (state.stack.isNotEmpty()) state.stack.removeLast()
+            if (state.stack.isNotEmpty()) state.stack.removeAt(state.stack.lastIndex)
         } else if (type == "@media") {
             state.stack.add("@media")
         } else if (context == "{" && type != "comment") {

@@ -48,7 +48,7 @@ fun treeToString(tree: Tree): String {
                 val name = nodeRef.type.name
                 val isError = nodeRef.type.isError
                 if (!shouldIgnore(name, isError)) {
-                    val (nodeName, children) = stack.removeLast()
+                    val (nodeName, children) = stack.removeAt(stack.lastIndex)
                     val str = if (children.isEmpty()) {
                         nodeName
                     } else {

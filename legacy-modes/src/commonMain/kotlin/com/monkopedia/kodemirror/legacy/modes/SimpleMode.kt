@@ -89,7 +89,7 @@ fun simpleMode(config: SimpleModeConfig): StreamParser<SimpleModeState> {
         override fun token(stream: StringStream, state: SimpleModeState): String? {
             val pend = state.pending
             if (pend != null && pend.isNotEmpty()) {
-                val p = pend.removeFirst()
+                val p = pend.removeAt(0)
                 if (pend.isEmpty()) state.pending = null
                 stream.pos += p.text.length
                 return p.token
@@ -113,7 +113,7 @@ fun simpleMode(config: SimpleModeConfig): StreamParser<SimpleModeState> {
                     } else if (rule.pop) {
                         val stack = state.stack
                         if (stack != null && stack.isNotEmpty()) {
-                            state.state = stack.removeLast()
+                            state.state = stack.removeAt(stack.lastIndex)
                         }
                     }
                     if (rule.indent) {
@@ -122,7 +122,7 @@ fun simpleMode(config: SimpleModeConfig): StreamParser<SimpleModeState> {
                         )
                     }
                     if (rule.dedent) {
-                        state.indent?.removeLast()
+                        state.indent?.let { it.removeAt(it.lastIndex) }
                     }
                     val token = resolveToken(rule.token, matches)
                     val groups = matches.groupValues

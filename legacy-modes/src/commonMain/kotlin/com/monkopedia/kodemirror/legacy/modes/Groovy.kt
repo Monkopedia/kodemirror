@@ -169,7 +169,7 @@ private fun groovyMakeStringTokenizer(
             }
             escaped = !escaped && next == "\\"
         }
-        if (end) state.tokenize.removeLast()
+        if (end) state.tokenize.removeAt(state.tokenize.lastIndex)
         "string"
     }
     return fn
@@ -181,7 +181,7 @@ private fun groovyTokenBaseUntilBrace(): (StringStream, GroovyState) -> String? 
         if (stream.peek() == "}") {
             depth--
             if (depth == 0) {
-                state.tokenize.removeLast()
+                state.tokenize.removeAt(state.tokenize.lastIndex)
                 return@fn state.tokenize.last()(stream, state)
             }
         } else if (stream.peek() == "{") {
@@ -204,7 +204,7 @@ private fun groovyVariableDerefTokenizer(): (StringStream, GroovyState) -> Strin
                 }
                 ) == null
         ) {
-            state.tokenize.removeLast()
+            state.tokenize.removeAt(state.tokenize.lastIndex)
         }
         if (next == null) return@fn state.tokenize.last()(stream, state)
         return@fn if (next.value[0] == '.') null else "variable"
@@ -217,7 +217,7 @@ private fun groovyTokenComment(stream: StringStream, state: GroovyState): String
     while (true) {
         val ch = stream.next() ?: break
         if (ch == "/" && maybeEnd) {
-            state.tokenize.removeLast()
+            state.tokenize.removeAt(state.tokenize.lastIndex)
             break
         }
         maybeEnd = ch == "*"

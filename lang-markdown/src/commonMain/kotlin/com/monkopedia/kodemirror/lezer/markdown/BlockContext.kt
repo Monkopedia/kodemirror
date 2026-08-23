@@ -192,7 +192,7 @@ class BlockContext(
     }
 
     internal fun finishContext() {
-        val cx = stack.removeLast()
+        val cx = stack.removeAt(stack.lastIndex)
         val top = stack.last()
         top.addChild(cx.toTree(parser.nodeSet), cx.from - top.from)
         block = top

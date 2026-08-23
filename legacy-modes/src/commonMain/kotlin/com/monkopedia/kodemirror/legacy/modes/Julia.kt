@@ -145,15 +145,19 @@ private fun juliaTokenBase(stream: StringStream, state: JuliaState): String? {
     }
 
     if (state.nestedArrays > 0 && ch == "]") {
-        while (state.scopes.isNotEmpty() && state.scopes.last() != "[") state.scopes.removeLast()
-        if (state.scopes.isNotEmpty()) state.scopes.removeLast()
+        while (state.scopes.isNotEmpty() && state.scopes.last() != "[") {
+            state.scopes.removeAt(state.scopes.lastIndex)
+        }
+        if (state.scopes.isNotEmpty()) state.scopes.removeAt(state.scopes.lastIndex)
         state.nestedArrays--
         state.leavingExpr = true
     }
 
     if (state.nestedGenerators > 0 && ch == ")") {
-        while (state.scopes.isNotEmpty() && state.scopes.last() != "(") state.scopes.removeLast()
-        if (state.scopes.isNotEmpty()) state.scopes.removeLast()
+        while (state.scopes.isNotEmpty() && state.scopes.last() != "(") {
+            state.scopes.removeAt(state.scopes.lastIndex)
+        }
+        if (state.scopes.isNotEmpty()) state.scopes.removeAt(state.scopes.lastIndex)
         state.nestedGenerators--
         state.leavingExpr = true
     }
@@ -171,7 +175,7 @@ private fun juliaTokenBase(stream: StringStream, state: JuliaState): String? {
     }
 
     if (stream.match(juliaClosers, consume = false) != null) {
-        if (state.scopes.isNotEmpty()) state.scopes.removeLast()
+        if (state.scopes.isNotEmpty()) state.scopes.removeAt(state.scopes.lastIndex)
     }
 
     if (stream.match(Regex("^::(?![:\$])")) != null) {

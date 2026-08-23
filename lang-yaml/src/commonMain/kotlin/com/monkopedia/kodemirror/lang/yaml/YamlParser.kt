@@ -291,7 +291,7 @@ private fun scanBrackets(input: InputStream): Boolean {
             if (!readQuoted(input, true)) return false
         } else if (input.next == 93 /* ']' */ || input.next == 125 /* '}' */) {
             if (bracketStack.lastOrNull() != input.next - 2) return false
-            bracketStack.removeLast()
+            bracketStack.removeAt(bracketStack.lastIndex)
             input.advance()
             if (bracketStack.isEmpty()) return true
         } else if (input.next < 0 || input.pos > end || isBreakSpace(input.next)) {

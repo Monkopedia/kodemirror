@@ -169,7 +169,7 @@ class InlineContext(val parser: MarkdownParser, val text: String, val offset: In
 
     fun takeContent(startIndex: Int): List<Element> {
         val content = resolveMarkers(startIndex)
-        while (parts.size > startIndex) parts.removeLast()
+        while (parts.size > startIndex) parts.removeAt(parts.lastIndex)
         return content
     }
 

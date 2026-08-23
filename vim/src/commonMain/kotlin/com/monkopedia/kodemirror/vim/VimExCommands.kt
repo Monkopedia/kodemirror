@@ -901,7 +901,7 @@ private fun exPutCommand(cm: VimEditor, params: ExParams, matchIndent: Boolean) 
     val args = params.args?.toMutableList() ?: mutableListOf()
     if (args.isNotEmpty() && args[0] == "!") {
         actionArgs.after = false
-        args.removeFirst()
+        args.removeAt(0)
     }
     if (args.isNotEmpty()) {
         actionArgs.registerName = args[0]

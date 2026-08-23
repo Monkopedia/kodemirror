@@ -54,7 +54,7 @@ val spreadsheet: StreamParser<SpreadsheetState> = object : StreamParser<Spreadsh
                 while (state.stack.firstOrNull() == "string" && !stream.eol()) {
                     if (stream.peek() == state.stringType) {
                         stream.next()
-                        state.stack.removeFirst()
+                        state.stack.removeAt(0)
                     } else if (stream.peek() == "\\") {
                         stream.next()
                         stream.next()
@@ -71,7 +71,7 @@ val spreadsheet: StreamParser<SpreadsheetState> = object : StreamParser<Spreadsh
                                 stream.match(Regex("^\\\\.")) != null
                             )
                     ) {
-                        state.stack.removeFirst()
+                        state.stack.removeAt(0)
                     }
                 }
                 return "operator"
