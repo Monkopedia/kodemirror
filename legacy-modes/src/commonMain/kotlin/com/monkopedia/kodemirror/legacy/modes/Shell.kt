@@ -133,7 +133,7 @@ private fun shellTokenString(quote: String, style: String): (StringStream, Shell
         while (true) {
             val next = stream.next() ?: break
             if (next == close && !escaped) {
-                state.tokens.removeFirst()
+                state.tokens.removeAt(0)
                 break
             } else if (next == "$" &&
                 !escaped &&
@@ -192,13 +192,13 @@ private fun shellTokenDollar(stream: StringStream, state: ShellState): String? {
     if (ch != null && !Regex("\\d").containsMatchIn(ch)) {
         stream.eatWhile(Regex("\\w"))
     }
-    state.tokens.removeFirst()
+    state.tokens.removeAt(0)
     return "def"
 }
 
 private fun shellTokenHeredoc(delim: String): (StringStream, ShellState) -> String? =
     { stream, state ->
-        if (stream.sol() && stream.string == delim) state.tokens.removeFirst()
+        if (stream.sol() && stream.string == delim) state.tokens.removeAt(0)
         stream.skipToEnd()
         "string.special"
     }

@@ -59,7 +59,7 @@ private fun ebnfTokenize(stream: StringStream, state: EbnfState): String? {
             while (state.stack.firstOrNull() == EBNF_STATE_STRING && !stream.eol()) {
                 if (stream.peek() == state.stringType) {
                     stream.next()
-                    state.stack.removeFirst()
+                    state.stack.removeAt(0)
                 } else if (stream.peek() == "\\") {
                     stream.next()
                     stream.next()
@@ -72,12 +72,12 @@ private fun ebnfTokenize(stream: StringStream, state: EbnfState): String? {
         EBNF_STATE_COMMENT -> {
             while (state.stack.firstOrNull() == EBNF_STATE_COMMENT && !stream.eol()) {
                 if (state.commentType == EBNF_COMMENT_SLASH && stream.match("*/")) {
-                    state.stack.removeFirst()
+                    state.stack.removeAt(0)
                     state.commentType = null
                 } else if (state.commentType == EBNF_COMMENT_PARENTHESIS &&
                     stream.match("*)")
                 ) {
-                    state.stack.removeFirst()
+                    state.stack.removeAt(0)
                     state.commentType = null
                 } else {
                     stream.match(Regex("^.[^*]*"))
@@ -88,7 +88,7 @@ private fun ebnfTokenize(stream: StringStream, state: EbnfState): String? {
         EBNF_STATE_CHARACTER_CLASS -> {
             while (state.stack.firstOrNull() == EBNF_STATE_CHARACTER_CLASS && !stream.eol()) {
                 if (stream.match(Regex("^[^\\]\\\\]+")) == null && stream.next() == null) {
-                    state.stack.removeFirst()
+                    state.stack.removeAt(0)
                 }
             }
             "operator"

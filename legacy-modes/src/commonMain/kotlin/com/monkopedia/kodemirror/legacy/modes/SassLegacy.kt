@@ -216,7 +216,7 @@ private fun sassIndent(state: SassState, stream: StringStream) {
 
 private fun sassDedent(state: SassState) {
     if (state.scopes.size == 1) return
-    state.scopes.removeFirst()
+    state.scopes.removeAt(0)
 }
 
 private fun sassTokenBase(stream: StringStream, state: SassState): String? {

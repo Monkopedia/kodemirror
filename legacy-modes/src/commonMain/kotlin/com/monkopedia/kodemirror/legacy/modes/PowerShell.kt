@@ -150,7 +150,7 @@ private fun psTokenBase(stream: StringStream, state: PowerShellState): String? {
     val parent = state.returnStack.lastOrNull()
     if (parent != null && parent.shouldReturnFrom(state)) {
         state.tokenize = parent.tokenize
-        state.returnStack.removeLast()
+        state.returnStack.removeAt(state.returnStack.lastIndex)
         return state.tokenize(stream, state)
     }
 

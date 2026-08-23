@@ -78,7 +78,7 @@ private fun eiffelReadQuoted(quote: String, style: String): (StringStream, Eiffe
         while (true) {
             val ch = stream.next() ?: break
             if (ch == quote && !escaped) {
-                state.tokenize.removeLast()
+                state.tokenize.removeAt(state.tokenize.lastIndex)
                 break
             }
             escaped = !escaped && ch == "%"

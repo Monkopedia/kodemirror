@@ -57,7 +57,7 @@ class Line {
         indent = 0
         forwardInner()
         depth = 1
-        while (markers.isNotEmpty()) markers.removeLast()
+        while (markers.isNotEmpty()) markers.removeAt(markers.lastIndex)
     }
 
     fun moveBase(to: Int) {

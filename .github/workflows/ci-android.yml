@@ -64,8 +64,20 @@ jobs:
       #  * `pixel_6` (1080x2400) comfortably contains the largest test viewport, which is
       #    800x600 px — the harness pins `LocalDensity` to `Density(1f, 1f)`, so dp == px and the
       #    device's own density does not enter into it.
-      #  * One level, not a matrix: the expected failure modes are environmental, not
+      #  * One level, not a matrix: most expected failure modes are environmental rather than
       #    API-level-specific. A matrix can be added if one ever proves otherwise.
+      #
+      # ⚠️  THE LEVEL MUST STAY BELOW 35. This is not an arbitrary "somewhere between minSdk
+      #    and compileSdk" choice any more — it is the regression guard for #258. JDK 21's
+      #    `SequencedCollection` methods (`List.removeLast()`/`removeFirst()`/`getFirst()`/
+      #    `getLast()`/`addFirst()`/`addLast()`/`reversed()`) arrive on Android at **API 35**.
+      #    A Kotlin call that binds to one of them compiles cleanly, runs fine on the host JDK
+      #    and on API 35+, and throws `java.lang.NoSuchMethodError` on API 24–34 — the whole
+      #    range this library declares. That is exactly how #258 shipped in 0.3.5, and this job
+      #    at API 34 is what caught it (35 of 92 tests). Bumping `api-level` to 35 or 36 would
+      #    put `SequencedCollection` on the device, and the entire bug class would stop
+      #    reproducing here with nothing turning red — silent loss of coverage, not a failure.
+      #    If a newer level is ever wanted, ADD it as a matrix entry; do not replace 34.
       - name: Run instrumented tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
