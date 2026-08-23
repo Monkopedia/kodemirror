@@ -38,6 +38,22 @@ kotlin {
             implementation(compose.desktop.uiTestJUnit4)
             implementation(compose.desktop.currentOs)
         }
+        // Instrumented (on-device/emulator) tests. `androidInstrumentedTest` is NOT wired to
+        // `commonTest` by the default hierarchy template — only `androidUnitTest` is — so the
+        // edge is added by hand. That makes every `commonTest` class compile into the test APK;
+        // which of them actually run is decided by the runner's `package` argument below.
+        androidInstrumentedTest {
+            dependsOn(commonTest.get())
+            dependencies {
+                implementation(libs.androidx.test.core)
+                implementation(libs.androidx.test.runner)
+                implementation(libs.androidx.test.ext.junit)
+                // ComponentActivity — `runComposeUiTest` on Android hosts the composition in one
+                // via ActivityScenario, and `src/androidInstrumentedTest/AndroidManifest.xml`
+                // declares it.
+                implementation(libs.androidx.activity.compose)
+            }
+        }
     }
 }
 
@@ -95,4 +111,17 @@ tasks.withType<AbstractTestTask>().matching { it.name == "macosArm64Test" }.conf
 // wasmJs tests verified green on the headless-browser runner (#202).
 kodemirrorLibrary {
     wasmJsTests.set(true)
+}
+
+// ── Android instrumented tests (#215) ────────────────────────────────────────────────────
+// The interaction tests excluded from the local unit-test tasks above DO run here, on a real
+// Android surface, where `runComposeUiTest` gets the ComponentActivity + ActivityScenario it
+// needs. `package` narrows the on-device run to exactly that package: everything else in
+// `commonTest` already runs on Android as a local unit test (`testDebugUnitTest`), and paying
+// emulator time to run it a second time buys no information about the input layer.
+android {
+    defaultConfig {
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunnerArguments["package"] = "com.monkopedia.kodemirror.view.input"
+    }
 }
