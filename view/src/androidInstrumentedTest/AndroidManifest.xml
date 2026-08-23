@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Hand-rolled stand-in for `androidx.compose.ui:ui-test-manifest`, which Compose Multiplatform
+  does not republish under `org.jetbrains.compose.ui` (only `ui-test` and `ui-test-junit4` are
+  there). `runComposeUiTest` on Android launches `androidx.activity.ComponentActivity` through
+  ActivityScenario, so the test APK's manifest has to declare it or every test dies with
+  "Unable to find explicit activity class".
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <activity
+            android:name="androidx.activity.ComponentActivity"
+            android:exported="false" />
+    </application>
+</manifest>

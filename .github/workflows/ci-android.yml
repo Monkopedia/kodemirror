@@ -1,0 +1,111 @@
+name: CI (Android instrumented)
+
+# Runs the Compose UI interaction tests on a real Android surface (#215).
+#
+# WHY A SEPARATE WORKFLOW, AND WHY IT DOES NOT GATE
+# These 92 tests run on jvm, wasmJs, macosArm64 and iosSimulatorArm64 but were excluded from
+# Android's local unit-test tasks (see `view/build.gradle.kts`) because `runComposeUiTest` on
+# Android needs a real ComponentActivity, and Robolectric — the usual substitute — answers
+# wrongly in both graphics modes. The only honest route is an emulator.
+#
+# It is deliberately NOT a required check. The result is produced ON the pull request, so the
+# author and the reviewer see it before merge; it simply does not auto-block, because the flake
+# profile of a brand-new emulator suite is unknown until it has some mileage. That is a
+# different shape from "runs only after merge", where the information does not exist at review
+# time at all.
+#
+# Owner ruling 2026-08-23: every PR, non-blocking.
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  instrumented-android:
+    name: Instrumented tests (emulator)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+
+      # GitHub's Linux runners expose /dev/kvm but only to the `kvm` group; the emulator
+      # process runs as `runner`. Without this the emulator silently falls back to software
+      # virtualisation and takes tens of minutes to boot, if it boots at all.
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      # Built before the emulator starts so a compile failure costs no emulator time and shows
+      # up as a plain Gradle error rather than as an "installation failed" from the runner.
+      - name: Assemble test APKs
+        run: >-
+          ./gradlew :view:assembleDebugAndroidTest
+          -Dkotlin.daemon.jvmargs="-Xmx4g"
+          -Dorg.gradle.jvmargs="-Xmx4g -Dfile.encoding=UTF-8"
+
+      # API 34 / `default` / x86_64 / pixel_6, chosen deliberately:
+      #  * minSdk is 24 and compileSdk is 36. 34 sits between them — a mainstream, mature
+      #    platform level rather than the floor (whose x86_64 images are old and badly behaved
+      #    under a current emulator) or the newest image, which has the least CI mileage.
+      #  * What these tests exercise — Compose text measurement, pointer input, focus — lives in
+      #    the Compose libraries, not in the platform, so the API level mostly decides how well
+      #    the emulator behaves. Pick the best-behaved level rather than an extreme.
+      #  * `default` rather than `google_apis`: nothing here touches Google APIs, and the leaner
+      #    image downloads and boots faster.
+      #  * `pixel_6` (1080x2400) comfortably contains the largest test viewport, which is
+      #    800x600 px — the harness pins `LocalDensity` to `Density(1f, 1f)`, so dp == px and the
+      #    device's own density does not enter into it.
+      #  * One level, not a matrix: the expected failure modes are environmental, not
+      #    API-level-specific. A matrix can be added if one ever proves otherwise.
+      - name: Run instrumented tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          disable-animations: true
+          emulator-options: >-
+            -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+            -camera-back none -camera-front none
+          # `wm size`/`wm density` are recorded because the test harness pins
+          # `LocalDensity` to `Density(1f, 1f)` and frames the editor with `requiredSize`, so
+          # the largest test viewport is literally 800x600 physical pixels. `requiredSize` does
+          # not shrink to fit, so a display smaller than that in either dimension would clip
+          # the editor and break every coordinate assertion while the tests still executed.
+          # Printing the measurement makes that a checkable number rather than an assumption.
+          #
+          # NOTE: the action runs each line of `script` as its own `sh -c`, so a backslash
+          # continuation is not a continuation — it becomes a bare `\` argument and Gradle fails
+          # with "Task '\' not found". The Gradle invocation has to stay on one line.
+          script: |
+            adb shell wm size
+            adb shell wm density
+            ./gradlew :view:connectedDebugAndroidTest -Dkotlin.daemon.jvmargs="-Xmx4g" -Dorg.gradle.jvmargs="-Xmx4g -Dfile.encoding=UTF-8"
+
+      # A green tick is not evidence that anything ran. #197 and #200 both survived because a
+      # task that executes zero tests still exits 0. Read the executed count out of the JUnit
+      # XML and fail loudly if it is zero.
+      - name: Report executed test count
+        if: always()
+        run: python3 .github/scripts/report-android-test-count.py
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-android-instrumented
+          path: |
+            **/build/outputs/androidTest-results/**/*.xml
+            **/build/reports/androidTests/**
+          if-no-files-found: error
