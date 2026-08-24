@@ -122,7 +122,11 @@ fun simpleMode(config: SimpleModeConfig): StreamParser<SimpleModeState> {
                         )
                     }
                     if (rule.dedent) {
-                        state.indent?.let { it.removeAt(it.lastIndex) }
+                        // Upstream is `state.indent.pop()`, and `[].pop()` is a
+                        // silent no-op — a dedent rule can fire before any
+                        // indent rule has (a document opening with `}`), so a
+                        // throwing pop would crash the parse (#262).
+                        state.indent?.removeLastOrNull()
                     }
                     val token = resolveToken(rule.token, matches)
                     val groups = matches.groupValues
