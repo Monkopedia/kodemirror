@@ -17,9 +17,12 @@
  * See NOTICE file for details.
  */
 
+import com.android.build.api.variant.LibraryAndroidComponentsExtension
 import java.util.concurrent.Callable
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 
 plugins {
     id("com.android.library")
@@ -80,6 +83,37 @@ kotlin {
         // Android shares platform code with JVM
         androidMain.get().dependsOn(jvmMain.get())
     }
+}
+
+// #263 — Android Lint's source providers come from the AGP variant's `sources`, and under the
+// legacy `com.android.library` + `androidTarget()` combination those cover only
+// `src/main/java`, `src/debug/java`, `src/androidMain/kotlin`, `src/main/kotlin` and
+// `src/debug/kotlin`. Every KMP source set that `androidMain` merely `dependsOn` — `commonMain`
+// above all, where essentially this whole library lives, and `jvmMain`, which `androidMain`
+// depends on here — is invisible to lint, so `lintDebug` reported "No issues found" while
+// reading almost nothing. #258 (34 `removeLast()`/`removeFirst()` calls that throw
+// NoSuchMethodError below API 35) sat in `commonMain` and `NewApi` never saw it.
+//
+// Register the dependsOn closure with the variant's Kotlin sources so lint analyses it. The
+// KMP plugin drives the Android Kotlin compilation from its own source-set model, so this
+// addition reaches lint without duplicating sources into any compile task.
+extensions.getByType<LibraryAndroidComponentsExtension>().onVariants { variant ->
+    val kotlinSources = variant.sources.kotlin ?: return@onVariants
+    val androidMain =
+        extensions.getByType<KotlinMultiplatformExtension>().sourceSets.findByName("androidMain")
+            ?: return@onVariants
+    val closure = linkedSetOf<KotlinSourceSet>()
+    val queue = ArrayDeque(androidMain.dependsOn)
+    while (queue.isNotEmpty()) {
+        val sourceSet = queue.removeFirst()
+        if (closure.add(sourceSet)) queue.addAll(sourceSet.dependsOn)
+    }
+    closure.asSequence()
+        .flatMap { it.kotlin.srcDirs }
+        .filter { it.isDirectory }
+        .map { it.relativeTo(projectDir).path }
+        .distinct()
+        .forEach(kotlinSources::addStaticSourceDirectory)
 }
 
 apiValidation {

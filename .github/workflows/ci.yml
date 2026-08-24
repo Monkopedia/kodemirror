@@ -62,3 +62,38 @@ jobs:
           :state:wasmJsTest
           :view:wasmJsTest
           :vim:wasmJsTest
+
+  # Android Lint, as its own job so it costs nothing serially against `check`.
+  #
+  # Until #263 this task was inert: under the legacy `com.android.library` + `androidTarget()`
+  # combination the variant's source providers listed only `src/main/java`, `src/debug/java`,
+  # `src/androidMain/kotlin`, `src/main/kotlin` and `src/debug/kotlin` — never `src/commonMain/kotlin`,
+  # where essentially the whole library lives. `lintDebug` reported "No issues found" on code it had
+  # not read, which is why `NewApi` was silent about #258's 34 `removeLast()`/`removeFirst()` calls.
+  # The convention plugin now registers the `androidMain` dependsOn closure with the variant's Kotlin
+  # sources; running the task here is the other half — a check that is fixed but never invoked is the
+  # same inert control in a different disguise.
+  #
+  # NOTE: this job is not in `main`'s branch protection (which requires `check`, `check-macos` and
+  # `check-ios`). It shows red on the PR but does not block a merge until a maintainer adds it.
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Android Lint (all modules)
+        run: >-
+          ./gradlew lintDebug
+          -Dkotlin.daemon.jvmargs="-Xmx4g"
+          -Dorg.gradle.jvmargs="-Xmx4g -Dfile.encoding=UTF-8"
+      - name: Upload lint reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-reports
+          path: "**/build/reports/lint-results-debug.*"
+          if-no-files-found: ignore
