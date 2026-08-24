@@ -90,10 +90,27 @@ jobs:
           ./gradlew lintDebug
           -Dkotlin.daemon.jvmargs="-Xmx4g"
           -Dorg.gradle.jvmargs="-Xmx4g -Dfile.encoding=UTF-8"
+      # A green lint job with an empty report set is the failure this guards. `error` alone
+      # only catches the set going to zero; the floor catches it *shrinking* — an AGP report
+      # rename, a task rename, modules dropping out of the task graph. It would NOT have
+      # caught #263 (an inert lint still writes 58 reports), so it is not a substitute for the
+      # control; it protects the artifact, which is load-bearing evidence: confirming this
+      # job's ~6-minute run was real work meant hand-inspecting these reports. Same shape as
+      # `report-android-test-count.py` failing on `tests="0"`. Raise the floor when modules
+      # are added; a drop below it should be explained, not accommodated.
+      - name: Verify the lint report set is complete
+        run: |
+          expected=58
+          count=$(find . -path '*/build/reports/lint-results-debug.xml' | wc -l)
+          echo "lint reports produced: $count (floor $expected)"
+          if [ "$count" -lt "$expected" ]; then
+            echo "::error::Only $count lint reports, expected at least $expected. Lint reported green over a report set that silently shrank — investigate before lowering this floor."
+            exit 1
+          fi
       - name: Upload lint reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: lint-reports
           path: "**/build/reports/lint-results-debug.*"
-          if-no-files-found: ignore
+          if-no-files-found: error
