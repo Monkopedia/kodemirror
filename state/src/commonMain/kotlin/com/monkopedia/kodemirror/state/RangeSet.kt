@@ -438,18 +438,24 @@ class RangeSet<T : RangeValue> internal constructor(
                 DocPos(start),
                 DocPos(start + c.length)
             )
-            if (touch == TouchesResult.No) {
-                maxPt = max(maxPt, c.maxPoint)
-                chunks.add(c)
-                positions.add(changes.mapPos(DocPos(start)).value)
-            } else {
-                val (mapped, pos) =
-                    c.map(start, changes)
-                if (mapped != null) {
-                    maxPt = max(maxPt, mapped.maxPoint)
-                    chunks.add(mapped)
-                    positions.add(pos)
+            when (touch) {
+                TouchesResult.No -> {
+                    maxPt = max(maxPt, c.maxPoint)
+                    chunks.add(c)
+                    positions.add(changes.mapPos(DocPos(start)).value)
                 }
+                TouchesResult.Yes -> {
+                    val (mapped, pos) =
+                        c.map(start, changes)
+                    if (mapped != null) {
+                        maxPt = max(maxPt, mapped.maxPoint)
+                        chunks.add(mapped)
+                        positions.add(pos)
+                    }
+                }
+                // A single change entirely covers this chunk, so every range in
+                // it was deleted along with the text. Drop the chunk entirely.
+                TouchesResult.Cover -> {}
             }
         }
         val next = nextLayer.map(changes)

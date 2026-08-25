@@ -309,6 +309,33 @@ class RangeSetTest {
     }
 
     @Test
+    fun mapDropsChunksFullyCoveredByASingleDeletion() {
+        // Both marks are inclusive on both sides, so mapping them individually
+        // would collapse each onto the deletion point instead of dropping it.
+        // The chunk is entirely covered by one change, so nothing may survive.
+        mapTest(
+            listOf(
+                mk(5, 10, mapOf("startSide" to -1, "endSide" to 1)),
+                mk(12, 15, mapOf("startSide" to -1, "endSide" to 1))
+            ),
+            listOf(Triple(2, 25, 0)),
+            emptyList()
+        )
+    }
+
+    @Test
+    fun mapDropsChunksFullyCoveredByAReplacement() {
+        mapTest(
+            listOf(
+                mk(5, 10, mapOf("startSide" to -1, "endSide" to 1)),
+                mk(12, 15, mapOf("startSide" to -1, "endSide" to 1))
+            ),
+            listOf(Triple(2, 25, 3)),
+            emptyList()
+        )
+    }
+
+    @Test
     fun mapShrinksRanges() {
         mapTest(
             listOf(mk(2, 4), mk(2, 8), mk(6, 8)),
