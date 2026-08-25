@@ -18,6 +18,7 @@
  */
 package com.monkopedia.kodemirror.language
 
+import com.monkopedia.kodemirror.lezer.common.Tree
 import com.monkopedia.kodemirror.lezer.highlight.highlightTree
 import com.monkopedia.kodemirror.lezer.highlight.ruleNodeProp
 import com.monkopedia.kodemirror.state.EditorState
@@ -241,6 +242,37 @@ class StreamParserTest {
     }
 
     @Test
+    fun largeDocumentBalancesIntoAnonymousGroupingNodes() {
+        // `StreamParse.finish` calls `balance()` on a top node holding one
+        // child per 512-character chunk, so any document over ~4 KB has more
+        // than 8 children and goes through `balanceRange`. The grouping nodes
+        // it inserts must be anonymous, not further copies of the top node.
+        val lang = StreamLanguage.define(simpleParser)
+        val line = "if x 42\n"
+        val doc = line.repeat(800)
+        val state = EditorState.create(
+            EditorStateConfig(doc = doc.asDoc(), extensions = lang.extension)
+        )
+        val tree = forceParsing(state)
+        assertEquals(doc.length, tree.length)
+        assertEquals("Document", tree.type.name)
+        // Non-vacuity: a grouping layer must actually have been inserted --
+        // a chunk tree's children are all TreeBuffers, so a direct child that
+        // itself holds a Tree can only be a node `balanceRange` created.
+        assertTrue(
+            tree.children.any { it is Tree && it.children.any { c -> c is Tree } },
+            "expected balance() to insert a grouping layer, got ${tree.children.size} " +
+                "children of sizes " +
+                tree.children.map { if (it is Tree) it.children.size else -1 }
+        )
+        assertEquals(
+            1,
+            countNamed(tree, "Document"),
+            "balance() must group chunks under anonymous nodes"
+        )
+    }
+
+    @Test
     fun languageExtensionWorks() {
         val lang = StreamLanguage.define(simpleParser)
         val state = EditorState.create(
@@ -253,4 +285,11 @@ class StreamParserTest {
         assertNotNull(resolved)
         assertEquals("simple", resolved.name)
     }
+}
+
+/** Number of [Tree] nodes in [node] (inclusive) whose type has the given name. */
+private fun countNamed(node: Any, name: String): Int = when (node) {
+    is Tree -> (if (node.type.name == name) 1 else 0) +
+        node.children.sumOf { countNamed(it, name) }
+    else -> 0
 }

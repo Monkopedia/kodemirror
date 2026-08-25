@@ -18,6 +18,8 @@
  */
 package com.monkopedia.kodemirror.lezer.common
 
+import kotlin.math.ceil
+
 /**
  * A range with from/to positions.
  */
@@ -313,6 +315,11 @@ data class TreeBuildSpec(
 
 /**
  * Configuration for [Tree.balance].
+ *
+ * [makeTree] builds the inner grouping nodes. It defaults to a factory
+ * producing anonymous ([NodeType.none]) trees; the tree it returns is used
+ * as-is, so a caller can attach props of its own. It is never used for the
+ * top node, which always keeps the balanced tree's own type and props.
  */
 data class BalanceConfig(
     val makeTree: ((children: List<Any>, positions: List<Int>, length: Int) -> Tree)? = null
@@ -389,34 +396,21 @@ class Tree(
 
     /**
      * Balance a tree, making sure no children arrays grow
-     * too large for optimal performance.
+     * too large for optimal performance. Returns a copy whose children may
+     * be grouped into subtrees of type [NodeType.none].
      */
     fun balance(config: BalanceConfig = BalanceConfig()): Tree {
         if (children.size <= BALANCE_BRANCH_FACTOR) return this
         return balanceRange(
-            type,
+            NodeType.none,
             children,
             positions,
             0,
             children.size,
             0,
             length,
-            { ch, pos, len ->
-                Tree(
-                    config.makeTree?.invoke(ch, pos, len)?.type ?: type,
-                    ch,
-                    pos,
-                    len
-                )
-            },
-            { ch, pos, len ->
-                Tree(
-                    config.makeTree?.invoke(ch, pos, len)?.type ?: type,
-                    ch,
-                    pos,
-                    len
-                )
-            }
+            { ch, pos, len -> Tree(type, ch, pos, len, propValues) },
+            config.makeTree ?: { ch, pos, len -> Tree(NodeType.none, ch, pos, len) }
         )
     }
 
@@ -1643,7 +1637,7 @@ private fun balanceRange(
     var total = 0
     for (i in from until to) total += nodeSize(balanceType, children[i])
 
-    val maxChild = ((total * 1.5) / BALANCE_BRANCH_FACTOR).toInt() + 1
+    val maxChild = ceil((total * 1.5) / BALANCE_BRANCH_FACTOR).toInt()
     val localChildren = mutableListOf<Any>()
     val localPositions = mutableListOf<Int>()
 
