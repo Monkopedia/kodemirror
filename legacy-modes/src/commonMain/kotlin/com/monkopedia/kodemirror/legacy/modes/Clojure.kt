@@ -228,7 +228,13 @@ private fun clojureBase(stream: StringStream, state: ClojureState): Pair<String?
     val matches = stream.match(clojureQualifiedSymbol)
     val symbol = matches?.value
 
-    if (symbol == null) {
+    // Upstream guards with `if (!symbol)`, which is true for the empty string as
+    // well as for no match at all. `clojureQualifiedSymbol` can succeed with a
+    // zero-length match -- its trailing `(?:...)*` may match nothing while the
+    // lookahead is satisfied -- so narrowing this to a null check let `""` fall
+    // through into `symbol[0]`, which throws where `charAt(0)` returns `""`.
+    if (symbol.isNullOrEmpty()) {
+        // advance stream by at least one character so we don't get stuck.
         stream.next()
         stream.eatWhile { c -> !clojureDelimiter.containsMatchIn(c) }
         return null to "error"
