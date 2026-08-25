@@ -255,11 +255,17 @@ private fun mkJavaScript(config: JavaScriptConfig): StreamParser<JavaScriptState
         return null
     }
 
-    fun isContinuedStatement(state: JavaScriptState, textAfter: String): Boolean =
-        state.lastType == "operator" ||
+    fun isContinuedStatement(state: JavaScriptState, textAfter: String): Boolean {
+        // Upstream reads `textAfter.charAt(0)`, which yields `""` -- not an
+        // error -- for an empty line, and neither test matches `""`. Reading
+        // `textAfter[0]` instead threw, so mirror the totality with the same
+        // idiom `indent` already uses for its own first character.
+        val firstChar = textAfter.firstOrNull()?.toString() ?: ""
+        return state.lastType == "operator" ||
             state.lastType == "," ||
-            jsIsOperatorChar.containsMatchIn(textAfter[0].toString()) ||
-            Regex("[,.]").containsMatchIn(textAfter[0].toString())
+            jsIsOperatorChar.containsMatchIn(firstChar) ||
+            Regex("[,.]").containsMatchIn(firstChar)
+    }
 
     return object : StreamParser<JavaScriptState> {
         override val name: String get() = config.name
