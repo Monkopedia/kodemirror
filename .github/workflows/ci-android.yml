@@ -28,6 +28,14 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+
+      # The reporting gate below is the only signal this non-blocking job emits, and a correct
+      # gate and a broken one print the same thing on a healthy suite — which is how it counted
+      # skipped tests as executed for as long as it did (#282). Self-test it against fixtures
+      # first: seconds, and before any emulator time is spent.
+      - name: Self-test the test-count gate
+        run: python3 .github/scripts/test-report-android-test-count.py
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
