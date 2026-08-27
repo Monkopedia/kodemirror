@@ -9,6 +9,13 @@ non-zero if the suite executed nothing, or if anything failed.
 "Executed" means recorded minus skipped (#282). An entirely @Ignore'd suite records a full
 complement of <testcase> elements and would otherwise pass the very gate written to catch an
 inert suite.
+
+A DIVERGENCE BETWEEN executed AND recorded IS THIS GATE WORKING, NOT A REGRESSION. If the suite
+ever reports `executed` below `recorded`, real skipping is being surfaced for the first time —
+find out what got @Ignore'd. Do not treat the number as having broken, and do not restore the old
+arithmetic to make it match a historical baseline. This job has printed 92 on every branch for its
+entire existence; that constant was never evidence of health, only evidence that the instrument
+had not yet been asked a question it could answer differently (#275).
 """
 import glob
 import os
