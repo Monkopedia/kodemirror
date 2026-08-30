@@ -23,6 +23,7 @@ import com.monkopedia.kodemirror.lezer.common.TreeFragment
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class ParseTest {
@@ -130,19 +131,33 @@ class ParseTest {
     @Test
     fun partialParseStopsAtPosition() {
         val input = "{\"a\": 1, \"b\": 2, \"c\": 3}"
+        val stopAt = 10
         val partial = jsonParser.startParse(input)
-        partial.stopAt(10)
-        // Advance until done or past stopAt
+        partial.stopAt(stopAt)
         var tree = partial.advance()
         var iterations = 0
         while (tree == null && iterations < 1000) {
             tree = partial.advance()
             iterations++
         }
-        // parsedPos should not have gone past 10 without a result
+        val result = assertNotNull(tree, "Braked parse should finish with a tree")
+        val detail = "stopAt=$stopAt doc=${input.length} " +
+            "tree.length=${result.length} parsedPos=${partial.parsedPos} " +
+            "tree=${treeToString(result)}"
+        // The brake must actually cut the parse short: the tree may not span
+        // the whole document. (@lezer/lr 1.4.10 yields length 12 here.)
         assertTrue(
-            tree != null || partial.parsedPos <= 10,
-            "Partial parse should respect stopAt"
+            result.length < input.length,
+            "stopAt must brake the parse before the end of the document; $detail"
+        )
+        assertTrue(
+            partial.parsedPos < input.length,
+            "Braked parse must not consume the whole document; $detail"
+        )
+        // ...but it must still parse up to the brake before stopping.
+        assertTrue(
+            result.length >= stopAt,
+            "Braked parse should cover the input up to stopAt; $detail"
         )
     }
 

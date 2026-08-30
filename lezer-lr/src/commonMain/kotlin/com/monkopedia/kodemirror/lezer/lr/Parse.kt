@@ -400,6 +400,12 @@ internal class Parse(
         split: MutableList<Stack>?
     ): Boolean {
         val start = stack.pos
+        val brake = stoppedAt
+        if (brake != null && start > brake) {
+            // The parse is braked past this point: wrap the stack up as far as
+            // it will go rather than consuming more input.
+            return stack.forceReduce()
+        }
         val actions = tokens.getActions(stack)
         val main = tokens.mainToken
 
