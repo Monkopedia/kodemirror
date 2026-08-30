@@ -23,6 +23,7 @@ import com.monkopedia.kodemirror.lezer.common.TreeFragment
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class ParseTest {
@@ -130,20 +131,36 @@ class ParseTest {
     @Test
     fun partialParseStopsAtPosition() {
         val input = "{\"a\": 1, \"b\": 2, \"c\": 3}"
+        val stopAt = 10
         val partial = jsonParser.startParse(input)
-        partial.stopAt(10)
-        // Advance until done or past stopAt
+        partial.stopAt(stopAt)
         var tree = partial.advance()
         var iterations = 0
         while (tree == null && iterations < 1000) {
             tree = partial.advance()
             iterations++
         }
-        // parsedPos should not have gone past 10 without a result
-        assertTrue(
-            tree != null || partial.parsedPos <= 10,
-            "Partial parse should respect stopAt"
+        val result = assertNotNull(tree, "Braked parse should finish with a tree")
+        val detail = "stopAt=$stopAt doc=${input.length} " +
+            "tree.length=${result.length} parsedPos=${partial.parsedPos} " +
+            "tree=${treeToString(result)}"
+        // The SHAPE is the assertion that matters. Extent alone cannot tell a
+        // parse braked at position 10 from one braked on its very first stack:
+        // dropping `start > stoppedAt` from the check brakes every stack and
+        // still yields tree.length 12 and parsedPos 12 -- but a tree made of
+        // error nodes. Only the shape separates them.
+        assertEquals(
+            "JsonText(Object(Property(PropertyName,Number)," +
+                "Property(PropertyName,\u26A0),\u26A0))",
+            treeToString(result),
+            "Braked tree shape; $detail"
         )
+        // Both numbers are @lezer/lr 1.4.10 + @lezer/json 1.0.3 on this input:
+        // 9 advance() calls, parsedPos 12, tree.length 12, against a 24-char
+        // document. Before the fix the port ran to 24/24 and returned the
+        // complete tree.
+        assertEquals(12, result.length, "Braked tree length; $detail")
+        assertEquals(12, partial.parsedPos, "Braked parsedPos; $detail")
     }
 
     @Test
