@@ -148,8 +148,20 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
     val compositionScope = rememberCoroutineScope()
     impl.backingCoroutineScope = compositionScope
 
+    // Publish the host on the session before its plugins are built. Bringing a
+    // plugin up can dispatch a transaction — the parse worker resuming a parse
+    // that was parked while the view was detached does exactly that, and the
+    // linter dispatches its first diagnostics from its constructor — and
+    // EditorSessionImpl.dispatchTransaction reaches plugins through
+    // session.pluginHost. Assigning that field only further down, after the
+    // plugins had already been built, meant such a transaction updated no
+    // plugins at all: the tree got re-parsed and the highlighter was never
+    // told (#284).
     val pluginHost = remember(session) {
-        ViewPluginHost(session).also { it.syncToState(state, null) }
+        ViewPluginHost(session).also {
+            impl.pluginHost = it
+            it.syncToState(state, null)
+        }
     }
     val lineLayoutCache = remember(session) { LineLayoutCache() }
     // Deferred layouts: onGloballyPositioned fires bottom-up (children before
