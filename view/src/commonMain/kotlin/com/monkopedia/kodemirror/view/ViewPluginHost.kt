@@ -44,11 +44,13 @@ internal class ViewPluginHost(private val session: EditorSession) {
         if (oldState == null || activePlugins != oldState.facet(viewPluginRegistry)) {
             // Reconcile instances
             val keep = mutableSetOf<ViewPlugin<*>>()
+            val created = mutableListOf<PluginValue>()
             for (plugin in activePlugins) {
                 if (!instances.containsKey(plugin)) {
                     @Suppress("UNCHECKED_CAST")
                     val inst = (plugin as ViewPlugin<PluginValue>).spec.create(session)
                     instances[plugin] = inst
+                    created.add(inst)
                 }
                 keep.add(plugin)
             }
@@ -57,6 +59,29 @@ internal class ViewPluginHost(private val session: EditorSession) {
             for (key in toRemove) {
                 instances.remove(key)?.destroy()
             }
+            // Catch-up update for the instances just created. A plugin whose
+            // pending work lives in a state field rather than in the plugin
+            // itself has no way to notice that work from its constructor; it
+            // only ever acts from update(). The language state field is the
+            // case that bites: an edit dispatched while no composable was
+            // attached parks it with `parsing = true` and the pre-edit tree,
+            // and the replacement ParseWorker built here would otherwise idle
+            // forever, leaving the new text under the old highlight positions
+            // until some later transaction happened to wake it (#284).
+            //
+            // Deliberately only the new instances: handing this to every
+            // instance would also re-trigger linting, LSP syncing and
+            // completion on each reconfigure, which is a wider behaviour
+            // change than this fix needs. The update carries no transactions,
+            // so `docChanged`/`selectionSet` are false and `startState` is
+            // `newState` — plugins that derive purely from a transaction
+            // correctly see it as a no-op.
+            if (created.isNotEmpty()) {
+                val catchUp = ViewUpdate(session, newState, emptyList())
+                for (inst in created) {
+                    inst.update(catchUp)
+                }
+            }
         }
     }
 
@@ -64,7 +89,10 @@ internal class ViewPluginHost(private val session: EditorSession) {
      * Propagate a [ViewUpdate] to all active plugin instances.
      */
     fun update(update: ViewUpdate) {
-        for (inst in instances.values) {
+        // Iterate a snapshot: bringing a plugin up can dispatch a transaction
+        // from its constructor or from its catch-up update, which re-enters
+        // here while syncToState is still adding to `instances` (#284).
+        for (inst in instances.values.toList()) {
             inst.update(update)
         }
     }
