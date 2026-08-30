@@ -77,7 +77,10 @@ internal class ViewPluginHost(private val session: EditorSession) {
             // `newState` — plugins that derive purely from a transaction
             // correctly see it as a no-op.
             if (created.isNotEmpty()) {
-                val catchUp = ViewUpdate(session, newState, emptyList())
+                // session.state, not newState: a plugin constructed above may
+                // itself have dispatched, so the state this method was handed
+                // can already be one behind by the time the catch-up is sent.
+                val catchUp = ViewUpdate(session, session.state, emptyList())
                 for (inst in created) {
                     inst.update(catchUp)
                 }
