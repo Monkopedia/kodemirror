@@ -144,21 +144,23 @@ class ParseTest {
         val detail = "stopAt=$stopAt doc=${input.length} " +
             "tree.length=${result.length} parsedPos=${partial.parsedPos} " +
             "tree=${treeToString(result)}"
-        // The brake must actually cut the parse short: the tree may not span
-        // the whole document. (@lezer/lr 1.4.10 yields length 12 here.)
-        assertTrue(
-            result.length < input.length,
-            "stopAt must brake the parse before the end of the document; $detail"
+        // The SHAPE is the assertion that matters. Extent alone cannot tell a
+        // parse braked at position 10 from one braked on its very first stack:
+        // dropping `start > stoppedAt` from the check brakes every stack and
+        // still yields tree.length 12 and parsedPos 12 -- but a tree made of
+        // error nodes. Only the shape separates them.
+        assertEquals(
+            "JsonText(Object(Property(PropertyName,Number)," +
+                "Property(PropertyName,\u26A0),\u26A0))",
+            treeToString(result),
+            "Braked tree shape; $detail"
         )
-        assertTrue(
-            partial.parsedPos < input.length,
-            "Braked parse must not consume the whole document; $detail"
-        )
-        // ...but it must still parse up to the brake before stopping.
-        assertTrue(
-            result.length >= stopAt,
-            "Braked parse should cover the input up to stopAt; $detail"
-        )
+        // Both numbers are @lezer/lr 1.4.10 + @lezer/json 1.0.3 on this input:
+        // 9 advance() calls, parsedPos 12, tree.length 12, against a 24-char
+        // document. Before the fix the port ran to 24/24 and returned the
+        // complete tree.
+        assertEquals(12, result.length, "Braked tree length; $detail")
+        assertEquals(12, partial.parsedPos, "Braked parsedPos; $detail")
     }
 
     @Test
