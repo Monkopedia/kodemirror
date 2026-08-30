@@ -148,7 +148,21 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
     val compositionScope = rememberCoroutineScope()
     impl.backingCoroutineScope = compositionScope
 
-    val pluginHost = remember(session) { ViewPluginHost(session) }
+    // Publish the host on the session before its plugins are built. Bringing a
+    // plugin up can dispatch a transaction — the parse worker resuming a parse
+    // that was parked while the view was detached does exactly that, and the
+    // linter dispatches its first diagnostics from its constructor — and
+    // EditorSessionImpl.dispatchTransaction reaches plugins through
+    // session.pluginHost. Assigning that field only further down, after the
+    // plugins had already been built, meant such a transaction updated no
+    // plugins at all: the tree got re-parsed and the highlighter was never
+    // told (#284).
+    val pluginHost = remember(session) {
+        ViewPluginHost(session).also {
+            impl.pluginHost = it
+            it.syncToState(state, null)
+        }
+    }
     val lineLayoutCache = remember(session) { LineLayoutCache() }
     // Deferred layouts: onGloballyPositioned fires bottom-up (children before
     // parent), so editorCoordinates is null on the first layout pass. We store
@@ -172,18 +186,6 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
     impl.pluginHost = pluginHost
     impl.lineLayoutCache = lineLayoutCache
     impl.clipboardManager = clipboardManager
-
-    // Build the plugin instances only once the session can route updates back
-    // to them. Bringing a plugin up can dispatch a transaction — the parse
-    // worker resuming a parse that was parked while the view was detached does
-    // exactly that, and the linter dispatches its first diagnostics from its
-    // constructor — and EditorSessionImpl.dispatchTransaction reaches plugins
-    // through session.pluginHost. Inside the remember{} that builds the host
-    // that field is still null, so any such transaction updated no plugins at
-    // all: the tree got re-parsed and the highlighter was never told (#284).
-    // This has to stay a remember{} rather than a SideEffect — the plugins'
-    // decorations are collected further down in this same composition pass.
-    remember(pluginHost) { pluginHost.syncToState(state, null) }
 
     DisposableEffect(session) {
         onDispose {
