@@ -2,6 +2,10 @@
 
 Steps for publishing a new Kodemirror release to Maven Central.
 
+> **`CLAUDE.md` → "Release process" is authoritative.** This file is its long-form operational
+> companion: the same flow with the exact commands and gates. It may add detail; where the two
+> disagree, `CLAUDE.md` wins and this file is the one that gets corrected.
+
 ## Pre-Release
 
 ### 1. All CI jobs are green
@@ -44,6 +48,14 @@ in install snippets, so grepping for `SNAPSHOT` never finds them. Grep for the
 grep -rn "0\.3\.5" docs-site/docs/ README.md
 ```
 
+Read every hit before changing it rather than running a blanket `sed`: a dependency snippet or a
+current-version claim (`README.md`'s "This is vX.Y.Z") gets bumped, but a genuine historical
+reference — "changed in 0.3.5", "if you are upgrading from 0.3.5" — must stay as written, or the
+document starts making false statements. As of the 0.3.6 bump every hit in these four files
+(`README.md`, `docs-site/docs/examples/bundle.md`, `docs-site/docs/guide/getting-started.md`,
+`docs-site/docs/guide/migration.md`) was a coordinate or a version claim, but that is a fact
+about today's docs, not a licence to skip the read next time.
+
 Then confirm nothing stale is left — the only versions these files should
 mention are the one being released and historical CHANGELOG entries:
 
@@ -58,34 +70,32 @@ Ensure `CHANGELOG.md` has a dated `[X.Y.Z] - YYYY-MM-DD` section (not `[Unreleas
 
 ### 4. Commit the version bump
 
+Steps 2 and 3 are **one PR**, opened through the normal coderbot -> `monkopedia-reviewer` flow
+(`CLAUDE.md` -> "Task Workflow"); never pushed straight to `main`. Stage the docs bump from step
+2 along with the two version files, or the release ships with stale coordinates again:
+
 ```bash
-git add convention-plugins/src/main/kotlin/kodemirror.library.gradle.kts kodemirror-bom/build.gradle.kts
+git add convention-plugins/src/main/kotlin/kodemirror.library.gradle.kts \
+        kodemirror-bom/build.gradle.kts \
+        CHANGELOG.md README.md docs-site/docs/
 git commit -m "Bump version to X.Y.Z for release"
-git push
 ```
 
-Wait for CI + Docs to pass on this commit before proceeding.
+Then push the branch and open the PR via coderbot. Wait for CI + Docs to pass and for the PR to
+merge before proceeding.
 
 ## Release
 
-### 5. Create GitHub Release with tag
+### 5. Tag the release commit
+
+Tags and GitHub Releases exist **only** for fully-published versions, so push the tag now and do
+**not** create the GitHub Release by hand — `deploy.yml` creates it itself once the publish has
+succeeded (step 6).
 
 ```bash
-gh release create vX.Y.Z \
-  --repo Monkopedia/kodemirror \
-  --title "vX.Y.Z" \
-  --notes "$(cat <<'EOF'
-## Highlights
-
-- (copy key points from CHANGELOG)
-
-See [CHANGELOG.md](CHANGELOG.md) for the full list of changes.
-EOF
-)" \
-  --target main
+git tag vX.Y.Z <merged-release-commit>
+git push origin vX.Y.Z
 ```
-
-This creates the git tag and the GitHub release in one step.
 
 ### 6. Deploy to Maven Central
 
@@ -95,20 +105,35 @@ Trigger the deploy workflow (manual dispatch):
 gh workflow run deploy.yml --repo Monkopedia/kodemirror --ref vX.Y.Z
 ```
 
-This runs CI first, then publishes all platform artifacts to Sonatype and closes the staging repository.
+A single macOS runner publishes every target, the BOM included, in one Gradle invocation — one
+atomic Central Portal deployment, validated and auto-released. On success the workflow's
+`release` job creates the matching GitHub Release (`vX.Y.Z`) from the CHANGELOG section: it
+skips `-SNAPSHOT`/`-RC` versions, is re-run safe (no-op if the release already exists), and
+`--verify-tag` fails the job if the tag was never pushed.
 
 Monitor progress:
 ```bash
 gh run list --repo Monkopedia/kodemirror --workflow deploy.yml --limit 3
 ```
 
+If the publish fails partway, that version is **burned**: do not retry it. Delete the tag, skip
+the version, and cut the next patch.
+
 ### 7. Verify on Maven Central
 
-After the deploy workflow succeeds, artifacts appear on Sonatype within minutes but may take up to 2 hours to sync to Maven Central:
+Confirm the BOM resolves from Maven Central proper (`repo1.maven.org`) — propagation takes
+roughly 10-35 minutes:
 
-- https://central.sonatype.com/namespace/com.monkopedia.kodemirror
+```bash
+curl -sI https://repo1.maven.org/maven2/com/monkopedia/kodemirror/kodemirror-bom/X.Y.Z/kodemirror-bom-X.Y.Z.pom
+```
 
-Verify at least one artifact (e.g., `view`) shows the new version.
+`HTTP/2 200` means published; `404` means it has not synced (or the deploy did not succeed).
+Then confirm the workflow created the GitHub Release:
+
+```bash
+gh release view vX.Y.Z --repo Monkopedia/kodemirror
+```
 
 ## Post-Release
 
@@ -122,8 +147,10 @@ Verify at least one artifact (e.g., `view`) shows the new version.
 
 git add convention-plugins/src/main/kotlin/kodemirror.library.gradle.kts kodemirror-bom/build.gradle.kts
 git commit -m "Bump version to X.Y.(Z+1)-SNAPSHOT for development"
-git push
 ```
+
+Like every other change, this goes through the coderbot -> reviewer PR flow, not a direct push
+to `main`.
 
 ### 9. Announce (optional)
 

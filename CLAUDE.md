@@ -85,8 +85,20 @@ cut the next patch.
 
 1. **Version-bump PR** (normal coderbot → reviewer flow): set `version = "X.Y.Z"` (drop the
    `-SNAPSHOT` suffix) in both `convention-plugins/src/main/kotlin/kodemirror.library.gradle.kts`
-   and `kodemirror-bom/build.gradle.kts`, and finalize `CHANGELOG.md` (`## [Unreleased]` →
-   `## [X.Y.Z] - <date>`).
+   and `kodemirror-bom/build.gradle.kts`; finalize `CHANGELOG.md` (`## [Unreleased]` →
+   `## [X.Y.Z] - <date>`); **and bump the hardcoded Maven coordinates in the user-facing docs**
+   — `README.md` and `docs-site/docs/**` — to `X.Y.Z`, including the README's "This is vX.Y.Z"
+   line. Those coordinates carry no `-SNAPSHOT`, so grepping for `SNAPSHOT` can never find them;
+   grep for the *previous* released version instead and read each hit before touching it — a
+   dependency snippet or a current-version claim gets bumped, a genuine historical reference
+   ("changed in 0.3.5", "if you are upgrading from 0.3.5") does not, so do not blind-`sed` it:
+
+   ```bash
+   grep -rn "0\.3\.5" README.md docs-site/docs/   # previous released version
+   ```
+
+   Omitting this step is what left the published docs advertising a superseded version after the
+   0.3.3, 0.3.4 and 0.3.6 cuts.
 2. **Tag** `vX.Y.Z` on the merged release commit and push the tag.
 3. **Dispatch `deploy.yml`** (`gh workflow run deploy.yml`). A single macOS runner publishes all
    targets (incl. the BOM) to Maven Central in one Gradle invocation — one atomic Central Portal
@@ -96,6 +108,13 @@ cut the next patch.
    if the tag was never pushed.
 4. **Verify** the BOM resolves on Maven Central (`repo1.maven.org`); propagation can take 10–35 min.
 5. **Notify** downstream consumers.
+
+`docs/release-checklist.md` is the long-form operational companion to these steps — the exact
+commands, the CI gates to check first, the post-release SNAPSHOT bump. **This section is
+authoritative for the release process: where the checklist disagrees with it, this section wins
+and the checklist is the file that gets corrected.** The checklist may add detail; it may not
+contradict. (`docs/` remains authoritative for architecture and design decisions — a separate
+concern from release mechanics.)
 
 ### General
 

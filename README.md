@@ -39,7 +39,7 @@ All from shared Kotlin code across every Compose target.
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation(platform("com.monkopedia.kodemirror:kodemirror-bom:0.3.5"))
+            implementation(platform("com.monkopedia.kodemirror:kodemirror-bom:0.3.6"))
             implementation("com.monkopedia.kodemirror:view")
             implementation("com.monkopedia.kodemirror:commands")
             implementation("com.monkopedia.kodemirror:basic-setup")
@@ -107,7 +107,7 @@ One Dark, Dracula, Solarized Light, Tomorrow, Cobalt, Espresso, and 11 more, plu
 
 ## Known Limitations
 
-This is v0.3.5 — the API may evolve. Known issues to be aware of:
+This is v0.3.6 — the API may evolve. Known issues to be aware of:
 
 - **Mobile/native** — Android and iOS targets compile and pass unit tests but are not battle-tested on real devices yet
 
