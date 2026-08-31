@@ -91,14 +91,25 @@ cut the next patch.
    line. Those coordinates carry no `-SNAPSHOT`, so grepping for `SNAPSHOT` can never find them;
    grep for the *previous* released version instead and read each hit before touching it — a
    dependency snippet or a current-version claim gets bumped, a genuine historical reference
-   ("changed in 0.3.5", "if you are upgrading from 0.3.5") does not, so do not blind-`sed` it:
+   ("changed in <that version>", "if you are upgrading from <that version>") does not, so do not
+   blind-`sed` it. **Derive the version from the tag list; never copy a literal out of this
+   document.** The coordinate `com.monkopedia.kodemirror:<module>` is a fact about the artefact
+   and stays true, but "the previous release is 0.3.5" is a fact about a queue and is false the
+   moment the next version ships — a hardcoded version here would then match nothing and *read
+   as though the docs were already clean*, skipping the step this block exists to enforce:
 
    ```bash
-   grep -rn "0\.3\.5" README.md docs-site/docs/   # previous released version
+   PREV=$(git describe --tags --abbrev=0 --match 'v*' | sed 's/^v//')
+   echo "superseding: $PREV"                    # positive control: must name the last release
+   grep -rn "$PREV" README.md docs-site/docs/
    ```
 
-   Omitting this step is what left the published docs advertising a superseded version after the
-   0.3.3, 0.3.4 and 0.3.6 cuts.
+   **Zero hits means `$PREV` is wrong — not that the docs are clean.** An empty result here is
+   the failure mode, not the pass condition; read the control line before believing it.
+
+   Omitting this step is what left the published docs advertising a superseded version at every
+   release cut after the first: `README.md` and `docs-site/` still said `0.1.0` at v0.2.0,
+   v0.3.0, v0.3.2, v0.3.3, v0.3.4 and v0.3.5, and said `0.3.5` at v0.3.6.
 2. **Tag** `vX.Y.Z` on the merged release commit and push the tag.
 3. **Dispatch `deploy.yml`** (`gh workflow run deploy.yml`). A single macOS runner publishes all
    targets (incl. the BOM) to Maven Central in one Gradle invocation — one atomic Central Portal

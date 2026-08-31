@@ -44,13 +44,19 @@ in install snippets, so grepping for `SNAPSHOT` never finds them. Grep for the
 *previous* released version instead and bump every hit to the new one:
 
 ```bash
-# Replace 0.3.5 with the version being superseded
-grep -rn "0\.3\.5" docs-site/docs/ README.md
+PREV=$(git describe --tags --abbrev=0 --match 'v*' | sed 's/^v//')
+echo "superseding: $PREV"                    # positive control: must name the last release
+grep -rn "$PREV" docs-site/docs/ README.md
 ```
+
+`$PREV` is derived from the tag list rather than written down, because a literal version is true
+only until the next release and then matches nothing — and **zero hits reads as "the docs are
+already clean" when it actually means the pattern is wrong.** Check the control line before
+believing an empty result.
 
 Read every hit before changing it rather than running a blanket `sed`: a dependency snippet or a
 current-version claim (`README.md`'s "This is vX.Y.Z") gets bumped, but a genuine historical
-reference — "changed in 0.3.5", "if you are upgrading from 0.3.5" — must stay as written, or the
+reference — "changed in $PREV", "if you are upgrading from $PREV" — must stay as written, or the
 document starts making false statements. As of the 0.3.6 bump every hit in these four files
 (`README.md`, `docs-site/docs/examples/bundle.md`, `docs-site/docs/guide/getting-started.md`,
 `docs-site/docs/guide/migration.md`) was a coordinate or a version claim, but that is a fact
@@ -152,7 +158,10 @@ git commit -m "Bump version to X.Y.(Z+1)-SNAPSHOT for development"
 Like every other change, this goes through the coderbot -> reviewer PR flow, not a direct push
 to `main`.
 
-### 9. Announce (optional)
+### 9. Notify downstream consumers
+
+Not optional — this is `CLAUDE.md`'s release step 5, and the release is not finished until
+consumers have been told. *Which* channels to use is the discretionary part:
 
 - Post to relevant Reddit communities
 - Submit PR to [kmp-awesome](https://github.com/terrakok/kmp-awesome)
