@@ -14,7 +14,11 @@ committing or pushing directly to `main`. An independent reviewer pass produces 
    - tests green: `JAVA_HOME=/usr/lib/jvm/java-21-openjdk ./gradlew :<module>:jvmTest`
    - style: `spotlessApply` / `ktlintFormat`
    - API: `apiCheck` (run `apiDump` only for an *intended* public-API change)
-   - update `CHANGELOG.md` (Unreleased) with the issue/PR number
+   - changelog: add **a new file** `changelog.d/<issue>.<section>.md` holding the entry, and
+     **do not edit `CHANGELOG.md`** — it is assembled at release time. Entries still carry the
+     issue/PR number. One file per change is the whole point: two PRs never touch the same file,
+     so merging one no longer conflicts every other open PR and invalidates its approval (#281).
+     `changelog.d/README.md` has the format; `python3 .github/scripts/changelog.py check` validates it.
 2. **Open a PR via the coderbot wrapper** (`/home/jmonk/git/urithiru/coder-bot/coderbot`),
    authored by `monkopedia-coder`, requesting the reviewer on creation:
    - `coderbot git push -u origin <branch>`
@@ -85,9 +89,9 @@ cut the next patch.
 
 1. **Version-bump PR** (normal coderbot → reviewer flow): set `version = "X.Y.Z"` (drop the
    `-SNAPSHOT` suffix) in both `convention-plugins/src/main/kotlin/kodemirror.library.gradle.kts`
-   and `kodemirror-bom/build.gradle.kts`; finalize `CHANGELOG.md` (`## [Unreleased]` →
-   `## [X.Y.Z] - <date>`); **and bump the hardcoded Maven coordinates in the user-facing docs**
-   — `README.md` and `docs-site/docs/**` — to `X.Y.Z`, including the README's "This is vX.Y.Z"
+   and `kodemirror-bom/build.gradle.kts`; **assemble the `changelog.d/` fragments** into a new
+   `## [X.Y.Z] - <date>` section (below); **and bump the hardcoded Maven coordinates in the
+   user-facing docs** — `README.md` and `docs-site/docs/**` — to `X.Y.Z`, including the "This is vX.Y.Z"
    line. Those coordinates carry no `-SNAPSHOT`, so grepping for `SNAPSHOT` can never find them;
    grep for the *previous* released version instead and read each hit before touching it — a
    dependency snippet or a current-version claim gets bumped, a genuine historical reference
@@ -110,6 +114,26 @@ cut the next patch.
    Omitting this step is what left the published docs advertising a superseded version at every
    release cut after the first: `README.md` and `docs-site/` still said `0.1.0` at v0.2.0,
    v0.3.0, v0.3.2, v0.3.3, v0.3.4 and v0.3.5, and said `0.3.5` at v0.3.6.
+
+   `CHANGELOG.md` has **no `## [Unreleased]` section** — entries accumulate as one file per
+   change under `changelog.d/` so that open PRs cannot conflict on them (#281). Assemble them
+   *after* setting the version files, since the assembler reads the version from the build
+   rather than taking a literal:
+
+   ```bash
+   python3 .github/scripts/changelog.py preview          # read the entries in aggregate first
+   python3 .github/scripts/changelog.py assemble         # writes the section, deletes the fragments
+   git add -A changelog.d/ CHANGELOG.md
+   ```
+
+   **`preview` is the point at which someone reads the entries together**, which is when a wrong
+   default or a wrong test count is most visible — two such defects were caught that way and
+   both were in changelog diffs a reviewer had been trained to skim. `assemble` refuses to run
+   on an empty `changelog.d/`, refuses a `-SNAPSHOT` or underivable version rather than
+   producing an empty one, and verifies its own output is **purely additive**: it strips the new
+   section back out and requires the remainder to match the previous file byte for byte, so a
+   published section cannot be silently reworded. It aborts and writes nothing if any of that
+   fails.
 2. **Tag** `vX.Y.Z` on the merged release commit and push the tag.
 3. **Dispatch `deploy.yml`** (`gh workflow run deploy.yml`). A single macOS runner publishes all
    targets (incl. the BOM) to Maven Central in one Gradle invocation — one atomic Central Portal

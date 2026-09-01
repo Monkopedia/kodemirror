@@ -90,7 +90,7 @@ For each fix item (in priority order):
    ```bash
    ./gradlew spotlessApply ktlintFormat
    ./gradlew :view:jvmTest :view:verifyRoborazziJvm   # plus apiCheck if public API moved
-   # update CHANGELOG.md under [Unreleased] with the issue/PR number
+   # add changelog.d/<issue>.fixed.md with the entry — not CHANGELOG.md (see changelog.d/README.md)
    /home/jmonk/git/urithiru/coder-bot/coderbot git push -u origin <branch>
    /home/jmonk/git/urithiru/coder-bot/coderbot gh pr create --base main \
      --reviewer monkopedia-reviewer --title "..." --body "...Fixes #<n>..."
