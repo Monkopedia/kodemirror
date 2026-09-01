@@ -191,7 +191,12 @@ private fun wholeWordSearchCursor(inner: Iterator<SearchMatch>, doc: Text): Iter
         val after = doc.sliceString(pos, pos + 1)
         val wordBefore = before.isNotEmpty() && isWordChar(before[0])
         val wordAfter = after.isNotEmpty() && isWordChar(after[0])
-        return wordBefore != wordAfter
+        // Upstream's `stringWordTest`/`regexpWordTest` only require that the
+        // two characters straddling a boundary are not *both* word characters
+        // (NAND). Using XOR additionally rejected boundaries where neither
+        // side is a word character, which made all-punctuation tokens such as
+        // `+`, `->`, `!=` or `^_^` unfindable with whole-word enabled.
+        return !(wordBefore && wordAfter)
     }
     return FilteringSearchCursor(inner) {
         isWordBoundary(it.from) && isWordBoundary(it.to)
