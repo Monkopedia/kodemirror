@@ -72,7 +72,28 @@ grep -rn "SNAPSHOT" docs-site/docs/ README.md
 
 ### 3. Changelog
 
-Ensure `CHANGELOG.md` has a dated `[X.Y.Z] - YYYY-MM-DD` section (not `[Unreleased]`) with all notable changes.
+Entries live as one file per change under `changelog.d/` — `CHANGELOG.md` carries no
+`[Unreleased]` section to edit, because a shared block made every merge conflict every other open
+PR (#281). Run this **after** step 2, since the assembler derives the version from the build files
+you just bumped:
+
+```bash
+python3 .github/scripts/changelog.py preview          # read the entries in aggregate
+python3 .github/scripts/changelog.py assemble         # writes CHANGELOG.md, deletes the fragments
+```
+
+Read the `preview` output before assembling rather than after. It is the one moment in the cycle
+when all of a release's entries are in front of one reader, and changelog defects are real: a
+wrong `MapMode` default and a fabricated test count both reached review and were caught only by
+someone reading the entry.
+
+`assemble` refuses an empty `changelog.d/`, refuses a `-SNAPSHOT` or underivable version instead
+of writing an empty one, and checks its own result is purely additive — the new section stripped
+back out must reproduce the previous `CHANGELOG.md` byte for byte, so published sections cannot be
+reworded by accident. Any of those failing aborts with a non-zero exit and writes nothing.
+
+The result must be a dated `[X.Y.Z] - YYYY-MM-DD` section; `deploy.yml` extracts the release notes
+from it by that exact heading.
 
 ### 4. Commit the version bump
 
@@ -84,6 +105,7 @@ Steps 2 and 3 are **one PR**, opened through the normal coderbot -> `monkopedia-
 git add convention-plugins/src/main/kotlin/kodemirror.library.gradle.kts \
         kodemirror-bom/build.gradle.kts \
         CHANGELOG.md README.md docs-site/docs/
+git add -A changelog.d/          # -A, so the fragment deletions are staged too
 git commit -m "Bump version to X.Y.Z for release"
 ```
 

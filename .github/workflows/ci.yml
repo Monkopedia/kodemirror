@@ -17,6 +17,13 @@ jobs:
           distribution: temurin
           java-version: 21
       - uses: gradle/actions/setup-gradle@v4
+      # Validates every `changelog.d/` fragment name and body (#281). A malformed fragment would
+      # otherwise surface only at the release cut, in the version-bump PR, which is the worst
+      # place to discover it. Seconds, and it fails inside a branch-protection-required job.
+      - name: Validate changelog fragments
+        run: |
+          python3 .github/scripts/test-changelog.py
+          python3 .github/scripts/changelog.py check
       # `:kodemirror-bom:verifyBomCoverage` checks the generated BOM POM against the set of
       # modules that publish, failing on drift in either direction (#244). It is named here
       # because this job does not run `check`.
