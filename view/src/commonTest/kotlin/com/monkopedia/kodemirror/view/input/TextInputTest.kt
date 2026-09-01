@@ -267,10 +267,11 @@ class TextInputTest {
         doc = "Hello",
         extensions = keymapExt
     ) { holder ->
-        onNodeWithTag("KodeMirror").performMouseInput {
-            click(Offset(10f, 15f))
-        }
-        waitForIdle()
+        // Deliberately no click: the editor auto-focuses the hidden field at
+        // composition, and on Android a pointer press then takes that focus away
+        // so no key event is delivered at all (#259). Clicking here would make
+        // these tests fail on the very platform the report came from, for an
+        // unrelated reason.
         holder.session.dispatch(
             TransactionSpec(selection = SelectionSpec.CursorSpec(DocPos(5)))
         )
@@ -312,11 +313,7 @@ class TextInputTest {
         doc = "",
         extensions = keymapExt
     ) { holder ->
-        onNodeWithTag("KodeMirror").performMouseInput {
-            click(Offset(10f, 15f))
-        }
-        waitForIdle()
-
+        // No click here either — see typingAfterBackspace_reachesTheDocument.
         onNodeWithTag("KodeMirror_input").performKeyInput {
             keyDown(Key.X)
             keyUp(Key.X)
@@ -340,11 +337,7 @@ class TextInputTest {
         doc = "",
         extensions = keymapExt
     ) { holder ->
-        onNodeWithTag("KodeMirror").performMouseInput {
-            click(Offset(10f, 15f))
-        }
-        waitForIdle()
-
+        // No click here either — see typingAfterBackspace_reachesTheDocument.
         onNodeWithTag("KodeMirror_input").performKeyInput {
             keyDown(Key.X)
             keyUp(Key.X)
