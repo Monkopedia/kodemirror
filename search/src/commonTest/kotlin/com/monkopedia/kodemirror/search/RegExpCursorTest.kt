@@ -103,6 +103,40 @@ class RegExpCursorTest {
     }
 
     @Test
+    fun anchorsMatchLineBoundariesNotTheEndOfThePreviousMatch() {
+        // Upstream always compiles with the "gm" base flags and never re-slices
+        // the document from the last match, so `^`/`$` anchor to real line
+        // boundaries. Reproduction from the issue: "aa\nab\nac".
+        val text = Text.of(listOf("aa", "ab", "ac"))
+
+        assertEquals(
+            listOf(0 to 1, 3 to 4, 6 to 7),
+            collectMatches(RegExpCursor(text, "^a"))
+        )
+        assertEquals(
+            listOf(1 to 2),
+            collectMatches(RegExpCursor(text, "a$"))
+        )
+        assertEquals(
+            listOf(0 to 0, 3 to 3, 6 to 6),
+            collectMatches(RegExpCursor(text, "^"))
+        )
+    }
+
+    @Test
+    fun aMidLineSearchStartIsNotALineStart() {
+        // `findNext` searches from the end of the current selection, which is
+        // usually mid-line. Upstream's line cursor buffers from
+        // `text.lineAt(from).from` and only *matches* from `from`, so `^`
+        // cannot match at the search start unless that really is a line start.
+        val text = Text.of(listOf("aa", "ab", "ac"))
+        assertEquals(
+            listOf(3 to 4, 6 to 7),
+            collectMatches(RegExpCursor(text, "^a", from = DocPos(1)))
+        )
+    }
+
+    @Test
     fun handlesInvalidRegexGracefully() {
         val text = Text.of("hello".split("\n"))
         val cursor = RegExpCursor(text, "[invalid")

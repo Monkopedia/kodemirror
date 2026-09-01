@@ -39,6 +39,24 @@ class RegExpCursor(
     private val to: DocPos = text.endPos
 ) : Iterator<SearchMatch> {
     private val regex: Regex?
+
+    /**
+     * Where the buffer [content] starts. Upstream's line cursor begins at
+     * `text.lineAt(from).from` and only *matches* from `from`, so that a search
+     * range starting mid-line does not make `^` match at that offset. Matching
+     * always begins at [from], so no match can start before it.
+     */
+    private val contentFrom: DocPos = text.lineAt(from).from
+
+    /**
+     * The searched range, flattened once from [contentFrom]. Upstream keeps a
+     * growing flattened document rather than re-slicing, and -- crucially --
+     * the regex is matched against that whole buffer so that `^`/`$` anchor to
+     * real line boundaries instead of to wherever the previous match ended.
+     * Truncating at [to] is what lets `$` match there, as upstream's line
+     * cursor does by slicing its current line to `to`.
+     */
+    private val content: String = text.sliceString(contentFrom, to)
     private var pos = from
     private var nextMatch: SearchMatch? = null
 
@@ -56,7 +74,8 @@ class RegExpCursor(
 
     init {
         regex = try {
-            Regex(query, options)
+            // Upstream's base flags are always "gm": multiline is not optional.
+            Regex(query, options + RegexOption.MULTILINE)
         } catch (_: Exception) {
             null
         }
@@ -73,11 +92,12 @@ class RegExpCursor(
             nextMatch = null
             return
         }
-        val content = text.sliceString(pos, to)
-        val result = regex.find(content)
+        val offset = pos - contentFrom
+        val result =
+            if (offset < 0 || offset > content.length) null else regex.find(content, offset)
         if (result != null) {
-            val matchFrom = pos + result.range.first
-            val matchTo = pos + (result.range.last + 1)
+            val matchFrom = contentFrom + result.range.first
+            val matchTo = contentFrom + (result.range.first + result.value.length)
             // Allow zero-width matches at `to` (e.g. $ anchor at document end),
             // but reject non-zero-width matches that start past the boundary.
             // Also reject zero-width matches at `to` that duplicate the
