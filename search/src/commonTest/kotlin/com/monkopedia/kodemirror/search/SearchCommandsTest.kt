@@ -119,6 +119,28 @@ class SearchCommandsTest {
     }
 
     @Test
+    fun replaceNextReplacesTheCurrentRegexMatch() {
+        // Upstream `replaceNext` decides "is the selection the match" by
+        // comparing positions. Comparing the selected text to the *pattern*
+        // made this branch dead for every regexp query.
+        val view = createView(
+            "john@a jane@b",
+            SearchQuery(
+                search = "(\\w+)@(\\w+)",
+                replace = "X",
+                regexp = true,
+                caseSensitive = true
+            ),
+            cursor = 0
+        )
+        assertTrue(findNext(view))
+        assertEquals(DocPos(0), view.state.selection.main.from)
+        assertEquals(DocPos(6), view.state.selection.main.to)
+        assertTrue(replaceNext(view))
+        assertEquals("X jane@b", view.state.doc.toString())
+    }
+
+    @Test
     fun replaceAllReplacesAllMatches() {
         val view = createView(
             "one two one two one",
