@@ -185,6 +185,19 @@ class SearchCommandsTest {
     }
 
     @Test
+    fun replaceAllUnquotesEscapesInTheReplacement() {
+        // Upstream's `getReplacement` runs the replace text through
+        // `unquote`, so a "\\n" typed into the replace field inserts a real
+        // newline rather than a backslash followed by an "n".
+        val view = createView(
+            "a b a",
+            SearchQuery(search = "a", replace = "x\\ny", caseSensitive = true)
+        )
+        assertTrue(replaceAll(view))
+        assertEquals("x\ny b x\ny", view.state.doc.toString())
+    }
+
+    @Test
     fun selectMatchesCreatesMultiSelection() {
         val view = createView(
             "one two one two one",

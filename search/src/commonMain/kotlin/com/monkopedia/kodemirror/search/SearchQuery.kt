@@ -60,6 +60,44 @@ data class SearchQuery(
         }
 
     /**
+     * [search] with `\n`, `\r`, `\t` and `\\` escapes resolved -- upstream's
+     * `SearchQuery.unquoted`, which every plain-string cursor searches for.
+     * When [literal] is set the escapes are left alone.
+     */
+    val unquoted: String
+        get() = unquote(search)
+
+    /**
+     * Resolve `\n`, `\r`, `\t` and `\\` escapes in [text], unless [literal]
+     * is set. Mirrors upstream `SearchQuery.unquote`.
+     */
+    fun unquote(text: String): String {
+        if (literal) return text
+        val sb = StringBuilder(text.length)
+        var i = 0
+        while (i < text.length) {
+            val ch = text[i]
+            if (ch == '\\' && i + 1 < text.length) {
+                val escaped = when (text[i + 1]) {
+                    'n' -> '\n'
+                    'r' -> '\r'
+                    't' -> '\t'
+                    '\\' -> '\\'
+                    else -> null
+                }
+                if (escaped != null) {
+                    sb.append(escaped)
+                    i += 2
+                    continue
+                }
+            }
+            sb.append(ch)
+            i++
+        }
+        return sb.toString()
+    }
+
+    /**
      * Get a cursor for this query over a given state.
      *
      * @param state The editor state to search.
@@ -80,7 +118,7 @@ data class SearchQuery(
             } else {
                 { it.lowercase() }
             }
-            SearchCursor(state.doc, search, from, to, normalize)
+            SearchCursor(state.doc, unquoted, from, to, normalize)
         }
         val cursor = if (wholeWord) wholeWordSearchCursor(base, state.doc) else base
         return if (test != null) {
@@ -104,7 +142,7 @@ data class SearchQuery(
      *
      * @param match The match whose capture groups should be substituted.
      */
-    fun expandReplace(match: SearchMatch): String = expandGroups(replace, match.groups)
+    fun expandReplace(match: SearchMatch): String = expandGroups(unquote(replace), match.groups)
 
     /**
      * Expand replacement string, handling `$1`, `$&`, `$$` substitutions
@@ -112,10 +150,11 @@ data class SearchQuery(
      *
      * @param match The regex cursor that produced the match (for group access).
      */
-    fun expandReplace(match: RegExpCursor): String = expandGroups(replace, match.matchGroups)
+    fun expandReplace(match: RegExpCursor): String =
+        expandGroups(unquote(replace), match.matchGroups)
 
     /** Expand replacement for a simple string match. */
-    fun expandReplace(): String = replace
+    fun expandReplace(): String = unquote(replace)
 
     companion object {
         /**

@@ -105,6 +105,30 @@ class SearchQueryTest {
     }
 
     @Test
+    fun unquotesEscapesInThePlainSearchString() {
+        // CM6 `test-query.ts:30-32`: searching "a\\nb" in "a a\nb b" finds
+        // the newline-separated occurrence at 2..5.
+        val query = SearchQuery(search = "a\\nb", caseSensitive = true)
+        assertEquals(
+            listOf(2 to 5),
+            collectMatches(query.getCursor(state("a a\nb b")))
+        )
+        assertEquals("a\nb", query.unquoted)
+        assertEquals("a\tb", SearchQuery(search = "a\\tb").unquoted)
+        assertEquals("a\\nb", SearchQuery(search = "a\\\\nb").unquoted)
+    }
+
+    @Test
+    fun literalDisablesUnquoting() {
+        val query = SearchQuery(search = "a\\nb", caseSensitive = true, literal = true)
+        assertEquals("a\\nb", query.unquoted)
+        assertEquals(
+            emptyList<Pair<Int, Int>>(),
+            collectMatches(query.getCursor(state("a a\nb b")))
+        )
+    }
+
+    @Test
     fun canMatchByWord() {
         val query = SearchQuery(
             search = "word",
