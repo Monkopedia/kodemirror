@@ -22,8 +22,16 @@ import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.Text
 import com.monkopedia.kodemirror.state.endPos
 
-/** A match found by a search cursor. */
-data class SearchMatch(val from: DocPos, val to: DocPos)
+/**
+ * A match found by a search cursor.
+ *
+ * @param from Start of the match.
+ * @param to End of the match.
+ * @param groups The regex capture groups for this match, with index 0 being the
+ *   whole match. Empty for plain-string cursors. Carried on the match itself so
+ *   that group references survive the cursor advancing past it.
+ */
+data class SearchMatch(val from: DocPos, val to: DocPos, val groups: List<String?> = emptyList())
 
 /**
  * A cursor that iterates over string matches in a [Text] document.

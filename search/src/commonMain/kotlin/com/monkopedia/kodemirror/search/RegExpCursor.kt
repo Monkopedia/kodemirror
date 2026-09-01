@@ -93,8 +93,9 @@ class RegExpCursor(
                         text.length > 0
                     )
             ) {
+                val groups = result.groups.map { it?.value }
                 matchGroups = result.groupValues
-                nextMatch = SearchMatch(matchFrom, matchTo)
+                nextMatch = SearchMatch(matchFrom, matchTo, groups)
             } else {
                 done = true
                 nextMatch = null

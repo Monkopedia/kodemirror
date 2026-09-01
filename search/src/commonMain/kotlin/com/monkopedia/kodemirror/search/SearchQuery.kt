@@ -91,47 +91,28 @@ data class SearchQuery(
     }
 
     /**
+     * The text that should replace [match], mirroring upstream
+     * `QueryType.getReplacement`: group references are expanded only for
+     * regex queries; plain-string queries insert [replace] verbatim.
+     */
+    fun getReplacement(match: SearchMatch): String =
+        if (regexp && !literal) expandReplace(match) else expandReplace()
+
+    /**
+     * Expand replacement string, handling `$1`, `$&`, `$$` substitutions
+     * for regex matches.
+     *
+     * @param match The match whose capture groups should be substituted.
+     */
+    fun expandReplace(match: SearchMatch): String = expandGroups(replace, match.groups)
+
+    /**
      * Expand replacement string, handling `$1`, `$&`, `$$` substitutions
      * for regex matches.
      *
      * @param match The regex cursor that produced the match (for group access).
      */
-    fun expandReplace(match: RegExpCursor): String {
-        val groups = match.matchGroups
-        val sb = StringBuilder()
-        var i = 0
-        while (i < replace.length) {
-            val ch = replace[i]
-            if (ch == '$' && i + 1 < replace.length) {
-                val next = replace[i + 1]
-                when {
-                    next == '$' -> {
-                        sb.append('$')
-                        i += 2
-                    }
-                    next == '&' -> {
-                        if (groups.isNotEmpty()) sb.append(groups[0])
-                        i += 2
-                    }
-                    next.isDigit() -> {
-                        val groupIdx = next.digitToInt()
-                        if (groupIdx < groups.size) {
-                            sb.append(groups[groupIdx] ?: "")
-                        }
-                        i += 2
-                    }
-                    else -> {
-                        sb.append(ch)
-                        i++
-                    }
-                }
-            } else {
-                sb.append(ch)
-                i++
-            }
-        }
-        return sb.toString()
-    }
+    fun expandReplace(match: RegExpCursor): String = expandGroups(replace, match.matchGroups)
 
     /** Expand replacement for a simple string match. */
     fun expandReplace(): String = replace
@@ -218,3 +199,61 @@ private fun wholeWordSearchCursor(inner: Iterator<SearchMatch>, doc: Text): Iter
 }
 
 private fun isWordChar(c: Char): Boolean = c.isLetterOrDigit() || c == '_'
+
+/**
+ * Substitute `$$`, `$&` and `$<n>` references in [template] from [groups],
+ * following upstream `RegExpQuery.getReplacement` (`/\$([$&]|\d+)/g`):
+ *
+ *  - `$$` yields a literal `$`.
+ *  - `$&` yields the whole match.
+ *  - `$<n>` prefers the longest in-range group number, so `$10` picks group 10
+ *    when it exists and otherwise falls back to group 1 followed by `0`.
+ *  - A reference that resolves to no group (`$0`, or an out-of-range number) is
+ *    left in the output verbatim rather than dropped.
+ */
+private fun expandGroups(template: String, groups: List<String?>): String {
+    val sb = StringBuilder()
+    var i = 0
+    while (i < template.length) {
+        val ch = template[i]
+        if (ch != '$' || i + 1 >= template.length) {
+            sb.append(ch)
+            i++
+            continue
+        }
+        when (val next = template[i + 1]) {
+            '$' -> {
+                sb.append('$')
+                i += 2
+            }
+            '&' -> {
+                sb.append(groups.firstOrNull() ?: "")
+                i += 2
+            }
+            else -> if (!next.isDigit()) {
+                sb.append(ch)
+                i++
+            } else {
+                var end = i + 1
+                while (end < template.length && template[end].isDigit()) end++
+                val digits = template.substring(i + 1, end)
+                var handled = false
+                for (len in digits.length downTo 1) {
+                    val n = digits.substring(0, len).toIntOrNull() ?: continue
+                    if (n > 0 && n < groups.size) {
+                        sb.append(groups[n] ?: "")
+                        sb.append(digits.substring(len))
+                        handled = true
+                        break
+                    }
+                }
+                if (!handled) {
+                    sb.append('$')
+                    sb.append(digits)
+                }
+                i = end
+            }
+        }
+    }
+    return sb.toString()
+}

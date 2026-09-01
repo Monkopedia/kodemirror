@@ -133,6 +133,36 @@ class SearchCommandsTest {
     }
 
     @Test
+    fun replaceAllExpandsRegexGroupsIntoTheDocument() {
+        // Upstream (@codemirror/search 6.7.1) replaceAll inserts
+        // `query.getReplacement(match)`, which expands `$1`/`$2`. Before this
+        // fix the raw template was written into the document.
+        val view = createView(
+            "john@a jane@b",
+            SearchQuery(
+                search = "(\\w+)@(\\w+)",
+                replace = "$2:$1",
+                regexp = true,
+                caseSensitive = true
+            )
+        )
+        assertTrue(replaceAll(view))
+        assertEquals("a:john b:jane", view.state.doc.toString())
+    }
+
+    @Test
+    fun replaceAllDoesNotExpandGroupsForPlainStringQueries() {
+        // Upstream StringQuery.getReplacement inserts the replace text
+        // verbatim; only RegExpQuery expands `$` references.
+        val view = createView(
+            "a b a",
+            SearchQuery(search = "a", replace = "$1", caseSensitive = true)
+        )
+        assertTrue(replaceAll(view))
+        assertEquals("$1 b $1", view.state.doc.toString())
+    }
+
+    @Test
     fun selectMatchesCreatesMultiSelection() {
         val view = createView(
             "one two one two one",

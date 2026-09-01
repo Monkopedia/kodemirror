@@ -174,7 +174,7 @@ val replaceAll: (EditorSession) -> Boolean = { view ->
                     ChangeSpec.Single(
                         match.from,
                         match.to,
-                        InsertContent.StringContent(query.replace)
+                        InsertContent.StringContent(query.getReplacement(match))
                     )
                 )
             }
