@@ -261,6 +261,17 @@ private fun isWordChar(c: Char): Boolean = c.isLetterOrDigit() || c == '_'
  *    when it exists and otherwise falls back to group 1 followed by `0`.
  *  - A reference that resolves to no group (`$0`, or an out-of-range number) is
  *    left in the output verbatim rather than dropped.
+ *
+ * One measured divergence from upstream, recorded here so it is not "corrected"
+ * back: for a group that *exists but did not participate* in the match -- `$2`
+ * against `(a)|(b)` matching `a` -- upstream emits the literal text
+ * `undefined`, because it interpolates `String(match[2])` where `match[2]` is
+ * JavaScript's `undefined`. This emits the empty string. The port is
+ * deliberately not bug-compatible there: `undefined` is an artefact of the host
+ * language's stringification, not a substitution rule anyone chose, and writing
+ * it into a user's document is not a behaviour worth reproducing. Every other
+ * case in a 28-case comparison against the published `@codemirror/search`
+ * 6.7.1 agrees exactly, on both JVM and wasm.
  */
 private fun expandGroups(template: String, groups: List<String?>): String {
     val sb = StringBuilder()

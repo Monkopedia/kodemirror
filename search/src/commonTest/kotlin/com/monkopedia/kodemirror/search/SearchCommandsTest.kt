@@ -141,6 +141,33 @@ class SearchCommandsTest {
     }
 
     @Test
+    fun replaceNextExpandsRegexGroupsIntoTheDocument() {
+        // The position-comparison test above uses `replace = "X"`, which
+        // carries no `$n` and so cannot see whether `replaceNext` expands the
+        // template or writes it verbatim: reverting its insert to
+        // `query.replace` leaves that test green. This drives the same command
+        // with a capturing pattern and a group reference, which is the
+        // assertion that distinguishes them.
+        val view = createView(
+            "john@a jane@b",
+            SearchQuery(
+                search = "(\\w+)@(\\w+)",
+                replace = "\$2:\$1",
+                regexp = true,
+                caseSensitive = true
+            ),
+            cursor = 0
+        )
+        assertTrue(findNext(view))
+        assertEquals(DocPos(0), view.state.selection.main.from)
+        assertEquals(DocPos(6), view.state.selection.main.to)
+        assertTrue(replaceNext(view))
+        // Only the current match is replaced; the second is left for the next
+        // invocation, which is what separates `replaceNext` from `replaceAll`.
+        assertEquals("a:john jane@b", view.state.doc.toString())
+    }
+
+    @Test
     fun replaceAllReplacesAllMatches() {
         val view = createView(
             "one two one two one",

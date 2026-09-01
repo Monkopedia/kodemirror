@@ -105,6 +105,33 @@ class SearchQueryReplaceTest {
     }
 
     @Test
+    fun anUnmatchedOptionalGroupExpandsToEmptyNotToTheStringUndefined() {
+        // A deliberate, measured divergence from upstream, pinned so that a
+        // future port audit cannot quietly "correct" it back.
+        //
+        // For a group that exists but did not participate in the match, the
+        // published @codemirror/search 6.7.1 emits the literal text
+        // `undefined` -- `new SearchQuery({search: "(a)|(b)", replace: "[$2]",
+        // regexp: true}).create().getReplacement(match)` over the document "a"
+        // returns "[undefined]". That is `String(match[2])` leaking JavaScript's
+        // `undefined` into the output, not a substitution rule; writing it into
+        // a user's document is not behaviour worth reproducing, so this port
+        // substitutes the empty string. Every other case of a 28-case
+        // comparison against that same published module agrees exactly.
+        val text = Text.of("a".split("\n"))
+        val cursor = RegExpCursor(text, "(a)|(b)")
+        val match = cursor.next()
+        val query = SearchQuery(search = "(a)|(b)", replace = "[$2]", regexp = true)
+        assertEquals("[]", query.expandReplace(match))
+        // The participating group is unaffected.
+        assertEquals(
+            "[a]",
+            SearchQuery(search = "(a)|(b)", replace = "[$1]", regexp = true)
+                .expandReplace(match)
+        )
+    }
+
+    @Test
     fun expandReplaceForNonRegex() {
         val query = SearchQuery(search = "hello", replace = "world")
         assertEquals("world", query.expandReplace())
