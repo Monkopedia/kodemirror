@@ -63,15 +63,22 @@ data class SearchQuery(
      * [search] with `\n`, `\r`, `\t` and `\\` escapes resolved -- upstream's
      * `SearchQuery.unquoted`, which every plain-string cursor searches for.
      * When [literal] is set the escapes are left alone.
+     *
+     * `internal`, matching upstream. `unquoted` and `unquote` carry
+     * `/// @internal` there (`codemirror/search` at `4db1811`,
+     * `src/search.ts:105,144`); `getReplacement` is narrower still, being a
+     * member of the `QueryType` class that upstream never exports, reachable
+     * only through the also-`@internal` `SearchQuery.create()`. None of the
+     * three appears in the 19-symbol export list of `dist/index.d.ts`.
      */
-    val unquoted: String
+    internal val unquoted: String
         get() = unquote(search)
 
     /**
      * Resolve `\n`, `\r`, `\t` and `\\` escapes in [text], unless [literal]
      * is set. Mirrors upstream `SearchQuery.unquote`.
      */
-    fun unquote(text: String): String {
+    internal fun unquote(text: String): String {
         if (literal) return text
         val sb = StringBuilder(text.length)
         var i = 0
@@ -133,7 +140,7 @@ data class SearchQuery(
      * `QueryType.getReplacement`: group references are expanded only for
      * regex queries; plain-string queries insert [replace] verbatim.
      */
-    fun getReplacement(match: SearchMatch): String =
+    internal fun getReplacement(match: SearchMatch): String =
         if (regexp && !literal) expandReplace(match) else expandReplace()
 
     /**

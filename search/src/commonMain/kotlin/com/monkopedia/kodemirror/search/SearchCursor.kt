@@ -27,11 +27,25 @@ import com.monkopedia.kodemirror.state.endPos
  *
  * @param from Start of the match.
  * @param to End of the match.
- * @param groups The regex capture groups for this match, with index 0 being the
- *   whole match. Empty for plain-string cursors. Carried on the match itself so
- *   that group references survive the cursor advancing past it.
  */
-data class SearchMatch(val from: DocPos, val to: DocPos, val groups: List<String?> = emptyList())
+data class SearchMatch(val from: DocPos, val to: DocPos) {
+    /**
+     * The regex capture groups for this match, with index 0 being the whole
+     * match. Empty for plain-string cursors. Carried on the match itself so
+     * that group references survive the cursor advancing past it.
+     *
+     * Deliberately kept out of the primary constructor: adding a third
+     * component would change the signatures of the generated `copy` and of the
+     * two-argument constructor, both of which ship in 0.3.5, and a changed
+     * signature is a removed method for anything already compiled against them.
+     */
+    var groups: List<String?> = emptyList()
+        private set
+
+    constructor(from: DocPos, to: DocPos, groups: List<String?>) : this(from, to) {
+        this.groups = groups
+    }
+}
 
 /**
  * A cursor that iterates over string matches in a [Text] document.
