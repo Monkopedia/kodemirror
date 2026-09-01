@@ -19,9 +19,11 @@
 package com.monkopedia.kodemirror.view.input
 
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performMouseInput
 import androidx.compose.ui.test.performTextInput
 import com.monkopedia.kodemirror.commands.standardKeymap
@@ -248,5 +250,103 @@ class TextInputTest {
 
         holder.assertDoc("ABCHello")
         holder.assertCursorAt(3)
+    }
+
+    /**
+     * Input must keep flowing after the keymap consumes a key (#294).
+     *
+     * Echo suppression is armed whenever a key-event path handles a key. Its
+     * reset used to live only in the handler installed by
+     * `platformRegisterKeyHandler`, which is a real implementation on wasmJs
+     * and a no-op on JVM, Android and native — so on those targets the first
+     * keymap-consumed key latched the flag and every later `onValueChange`
+     * was discarded, permanently. Backspace is the reported trigger.
+     */
+    @Test
+    fun typingAfterBackspace_reachesTheDocument() = runEditorTest(
+        doc = "Hello",
+        extensions = keymapExt
+    ) { holder ->
+        // Deliberately no click: the editor auto-focuses the hidden field at
+        // composition, and on Android a pointer press then takes that focus away
+        // so no key event is delivered at all (#259). Clicking here would make
+        // these tests fail on the very platform the report came from, for an
+        // unrelated reason.
+        holder.session.dispatch(
+            TransactionSpec(selection = SelectionSpec.CursorSpec(DocPos(5)))
+        )
+        waitForIdle()
+
+        // Backspace is consumed by the keymap, which arms echo suppression.
+        onNodeWithTag("KodeMirror_input").performKeyInput {
+            keyDown(Key.Backspace)
+            keyUp(Key.Backspace)
+        }
+        waitForIdle()
+        holder.assertDoc("Hell")
+
+        // Text input arriving with no key event of its own — an IME commit on
+        // Android, or any onValueChange echo — must still reach the document.
+        onNodeWithTag("KodeMirror_input").performTextInput("X")
+        waitForIdle()
+        holder.assertDoc("HellX")
+    }
+
+    /**
+     * The other direction of #294: suppression must still suppress. A printable
+     * key entered by the key-event path is echoed back through the hidden field's
+     * `onValueChange` on wasmJs (returning true from `onPreviewKeyEvent` does not
+     * `preventDefault()` the DOM event), and that echo must be dropped rather
+     * than doubling the character — so the character appears exactly once
+     * however it arrived.
+     *
+     * Which half does the entering is target-dependent, which is why the
+     * assertion is on the result rather than on the path. On JVM, Android and
+     * native the key event carries the character, so the key path enters it and
+     * the following text input is its echo. On wasmJs `keyEventLayoutKey` reads
+     * the browser's real keydown, which a synthetic `performKeyInput` never
+     * fires, so the key press enters nothing and the text input is the only
+     * source. Either way the document must end up with one `x`.
+     */
+    @Test
+    fun keyEnteredCharacter_isNotDoubledByItsEcho() = runEditorTest(
+        doc = "",
+        extensions = keymapExt
+    ) { holder ->
+        // No click here either — see typingAfterBackspace_reachesTheDocument.
+        onNodeWithTag("KodeMirror_input").performKeyInput {
+            keyDown(Key.X)
+            keyUp(Key.X)
+        }
+        waitForIdle()
+
+        onNodeWithTag("KodeMirror_input").performTextInput("x")
+        waitForIdle()
+        holder.assertDoc("x")
+    }
+
+    /**
+     * Echo suppression must not swallow input that is not the echo (#294). This
+     * is the same latch as [typingAfterBackspace_reachesTheDocument] reached
+     * through the other arming path — a printable key rather than a keymap
+     * command — and it is what bounds the suppression to the keystroke that
+     * armed it: text differing from what the key path entered is always genuine.
+     */
+    @Test
+    fun differentTextAfterAKeyPress_isNotSuppressed() = runEditorTest(
+        doc = "",
+        extensions = keymapExt
+    ) { holder ->
+        // No click here either — see typingAfterBackspace_reachesTheDocument.
+        onNodeWithTag("KodeMirror_input").performKeyInput {
+            keyDown(Key.X)
+            keyUp(Key.X)
+        }
+        waitForIdle()
+
+        onNodeWithTag("KodeMirror_input").performTextInput("y")
+        waitForIdle()
+        val doc = holder.session.state.doc.toString()
+        assertTrue(doc.endsWith("y"), "Expected typed 'y' to reach the document, but doc is: $doc")
     }
 }

@@ -65,10 +65,13 @@ kotlin {
 // `graphicsMode=LEGACY` all text measures to zero width, so every coordinate-based
 // assertion is meaningless (a click 30px into a line resolves to the line's last character);
 // under `graphicsMode=NATIVE` the metrics are right but a pointer press clears Compose focus,
-// which breaks the focus and keyboard suites. Graphics mode cannot plausibly change focus
-// semantics, so that divergence is an artifact of the environment rather than a finding about
-// the editor. Android coverage for these needs instrumented tests on a device/emulator; see
-// #215. Everything else in `commonTest` still runs here.
+// which breaks the focus and keyboard suites. That last divergence was read here as an
+// environment artifact rather than a finding about the editor; the instrumented suite it asked
+// for has since REFUTED that — the same 5 focus + 8 keyboard failures reproduce on an API 34
+// emulator, tracked as #259. Robolectric is still not a trustworthy substitute (the LEGACY
+// metrics problem stands), but it was not wrong about this one. Android coverage for these
+// needs instrumented tests on a device/emulator; see #215. Everything else in `commonTest`
+// still runs here.
 // `testDebugUnitTest` / `testReleaseUnitTest` are the Android local-unit-test tasks; the JVM
 // target's task is `jvmTest` and is deliberately left alone.
 tasks.withType<Test>().matching { it.name.endsWith("UnitTest") }.configureEach {
