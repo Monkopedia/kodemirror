@@ -175,13 +175,28 @@ class SearchCommandsTest {
     @Test
     fun replaceAllDoesNotExpandGroupsForPlainStringQueries() {
         // Upstream StringQuery.getReplacement inserts the replace text
-        // verbatim; only RegExpQuery expands `$` references.
-        val view = createView(
-            "a b a",
-            SearchQuery(search = "a", replace = "$1", caseSensitive = true)
-        )
-        assertTrue(replaceAll(view))
-        assertEquals("$1 b $1", view.state.doc.toString())
+        // verbatim; only RegExpQuery expands `$` references
+        // (`@codemirror/search` 6.7.1 `dist/index.js:581,662,727`).
+        //
+        // `$1` alone cannot see the difference: a plain match carries no
+        // groups, and against an empty group list the expander leaves `$1`
+        // alone anyway, so it reads the same whether or not the plain-string
+        // branch is taken. `$&` and `$$` are the two references that *do*
+        // resolve against an empty group list -- to "" and to "$" -- so they
+        // are what actually pins `getReplacement` to the verbatim branch.
+        // Both expectations are upstream's own output for these queries.
+        for ((replace, expected) in listOf(
+            "\$1" to "\$1 b \$1",
+            "\$&" to "\$& b \$&",
+            "\$\$" to "\$\$ b \$\$"
+        )) {
+            val view = createView(
+                "a b a",
+                SearchQuery(search = "a", replace = replace, caseSensitive = true)
+            )
+            assertTrue(replaceAll(view))
+            assertEquals(expected, view.state.doc.toString())
+        }
     }
 
     @Test
