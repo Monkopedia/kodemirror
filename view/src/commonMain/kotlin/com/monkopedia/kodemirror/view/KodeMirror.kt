@@ -72,6 +72,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isAltPressed
 import androidx.compose.ui.input.key.isCtrlPressed
@@ -262,13 +263,17 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
     // should skip to avoid double-handling.
     val keyProcessedByCallback = remember { booleanArrayOf(false) }
 
-    // Suppresses the hidden text field's onValueChange echo for a key already
-    // handled by the key-event paths (document-level handler / onPreviewKeyEvent).
-    // Declared here (rather than inside EditorContent) so the document-level key
-    // handler below can RESET it at the start of each keydown. It then stays
-    // armed across the — possibly multiple — onValueChange echoes a single
-    // keystroke can produce on wasmJs when a completion popup recomposes (#109).
-    val suppressInput = remember { booleanArrayOf(false) }
+    // The text a key-event path (document-level handler / onPreviewKeyEvent)
+    // already entered for the keystroke in flight, whose echo through the hidden
+    // text field must therefore be dropped. Declared here, rather than inside
+    // EditorContent, so the document-level key handler below can update it.
+    //
+    // It holds the *text* rather than a bare flag so its lifetime is bounded by
+    // the keystroke that armed it on every target. A boolean armed by the key
+    // paths and cleared only by the wasmJs-only document handler latched on for
+    // good on JVM/Android/native, where that handler is a no-op — one Backspace
+    // and the editor never accepted text again (#294).
+    val pendingEcho = remember { arrayOfNulls<String>(1) }
 
     // Register a platform-level key handler that receives ALL keydown events.
     // This is the primary input path on wasmJs because Playwright (and some
@@ -280,21 +285,17 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
         val token = platformRegisterKeyHandler handler@{ key, ctrl, alt, meta, shift ->
             // Clear the flags at the start of each key event.
             // keyProcessedByCallback is set true only if we handle this key.
-            // suppressInput is reset so this keystroke can re-arm echo
-            // suppression from scratch; it then stays armed across the
-            // (possibly multiple) onValueChange echoes one keystroke can
-            // produce on wasmJs when a completion popup recomposes (#109).
             keyProcessedByCallback[0] = false
-            suppressInput[0] = false
+            pendingEcho[0] = null
             val handled = handleRawKeyEvent(session, key, ctrl, alt, meta, shift)
             if (handled) {
                 keyProcessedByCallback[0] = true
-                // A plain printable char inserted here still triggers an
+                // A plain printable char entered here still triggers an
                 // onValueChange echo on the hidden field even when onPreviewKeyEvent
                 // does NOT fire on the live wasmJs build — so arm echo suppression
                 // directly rather than relying on onPreviewKeyEvent to bridge it (#109).
                 if (key.length == 1 && !ctrl && !alt && !meta && !key[0].isISOControl()) {
-                    suppressInput[0] = true
+                    pendingEcho[0] = key
                 }
             }
             handled
@@ -680,7 +681,7 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                     editorCoordinates = editorCoordinates,
                     textLayoutResults = textLayoutResults,
                     keyProcessedByCallback = keyProcessedByCallback,
-                    suppressInput = suppressInput
+                    pendingEcho = pendingEcho
                 )
                 // Visible horizontal scrollbar for no-wrap mode (#65). Only
                 // shown when there is actual horizontal overflow and line
@@ -709,6 +710,20 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
     }
 }
 
+/**
+ * The text [event] enters as ordinary typing, or null when it enters none.
+ *
+ * Modified presses (Ctrl+A, Alt+X, ...) are shortcuts rather than text, and
+ * control and special keys (Backspace, Enter, arrows) carry no insertable
+ * character. Used both to insert a character the keymap left alone and to
+ * recognise that same character coming back as an input echo.
+ */
+private fun typedText(event: KeyEvent): String? {
+    if (event.isCtrlPressed || event.isMetaPressed || event.isAltPressed) return null
+    val char = keyEventLayoutKey(event) ?: keyEventCharacter(event)?.toString() ?: return null
+    return char.takeIf { it.length == 1 && !it[0].isISOControl() }
+}
+
 /** Inner content of the editor: hidden text field, line list, and tooltip layer. */
 @Composable
 private fun EditorContent(
@@ -725,7 +740,7 @@ private fun EditorContent(
     editorCoordinates: LayoutCoordinates?,
     textLayoutResults: MutableMap<Int, TextLayoutResult>,
     keyProcessedByCallback: BooleanArray,
-    suppressInput: BooleanArray
+    pendingEcho: Array<String?>
 ) {
     val session = LocalEditorSession.current
     val impl = session as EditorSessionImpl
@@ -752,27 +767,30 @@ private fun EditorContent(
     var hiddenTextValue by remember {
         mutableStateOf(TextFieldValue(""))
     }
-    // suppressInput (hoisted to the caller) suppresses the hidden text field's
-    // onValueChange echo when onPreviewKeyEvent / the document-level handler
-    // already consumed the key. On wasmJs, returning true from onPreviewKeyEvent
-    // does NOT call preventDefault() on the DOM event, so the browser still
-    // generates an input event that triggers onValueChange. This flag bridges
-    // the gap. It is RESET per keydown (by the document-level handler), not by
-    // onValueChange, so it survives more than one echo per keystroke (#109).
+    // pendingEcho (hoisted to the caller) holds the text a key path already
+    // entered for the keystroke in flight. On wasmJs, returning true from
+    // onPreviewKeyEvent does NOT call preventDefault() on the DOM event, so the
+    // browser still generates an input event that triggers onValueChange with
+    // that same text; dropping it is what keeps the character from doubling.
     BasicTextField(
         value = hiddenTextValue,
         cursorBrush = SolidColor(Color.Transparent),
         onValueChange = { newValue ->
-            if (suppressInput[0]) {
-                // Sticky: do NOT clear suppressInput here. A single keystroke can
-                // produce more than one onValueChange echo on wasmJs — the browser
-                // input event, plus a re-fire when a completion popup recomposes —
-                // and both must be dropped, otherwise the trigger character is
-                // re-inserted (doubled) and the spurious doc-change closes the
-                // just-opened completion popup (#109). The flag is reset per
-                // keydown by the document-level key handler.
+            if (newValue.text == pendingEcho[0]) {
+                // Matching echoes stay suppressed for as long as they keep
+                // arriving: one keystroke can produce more than one on wasmJs —
+                // the browser input event, plus a re-fire when a completion popup
+                // recomposes — and both must be dropped, otherwise the trigger
+                // character is re-inserted (doubled) and the spurious doc-change
+                // closes the just-opened completion popup (#109).
                 hiddenTextValue = TextFieldValue("")
                 return@BasicTextField
+            }
+            // Any other text is genuine input, so the keystroke's echo is over.
+            // An empty value inserts nothing either way, and disarming on one
+            // would let a second echo of the same keystroke through (#109).
+            if (newValue.text.isNotEmpty()) {
+                pendingEcho[0] = null
             }
             // Block text input when editor is read-only
             if (!session.editable) {
@@ -827,12 +845,21 @@ private fun EditorContent(
                     keyProcessedByCallback[0]
                 ) {
                     keyProcessedByCallback[0] = false
-                    suppressInput[0] = true
+                    // The document-level handler already recorded this keydown's
+                    // echo (or cleared it); don't clobber it.
                     return@onPreviewKeyEvent true
+                }
+                // Every keydown starts a fresh keystroke, so nothing is left to
+                // echo from the previous one. This runs on every target, which is
+                // what stops the suppression outliving its keystroke (#294).
+                if (event.type == KeyEventType.KeyDown) {
+                    pendingEcho[0] = null
                 }
                 val consumed = handleKeyEvent(session, event)
                 if (consumed) {
-                    suppressInput[0] = true
+                    // The keymap took the key, so any text the platform would
+                    // still enter for it is a duplicate.
+                    pendingEcho[0] = typedText(event)
                 } else if (event.type == KeyEventType.KeyDown && session.editable) {
                     // When the keymap doesn't consume a printable character,
                     // insert it directly. On wasmJs with canvas focus, the
@@ -841,15 +868,8 @@ private fun EditorContent(
                     // won't fire. This bridges the gap.
                     // Don't insert for modified keys (Ctrl+A, Alt+X, etc.)
                     // — those are shortcuts, not text input.
-                    val char = keyEventLayoutKey(event)
-                        ?: keyEventCharacter(event)?.toString()
-                    if (char != null &&
-                        char.length == 1 &&
-                        !char[0].isISOControl() &&
-                        !event.isCtrlPressed &&
-                        !event.isMetaPressed &&
-                        !event.isAltPressed
-                    ) {
+                    val char = typedText(event)
+                    if (char != null) {
                         val sel = session.state.selection.main
                         val newCursor = DocPos(sel.from.value + char.length)
                         session.dispatch(
@@ -863,7 +883,7 @@ private fun EditorContent(
                                 userEvent = "input.type"
                             )
                         )
-                        suppressInput[0] = true
+                        pendingEcho[0] = char
                         return@onPreviewKeyEvent true
                     }
                 }
