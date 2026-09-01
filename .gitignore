@@ -24,3 +24,6 @@ package-lock.json
 playwright-report/
 test-results/
 gap-analysis/screenshots/
+
+# `.github/scripts/test-changelog.py` imports `changelog.py`, so running it writes bytecode here.
+__pycache__/
