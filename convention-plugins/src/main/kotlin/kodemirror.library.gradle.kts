@@ -62,19 +62,29 @@ kotlin {
     // `org.gradle.jvm.version` attribute, so Gradle could not reject the variant for a JDK 17
     // consumer with a readable message — they got a raw `UnsupportedClassVersionError`. See #237.
     //
-    // `-Xjdk-release=11` is the half that `jvmTarget` alone does not give: `jvmTarget` controls
-    // the bytecode emitted, while the JDK API surface the compiler resolves against comes from
-    // the compiling JDK. #258 was that gap realised — `removeLast()`/`removeFirst()` bound to
-    // JDK 21's `SequencedCollection`, which does not exist below Android API 35, throwing
-    // `NoSuchMethodError` across the whole declared `minSdk = 24..34` with Kotlin diagnostics,
-    // Android Lint (#263) and desugaring all silent. `-Xjdk-release` restricts resolution to the
-    // JDK 11 API without moving the JDK the build runs on.
+    // `-Xjdk-release=11` covers a gap `jvmTarget` alone leaves **on the jvm target only**:
+    // `jvmTarget` controls the bytecode emitted, while the JDK API surface the compiler resolves
+    // against comes from the compiling JDK. Without it the jvm compilation emits class-55
+    // bytecode that can still call a JDK 21 method — #237's own symptom one level down, an
+    // `UnsupportedClassVersionError` traded for a `NoSuchMethodError`. Measured on the `jvm`
+    // compilation: `list.removeLast()` in `commonMain` emits `CollectionsKt.removeLast` with the
+    // flag and `java/util/List.removeLast` without it.
     //
-    // `jvmToolchain(11)` would do both in one line and was the stated default on #237, but it
-    // also pins the JVM that *tests* run on, and `:lsp-client`'s own dependency
-    // `com.monkopedia.lsp:lsp-jvm:1.2.1` is 1450/1450 class 65 — measured — so every test in that
-    // module dies at class-load time under a JDK 11 test JVM. This pair reaches the same
-    // published bytecode with the build and its tests still on JDK 21.
+    // It does NOT guard the android compilation, and #258 was an Android bug. `androidTarget`
+    // resolves against `compileSdk 36`'s `android.jar` rather than the JDK's `ct.sym`, and that
+    // `android.jar` exports `removeLast`/`removeFirst`/`reversed`, so the same line still emits
+    // `java/util/List.removeLast` for Android with the flag present — measured, and
+    // `jvmToolchain(11)` has the identical blind spot. The Android-side guard for that class is
+    // `NewApi` in Android Lint, which reads `commonMain` at all only because of the source
+    // registration further down this file (#263); `:state:lintDebug` fails that probe with
+    // "requires API level 35 (current min is 24)". The flag is still declared on both targets so
+    // the two blocks read alike and neither drifts, but it does nothing on the android one.
+    //
+    // `jvmToolchain(11)` would set the target and restrict the JDK API surface in one line, and
+    // was the stated default on #237, but it also pins the JVM that *tests* run on, and
+    // `:lsp-client`'s own dependency `com.monkopedia.lsp:lsp-jvm:1.2.1` is 1450/1450 class 65 —
+    // measured — so every test in that module dies at class-load time under a JDK 11 test JVM.
+    // This pair reaches the same published bytecode with build and tests still on JDK 21.
     jvm {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
