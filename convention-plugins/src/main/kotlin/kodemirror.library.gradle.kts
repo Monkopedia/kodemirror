@@ -21,6 +21,7 @@ import com.android.build.api.variant.LibraryAndroidComponentsExtension
 import java.util.concurrent.Callable
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 
@@ -53,8 +54,39 @@ android {
 }
 
 kotlin {
-    jvm()
-    androidTarget()
+    // What consumers must RUN, declared rather than inherited. Nothing here used to set a Kotlin
+    // `jvmTarget` or a `jvmToolchain`, so every JVM and Android compilation silently took the
+    // target of whatever JDK Gradle happened to be running on — the CI runners' pinned JDK 21.
+    // That shipped class-65 (Java 21) bytecode in 0.3.4, 0.3.5 and 0.3.6, contradicting the
+    // `compileOptions { VERSION_11 }` written directly above, and KMP publishes no
+    // `org.gradle.jvm.version` attribute, so Gradle could not reject the variant for a JDK 17
+    // consumer with a readable message — they got a raw `UnsupportedClassVersionError`. See #237.
+    //
+    // `-Xjdk-release=11` is the half that `jvmTarget` alone does not give: `jvmTarget` controls
+    // the bytecode emitted, while the JDK API surface the compiler resolves against comes from
+    // the compiling JDK. #258 was that gap realised — `removeLast()`/`removeFirst()` bound to
+    // JDK 21's `SequencedCollection`, which does not exist below Android API 35, throwing
+    // `NoSuchMethodError` across the whole declared `minSdk = 24..34` with Kotlin diagnostics,
+    // Android Lint (#263) and desugaring all silent. `-Xjdk-release` restricts resolution to the
+    // JDK 11 API without moving the JDK the build runs on.
+    //
+    // `jvmToolchain(11)` would do both in one line and was the stated default on #237, but it
+    // also pins the JVM that *tests* run on, and `:lsp-client`'s own dependency
+    // `com.monkopedia.lsp:lsp-jvm:1.2.1` is 1450/1450 class 65 — measured — so every test in that
+    // module dies at class-load time under a JDK 11 test JVM. This pair reaches the same
+    // published bytecode with the build and its tests still on JDK 21.
+    jvm {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_11)
+            freeCompilerArgs.add("-Xjdk-release=11")
+        }
+    }
+    androidTarget {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_11)
+            freeCompilerArgs.add("-Xjdk-release=11")
+        }
+    }
 
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
