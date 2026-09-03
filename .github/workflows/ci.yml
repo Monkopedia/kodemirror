@@ -12,6 +12,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # `--base-ref` below needs the base commit, which a depth-1 checkout does not have:
+          # on a pull_request the checked-out ref is the merge commit and its parents are absent.
+          fetch-depth: 0
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -20,10 +24,23 @@ jobs:
       # Validates every `changelog.d/` fragment name and body (#281). A malformed fragment would
       # otherwise surface only at the release cut, in the version-bump PR, which is the worst
       # place to discover it. Seconds, and it fails inside a branch-protection-required job.
+      #
+      # `--base-ref` additionally compares CHANGELOG.md against the merge base and refuses any
+      # change to it that is not a release assembly (#297). Without it `check` reads only the
+      # fragments, so a PR editing CHANGELOG.md directly passes — and since #295 removed
+      # `## [Unreleased]`, such an edit no longer conflicts either: git lands the hunk inside an
+      # already-published section and the merge is clean. The flag is omitted on `push` (no PR to
+      # compare against); the script prints which branch it took, so an inert guard is visible in
+      # the log rather than silent.
+      # `github.event.pull_request.base.sha` rather than `origin/<base_ref>`: actions/checkout
+      # fetches only the ref it checks out, so there is no `refs/remotes/origin/main` to name --
+      # but the base commit is an ancestor of the merge commit and so is present at depth 0.
       - name: Validate changelog fragments
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           python3 .github/scripts/test-changelog.py
-          python3 .github/scripts/changelog.py check
+          python3 .github/scripts/changelog.py check ${BASE_SHA:+--base-ref "$BASE_SHA"}
       # `:kodemirror-bom:verifyBomCoverage` checks the generated BOM POM against the set of
       # modules that publish, failing on drift in either direction (#244). It is named here
       # because this job does not run `check`.
