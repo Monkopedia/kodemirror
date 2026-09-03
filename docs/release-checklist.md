@@ -88,9 +88,16 @@ wrong `MapMode` default and a fabricated test count both reached review and were
 someone reading the entry.
 
 `assemble` refuses an empty `changelog.d/`, refuses a `-SNAPSHOT` or underivable version instead
-of writing an empty one, and checks its own result is purely additive — the new section stripped
-back out must reproduce the previous `CHANGELOG.md` byte for byte, so published sections cannot be
-reworded by accident. Any of those failing aborts with a non-zero exit and writes nothing.
+of writing an empty one, refuses a version whose `## [X.Y.Z]` heading is already in the file, and
+checks its own result is purely additive — the new section stripped back out must reproduce the
+previous `CHANGELOG.md` byte for byte, so published sections cannot be reworded by accident. Any
+of those failing aborts with a non-zero exit and writes nothing.
+
+The already-released refusal covers the case the `-SNAPSHOT` guard cannot: because step 8's
+post-release SNAPSHOT bump is usually skipped, `main` normally sits on an already-released
+version, and running `assemble` before step 2 would otherwise write a **second** `## [X.Y.Z]`
+heading with exit 0 and delete the fragments. `deploy.yml`'s extractor re-arms on the second
+matching heading, so the release notes would carry both sections (#297).
 
 The result must be a dated `[X.Y.Z] - YYYY-MM-DD` section; `deploy.yml` extracts the release notes
 from it by that exact heading.

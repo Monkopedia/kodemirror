@@ -117,13 +117,15 @@ See [all open issues](https://github.com/Monkopedia/kodemirror/issues) for the f
 
 Contributions are welcome! Please [open an issue](https://github.com/Monkopedia/kodemirror/issues/new) to discuss before submitting large changes.
 
-**Changelog entries go in `changelog.d/`, not in `CHANGELOG.md`.** Add a new file named
+**Changelog entries go in `changelog.d/`, not in `CHANGELOG.md`.** When your change is one a user
+reads about — behaviour, public API, the build, or user-facing docs — add a new file named
 `<issue>.<section>.md` — for example `changelog.d/281.fixed.md` — containing the markdown bullet(s)
-your change should appear as. `CHANGELOG.md` is assembled from those files at release time and has
-no `[Unreleased]` section to edit. One file per pull request means two pull requests never touch
-the same file, so they never conflict on the changelog. See
-[`changelog.d/README.md`](changelog.d/README.md) for the sections and the format, and run
-`python3 .github/scripts/changelog.py check` to validate.
+your change should appear as. A change with no user-visible effect needs none. `CHANGELOG.md` is
+assembled from those files at release time and has no `[Unreleased]` section to edit; editing it
+directly is refused by CI. One file per change means two pull requests never touch the same file,
+so they never conflict on the changelog. See
+[`changelog.d/README.md`](changelog.d/README.md) for the sections, the format and when an entry is
+expected, and run `python3 .github/scripts/changelog.py check` to validate.
 
 ## License
 

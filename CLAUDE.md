@@ -14,11 +14,16 @@ committing or pushing directly to `main`. An independent reviewer pass produces 
    - tests green: `JAVA_HOME=/usr/lib/jvm/java-21-openjdk ./gradlew :<module>:jvmTest`
    - style: `spotlessApply` / `ktlintFormat`
    - API: `apiCheck` (run `apiDump` only for an *intended* public-API change)
-   - changelog: add **a new file** `changelog.d/<issue>.<section>.md` holding the entry, and
-     **do not edit `CHANGELOG.md`** — it is assembled at release time. Entries still carry the
-     issue/PR number. One file per change is the whole point: two PRs never touch the same file,
-     so merging one no longer conflicts every other open PR and invalidates its approval (#281).
-     `changelog.d/README.md` has the format; `python3 .github/scripts/changelog.py check` validates it.
+   - changelog: when the change is one a **user of the library reads about** — behaviour, public
+     API, build/release process, or user-facing docs — add **a new file**
+     `changelog.d/<issue>.<section>.md` holding the entry. A change with no user-visible effect
+     (pure internal refactor, test-only, CI plumbing) legitimately gets none; `check` does not
+     require one. Either way **do not edit `CHANGELOG.md`** — it is assembled at release time,
+     and `check --base-ref origin/main` refuses any other change to it (#297). Entries still
+     carry the issue/PR number. One file per change is the whole point: two PRs never touch the
+     same file, so merging one no longer conflicts every other open PR and invalidates its
+     approval (#281). `changelog.d/README.md` has the format and the when-to-write-one criterion;
+     `python3 .github/scripts/changelog.py check` validates it.
 2. **Open a PR via the coderbot wrapper** (`/home/jmonk/git/urithiru/coder-bot/coderbot`),
    authored by `monkopedia-coder`, requesting the reviewer on creation:
    - `coderbot git push -u origin <branch>`
@@ -130,10 +135,12 @@ cut the next patch.
    default or a wrong test count is most visible — two such defects were caught that way and
    both were in changelog diffs a reviewer had been trained to skim. `assemble` refuses to run
    on an empty `changelog.d/`, refuses a `-SNAPSHOT` or underivable version rather than
-   producing an empty one, and verifies its own output is **purely additive**: it strips the new
-   section back out and requires the remainder to match the previous file byte for byte, so a
-   published section cannot be silently reworded. It aborts and writes nothing if any of that
-   fails.
+   producing an empty one, refuses a version whose `## [X.Y.Z]` heading is already in the file
+   (the `-SNAPSHOT` guard does not cover that — the post-release bump is usually skipped, so
+   `main` normally reads an already-released version, #297), and verifies its own output is
+   **purely additive**: it strips the new section back out and requires the remainder to match
+   the previous file byte for byte, so a published section cannot be silently reworded. It aborts
+   and writes nothing if any of that fails.
 2. **Tag** `vX.Y.Z` on the merged release commit and push the tag.
 3. **Dispatch `deploy.yml`** (`gh workflow run deploy.yml`). A single macOS runner publishes all
    targets (incl. the BOM) to Maven Central in one Gradle invocation — one atomic Central Portal
