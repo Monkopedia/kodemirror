@@ -33,7 +33,7 @@ Deliberate properties, each earned from a real failure recorded on #281/#297:
 * **A version is released once.** `assemble` refuses a version whose `## [X.Y.Z]`
   heading is already in the file. The `-SNAPSHOT` guard was the only defence and
   it is inert in this repo's steady state: the post-release SNAPSHOT bump has
-  been performed after three of eight releases, so `main` normally sits on an
+  been performed after four of eight releases, so `main` normally sits on an
   already-released version. `_verify_additive` does not cover it -- a *heading*
   collision leaves the rendered section absent from the old file (#297).
 * **`check` also guards CHANGELOG.md, not just the fragments.** Validating only
