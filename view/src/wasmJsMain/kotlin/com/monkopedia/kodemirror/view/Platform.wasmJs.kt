@@ -134,23 +134,6 @@ private fun ensureJsDispatcher() {
 @JsFun("() => globalThis.__kodeKey || ''")
 private external fun readCapturedKey(): String
 
-/**
- * Focus the canvas in the shadow DOM so keyboard events reach Skiko's
- * event handler. Skiko processes key events from the canvas element
- * and converts them to Compose KeyEvents that flow through
- * onPreviewKeyEvent.
- */
-@JsFun(
-    """() => {
-    var shadow = document.body.shadowRoot;
-    if (shadow) {
-        var canvas = shadow.querySelector('canvas');
-        if (canvas) canvas.focus();
-    }
-}"""
-)
-private external fun platformFocusCanvas()
-
 internal actual fun platformRegisterKeyHandler(
     handler: (key: String, ctrl: Boolean, alt: Boolean, meta: Boolean, shift: Boolean) -> Boolean
 ): PlatformKeyHandlerToken {
@@ -166,10 +149,6 @@ internal actual fun platformUnregisterKeyHandler(token: PlatformKeyHandlerToken)
         jsClearKeyCallback()
         jsDispatcherInstalled = false
     }
-}
-
-internal actual fun platformFocusInput() {
-    platformFocusCanvas()
 }
 
 // Write to the system clipboard via the async Clipboard API. This must be

@@ -32,53 +32,34 @@ import kotlin.test.Test
 import kotlin.test.assertTrue
 
 /**
- * Tests for focus management after canvas/editor clicks.
+ * Tests for focus management after editor clicks.
  *
- * # Issue #2: Canvas click can break keyboard input
+ * # Issue #2: a tap/drag race could skip `requestFocus()`
  *
- * ## Root cause analysis
+ * The editor used to run separate tap and drag gesture coroutines that each
+ * competed for the DOWN event, so focus could be skipped depending on which
+ * won. They are now one `awaitEachGesture` block that requests focus on the
+ * down before deciding tap-vs-drag. These tests hold that: click, repeated
+ * click, drag, and click-after-drag must all leave the hidden field focused
+ * and keyboard navigation working.
  *
- * The editor Box has THREE separate `pointerInput` modifiers:
- *   1. `detectTapGestures`  — calls `focusRequester.requestFocus()` on tap
- *   2. `detectDragGestures` — calls `focusRequester.requestFocus()` on drag start
- *   3. `awaitPointerEventScope` — hover tracking (no focus involvement)
+ * # Issue #303: DOM focus and the soft keyboard on wasmJs
  *
- * Each `pointerInput` block runs in its own coroutine and competes for pointer
- * events. When the user clicks (press + quick release), Compose's gesture
- * detection applies "slop": a pointer move below ~18px is still considered a
- * tap, but both coroutines receive the DOWN event simultaneously.
+ * Compose focus is not the whole story in a browser. Compose's canvas carries
+ * `tabindex="0"`, so an un-`preventDefault()`ed pointer down moves *DOM* focus
+ * to the canvas and blurs the backing `<textarea>` — the only element a browser
+ * raises a soft keyboard for — and Compose-web only calls `preventDefault()`
+ * when the gesture consumed a change. The editor therefore consumes the down,
+ * and calls `SoftwareKeyboardController.show()` in the same gesture because a
+ * `requestFocus()` on an already-focused field is a no-op and never asks the
+ * platform for the IME.
  *
- * On Desktop/JVM, `detectDragGestures` requires the pointer to move past the
- * drag slop threshold before it starts consuming events, so a pure click
- * normally reaches `detectTapGestures` intact.
- *
- * On **wasmJs**, the situation is more complex:
- *   - `platformFocusInput()` calls `platformFocusCanvas()`, which focuses the
- *     `<canvas>` element in Skiko's shadow DOM. A canvas click can momentarily
- *     move *browser* DOM focus to the canvas, away from any hidden textarea.
- *   - If `detectTapGestures` does not fire (e.g., drag detector consumed the
- *     event before the tap completed), `focusRequester.requestFocus()` is never
- *     called, leaving the BasicTextField without Compose focus.
- *   - The `recentlyDragged` flag (set in `onDragStart`, cleared in tap) adds
- *     another wrinkle: if drag fires first and sets `recentlyDragged = true`,
- *     the subsequent tap callback early-returns and skips `requestFocus()`.
- *
- * ## Why this test can/cannot reproduce the bug on JVM
- *
- * On JVM (Desktop Compose), `platformFocusInput()` is a no-op. Focus is
- * managed entirely by Compose's `FocusRequester`. The drag/tap race exists in
- * the pointer-input pipeline, but in the Desktop test environment Compose
- * correctly hands a click (no slop exceeded) to `detectTapGestures`, so
- * `requestFocus()` fires and the BasicTextField is focused.
- *
- * **The bug is wasmJs-specific**: it only manifests when:
- *   a) the browser moves DOM focus to the canvas on click, AND
- *   b) the Compose FocusRequester doesn't re-focus the hidden textarea, AND
- *   c) the document-level key handler (`platformRegisterKeyHandler`) does not
- *      catch keys because they target the canvas rather than the body.
- *
- * The tests below verify the *correct* JVM behavior (click → focus → keyboard
- * works) and document the wasmJs-specific failure mode as comments.
+ * Neither half is observable from a Compose UI test: `hasFocus` below reports
+ * Compose focus, not `document.activeElement`, and there is no soft keyboard in
+ * a test environment. The DOM-level evidence for #303 lives in the PR, measured
+ * against a real browser. What these tests can and do guard is that the added
+ * consume did not cost the gesture behaviour above; the pointer-type coverage
+ * that consume most affects is in [TouchGestureTest] and [DragSelectionTest].
  */
 @OptIn(ExperimentalTestApi::class)
 class FocusManagementTest {
@@ -114,12 +95,8 @@ class FocusManagementTest {
     // -------------------------------------------------------------------------
 
     /**
-     * A single click on the editor canvas should give Compose focus to the
-     * hidden BasicTextField so that subsequent key events are routed to it.
-     *
-     * On JVM: passes — detectTapGestures fires and calls requestFocus().
-     * On wasmJs: may fail — canvas click may move DOM focus away from the
-     * textarea; see class KDoc for details.
+     * A single click on the editor should give Compose focus to the hidden
+     * BasicTextField so that subsequent key events are routed to it.
      */
     @Test
     fun clickOnEditor_givesFocusToTextField() = runEditorTest(
@@ -165,10 +142,8 @@ class FocusManagementTest {
     }
 
     /**
-     * Multiple sequential clicks should each preserve focus.
-     *
-     * Each click calls detectTapGestures → requestFocus(). Clicking the second
-     * time should NOT steal focus from the BasicTextField.
+     * Multiple sequential clicks should each preserve focus. Every pointer
+     * down calls requestFocus(); a later click must not steal focus back.
      */
     @Test
     fun multipleClicks_eachPreservesFocus() = runEditorTest(
@@ -185,10 +160,9 @@ class FocusManagementTest {
     }
 
     /**
-     * After a drag gesture, the editor should remain focused.
-     *
-     * detectDragGestures.onDragStart calls requestFocus(), so a drag should
-     * also focus the editor. Subsequent key input must work.
+     * After a drag gesture, the editor should remain focused. Focus is
+     * requested on the down, before tap-vs-drag is decided, so a drag focuses
+     * the editor just as a tap does and key input must still work.
      */
     @Test
     fun dragThenKeyboard_cursorMoves() = runEditorTest(
@@ -234,18 +208,10 @@ class FocusManagementTest {
     }
 
     /**
-     * Tap immediately after a drag must NOT skip focus due to `recentlyDragged`.
-     *
-     * In KodeMirror.kt, the tap handler checks `recentlyDragged` and early-
-     * returns (skipping requestFocus) if it's true. The drag's `onDragEnd`
-     * callback sets `recentlyDragged = false`, so a fresh tap after drag
-     * completion should still call requestFocus().
-     *
-     * If the ordering is wrong (tap fires before onDragEnd clears the flag),
-     * the tap skips requestFocus and focus is lost.
-     *
-     * On JVM, `recentlyDragged` is cleared by `onDragEnd` before the next tap
-     * can fire, so this passes. The risk is on wasmJs where timing differs.
+     * A tap immediately after a drag must still focus the editor. The original
+     * defect (#2) was a `recentlyDragged` flag that made the tap handler
+     * early-return past `requestFocus()`; the unified gesture has no such flag,
+     * and this holds it that way.
      */
     @Test
     fun clickAfterDrag_focusIsRestored() = runEditorTest(
@@ -280,8 +246,7 @@ class FocusManagementTest {
             posAfter == posBefore - 1,
             "Expected cursor to move left by 1 after click-after-drag " +
                 "(from $posBefore to ${posBefore - 1}), but got $posAfter. " +
-                "This suggests `recentlyDragged` was still true when the tap fired, " +
-                "causing requestFocus() to be skipped."
+                "This suggests the tap after a drag skipped requestFocus()."
         )
     }
 
