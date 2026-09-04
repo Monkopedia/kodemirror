@@ -46,10 +46,6 @@ internal actual fun platformUnregisterKeyHandler(token: PlatformKeyHandlerToken)
     // No-op
 }
 
-internal actual fun platformFocusInput() {
-    // No-op on native — Compose manages focus natively
-}
-
 internal actual fun platformWriteClipboard(text: String): Boolean {
     // No-op on native — Compose's ClipboardManager writes the system
     // clipboard synchronously, so the command layer handles it directly.

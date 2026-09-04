@@ -52,10 +52,6 @@ internal actual fun platformUnregisterKeyHandler(token: PlatformKeyHandlerToken)
     // No-op
 }
 
-internal actual fun platformFocusInput() {
-    // No-op on JVM — Compose Desktop manages focus natively
-}
-
 internal actual fun platformWriteClipboard(text: String): Boolean {
     // No-op on JVM — Compose's ClipboardManager writes the AWT system
     // clipboard synchronously, so the command layer handles it directly.

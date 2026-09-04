@@ -87,6 +87,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.input.TextFieldValue
@@ -250,11 +251,17 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
 
     // Focus management
     val focusRequester = remember { FocusRequester() }
+    // Requesting Compose focus is not enough to raise a soft keyboard once the
+    // hidden field already holds focus: with no focus *change* there is no new
+    // startInput, so the platform is never asked to show the IME. Compose's own
+    // BasicTextField calls show() explicitly for that case
+    // (CoreTextField.requestFocusAndShowKeyboardIfNeeded); the editor's tap
+    // handler below does the same (#303).
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     // Auto-focus the hidden text field when the editor first appears
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
-        platformFocusInput()
     }
 
     // Track whether the platform callback already handled this keydown.
@@ -559,10 +566,21 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                         // separate tap/drag coroutines competed for the DOWN
                         // event and focus could be skipped.
                         awaitEachGesture {
-                            val down = awaitFirstDown()
-                            // Always focus immediately on any pointer down
+                            // Consume the down, as detectTapAndPress does for a
+                            // text field. On wasmJs that is what makes Compose
+                            // call preventDefault() on the browser event;
+                            // without it the default action moves DOM focus to
+                            // the tabindex=0 <canvas> and blurs the backing
+                            // <textarea>, the only element a soft keyboard is
+                            // raised for (#303). Children (line-list scroll,
+                            // gutter clicks) see the Main pass first, so this
+                            // does not take the gesture away from them.
+                            val down = awaitFirstDown().also { it.consume() }
+                            // Focus immediately on any pointer down, and ask for
+                            // the keyboard even when focus does not change —
+                            // otherwise one the user dismissed never comes back.
                             focusRequester.requestFocus()
-                            platformFocusInput()
+                            keyboardController?.show()
 
                             val downPosition = down.position
                             var isDrag = false

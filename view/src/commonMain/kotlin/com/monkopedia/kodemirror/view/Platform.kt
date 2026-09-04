@@ -113,17 +113,6 @@ internal expect fun platformRegisterKeyHandler(
 internal expect fun platformUnregisterKeyHandler(token: PlatformKeyHandlerToken)
 
 /**
- * Ensure the editor's backing text input element has platform focus.
- *
- * On wasmJs, Compose's FocusRequester.requestFocus() gives Compose-internal
- * focus but doesn't always move DOM focus to the textarea that Skiko creates.
- * This function explicitly focuses the textarea in the shadow DOM.
- *
- * On JVM/Desktop, this is a no-op since Compose manages focus natively.
- */
-internal expect fun platformFocusInput()
-
-/**
  * Write [text] to the underlying system clipboard.
  *
  * On wasmJs the canvas-rendered editor has no DOM `contenteditable`, so the
