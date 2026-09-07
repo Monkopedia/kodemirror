@@ -28,6 +28,10 @@ import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.AwaitPointerEventScope
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerId
+import androidx.compose.ui.input.pointer.changedToUpIgnoreConsumed
 import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorSelection
@@ -657,3 +661,55 @@ internal fun handleRectangularDrag(
         )
     )
 }
+
+/**
+ * What a press did while the editor waited to see whether it was a long press.
+ *
+ * @see awaitTouchLongPress
+ */
+internal enum class TouchHoldOutcome {
+    /** Held in place past the long-press timeout — the editor claims the drag. */
+    LongPress,
+
+    /** Travelled past the touch slop first — the gesture belongs to whoever else wants it. */
+    Moved,
+
+    /** Lifted before the timeout — an ordinary tap. */
+    Released
+}
+
+/**
+ * Wait out the long-press timeout on [pointerId], reporting what the pointer did.
+ *
+ * Observes in [PointerEventPass.Initial] — ahead of the children — but consumes
+ * nothing, so a press that turns into a drag before the timeout is still the
+ * enclosing scroll containers' to claim. That is the whole point of the wait:
+ * a touch drag over the editor scrolls the line list (vertically) or the line
+ * content (horizontally), and only a drag that begins from a long press is a
+ * text selection, as CodeMirror 6 behaves on mobile (#311).
+ *
+ * Returns [TouchHoldOutcome.Released] rather than leaving the caller to
+ * discover the lift for itself: after this returns the pointer may already be
+ * up, and a caller that then awaited another event for it would hang instead
+ * of handling the tap.
+ */
+internal suspend fun AwaitPointerEventScope.awaitTouchLongPress(
+    pointerId: PointerId,
+    downPosition: Offset,
+    slop: Float,
+    timeoutMillis: Long
+): TouchHoldOutcome = withTimeoutOrNull(timeoutMillis) {
+    while (true) {
+        val event = awaitPointerEvent(PointerEventPass.Initial)
+        val change = event.changes.firstOrNull { it.id == pointerId }
+            ?: return@withTimeoutOrNull TouchHoldOutcome.Released
+        if (change.changedToUpIgnoreConsumed()) {
+            return@withTimeoutOrNull TouchHoldOutcome.Released
+        }
+        if ((change.position - downPosition).getDistance() > slop) {
+            return@withTimeoutOrNull TouchHoldOutcome.Moved
+        }
+    }
+    @Suppress("UNREACHABLE_CODE")
+    TouchHoldOutcome.Moved
+} ?: TouchHoldOutcome.LongPress
