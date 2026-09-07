@@ -468,35 +468,18 @@ internal class Parse(
     }
 
     /**
-     * Advance a stack through nested reductions until it progresses
-     * past its current position, or until a limit is reached. Used
-     * during error recovery after inserting a synthetic token.
+     * Advance a given stack forward as far as it will go, handing it to
+     * [pushStackDedup] once it moves past its starting position. Returns true
+     * if it moved forward, false if it got stuck. Used during error recovery.
      */
     private fun advanceFully(stack: Stack, newStacks: MutableList<Stack>): Boolean {
-        val startPos = stack.pos
-        var limit = 0
+        val pos = stack.pos
         while (true) {
-            if (stack.pos > startPos) {
+            if (!advanceStack(stack, null, null)) return false
+            if (stack.pos > pos) {
                 pushStackDedup(stack, newStacks)
                 return true
             }
-            val defaultReduce = parser.stateSlot(
-                stack.state,
-                ParseState.DEFAULT_REDUCE
-            )
-            if (defaultReduce > 0) {
-                stack.reduce(defaultReduce)
-            } else {
-                val actions = tokens.getActions(stack)
-                if (actions.isEmpty()) return false
-                stack.apply(
-                    actions[0],
-                    if (actions.size >= 2) actions[1] else 0,
-                    startPos,
-                    if (actions.size >= 3) actions[2] else startPos
-                )
-            }
-            if (++limit > Rec.FORCE_REDUCE_LIMIT) return false
         }
     }
 
