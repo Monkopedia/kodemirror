@@ -61,6 +61,77 @@ class SearchQueryReplaceTest {
     }
 
     @Test
+    fun expandReplaceLeavesUnresolvableGroupReferencesLiteral() {
+        // Upstream `RegExpQuery.getReplacement` only substitutes group numbers
+        // that are `> 0 && < match.length`; anything else falls through to the
+        // literal match text.
+        val text = Text.of("ab cd".split("\n"))
+        val match = RegExpCursor(text, "(a)(b)").next()
+        assertEquals(
+            "$0",
+            SearchQuery(search = "(a)(b)", replace = "$0", regexp = true)
+                .expandReplace(match)
+        )
+        assertEquals(
+            "$9",
+            SearchQuery(search = "(a)(b)", replace = "$9", regexp = true)
+                .expandReplace(match)
+        )
+    }
+
+    @Test
+    fun expandReplaceFallsBackToShorterGroupNumbers() {
+        // `$10` with only two groups means group 1 followed by a literal "0".
+        val text = Text.of("ab cd".split("\n"))
+        val match = RegExpCursor(text, "(a)(b)").next()
+        assertEquals(
+            "a0",
+            SearchQuery(search = "(a)(b)", replace = "$10", regexp = true)
+                .expandReplace(match)
+        )
+    }
+
+    @Test
+    fun expandReplaceUsesTheGroupsOfTheGivenMatchNotTheLookahead() {
+        // RegExpCursor.advance() runs ahead of the returned match, so groups
+        // must travel on the match itself.
+        val text = Text.of("ab xy".split("\n"))
+        val cursor = RegExpCursor(text, "(\\w)(\\w)")
+        val first = cursor.next()
+        val second = cursor.next()
+        val query = SearchQuery(search = "(\\w)(\\w)", replace = "$2$1", regexp = true)
+        assertEquals("ba", query.expandReplace(first))
+        assertEquals("yx", query.expandReplace(second))
+    }
+
+    @Test
+    fun anUnmatchedOptionalGroupExpandsToEmptyNotToTheStringUndefined() {
+        // A deliberate, measured divergence from upstream, pinned so that a
+        // future port audit cannot quietly "correct" it back.
+        //
+        // For a group that exists but did not participate in the match, the
+        // published @codemirror/search 6.7.1 emits the literal text
+        // `undefined` -- `new SearchQuery({search: "(a)|(b)", replace: "[$2]",
+        // regexp: true}).create().getReplacement(match)` over the document "a"
+        // returns "[undefined]". That is `String(match[2])` leaking JavaScript's
+        // `undefined` into the output, not a substitution rule; writing it into
+        // a user's document is not behaviour worth reproducing, so this port
+        // substitutes the empty string. Every other case of a 28-case
+        // comparison against that same published module agrees exactly.
+        val text = Text.of("a".split("\n"))
+        val cursor = RegExpCursor(text, "(a)|(b)")
+        val match = cursor.next()
+        val query = SearchQuery(search = "(a)|(b)", replace = "[$2]", regexp = true)
+        assertEquals("[]", query.expandReplace(match))
+        // The participating group is unaffected.
+        assertEquals(
+            "[a]",
+            SearchQuery(search = "(a)|(b)", replace = "[$1]", regexp = true)
+                .expandReplace(match)
+        )
+    }
+
+    @Test
     fun expandReplaceForNonRegex() {
         val query = SearchQuery(search = "hello", replace = "world")
         assertEquals("world", query.expandReplace())
