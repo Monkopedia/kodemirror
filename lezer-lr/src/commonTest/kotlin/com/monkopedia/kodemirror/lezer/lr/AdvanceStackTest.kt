@@ -51,14 +51,17 @@ class AdvanceStackTest {
      * a lookahead 40 characters past that position while the token itself ends
      * 8 characters past it.
      *
-     * The state at that position has a default reduce, so upstream reduces
-     * without tokenising and only records the lookahead further along, from the
-     * state that genuinely needs a token — where the same scan starts eight
-     * characters later and therefore reaches 32 rather than 40 past the node.
-     * Calling `getActions` first records the wider value, and writes it into
-     * the tree as `NodeProp.lookAhead`: a node that claims to depend on more of
-     * the document than it does, which is what `TreeFragment.applyChanges`
-     * consults to decide how far an edit invalidates reuse.
+     * Both orders record the same lookahead values (41 at position 1, 49 at
+     * position 9); what differs is *where in the stack buffer* the record
+     * lands. `Stack.setLookAhead` writes it at the current buffer position, and
+     * the state at position 1 has a default reduce — so calling `getActions`
+     * first puts the record inside the node that reduce is about to build,
+     * where upstream puts it after that node. `Tree.build` reads the buffer
+     * backwards and gives a node the last record it passed, so the port's
+     * `Item` picks up the *next* position's 49 instead of its own 41: it claims
+     * to depend on 40 characters past its end rather than 32. That number is
+     * what `TreeFragment.applyChanges` consults to decide how far an edit
+     * invalidates reuse.
      *
      * `bufferLength` 1 is load-bearing: `NodeProp.lookAhead` is only kept on
      * nodes that are materialised as `Tree` objects, not on nodes packed into a
