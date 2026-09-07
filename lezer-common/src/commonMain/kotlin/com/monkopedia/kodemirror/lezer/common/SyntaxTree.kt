@@ -1300,19 +1300,21 @@ private fun stackIterator(tree: Tree, pos: Int, side: Int): NodeIterator {
 // ---- enterUnfinishedNodesBefore helper ----
 
 private fun enterUnfinishedNodesBefore(node: SyntaxNode, pos: Int): SyntaxNode {
-    var scan: SyntaxNode = node
-    val cursor = scan.childBefore(pos)
-    while (cursor != null) {
-        val last = cursor.lastChild
-        if (last == null || last.to != cursor.to) break
-        if (last.type.isError && last.from == last.to) {
-            scan = cursor
-            break
+    // `scan` walks down the right edge of the tree; `result` only advances when
+    // that edge actually ends in an unfinished (zero-length error) node.
+    var scan: SyntaxNode? = node.childBefore(pos)
+    var result: SyntaxNode = node
+    while (scan != null) {
+        val last = scan.lastChild
+        if (last == null || last.to != scan.to) break
+        scan = if (last.type.isError && last.from == last.to) {
+            result = scan
+            last.prevSibling
+        } else {
+            last
         }
-        scan = cursor
-        break
     }
-    return scan
+    return result
 }
 
 // ---- Tree.build implementation ----

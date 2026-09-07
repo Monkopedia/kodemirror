@@ -509,40 +509,187 @@ class TreeTest {
 
     // ---- enterUnfinishedNodesBefore tests ----
 
+    /** Error node type used by the enterUnfinishedNodesBefore fixtures. */
+    private val errorType = NodeType.define(
+        NodeTypeSpec(name = "\u26A0", id = 10, error = true)
+    )
+
+    private fun leaf(type: NodeType, length: Int) = Tree(type, emptyList(), emptyList(), length)
+
+    /** `name(from-to)` in document coordinates, so failures name a concrete node. */
+    private fun describe(node: SyntaxNode) = "${node.name}(${node.from}-${node.to})"
+
     @Test
     fun enterUnfinishedNodesBeforeOnNormalTree() {
         val tree = simple()
         val node = tree.topNode
-        // No error nodes, should return the node itself or a child
-        val result = node.enterUnfinishedNodesBefore(10)
-        assertNotNull(result)
+        // childBefore(10) is Pa(4-20), whose last child Br(16-18) does not reach
+        // Pa's end, so the walk stops immediately and the start node is returned.
+        assertEquals("T(0-20)", describe(node.enterUnfinishedNodesBefore(10)))
     }
 
     @Test
     fun enterUnfinishedNodesBeforeWithErrorNode() {
-        // Build a tree with an error node
-        val errorType = NodeType.define(
-            NodeTypeSpec(name = "\u26A0", id = 10, error = true)
-        )
+        // T(0-5) { a(0-3), err(3-3) }
         val a = types[1]
         val tree = Tree(
             types[0],
             listOf(
-                Tree(a, emptyList(), emptyList(), 3),
+                leaf(a, 3),
                 // zero-length error node
-                Tree(
-                    errorType,
-                    emptyList(),
-                    emptyList(),
-                    0
-                )
+                leaf(errorType, 0)
             ),
             listOf(0, 3),
             5
         )
-        val node = tree.topNode
-        val result = node.enterUnfinishedNodesBefore(5)
-        assertNotNull(result)
+        // childBefore(5) is the empty error node itself, which has no children,
+        // so the walk stops and the start node is returned.
+        assertEquals("T(0-5)", describe(tree.topNode.enterUnfinishedNodesBefore(5)))
+    }
+
+    @Test
+    fun enterUnfinishedNodesBeforeDescendsMoreThanOneLevel() {
+        // T(0-6) { Pa(0-6) { b(0-3), Br(3-6) { c(3-6), err(6-6) } } }
+        // The right edge is two levels deep and ends in a zero-length error
+        // node, so the walk must iterate twice to reach Br(3-6).
+        val tree = Tree(
+            types[0],
+            listOf(
+                Tree(
+                    types[4],
+                    listOf(
+                        leaf(types[2], 3),
+                        Tree(
+                            types[5],
+                            listOf(leaf(types[3], 3), leaf(errorType, 0)),
+                            listOf(0, 3),
+                            3
+                        )
+                    ),
+                    listOf(0, 3),
+                    6
+                )
+            ),
+            listOf(0),
+            6
+        )
+        assertEquals("Br(3-6)", describe(tree.topNode.enterUnfinishedNodesBefore(6)))
+    }
+
+    @Test
+    fun enterUnfinishedNodesBeforeDescendsThreeLevels() {
+        // T(0-9) { Pa(0-9) { b(0-3), Br(3-9) { c(3-6), Br(6-9) { c(6-9), err(9-9) } } } }
+        // Three descents are required before the empty error node is reached.
+        val tree = Tree(
+            types[0],
+            listOf(
+                Tree(
+                    types[4],
+                    listOf(
+                        leaf(types[2], 3),
+                        Tree(
+                            types[5],
+                            listOf(
+                                leaf(types[3], 3),
+                                Tree(
+                                    types[5],
+                                    listOf(leaf(types[3], 3), leaf(errorType, 0)),
+                                    listOf(0, 3),
+                                    3
+                                )
+                            ),
+                            listOf(0, 3),
+                            6
+                        )
+                    ),
+                    listOf(0, 3),
+                    9
+                )
+            ),
+            listOf(0),
+            9
+        )
+        assertEquals("Br(6-9)", describe(tree.topNode.enterUnfinishedNodesBefore(9)))
+    }
+
+    @Test
+    fun enterUnfinishedNodesBeforeStopsWhenRightEdgeFallsShort() {
+        // T(0-10) { Pa(0-10) { b(0-3), Br(3-6) { c(3-6), err(6-6) } } }
+        // Pa's last child ends at 6, short of Pa's own end at 10, so Pa is not
+        // "unfinished on its right edge" and the walk must stop before ever
+        // seeing the empty error node nested inside Br.
+        val tree = Tree(
+            types[0],
+            listOf(
+                Tree(
+                    types[4],
+                    listOf(
+                        leaf(types[2], 3),
+                        Tree(
+                            types[5],
+                            listOf(leaf(types[3], 3), leaf(errorType, 0)),
+                            listOf(0, 3),
+                            3
+                        )
+                    ),
+                    listOf(0, 3),
+                    10
+                )
+            ),
+            listOf(0),
+            10
+        )
+        assertEquals("T(0-10)", describe(tree.topNode.enterUnfinishedNodesBefore(10)))
+    }
+
+    @Test
+    fun enterUnfinishedNodesBeforeStaysPutWithoutErrorNode() {
+        // T(0-6) { Pa(0-6) { b(0-3), c(3-6) } } - no error node anywhere.
+        // The walk descends the right edge but never updates the result, so the
+        // start node comes back unchanged - not the visited child Pa(0-6).
+        val tree = Tree(
+            types[0],
+            listOf(
+                Tree(
+                    types[4],
+                    listOf(leaf(types[2], 3), leaf(types[3], 3)),
+                    listOf(0, 3),
+                    6
+                )
+            ),
+            listOf(0),
+            6
+        )
+        assertEquals("T(0-6)", describe(tree.topNode.enterUnfinishedNodesBefore(6)))
+    }
+
+    @Test
+    fun enterUnfinishedNodesBeforeContinuesIntoPreviousSibling() {
+        // T(0-6) { Pa(0-6) { Br(0-6) { c(0-6), err(6-6) }, err(6-6) } }
+        // After the outer empty error node the walk continues from its previous
+        // sibling Br(0-6), which itself ends in an empty error node.
+        val tree = Tree(
+            types[0],
+            listOf(
+                Tree(
+                    types[4],
+                    listOf(
+                        Tree(
+                            types[5],
+                            listOf(leaf(types[3], 6), leaf(errorType, 0)),
+                            listOf(0, 6),
+                            6
+                        ),
+                        leaf(errorType, 0)
+                    ),
+                    listOf(0, 6),
+                    6
+                )
+            ),
+            listOf(0),
+            6
+        )
+        assertEquals("Br(0-6)", describe(tree.topNode.enterUnfinishedNodesBefore(6)))
     }
 
     // ---- NodeType.match tests ----
