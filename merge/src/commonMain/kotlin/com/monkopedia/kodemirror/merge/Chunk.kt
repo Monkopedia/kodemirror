@@ -264,7 +264,7 @@ private fun updateChunks(
         val fromB = if (range != null) range.fromB + offB else b.endPos
         while (chunkI < chunks.size) {
             val next = chunks[chunkI]
-            if (next.endA + offA > fromA || next.endB + offB > fromB) break
+            if (range != null && (next.toA + offA > fromA || next.toB + offB > fromB)) break
             result.add(next.offset(offA, offB))
             chunkI++
         }
