@@ -125,8 +125,7 @@ private val indentation = ContextTracker(
             context
         }
     },
-    hash = { context -> context.hash },
-    strict = false
+    hash = { context -> context.hash }
 ) as ContextTracker<Any?>
 
 private fun three(input: InputStream, ch: Int, off: Int = 0): Boolean = input.peek(off) == ch &&
