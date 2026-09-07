@@ -45,23 +45,22 @@ import kotlin.test.assertEquals
  * The tests come in two halves because the two halves carry different weight:
  *
  * * [indentQueriesAtTheStartOfEveryLine] drives the public
- *   [getIndentation] entry point. It cannot reach the faulty read on this port
- *   (see below) and so passes before and after the fix; it is here to pin the
- *   answers the boundary actually gives for blank lines.
+ *   [getIndentation] entry point; it pins the answers the boundary gives for
+ *   blank lines. Its `function f()` case answered a flat 0 until #276 ported
+ *   the lexical stack.
  * * [indentOfABlankContinuedStatementLine] and its siblings call
  *   `StreamParser.indent` -- the same method [getIndentation] ends up in, via
  *   `StreamLanguage.getIndent` -- with a [JavaScriptState] built directly.
  *   These are the tests that fail with `StringIndexOutOfBoundsException`
  *   without the fix.
  *
- * Building the state by hand is necessary rather than convenient: this port
- * does not carry CodeMirror's `cc` continuation stack, so nothing ever pushes a
- * lexical scope and `state.lexical` stays the base `"block"` scope for every
- * document. The `"stat"` branch that calls `isContinuedStatement` is therefore
- * unreachable through the parser today, which makes the crash latent rather
- * than live. [JavaScriptState] and [JSLexical] are public API, and these tests
- * hold the upstream contract for the branch so that porting the lexical stack
- * does not resurrect the crash.
+ * Building the state by hand isolates the branch: the `"stat"` scope, the
+ * `lastType` and the text after the cursor are set directly rather than
+ * arrived at through a document, so each of `isContinuedStatement`'s four
+ * disjuncts can be exercised on its own. #276 has since ported the `cc`
+ * continuation stack, so the parser does now produce `"stat"` scopes and the
+ * branch is live; [JavaScriptState] and [JSLexical] are public API and these
+ * tests hold the upstream contract for it directly.
  */
 class JavaScriptBlankLineIndentTest {
 
@@ -86,7 +85,7 @@ class JavaScriptBlankLineIndentTest {
     fun indentQueriesAtTheStartOfEveryLine() {
         assertEquals(listOf(0, 0, 0), indentsPerLine("foo()\n\n"))
         assertEquals(listOf(0, 0, 0), indentsPerLine("foo\n\n"))
-        assertEquals(listOf(0, 0, 0, 0, 0), indentsPerLine("function f() {\n  foo();\n\n}\n"))
+        assertEquals(listOf(0, 2, 2, 0, 0), indentsPerLine("function f() {\n  foo();\n\n}\n"))
         assertEquals(listOf(0, 0, 0, 0), indentsPerLine("foo();\n   \nbar()\n"))
     }
 
