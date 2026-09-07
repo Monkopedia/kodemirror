@@ -872,9 +872,16 @@ internal class BufferNode(val context: BufferContext, val _parent: BufferNode?, 
  * Mutable tree walker. Walks a [Tree] depth-first, handling both
  * [Tree] and [TreeBuffer] children.
  */
-class TreeCursor internal constructor(root: Tree, internal val mode: Int = 0) : SyntaxNodeRef {
+class TreeCursor internal constructor(root: TreeNode, internal val mode: Int = 0) : SyntaxNodeRef {
+    /**
+     * Cursor over a whole tree, in that tree's own coordinates. A tree parsed over ranges is
+     * built relative to `ranges[0].from` (see `MixedParse.startInner`), so a caller that needs
+     * document coordinates must use the primary constructor with an offset [TreeNode] instead.
+     */
+    internal constructor(root: Tree, mode: Int = 0) : this(TreeNode(root, 0, null, 0), mode)
+
     @Suppress("ktlint:standard:property-naming", "ktlint:standard:backing-property-naming")
-    internal var _tree: TreeNode = TreeNode(root, 0, null, 0)
+    internal var _tree: TreeNode = root
     internal var buffer: BufferContext? = null
     private val stack = mutableListOf<Int>()
     internal var index: Int = 0
@@ -882,9 +889,9 @@ class TreeCursor internal constructor(root: Tree, internal val mode: Int = 0) : 
 
     override var type: NodeType = root.type
         private set
-    override var from: Int = 0
+    override var from: Int = root.from
         private set
-    override var to: Int = root.length
+    override var to: Int = root.to
         private set
     override val name: String get() = type.name
 
