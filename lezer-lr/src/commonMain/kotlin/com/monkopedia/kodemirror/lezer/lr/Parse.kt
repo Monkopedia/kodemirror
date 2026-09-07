@@ -19,6 +19,7 @@
 package com.monkopedia.kodemirror.lezer.lr
 
 import com.monkopedia.kodemirror.lezer.common.Input
+import com.monkopedia.kodemirror.lezer.common.NodeProp
 import com.monkopedia.kodemirror.lezer.common.PartialParse
 import com.monkopedia.kodemirror.lezer.common.TextRange
 import com.monkopedia.kodemirror.lezer.common.Tree
@@ -411,8 +412,7 @@ internal class Parse(
 
         // Try to use a cached tree fragment
         if (main != null && !parser.hasWrappers()) {
-            val cached = useCachedResult(stack, main)
-            if (cached) return true
+            if (useCachedResult(stack)) return true
         }
 
         // Default reduce (no token needed)
@@ -453,18 +453,46 @@ internal class Parse(
 
     /**
      * Try to reuse a cached tree node at the current position.
+     *
+     * Mirrors the fragment-reuse block of `@lezer/lr` 1.4.10's
+     * `LRParse.advanceStack` (`dist/index.js:1411-1428`). A node is only
+     * reusable when it belongs to this parser's node set, the current state
+     * has a goto for its term, it actually covers some input, and — under a
+     * strict [ContextTracker] — it was parsed under the same context hash.
+     * When the node itself does not qualify, upstream retries with its first
+     * child if that child starts at the same position.
      */
-    private fun useCachedResult(stack: Stack, main: CachedToken): Boolean {
+    private fun useCachedResult(stack: Stack): Boolean {
         val frags = fragments ?: return false
-        val cached = frags.nodeAt(stack.pos) ?: return false
-        val type = cached.type
-        if (type.id == 0) return false // error node
-
-        val goto = parser.getGoto(stack.state, type.id, false)
-        if (goto < 0) return false
-
-        stack.useNode(cached, goto)
-        return true
+        val context = stack.curContext
+        val strictCx = context != null && context.tracker.strict
+        val cxHash = if (strictCx) context.hash else 0
+        var cached: Tree? = frags.nodeAt(stack.pos)
+        while (cached != null) {
+            val type = cached.type
+            // The type object must be the very one this parser's node set
+            // holds at that id; a same-id type from another node set (a
+            // reconfigured parser, a mixed-language fragment) is not reusable.
+            val match = if (parser.nodeSet.types.getOrNull(type.id) === type) {
+                parser.getGoto(stack.state, type.id, false)
+            } else {
+                -1
+            }
+            if (match > -1 &&
+                // A zero-length node would not move `stack.pos`, and every
+                // caller loops while `advanceStack` returns true.
+                cached.length > 0 &&
+                (!strictCx || (cached.prop(NodeProp.contextHash) ?: 0) == cxHash)
+            ) {
+                stack.useNode(cached, match)
+                return true
+            }
+            if (cached.children.isEmpty() || cached.positions[0] > 0) break
+            val inner = cached.children[0]
+            if (inner !is Tree) break
+            cached = inner
+        }
+        return false
     }
 
     /**
