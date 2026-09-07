@@ -270,12 +270,21 @@ interface SyntaxNode : SyntaxNodeRef {
     /** Navigate to a child before a position. */
     fun childBefore(pos: Int): SyntaxNode?
 
-    /** Resolve to the innermost node at a position. */
+    /**
+     * Resolve to the innermost node at [pos], moving up out of this node
+     * first when it does not cover [pos]. Does not enter
+     * [overlays][MountedTree.overlay].
+     *
+     * [pos] is an absolute document position, not an offset into this node.
+     */
     fun resolve(pos: Int, side: Int = 0): SyntaxNode
 
     /**
-     * Like [resolve], but enters overlay-mounted trees to find
-     * the innermost node.
+     * Like [resolve], but enters [overlaid][MountedTree.overlay] nodes to
+     * find the innermost node, and climbs back out of overlays that do not
+     * cover [pos].
+     *
+     * [pos] is an absolute document position, not an offset into this node.
      */
     fun resolveInner(pos: Int, side: Int = 0): SyntaxNode
 
@@ -380,13 +389,21 @@ class Tree(
         return cursor
     }
 
-    /** Resolve to the innermost node at position [pos]. */
-    fun resolve(pos: Int, side: Int = 0): SyntaxNode = topNode.resolve(pos, side)
+    /**
+     * Resolve to the innermost node at position [pos].
+     *
+     * This does not enter [overlays][MountedTree.overlay]; use
+     * [resolveInner] when you want the innermost overlaid node.
+     */
+    fun resolve(pos: Int, side: Int = 0): SyntaxNode = resolveNode(topNode, pos, side, false)
 
     /**
-     * Like [resolve], but enters overlay-mounted trees.
+     * Like [resolve], but enters [overlaid][MountedTree.overlay] nodes,
+     * producing a syntax node pointing into the innermost overlaid tree at
+     * [pos], with parent links going through all parent structure, including
+     * the host trees.
      */
-    fun resolveInner(pos: Int, side: Int = 0): SyntaxNode = resolveNode(this, pos, side, false)
+    fun resolveInner(pos: Int, side: Int = 0): SyntaxNode = resolveNode(topNode, pos, side, true)
 
     /**
      * Returns a [NodeIterator] pointing at the innermost node at [pos],
@@ -657,16 +674,9 @@ internal class TreeNode(
         Side.BEFORE
     )
 
-    override fun resolve(pos: Int, side: Int): SyntaxNode {
-        var node: SyntaxNode = this
-        while (true) {
-            val inner = node.enter(pos, side) ?: return node
-            node = inner
-        }
-    }
+    override fun resolve(pos: Int, side: Int): SyntaxNode = resolveNode(this, pos, side, false)
 
-    override fun resolveInner(pos: Int, side: Int): SyntaxNode =
-        resolveNode(this._tree, pos, side, false)
+    override fun resolveInner(pos: Int, side: Int): SyntaxNode = resolveNode(this, pos, side, true)
 
     override fun enterUnfinishedNodesBefore(pos: Int): SyntaxNode =
         enterUnfinishedNodesBefore(this, pos)
@@ -828,16 +838,9 @@ internal class BufferNode(val context: BufferContext, val _parent: BufferNode?, 
         }
     }
 
-    override fun resolve(pos: Int, side: Int): SyntaxNode {
-        var node: SyntaxNode = this
-        while (true) {
-            val inner = node.enter(pos, side) ?: return node
-            node = inner
-        }
-    }
+    override fun resolve(pos: Int, side: Int): SyntaxNode = resolveNode(this, pos, side, false)
 
-    override fun resolveInner(pos: Int, side: Int): SyntaxNode =
-        resolveNode(context.parent._tree, pos, side, false)
+    override fun resolveInner(pos: Int, side: Int): SyntaxNode = resolveNode(this, pos, side, true)
 
     override fun enterUnfinishedNodesBefore(pos: Int): SyntaxNode =
         enterUnfinishedNodesBefore(this, pos)
@@ -1237,14 +1240,42 @@ private fun collectVisibleChildren(tree: Tree, basePos: Int, result: MutableList
 
 // ---- resolveNode helper (handles overlay-mounted trees) ----
 
-private fun resolveNode(tree: Tree, pos: Int, side: Int, overlays: Boolean): SyntaxNode {
-    var node: SyntaxNode = tree.topNode
+private fun resolveNode(startNode: SyntaxNode, pos: Int, side: Int, overlays: Boolean): SyntaxNode {
+    var node: SyntaxNode = startNode
+    // Move up to a node that actually holds the position, if possible.
+    while (node.from == node.to ||
+        (if (side < 1) node.from >= pos else node.from > pos) ||
+        (if (side > -1) node.to <= pos else node.to < pos)
+    ) {
+        val parent = if (!overlays && node is TreeNode && node.index < 0) {
+            // Without overlays, an overlay root is the end of the line.
+            null
+        } else {
+            node.parent
+        }
+        if (parent == null) return node
+        node = parent
+    }
+    val mode = if (overlays) 0 else IterMode.IGNORE_OVERLAYS
+    // Must go up out of overlays when those do not overlap with pos.
+    if (overlays) {
+        var scan: SyntaxNode = node
+        var parent = scan.parent
+        while (parent != null) {
+            if (scan is TreeNode &&
+                scan.index < 0 &&
+                parent.enter(pos, side, mode)?.from != scan.from
+            ) {
+                node = parent
+            }
+            scan = parent
+            parent = scan.parent
+        }
+    }
     while (true) {
-        val inner = node.enter(pos, side) ?: break
-        if (inner === node) break
+        val inner = node.enter(pos, side, mode) ?: return node
         node = inner
     }
-    return node
 }
 
 // ---- stackIterator helper (resolveStack) ----
