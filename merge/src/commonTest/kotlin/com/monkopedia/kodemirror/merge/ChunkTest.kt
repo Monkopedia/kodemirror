@@ -45,6 +45,10 @@ class ChunkTest {
     private val docA = Text.of(linesA)
     private val docB = Text.of(linesB)
 
+    private fun List<Chunk>.describe(): String = joinToString(" ") {
+        "${it.fromA.value}-${it.toA.value}/${it.fromB.value}-${it.toB.value}"
+    }
+
     @Test
     fun enumeratesChangedChunks() {
         val chunks = Chunk.build(docA, docB)
@@ -311,5 +315,98 @@ class ChunkTest {
         )
         val updated = Chunk.updateB(chs, sA.doc, tr.newDoc, tr.changes)
         assertEquals(0, updated.size)
+    }
+
+    @Test
+    fun properlyDropsRangesAtTheStartOfTheDocument() {
+        val sA = EditorState.create(EditorStateConfig(doc = "\na\n".asDoc()))
+        val sB = EditorState.create(EditorStateConfig(doc = "a\n".asDoc()))
+        val chs = Chunk.build(sA.doc, sB.doc)
+        assertEquals(1, chs.size)
+        val tr = sA.update(
+            TransactionSpec(
+                changes = ChangeSpec.Single(
+                    from = DocPos(1),
+                    insert = InsertContent.StringContent("\n")
+                )
+            )
+        )
+        val updated = Chunk.updateA(chs, tr.newDoc, sB.doc, tr.changes)
+        assertEquals("0-2/0-0", updated.describe())
+        assertEquals(1, updated.size)
+    }
+
+    @Test
+    fun updatesChunksForAChangeInTheMiddleOfTheDocument() {
+        val stateA = EditorState.create(EditorStateConfig(doc = docA.toString().asDoc()))
+        val stateB = EditorState.create(EditorStateConfig(doc = docB.toString().asDoc()))
+        val chunks = Chunk.build(stateA.doc, stateB.doc)
+        assertEquals("4383-4392/4383-4390 6183-6633/6181-6197", chunks.describe())
+        val tr = stateA.update(
+            TransactionSpec(
+                changes = ChangeSpec.Single(
+                    from = stateA.doc.line(LineNumber(300)).from,
+                    insert = InsertContent.StringContent("line MID\n")
+                )
+            )
+        )
+        val updated = Chunk.updateA(chunks, tr.newDoc, stateB.doc, tr.changes)
+        assertEquals(
+            "2583-2592/2583-2583 4392-4401/4383-4390 6192-6642/6181-6197",
+            updated.describe()
+        )
+    }
+
+    @Test
+    fun updatesChunksForAChangeAtTheEndOfTheDocument() {
+        val stateA = EditorState.create(EditorStateConfig(doc = docA.toString().asDoc()))
+        val stateB = EditorState.create(EditorStateConfig(doc = docB.toString().asDoc()))
+        val chunks = Chunk.build(stateA.doc, stateB.doc)
+        val tr = stateA.update(
+            TransactionSpec(
+                changes = ChangeSpec.Single(
+                    from = stateA.doc.endPos,
+                    insert = InsertContent.StringContent("\nline END")
+                )
+            )
+        )
+        val updated = Chunk.updateA(chunks, tr.newDoc, stateB.doc, tr.changes)
+        assertEquals(
+            "4383-4392/4383-4390 6183-6633/6181-6197 8883-8902/8447-8457",
+            updated.describe()
+        )
+    }
+
+    @Test
+    fun keepsChunksPastTheLastUpdateRange() {
+        val tailA = (1..1000).map { "line $it" }
+        val tailB = tailA.toMutableList().also {
+            it[499] = "line D"
+            it.add("line EXTRA")
+        }
+        val sA = EditorState.create(
+            EditorStateConfig(doc = tailA.joinToString("\n").asDoc())
+        )
+        val sB = EditorState.create(
+            EditorStateConfig(doc = tailB.joinToString("\n").asDoc())
+        )
+        val chs = Chunk.build(sA.doc, sB.doc)
+        assertEquals("4383-4392/4383-4390 8883-8893/8881-8902", chs.describe())
+        val tr = sA.update(
+            TransactionSpec(
+                changes = ChangeSpec.Single(
+                    from = DocPos.ZERO,
+                    insert = InsertContent.StringContent("line NULL\n")
+                )
+            )
+        )
+        val updated = Chunk.updateA(chs, tr.newDoc, sB.doc, tr.changes)
+        // The trailing chunk sits past the last update range and its `toA` (8903) is one
+        // past the end of the updated document A (8902); it must still be carried over.
+        assertEquals(
+            "0-10/0-0 4393-4402/4383-4390 8893-8903/8881-8902",
+            updated.describe()
+        )
+        assertEquals(sA.doc.length + 10 + 1, updated[2].toA.value)
     }
 }
