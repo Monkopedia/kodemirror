@@ -62,6 +62,43 @@ class ParseTest {
         assertTrue(result.contains("PropertyName"), "Should recover a PropertyName")
     }
 
+    // --- Error recovery through a reduce chain deeper than the force-reduce
+    // limit. `chainParser` needs twelve non-advancing reductions to fold a
+    // `Num` up into an `Item`, which is more than `Rec.FORCE_REDUCE_LIMIT`.
+    // Both expectations below are what @lezer/lr 1.4.10 produces for this
+    // grammar and input. ---
+
+    @Test
+    fun deepChainParsesWellFormedInput() {
+        // Guards the fixture itself: a mis-transcribed parser table would make
+        // the recovery expectation below meaningless.
+        val tree = chainParser.parse("1,2")
+        assertEquals(
+            "Program(" + CHAIN_ITEM_NUM + ",Comma," + CHAIN_ITEM_NUM + ")",
+            treeToString(tree)
+        )
+        assertEquals(3, tree.length)
+    }
+
+    @Test
+    fun recoveryFoldsChainsDeeperThanForceReduceLimit() {
+        // The leading commas make the parse stall on its first token, so the
+        // whole document is rebuilt through `runRecovery` -> `advanceFully`.
+        // Recovering the leading `Item` takes more non-advancing steps than
+        // `Rec.FORCE_REDUCE_LIMIT` allows, so an `advanceFully` that gives up
+        // after ten steps drops that stack and produces
+        // `Program(\u26A0(Comma),\u26A0(Comma),Item(...))` instead.
+        val tree = chainParser.parse(",,11")
+        val detail = "tree=${treeToString(tree)} length=${tree.length}"
+        assertEquals(
+            "Program(" + CHAIN_ITEM_ERR + ",Comma,\u26A0,Comma," +
+                CHAIN_ITEM_NUM + ")",
+            treeToString(tree),
+            "Recovered tree shape; $detail"
+        )
+        assertEquals(4, tree.length, "Recovered tree length; $detail")
+    }
+
     // --- Incremental parsing ---
 
     @Test
@@ -172,5 +209,15 @@ class ParseTest {
         assertFailsWith<IllegalArgumentException> {
             partial.stopAt(15)
         }
+    }
+
+    private companion object {
+        /** `Item` wrapping a `Num`, spelled out through the unit-production chain. */
+        const val CHAIN_ITEM_NUM =
+            "Item(L1(L2(L3(L4(L5(L6(L7(L8(L9(L10(L11(L12(Num)))))))))))))"
+
+        /** The same chain wrapping an error node. */
+        const val CHAIN_ITEM_ERR =
+            "Item(L1(L2(L3(L4(L5(L6(L7(L8(L9(L10(L11(L12(\u26A0)))))))))))))"
     }
 }
