@@ -64,14 +64,16 @@ kotlin {
 // Robolectric — the usual answer — turns out not to give a trustworthy result here. Under
 // `graphicsMode=LEGACY` all text measures to zero width, so every coordinate-based
 // assertion is meaningless (a click 30px into a line resolves to the line's last character);
-// under `graphicsMode=NATIVE` the metrics are right but a pointer press clears Compose focus,
-// which breaks the focus and keyboard suites. That last divergence was read here as an
+// under `graphicsMode=NATIVE` the metrics were right but a pointer press cleared Compose focus,
+// which broke the focus and keyboard suites. That last divergence was read here as an
 // environment artifact rather than a finding about the editor; the instrumented suite it asked
-// for has since REFUTED that — the same 5 focus + 8 keyboard failures reproduce on an API 34
-// emulator, tracked as #259. Robolectric is still not a trustworthy substitute (the LEGACY
-// metrics problem stands), but it was not wrong about this one. Android coverage for these
-// needs instrumented tests on a device/emulator; see #215. Everything else in `commonTest`
-// still runs here.
+// for REFUTED that — the same 5 focus + 8 keyboard failures reproduced on an emulator — and the
+// cause has since been traced and fixed (#259): Compose clears focus on a mouse or touchpad
+// press that lands outside the focused node, which had nothing to do with the graphics mode and
+// everything to do with the editor's focused node being a 1-dp hidden input. Robolectric is
+// still not a trustworthy substitute here, because the LEGACY metrics problem stands, but it was
+// not wrong about this one. Android coverage for these needs instrumented tests on a
+// device/emulator; see #215. Everything else in `commonTest` still runs here.
 // `testDebugUnitTest` / `testReleaseUnitTest` are the Android local-unit-test tasks; the JVM
 // target's task is `jvmTest` and is deliberately left alone.
 tasks.withType<Test>().matching { it.name.endsWith("UnitTest") }.configureEach {

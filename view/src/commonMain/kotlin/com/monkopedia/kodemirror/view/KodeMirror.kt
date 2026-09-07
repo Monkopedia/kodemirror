@@ -766,6 +766,59 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                             }
                         }
                     }
+                    .pointerInput(Unit) {
+                        // Hold the editor's focus for the length of a press.
+                        //
+                        // Compose on Android takes focus away on a mouse or
+                        // touchpad press: `AndroidComposeView.dispatchTouchEvent`
+                        // applies `AutoClearFocusBehavior.CursorBased` — the
+                        // platform default — AFTER the gesture handlers above
+                        // have run, clearing focus whenever a cursor press lands
+                        // outside the bounds of the focused node. The editor's
+                        // focused node is the 1-dp hidden input, so no press in
+                        // the editor ever lands inside it and every mouse click
+                        // blanked the focus the gesture had just requested. The
+                        // click still placed the caret correctly; it was the key
+                        // after it that went nowhere (#259). A finger press is
+                        // not a cursor press and never tripped this, which is the
+                        // whole of the mouse/touch split the two suites saw.
+                        //
+                        // That clear is not forced, and a captured focus target
+                        // refuses a non-forced clear, so capturing across the
+                        // press vetoes it. Taken on the Final pass, which runs
+                        // after every Main-pass handler in the tree and therefore
+                        // after the gesture above has requested focus, and
+                        // released as soon as the last pointer lifts so nothing
+                        // else is ever kept from taking focus.
+                        var focusCaptured = false
+                        try {
+                            awaitPointerEventScope {
+                                while (true) {
+                                    val event = awaitPointerEvent(
+                                        PointerEventPass.Final
+                                    )
+                                    val pressed = event.changes.any { it.pressed }
+                                    if (pressed) {
+                                        if (!focusCaptured) {
+                                            focusCaptured =
+                                                focusRequester.captureFocus()
+                                        }
+                                    } else if (focusCaptured) {
+                                        focusRequester.freeFocus()
+                                        focusCaptured = false
+                                    }
+                                }
+                            }
+                        } finally {
+                            // Only reached when this node detaches, where the
+                            // focus target's own detach forcibly clears the
+                            // capture anyway; freeing through a requester whose
+                            // node has already gone throws, so it is guarded.
+                            if (focusCaptured) {
+                                runCatching { focusRequester.freeFocus() }
+                            }
+                        }
+                    }
                     .pointerInput(session) {
                         awaitPointerEventScope {
                             var lastHoverDocPos: Int? = -1
