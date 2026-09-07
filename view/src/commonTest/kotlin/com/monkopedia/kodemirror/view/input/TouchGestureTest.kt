@@ -23,6 +23,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
@@ -64,13 +65,13 @@ class TouchGestureTest {
     }
 
     /**
-     * A horizontal touch drag over the editor does not extend a selection: the
-     * line content sits in a horizontal scroll container, which claims the drag
-     * before the editor's gesture sees it, and the gesture falls back to placing
-     * the cursor at the down position. That is pre-existing behaviour, measured
-     * identical before and after the #303 pointer-down consume, and it is
-     * characterised here so a change to it is caught rather than shipped —
-     * touch drag-selection itself is tracked separately.
+     * A horizontal touch drag that does *not* begin with a long press still
+     * belongs to the horizontal scroll container the line content sits in: the
+     * gesture falls back to placing the cursor at the down position and selects
+     * nothing. That was the whole of the behaviour before #311 and is now the
+     * deliberate half of it — dragging a finger over a line too wide for the
+     * viewport has to scroll it, since touch has no wheel. Selecting with a
+     * finger goes through [longPressThenTouchDragSelectsAcrossLines] instead.
      */
     @Test
     fun horizontalTouchDragPlacesCursorAndLeavesDocument() =
@@ -119,6 +120,144 @@ class TouchGestureTest {
             after > before,
             "Expected a vertical touch drag to scroll the line list " +
                 "(firstVisibleIndex $before -> $after)"
+        )
+    }
+
+    /**
+     * A long press followed by a touch drag selects text, like CodeMirror 6 on
+     * mobile. The drag is claimed away from the enclosing scroll containers only
+     * once the long press has fired, so a plain drag still scrolls (#311).
+     *
+     * The coordinates are chosen to be font-metric independent: x=8 is just
+     * inside the content's 6dp start padding, so every press resolves to the
+     * first character of its line, and the assertion is an exact anchor/head
+     * pair rather than "something is selected".
+     */
+    @Test
+    fun longPressThenTouchDragSelectsAcrossLines() = runEditorTest(doc = threeLineDoc) { holder ->
+        onNodeWithTag("KodeMirror").performTouchInput {
+            down(Offset(8f, 8f))
+            // Hold still past the long-press timeout, emitting moves the
+            // way `longClick` does so the gesture stays alive.
+            repeat(10) {
+                advanceEventTime(viewConfiguration.longPressTimeoutMillis / 5)
+                moveTo(Offset(8f, 8f))
+            }
+            moveTo(Offset(8f, 35f))
+            moveTo(Offset(8f, 55f))
+            up()
+        }
+        waitForIdle()
+        val sel = holder.session.state.selection.main
+        assertEquals(
+            0,
+            sel.anchor.value,
+            "Expected the selection anchored at the long-pressed position, " +
+                "but got $sel"
+        )
+        assertEquals(
+            18,
+            sel.head.value,
+            "Expected the selection head at the start of line 3, but got $sel"
+        )
+    }
+
+    /**
+     * The same long-press drag over a document taller than the viewport selects
+     * text and leaves the line list where it was. This is the half of #311 the
+     * three-line case cannot show: there is nothing there to scroll, so the
+     * gesture would look the same whether or not the editor actually claimed it.
+     * Here the LazyColumn takes this very drag when it is not preceded by a long
+     * press — the same three moves without the hold scroll it twelve lines and
+     * leave the caret at 60 — so both the exact anchor/head pair and the unmoved
+     * first-visible index say the editor took the gesture away from it.
+     */
+    @Test
+    fun longPressThenTouchDragSelectsWithoutScrollingTheList() = runEditorTest(
+        doc = fiftyLineDoc,
+        height = 300
+    ) { holder ->
+        onNodeWithTag("KodeMirror").performTouchInput {
+            down(Offset(8f, 55f))
+            repeat(10) {
+                advanceEventTime(viewConfiguration.longPressTimeoutMillis / 5)
+                moveTo(Offset(8f, 55f))
+            }
+            moveTo(Offset(8f, 40f))
+            moveTo(Offset(8f, 25f))
+            moveTo(Offset(8f, 8f))
+            up()
+        }
+        waitForIdle()
+        val sel = holder.session.state.selection.main
+        assertEquals(
+            40 to 0,
+            sel.anchor.value to sel.head.value,
+            "Expected a selection anchored at the start of line 3 and headed at " +
+                "the start of line 1, but got $sel"
+        )
+        assertEquals(
+            0,
+            holder.firstVisibleIndex(),
+            "Expected the line list not to scroll while the long-press drag " +
+                "selected, but the first visible item moved"
+        )
+    }
+
+    /**
+     * A long-press drag *along* a line wider than the viewport selects and does
+     * not scroll the line under the finger.
+     *
+     * This is the case the two vertical tests cannot reach, and the one that
+     * makes the drag loop's [PointerEventPass.Initial] load-bearing rather than
+     * merely principled: the `LazyColumn` happens to leave the gesture alone
+     * either way, but the `horizontalScroll` container does not. Consuming in
+     * the Main pass instead lets it take the same drag — measured at 2358px of
+     * scroll, with the selection landing on the offsets that scrolled text
+     * happened to be under — so without this test a refactor to `Main` would
+     * pass the suite green and silently break selecting on a long line.
+     *
+     * The two assertions are both font-metric independent, which is what lets
+     * the same literals hold on JVM, in a browser and on a device: the scroll
+     * offset is a pixel count that must not move at all, and the drag ends at
+     * x=8, inside the content's 6dp start padding, so its head is the line's
+     * first character exactly. The anchor is left unpinned on purpose — where
+     * x=300 falls in the text depends on the platform's font — and is reported
+     * in the failure message instead.
+     */
+    @Test
+    fun longPressThenHorizontalDragSelectsWithoutScrollingTheLine() = runEditorTest(
+        doc = "A very long line ".repeat(40) + "\nsecond\nthird"
+    ) { holder ->
+        onNodeWithTag("KodeMirror").performTouchInput {
+            down(Offset(300f, 8f))
+            repeat(10) {
+                advanceEventTime(viewConfiguration.longPressTimeoutMillis / 5)
+                moveTo(Offset(300f, 8f))
+            }
+            moveTo(Offset(220f, 8f))
+            moveTo(Offset(140f, 8f))
+            moveTo(Offset(60f, 8f))
+            moveTo(Offset(8f, 8f))
+            up()
+        }
+        waitForIdle()
+        val sel = holder.session.state.selection.main
+        assertEquals(
+            0,
+            holder.horizontalScrollPx(),
+            "Expected the line not to scroll under a long-press drag along it, " +
+                "but the content scrolled (selection was $sel)"
+        )
+        assertEquals(
+            0,
+            sel.head.value,
+            "Expected the drag to end on the line's first character, but got $sel"
+        )
+        assertTrue(
+            sel.anchor.value > 0,
+            "Expected the selection anchored where the long press landed, " +
+                "further into the line than its start, but got $sel"
         )
     }
 }

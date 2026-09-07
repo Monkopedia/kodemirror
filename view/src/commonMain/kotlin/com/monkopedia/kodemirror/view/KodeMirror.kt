@@ -80,6 +80,8 @@ import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerType
+import androidx.compose.ui.input.pointer.changedToUpIgnoreConsumed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.layout
@@ -610,6 +612,87 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                             var isDrag = false
                             var dragStart = downPosition
                             var dragCurrent = downPosition
+
+                            // A touch drag is not ours to take. The line list
+                            // (LazyColumn) and the line content
+                            // (horizontalScroll) are children of this node, so
+                            // they see the Main pass first and `scrollable`
+                            // claims any drag whose pointer is not a mouse —
+                            // which is exactly why a mouse drag selects here and
+                            // a finger drag did not (#311). Scrolling with a
+                            // finger must keep working, so instead of taking the
+                            // drag back, wait: a press held in place past the
+                            // long-press timeout starts a selection and the
+                            // moves after it are consumed in the Initial pass,
+                            // ahead of the scroll containers. That is CodeMirror
+                            // 6's mobile behaviour too — a plain drag scrolls,
+                            // a long press begins a selection.
+                            val hold = if (down.type != PointerType.Mouse) {
+                                awaitTouchLongPress(
+                                    down.id,
+                                    downPosition,
+                                    viewConfiguration.touchSlop,
+                                    viewConfiguration.longPressTimeoutMillis
+                                )
+                            } else {
+                                // A mouse never waits: `scrollable` ignores
+                                // mouse drags, so this one was always ours.
+                                TouchHoldOutcome.Moved
+                            }
+
+                            if (hold == TouchHoldOutcome.LongPress) {
+                                // Anchor the selection where the finger has been
+                                // resting, then extend it for as long as the
+                                // finger moves.
+                                handleDrag(
+                                    session,
+                                    downPosition,
+                                    downPosition,
+                                    currentResolvePos
+                                )
+                                session.plugin(dropCursorViewPlugin)
+                                    ?.moveTo(currentResolvePos(downPosition))
+                                while (true) {
+                                    val event = awaitPointerEvent(
+                                        PointerEventPass.Initial
+                                    )
+                                    val change = event.changes.firstOrNull {
+                                        it.id == down.id
+                                    } ?: break
+                                    // Consuming in the Initial pass is what
+                                    // keeps the scroll containers out: they read
+                                    // the Main pass and skip a change that is
+                                    // already consumed.
+                                    change.consume()
+                                    if (change.changedToUpIgnoreConsumed()) break
+                                    dragCurrent = change.position
+                                    handleDrag(
+                                        session,
+                                        downPosition,
+                                        dragCurrent,
+                                        currentResolvePos
+                                    )
+                                    session.plugin(dropCursorViewPlugin)
+                                        ?.moveTo(currentResolvePos(dragCurrent))
+                                }
+                                session.plugin(dropCursorViewPlugin)
+                                    ?.moveTo(null)
+                                return@awaitEachGesture
+                            }
+
+                            if (hold == TouchHoldOutcome.Released) {
+                                // Lifted before the timeout: the pointer is
+                                // already up, so there is no slop to wait for.
+                                val pos = currentResolvePos(downPosition)
+                                    ?: return@awaitEachGesture
+                                session.dispatch(
+                                    TransactionSpec(
+                                        selection = SelectionSpec
+                                            .CursorSpec(DocPos(pos))
+                                    )
+                                )
+                                return@awaitEachGesture
+                            }
 
                             // Try to detect if this becomes a drag
                             val slopChange = awaitTouchSlopOrCancellation(
