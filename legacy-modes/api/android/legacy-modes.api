@@ -1291,17 +1291,19 @@ public final class com/monkopedia/kodemirror/legacy/modes/JSLexical {
 
 public final class com/monkopedia/kodemirror/legacy/modes/JavaScriptConfig {
 	public fun <init> ()V
-	public fun <init> (Ljava/lang/String;ZZZLjava/lang/Integer;Lkotlin/text/Regex;)V
-	public synthetic fun <init> (Ljava/lang/String;ZZZLjava/lang/Integer;Lkotlin/text/Regex;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;ZZZLjava/lang/Integer;Lkotlin/text/Regex;Z)V
+	public synthetic fun <init> (Ljava/lang/String;ZZZLjava/lang/Integer;Lkotlin/text/Regex;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Z
 	public final fun component3 ()Z
 	public final fun component4 ()Z
 	public final fun component5 ()Ljava/lang/Integer;
 	public final fun component6 ()Lkotlin/text/Regex;
-	public final fun copy (Ljava/lang/String;ZZZLjava/lang/Integer;Lkotlin/text/Regex;)Lcom/monkopedia/kodemirror/legacy/modes/JavaScriptConfig;
-	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/legacy/modes/JavaScriptConfig;Ljava/lang/String;ZZZLjava/lang/Integer;Lkotlin/text/Regex;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/legacy/modes/JavaScriptConfig;
+	public final fun component7 ()Z
+	public final fun copy (Ljava/lang/String;ZZZLjava/lang/Integer;Lkotlin/text/Regex;Z)Lcom/monkopedia/kodemirror/legacy/modes/JavaScriptConfig;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/legacy/modes/JavaScriptConfig;Ljava/lang/String;ZZZLjava/lang/Integer;Lkotlin/text/Regex;ZILjava/lang/Object;)Lcom/monkopedia/kodemirror/legacy/modes/JavaScriptConfig;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDoubleIndentSwitch ()Z
 	public final fun getJson ()Z
 	public final fun getJsonld ()Z
 	public final fun getName ()Ljava/lang/String;

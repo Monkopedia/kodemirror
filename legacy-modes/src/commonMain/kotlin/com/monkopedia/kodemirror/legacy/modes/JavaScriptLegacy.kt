@@ -52,6 +52,13 @@ private val jsKeywords: Map<String, JsKw> = run {
 }
 
 private val jsIsOperatorChar = Regex("[+\\-*&%=<>!?|~^@]")
+private const val JS_BRACKETS = "([{}])"
+private val jsStringDelimiter = Regex("[\"'/`]")
+private val jsTsReturnType =
+    Regex(":\\s*(?:\\w+(?:<[^>]*>|\\[\\])?|\\{[^}]*\\})\\s*\$")
+private val jsElseAhead = Regex("^\\s*else\\b")
+private val jsNoPopAfter = Regex("^[,\\.=+\\-*:?\\[\\(]")
+private val jsCaseAhead = Regex("^(?:case|default)\\b")
 private val jsIsJsonldKeyword =
     Regex("^@(context|id|value|language|type|container|list|set|reverse|index|base|vocab|graph)\"")
 
@@ -70,7 +77,13 @@ data class JavaScriptConfig(
     val jsonld: Boolean = false,
     val typescript: Boolean = false,
     val statementIndent: Int? = null,
-    val wordCharacters: Regex = Regex("[\\w\$\\u00a1-\\uffff]")
+    val wordCharacters: Regex = Regex("[\\w\$\\u00a1-\\uffff]"),
+    /**
+     * Whether the body of a `switch` is indented by two units, with `case`
+     * and `default` labels at one. Upstream's `doubleIndentSwitch`, which
+     * defaults to on.
+     */
+    val doubleIndentSwitch: Boolean = true
 )
 
 class JavaScriptState(
@@ -81,7 +94,20 @@ class JavaScriptState(
     var indented: Int = 0,
     var lexical: JSLexical = JSLexical(-2, 0, "block"),
     var fatArrowAt: Int? = null
-)
+) {
+    /**
+     * The continuation stack (`state.cc` upstream): the grammar's pending
+     * combinators, top of stack last. Internal because the combinator type is
+     * an implementation detail of the mode.
+     */
+    internal var cc: MutableList<JsComb> = mutableListOf()
+
+    /** Names bound in the innermost variable scope. */
+    internal var localVars: JsVar? = null
+
+    /** The enclosing variable scopes. */
+    internal var context: JsContext? = null
+}
 
 @Suppress("CyclomaticComplexMethod", "LongMethod", "ReturnCount", "NestedBlockDepth")
 private fun mkJavaScript(config: JavaScriptConfig): StreamParser<JavaScriptState> {
@@ -267,6 +293,73 @@ private fun mkJavaScript(config: JavaScriptConfig): StreamParser<JavaScriptState
             Regex("[,.]").containsMatchIn(firstChar)
     }
 
+    // A crude lookahead trick to notice that we are parsing the argument
+    // patterns of a fat-arrow function before hitting the arrow token. It only
+    // works if the arrow is on the same line as the arguments with no comments
+    // in between; the fallback is to only notice at the arrow itself.
+    @Suppress(
+        "CyclomaticComplexMethod",
+        "NestedBlockDepth",
+        "ReturnCount",
+        "LoopWithTooManyJumpStatements"
+    )
+    fun findFatArrow(stream: StringStream, state: JavaScriptState) {
+        if (state.fatArrowAt != null) state.fatArrowAt = null
+        var arrow = stream.string.indexOf("=>", stream.start)
+        if (arrow < 0) return
+
+        if (isTS) {
+            // Try to skip TypeScript return type declarations after the arguments.
+            // Upstream assigns the match index of the *sliced* string straight
+            // to `arrow`, which is only the same as an absolute offset when
+            // `stream.start` is 0 -- which it is on the `sol()` call path. Kept
+            // as-is so the port answers what upstream answers.
+            val m = jsTsReturnType.find(stream.string.substring(stream.start, arrow))
+            if (m != null) arrow = m.range.first
+        }
+
+        var depth = 0
+        var sawSomething = false
+        var pos = arrow - 1
+        while (pos >= 0) {
+            val ch = stream.string[pos].toString()
+            val bracket = JS_BRACKETS.indexOf(ch)
+            if (bracket in 0..2) {
+                if (depth == 0) {
+                    pos++
+                    break
+                }
+                depth--
+                if (depth == 0) {
+                    if (ch == "(") sawSomething = true
+                    break
+                }
+            } else if (bracket in 3..5) {
+                depth++
+            } else if (wordRE.containsMatchIn(ch)) {
+                sawSomething = true
+            } else if (jsStringDelimiter.containsMatchIn(ch)) {
+                while (true) {
+                    if (pos == 0) return
+                    val next = stream.string[pos - 1].toString()
+                    val beforeNext = if (pos >= 2) stream.string[pos - 2].toString() else ""
+                    if (next == ch && beforeNext != "\\") {
+                        pos--
+                        break
+                    }
+                    pos--
+                }
+            } else if (sawSomething && depth == 0) {
+                pos++
+                break
+            }
+            pos--
+        }
+        if (sawSomething && depth == 0) state.fatArrowAt = pos
+    }
+
+    val grammar = JsGrammar(isTS, jsonMode, jsonldMode) { s, st -> findFatArrow(s, st) }
+
     return object : StreamParser<JavaScriptState> {
         override val name: String get() = config.name
 
@@ -279,18 +372,25 @@ private fun mkJavaScript(config: JavaScriptConfig): StreamParser<JavaScriptState
             stringQuote = state.stringQuote,
             lastType = state.lastType,
             indented = state.indented,
-            // JSLexical is immutable data class - safe to share
+            // The lexical chain is shared by reference, exactly as upstream's
+            // default `copyState` shares it: `align` is filled in once per
+            // scope and both copies must observe the same answer.
             lexical = state.lexical,
             fatArrowAt = state.fatArrowAt
-        )
+        ).also {
+            // The continuation stack is copied (upstream slices the array);
+            // the scope lists are immutable and shared.
+            it.cc = state.cc.toMutableList()
+            it.localVars = state.localVars
+            it.context = state.context
+        }
 
         @Suppress("CyclomaticComplexMethod", "LongMethod", "ReturnCount", "NestedBlockDepth")
         override fun token(stream: StringStream, state: JavaScriptState): String? {
             if (stream.sol()) {
-                if (state.lexical.align == null) {
-                    state.lexical = state.lexical.copy(align = false)
-                }
+                if (state.lexical.align == null) state.lexical.align = false
                 state.indented = stream.indentation()
+                findFatArrow(stream, state)
             }
             if (state.tokenize != 2 && stream.eatSpace()) return null
 
@@ -358,26 +458,42 @@ private fun mkJavaScript(config: JavaScriptConfig): StreamParser<JavaScriptState
                 type
             }
 
-            return style
+            return grammar.parseJS(state, style, type, content, stream)
         }
 
+        @Suppress("CyclomaticComplexMethod", "ReturnCount", "LoopWithTooManyJumpStatements")
         override fun indent(
             state: JavaScriptState,
             textAfter: String,
             context: IndentContext
         ): Int? {
-            if (state.tokenize == 2 || state.tokenize == 3) return null
+            if (state.tokenize == 2 || state.tokenize == JS_TOKENIZE_QUASI) return null
             if (state.tokenize != 0) return 0
             val firstChar = textAfter.firstOrNull()?.toString() ?: ""
             var lexical = state.lexical
 
-            // Walk up stat/form lexical scopes
-            while ((lexical.type == "stat" || lexical.type == "form") &&
-                (
-                    firstChar == "}" ||
-                        !Regex("^[,\\.=+\\-*:?\\[(]").containsMatchIn(textAfter)
-                    )
-            ) {
+            // Kludge to prevent 'maybeelse' from blocking lexical scope pops.
+            if (!jsElseAhead.containsMatchIn(textAfter)) {
+                for (i in state.cc.indices.reversed()) {
+                    val c = state.cc[i]
+                    if (c === grammar.poplex) {
+                        lexical = lexical.prev ?: break
+                    } else if (c !== grammar.maybeelse && c !== grammar.popcontext) {
+                        break
+                    }
+                }
+            }
+
+            // Walk up stat/form lexical scopes. The `maybeoperator*` conjunct
+            // is what keeps a `stat` scope alive for a genuinely continued
+            // expression; without it every `stat` and `form` scope is popped.
+            while (lexical.type == "stat" || lexical.type == "form") {
+                val top = state.cc.lastOrNull()
+                val topIsOperator = top === grammar.maybeoperatorComma ||
+                    top === grammar.maybeoperatorNoComma
+                val continues = firstChar == "}" ||
+                    (topIsOperator && !jsNoPopAfter.containsMatchIn(textAfter))
+                if (!continues) break
                 lexical = lexical.prev ?: break
             }
 
@@ -385,12 +501,20 @@ private fun mkJavaScript(config: JavaScriptConfig): StreamParser<JavaScriptState
                 lexical.type == ")" &&
                 lexical.prev?.type == "stat"
             ) {
-                lexical = lexical.prev!!
+                lexical = lexical.prev
             }
 
             val closing = firstChar == lexical.type
 
             return when {
+                lexical.type == "vardef" ->
+                    lexical.indented + (
+                        if (state.lastType == "operator" || state.lastType == ",") {
+                            (lexical.info?.length ?: 0) + 1
+                        } else {
+                            0
+                        }
+                        )
                 lexical.type == "form" && firstChar == "{" -> lexical.indented
                 lexical.type == "form" -> lexical.indented + context.unit
                 lexical.type == "stat" ->
@@ -399,6 +523,14 @@ private fun mkJavaScript(config: JavaScriptConfig): StreamParser<JavaScriptState
                             statementIndent ?: context.unit
                         } else {
                             0
+                        }
+                        )
+                lexical.info == "switch" && !closing && config.doubleIndentSwitch ->
+                    lexical.indented + (
+                        if (jsCaseAhead.containsMatchIn(textAfter)) {
+                            context.unit
+                        } else {
+                            2 * context.unit
                         }
                         )
                 lexical.align == true -> lexical.column + (if (closing) 0 else 1)

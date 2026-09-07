@@ -1360,8 +1360,10 @@ final class com.monkopedia.kodemirror.legacy.modes/JSLexical { // com.monkopedia
 }
 
 final class com.monkopedia.kodemirror.legacy.modes/JavaScriptConfig { // com.monkopedia.kodemirror.legacy.modes/JavaScriptConfig|null[0]
-    constructor <init>(kotlin/String = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Int? = ..., kotlin.text/Regex = ...) // com.monkopedia.kodemirror.legacy.modes/JavaScriptConfig.<init>|<init>(kotlin.String;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Int?;kotlin.text.Regex){}[0]
+    constructor <init>(kotlin/String = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Int? = ..., kotlin.text/Regex = ..., kotlin/Boolean = ...) // com.monkopedia.kodemirror.legacy.modes/JavaScriptConfig.<init>|<init>(kotlin.String;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Int?;kotlin.text.Regex;kotlin.Boolean){}[0]
 
+    final val doubleIndentSwitch // com.monkopedia.kodemirror.legacy.modes/JavaScriptConfig.doubleIndentSwitch|{}doubleIndentSwitch[0]
+        final fun <get-doubleIndentSwitch>(): kotlin/Boolean // com.monkopedia.kodemirror.legacy.modes/JavaScriptConfig.doubleIndentSwitch.<get-doubleIndentSwitch>|<get-doubleIndentSwitch>(){}[0]
     final val json // com.monkopedia.kodemirror.legacy.modes/JavaScriptConfig.json|{}json[0]
         final fun <get-json>(): kotlin/Boolean // com.monkopedia.kodemirror.legacy.modes/JavaScriptConfig.json.<get-json>|<get-json>(){}[0]
     final val jsonld // com.monkopedia.kodemirror.legacy.modes/JavaScriptConfig.jsonld|{}jsonld[0]
@@ -1381,7 +1383,8 @@ final class com.monkopedia.kodemirror.legacy.modes/JavaScriptConfig { // com.mon
     final fun component4(): kotlin/Boolean // com.monkopedia.kodemirror.legacy.modes/JavaScriptConfig.component4|component4(){}[0]
     final fun component5(): kotlin/Int? // com.monkopedia.kodemirror.legacy.modes/JavaScriptConfig.component5|component5(){}[0]
     final fun component6(): kotlin.text/Regex // com.monkopedia.kodemirror.legacy.modes/JavaScriptConfig.component6|component6(){}[0]
-    final fun copy(kotlin/String = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Int? = ..., kotlin.text/Regex = ...): com.monkopedia.kodemirror.legacy.modes/JavaScriptConfig // com.monkopedia.kodemirror.legacy.modes/JavaScriptConfig.copy|copy(kotlin.String;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Int?;kotlin.text.Regex){}[0]
+    final fun component7(): kotlin/Boolean // com.monkopedia.kodemirror.legacy.modes/JavaScriptConfig.component7|component7(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Int? = ..., kotlin.text/Regex = ..., kotlin/Boolean = ...): com.monkopedia.kodemirror.legacy.modes/JavaScriptConfig // com.monkopedia.kodemirror.legacy.modes/JavaScriptConfig.copy|copy(kotlin.String;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Int?;kotlin.text.Regex;kotlin.Boolean){}[0]
     final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.legacy.modes/JavaScriptConfig.equals|equals(kotlin.Any?){}[0]
     final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.legacy.modes/JavaScriptConfig.hashCode|hashCode(){}[0]
     final fun toString(): kotlin/String // com.monkopedia.kodemirror.legacy.modes/JavaScriptConfig.toString|toString(){}[0]
