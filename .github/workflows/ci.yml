@@ -44,6 +44,20 @@ jobs:
       # `:kodemirror-bom:verifyBomCoverage` checks the generated BOM POM against the set of
       # modules that publish, failing on drift in either direction (#244). It is named here
       # because this job does not run `check`.
+      #
+      # `ktlintCheck` and `spotlessCheck` are named for the same reason, and are named *here*
+      # rather than in a job of their own because this is the only Linux job in `main`'s branch
+      # protection (which requires `check`, `check-macos` and `check-ios`). Until #299 neither
+      # task appeared in any workflow file: both hang off `check`, which this job deliberately
+      # does not run, so listing tasks explicitly had silently dropped them. `spotlessCheck` is
+      # the consequential one -- it is what applies `spotless/license-header.kt` over
+      # `src/**/*.kt` in all 57 modules, and that header carries both the Apache-2.0 notice and
+      # the "Originally based on CodeMirror 6 by Marijn Haverbeke, licensed under MIT" line this
+      # MIT-derived port is obliged to keep. A source file stripped of its header passed every
+      # gating task before this line existed. `ktlintCheck` is a separate tool with separate
+      # rules (.editorconfig), so both names are needed; neither compiles anything, and together
+      # they add ~25s to a job that already pays for configuration.
+      #
       # The wasmJsTest tasks below are exactly the modules that opt in via
       # `kodemirrorLibrary { wasmJsTests.set(true) }`; they are listed one by one so that a
       # module dropping out of the opt-in set shows up as a diff here rather than as a silent
@@ -52,7 +66,7 @@ jobs:
       # docs.yml: linking ~29 wasm test binaries OOMs the Kotlin daemon at the 2g default.
       - name: Lint and test (JVM + wasmJs + Android)
         run: >-
-          ./gradlew apiCheck jvmTest :kodemirror-bom:verifyBomCoverage
+          ./gradlew apiCheck ktlintCheck spotlessCheck jvmTest :kodemirror-bom:verifyBomCoverage
           -Dkotlin.daemon.jvmargs="-Xmx4g"
           -Dorg.gradle.jvmargs="-Xmx4g -Dfile.encoding=UTF-8"
           :view:verifyRoborazziJvm
