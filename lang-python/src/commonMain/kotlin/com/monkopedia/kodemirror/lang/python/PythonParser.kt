@@ -191,8 +191,7 @@ private val trackIndent = ContextTracker(
             context
         }
     },
-    hash = { context -> context.hash },
-    strict = false
+    hash = { context -> context.hash }
 ) as ContextTracker<Any?>
 
 // External tokenizers

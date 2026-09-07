@@ -407,15 +407,18 @@ internal class Parse(
             // it will go rather than consuming more input.
             return stack.forceReduce()
         }
-        val actions = tokens.getActions(stack)
-        val main = tokens.mainToken
 
-        // Try to use a cached tree fragment
-        if (main != null && !parser.hasWrappers()) {
+        // Try to use a cached tree fragment. Upstream gates this on nothing but
+        // the presence of a fragment cursor -- it has not tokenised yet at this
+        // point, which is why reuse is still attempted at a position where no
+        // tokenizer produces a token.
+        if (!parser.hasWrappers()) {
             if (useCachedResult(stack)) return true
         }
 
-        // Default reduce (no token needed)
+        // Default reduce (no token needed). Upstream returns here without ever
+        // calling `getActions`, so a default-reduce state does not tokenise --
+        // and does not extend the recorded lookahead -- at this position.
         val defaultReduce =
             parser.stateSlot(stack.state, ParseState.DEFAULT_REDUCE)
         if (defaultReduce > 0) {
@@ -423,32 +426,30 @@ internal class Parse(
             return true
         }
 
-        if (actions.isEmpty()) return false
-
-        // Use the first action; split stacks for any alternatives
-        val action0 = actions[0]
-        val token0 = if (actions.size >= 2) actions[1] else 0
-        val end0 = if (actions.size >= 3) actions[2] else start
-
-        if (actions.size > 3) {
-            var ai = 3
-            while (ai < actions.size) {
-                val action = actions[ai]
-                val token = actions[ai + 1]
-                val end = actions[ai + 2]
-                val s = stack.split()
-                s.apply(action, token, start, end)
-                if (split != null) {
-                    split.add(s)
-                } else if (newStacks != null) {
-                    pushStackDedup(s, newStacks)
-                }
-                ai += 3
+        val actions = tokens.getActions(stack)
+        var i = 0
+        while (i < actions.size) {
+            val action = actions[i]
+            val term = actions[i + 1]
+            val end = actions[i + 2]
+            i += 3
+            if (i == actions.size || split == null || newStacks == null) {
+                stack.apply(action, term, start, end)
+                return true
+            }
+            // An ambiguity: fork the stack and take this action on the copy.
+            val localStack = stack.split()
+            localStack.apply(action, term, start, end)
+            if (localStack.pos > start) {
+                // Forked stacks that consumed input belong in the caller's
+                // output list; only the ones still at `start` are re-examined
+                // by the loop that is currently walking `split`.
+                newStacks.add(localStack)
+            } else {
+                split.add(localStack)
             }
         }
-
-        stack.apply(action0, token0, start, end0)
-        return true
+        return false
     }
 
     /**
