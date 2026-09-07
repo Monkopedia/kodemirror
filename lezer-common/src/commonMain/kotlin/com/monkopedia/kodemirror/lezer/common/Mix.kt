@@ -163,7 +163,13 @@ private class MixedParse(
         val fragmentCursor = FragmentCursor(fragments)
         var overlay: ActiveOverlay? = null
         var covered: CoverInfo? = null
-        val cursor = baseTree!!.cursor(
+        // The base tree is built relative to `ranges[0].from` (`@lezer/lr`'s `Parse.finish`
+        // passes it to `Tree.build` as `start`), so the walk has to begin at that offset to
+        // yield document coordinates. At the top level it is 0; nested inside another
+        // `parseMixed` it is the mounting node's start, and losing it shifts every range handed
+        // to the parsers below by exactly that much (#341).
+        val cursor = TreeCursor(
+            TreeNode(baseTree!!, ranges[0].from, null, 0),
             IterMode.INCLUDE_ANONYMOUS or IterMode.IGNORE_MOUNTS
         )
 
