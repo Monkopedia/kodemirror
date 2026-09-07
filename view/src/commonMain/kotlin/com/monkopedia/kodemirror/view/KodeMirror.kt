@@ -485,7 +485,7 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
     // every hit-test through the live layout keeps clicks/drags/hover on the
     // glyph under the pointer instead of its pre-scroll position.
     val resolvePos: (Offset) -> Int? = { offset ->
-        posFromVisibleItems(
+        val pos = posFromVisibleItems(
             offset,
             lazyState,
             columnItems,
@@ -496,7 +496,31 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
             if (wrapLines) 0 else horizontalScrollState.value,
             contentTopPaddingPx
         ) ?: session.posAtCoords(offset.x, offset.y)
+        // Drop — never clamp — a result the current document cannot contain.
+        // Pointer events are delivered before the frame's composition, so a
+        // document swapped in from outside a gesture (setDoc, an LSP edit) can
+        // land between the event and the recomposition that re-derives the
+        // layout from it. Everything above is then self-consistent but
+        // describes the PREVIOUS document, and there is no honest mapping from
+        // such a position into the new one. Coercing it into range would place
+        // the caret somewhere the user did not click and say nothing about it;
+        // returning null makes the gesture a no-op, so the click is simply lost
+        // and the next one — against a settled layout — lands correctly.
+        pos?.takeIf { it in 0..session.state.doc.length }
     }
+
+    // The two gesture coroutines below are keyed on `session`, and a session
+    // keeps its identity when its document changes — so their key never fires
+    // and the handler lambda they were started with is the one they keep. Held
+    // directly, `resolvePos` would be whichever composition's copy happened to
+    // be current when the first pointer event started them, closed over that
+    // composition's `columnItems` — the OLD document's line spans. Clicking
+    // after the document was replaced with a shorter one then resolved through
+    // a line start past the new document's end and the dispatch threw
+    // "Selection points outside of document" (#313). Reading the latest
+    // resolver keeps the gesture coroutines stable and their hit-testing
+    // current, the same treatment `currentColumnItems` gets above.
+    val currentResolvePos by rememberUpdatedState(resolvePos)
 
     CompositionLocalProvider(
         LocalEditorTheme provides theme,
@@ -604,18 +628,18 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                                         session,
                                         dragStart,
                                         dragCurrent,
-                                        resolvePos
+                                        currentResolvePos
                                     )
                                 } else {
                                     handleDrag(
                                         session,
                                         dragStart,
                                         dragCurrent,
-                                        resolvePos
+                                        currentResolvePos
                                     )
                                 }
                                 session.plugin(dropCursorViewPlugin)
-                                    ?.moveTo(resolvePos(dragCurrent))
+                                    ?.moveTo(currentResolvePos(dragCurrent))
 
                                 drag(slopChange.id) { change ->
                                     change.consume()
@@ -625,18 +649,18 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                                             session,
                                             dragStart,
                                             dragCurrent,
-                                            resolvePos
+                                            currentResolvePos
                                         )
                                     } else {
                                         handleDrag(
                                             session,
                                             dragStart,
                                             dragCurrent,
-                                            resolvePos
+                                            currentResolvePos
                                         )
                                     }
                                     session.plugin(dropCursorViewPlugin)
-                                        ?.moveTo(resolvePos(dragCurrent))
+                                        ?.moveTo(currentResolvePos(dragCurrent))
                                 }
                                 // Drag ended
                                 session.plugin(dropCursorViewPlugin)
@@ -644,7 +668,7 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                             } else if (!isDrag) {
                                 // Pointer released without exceeding slop —
                                 // treat as a tap for cursor positioning.
-                                val pos = resolvePos(downPosition)
+                                val pos = currentResolvePos(downPosition)
                                     ?: return@awaitEachGesture
                                 session.dispatch(
                                     TransactionSpec(
@@ -669,7 +693,7 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                                 val pos = event.changes
                                     .firstOrNull()?.position
                                 if (pos != null) {
-                                    val docPos = resolvePos(pos)
+                                    val docPos = currentResolvePos(pos)
                                     if (docPos != lastHoverDocPos) {
                                         lastHoverDocPos = docPos
                                         val hoverTooltips =
