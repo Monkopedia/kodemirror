@@ -53,6 +53,19 @@ dependencies {
 // silently produces nothing (e.g. the publish plugin id changes). The expected set is every
 // module applying the `kodemirror.library` convention plugin, minus the documented exclusions;
 // that is a deliberately different criterion from the one the derivation uses.
+//
+// It guards TWO independent kinds of drift, because the POM can be wrong in two ways:
+//
+//  1. the set of constrained artifactIds not matching the set of published modules (#244);
+//  2. a constrained `<version>` not matching the BOM's own version (#300).
+//
+// (2) exists because the project version is written out twice, as two independent string
+// literals — `convention-plugins/src/main/kotlin/kodemirror.library.gradle.kts` (which sets the
+// version of all library modules, and therefore of every constraint here) and the `version =`
+// line above (the BOM's own coordinate). The release process instructs a human to edit both.
+// Editing only one publishes a BOM at X whose constraints all say Y: it resolves cleanly and
+// silently hands consumers the *previous* release, which is worse than #244's hard resolution
+// failure because nothing surfaces it.
 val expectedBomModules = provider {
     rootProject.subprojects
         .filter {
@@ -71,22 +84,36 @@ val pomTasks = tasks.withType<GenerateMavenPom>()
 val verifyBomCoverage = tasks.register("verifyBomCoverage") {
     group = "verification"
     description =
-        "Fails if the generated BOM POM does not constrain exactly the published modules."
+        "Fails if the generated BOM POM does not constrain exactly the published modules, " +
+            "each at the BOM's own version."
     dependsOn(pomTasks)
     val pomFiles = provider { pomTasks.map { it.destination } }
     val expected = expectedBomModules
+    // Read at configuration time: `project` must not be touched from a task action.
+    val bomVersion = project.version.toString()
     inputs.files(pomFiles)
     inputs.property("expectedModules", expected)
+    inputs.property("bomVersion", bomVersion)
     doLast {
         val pom = pomFiles.get().single().readText()
         val managed = Regex(
             "<dependencyManagement>(.*?)</dependencyManagement>",
             RegexOption.DOT_MATCHES_ALL
         ).find(pom)?.groupValues?.get(1).orEmpty()
-        val declared = Regex("<artifactId>([^<]+)</artifactId>")
+        // Parse whole `<dependency>` blocks rather than bare `<artifactId>`s, so the artifactId
+        // and the version that ships beside it stay associated. A missing `<version>` maps to
+        // the empty string, which can never equal `bomVersion` and so is reported rather than
+        // silently accepted.
+        val constrained = Regex("<dependency>(.*?)</dependency>", RegexOption.DOT_MATCHES_ALL)
             .findAll(managed)
             .map { it.groupValues[1] }
-            .toSortedSet()
+            .map { entry ->
+                fun tag(name: String) =
+                    Regex("<$name>([^<]*)</$name>").find(entry)?.groupValues?.get(1).orEmpty()
+                tag("artifactId") to tag("version")
+            }
+            .toList()
+        val declared = constrained.map { it.first }.toSortedSet()
         val expectedModules = expected.get()
         check(expectedModules.isNotEmpty()) {
             "No published modules were detected — the BOM constraint derivation is broken."
@@ -110,7 +137,39 @@ val verifyBomCoverage = tasks.register("verifyBomCoverage") {
                 )
             }
         }
-        logger.lifecycle("kodemirror-bom constrains all ${declared.size} published modules.")
+        // Every constraint is a kodemirror module, so requiring the BOM's own version of all of
+        // them is exact rather than approximate: the coverage check above runs first and already
+        // rejects anything "in the BOM but NOT published", so a third-party constraint could
+        // never reach here and be mistaken for drift.
+        val mismatched = constrained.filter { it.second != bomVersion }
+        check(mismatched.isEmpty()) {
+            buildString {
+                appendLine(
+                    "kodemirror-bom constrains modules at a version other than its own (#300)."
+                )
+                appendLine("  kodemirror-bom version: $bomVersion")
+                appendLine("  mismatched constraints: ${mismatched.size} of ${constrained.size}")
+                mismatched
+                    .groupBy({ it.second }, { it.first })
+                    .toSortedMap()
+                    .forEach { (version, modules) ->
+                        val shown = if (version.isEmpty()) "<no version element>" else version
+                        appendLine(
+                            "  constrained at $shown (${modules.size}): " +
+                                modules.sorted().joinToString()
+                        )
+                    }
+                appendLine(
+                    "  The project version is two independent literals: " +
+                        "convention-plugins/src/main/kotlin/kodemirror.library.gradle.kts " +
+                        "(every library module) and kodemirror-bom/build.gradle.kts (the BOM " +
+                        "itself). Set both to the same value."
+                )
+            }
+        }
+        logger.lifecycle(
+            "kodemirror-bom constrains all ${declared.size} published modules at $bomVersion."
+        )
     }
 }
 
