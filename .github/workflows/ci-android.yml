@@ -40,7 +40,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4.4.3
 
       # GitHub's Linux runners expose /dev/kvm but only to the `kvm` group; the emulator
       # process runs as `runner`. Without this the emulator silently falls back to software
@@ -87,7 +87,7 @@ jobs:
       #    reproducing here with nothing turning red — silent loss of coverage, not a failure.
       #    If a newer level is ever wanted, ADD it as a matrix entry; do not replace 34.
       - name: Run instrumented tests
-        uses: reactivecircus/android-emulator-runner@v2
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           api-level: 34
           target: default
