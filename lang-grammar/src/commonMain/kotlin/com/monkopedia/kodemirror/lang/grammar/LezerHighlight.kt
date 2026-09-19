@@ -43,6 +43,6 @@ val lezerHighlighting = styleTags(
         "( )" to t.paren,
         "[ ]" to t.squareBracket,
         "{ }" to t.brace,
-        "\"!\" ~ * + ? |" to t.operator
+        "\"!\" ~ \"*\" + ? |" to t.operator
     )
 )
