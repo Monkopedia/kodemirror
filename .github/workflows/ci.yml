@@ -81,6 +81,7 @@ jobs:
           :lang-java:wasmJsTest
           :lang-javascript:wasmJsTest
           :lang-json:wasmJsTest
+          :lang-liquid:wasmJsTest
           :lang-markdown:wasmJsTest
           :lang-php:wasmJsTest
           :lang-python:wasmJsTest
