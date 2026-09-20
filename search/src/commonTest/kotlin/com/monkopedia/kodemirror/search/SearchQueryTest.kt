@@ -105,6 +105,30 @@ class SearchQueryTest {
     }
 
     @Test
+    fun unquotesEscapesInThePlainSearchString() {
+        // CM6 `test-query.ts:30-32`: searching "a\\nb" in "a a\nb b" finds
+        // the newline-separated occurrence at 2..5.
+        val query = SearchQuery(search = "a\\nb", caseSensitive = true)
+        assertEquals(
+            listOf(2 to 5),
+            collectMatches(query.getCursor(state("a a\nb b")))
+        )
+        assertEquals("a\nb", query.unquoted)
+        assertEquals("a\tb", SearchQuery(search = "a\\tb").unquoted)
+        assertEquals("a\\nb", SearchQuery(search = "a\\\\nb").unquoted)
+    }
+
+    @Test
+    fun literalDisablesUnquoting() {
+        val query = SearchQuery(search = "a\\nb", caseSensitive = true, literal = true)
+        assertEquals("a\\nb", query.unquoted)
+        assertEquals(
+            emptyList<Pair<Int, Int>>(),
+            collectMatches(query.getCursor(state("a a\nb b")))
+        )
+    }
+
+    @Test
     fun canMatchByWord() {
         val query = SearchQuery(
             search = "word",
@@ -120,18 +144,24 @@ class SearchQueryTest {
     }
 
     @Test
-    fun doesNotMatchNonWordsByWord() {
-        // "^_^" contains non-word chars (^), so the word boundary check
-        // rejects matches because the boundary chars are also non-word
+    fun matchesNonWordTokensByWord() {
+        // Upstream's word test only rejects a boundary when the characters on
+        // *both* sides are word characters, so an all-punctuation token is
+        // findable. This is CM6's own `test-query.ts` case:
+        // `test(new SearchQuery({search: "^_^", wholeWord: true}), "x[^_^]y [^_^]")`.
         val query = SearchQuery(
             search = "^_^",
             caseSensitive = true,
             wholeWord = true
         )
-        val matches = collectMatches(
-            query.getCursor(state("hello ^_^ world"))
+        assertEquals(
+            listOf(1 to 4, 6 to 9),
+            collectMatches(query.getCursor(state("x^_^y ^_^")))
         )
-        assertEquals(0, matches.size)
+        assertEquals(
+            listOf(6 to 9),
+            collectMatches(query.getCursor(state("hello ^_^ world")))
+        )
     }
 
     @Test
