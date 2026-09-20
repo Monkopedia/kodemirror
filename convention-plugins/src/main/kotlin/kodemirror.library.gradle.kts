@@ -38,7 +38,7 @@ plugins {
 }
 
 group = "com.monkopedia.kodemirror"
-version = "0.3.6"
+version = "0.3.7"
 
 android {
     namespace = "com.monkopedia.kodemirror.${project.name.replace("-", ".")}"

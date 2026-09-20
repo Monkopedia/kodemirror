@@ -21,23 +21,23 @@ In your module's `build.gradle.kts`, add the Kodemirror dependencies:
 ```kotlin
 dependencies {
     // Core
-    implementation("com.monkopedia.kodemirror:state:0.3.6")
-    implementation("com.monkopedia.kodemirror:view:0.3.6")
+    implementation("com.monkopedia.kodemirror:state:0.3.7")
+    implementation("com.monkopedia.kodemirror:view:0.3.7")
 
     // Commands (undo, redo, indentation, etc.)
-    implementation("com.monkopedia.kodemirror:commands:0.3.6")
+    implementation("com.monkopedia.kodemirror:commands:0.3.7")
 
     // Language infrastructure (syntax highlighting, bracket matching)
-    implementation("com.monkopedia.kodemirror:language:0.3.6")
+    implementation("com.monkopedia.kodemirror:language:0.3.7")
 
     // Language support (pick the languages you need)
-    implementation("com.monkopedia.kodemirror:lang-javascript:0.3.6")
+    implementation("com.monkopedia.kodemirror:lang-javascript:0.3.7")
 
     // Optional: theme
-    implementation("com.monkopedia.kodemirror:theme-one-dark:0.3.6")
+    implementation("com.monkopedia.kodemirror:theme-one-dark:0.3.7")
 
     // Optional: all-in-one setup bundle
-    // implementation("com.monkopedia.kodemirror:basic-setup:0.3.6")
+    // implementation("com.monkopedia.kodemirror:basic-setup:0.3.7")
 }
 ```
 

@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "com.monkopedia.kodemirror"
-version = "0.3.6"
+version = "0.3.7"
 
 // Published coordinates deliberately kept OUT of the BOM. A BOM entry is a statement that the
 // coordinate is supported and intended for consumption, so anything whose status is unsettled is
