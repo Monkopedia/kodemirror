@@ -4,6 +4,283 @@ All notable changes to Kodemirror will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.3.7] - 2026-09-20
+
+### Fixed
+- Synced `:lang-python`'s `states` table to upstream `@lezer/python` 1.1.19, whose sole change
+  from 1.1.18 — the one character the port was transcribed with — restores `StateFlag.Accepting`
+  on state 0 (#369). Empty, whitespace-only and comment-only Python documents were being given a
+  spurious syntax-error node, so an empty editor rendered `Script(⚠)`, with the diagnostic, fold
+  and indent behaviour that keys off it. All five parser tables are now byte-identical to 1.1.19.
+- Restored twelve characters (`1G0d1G0dOOQO`) dropped from `:lang-less`'s transcribed `states`
+  table (#368). `@import` threw `IndexOutOfBoundsException`, and `@media` silently misparsed as
+  an `ImportStatement` with three error nodes. All five parser tables are now byte-identical to
+  upstream `@codemirror/lang-less` 6.0.2, and the module gained a tree-shape test suite whose
+  expectations were taken from that upstream parser.
+- Fixed two defects that made `:lang-grammar` unusable (#367). The `styleTags` selector in the
+  highlight spec had lost the quotes around `*`, so the bare wildcard was rejected and every
+  public entry point — `lezerParser`, `lezerGrammarLanguage`, `lezerGrammar()`,
+  `lezerHighlighting` — threw `ExceptionInInitializerError` on first touch; and one character
+  was missing from the transcribed `stateData` table, crashing `@skip` scopes, node props,
+  `@local tokens`, `@external` declarations and `@specialize`. All five parser tables are now
+  byte-identical to upstream `@lezer/lezer` 1.1.1, and the module gained a test suite whose
+  expectations were taken from that upstream parser.
+- Restored six characters (`#l#m+[`) dropped from `:lang-wast`'s transcribed `tokenData`
+  table, which made `wastParser` throw `ArrayIndexOutOfBoundsException` on every input,
+  `(module)` included (#366). All five parser tables are now byte-identical to upstream
+  `@codemirror/lang-wast` 6.0.2, and the module gained a tree-shape test suite whose
+  expectations were taken from that upstream parser.
+- `parseMixed` no longer loses the base tree's origin when it runs inside another `parseMixed`
+  (#341). A parse started over ranges builds its tree relative to `ranges[0].from`, but
+  `MixedParse` walked that tree from an origin of 0. At the top level the two agree, so the
+  defect was invisible until a nested parser was itself a mixed parser — from there every range
+  handed to the parsers below was short by the mounting node's start, and the innermost parser
+  silently lexed the wrong characters. `:lang-vue` and `:lang-angular` are exactly that shape
+  (`html` -> template grammar -> `javascript`), so every Vue interpolation and bound, directive
+  or event attribute, and every Angular interpolation and bound, event or structural attribute,
+  was parsed from text taken from the wrong place in the document: `<img [src]="url">` lexed
+  `rc]` in place of `url`, and `<button (click)="go()">` produced a bare `VariableName` over
+  `clic` — no exception, no error node, correct-looking node positions, wrong tree. The fix
+  restores `@lezer/common`'s origin, and is covered by a regression test asserting that the same
+  fragment parsed at five different document offsets yields the same tree shape.
+- Fixed `:lang-jinja` throwing `ArrayIndexOutOfBoundsException` on every non-empty input (#339).
+  The hand-transcribed `goto` table was truncated to 266 of upstream's 2571 characters — roughly
+  90% of it was missing — so the parser indexed past the end of its own tables on the first real
+  token. The literal was restored from `@codemirror/lang-jinja@6.0.1`, which all five tables now
+  match character for character, and the module gained its first test suite, asserting the tree
+  shapes and token offsets the upstream parser produces.
+- Fixed `:lang-liquid` throwing on essentially every input, including plain HTML with no Liquid in
+  it (#337). The hand-transcribed parser tables were corrupt: `goto` held 1595 of upstream's 2452
+  characters (a dropped character at index 172, a dropped 108-character run at 475, a spurious
+  4-character insertion, and a truncated tail), and `stateData` had two wrong characters at indices
+  3543 and 5042 that made a `RenderParameter` reduce target a `tablerow` instead. Both literals were
+  restored from `@codemirror/lang-liquid@6.3.2`, which all five tables now match character for
+  character, and the module gained its first test suite — tree-shape assertions taken from the
+  upstream parser's own output, including a case the corrupt `stateData` mis-parsed with no error
+  node at all.
+- `Parse.advanceStack` now runs its steps in `@lezer/lr` 1.4.10's order and routes ambiguity forks
+  the way upstream does (#323). It called `tokens.getActions(stack)` first, unconditionally, so a
+  state with a default reduce tokenised where upstream does not — recording a wider
+  `NodeProp.lookAhead` on the resulting nodes, which is what `TreeFragment.applyChanges` consults
+  to decide how far an edit invalidates reuse. That early tokenisation was also the only reason
+  the fragment-reuse block was gated on having a main token, so reuse was refused at any position
+  the grammar cannot tokenise, where upstream reuses the cached node. And the forks of an
+  ambiguous parse were all appended to the list being iterated, where upstream sends the ones that
+  consumed input straight to the caller's stack list and keeps the original stack on the *last*
+  action rather than the first; the resulting order decides which reading survives `advance`'s
+  pruning. On a 488-case corpus of ambiguous parses checked against `@lezer/lr` 1.4.10 the port
+  disagreed on 401 and now disagrees on none.
+- `:lang-python`'s indentation `ContextTracker` is no longer declared `strict = false` (#323).
+  `@lezer/python` leaves `strict` at its default of true; with it false the token cache never
+  invalidated on an indent-context change, so a stale `dedent` was reused where a keyword should
+  have been read. It was masked by the `advanceStack` order above. Both measurements of the effect
+  improve and neither reaches parity: over 40 files from the Python 3.14 standard library — those
+  under 25,000 characters and free of tabs, taken in sorted filename order — the port disagreed
+  with `@lezer/python` on 11 before this change (36 with the `advanceStack` fix alone) and on none
+  after, while a second run over 39 files of that same sorted listing with the size filter removed
+  measured 25 before and 16 after. The two are one enumeration sampled twice under different
+  filters, sharing 25 files, rather than two independent corpora. The 40-file run's recorded
+  upstream trees reproduce exactly under `@lezer/python` 1.1.18 and 1.1.19 alike, so its figures do
+  not turn on which the oracle resolved. The residual gap between the two runs, and its cause, are
+  tracked in #357. `elif`/`else` branches, dedented bodies and nested functions were the visible
+  casualties.
+- The LR parser now applies all of `@lezer/lr` 1.4.10's conditions before reusing a node from an
+  incremental-parse fragment (#321). Four were missing: a zero-length node was reused even though
+  reusing one cannot advance the parse position (`@lezer/lr` refuses it, and every caller of
+  `advanceStack` loops while it reports progress); a node whose type object came from a different
+  node set — a reconfigured parser, or a fragment from another language — was reused on a bare id
+  match; a strict `ContextTracker`'s `contextHash` was ignored, so a context-sensitive parse could
+  reuse a node built under a different context; and reuse gave up on a node that did not match
+  instead of retrying with its first child when that child starts at the same position, losing
+  reuse `@lezer/lr` performs. Each condition is covered by a test whose expectation is the tree
+  `@lezer/lr` 1.4.10 produces for the same table, input and fragment.
+- Fixed a crash when the editor is clicked after its document has been replaced with a shorter one
+  (#313). `Modifier.pointerInput` was keyed on the session, which keeps its identity when its
+  document changes, so the gesture coroutine kept the position resolver it was started with — one
+  closed over the previous document's line spans. A click on the second line of a shorter
+  replacement resolved through the old line's start offset, past the end of the new document, and
+  the resulting selection threw `Selection points outside of document`. The gesture coroutines now
+  read the current resolver through `rememberUpdatedState`, so they stay stable across a document
+  change while hit-testing against the current layout. A hit-test result the current document
+  cannot contain is now also dropped rather than dispatched, which loses a click that raced a
+  document update instead of placing the caret somewhere the user did not click.
+- Touch drag now selects text after a long press (#311). Dragging a finger across the editor
+  extended no selection: the line list (`LazyColumn`) and the line content (`horizontalScroll`) are
+  children of the node carrying the editor's gesture, so they saw the pointer first, and
+  `scrollable` claims any drag whose pointer is not a mouse — which is why the same drag with a
+  mouse selected normally. Taking the drag back outright would have cost touch scrolling, so the
+  editor now waits: a press held past the long-press timeout anchors a selection at that position
+  and the moves after it are consumed ahead of the scroll containers, while a press that travels
+  first still scrolls. This matches CodeMirror 6 on mobile, where a plain drag scrolls and a long
+  press begins a selection.
+- Fixed the soft keyboard not appearing when the editor is tapped in a browser on mobile (#303).
+  The editor's tap gesture did not consume the pointer down, so Compose for Web never called
+  `preventDefault()` on it and the browser's default action moved DOM focus to the Compose
+  `<canvas>`, blurring the backing `<textarea>` a soft keyboard is raised for; and because the
+  hidden field already held Compose focus, `requestFocus()` on tap was a no-op that never asked
+  the platform to show the keyboard. The gesture now consumes the down and calls
+  `SoftwareKeyboardController.show()`, matching what `BasicTextField` does. Verified in a browser
+  by measuring DOM focus and `pointerdown.defaultPrevented` before and after; a real device and an
+  actual on-screen keyboard were not exercised, and iOS Safari and Firefox for Android may have a
+  further obstacle of their own.
+- Text input no longer dies permanently after a key the keymap consumes, which on Android meant one Backspace and the editor never accepted another character (#294, issue 2 of the report; issue 1, the IME/composition rework, is untouched and #294 stays open for it). The hidden `BasicTextField`'s echo suppression was a boolean armed by both key paths and cleared in exactly one place — the handler passed to `platformRegisterKeyHandler`, which is a real implementation only on wasmJs and an explicit no-op on JVM and native. So on JVM, Android and iOS the first keymap-consumed key latched it and every later `onValueChange` was discarded for the life of the editor; wasmJs was the only target where the reset ever ran. The flag is replaced by `pendingEcho`, which holds the *text* a key path already entered rather than a bare "something happened" bit, so its lifetime is bounded by the keystroke that armed it on every target rather than by a callback one target installs: it is cleared at the start of every keydown in `onPreviewKeyEvent` (which exists on all six targets, unlike the platform handler), it is armed only with a concrete string, and any `onValueChange` carrying different text clears it and is inserted normally. A key that enters no text — Backspace, Enter, the arrows — now arms nothing at all, since there is no echo of it to drop.
+- Four tests pin the behaviour, and what each one proves was established by running it rather than by reading it (#294). Two are red on unmodified `main`: `typingAfterBackspace_reachesTheDocument` fails there with `Expected doc: HellX / Actual doc: Hell` — the reported symptom exactly — and `differentTextAfterAKeyPress_isNotSuppressed` with `Expected typed 'y' to reach the document, but doc is: x`. The other two guard the opposite direction and pass both before and after, so each was checked by mutating the fix instead: making the suppression never fire breaks `keyEnteredCharacter_isNotDoubledByItsEcho` (`x` vs `xx`), and making it disarm on the first echo rather than staying armed breaks `repeatedEchoesOfOneKeystroke_areAllDropped` (`x` vs `xx`), which is the property #109 needs because one keystroke can produce more than one echo on wasmJs. That last test lives in `view/src/jvmTest/` rather than beside the others in `commonTest`, because on wasmJs `keyEventLayoutKey` reads the browser's real keydown and a synthetic `performKeyInput` never fires one — no key press in the Compose harness enters a character there, so the suppression it exercises is never armed and the same assertions would read `x` on JVM/Android/native and `xx` on wasmJs.
+- Coverage limit worth knowing: none of the four presses the pointer first, because when they were written a pointer press on Android took Compose focus off the hidden field and no key event was delivered afterwards — the #259 defect, fixed in this same release. Tap-then-type and tap-then-IME-commit are therefore not among the cases these four cover, and this fix was verified on Android only from the auto-focused state the editor establishes at composition. Measured per target with the fix in place, each from a deleted-then-regenerated results directory: `:view:jvmTest` 325/0, `:view:wasmJsBrowserTest` 292/0, and the Android instrumented suite 96 executed / 0 skipped / 13 failed — the 13 that were open against #259 when this was measured, and that its fix, landed since, now makes pass — with all three new `commonTest` cases passing on the emulator.
+- Error recovery in the LR parser no longer abandons a stack after ten non-advancing reductions
+  (#286). `advanceFully` reimplemented `advanceStack` rather than calling it, and its standalone
+  copy needed a ten-step guard to terminate; a grammar whose reduce chain is longer than that
+  (twelve unit productions in the new test fixture) lost the recovered node entirely, yielding
+  `Program(⚠(Comma),⚠(Comma),Item(…))` where `@lezer/lr` 1.4.10 yields
+  `Program(Item(…),Comma,⚠,Comma,Item(…))`. `advanceFully` now delegates to `advanceStack`, as
+  upstream does, so the `stoppedAt` brake and cached-fragment reuse also reach the recovery path.
+- Ported the JavaScript mode's `parseJS` grammar, so JavaScript, TypeScript, JSON and JSON-LD
+  auto-indent now tracks nesting instead of answering a constant (#276). Only the tokenizer had
+  been ported: nothing ever pushed a lexical scope, so `state.lexical` stayed the base `"block"`
+  scope and **every line of every document indented to column 0** — measured before the fix over
+  the documents in the issue and over nested fixtures such as
+  `function f() {\n  if (x) {\n    g();\n  }\n}`, which answered `0, 0, 0, 0, 0` where CodeMirror
+  answers `0, 2, 4, 2, 0`. The continuation stack, the lexical and variable scope stacks, the
+  `vardef` and double-indent-`switch` cases of `indent`, and the `maybeoperator` conjunct of its
+  scope walk are all now in place, checked line by line against
+  `@codemirror/legacy-modes` 6.5.0 `mode/javascript.js`.
+- As a consequence the mode now emits the grammar's token styles as well: definitions, property
+  names, TypeScript type positions, contextual keywords (`as`, `from`, `implements`, …) and
+  local-variable references were previously all reported as plain variables or identifiers
+  (#276). The Pug mode, which embeds this mode for its inline JavaScript, picks the same
+  improvement up.
+- Added `JavaScriptConfig.doubleIndentSwitch` (default `true`), upstream's switch for whether a
+  `switch` body indents by two units (#276).
+- Fixed a mouse click in the editor blanking its focus on Android, so every key pressed after a
+  click was dropped (#259). The click itself was never wrong — it hit-tested correctly and placed
+  the caret where it should — but Compose then took the focus away, and the arrow keys, Home, End
+  and the keymap's shortcuts all did nothing until the editor was focused again by other means.
+  Anyone using the library on an Android tablet or on ChromeOS with a mouse or trackpad hit this on
+  every click; the same gestures with a finger always worked, which is why it went unrecognised for
+  so long. The cause is a Compose policy rather than a defect in the editor: `AndroidComposeView`
+  applies `AutoClearFocusBehavior.CursorBased` — the platform default — *after* the gesture
+  handlers have run, clearing focus when a mouse or touchpad press lands outside the bounds of the
+  focused node, and the editor's focused node is a 1-dp hidden input that no press ever lands
+  inside. The editor now captures its focus for the duration of a press, which is the framework's
+  own way of refusing that clear, and releases it as soon as the pointer lifts so nothing else is
+  kept from taking focus. Thirteen Android instrumented tests across `FocusManagementTest` and
+  `KeyboardHandlingTest` had been failing on this since the suite was introduced and now pass.
+- `:lang-yaml`'s indentation `ContextTracker` no longer declares `strict = false` (#257).
+  `@lezer/yaml` 1.0.4 leaves `strict` at `@lezer/lr`'s default of true; with it false the stack's
+  context hash is pinned to 0 and `Stack.close` stops writing `NodeProp.contextHash`, so
+  `Parse.useCachedResult` had nothing to compare and reused a cached node whatever block depth it
+  was parsed under. Re-indenting a line then spliced a subtree back in at the wrong nesting — an
+  incremental reparse of an F-Droid metadata file swallowed two top-level keys into the mapping
+  above them. Over 16,470 single-edit incremental reparses of 915 indentation-heavy YAML documents
+  the incremental tree disagreed with a fresh parse of the same text 153 times before this change
+  and 6 times after; whole-document parses are unaffected either way.
+- Fixed `SyntaxNode.enterUnfinishedNodesBefore`, which stopped after a single level and reported
+  an unfinished node where there was none (#253). The port computed the child to test once,
+  outside its `while` loop, and every path through the loop body ended in `break`, so the walk
+  could never descend past the first child; it then returned that child rather than the node whose
+  right edge actually ends in a zero-length error node. `@lezer/common` keeps two cursors — one
+  walking down the right edge of the tree, one recording the last node whose right edge ended in
+  an unfinished (empty error) node — and returns the second, unchanged when there is no such node.
+  This is the primitive that finds the innermost still-open construct before a position, so it
+  backs continued indentation and completion context inside an unfinished block: on a JavaScript
+  document ending in `function f() {\n  if (x) {\n    a.` it returned `FunctionDeclaration(0-32)`
+  where `@lezer/javascript` returns `MemberExpression(30-32)`, and on the complete document
+  `function f() { let a = 1; }` it returned `FunctionDeclaration(0-27)` where upstream returns the
+  `Script` itself. Both cursors are now kept and the loop advances, matching `@lezer/common` 1.5.2.
+- Fixed syntax-tree resolution around overlay-mounted trees, which every mixed-language grammar
+  relies on — HTML with embedded `<script>`/`<style>`, Vue, Angular, Jinja, Liquid, and markdown
+  with fenced code (#252). `resolveNode` took an `overlays` flag and never read it, so all four
+  entry points behaved as though it were always true and none of them behaved as `@lezer/common`
+  documents. `Tree.resolve` and `SyntaxNode.resolve` descended into overlays and returned
+  inner-language nodes where the host language was asked for; `resolveInner` never climbed back
+  out of an overlay that does not cover the requested position, returning an inner node for a
+  position the mount does not cover; `SyntaxNode.resolve`/`resolveInner` never climbed up out of
+  the receiver, so a position outside the node returned the node itself; and
+  `SyntaxNode.resolveInner` resolved against the node's own subtree, treating its argument as a
+  subtree-local offset rather than an absolute document position and returning a node detached
+  from the real parent chain. Every one of these was a silently wrong answer rather than a crash,
+  and `resolve`/`resolveInner` is the primary tree query behind indentation, folding, bracket
+  matching and completion context. `resolveNode` now starts from the passed node, selects
+  `IterMode.IGNORE_OVERLAYS` for a non-overlay descent, and runs the climb-out-of-overlays pass,
+  matching `@lezer/common` 1.5.2.
+- Fixed `MergeView` and the unified merge editor duplicating chunks at the start of the document
+  after an edit (#250). When recomputing chunks for a change, `Chunk.updateA`/`Chunk.updateB`
+  carried an old chunk across whenever it ended one position before the start of an update range,
+  and then recomputed the same region inside that range, so the returned list held two chunks
+  covering the same start offsets. That produced doubled change decorations and gutter markers,
+  and let `acceptChunk`/`rejectChunk` select the wrong chunk and apply the wrong range. The
+  overlap test now compares against the chunk's `toA`/`toB` rather than `endA`/`endB`, and is
+  skipped entirely on the final pass so chunks past the last updated range are never dropped —
+  matching the upstream `@codemirror/merge` fix (`db4a11a`, `codemirror/dev#1680`), whose
+  regression test is ported alongside it.
+
+### Build
+- The BOM drift guard (`:kodemirror-bom:verifyBomCoverage`) now also checks the **versions** in the
+  generated BOM POM, not just the artifactIds (#300). The project version is written as two
+  independent literals — one in the `kodemirror.library` convention plugin (every library module)
+  and one in `kodemirror-bom/build.gradle.kts` (the BOM's own coordinate) — and the release process
+  asks a human to edit both. Editing only one produced a BOM published at X that constrained all 56
+  modules at Y: it resolves cleanly and silently hands consumers the previous release, and the
+  guard reported success. The guard now parses whole `<dependency>` blocks and fails if any
+  constrained `<version>` differs from the BOM's own, naming the mismatched version and modules.
+- CI now runs `ktlintCheck` and `spotlessCheck` in the branch-protection-required `check` job
+  (#299). Both hang off Gradle's `check`, which that job deliberately does not run, so naming
+  its tasks explicitly had dropped them: neither appeared in any workflow file, and a source
+  file stripped of its license header passed every gating task. `spotlessCheck` is what applies
+  `spotless/license-header.kt` over `src/**/*.kt` in all 57 modules, so the Apache-2.0 notice
+  and the "Originally based on CodeMirror 6 by Marijn Haverbeke, licensed under MIT"
+  attribution this port is obliged to carry were enforced only by developer discipline. The
+  tree was already compliant -- 57 modules, 563 Kotlin files, ~136k lines pass unchanged -- so
+  this is enforcement only, with no reformatting in front of it. It compiles nothing and adds
+  about 25s to a job that already pays for configuration.
+- Hardened the `changelog.d/` tooling so `check` answers "did this change do the right thing with
+  the changelog", not just "are the fragments present well-formed" (#297).
+  - `check` refuses a `## [Unreleased]` heading in `CHANGELOG.md`, and — given `--base-ref`, as CI
+    now runs it — refuses any change to `CHANGELOG.md` that is not a release assembly. Previously
+    `check` never read the file at all, so a branch written before #295 removed `[Unreleased]`
+    passed CI while git landed its hunk *inside an already-published section*, with a clean merge.
+  - `assemble` refuses a version whose `## [X.Y.Z]` heading is already in `CHANGELOG.md`. The
+    `-SNAPSHOT` guard does not cover it: the post-release SNAPSHOT bump has been performed after
+    four of eight releases, so `main` normally sits on an already-released version, and assembly
+    there produced a second identical heading with exit 0 and the fragments deleted.
+  - `changelog.d/README.md` now states when a fragment is expected and when it is legitimately
+    omitted; a fragment remains optional rather than required.
+- Pinned the two remaining third-party GitHub Actions from mutable major-version tags to the full commit SHAs those tags resolve to today, matching the form #289 established for `crazy-max/ghaction-import-gpg` (#290). `gradle/actions/setup-gradle@v4` becomes `@ed408507eac070d1f99cc633dbcf757c94c7933a # v4.4.3` at all **eight** of its call sites — two each in `ci.yml`, `ci-apple.yml` and `docs.yml`, one each in `ci-android.yml` and `deploy.yml` — and `reactivecircus/android-emulator-runner@v2` in `ci-android.yml` becomes `@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0`. Both tags are **annotated**, unlike the lightweight `v5` that #289 pinned, so `.object.sha` on the ref is a tag object and had to be dereferenced — twice for `gradle/actions`, whose `v4` points at the annotated tag `v4.4.3` which in turn points at the commit. Taking `.object.sha` at face value there would have pinned a tag object's hash, which is not a commit and fails at run time. Each resolved SHA was confirmed to be the commit its tag names today and to carry the action's `action.yml` at that ref, with a fabricated 40-hex SHA returning HTTP 422 as a negative control, so **nothing about any run behaves differently** — this is not an upgrade.
+- Unlike #289 this is not a key-exposure fix, and should not be read as one: neither action is handed `OSSRH_GPG_SECRET_KEY` or its passphrase (#290). What it closes is the general supply-chain case — a mutable tag can be moved to point at different code — on an action that runs in **every** CI job in the repo, `deploy.yml` included, so `setup-gradle` executes in the same workflow as the signing step even though the key never reaches it. First-party `actions/*` stay on tags by convention and are unchanged. Verification is necessarily static for one of the nine sites: `deploy.yml` is `workflow_dispatch`-only, so no pull-request check exercises it and a green CI run says nothing about that call site; the other seven `setup-gradle` sites and the emulator runner are covered by ordinary CI. All five workflows were re-parsed with `yaml.safe_load` and every `uses:` value walked out of the parsed tree — 40 of them — to assert that **zero** third-party `uses:` remains on a tag (10 pinned, 0 unpinned) and that each `# vX.Y.Z` stayed a YAML comment rather than leaking into the ref; a fabricated unpinned entry trips that assertion, so it is shown to fire rather than merely to pass.
+- Changelog entries are now one file per change under `changelog.d/`, assembled into `CHANGELOG.md` at release time (#281). Every PR used to append to the same `## [Unreleased]` block, so merging any one of them conflicted every other open PR on a file that had nothing to do with the code under review — three collided in a single week, and because a GitHub approval pins to a commit, each forced rebase invalidated a review that had already passed. The cost was a re-review, not a `git rebase`, and the resulting stream of changelog-only conflicts trained reviewers to skim exactly the diffs where changelog defects hide: two PRs were held recently for defects in those diffs, a wrong `MapMode` default and a test count that matched nothing. Fragments are named `<issue>.<section>.md`, so two PRs never touch the same file and merge order stops mattering; `CHANGELOG.md` no longer carries an `## [Unreleased]` section to edit. Demonstrated rather than asserted: two branches each adding a fragment merge cleanly in **both** orders, where the same two entries appended to the old shared block conflict in both.
+- Added `.github/scripts/changelog.py` to assemble the fragments, with the failure modes from resolving these conflicts by hand built in as guards (#281). It never parses entry prose — an entry is not reliably one bullet carrying one `(#N)`, and a previous auto-resolver keyed on that shape aborted on #278, whose entry has sub-bullets with no reference of their own — so grouping comes from the filename and the body is copied verbatim. It is Python rather than a shell pipeline because a changelog line is hostile input to one: a bullet's leading `-` was parsed as an option and produced a false `DIFFERS`. The version is derived from the build files rather than written down, since a hardcoded version decays into a false "clean" once it ships (#293), and a failed derivation aborts loudly instead of yielding an empty string. Assembly verifies itself to be **purely additive**: the new section stripped back out must reproduce the previous file byte for byte, which a rewording defeats a line-count check by passing. Verified against the real data — assembling the two backfilled fragments reproduces the previous `## [Unreleased]` content byte for byte (7346 bytes each side), with a negative control that changing one word reports `DIFFERS`.
+- `.github/scripts/test-changelog.py` covers the assembler, and CI runs it with the fragment validation in the `check` job (#281). Each guard has a negative control that must fail: neutering the additive check fails exactly three of the fifteen tests, so the guard is shown to fire rather than merely present. A malformed fragment now surfaces on its own PR instead of at the release cut, which is the worst place to find one.
+
+### Tests
+- Pinned the pointer pass that #259's focus fix depends on (#344). The editor holds its focus
+  across a press by capturing it on the `Final` pointer pass, and that choice was load-bearing but
+  unguarded: moving the capture to `Main` or `Initial` left the entire Android instrumented suite
+  green, because every existing focus test starts from an editor that is already focused and a
+  capture taken too early still finds a focus to capture. The case that discriminates is the first
+  mouse click on an editor that is *not* focused, where the capture has to come after the gesture's
+  own focus request or there is nothing to capture and Compose's cursor auto-clear blanks the focus
+  again — #259 all over. Two instrumented tests now cover it, one clicking an editor that focus was
+  moved away from and one moving focus between two editors, and both fail under either mutation.
+
+### Documentation
+- Corrected the "post-release `-SNAPSHOT` bump" figure cited by the changelog tooling: it has been
+  performed after **four** of eight releases, not three (#306). The fourth is easy to miss because
+  it rode inside an unrelated Compose-migration PR (`9104fb88`, #182/#183) instead of a dedicated
+  bump commit, so a search over commit subjects returns three; the count here was re-derived by
+  reading `version = ` out of `convention-plugins/src/main/kotlin/kodemirror.library.gradle.kts` at
+  each tag and across each tag range. Fixed in `.github/scripts/changelog.py`'s docstring and in the
+  still-unassembled `changelog.d/297.build.md`; `changelog.d/293.documentation.md` additionally had
+  the fourth case folded into its enumeration, which had described it in prose while counting three.
+  Behaviour is unchanged — the #297 guard is correct and the qualitative conclusion (half the
+  releases skip the bump) still holds.
+- Retracted the claim in `view/build.gradle.kts` that the focus/keyboard divergence seen under Robolectric `graphicsMode=NATIVE` "is an artifact of the environment rather than a finding about the editor" (#294, checked while ruling that divergence out as a symptom of the `suppressInput` latch fixed alongside). #216 recorded the `graphicsMode=LEGACY` half as an observation — a click 30px into `Hello world` resolving to the line's last character — and the NATIVE half as an inference from it; the instrumented suite that comment asked for has since refuted the inference, with the same `FocusManagementTest` and `KeyboardHandlingTest` failures reproducing on an API 34 emulator (#259, constant across every branch from then until its fix landed in this release, per #275). The observation stands and the exclusion is unchanged — Robolectric is still not a substitute, and is no longer a dependency, so the LEGACY measurement cannot be re-run today — but the next reader should not be told the NATIVE result was noise.
+- Those 13 instrumented failures were **not** caused by the `suppressInput` latch (#294). That flag only ever gated `onValueChange`, never `handleKeyEvent`, and each of the 8 `KeyboardHandlingTest` failures failed on the first and only key its test pressed, before anything could arm it — consistent with #259's own reading that all 13 reduced to focus being lost on pointer-down, and with `TextInputTest` (the suite that does exercise `onValueChange`) passing on the same device. Confirmed from the other side too: the emulator run with this fix applied still failed exactly those 13, by name. Ruling the latch out is what established them as a separate defect rather than a regression from this change; #259 fixed that focus loss and is in this same release, so those 13 pass as of it.
+- Parameterised the docs-version grep in `CLAUDE.md`'s release step 1 so it cannot decay into a false "clean" (#293). It read `grep -rn "0\.3\.5" README.md docs-site/docs/   # previous released version`, and that literal was already false — 0.3.6 shipped on 2026-08-30 — so at the 0.3.7 cut it returns **zero hits**, which reads as *the docs are already clean* and skips the step the block exists to enforce. This is the empty-grep failure occurring inside the document written to prevent it, and it is the mechanism/disposition distinction: `com.monkopedia.kodemirror:<module>` is a fact about the artefact and stays true, while "the previous release is 0.3.5" is a fact about a queue and is false at the next cut; the two must not be baked into one command. The version is now derived from the tag list the release process itself maintains — `PREV=$(git describe --tags --abbrev=0 --match 'v*' | sed 's/^v//')` with an echoed `superseding: $PREV` control line — and the text now states that **zero hits means `$PREV` is wrong, not that the docs are clean**, the empty result being the failure mode rather than the pass condition. Verified on the branch: the command prints `superseding: 0.3.6` and finds 33 hits, matching the 33 occurrences #292 recorded bumping. `docs/release-checklist.md` step 2 takes the same form; its `# Replace 0.3.5 with the version being superseded` comment was the model for this fix but carried a literal that had gone stale the same way, so neither file now hardcodes a version.
+- Corrected the recurrence claim that #292 introduced, which understated the problem it was arguing for (#293). The text said omitting the docs bump "left the published docs advertising a superseded version after the 0.3.3, 0.3.4 and 0.3.6 cuts"; reading the coordinates out of every release tag shows it was **every cut after the first**. `README.md` and `docs-site/` said `0.1.0` at v0.2.0, v0.3.0, v0.3.2, v0.3.3, v0.3.4 and v0.3.5, and `0.3.5` at v0.3.6 — seven, not three. The v0.3.6 row reading `0.3.5` rather than `0.1.0` is the positive control that the probe distinguishes states instead of printing one constant. Corroborated from the other side: only three commits in the repo's history have ever changed a published coordinate in those files — `f975188d` (v0.1.0 prep), `456172b6` (#192/#203, `0.1.0` -> `0.3.5`, landed mid-cycle rather than at a cut, and the first PR ever to bump them at all) and `97eb7afa` (#292, `0.3.5` -> `0.3.6`). `0.3.1` is excluded deliberately: it has a CHANGELOG section and a bump commit but no tag, and `kodemirror-bom-0.3.1.pom` answers `404` on `repo1.maven.org` where every other version answers `200` — a burned version, not a cut. The same wrong claim in this section's own #292 entry is corrected alongside it.
+- Resolved the last disagreement between the two release documents, in the direction #292 established (#293). `docs/release-checklist.md` section 9 marked "Announce" **optional** while `CLAUDE.md` step 5 ("Notify downstream consumers") did not, and the precedence rule is that `CLAUDE.md` wins and the checklist may add detail but not contradict. Section 9 is now "Notify downstream consumers" and not optional, with the discretion moved to where it belongs — which channels to use (Reddit, the kmp-awesome PR) is a judgement call, telling consumers at all is not. No version file is touched: `main` currently reads `version = "0.3.6"` in both `convention-plugins/src/main/kotlin/kodemirror.library.gradle.kts` and `kodemirror-bom/build.gradle.kts`, so checklist section 8's post-release SNAPSHOT bump has not been done after v0.3.6, and per the diffs it has happened after only four of eight releases — three of them as a deliberate step (v0.1.0, v0.2.0 and v0.3.3 via #159), while the fourth, after v0.3.5, rode inside the unrelated Compose-migration PR `9104fb88` (#182/#183) rather than a dedicated bump commit; after v0.3.0, v0.3.2 and v0.3.4 it did not happen at all. That is recorded here rather than acted on, since it carries publish implications.
+- Bumped the hardcoded Maven coordinates in the user-facing docs from `0.3.5` to `0.3.6`, the released version (#292). 33 occurrences across four files: `README.md` (2), `docs-site/docs/examples/bundle.md` (20), `docs-site/docs/guide/getting-started.md` (7) and `docs-site/docs/guide/migration.md` (4). Each was read in context and classified before being changed rather than `sed`-ed sight unseen, because rewriting a historical version reference turns it into a false statement: 32 are dependency coordinates inside Gradle snippets (including one commented-out `basic-setup` line a reader is meant to uncomment) and one is the README's live "This is v0.3.5" claim under Known Limitations. None turned out to be historical. `migration.md` was the file most at risk of holding one, and does not — it is a CodeMirror 6 -> Kodemirror porting guide and mentions no version anywhere outside its four-line dependency block. That 0.3.6 is the version to point at was checked against Maven Central itself rather than assumed: `kodemirror-bom-0.3.6.pom` answers `200` on `repo1.maven.org` where a fabricated `0.9.9` answers `404`.
+- Reconciled `CLAUDE.md`'s "Release process" with `docs/release-checklist.md`, which disagreed about what a release includes (#292). The checklist's step 2 already required bumping the docs-site/README coordinates; `CLAUDE.md` step 1 named only the two version files and `CHANGELOG.md`. `CLAUDE.md` is the document agents actually follow, so its omission is the one that kept winning — every release cut after the first shipped with the docs still advertising a superseded version, which is why this recurred rather than being fixed once. The checklist's requirement is the correct behaviour, so the fix adds it to the authoritative document rather than dropping it from the other: `CLAUDE.md` step 1 now carries the docs bump, records that grepping for `SNAPSHOT` can never find those coordinates (they are hardcoded release versions) so the previous released version is what to grep for, and says to read each hit rather than blind-`sed` it. It also now states the precedence the two documents lacked — `CLAUDE.md` is authoritative for the release process and the checklist is its operational companion, which may add detail but not contradict; `docs/` remains authoritative for architecture and design decisions, a separate concern.
+- Corrected three further points where `docs/release-checklist.md` contradicted `CLAUDE.md`, found while reading both end to end (#292). Step 5 had you run `gh release create --target main` *before* dispatching `deploy.yml`: that inverts `CLAUDE.md`'s rule that tags and GitHub Releases exist only for fully-published versions, and duplicates what `deploy.yml`'s `release` job already does from the CHANGELOG section after the publish succeeds (idempotent, skips `-SNAPSHOT`/`-RC`, `--verify-tag`); it now only pushes the tag. Steps 4 and 8 ran `git push` straight to `main`, which the Task Workflow forbids, and step 4's `git add` listed only the two version files — so an agent following it literally would have left step 2's docs bump uncommitted, the same defect one layer down. Step 7 pointed at `central.sonatype.com` with a two-hour sync estimate; it now checks that the BOM resolves from `repo1.maven.org` in the 10-35 minutes `CLAUDE.md` describes.
+
 ## [0.3.6] - 2026-08-30
 
 ### Documentation
