@@ -23,14 +23,11 @@ import com.monkopedia.kodemirror.language.getIndentation
 import com.monkopedia.kodemirror.language.indentString
 import com.monkopedia.kodemirror.state.ChangeByRangeResult
 import com.monkopedia.kodemirror.state.ChangeSpec
-import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.Line
-import com.monkopedia.kodemirror.state.LineNumber
 import com.monkopedia.kodemirror.state.SelectionRange
-import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.countColumn
@@ -70,29 +67,8 @@ val indentSelection: (EditorSession) -> Boolean = { view ->
     if (state.readOnly) {
         false
     } else {
-        var atLine = -1
-        val spec = state.changeByRange { range ->
-            val changes = mutableListOf<ChangeSpec>()
-            var pos = range.from
-            while (pos <= range.to) {
-                val line = state.doc.lineAt(pos)
-                if (
-                    line.number.value > atLine &&
-                    (range.empty || range.to > line.from)
-                ) {
-                    indentLine(state, line, range, changes)
-                    atLine = line.number.value
-                }
-                pos = line.to + 1
-            }
-            val changeSet = state.changes(ChangeSpec.Multi(changes))
-            ChangeByRangeResult(
-                range = EditorSelection.range(
-                    changeSet.mapPos(range.anchor, 1),
-                    changeSet.mapPos(range.head, 1)
-                ),
-                changes = ChangeSpec.Multi(changes)
-            )
+        val spec = changeBySelectedLine(state) { line, changes, range ->
+            indentLine(state, line, range, changes)
         }
         view.dispatch(spec.copy(userEvent = "indent"))
         true
@@ -124,93 +100,82 @@ private fun indentLine(
     }
 }
 
+/**
+ * Call [f] once for each line touched by the selection (each line only
+ * once, even when several ranges touch it), mapping every range through
+ * its own changes with assoc 1. Mirrors upstream `changeBySelectedLine`.
+ */
+private fun changeBySelectedLine(
+    state: EditorState,
+    f: (Line, MutableList<ChangeSpec>, SelectionRange) -> Unit
+): TransactionSpec {
+    var atLine = -1
+    return state.changeByRange { range ->
+        val changes = mutableListOf<ChangeSpec>()
+        var pos = range.from
+        while (pos <= range.to) {
+            val line = state.doc.lineAt(pos)
+            if (line.number.value > atLine && (range.empty || range.to > line.from)) {
+                f(line, changes, range)
+                atLine = line.number.value
+            }
+            pos = line.to + 1
+        }
+        val changeSet = state.changes(ChangeSpec.Multi(changes))
+        ChangeByRangeResult(
+            range = EditorSelection.range(
+                changeSet.mapPos(range.anchor, 1),
+                changeSet.mapPos(range.head, 1)
+            ),
+            changes = ChangeSpec.Set(changeSet)
+        )
+    }
+}
+
 private fun changeIndent(view: EditorSession, add: Boolean): Boolean {
     val state = view.state
     if (state.readOnly) return false
 
     val indentSize = getIndentUnit(state)
     val indent = " ".repeat(indentSize)
-    val sel = state.selection.main
-    val startLine = state.doc.lineAt(sel.from)
-    // When the selection ends at the very start of a line and is non-empty,
-    // don't include that line (matches CM6 indentMore behavior).
-    val endLine = if (sel.to > sel.from) {
-        val candidateLine = state.doc.lineAt(sel.to)
-        if (sel.to == candidateLine.from) {
-            state.doc.lineAt(DocPos(sel.to.value - 1))
-        } else {
-            candidateLine
-        }
-    } else {
-        state.doc.lineAt(sel.to)
-    }
-
-    val changes = mutableListOf<ChangeSpec>()
-
-    for (lineNum in startLine.number.value..endLine.number.value) {
-        val line = state.doc.line(LineNumber(lineNum))
+    var changed = false
+    val spec = changeBySelectedLine(state) { line, changes, _ ->
         if (add) {
             changes.add(
-                ChangeSpec.Single(
-                    line.from,
-                    line.from,
-                    InsertContent.StringContent(indent)
-                )
+                ChangeSpec.Single(line.from, line.from, InsertContent.StringContent(indent))
             )
-        } else {
-            // Match CM6's indentLess: compute the current column width of
-            // leading whitespace, then generate the new (shorter) indent
-            // string. Only replace the differing suffix so that the cursor
-            // stays in place when it's within the common prefix.
-            val text = line.text
-            val space = text.takeWhile { it == ' ' || it == '\t' }
-            if (space.isEmpty()) continue
-            val col = countColumn(space, state.tabSize)
-            val newCol = (col - indentSize).coerceAtLeast(0)
-            val newIndent = indentString(state, newCol)
-            // Find common prefix length
-            var keep = 0
-            while (
-                keep < space.length &&
-                keep < newIndent.length &&
-                space[keep] == newIndent[keep]
-            ) {
-                keep++
-            }
-            changes.add(
-                ChangeSpec.Single(
-                    line.from + keep,
-                    line.from + space.length,
-                    if (keep < newIndent.length) {
-                        InsertContent.StringContent(newIndent.substring(keep))
-                    } else {
-                        null
-                    }
-                )
-            )
+            changed = true
+            return@changeBySelectedLine
         }
-    }
-
-    if (changes.isEmpty()) return false
-
-    // CM6's changeBySelectedLine maps selection with assoc=1, so the
-    // cursor moves right on insertions and stays in place when the
-    // deletion is after the cursor (as with the suffix-only dedent).
-    val changeDesc = state.changes(ChangeSpec.Multi(changes))
-    val newSel = EditorSelection.create(
-        state.selection.ranges.map { r ->
-            EditorSelection.range(
-                changeDesc.mapPos(r.anchor, 1),
-                changeDesc.mapPos(r.head, 1)
+        // Match CM6's indentLess: compute the current column width of
+        // leading whitespace, then generate the new (shorter) indent
+        // string. Only replace the differing suffix so that the cursor
+        // stays in place when it's within the common prefix.
+        val space = line.text.takeWhile { it == ' ' || it == '\t' }
+        if (space.isEmpty()) return@changeBySelectedLine
+        val col = countColumn(space, state.tabSize)
+        val newIndent = indentString(state, (col - indentSize).coerceAtLeast(0))
+        var keep = 0
+        while (
+            keep < space.length &&
+            keep < newIndent.length &&
+            space[keep] == newIndent[keep]
+        ) {
+            keep++
+        }
+        changes.add(
+            ChangeSpec.Single(
+                line.from + keep,
+                line.from + space.length,
+                InsertContent.StringContent(newIndent.substring(keep))
             )
-        },
-        state.selection.mainIndex
-    )
+        )
+        changed = true
+    }
+    if (!changed) return false
 
     view.dispatch(
-        TransactionSpec(
-            changes = ChangeSpec.Multi(changes),
-            selection = SelectionSpec.EditorSelectionSpec(newSel),
+        spec.copy(
             scrollIntoView = true,
             userEvent = if (add) "indent.more" else "indent.less",
             annotations = listOf(Transaction.addToHistory.of(true))

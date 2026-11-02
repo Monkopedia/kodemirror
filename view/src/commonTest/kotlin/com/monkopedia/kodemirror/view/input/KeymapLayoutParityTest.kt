@@ -207,8 +207,12 @@ class KeymapLayoutParityTest {
         press(holder, "Ctrl-Home")
         press(holder, "ArrowDown")
         press(holder, "Shift-Alt-ArrowDown")
+        // 46, not the fixture's 22: the fixture was captured from
+        // @codemirror/commands 6.7.1, and 6.10.1 fixed copyLineDown so a cursor
+        // at line start lands in the bottom copy. The port follows 6.10.2,
+        // which gives 46 on this document (#380).
         holder.session.assertParityCursor(
-            22,
+            46,
             doc = parityDocWithHead(
                 PARITY_LINE_1,
                 PARITY_LINE_2,

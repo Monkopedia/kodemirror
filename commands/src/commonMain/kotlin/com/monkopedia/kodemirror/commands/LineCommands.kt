@@ -63,16 +63,16 @@ val copyLineDown: (EditorSession) -> Boolean = { view ->
  * ranges. Adjacent/overlapping ranges (whose line spans touch) merge
  * into a single block.
  */
-private class LineBlock(var from: DocPos, var to: DocPos, val ranges: MutableList<SelectionRange>)
+internal class LineBlock(var from: DocPos, var to: DocPos, val ranges: MutableList<SelectionRange>)
 
 /**
  * Group all selection ranges into contiguous line-blocks, mirroring
- * upstream `@codemirror/commands` `selectedLineBlocks`.
+ * upstream `@codemirror/commands` `selectedLineBlocks`. Ranges on the
+ * same or directly adjacent lines merge into a single block.
  */
-private fun selectedLineBlocks(state: EditorState): List<LineBlock> {
+internal fun selectedLineBlocks(state: EditorState): List<LineBlock> {
     val blocks = mutableListOf<LineBlock>()
-    var upto = 0
-    var seen = false
+    var upto = -1
     for (range in state.selection.ranges) {
         val startLine = state.doc.lineAt(range.from)
         var endLine = state.doc.lineAt(range.to)
@@ -81,15 +81,14 @@ private fun selectedLineBlocks(state: EditorState): List<LineBlock> {
         if (!range.empty && range.to == endLine.from) {
             endLine = state.doc.lineAt(range.to - 1)
         }
-        if (seen && upto >= startLine.number.value) {
+        if (upto >= startLine.number.value) {
             val prev = blocks[blocks.size - 1]
             prev.to = endLine.to
             prev.ranges.add(range)
         } else {
             blocks.add(LineBlock(startLine.from, endLine.to, mutableListOf(range)))
         }
-        upto = endLine.number.value
-        seen = true
+        upto = endLine.number.value + 1
     }
     return blocks
 }
@@ -173,39 +172,29 @@ private fun copyLines(view: EditorSession, forward: Boolean): Boolean {
     val state = view.state
     if (state.readOnly) return false
 
-    val sel = state.selection.main
-    val startLine = state.doc.lineAt(sel.from)
-    val endLine = state.doc.lineAt(sel.to)
-    val blockText = state.sliceDoc(startLine.from, endLine.to)
-
-    val changes: ChangeSpec
-
-    if (forward) {
-        // CM6 copyDown: insert copy BEFORE the block (at startLine.from).
-        // The cursor stays at its old position (default mapping) which now
-        // points into the copy. The original block shifts down.
-        changes = ChangeSpec.Single(
-            startLine.from,
-            startLine.from,
-            InsertContent.StringContent(blockText + state.lineBreak)
-        )
-    } else {
-        // CM6 copyUp: insert copy AFTER the block (at endLine.to).
-        // The cursor stays at its old position (default mapping) which
-        // still points to the original block.
-        changes = ChangeSpec.Single(
-            endLine.to,
-            endLine.to,
-            InsertContent.StringContent(state.lineBreak + blockText)
-        )
+    val changes = selectedLineBlocks(state).map { block ->
+        val text = state.sliceDoc(block.from, block.to)
+        if (forward) {
+            ChangeSpec.Single(
+                block.from,
+                block.from,
+                InsertContent.StringContent(text + state.lineBreak)
+            )
+        } else {
+            ChangeSpec.Single(
+                block.to,
+                block.to,
+                InsertContent.StringContent(state.lineBreak + text)
+            )
+        }
     }
-
-    // No explicit selection — let the default mapping handle cursor
-    // position. The cursor stays at its old position relative to the
-    // insertion point.
+    val changeSet = state.changes(ChangeSpec.Multi(changes))
     view.dispatch(
         TransactionSpec(
-            changes = changes,
+            changes = ChangeSpec.Set(changeSet),
+            selection = SelectionSpec.EditorSelectionSpec(
+                state.selection.map(changeSet, if (forward) 1 else -1)
+            ),
             scrollIntoView = true,
             userEvent = "input.copyline",
             annotations = listOf(Transaction.addToHistory.of(true))

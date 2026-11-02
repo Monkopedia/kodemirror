@@ -741,30 +741,36 @@ val deleteToLineEnd: (EditorSession) -> Boolean = { view ->
     }
 }
 
-/** Delete the entire current line (including line break). */
+/** Delete the selected line(s), including a line break. */
 val deleteLine: (EditorSession) -> Boolean = { view ->
     val state = view.state
     if (state.readOnly) {
         false
     } else {
-        val spec = state.changeByRange { sel ->
-            val startLine = state.doc.lineAt(sel.from)
-            val endLine = if (sel.empty) startLine else state.doc.lineAt(sel.to)
-            val from = startLine.from
-            val to = if (endLine.number.value < state.doc.lines) {
-                endLine.to + 1 // include line break
-            } else if (startLine.number > LineNumber.FIRST) {
-                startLine.from - 1 // delete preceding line break
-            } else {
-                endLine.to
-            }
-            ChangeByRangeResult(
-                range = EditorSelection.cursor(from.coerceAtMost(state.doc.endPos)),
-                changes = ChangeSpec.Single(from, to)
+        val docEnd = state.doc.endPos
+        val changes = state.changes(
+            ChangeSpec.Multi(
+                selectedLineBlocks(state).map { block ->
+                    // Take the line break before the block, or after it
+                    // when the block starts the document.
+                    if (block.from > DocPos.ZERO) {
+                        ChangeSpec.Single(block.from - 1, block.to)
+                    } else if (block.to < docEnd) {
+                        ChangeSpec.Single(block.from, block.to + 1)
+                    } else {
+                        ChangeSpec.Single(block.from, block.to)
+                    }
+                }
             )
-        }
+        )
+        val selection = EditorSelection.create(
+            state.selection.ranges.map { moveVertically(view, it, forward = true) },
+            state.selection.mainIndex
+        ).map(changes)
         view.dispatch(
-            spec.copy(
+            TransactionSpec(
+                changes = ChangeSpec.Set(changes),
+                selection = SelectionSpec.EditorSelectionSpec(selection),
                 scrollIntoView = true,
                 userEvent = "delete.line",
                 annotations = listOf(Transaction.addToHistory.of(true))
@@ -971,10 +977,15 @@ val insertNewlineAndIndent: (EditorSession) -> Boolean = { view ->
  */
 val newlineAndIndent: (EditorSession) -> Boolean = insertNewlineAndIndent
 
-/** Insert a tab character or indent unit. */
+/**
+ * Insert a tab character at the cursor, or indent the selected lines
+ * with [indentMore] when any range is non-empty.
+ */
 val insertTab: (EditorSession) -> Boolean = { view ->
     if (view.state.readOnly) {
         false
+    } else if (view.state.selection.ranges.any { !it.empty }) {
+        indentMore(view)
     } else {
         view.dispatch(
             view.state.replaceSelection("\t").copy(
@@ -1015,25 +1026,40 @@ val splitLine: (EditorSession) -> Boolean = { view ->
     }
 }
 
-/** Swap the characters before and after the cursor. */
+/** Swap the characters (grapheme clusters) before and after the cursor. */
 val transposeChars: (EditorSession) -> Boolean = { view ->
     val state = view.state
-    if (state.readOnly) {
+    val canTranspose: (SelectionRange) -> Boolean = {
+        it.empty && it.from > DocPos.ZERO && it.from < state.doc.endPos
+    }
+    if (state.readOnly || state.selection.ranges.none(canTranspose)) {
         false
     } else {
         val spec = state.changeByRange { sel ->
-            if (!sel.empty || sel.from == DocPos.ZERO || sel.from >= state.doc.endPos) {
+            if (!canTranspose(sel)) {
                 ChangeByRangeResult(range = sel)
             } else {
                 val pos = sel.from
-                val before = state.sliceDoc(pos - 1, pos)
-                val after = state.sliceDoc(pos, pos + 1)
+                val line = state.doc.lineAt(pos)
+                val col = pos - line.from
+                val from = if (pos == line.from) {
+                    pos - 1
+                } else {
+                    line.from + findClusterBreak(line.text, col, forward = false)
+                }
+                val to = if (pos == line.to) {
+                    pos + 1
+                } else {
+                    line.from + findClusterBreak(line.text, col, forward = true)
+                }
                 ChangeByRangeResult(
-                    range = EditorSelection.cursor(pos + 1),
+                    range = EditorSelection.cursor(to),
                     changes = ChangeSpec.Single(
-                        pos - 1,
-                        pos + 1,
-                        InsertContent.StringContent(after + before)
+                        from,
+                        to,
+                        InsertContent.StringContent(
+                            state.sliceDoc(pos, to) + state.sliceDoc(from, pos)
+                        )
                     )
                 )
             }

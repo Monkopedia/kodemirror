@@ -24,7 +24,7 @@ import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.InsertContent
-import com.monkopedia.kodemirror.state.LineNumber
+import com.monkopedia.kodemirror.state.Line
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
@@ -42,7 +42,7 @@ val toggleComment: (EditorSession) -> Boolean = { view ->
     val line = tokens?.line
     val block = tokens?.block
     if (line != null) {
-        toggleLineComment(view, line)
+        changeLineComment(view, line, CommentOption.Toggle)
     } else if (block != null) {
         toggleBlockCommentCommand(view, block)
     } else {
@@ -56,7 +56,7 @@ val toggleComment: (EditorSession) -> Boolean = { view ->
 val lineComment: (EditorSession) -> Boolean = { view ->
     val line = getCommentTokens(view.state)?.line
     if (line != null) {
-        applyLineComment(view, line, add = true)
+        changeLineComment(view, line, CommentOption.Comment)
     } else {
         false
     }
@@ -68,7 +68,7 @@ val lineComment: (EditorSession) -> Boolean = { view ->
 val lineUncomment: (EditorSession) -> Boolean = { view ->
     val line = getCommentTokens(view.state)?.line
     if (line != null) {
-        applyLineComment(view, line, add = false)
+        changeLineComment(view, line, CommentOption.Uncomment)
     } else {
         false
     }
@@ -118,85 +118,89 @@ val commentKeymap: List<KeyBinding> = listOf(
 
 private fun getCommentTokens(state: EditorState): CommentTokens? = state.facet(commentTokens)
 
-private fun toggleLineComment(view: EditorSession, lineToken: String): Boolean {
+private enum class CommentOption { Toggle, Comment, Uncomment }
+
+private class LineCommentInfo(
+    val line: Line,
+    val comment: Int,
+    var indent: Int,
+    val empty: Boolean,
+    var single: Boolean = false
+)
+
+/**
+ * Comment or uncomment every line touched by the selection, mirroring
+ * upstream `changeLineComment`: the marker goes at the block's minimum
+ * indentation, blank lines inside a multi-line block are skipped, and a
+ * range ending at the start of a line does not include that line.
+ */
+private fun changeLineComment(view: EditorSession, token: String, option: CommentOption): Boolean {
     val state = view.state
     if (state.readOnly) return false
 
-    val sel = state.selection.main
-    val startLine = state.doc.lineAt(sel.from)
-    val endLine = state.doc.lineAt(sel.to)
-
-    // Check if all lines are already commented
-    var allCommented = true
-    for (lineNum in startLine.number.value..endLine.number.value) {
-        val line = state.doc.line(LineNumber(lineNum))
-        val trimmed = line.text.trimStart()
-        if (trimmed.isNotEmpty() && !trimmed.startsWith(lineToken)) {
-            allCommented = false
-            break
+    val lines = mutableListOf<LineCommentInfo>()
+    var prevLine = -1
+    for (range in state.selection.ranges) {
+        val startI = lines.size
+        var minIndent = Int.MAX_VALUE
+        var pos = range.from
+        while (pos <= range.to) {
+            val line = state.doc.lineAt(pos)
+            if (line.from.value > prevLine && (range.empty || range.to > line.from)) {
+                prevLine = line.from.value
+                val indent = line.text.takeWhile { it.isWhitespace() }.length
+                val comment = if (line.text.startsWith(token, indent)) indent else -1
+                if (indent < line.text.length && indent < minIndent) minIndent = indent
+                lines.add(LineCommentInfo(line, comment, indent, empty = indent == line.length))
+            }
+            pos = line.to + 1
         }
-    }
-
-    return applyLineComment(view, lineToken, add = !allCommented)
-}
-
-private fun applyLineComment(view: EditorSession, lineToken: String, add: Boolean): Boolean {
-    val state = view.state
-    if (state.readOnly) return false
-
-    val sel = state.selection.main
-    val startLine = state.doc.lineAt(sel.from)
-    val endLine = state.doc.lineAt(sel.to)
-
-    val changes = mutableListOf<ChangeSpec>()
-
-    for (lineNum in startLine.number.value..endLine.number.value) {
-        val line = state.doc.line(LineNumber(lineNum))
-        if (add) {
-            // Insert the comment token AFTER the line's leading whitespace, not at
-            // column 0 — otherwise indentation is pushed past the marker
-            // ("//    indented" instead of "    // indented"), which also disagreed
-            // with the uncomment path's leading-space handling (#116/#119).
-            val leadingSpace = line.text.length - line.text.trimStart().length
-            val insertAt = line.from + leadingSpace
-            changes.add(
-                ChangeSpec.Single(
-                    insertAt,
-                    insertAt,
-                    InsertContent.StringContent("$lineToken ")
-                )
-            )
-        } else {
-            val text = line.text
-            val leadingSpace = text.length - text.trimStart().length
-            if (text.substring(leadingSpace).startsWith(lineToken)) {
-                val removeEnd = leadingSpace + lineToken.length
-                // Also remove a trailing space after the comment marker
-                val finalEnd = if (
-                    removeEnd < text.length && text[removeEnd] == ' '
-                ) {
-                    removeEnd + 1
-                } else {
-                    removeEnd
-                }
-                changes.add(
-                    ChangeSpec.Single(line.from + leadingSpace, line.from + finalEnd)
-                )
+        if (minIndent < Int.MAX_VALUE) {
+            for (i in startI until lines.size) {
+                if (lines[i].indent < lines[i].line.text.length) lines[i].indent = minIndent
             }
         }
+        if (lines.size == startI + 1) lines[startI].single = true
     }
 
-    if (changes.isEmpty()) return false
-
-    view.dispatch(
-        TransactionSpec(
-            changes = ChangeSpec.Multi(changes),
-            scrollIntoView = true,
-            userEvent = if (add) "comment.line" else "uncomment.line",
-            annotations = listOf(Transaction.addToHistory.of(true))
+    if (
+        option != CommentOption.Uncomment &&
+        lines.any { it.comment < 0 && (!it.empty || it.single) }
+    ) {
+        val changes = lines.filter { it.single || !it.empty }.map {
+            val at = it.line.from + it.indent
+            ChangeSpec.Single(at, at, InsertContent.StringContent("$token "))
+        }
+        val changeSet = state.changes(ChangeSpec.Multi(changes))
+        view.dispatch(
+            TransactionSpec(
+                changes = ChangeSpec.Set(changeSet),
+                selection = SelectionSpec.EditorSelectionSpec(state.selection.map(changeSet, 1)),
+                scrollIntoView = true,
+                userEvent = "comment.line",
+                annotations = listOf(Transaction.addToHistory.of(true))
+            )
         )
-    )
-    return true
+        return true
+    }
+    if (option != CommentOption.Comment && lines.any { it.comment >= 0 }) {
+        val changes = lines.filter { it.comment >= 0 }.map {
+            val from = it.line.from + it.comment
+            var to = from + token.length
+            if (it.line.text.getOrNull(to - it.line.from) == ' ') to += 1
+            ChangeSpec.Single(from, to)
+        }
+        view.dispatch(
+            TransactionSpec(
+                changes = ChangeSpec.Multi(changes),
+                scrollIntoView = true,
+                userEvent = "uncomment.line",
+                annotations = listOf(Transaction.addToHistory.of(true))
+            )
+        )
+        return true
+    }
+    return false
 }
 
 private fun toggleBlockCommentCommand(
