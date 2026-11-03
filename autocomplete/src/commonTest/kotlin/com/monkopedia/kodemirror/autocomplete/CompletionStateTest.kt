@@ -139,7 +139,8 @@ class CompletionStateTest {
                     DocPos(1),
                     InsertContent.StringContent("el")
                 ),
-                selection = SelectionSpec.CursorSpec(DocPos(3))
+                selection = SelectionSpec.CursorSpec(DocPos(3)),
+                userEvent = "input.type"
             )
         )
         val filtered = currentCompletions(tr.state)

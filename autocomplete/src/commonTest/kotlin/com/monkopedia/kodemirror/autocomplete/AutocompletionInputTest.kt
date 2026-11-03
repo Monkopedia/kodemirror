@@ -90,7 +90,7 @@ class AutocompletionInputTest {
                 TransactionSpec(
                     changes = ChangeSpec.Single(pos - 1, pos, InsertContent.StringContent("")),
                     selection = SelectionSpec.CursorSpec(pos - 1),
-                    userEvent = "input.delete"
+                    userEvent = "delete.backward"
                 )
             )
         }
