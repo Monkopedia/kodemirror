@@ -221,4 +221,25 @@ class CloseBracketsTest {
         assertFalse(deleteBracketPair(view))
         assertEquals("()", view.state.doc.toString())
     }
+
+    private fun readOnlyBracketState(doc: String, cursor: Int): EditorState = EditorState.create(
+        EditorStateConfig(
+            doc = doc.asDoc(),
+            selection = SelectionSpec.CursorSpec(DocPos(cursor)),
+            extensions = ExtensionList(listOf(EditorState.readOnly.of(true), closeBrackets()))
+        )
+    )
+
+    @Test
+    fun deleteBracketPairRefusesInAReadOnlyState() {
+        val view = EditorSession(readOnlyBracketState("()", 1))
+        assertFalse(deleteBracketPair(view))
+        assertEquals("()", view.state.doc.toString())
+    }
+
+    @Test
+    fun typedBracketPassesThroughInAReadOnlyState() {
+        val s = type(readOnlyBracketState("", 0), "(")
+        assertEquals("(", s.doc.toString())
+    }
 }

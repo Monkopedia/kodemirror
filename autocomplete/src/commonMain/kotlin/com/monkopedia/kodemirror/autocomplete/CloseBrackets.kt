@@ -105,7 +105,7 @@ fun closeBrackets(config: CloseBracketsConfig = CloseBracketsConfig()): Extensio
     val filter = transactionFilter.of { tr ->
         val state = tr.startState
         val main = state.selection.main
-        val typed = if (tr.isUserEvent("input.type")) typedAt(tr, main) else null
+        val typed = if (tr.isUserEvent("input.type") && !state.readOnly) typedAt(tr, main) else null
         val spec = typed?.let { bracketTransaction(state, it) }
         if (spec == null) {
             TransactionFilterResult.Filtered(tr)
@@ -138,8 +138,9 @@ private fun typedAt(tr: Transaction, main: SelectionRange): String? {
 }
 
 /** Delete bracket pair command: when every cursor is between a pair, delete both. */
-val deleteBracketPair: (EditorSession) -> Boolean = { view ->
+val deleteBracketPair: (EditorSession) -> Boolean = command@{ view ->
     val state = view.state
+    if (state.readOnly) return@command false
     val pairs = state.facet(closeBracketsConfig).pairs()
     var dont = false
     val spec = state.changeByRange { range ->
@@ -163,7 +164,7 @@ val deleteBracketPair: (EditorSession) -> Boolean = { view ->
             )
         }
     }
-    if (!dont) view.dispatch(spec.copy(userEvent = "delete.backward"))
+    if (!dont) view.dispatch(spec.copy(userEvent = "delete.backward", scrollIntoView = true))
     !dont
 }
 
@@ -224,7 +225,7 @@ private fun allRanges(
     val spec = state.changeByRange { range ->
         f(range) ?: ChangeByRangeResult(range = range).also { dont = true }
     }
-    return if (dont) null else spec.copy(userEvent = "input.type")
+    return if (dont) null else spec.copy(userEvent = "input.type", scrollIntoView = true)
 }
 
 private fun insert(at: DocPos, text: String) =
