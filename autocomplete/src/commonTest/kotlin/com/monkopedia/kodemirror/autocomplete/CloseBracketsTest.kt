@@ -18,9 +18,14 @@
  */
 package com.monkopedia.kodemirror.autocomplete
 
+import com.monkopedia.kodemirror.state.ChangeByRangeResult
+import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
+import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
+import com.monkopedia.kodemirror.state.ExtensionList
+import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.view.EditorSession
@@ -108,5 +113,133 @@ class CloseBracketsTest {
         val tr = state.update(spec)
         assertEquals("x", tr.state.doc.toString())
         assertEquals(DocPos(1), tr.state.selection.main.head)
+    }
+
+    // ── Against @codemirror/autocomplete 6.20.1 on the same inputs (#383) ──
+
+    private fun multi(vararg ranges: Pair<Int, Int>) = SelectionSpec.EditorSelectionSpec(
+        EditorSelection.create(ranges.map { (a, h) -> EditorSelection.range(DocPos(a), DocPos(h)) })
+    )
+
+    private fun bracketState(doc: String, sel: SelectionSpec): EditorState = EditorState.create(
+        EditorStateConfig(
+            doc = doc.asDoc(),
+            selection = sel,
+            extensions = ExtensionList(
+                listOf(EditorState.allowMultipleSelections.of(true), closeBrackets())
+            )
+        )
+    )
+
+    /** Type [ch] the way the editor does: replace each selection range, as `input.type`. */
+    private fun type(state: EditorState, ch: String): EditorState = state.update(
+        state.changeByRange { r ->
+            ChangeByRangeResult(
+                changes = ChangeSpec.Single(r.from, r.to, InsertContent.StringContent(ch)),
+                range = EditorSelection.cursor(r.from + ch.length)
+            )
+        }.copy(userEvent = "input.type")
+    ).state
+
+    private fun EditorState.selString() = selection.ranges.joinToString(",") {
+        if (it.empty) "${it.head.value}" else "${it.anchor.value}-${it.head.value}"
+    }
+
+    @Test
+    fun quoteAfterAWordIsNotDoubled() {
+        val s = type(bracketState("don", multi(3 to 3)), "'")
+        assertEquals("don'", s.doc.toString())
+        assertEquals("4", s.selString())
+    }
+
+    @Test
+    fun quoteAtStartIsClosed() {
+        val s = type(bracketState("", multi(0 to 0)), "'")
+        assertEquals("''", s.doc.toString())
+        assertEquals("1", s.selString())
+    }
+
+    @Test
+    fun openBracketWrapsTheSelection() {
+        val s = type(bracketState("foo", multi(0 to 3)), "(")
+        assertEquals("(foo)", s.doc.toString())
+        assertEquals("1-4", s.selString())
+    }
+
+    @Test
+    fun closingBracketNotInsertedByTheExtensionIsTyped() {
+        val s = type(bracketState("f()", multi(2 to 2)), ")")
+        assertEquals("f())", s.doc.toString())
+        assertEquals("3", s.selString())
+    }
+
+    @Test
+    fun closingBracketInsertedByTheExtensionIsOvertyped() {
+        val opened = type(bracketState("f", multi(1 to 1)), "(")
+        assertEquals("f()", opened.doc.toString())
+        val s = type(opened, ")")
+        assertEquals("f()", s.doc.toString())
+        assertEquals("3", s.selString())
+    }
+
+    @Test
+    fun everyCursorGetsAClosingBracket() {
+        val s = type(bracketState("a b", multi(1 to 1, 3 to 3)), "(")
+        assertEquals("a() b()", s.doc.toString())
+        assertEquals("2,6", s.selString())
+    }
+
+    @Test
+    fun insertBracketLeavesQuoteAfterWordUnpaired() {
+        val state = createState("don", cursor = 3)
+        assertEquals("don'", state.update(insertBracket(state, "'")).state.doc.toString())
+    }
+
+    @Test
+    fun insertBracketBeforeAWordDoesNotClose() {
+        val state = createState("foo", cursor = 0)
+        assertEquals("(foo", state.update(insertBracket(state, "(")).state.doc.toString())
+    }
+
+    @Test
+    fun insertBracketDoesNotSkipAClosingBracketItDidNotInsert() {
+        val state = createState("f()", cursor = 2)
+        assertEquals("f())", state.update(insertBracket(state, ")")).state.doc.toString())
+    }
+
+    @Test
+    fun deleteBracketPairDeletesEveryCursorsPair() {
+        val view = EditorSession(bracketState("() ()", multi(1 to 1, 4 to 4)))
+        assertTrue(deleteBracketPair(view))
+        assertEquals(" ", view.state.doc.toString())
+        assertEquals("0,1", view.state.selString())
+    }
+
+    @Test
+    fun deleteBracketPairIgnoresANonEmptySelection() {
+        val view = EditorSession(bracketState("()", multi(0 to 1)))
+        assertFalse(deleteBracketPair(view))
+        assertEquals("()", view.state.doc.toString())
+    }
+
+    private fun readOnlyBracketState(doc: String, cursor: Int): EditorState = EditorState.create(
+        EditorStateConfig(
+            doc = doc.asDoc(),
+            selection = SelectionSpec.CursorSpec(DocPos(cursor)),
+            extensions = ExtensionList(listOf(EditorState.readOnly.of(true), closeBrackets()))
+        )
+    )
+
+    @Test
+    fun deleteBracketPairRefusesInAReadOnlyState() {
+        val view = EditorSession(readOnlyBracketState("()", 1))
+        assertFalse(deleteBracketPair(view))
+        assertEquals("()", view.state.doc.toString())
+    }
+
+    @Test
+    fun typedBracketPassesThroughInAReadOnlyState() {
+        val s = type(readOnlyBracketState("", 0), "(")
+        assertEquals("(", s.doc.toString())
     }
 }
