@@ -20,12 +20,15 @@ package com.monkopedia.kodemirror.autocomplete
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
+import com.monkopedia.kodemirror.language.indentUnit
+import com.monkopedia.kodemirror.state.ChangeDesc
 import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.InsertContent
+import com.monkopedia.kodemirror.state.MapMode
 import com.monkopedia.kodemirror.state.RangeSet
 import com.monkopedia.kodemirror.state.RangeSetBuilder
 import com.monkopedia.kodemirror.state.SelectionSpec
@@ -33,6 +36,7 @@ import com.monkopedia.kodemirror.state.StateEffect
 import com.monkopedia.kodemirror.state.StateEffectType
 import com.monkopedia.kodemirror.state.StateField
 import com.monkopedia.kodemirror.state.StateFieldSpec
+import com.monkopedia.kodemirror.state.Text
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.view.Decoration
 import com.monkopedia.kodemirror.view.DecorationSet
@@ -67,28 +71,40 @@ private val setActiveSnippet: StateEffectType<ActiveSnippet?> = StateEffect.defi
 
 // ── State field ──
 
-/** State field that holds the currently active snippet, or `null` when no snippet is active. */
+/** [field] mapped through [changes], or `null` when its text was deleted. */
+private fun SnippetField.mapped(changes: ChangeDesc): SnippetField? {
+    val from = changes.mapPos(from, -1, MapMode.TrackDel) ?: return null
+    val to = changes.mapPos(to, 1, MapMode.TrackDel) ?: return null
+    return SnippetField(name, from, to)
+}
+
+/**
+ * State field that holds the currently active snippet, or `null` when no snippet is active.
+ *
+ * As upstream: a snippet set by a transaction is taken as is (its positions
+ * already refer to that transaction's document), an active one is mapped through
+ * later changes and ends when a field's text is deleted, and it also ends when
+ * the selection moves outside the current field.
+ */
 val snippetState: StateField<ActiveSnippet?> = StateField.define(
     StateFieldSpec(
         create = { null },
-        update = { value, tr ->
-            var result = value
+        update = update@{ value, tr ->
             for (effect in tr.effects) {
-                val snippetEffect = effect.asType(setActiveSnippet)
-                if (snippetEffect != null) {
-                    result = snippetEffect.value
-                }
+                effect.asType(setActiveSnippet)?.let { return@update it.value }
             }
+            var result = value
             if (result != null && tr.docChanged) {
-                val mapping = tr.changes
-                val mapped = result.fields.map { field ->
-                    SnippetField(
-                        field.name,
-                        mapping.mapPos(field.from),
-                        mapping.mapPos(field.to, 1)
-                    )
-                }
-                result = result.copy(fields = mapped)
+                val fields = result.fields.map { it.mapped(tr.changes) ?: return@update null }
+                result = result.copy(fields = fields)
+            }
+            val selection = tr.selection
+            val field = result?.currentField
+            if (selection != null &&
+                field != null &&
+                !selection.ranges.all { it.from >= field.from && it.to <= field.to }
+            ) {
+                result = null
             }
             result
         }
@@ -97,94 +113,138 @@ val snippetState: StateField<ActiveSnippet?> = StateField.define(
 
 // ── Template parsing ──
 
-private data class ParsedField(val name: String, val index: Int)
+/** A field's position in the template: line index and offsets within that line. */
+private data class FieldPos(var field: Int, val line: Int, var from: Int, var to: Int)
 
-private data class ParsedSnippet(val parts: List<String>, val fields: List<ParsedField>)
+private class ParsedSnippet(
+    val lines: List<String>,
+    val fieldNames: List<String>,
+    val positions: List<FieldPos>
+)
 
+private val placeholder = Regex("[#$]\\{(?:(\\d+)(?::([^{}]*))?|((?:\\\\[{}]|[^{}])*))\\}")
+private val escapedBrace = Regex("\\\\([{}])")
+private val lineBreak = Regex("\r\n?|\n")
+
+/** Upstream's `Snippet.parse`. */
 private fun parseTemplate(template: String): ParsedSnippet {
-    val parts = mutableListOf<String>()
-    val fields = mutableListOf<ParsedField>()
-    var i = 0
-    val current = StringBuilder()
-
-    while (i < template.length) {
-        if (template[i] == '$' && i + 1 < template.length && template[i + 1] == '{') {
-            parts.add(current.toString())
-            current.clear()
-            val start = i + 2
-            val end = template.indexOf('}', start)
-            if (end == -1) {
-                current.append(template.substring(i))
-                i = template.length
-            } else {
-                val name = template.substring(start, end)
-                fields.add(ParsedField(name, parts.size - 1))
-                i = end + 1
+    data class Field(val seq: Int?, val name: String)
+    val fields = mutableListOf<Field>()
+    val lines = mutableListOf<String>()
+    val positions = mutableListOf<FieldPos>()
+    for (rawLine in template.split(lineBreak)) {
+        var line = rawLine
+        while (true) {
+            val m = placeholder.find(line) ?: break
+            val seq = m.groupValues[1].takeIf { it.isNotEmpty() }?.toInt()
+            val rawName = m.groupValues[2].ifEmpty { m.groupValues[3] }
+            val name = escapedBrace.replace(rawName) { it.groupValues[1] }
+            val index = m.range.first
+            var found = fields.indexOfLast {
+                if (seq != null) it.seq == seq else name.isNotEmpty() && it.name == name
             }
-        } else {
-            current.append(template[i])
-            i++
+            if (found < 0) {
+                var i = 0
+                while (i < fields.size &&
+                    (seq == null || fields[i].seq.let { it != null && it < seq })
+                ) {
+                    i++
+                }
+                fields.add(i, Field(seq, name))
+                found = i
+                for (pos in positions) if (pos.field >= found) pos.field++
+            }
+            for (pos in positions) {
+                if (pos.line == lines.size && pos.from > index) {
+                    val snip = if (m.groupValues[2].isNotEmpty()) 3 + m.groupValues[1].length else 2
+                    pos.from -= snip
+                    pos.to -= snip
+                }
+            }
+            positions += FieldPos(found, lines.size, index, index + name.length)
+            line = line.substring(0, index) + rawName + line.substring(m.range.last + 1)
         }
+        line = escapedBrace.replace(line) { brace ->
+            for (pos in positions) {
+                if (pos.line == lines.size && pos.from > brace.range.first) {
+                    pos.from--
+                    pos.to--
+                }
+            }
+            brace.groupValues[1]
+        }
+        lines += line
     }
-    parts.add(current.toString())
-    return ParsedSnippet(parts, fields)
+    return ParsedSnippet(lines, fields.map { it.name }, positions)
 }
 
 /**
  * Parse a snippet template and return a function that, when called,
  * applies the snippet at the given range in the editor.
  *
- * Template syntax: `${name}` for named fields that the user can
- * tab through. `${}` marks the final cursor position.
+ * Template syntax, as upstream: `${name}` (or `#{name}`) marks a field the user
+ * can tab through, with `name` as its default text; `${}` is an empty field.
+ * Fields are visited in textual order unless numbered — `${1}` or
+ * `${1:default}`. `\{` and `\}` are literal braces. Each new line takes the
+ * indentation of the line the snippet starts on, plus one indent unit per
+ * leading tab.
+ *
+ * A field that appears more than once is a tab stop at its first occurrence
+ * only; its other occurrences are inserted as plain text.
  */
 fun snippet(template: String): (CompletionApplyContext) -> Unit {
     val parsed = parseTemplate(template)
     return { ctx ->
         val view = ctx.session
+        val state = view.state
         val from = ctx.from
-        val to = ctx.to
-        val text = StringBuilder()
-        val snippetFields = mutableListOf<SnippetField>()
-        var offset = from
+        val main = state.selection.main
+        val to = if (ctx.to == main.from) main.to else ctx.to
 
-        for ((i, part) in parsed.parts.withIndex()) {
-            text.append(part)
-            val fieldHere = parsed.fields.filter { it.index == i }
-            for (f in fieldHere) {
-                val fieldFrom = offset + text.length
-                snippetFields.add(SnippetField(f.name, fieldFrom, fieldFrom))
+        // Instantiate: indent continuation lines and record where each starts.
+        val baseIndent = state.doc.lineAt(from).text.takeWhile { it.isWhitespace() }
+        val unit = " ".repeat(state.facet(indentUnit))
+        val lineStart = mutableListOf(from.value)
+        val text = mutableListOf<String>()
+        var pos = from.value
+        for (templateLine in parsed.lines) {
+            var line = templateLine
+            if (text.isNotEmpty()) {
+                val tabs = line.takeWhile { it == '\t' }.length
+                val indent = baseIndent + unit.repeat(tabs)
+                lineStart += pos + indent.length - tabs
+                line = indent + line.substring(tabs)
+            }
+            text += line
+            pos += line.length + 1
+        }
+        val fields = parsed.fieldNames.indices.mapNotNull { field ->
+            parsed.positions.firstOrNull { it.field == field }?.let {
+                val start = lineStart[it.line]
+                SnippetField(
+                    parsed.fieldNames[field],
+                    DocPos(start + it.from),
+                    DocPos(start + it.to)
+                )
             }
         }
 
-        val insertText = text.toString()
-
-        val activeSnippet = if (snippetFields.isNotEmpty()) {
-            ActiveSnippet(snippetFields, 0)
-        } else {
-            null
-        }
-
-        val effects = if (activeSnippet != null) {
-            listOf(setActiveSnippet.of(activeSnippet))
-        } else {
-            emptyList()
-        }
-
-        val cursorPos = if (activeSnippet != null) {
-            activeSnippet.currentField?.from ?: (from + insertText.length)
-        } else {
-            from + insertText.length
-        }
-
+        val inserted = Text.of(text)
+        // The first field is selected; without fields the cursor goes after the text.
+        val selection = fields.firstOrNull()?.let { SelectionSpec.CursorSpec(it.from, it.to) }
+            ?: SelectionSpec.CursorSpec(from + inserted.length)
         view.dispatch(
             TransactionSpec(
-                changes = ChangeSpec.Single(
-                    from,
-                    to,
-                    InsertContent.StringContent(insertText)
-                ),
-                selection = SelectionSpec.CursorSpec(cursorPos),
-                effects = effects,
+                changes = ChangeSpec.Single(from, to, InsertContent.TextContent(inserted)),
+                selection = selection,
+                effects = if (fields.size >
+                    1
+                ) {
+                    listOf(setActiveSnippet.of(ActiveSnippet(fields, 0)))
+                } else {
+                    null
+                },
+                annotations = listOf(pickedCompletion.of(ctx.completion)),
                 userEvent = "input.complete"
             )
         )
