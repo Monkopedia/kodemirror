@@ -112,4 +112,14 @@ class CompletionHelpersTest {
         assertEquals("abx\ny cd", next.doc.toString())
         assertEquals(DocPos(5), next.selection.main.head)
     }
+
+    @Test
+    fun completeAnyWordKeepsCombiningMarksInsideAWord() {
+        // Devanagari vowel signs are combining marks (\p{M}); upstream's \p{Alphabetic}
+        // keeps them, so the word is one option, not fragments.
+        val result = completeAnyWord(context("हिंदी ह", explicit = false))
+        assertNotNull(result)
+        assertEquals(DocPos(6), result.from)
+        assertEquals(listOf("हिंदी"), result.options.map { it.label })
+    }
 }

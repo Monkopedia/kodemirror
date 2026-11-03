@@ -564,13 +564,17 @@ private const val MAX_WORD_LIST = 2000
 
 /**
  * A completion source that provides the words in the document (letters,
- * digits, `_` and the language's `wordChars`), except the one being typed at
+ * combining marks, digits, `_` and the language's `wordChars`), except the one being typed at
  * the cursor.
  */
 val completeAnyWord: CompletionSource = { ctx ->
     val wordChars =
         ctx.state.languageDataAt(LanguageDataKey.WORD_CHARS, ctx.pos).firstOrNull() ?: ""
-    val word = Regex("[\\p{L}\\p{N}_${wordChars.map(::escapeForClass).joinToString("")}]+")
+    // Upstream uses \p{Alphabetic}, which has no spelling common to every target
+    // (`\p{IsAlphabetic}` on the JVM, `\p{Alphabetic}` in JS). Letters plus combining
+    // marks plus numbers is a slight superset of it that all of them accept, and keeps
+    // marks such as Devanagari vowel signs inside the word.
+    val word = Regex("[\\p{L}\\p{M}\\p{N}_${wordChars.map(::escapeForClass).joinToString("")}]+")
     val token = ctx.matchBefore(word)
     if (token == null && !ctx.explicit) {
         null
