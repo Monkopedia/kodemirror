@@ -54,6 +54,8 @@ import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.InsertContent
+import com.monkopedia.kodemirror.state.LanguageDataKey
+import com.monkopedia.kodemirror.state.LineNumber
 import com.monkopedia.kodemirror.state.Slot
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.view.EditorSession
@@ -314,13 +316,17 @@ fun insertCompletionText(
         ) {
             ChangeByRangeResult(range = range)
         } else {
+            // Split through the state's line separator, as the doc does: a CRLF
+            // in [text] becomes one doc line break, so the cursor must be placed
+            // by the inserted Text's length, not the raw string's.
+            val lines = state.toText(text)
             ChangeByRangeResult(
                 changes = ChangeSpec.Single(
                     range.from + fromOff,
                     if (to == main.from) range.to else range.from + toOff,
-                    InsertContent.StringContent(text)
+                    InsertContent.TextContent(lines)
                 ),
-                range = EditorSelection.cursor(range.from + fromOff + text.length)
+                range = EditorSelection.cursor(range.from + fromOff + lines.length)
             )
         }
     }
@@ -510,40 +516,83 @@ private fun typeIcon(type: String): String = when (type) {
 
 // ── Completion helpers ──
 
+private val wordLabel = Regex("\\w+")
+
+/** Characters that must be escaped inside a regex character class on every platform. */
+private const val CLASS_SPECIAL = "\\]-[^"
+
+private fun escapeForClass(c: Char): String = if (c in CLASS_SPECIAL) "\\$c" else "$c"
+
+/**
+ * Build the regex character class for [chars], as upstream's `toSet`: word
+ * characters collapse into `\w`, and the rest are escaped where a class
+ * needs it. An empty set yields a class that matches nothing.
+ */
+private fun charClass(chars: Set<Char>): String {
+    if (chars.isEmpty()) return "[^\\s\\S]"
+    val (word, other) = chars.partition { wordLabel.matches(it.toString()) }
+    val escaped = other.joinToString("", transform = ::escapeForClass)
+    return "[${if (word.isNotEmpty()) "\\w" else ""}$escaped]"
+}
+
 /** Create a completion source from a static list. */
-fun completeFromList(list: List<Completion>): CompletionSource = { ctx ->
-    val wordMatch = ctx.matchBefore(Regex("[\\w$]+"))
-    if (wordMatch != null || ctx.explicit) {
-        CompletionResult(
-            from = wordMatch?.from ?: ctx.pos,
-            options = list,
-            validFor = Regex("[\\w$]*")
-        )
+fun completeFromList(list: List<Completion>): CompletionSource {
+    // Upstream derives the token pattern from the labels' own characters, so a
+    // label like `@media` matches the `@` typed before the cursor.
+    val (validFor, match) = if (list.all { wordLabel.matches(it.label) }) {
+        Regex("\\w*") to wordLabel
     } else {
-        null
+        val first = list.mapNotNull { it.label.firstOrNull() }.toSet()
+        val rest = list.flatMap { it.label.drop(1).toList() }.toSet()
+        Regex(charClass(first) + charClass(rest) + "*").let { it to it }
+    }
+    return { ctx ->
+        val token = ctx.matchBefore(match)
+        if (token != null || ctx.explicit) {
+            CompletionResult(
+                from = token?.from ?: ctx.pos,
+                options = list,
+                validFor = validFor
+            )
+        } else {
+            null
+        }
     }
 }
 
-/** A completion source that provides all words in the document. */
+private const val MAX_WORD_LIST = 2000
+
+/**
+ * A completion source that provides the words in the document (letters,
+ * combining marks, digits, `_` and the language's `wordChars`), except the one being typed at
+ * the cursor.
+ */
 val completeAnyWord: CompletionSource = { ctx ->
-    val wordMatch = ctx.matchBefore(Regex("[\\w$]+"))
-    if (wordMatch != null && wordMatch.text.length >= 2) {
-        val word = wordMatch.text
-        val doc = ctx.state.doc
-        val text = doc.sliceString(DocPos.ZERO)
-        val words = Regex("[\\w$]{2,}").findAll(text)
-            .map { it.value }
-            .filter { it != word }
-            .distinct()
-            .map { Completion(label = it, type = "text") }
-            .toList()
-        CompletionResult(
-            from = wordMatch.from,
-            options = words,
-            validFor = Regex("[\\w$]*")
-        )
-    } else {
+    val wordChars =
+        ctx.state.languageDataAt(LanguageDataKey.WORD_CHARS, ctx.pos).firstOrNull() ?: ""
+    // Upstream uses \p{Alphabetic}, which has no spelling common to every target
+    // (`\p{IsAlphabetic}` on the JVM, `\p{Alphabetic}` in JS). Letters plus combining
+    // marks plus numbers is a slight superset of it that all of them accept, and keeps
+    // marks such as Devanagari vowel signs inside the word.
+    val word = Regex("[\\p{L}\\p{M}\\p{N}_${wordChars.map(::escapeForClass).joinToString("")}]+")
+    val token = ctx.matchBefore(word)
+    if (token == null && !ctx.explicit) {
         null
+    } else {
+        val from = token?.from ?: ctx.pos
+        val doc = ctx.state.doc
+        val seen = mutableSetOf<String>()
+        val options = mutableListOf<Completion>()
+        lines@ for (n in 1..doc.lines) {
+            val line = doc.line(LineNumber(n))
+            for (m in word.findAll(line.text)) {
+                if (line.from + m.range.first != from && seen.add(m.value)) {
+                    options += Completion(label = m.value, type = "text")
+                    if (options.size >= MAX_WORD_LIST) break@lines
+                }
+            }
+        }
+        CompletionResult(from = from, options = options, validFor = word)
     }
 }
 
