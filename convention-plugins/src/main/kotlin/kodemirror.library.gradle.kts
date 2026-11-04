@@ -57,7 +57,7 @@ kotlin {
     // What consumers must RUN, declared rather than inherited. Nothing here used to set a Kotlin
     // `jvmTarget` or a `jvmToolchain`, so every JVM and Android compilation silently took the
     // target of whatever JDK Gradle happened to be running on — the CI runners' pinned JDK 21.
-    // That shipped class-65 (Java 21) bytecode in 0.3.4, 0.3.5 and 0.3.6, contradicting the
+    // That shipped class-65 (Java 21) bytecode in 0.3.4 through 0.3.7, contradicting the
     // `compileOptions { VERSION_11 }` written directly above, and KMP publishes no
     // `org.gradle.jvm.version` attribute, so Gradle could not reject the variant for a JDK 17
     // consumer with a readable message — they got a raw `UnsupportedClassVersionError`. See #237.
