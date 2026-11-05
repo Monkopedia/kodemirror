@@ -18,8 +18,10 @@
  */
 package com.monkopedia.kodemirror.lint
 
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.SelectionSpec
+import com.monkopedia.kodemirror.state.Text
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.KeyBinding
@@ -49,17 +51,92 @@ val closeLintPanel: (EditorSession) -> Boolean = { view ->
     }
 }
 
+/** One piece of the decoration set upstream `LintState.init` builds, covering [diagnostics]. */
+private class LintSegment(val from: DocPos, val to: DocPos, val diagnostics: List<Diagnostic>)
+
+/**
+ * Split [diagnostics] into the non-overlapping pieces upstream navigates over, as
+ * `LintState.init` does: sorted by `from` then `to`, split wherever the set of covering diagnostics
+ * changes, cut off at the document end, and with a point or a short line-break-only range turned
+ * into a zero-width piece at its start.
+ */
+private fun lintSegments(diagnostics: List<Diagnostic>, doc: Text): List<LintSegment> {
+    val sorted = diagnostics.sortedWith(compareBy({ it.from }, { it.to }))
+    val docEnd = DocPos(doc.length)
+    val segments = mutableListOf<LintSegment>()
+    val active = mutableListOf<Diagnostic>()
+    var pos = DocPos.ZERO
+    var i = 0
+    while (i < sorted.size || active.isNotEmpty()) {
+        val next = sorted.getOrNull(i)
+        val from: DocPos
+        var to: DocPos
+        if (active.isNotEmpty()) {
+            from = pos
+            to = active.minOf { it.to }
+            if (next != null && next.from > from) to = minOf(to, next.from)
+        } else {
+            from = next!!.from
+            if (from > docEnd) break
+            to = next.to
+            active += next
+            i++
+        }
+        while (i < sorted.size) {
+            val candidate = sorted[i]
+            if (candidate.from == from && (candidate.to > candidate.from || candidate.to == from)) {
+                active += candidate
+                i++
+                to = minOf(to, candidate.to)
+            } else {
+                to = minOf(to, candidate.from)
+                break
+            }
+        }
+        to = minOf(to, docEnd)
+        val widget = active.any { it.from == from && (it.to == to || to == docEnd) } &&
+            (
+                from == to ||
+                    (to.value - from.value < 10 && doc.sliceString(from, to).all { it == '\n' })
+                )
+        segments += LintSegment(from, if (widget) from else to, active.toList())
+        pos = to
+        if (pos == docEnd) break
+        active.removeAll { it.to <= pos }
+    }
+    return segments
+}
+
+/**
+ * Upstream `findDiagnostic`: the first piece reaching [after], extended over the pieces right after
+ * it that carry the same diagnostic.
+ */
+private fun findDiagnostic(segments: List<LintSegment>, after: DocPos): Pair<DocPos, DocPos>? {
+    val start = segments.indexOfFirst { it.to >= after }
+    if (start < 0) return null
+    val diagnostic = segments[start].diagnostics.first()
+    var to = segments[start].to
+    for (segment in segments.subList(start + 1, segments.size)) {
+        if (diagnostic !in segment.diagnostics) break
+        to = segment.to
+    }
+    return segments[start].from to to
+}
+
 /**
  * Select the next diagnostic after the selection, wrapping to the first one. Returns false when
  * there is none, or when wrapping would select the range that is already selected.
  */
 val nextDiagnostic: (EditorSession) -> Boolean = { view ->
-    val diags = view.state.field(lintState, require = false)?.diagnostics.orEmpty()
+    val field = view.state.field(lintState, require = false)
     val sel = view.state.selection.main
-    val after = sel.to + 1
-    val next = diags.firstOrNull { it.to >= after }
-        ?: diags.firstOrNull()?.takeUnless { it.from == sel.from && it.to == sel.to }
-    if (next != null) selectDiagnostic(view, next)
+    val segments = lintSegments(field?.diagnostics.orEmpty(), view.state.doc)
+    val next = findDiagnostic(segments, sel.to + 1)
+        ?: findDiagnostic(segments, DocPos.ZERO)?.takeUnless {
+            it.first == sel.from &&
+                it.second == sel.to
+        }
+    if (next != null) selectRange(view, next.first, next.second)
     next != null
 }
 
@@ -68,29 +145,27 @@ val nextDiagnostic: (EditorSession) -> Boolean = { view ->
  * false when there is none, or when wrapping would land where the selection already starts.
  */
 val previousDiagnostic: (EditorSession) -> Boolean = { view ->
-    val diags = view.state.field(lintState, require = false)?.diagnostics.orEmpty()
+    val field = view.state.field(lintState, require = false)
     val sel = view.state.selection.main
-    var prev: Diagnostic? = null
-    var last: Diagnostic? = null
-    for (diag in diags) {
-        if (diag.to < sel.to && (prev == null || prev.from < diag.from)) prev = diag
-        if (last == null || diag.from > last.from) last = diag
+    var prev: LintSegment? = null
+    var last: LintSegment? = null
+    for (segment in lintSegments(field?.diagnostics.orEmpty(), view.state.doc)) {
+        if (segment.to < sel.to && (prev == null || prev.from < segment.from)) prev = segment
+        if (last == null || segment.from > last.from) last = segment
     }
     val target = when {
         last == null -> null
         prev == null && last.from == sel.from -> null
         else -> prev ?: last
     }
-    if (target != null) selectDiagnostic(view, target)
+    if (target != null) selectRange(view, target.from, target.to)
     target != null
 }
 
-private fun selectDiagnostic(view: EditorSession, diag: Diagnostic) {
+private fun selectRange(view: EditorSession, from: DocPos, to: DocPos) {
     view.dispatch(
         TransactionSpec(
-            selection = SelectionSpec.EditorSelectionSpec(
-                EditorSelection.single(diag.from, diag.to)
-            ),
+            selection = SelectionSpec.EditorSelectionSpec(EditorSelection.single(from, to)),
             scrollIntoView = true
         )
     )

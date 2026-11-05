@@ -187,6 +187,134 @@ class LintCommandsTest {
         assertFalse(previousDiagnostic(view))
     }
 
+    /**
+     * Runs a sequence of "N" (next) / "P" (previous) commands and reports each result the way the
+     * upstream probe prints it: `next:true:5/8`.
+     */
+    private fun steps(view: EditorSession, keys: String): String = keys.map { key ->
+        val name = if (key == 'N') "next" else "prev"
+        val result = (if (key == 'N') nextDiagnostic else previousDiagnostic)(view)
+        val sel = view.state.selection.main
+        "$name:$result:${sel.anchor.value}/${sel.head.value}"
+    }.joinToString(" ")
+
+    private fun ranges(vararg pairs: Pair<Int, Int>) = pairs.map { (from, to) ->
+        d(from, to, "$from-$to")
+    }
+
+    // Overlapping diagnostics: upstream navigates over the non-overlapping pieces LintState.init
+    // splits them into, so every diagnostic stays reachable. Expected strings are the output of
+    // review-398/probe398.mjs against @codemirror/lint 6.9.5.
+
+    @Test
+    fun sameStartTiesCycleThroughBothPieces() {
+        assertEquals(
+            "next:true:5/7 next:true:7/10 next:true:5/7 next:true:7/10",
+            steps(createView(alphabet, ranges(5 to 10, 5 to 7)), "NNNN")
+        )
+        assertEquals(
+            "next:true:5/7 next:true:7/10 next:true:5/7 next:true:7/10",
+            steps(createView(alphabet, ranges(5 to 7, 5 to 10)), "NNNN")
+        )
+        assertEquals(
+            "prev:true:7/10 prev:true:5/7 prev:true:7/10 prev:true:5/7",
+            steps(createView(alphabet, ranges(5 to 10, 5 to 7), 20), "PPPP")
+        )
+        assertEquals(
+            "prev:true:7/10 prev:true:5/7 prev:true:7/10 prev:true:5/7",
+            steps(createView(alphabet, ranges(5 to 7, 5 to 10), 20), "PPPP")
+        )
+    }
+
+    @Test
+    fun pointSharingAStartWithARangeStaysReachable() {
+        assertEquals(
+            "next:true:5/5 next:true:5/8 next:true:5/5 next:true:5/8",
+            steps(createView(alphabet, ranges(5 to 8, 5 to 5)), "NNNN")
+        )
+        assertEquals(
+            "next:true:5/5 next:true:5/8 next:true:5/5 next:true:5/8",
+            steps(createView(alphabet, ranges(5 to 5, 5 to 8)), "NNNN")
+        )
+    }
+
+    @Test
+    fun nestedDiagnostics() {
+        assertEquals(
+            "next:true:0/20 next:false:0/20 next:false:0/20 next:false:0/20",
+            steps(createView(alphabet, ranges(0 to 20, 5 to 8)), "NNNN")
+        )
+        assertEquals(
+            "next:true:5/20 next:true:0/20 next:false:0/20 next:false:0/20",
+            steps(createView(alphabet, ranges(0 to 20, 5 to 8), 6), "NNNN")
+        )
+        assertEquals(
+            "prev:true:8/20 prev:true:5/8 prev:true:0/5 prev:true:8/20",
+            steps(createView(alphabet, ranges(0 to 20, 5 to 8), 25), "PPPP")
+        )
+    }
+
+    @Test
+    fun partlyOverlappingDiagnostics() {
+        assertEquals(
+            "next:true:0/10 next:true:10/15 next:true:0/10 next:true:10/15",
+            steps(createView(alphabet, ranges(0 to 10, 5 to 15)), "NNNN")
+        )
+        assertEquals(
+            "next:true:5/10 next:true:10/15 next:true:0/10 next:true:10/15",
+            steps(createView(alphabet, ranges(0 to 10, 5 to 15), 7), "NNNN")
+        )
+        assertEquals(
+            "prev:true:10/15 prev:true:5/10 prev:true:0/5 prev:true:10/15",
+            steps(createView(alphabet, ranges(0 to 10, 5 to 15), 20), "PPPP")
+        )
+    }
+
+    @Test
+    fun duplicateDiagnosticsAreOnePiece() {
+        assertEquals(
+            "next:true:5/8 next:false:5/8 next:false:5/8 next:false:5/8",
+            steps(createView(alphabet, ranges(5 to 8, 5 to 8)), "NNNN")
+        )
+    }
+
+    @Test
+    fun lineBreakOnlyDiagnosticIsAPoint() {
+        assertEquals(
+            "next:true:3/3 next:false:3/3 next:false:3/3 next:false:3/3",
+            steps(createView("abc\ndef\nghi", ranges(3 to 4)), "NNNN")
+        )
+    }
+
+    @Test
+    fun adjacentAndUnsortedDiagnosticsCycle() {
+        assertEquals(
+            "next:true:0/5 next:true:5/10 next:true:0/5 next:true:5/10",
+            steps(createView(alphabet, ranges(0 to 5, 5 to 10)), "NNNN")
+        )
+        assertEquals(
+            "prev:true:5/10 prev:true:0/5 prev:true:5/10 prev:true:0/5",
+            steps(createView(alphabet, ranges(0 to 5, 5 to 10), 12), "PPPP")
+        )
+        assertEquals(
+            "next:true:5/8 next:true:15/18 next:true:5/8 next:true:15/18",
+            steps(createView(alphabet, ranges(15 to 18, 5 to 8)), "NNNN")
+        )
+        assertEquals(
+            "next:true:1/2 next:true:6/6 next:true:1/2 next:true:6/6",
+            steps(createView("abcdef", ranges(6 to 6, 1 to 2)), "NNNN")
+        )
+    }
+
+    @Test
+    fun selectionDirectionUsesItsRange() {
+        val two = ranges(5 to 8, 15 to 18)
+        assertEquals("next:true:15/18", steps(createView(alphabet, two, 6, 16), "N"))
+        assertEquals("next:true:15/18", steps(createView(alphabet, two, 16, 6), "N"))
+        assertEquals("prev:true:5/8", steps(createView(alphabet, two, 6, 16), "P"))
+        assertEquals("prev:true:15/18", steps(createView(alphabet, two, 8, 5), "P"))
+    }
+
     @Test
     fun openAndCloseLintPanelToggle() {
         val view = createView("hello", emptyList())
