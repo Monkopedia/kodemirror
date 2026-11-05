@@ -18,6 +18,7 @@
  */
 package com.monkopedia.kodemirror.lint
 
+import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.view.EditorSession
@@ -48,44 +49,51 @@ val closeLintPanel: (EditorSession) -> Boolean = { view ->
     }
 }
 
-/** Jump to the next diagnostic after the cursor. */
+/**
+ * Select the next diagnostic after the selection, wrapping to the first one. Returns false when
+ * there is none, or when wrapping would select the range that is already selected.
+ */
 val nextDiagnostic: (EditorSession) -> Boolean = { view ->
-    val state = view.state
-    val diags = state.field(lintState, require = false)?.diagnostics ?: emptyList()
-    val pos = state.selection.main.head
-    val next = diags.firstOrNull { it.from > pos } ?: diags.firstOrNull()
-    if (next != null) {
-        view.dispatch(
-            TransactionSpec(
-                selection = SelectionSpec.CursorSpec(next.from),
-                scrollIntoView = true,
-                userEvent = "select.lint"
-            )
-        )
-        true
-    } else {
-        false
-    }
+    val diags = view.state.field(lintState, require = false)?.diagnostics.orEmpty()
+    val sel = view.state.selection.main
+    val after = sel.to + 1
+    val next = diags.firstOrNull { it.to >= after }
+        ?: diags.firstOrNull()?.takeUnless { it.from == sel.from && it.to == sel.to }
+    if (next != null) selectDiagnostic(view, next)
+    next != null
 }
 
-/** Jump to the previous diagnostic before the cursor. */
+/**
+ * Select the nearest diagnostic ending before the selection, wrapping to the last one. Returns
+ * false when there is none, or when wrapping would land where the selection already starts.
+ */
 val previousDiagnostic: (EditorSession) -> Boolean = { view ->
-    val state = view.state
-    val diags = state.field(lintState, require = false)?.diagnostics ?: emptyList()
-    val pos = state.selection.main.head
-    val prev = diags.lastOrNull { it.from < pos } ?: diags.lastOrNull()
-    if (prev != null) {
-        view.dispatch(
-            TransactionSpec(
-                selection = SelectionSpec.CursorSpec(prev.from),
-                scrollIntoView = true,
-                userEvent = "select.lint"
-            )
-        )
-        true
-    } else {
-        false
+    val diags = view.state.field(lintState, require = false)?.diagnostics.orEmpty()
+    val sel = view.state.selection.main
+    var prev: Diagnostic? = null
+    var last: Diagnostic? = null
+    for (diag in diags) {
+        if (diag.to < sel.to && (prev == null || prev.from < diag.from)) prev = diag
+        if (last == null || diag.from > last.from) last = diag
     }
+    val target = when {
+        last == null -> null
+        prev == null && last.from == sel.from -> null
+        else -> prev ?: last
+    }
+    if (target != null) selectDiagnostic(view, target)
+    target != null
+}
+
+private fun selectDiagnostic(view: EditorSession, diag: Diagnostic) {
+    view.dispatch(
+        TransactionSpec(
+            selection = SelectionSpec.EditorSelectionSpec(
+                EditorSelection.single(diag.from, diag.to)
+            ),
+            scrollIntoView = true
+        )
+    )
 }
 
 /** Default lint keymap bindings. */

@@ -19,6 +19,7 @@
 package com.monkopedia.kodemirror.lint
 
 import com.monkopedia.kodemirror.state.DocPos
+import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.ExtensionList
@@ -36,12 +37,15 @@ class LintCommandsTest {
     private fun createView(
         doc: String,
         diagnostics: List<Diagnostic>,
-        cursor: Int = 0
+        anchor: Int = 0,
+        head: Int = anchor
     ): EditorSession {
         val state = EditorState.create(
             EditorStateConfig(
                 doc = doc.asDoc(),
-                selection = SelectionSpec.CursorSpec(DocPos(cursor)),
+                selection = SelectionSpec.EditorSelectionSpec(
+                    EditorSelection.single(DocPos(anchor), DocPos(head))
+                ),
                 extensions = ExtensionList(listOf(lintState, lintPanelOpen))
             )
         )
@@ -54,36 +58,133 @@ class LintCommandsTest {
         return view
     }
 
+    private fun d(from: Int, to: Int, message: String) =
+        Diagnostic(DocPos(from), DocPos(to), Severity.ERROR, message)
+
+    private val alphabet = "abcdefghijklmnopqrstuvwxyz"
+    private val twoDiagnostics = listOf(d(5, 8, "first"), d(15, 18, "second"))
+
+    /** Runs [command] [times] times and reports its last result plus "anchor/head". */
+    private fun run(
+        view: EditorSession,
+        command: (EditorSession) -> Boolean,
+        times: Int = 1
+    ): String {
+        var result = false
+        repeat(times) { result = command(view) }
+        val sel = view.state.selection.main
+        return "$result sel=${sel.anchor.value}/${sel.head.value}"
+    }
+
+    // Expected values below were produced by @codemirror/lint 6.9.5's nextDiagnostic and
+    // previousDiagnostic on the same documents, diagnostics and selections (#382).
+
     @Test
-    fun nextDiagnosticJumpsToNext() {
-        val diags = listOf(
-            Diagnostic(DocPos(5), DocPos(8), Severity.ERROR, "first"),
-            Diagnostic(DocPos(15), DocPos(18), Severity.WARNING, "second")
+    fun nextDiagnosticSelectsTheNextRange() {
+        assertEquals("true sel=5/8", run(createView(alphabet, twoDiagnostics), nextDiagnostic))
+        assertEquals(
+            "true sel=15/18",
+            run(createView(alphabet, twoDiagnostics), nextDiagnostic, times = 2)
         )
-        val view = createView("abcdefghijklmnopqrstuvwxyz", diags, cursor = 0)
-        assertTrue(nextDiagnostic(view))
-        assertEquals(DocPos(5), view.state.selection.main.head)
+        assertEquals("true sel=5/8", run(createView(alphabet, twoDiagnostics, 4), nextDiagnostic))
     }
 
     @Test
-    fun previousDiagnosticJumpsToPrevious() {
-        val diags = listOf(
-            Diagnostic(DocPos(5), DocPos(8), Severity.ERROR, "first"),
-            Diagnostic(DocPos(15), DocPos(18), Severity.WARNING, "second")
-        )
-        val view = createView("abcdefghijklmnopqrstuvwxyz", diags, cursor = 20)
-        assertTrue(previousDiagnostic(view))
-        assertEquals(DocPos(15), view.state.selection.main.head)
+    fun nextDiagnosticFromInsideADiagnosticSelectsIt() {
+        assertEquals("true sel=5/8", run(createView(alphabet, twoDiagnostics, 6), nextDiagnostic))
+    }
+
+    @Test
+    fun nextDiagnosticFromTheEndOfADiagnosticMovesOn() {
+        assertEquals("true sel=15/18", run(createView(alphabet, twoDiagnostics, 8), nextDiagnostic))
     }
 
     @Test
     fun nextDiagnosticWrapsAround() {
-        val diags = listOf(
-            Diagnostic(DocPos(2), DocPos(5), Severity.ERROR, "only")
+        assertEquals(
+            "true sel=2/5",
+            run(createView("abcdefghij", listOf(d(2, 5, "only")), 8), nextDiagnostic)
         )
-        val view = createView("abcdefghij", diags, cursor = 8)
-        assertTrue(nextDiagnostic(view))
-        assertEquals(DocPos(2), view.state.selection.main.head)
+    }
+
+    @Test
+    fun nextDiagnosticReturnsFalseWhenAlreadyOnTheOnlyDiagnostic() {
+        assertEquals(
+            "false sel=2/5",
+            run(createView("abcdefghij", listOf(d(2, 5, "only")), 2, 5), nextDiagnostic)
+        )
+    }
+
+    @Test
+    fun nextDiagnosticReturnsFalseWithoutDiagnostics() {
+        assertEquals("false sel=3/3", run(createView(alphabet, emptyList(), 3), nextDiagnostic))
+    }
+
+    @Test
+    fun nextDiagnosticSelectsAPointDiagnostic() {
+        assertEquals(
+            "true sel=10/10",
+            run(createView(alphabet, listOf(d(10, 10, "pt"))), nextDiagnostic)
+        )
+    }
+
+    @Test
+    fun previousDiagnosticSelectsThePreviousRange() {
+        assertEquals(
+            "true sel=15/18",
+            run(createView(alphabet, twoDiagnostics, 20), previousDiagnostic)
+        )
+        assertEquals(
+            "true sel=5/8",
+            run(createView(alphabet, twoDiagnostics, 20), previousDiagnostic, times = 2)
+        )
+        assertEquals(
+            "true sel=5/8",
+            run(createView(alphabet, twoDiagnostics, 9), previousDiagnostic)
+        )
+    }
+
+    @Test
+    fun previousDiagnosticFromInsideADiagnosticSkipsIt() {
+        assertEquals(
+            "true sel=5/8",
+            run(createView(alphabet, twoDiagnostics, 16), previousDiagnostic)
+        )
+    }
+
+    @Test
+    fun previousDiagnosticWraps() {
+        assertEquals(
+            "true sel=15/18",
+            run(createView(alphabet, twoDiagnostics, 2), previousDiagnostic)
+        )
+        assertEquals(
+            "true sel=15/18",
+            run(createView(alphabet, twoDiagnostics, 8), previousDiagnostic)
+        )
+    }
+
+    @Test
+    fun previousDiagnosticReturnsFalseWhenNothingToMoveTo() {
+        assertEquals(
+            "false sel=16/16",
+            run(createView(alphabet, emptyList(), 16), previousDiagnostic)
+        )
+        assertEquals(
+            "false sel=2/2",
+            run(createView("abcdefghij", listOf(d(2, 5, "only")), 2), previousDiagnostic)
+        )
+        assertEquals(
+            "false sel=2/5",
+            run(createView("abcdefghij", listOf(d(2, 5, "only")), 2, 5), previousDiagnostic)
+        )
+    }
+
+    @Test
+    fun commandsReturnFalseWithoutTheLintState() {
+        val view = EditorSession(EditorState.create(EditorStateConfig(doc = alphabet.asDoc())))
+        assertFalse(nextDiagnostic(view))
+        assertFalse(previousDiagnostic(view))
     }
 
     @Test
