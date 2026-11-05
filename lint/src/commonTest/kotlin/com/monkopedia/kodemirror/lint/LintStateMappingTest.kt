@@ -175,4 +175,76 @@ class LintStateMappingTest {
             run("hello world", listOf(d(2, 5, "r")), delete(4, 8))
         )
     }
+
+    /** Like [run], but applies [changes] one after another and reports every dump. */
+    private fun runAll(
+        doc: String,
+        diagnostics: List<Diagnostic>,
+        vararg changes: ChangeSpec
+    ): List<String> {
+        var state = EditorState.create(EditorStateConfig(doc = doc.asDoc(), extensions = lintState))
+        state =
+            state.update(
+                TransactionSpec(effects = listOf(setDiagnosticsEffect.of(diagnostics)))
+            ).state
+        val dumps = mutableListOf(dump(state))
+        for (change in changes) {
+            state = state.update(TransactionSpec(changes = change)).state
+            dumps.add(dump(state))
+        }
+        return dumps
+    }
+
+    @Test
+    fun diagnosticClampedAtEofGrowsWithTextTypedThere() {
+        assertEquals(
+            "count=1 [a@3-5]" to "count=1 [a@3-7]",
+            run("hello", listOf(d(3, 8, "a")), insert(5, "!!"))
+        )
+    }
+
+    @Test
+    fun diagnosticEndingExactlyAtEofDoesNotGrow() {
+        assertEquals(
+            "count=1 [a@3-5]" to "count=1 [a@3-5]",
+            run("hello", listOf(d(3, 5, "a")), insert(5, "!!"))
+        )
+    }
+
+    @Test
+    fun clampedEndKeepsGrowingAcrossLaterEdits() {
+        assertEquals(
+            listOf(
+                "count=1 [a@3-5]",
+                "count=1 [a@3-6]",
+                "count=1 [a@3-7]",
+                "count=1 [a@3-6]",
+                "count=1 [a@4-7]"
+            ),
+            runAll(
+                "hello",
+                listOf(d(3, 8, "a")),
+                insert(5, "!"),
+                insert(6, "?"),
+                delete(6, 7),
+                insert(0, "x")
+            )
+        )
+    }
+
+    @Test
+    fun clampedDiagnosticIsDroppedWhenItsRangeIsDeleted() {
+        assertEquals(
+            "count=1 [a@3-5]" to "count=0 []",
+            run("hello", listOf(d(3, 8, "a")), delete(3, 5))
+        )
+    }
+
+    @Test
+    fun clampedPointAtEofStaysBeforeTextTypedThere() {
+        assertEquals(
+            "count=1 [a@5-5]" to "count=1 [a@5-5]",
+            run("hello", listOf(d(5, 8, "a")), insert(5, "!!"))
+        )
+    }
 }
