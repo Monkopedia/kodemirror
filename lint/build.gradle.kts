@@ -17,6 +17,7 @@ kotlin {
         commonTest.dependencies {
             implementation(project(":state"))
             implementation(project(":view"))
+            implementation(libs.kotlinx.coroutines.test)
         }
     }
 }
