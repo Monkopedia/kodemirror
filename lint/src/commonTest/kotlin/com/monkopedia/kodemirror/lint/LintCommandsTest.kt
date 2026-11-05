@@ -270,6 +270,22 @@ class LintCommandsTest {
         )
     }
 
+    // A point inside a range is a widget piece that starts before the previous piece ends, so
+    // upstream's RangeSetBuilder puts it in a second layer, visited after the first. Expected
+    // strings from @codemirror/lint 6.9.5 (review-382/layer398-upstream.txt).
+
+    @Test
+    fun pointInsideARangeIsVisitedInItsOwnLayer() {
+        assertEquals(
+            "next:true:5/7 next:true:7/10 next:true:5/7 prev:true:7/10 prev:true:7/7 prev:false:7/7",
+            steps(createView(alphabet, ranges(5 to 10, 7 to 7)), "NNNPPP")
+        )
+        assertEquals(
+            "next:true:0/4 next:true:5/7 next:true:7/10 prev:true:7/7 prev:true:0/4 prev:true:7/10",
+            steps(createView(alphabet, ranges(0 to 4, 5 to 10, 7 to 7), 20), "NNNPPP")
+        )
+    }
+
     @Test
     fun duplicateDiagnosticsAreOnePiece() {
         assertEquals(

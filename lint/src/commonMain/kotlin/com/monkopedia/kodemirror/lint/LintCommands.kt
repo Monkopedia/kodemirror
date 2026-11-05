@@ -20,6 +20,9 @@ package com.monkopedia.kodemirror.lint
 
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorSelection
+import com.monkopedia.kodemirror.state.RangeSet
+import com.monkopedia.kodemirror.state.RangeSetBuilder
+import com.monkopedia.kodemirror.state.RangeValue
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.Text
 import com.monkopedia.kodemirror.state.TransactionSpec
@@ -51,8 +54,27 @@ val closeLintPanel: (EditorSession) -> Boolean = { view ->
     }
 }
 
-/** One piece of the decoration set upstream `LintState.init` builds, covering [diagnostics]. */
-private class LintSegment(val from: DocPos, val to: DocPos, val diagnostics: List<Diagnostic>)
+/**
+ * One piece of the decoration set upstream `LintState.init` builds, covering [diagnostics], with
+ * the sides of the decoration upstream uses for it: a widget (`Side.InlineBefore`) for a
+ * zero-width piece, otherwise a mark that is inclusive at its end when a diagnostic continues past
+ * it. The sides decide which [RangeSet] layer a piece lands in, and so the order `between` visits
+ * pieces in, which the commands below depend on exactly as upstream's do.
+ */
+private class LintPiece(val diagnostics: List<Diagnostic>, widget: Boolean, inclusiveEnd: Boolean) :
+    RangeValue() {
+    override val startSide: Int = if (widget) -100_000_000 else 500_000_000
+    override val endSide: Int = if (widget) {
+        -100_000_000
+    } else if (inclusiveEnd) {
+        1
+    } else {
+        -600_000_000
+    }
+    override val point: Boolean = widget
+
+    fun carries(diagnostic: Diagnostic) = diagnostics.any { it === diagnostic }
+}
 
 /**
  * Split [diagnostics] into the non-overlapping pieces upstream navigates over, as
@@ -60,10 +82,10 @@ private class LintSegment(val from: DocPos, val to: DocPos, val diagnostics: Lis
  * changes, cut off at the document end, and with a point or a short line-break-only range turned
  * into a zero-width piece at its start.
  */
-private fun lintSegments(diagnostics: List<Diagnostic>, doc: Text): List<LintSegment> {
+private fun lintPieces(diagnostics: List<Diagnostic>, doc: Text): RangeSet<LintPiece> {
     val sorted = diagnostics.sortedWith(compareBy({ it.from }, { it.to }))
     val docEnd = DocPos(doc.length)
-    val segments = mutableListOf<LintSegment>()
+    val builder = RangeSetBuilder<LintPiece>()
     val active = mutableListOf<Diagnostic>()
     var pos = DocPos.ZERO
     var i = 0
@@ -99,28 +121,36 @@ private fun lintSegments(diagnostics: List<Diagnostic>, doc: Text): List<LintSeg
                 from == to ||
                     (to.value - from.value < 10 && doc.sliceString(from, to).all { it == '\n' })
                 )
-        segments += LintSegment(from, if (widget) from else to, active.toList())
+        val piece = LintPiece(active.toList(), widget, inclusiveEnd = active.any { it.to > to })
+        builder.add(from, if (widget) from else to, piece)
         pos = to
         if (pos == docEnd) break
         active.removeAll { it.to <= pos }
     }
-    return segments
+    return builder.finish()
 }
 
 /**
- * Upstream `findDiagnostic`: the first piece reaching [after], extended over the pieces right after
- * it that carry the same diagnostic.
+ * Upstream `findDiagnostic`: the first piece reaching [after], extended over the pieces visited
+ * after it while they carry the same diagnostic.
  */
-private fun findDiagnostic(segments: List<LintSegment>, after: DocPos): Pair<DocPos, DocPos>? {
-    val start = segments.indexOfFirst { it.to >= after }
-    if (start < 0) return null
-    val diagnostic = segments[start].diagnostics.first()
-    var to = segments[start].to
-    for (segment in segments.subList(start + 1, segments.size)) {
-        if (diagnostic !in segment.diagnostics) break
-        to = segment.to
+private fun findDiagnostic(pieces: RangeSet<LintPiece>, after: DocPos): Pair<DocPos, DocPos>? {
+    var found: Triple<Int, Int, Diagnostic>? = null
+    pieces.between(after, DocPos(1_000_000_000)) { from, to, piece ->
+        val current = found
+        when {
+            current == null -> {
+                found = Triple(from, to, piece.diagnostics.first())
+                null
+            }
+            !piece.carries(current.third) -> false
+            else -> {
+                found = current.copy(second = to)
+                null
+            }
+        }
     }
-    return segments[start].from to to
+    return found?.let { DocPos(it.first) to DocPos(it.second) }
 }
 
 /**
@@ -130,9 +160,9 @@ private fun findDiagnostic(segments: List<LintSegment>, after: DocPos): Pair<Doc
 val nextDiagnostic: (EditorSession) -> Boolean = { view ->
     val field = view.state.field(lintState, require = false)
     val sel = view.state.selection.main
-    val segments = lintSegments(field?.diagnostics.orEmpty(), view.state.doc)
-    val next = findDiagnostic(segments, sel.to + 1)
-        ?: findDiagnostic(segments, DocPos.ZERO)?.takeUnless {
+    val pieces = lintPieces(field?.diagnostics.orEmpty(), view.state.doc)
+    val next = findDiagnostic(pieces, sel.to + 1)
+        ?: findDiagnostic(pieces, DocPos.ZERO)?.takeUnless {
             it.first == sel.from &&
                 it.second == sel.to
         }
@@ -145,20 +175,26 @@ val nextDiagnostic: (EditorSession) -> Boolean = { view ->
  * false when there is none, or when wrapping would land where the selection already starts.
  */
 val previousDiagnostic: (EditorSession) -> Boolean = { view ->
-    val field = view.state.field(lintState, require = false)
-    val sel = view.state.selection.main
-    var prev: LintSegment? = null
-    var last: LintSegment? = null
-    for (segment in lintSegments(field?.diagnostics.orEmpty(), view.state.doc)) {
-        if (segment.to < sel.to && (prev == null || prev.from < segment.from)) prev = segment
-        if (last == null || segment.from > last.from) last = segment
+    val state = view.state
+    val sel = state.selection.main
+    var prev: Pair<Int, Int>? = null
+    var last: Pair<Int, Int>? = null
+    val pieces =
+        lintPieces(state.field(lintState, require = false)?.diagnostics.orEmpty(), state.doc)
+    pieces.between(DocPos.ZERO, DocPos(state.doc.length)) { from, to, _ ->
+        val p = prev
+        val l = last
+        if (to < sel.to.value && (p == null || p.first < from)) prev = from to to
+        if (l == null || from > l.first) last = from to to
+        null
     }
+    val l = last
     val target = when {
-        last == null -> null
-        prev == null && last.from == sel.from -> null
-        else -> prev ?: last
+        l == null -> null
+        prev == null && l.first == sel.from.value -> null
+        else -> prev ?: l
     }
-    if (target != null) selectRange(view, target.from, target.to)
+    target?.let { (from, to) -> selectRange(view, DocPos(from), DocPos(to)) }
     target != null
 }
 
