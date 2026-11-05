@@ -19,6 +19,7 @@
 package com.monkopedia.kodemirror.lint
 
 import com.monkopedia.kodemirror.state.ChangeSpec
+import com.monkopedia.kodemirror.state.Compartment
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
@@ -227,6 +228,34 @@ class LintPluginTest {
         wait(100)
         assertEquals("calls=2 count=0 []", "calls=$calls ${dump(view)}")
         wait(200)
+        assertEquals("calls=2 count=1 [run2@0-1]", "calls=$calls ${dump(view)}")
+    }
+
+    @Test
+    fun configChangeLetsAnInFlightRunLand() = runTest {
+        // Upstream (review-382/configChange.mjs): a reconfigure with no doc change schedules a
+        // fresh run but does not discard the one already running.
+        var calls = 0
+        val source: SuspendLintSource = { _ ->
+            val n = ++calls
+            delay(100)
+            listOf(d(0, 1, "run$n"))
+        }
+        val compartment = Compartment()
+        val view =
+            session(
+                linter(source, LintConfig(delay = 10)),
+                compartment.of(ExtensionList(emptyList()))
+            )
+        wait(50)
+        view.dispatch(
+            TransactionSpec(
+                effects = listOf(compartment.reconfigure(lintDisplay(LintConfig(delay = 20))))
+            )
+        )
+        wait(70)
+        assertEquals("calls=2 count=1 [run1@0-1]", "calls=$calls ${dump(view)}")
+        wait(180)
         assertEquals("calls=2 count=1 [run2@0-1]", "calls=$calls ${dump(view)}")
     }
 

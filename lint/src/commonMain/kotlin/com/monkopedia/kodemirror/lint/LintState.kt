@@ -24,12 +24,12 @@ import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Facet
 import com.monkopedia.kodemirror.state.MapMode
-import com.monkopedia.kodemirror.state.RangeSet
 import com.monkopedia.kodemirror.state.RangeSetBuilder
 import com.monkopedia.kodemirror.state.StateEffect
 import com.monkopedia.kodemirror.state.StateEffectType
 import com.monkopedia.kodemirror.state.StateField
 import com.monkopedia.kodemirror.state.StateFieldSpec
+import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.view.Decoration
 import com.monkopedia.kodemirror.view.DecorationSet
@@ -46,6 +46,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -61,7 +62,7 @@ internal val forceLintEffect: StateEffectType<Unit> = StateEffect.define()
 /** Internal state holding diagnostics and their decorations. */
 internal class LintStateValue private constructor(
     private val entries: List<Entry>,
-    val decorations: DecorationSet
+    private val theme: EditorTheme?
 ) {
     /**
      * A stored diagnostic. [inclusiveEnd] marks one whose end was cut off at the document end:
@@ -91,35 +92,11 @@ internal class LintStateValue private constructor(
 
     val diagnostics: List<Diagnostic> = entries.map { it.diagnostic }
 
-    fun map(changes: ChangeSet, theme: EditorTheme): LintStateValue =
-        create(entries.mapNotNull { it.map(changes) }, theme)
-
-    companion object {
-        val empty = LintStateValue(emptyList(), RangeSet.empty())
-
-        /**
-         * Clamp [diagnostics] to the document, as upstream `LintState.init` does: a diagnostic
-         * starting past the end is dropped, one ending past it is cut off at the end (and keeps
-         * an inclusive end). The clamped list is what gets stored, so later edits map positions
-         * that are in range.
-         */
-        fun build(
-            diagnostics: List<Diagnostic>,
-            docLength: Int,
-            theme: EditorTheme
-        ): LintStateValue {
-            val docEnd = DocPos(docLength)
-            val entries = diagnostics
-                .filter { it.from <= docEnd }
-                .map { if (it.to > docEnd) Entry(it.copy(to = docEnd), true) else Entry(it, false) }
-            return create(entries, theme)
-        }
-
-        private fun create(entries: List<Entry>, theme: EditorTheme): LintStateValue {
-            if (entries.isEmpty()) return empty
-            val sorted = entries.sortedWith(compareBy({ it.diagnostic.from }, { it.diagnostic.to }))
-            val builder = RangeSetBuilder<Decoration>()
-            for (diag in sorted.map { it.diagnostic }) {
+    /** The underline marks, built on first use (the gutter's copy of the state never needs them). */
+    val decorations: DecorationSet by lazy {
+        val builder = RangeSetBuilder<Decoration>()
+        if (theme != null) {
+            for (diag in diagnostics) {
                 val from = maxOf(DocPos.ZERO, diag.from)
                 val to = maxOf(from, diag.to)
                 if (from < to) {
@@ -142,36 +119,89 @@ internal class LintStateValue private constructor(
                     )
                 }
             }
-            return LintStateValue(sorted, builder.finish())
+        }
+        builder.finish()
+    }
+
+    fun map(changes: ChangeSet, theme: EditorTheme): LintStateValue =
+        create(entries.mapNotNull { it.map(changes) }, theme)
+
+    companion object {
+        val empty = LintStateValue(emptyList(), null)
+
+        /**
+         * Clamp [diagnostics] to the document, as upstream `LintState.init` does: a diagnostic
+         * starting past the end is dropped, one ending past it is cut off at the end (and keeps
+         * an inclusive end). The clamped list is what gets stored, so later edits map positions
+         * that are in range.
+         */
+        fun build(
+            diagnostics: List<Diagnostic>,
+            docLength: Int,
+            theme: EditorTheme
+        ): LintStateValue {
+            val docEnd = DocPos(docLength)
+            val entries = diagnostics
+                .filter { it.from <= docEnd }
+                .map { if (it.to > docEnd) Entry(it.copy(to = docEnd), true) else Entry(it, false) }
+            return create(entries, theme)
+        }
+
+        private fun create(entries: List<Entry>, theme: EditorTheme): LintStateValue {
+            if (entries.isEmpty()) return empty
+            val sorted = entries.sortedWith(compareBy({ it.diagnostic.from }, { it.diagnostic.to }))
+            return LintStateValue(sorted, theme)
         }
     }
 }
 
-/** State field tracking diagnostics and their decorations. */
+/**
+ * The update shared by [lintState] and the gutter's [lintGutterState]: diagnostics from a
+ * [setDiagnosticsEffect] (passed through [filter]) replace the value, otherwise it is mapped
+ * through the document change.
+ */
+private fun updateLintStateValue(
+    value: LintStateValue,
+    tr: Transaction,
+    filter: DiagnosticFilter?
+): LintStateValue {
+    val theme = tr.startState.facet(editorTheme)
+    var result = value
+    for (effect in tr.effects) {
+        val diagEffect = effect.asType(setDiagnosticsEffect) ?: continue
+        val diagnostics = filter?.invoke(diagEffect.value) ?: diagEffect.value
+        result = LintStateValue.build(diagnostics, tr.newDoc.length, theme)
+    }
+    if (result === value && tr.docChanged) {
+        result = result.map(tr.changes, theme)
+    }
+    return result
+}
+
+/**
+ * State field tracking diagnostics and their decorations. [LintConfig.markerFilter] decides which
+ * diagnostics it keeps, as in upstream `LintState.init`.
+ */
 internal val lintState: StateField<LintStateValue> = StateField.define(
     StateFieldSpec(
         create = { LintStateValue.empty },
         update = { value, tr ->
-            val theme = tr.startState.facet(editorTheme)
-            var result = value
-            for (effect in tr.effects) {
-                val diagEffect = effect.asType(setDiagnosticsEffect)
-                if (diagEffect != null) {
-                    result = LintStateValue.build(
-                        diagEffect.value,
-                        tr.newDoc.length,
-                        theme
-                    )
-                }
-            }
-            if (result === value && tr.docChanged) {
-                result = result.map(tr.changes, theme)
-            }
-            result
+            updateLintStateValue(value, tr, tr.state.facet(lintConfig).markerFilter)
         },
         provide = { field ->
             decorations.from(field) { it.decorations }
         }
+    )
+)
+
+/**
+ * The diagnostics the lint gutter shows. Upstream keeps the gutter's markers in their own field
+ * fed by every [setDiagnosticsEffect], so [LintConfig.markerFilter] does not hide them.
+ */
+internal val lintGutterState: StateField<LintStateValue> = StateField.define(
+    StateFieldSpec(
+        create = { LintStateValue.empty },
+        update = { value, tr -> updateLintStateValue(value, tr, null) }
     )
 )
 
@@ -212,7 +242,9 @@ private typealias DiagnosticFilter = (List<Diagnostic>) -> List<Diagnostic>
 internal class CombinedLintConfig(
     val sources: List<SuspendLintSource>,
     val delay: Long,
-    val tooltipFilter: DiagnosticFilter?
+    val markerFilter: DiagnosticFilter?,
+    val tooltipFilter: DiagnosticFilter?,
+    val autoPanel: Boolean
 )
 
 /** Apply [a], then [b], like upstream's `combineFilter`. */
@@ -242,9 +274,13 @@ internal val lintConfig: Facet<LintConfigInput, CombinedLintConfig> = Facet.defi
             delay =
             inputs.map { it.config.delay }.filter { it != defaultDelay }.maxOrNull()
                 ?: defaultDelay,
+            markerFilter = inputs.fold(null as DiagnosticFilter?) { acc, input ->
+                combineFilters(acc, input.config.markerFilter)
+            },
             tooltipFilter = inputs.fold(null as DiagnosticFilter?) { acc, input ->
                 combineFilters(acc, input.config.tooltipFilter)
-            }
+            },
+            autoPanel = inputs.any { it.config.autoPanel }
         )
     }
 )
@@ -259,10 +295,12 @@ private const val BATCH_TIMEOUT_MS = 200L
 internal class LintPlugin(private val view: EditorSession) : PluginValue {
     private val job = SupervisorJob(view.coroutineScope.coroutineContext[Job])
     private val scope = CoroutineScope(view.coroutineScope.coroutineContext + job)
-    private var lintJob: Job? = null
 
-    /** True while a run is scheduled but its delay has not yet passed. */
-    private var pending = false
+    /** The scheduled run, while its delay has not yet passed. */
+    private var timer: Job? = null
+
+    /** Parent of the runs whose sources are in flight; a doc change makes their results stale. */
+    private val runs = SupervisorJob(job)
 
     init {
         schedule()
@@ -273,27 +311,28 @@ internal class LintPlugin(private val view: EditorSession) : PluginValue {
             tr.effects.any { it.asType(forceLintEffect) != null }
         }
         if (forced) {
-            if (pending) launchRun(waitMs = 0)
+            if (timer != null) startRun(waitMs = 0)
             return
         }
-        if (update.docChanged ||
-            update.state.facet(lintConfig) != update.startState.facet(lintConfig)
-        ) {
+        if (update.docChanged) {
+            runs.cancelChildren()
+            schedule()
+        } else if (update.state.facet(lintConfig) != update.startState.facet(lintConfig)) {
+            // Like upstream, a config change lints again but lets a run in flight land.
             schedule()
         }
     }
 
     private fun schedule() {
-        launchRun(waitMs = view.state.facet(lintConfig).delay)
+        startRun(waitMs = view.state.facet(lintConfig).delay)
     }
 
-    private fun launchRun(waitMs: Long) {
-        lintJob?.cancel()
-        pending = true
-        lintJob = scope.launch {
+    private fun startRun(waitMs: Long) {
+        timer?.cancel()
+        timer = scope.launch {
             delay(waitMs)
-            pending = false
-            runSources()
+            timer = null
+            scope.launch(runs) { runSources() }
         }
     }
 

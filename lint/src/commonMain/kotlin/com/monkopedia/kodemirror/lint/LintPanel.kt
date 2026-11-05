@@ -46,13 +46,31 @@ import com.monkopedia.kodemirror.view.rememberField
 internal val openPanelEffect: StateEffectType<Boolean> = StateEffect.define()
 internal val closePanelEffect: StateEffectType<Boolean> = StateEffect.define()
 
-/** State field tracking whether the lint panel is open. */
+/**
+ * State field tracking whether the lint panel is open. With [LintConfig.autoPanel], setting
+ * diagnostics opens it when there are any and closes it when there are none, and an edit that
+ * removes the last diagnostic closes it, as upstream's `lintState` does.
+ */
 internal val lintPanelOpen: StateField<Boolean> = StateField.define(
     StateFieldSpec(
         create = { false },
         update = { value, tr ->
+            val autoPanel = tr.state.facet(lintConfig).autoPanel
             var result = value
+            if (result &&
+                autoPanel &&
+                tr.docChanged &&
+                tr.startState.field(
+                    lintState,
+                    require = false
+                )?.diagnostics?.isNotEmpty() == true &&
+                tr.state.field(lintState, require = false)?.diagnostics?.isEmpty() == true
+            ) {
+                result = false
+            }
             for (effect in tr.effects) {
+                val diagnostics = effect.asType(setDiagnosticsEffect)
+                if (diagnostics != null && autoPanel) result = diagnostics.value.isNotEmpty()
                 if (effect.asType(openPanelEffect) != null) result = true
                 if (effect.asType(closePanelEffect) != null) result = false
             }
