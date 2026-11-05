@@ -21,6 +21,7 @@ package com.monkopedia.kodemirror.lint
 import androidx.compose.ui.text.SpanStyle
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
+import com.monkopedia.kodemirror.state.Facet
 import com.monkopedia.kodemirror.state.RangeSet
 import com.monkopedia.kodemirror.state.RangeSetBuilder
 import com.monkopedia.kodemirror.state.StateEffect
@@ -38,11 +39,16 @@ import com.monkopedia.kodemirror.view.ViewPlugin
 import com.monkopedia.kodemirror.view.ViewUpdate
 import com.monkopedia.kodemirror.view.decorations
 import com.monkopedia.kodemirror.view.editorTheme
+import com.monkopedia.kodemirror.view.logException
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 /** Effect used to update the set of diagnostics. */
 val setDiagnosticsEffect: StateEffectType<List<Diagnostic>> = StateEffect.define()
@@ -148,104 +154,149 @@ fun forEachDiagnostic(state: EditorState, callback: (Diagnostic) -> Unit) {
     state.field(lintState, require = false)?.diagnostics?.forEach(callback)
 }
 
-/** Force the linter to re-run immediately. */
+/**
+ * Make a pending lint run happen right away instead of waiting for the delay. Does nothing when
+ * no run is pending, as upstream `forceLinting` does.
+ */
 fun forceLinting(view: EditorSession) {
     view.dispatch(
         TransactionSpec(effects = listOf(forceLintEffect.of(Unit)))
     )
 }
 
-/** Internal linter plugin that debounces and runs the lint source. */
-internal class LinterPlugin(
-    private val view: EditorSession,
-    private val source: LintSource,
-    private val config: LintConfig
-) : PluginValue {
-    private var pendingSince: Long = -1L
+/** One `linter()`/`lintDisplay()` contribution to [lintConfig]. */
+internal class LintConfigInput(val source: SuspendLintSource?, val config: LintConfig)
 
-    init {
-        // Run the linter on creation
-        runLinter()
+private typealias DiagnosticFilter = (List<Diagnostic>) -> List<Diagnostic>
+
+/** The combination of every [LintConfigInput] in the state, like upstream's `lintConfig`. */
+internal class CombinedLintConfig(
+    val sources: List<SuspendLintSource>,
+    val delay: Long,
+    val tooltipFilter: DiagnosticFilter?
+)
+
+/** Apply [a], then [b], like upstream's `combineFilter`. */
+private fun combineFilters(a: DiagnosticFilter?, b: DiagnosticFilter?): DiagnosticFilter? =
+    if (a == null) {
+        b
+    } else if (b == null) {
+        a
+    } else {
+        { diagnostics -> b(a(diagnostics)) }
     }
 
-    override fun update(update: ViewUpdate) {
-        // Check for force lint effect
-        for (tr in update.transactions) {
-            for (effect in tr.effects) {
-                if (effect.asType(forceLintEffect) != null) {
-                    runLinter()
-                    return
-                }
+private val defaultDelay = LintConfig().delay
+
+/**
+ * Facet collecting every lint source and its configuration, so that all sources lint together and
+ * their diagnostics are dispatched as one list (upstream `lintConfig`).
+ *
+ * Upstream combines only the options a config sets, taking the largest delay. [LintConfig] cannot
+ * tell an explicit `delay = 750` from the default, so a config left at the default delay does not
+ * take part, which keeps `linter(source)` from overriding another linter's shorter delay.
+ */
+internal val lintConfig: Facet<LintConfigInput, CombinedLintConfig> = Facet.define(
+    combine = { inputs ->
+        CombinedLintConfig(
+            sources = inputs.mapNotNull { it.source },
+            delay =
+            inputs.map { it.config.delay }.filter { it != defaultDelay }.maxOrNull()
+                ?: defaultDelay,
+            tooltipFilter = inputs.fold(null as DiagnosticFilter?) { acc, input ->
+                combineFilters(acc, input.config.tooltipFilter)
             }
-        }
-
-        if (update.docChanged) {
-            pendingSince = currentTimeMillis()
-        }
-
-        if (pendingSince >= 0) {
-            val elapsed = currentTimeMillis() - pendingSince
-            if (elapsed >= config.delay) {
-                pendingSince = -1L
-                runLinter()
-            }
-        }
-    }
-
-    private fun runLinter() {
-        val diagnostics = source(view)
-        view.dispatch(
-            TransactionSpec(
-                effects = listOf(setDiagnosticsEffect.of(diagnostics))
-            )
         )
     }
-}
+)
 
-internal fun createLinterPlugin(source: LintSource, config: LintConfig): ViewPlugin<LinterPlugin> =
-    ViewPlugin.define(
-        create = { view -> LinterPlugin(view, source, config) }
-    )
+/** How long a source result waits for the remaining sources before the partial list is shown. */
+private const val BATCH_TIMEOUT_MS = 200L
 
-/** Async linter plugin that uses coroutines for debouncing and source execution. */
-internal class AsyncLinterPlugin(
-    private val view: EditorSession,
-    private val source: SuspendLintSource,
-    private val config: LintConfig
-) : PluginValue {
+/**
+ * Runs every configured lint source once the document has been idle for the configured delay, and
+ * dispatches their combined diagnostics (upstream `lintPlugin`).
+ */
+internal class LintPlugin(private val view: EditorSession) : PluginValue {
     private val job = SupervisorJob(view.coroutineScope.coroutineContext[Job])
     private val scope = CoroutineScope(view.coroutineScope.coroutineContext + job)
     private var lintJob: Job? = null
 
+    /** True while a run is scheduled but its delay has not yet passed. */
+    private var pending = false
+
     init {
-        launchLint()
+        schedule()
     }
 
     override fun update(update: ViewUpdate) {
-        for (tr in update.transactions) {
-            for (effect in tr.effects) {
-                if (effect.asType(forceLintEffect) != null) {
-                    launchLint()
-                    return
-                }
-            }
+        val forced = update.transactions.any { tr ->
+            tr.effects.any { it.asType(forceLintEffect) != null }
         }
-        if (update.docChanged) {
-            launchLint()
+        if (forced) {
+            if (pending) launchRun(waitMs = 0)
+            return
+        }
+        if (update.docChanged ||
+            update.state.facet(lintConfig) != update.startState.facet(lintConfig)
+        ) {
+            schedule()
         }
     }
 
-    private fun launchLint() {
+    private fun schedule() {
+        launchRun(waitMs = view.state.facet(lintConfig).delay)
+    }
+
+    private fun launchRun(waitMs: Long) {
         lintJob?.cancel()
+        pending = true
         lintJob = scope.launch {
-            delay(config.delay)
-            val diagnostics = source(view)
-            view.dispatch(
-                TransactionSpec(
-                    effects = listOf(setDiagnosticsEffect.of(diagnostics))
-                )
-            )
+            delay(waitMs)
+            pending = false
+            runSources()
         }
+    }
+
+    private suspend fun runSources() = coroutineScope {
+        val state = view.state
+        val sources = state.facet(lintConfig).sources
+        if (sources.isEmpty()) return@coroutineScope
+        val results = Channel<List<Diagnostic>>(Channel.UNLIMITED)
+        for (source in sources) {
+            launch {
+                try {
+                    results.send(source(view))
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    logException(view.state, e)
+                }
+            }
+        }
+        val sink = { collected: List<List<Diagnostic>> ->
+            if (view.state.doc === state.doc) {
+                view.dispatch(
+                    TransactionSpec(effects = listOf(setDiagnosticsEffect.of(collected.flatten())))
+                )
+            }
+        }
+        // Like upstream batchResults: dispatch once every source has answered, or, if the rest
+        // stall for BATCH_TIMEOUT_MS after an answer, show what has arrived so far.
+        val collected = mutableListOf<List<Diagnostic>>()
+        while (collected.size < sources.size) {
+            val next = if (collected.isEmpty()) {
+                results.receive()
+            } else {
+                withTimeoutOrNull(BATCH_TIMEOUT_MS) { results.receive() }
+                    ?: run {
+                        sink(collected)
+                        results.receive()
+                    }
+            }
+            collected += next
+        }
+        sink(collected)
     }
 
     override fun destroy() {
@@ -253,11 +304,4 @@ internal class AsyncLinterPlugin(
     }
 }
 
-internal fun createAsyncLinterPlugin(
-    source: SuspendLintSource,
-    config: LintConfig
-): ViewPlugin<AsyncLinterPlugin> = ViewPlugin.define(
-    create = { view -> AsyncLinterPlugin(view, source, config) }
-)
-
-internal fun currentTimeMillis(): Long = kotlin.time.Clock.System.now().toEpochMilliseconds()
+internal val lintPlugin: ViewPlugin<LintPlugin> = ViewPlugin.define(create = { LintPlugin(it) })

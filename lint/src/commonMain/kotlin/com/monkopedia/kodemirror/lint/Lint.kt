@@ -27,9 +27,7 @@ import com.monkopedia.kodemirror.state.Slot
 import com.monkopedia.kodemirror.view.LocalEditorSession
 import com.monkopedia.kodemirror.view.LocalEditorTheme
 import com.monkopedia.kodemirror.view.Panel
-import com.monkopedia.kodemirror.view.PluginValue
 import com.monkopedia.kodemirror.view.Tooltip
-import com.monkopedia.kodemirror.view.ViewPlugin
 import com.monkopedia.kodemirror.view.hoverTooltip
 import com.monkopedia.kodemirror.view.keymap
 import com.monkopedia.kodemirror.view.showPanels
@@ -37,34 +35,32 @@ import com.monkopedia.kodemirror.view.showPanels
 /**
  * Create a linter extension with a suspend source.
  *
- * The source is invoked in a coroutine scope tied to the linter's lifecycle.
- * It is automatically debounced (by [LintConfig.delay]) and cancelled when
- * the document changes or the editor is destroyed.
+ * The source is invoked in a coroutine scope tied to the linter's lifecycle once the document has
+ * been idle for [LintConfig.delay], and cancelled when the document changes or the editor is
+ * destroyed. All linters in an editor run together, and their diagnostics are shown as one list.
  *
  * @param source Suspend function that produces diagnostics.
  * @param config Linter configuration.
  */
-fun linter(source: SuspendLintSource, config: LintConfig = LintConfig()): Extension =
-    createLinterExtension(createAsyncLinterPlugin(source, config), config)
+fun linter(source: SuspendLintSource, config: LintConfig = LintConfig()): Extension = ExtensionList(
+    listOf(lintConfig.of(LintConfigInput(source, config)), lintPluginExtension, lintExtensions)
+)
 
 /**
  * Create a linter extension.
  *
+ * The source runs once the document has been idle for [LintConfig.delay]. All linters in an
+ * editor run together, and their diagnostics are shown as one list.
+ *
  * @param source Function that produces diagnostics for the current view.
  * @param config Linter configuration.
  */
-fun linter(source: LintSource, config: LintConfig = LintConfig()): Extension =
-    createLinterExtension(createLinterPlugin(source, config), config)
+fun linter(source: LintSource, config: LintConfig = LintConfig()): Extension {
+    val suspendSource: SuspendLintSource = { view -> source(view) }
+    return linter(suspendSource, config)
+}
 
-private fun <V : PluginValue> createLinterExtension(
-    linterPlugin: ViewPlugin<V>,
-    config: LintConfig
-): Extension = ExtensionList(
-    listOf(
-        lintDisplay(config),
-        linterPlugin.asExtension()
-    )
-)
+private val lintPluginExtension: Extension = lintPlugin.asExtension()
 
 /**
  * The diagnostic-display half of the linter, without any lint source.
@@ -75,10 +71,15 @@ private fun <V : PluginValue> createLinterExtension(
  * other than a local [LintSource] — for example a language server feeding
  * diagnostics in directly. The plain [linter] functions build on top of this.
  *
- * @param config Linter configuration. Only [LintConfig.tooltipFilter] affects
- *   the display; the source-related options are unused here.
+ * @param config Linter configuration. It is combined with the configs of any [linter]s in the
+ *   editor: its [LintConfig.tooltipFilter] applies to the display, and a non-default
+ *   [LintConfig.delay] applies to every linter, as upstream's `linter(null, config)` does.
  */
-fun lintDisplay(config: LintConfig = LintConfig()): Extension {
+fun lintDisplay(config: LintConfig = LintConfig()): Extension =
+    ExtensionList(listOf(lintConfig.of(LintConfigInput(null, config)), lintExtensions))
+
+/** The display extensions shared by every [linter] and [lintDisplay], installed once. */
+private val lintExtensions: Extension = run {
     val panelProvider = showPanels.compute(
         listOf(Slot.FieldSlot(lintPanelOpen))
     ) { state ->
@@ -100,7 +101,7 @@ fun lintDisplay(config: LintConfig = LintConfig()): Extension {
             ?.diagnostics ?: emptyList()
         val docPos = DocPos(pos)
         val atPos = diags.filter { docPos >= it.from && docPos <= it.to }
-        val filtered = config.tooltipFilter?.invoke(atPos) ?: atPos
+        val filtered = view.state.facet(lintConfig).tooltipFilter?.invoke(atPos) ?: atPos
         if (filtered.isEmpty()) {
             null
         } else {
@@ -116,7 +117,7 @@ fun lintDisplay(config: LintConfig = LintConfig()): Extension {
         }
     }
 
-    return ExtensionList(
+    ExtensionList(
         listOf(
             lintState,
             lintPanelOpen,
