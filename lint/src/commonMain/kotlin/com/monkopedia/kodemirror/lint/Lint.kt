@@ -72,8 +72,8 @@ private val lintPluginExtension: Extension = lintPlugin.asExtension()
  * diagnostics in directly. The plain [linter] functions build on top of this.
  *
  * @param config Linter configuration. It is combined with the configs of any [linter]s in the
- *   editor: its [LintConfig.tooltipFilter] applies to the display, and a non-default
- *   [LintConfig.delay] applies to every linter, as upstream's `linter(null, config)` does.
+ *   editor, as upstream's `linter(null, config)` is: its filters and [LintConfig.autoPanel] apply
+ *   to the display, and a non-default [LintConfig.delay] applies to every linter.
  */
 fun lintDisplay(config: LintConfig = LintConfig()): Extension =
     ExtensionList(listOf(lintConfig.of(LintConfigInput(null, config)), lintExtensions))

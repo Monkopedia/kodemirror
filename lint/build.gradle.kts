@@ -19,6 +19,11 @@ kotlin {
             implementation(project(":view"))
             implementation(libs.kotlinx.coroutines.test)
         }
+        jvmTest.dependencies {
+            // Drives the lint gutter's hover tooltip through a real editor (LintGutterHoverTest).
+            implementation(compose.desktop.uiTestJUnit4)
+            implementation(compose.desktop.currentOs)
+        }
     }
 }
 

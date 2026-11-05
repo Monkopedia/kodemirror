@@ -69,8 +69,7 @@ fun lintGutter(config: LintGutterConfig = LintGutterConfig()): Extension {
         GutterConfig(
             type = GutterType.Custom("lint"),
             lineMarker = { view, linePos ->
-                val diagnostics = view.state.field(lintState, require = false)
-                    ?.diagnostics ?: emptyList()
+                val diagnostics = view.state.field(lintGutterState).diagnostics
                 val line = view.state.doc.lineAt(DocPos(linePos))
                 val lineDiags = diagnostics.filter { it.from >= line.from && it.from < line.to }
                 val filtered = config.markerFilter?.invoke(lineDiags) ?: lineDiags
@@ -90,9 +89,8 @@ fun lintGutter(config: LintGutterConfig = LintGutterConfig()): Extension {
         )
     )
 
-    val hoverExt = hoverTooltip { view, pos ->
-        val diagnostics = view.state.field(lintState, require = false)
-            ?.diagnostics ?: emptyList()
+    val hoverExt = hoverTooltip(config.hoverTime) { view, pos ->
+        val diagnostics = view.state.field(lintGutterState).diagnostics
         val line = view.state.doc.lineAt(DocPos(pos))
         val lineDiags = diagnostics.filter { it.from >= line.from && it.from < line.to }
         val filtered = config.tooltipFilter?.invoke(lineDiags) ?: lineDiags
@@ -111,5 +109,5 @@ fun lintGutter(config: LintGutterConfig = LintGutterConfig()): Extension {
         }
     }
 
-    return extensionListOf(gutterExt, hoverExt)
+    return extensionListOf(lintGutterState, gutterExt, hoverExt)
 }
