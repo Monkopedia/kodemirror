@@ -27,6 +27,9 @@ import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asDoc
+import com.monkopedia.kodemirror.view.EditorSession
+import com.monkopedia.kodemirror.view.GutterType
+import com.monkopedia.kodemirror.view.gutters
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -141,6 +144,20 @@ class LintOptionsTest {
         ).set(listOf(d(0, 5, "a")))
         assertEquals("count=0 []", s.dump())
         assertEquals(1, s.field(lintGutterState).diagnostics.size)
+    }
+
+    @Test
+    fun gutterStillShowsAMarkerWhenTheLinterMarkerFilterDropsEverything() {
+        // Drives the gutter's own lineMarker callback. Upstream 6.9.5: marker count 1 while
+        // diagnosticCount is 0 (review-382/optionsD.mjs, G1).
+        val s = state(lintDisplay(LintConfig(markerFilter = { emptyList() })), lintGutter())
+            .set(listOf(d(0, 5, "a")))
+        val lintColumn = s.facet(gutters).single { it.type == GutterType.Custom("lint") }
+        val marker = lintColumn.lineMarker!!(EditorSession(s), 0)
+        assertEquals(
+            "count=0 [] marker=ERROR",
+            "${s.dump()} marker=${(marker as LintGutterMarker?)?.severity}"
+        )
     }
 
     @Test

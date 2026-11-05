@@ -20,6 +20,7 @@ package com.monkopedia.kodemirror.lint
 
 import androidx.compose.runtime.remember
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.test.DesktopComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performMouseInput
@@ -27,12 +28,14 @@ import androidx.compose.ui.test.runDesktopComposeUiTest
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
+import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.KodeMirror
 import com.monkopedia.kodemirror.view.hasHoverTooltips
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -44,8 +47,10 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalTestApi::class)
 class LintGutterHoverTest {
 
-    @Test
-    fun gutterTooltipWaitsForHoverTime() = runDesktopComposeUiTest {
+    /** Mounts [extensions] over "hello world", sets one 0-2 error and hovers past line 1's end. */
+    private fun DesktopComposeUiTest.hoverPastTheDiagnostic(
+        vararg extensions: Extension
+    ): EditorSession {
         lateinit var session: EditorSession
         setContent {
             session = remember {
@@ -53,12 +58,7 @@ class LintGutterHoverTest {
                     EditorState.create(
                         EditorStateConfig(
                             doc = "hello world".asDoc(),
-                            extensions = ExtensionList(
-                                listOf(
-                                    lintDisplay(),
-                                    lintGutter(LintGutterConfig(hoverTime = 1000))
-                                )
-                            )
+                            extensions = ExtensionList(extensions.toList())
                         )
                     )
                 )
@@ -74,9 +74,28 @@ class LintGutterHoverTest {
         // Past the end of the first line: outside the diagnostic, so only the gutter's
         // line-wide tooltip can answer.
         onRoot().performMouseInput { moveTo(Offset(width - 5f, 5f)) }
+        return session
+    }
+
+    @Test
+    fun gutterTooltipWaitsForHoverTime() = runDesktopComposeUiTest {
+        val session =
+            hoverPastTheDiagnostic(lintDisplay(), lintGutter(LintGutterConfig(hoverTime = 1000)))
         mainClock.advanceTimeBy(500)
         assertFalse(hasHoverTooltips(session), "tooltip shown before hoverTime elapsed")
         mainClock.advanceTimeBy(600)
         assertTrue(hasHoverTooltips(session), "tooltip not shown after hoverTime elapsed")
+    }
+
+    @Test
+    fun gutterTooltipIgnoresTheLinterMarkerFilter() = runDesktopComposeUiTest {
+        // Upstream's gutter reads its own field, so LintConfig.markerFilter does not hide it.
+        val session = hoverPastTheDiagnostic(
+            lintDisplay(LintConfig(markerFilter = { emptyList() })),
+            lintGutter(LintGutterConfig(hoverTime = 300))
+        )
+        mainClock.advanceTimeBy(400)
+        assertEquals(0, diagnosticCount(session.state))
+        assertTrue(hasHoverTooltips(session), "gutter tooltip hidden by the linter's markerFilter")
     }
 }
