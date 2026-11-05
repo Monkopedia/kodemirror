@@ -19,8 +19,10 @@
 package com.monkopedia.kodemirror.lint
 
 import androidx.compose.ui.text.SpanStyle
+import com.monkopedia.kodemirror.state.ChangeSet
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
+import com.monkopedia.kodemirror.state.MapMode
 import com.monkopedia.kodemirror.state.RangeSet
 import com.monkopedia.kodemirror.state.RangeSetBuilder
 import com.monkopedia.kodemirror.state.StateEffect
@@ -55,18 +57,26 @@ internal class LintStateValue(val diagnostics: List<Diagnostic>, val decorations
     companion object {
         val empty = LintStateValue(emptyList(), RangeSet.empty())
 
+        /**
+         * Clamp [diagnostics] to the document, as upstream `LintState.init` does: a diagnostic
+         * starting past the end is dropped, one ending past it is cut off at the end. The clamped
+         * list is what gets stored, so later edits map positions that are in range.
+         */
         fun build(
             diagnostics: List<Diagnostic>,
             docLength: Int,
             theme: EditorTheme
         ): LintStateValue {
-            if (diagnostics.isEmpty()) return empty
             val docEnd = DocPos(docLength)
-            val sorted = diagnostics.sortedBy { it.from }
+            val clamped = diagnostics
+                .filter { it.from <= docEnd }
+                .map { if (it.to > docEnd) it.copy(to = docEnd) else it }
+                .sortedWith(compareBy({ it.from }, { it.to }))
+            if (clamped.isEmpty()) return empty
             val builder = RangeSetBuilder<Decoration>()
-            for (diag in sorted) {
-                val from = maxOf(DocPos.ZERO, minOf(diag.from, docEnd))
-                val to = maxOf(from, minOf(diag.to, docEnd))
+            for (diag in clamped) {
+                val from = maxOf(DocPos.ZERO, diag.from)
+                val to = maxOf(from, diag.to)
                 if (from < to) {
                     val color = when (diag.severity) {
                         Severity.HINT -> theme[lintHintColor]
@@ -87,9 +97,24 @@ internal class LintStateValue(val diagnostics: List<Diagnostic>, val decorations
                     )
                 }
             }
-            return LintStateValue(sorted, builder.finish())
+            return LintStateValue(clamped, builder.finish())
         }
     }
+}
+
+/**
+ * Map [diag] through [changes] the way upstream maps its decoration: a range is an exclusive mark
+ * that is dropped once it collapses; a point (`from == to`) is a widget that stays before text
+ * inserted at it and is dropped only when a deletion spans it.
+ */
+private fun mapDiagnostic(diag: Diagnostic, changes: ChangeSet): Diagnostic? {
+    if (diag.from == diag.to) {
+        val pos = changes.mapPos(diag.from, -1, MapMode.TrackDel) ?: return null
+        return diag.copy(from = pos, to = pos)
+    }
+    val newFrom = changes.mapPos(diag.from, 1)
+    val newTo = changes.mapPos(diag.to, -1)
+    return if (newFrom < newTo) diag.copy(from = newFrom, to = newTo) else null
 }
 
 /** State field tracking diagnostics and their decorations. */
@@ -111,15 +136,7 @@ internal val lintState: StateField<LintStateValue> = StateField.define(
             }
             if (result === value && tr.docChanged) {
                 // Map existing diagnostics through changes
-                val mapped = result.diagnostics.mapNotNull { diag ->
-                    val newFrom = tr.changes.mapPos(diag.from, 1)
-                    val newTo = tr.changes.mapPos(diag.to, -1)
-                    if (newFrom < newTo) {
-                        diag.copy(from = newFrom, to = newTo)
-                    } else {
-                        null
-                    }
-                }
+                val mapped = result.diagnostics.mapNotNull { mapDiagnostic(it, tr.changes) }
                 result = LintStateValue.build(mapped, tr.newDoc.length, theme)
             }
             result
