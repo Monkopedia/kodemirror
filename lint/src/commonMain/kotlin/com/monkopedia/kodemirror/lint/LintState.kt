@@ -46,6 +46,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -294,10 +295,12 @@ private const val BATCH_TIMEOUT_MS = 200L
 internal class LintPlugin(private val view: EditorSession) : PluginValue {
     private val job = SupervisorJob(view.coroutineScope.coroutineContext[Job])
     private val scope = CoroutineScope(view.coroutineScope.coroutineContext + job)
-    private var lintJob: Job? = null
 
-    /** True while a run is scheduled but its delay has not yet passed. */
-    private var pending = false
+    /** The scheduled run, while its delay has not yet passed. */
+    private var timer: Job? = null
+
+    /** Parent of the runs whose sources are in flight; a doc change makes their results stale. */
+    private val runs = SupervisorJob(job)
 
     init {
         schedule()
@@ -308,27 +311,28 @@ internal class LintPlugin(private val view: EditorSession) : PluginValue {
             tr.effects.any { it.asType(forceLintEffect) != null }
         }
         if (forced) {
-            if (pending) launchRun(waitMs = 0)
+            if (timer != null) startRun(waitMs = 0)
             return
         }
-        if (update.docChanged ||
-            update.state.facet(lintConfig) != update.startState.facet(lintConfig)
-        ) {
+        if (update.docChanged) {
+            runs.cancelChildren()
+            schedule()
+        } else if (update.state.facet(lintConfig) != update.startState.facet(lintConfig)) {
+            // Like upstream, a config change lints again but lets a run in flight land.
             schedule()
         }
     }
 
     private fun schedule() {
-        launchRun(waitMs = view.state.facet(lintConfig).delay)
+        startRun(waitMs = view.state.facet(lintConfig).delay)
     }
 
-    private fun launchRun(waitMs: Long) {
-        lintJob?.cancel()
-        pending = true
-        lintJob = scope.launch {
+    private fun startRun(waitMs: Long) {
+        timer?.cancel()
+        timer = scope.launch {
             delay(waitMs)
-            pending = false
-            runSources()
+            timer = null
+            scope.launch(runs) { runSources() }
         }
     }
 
