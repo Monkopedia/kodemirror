@@ -841,4 +841,47 @@ class EditorStateTest {
             tr.effects.map { e -> if (e.asType(eff) != null) e.value else 0 }.joinToString(",")
         )
     }
+
+    // Expected values from @codemirror/state 6.5.4 (#384): a transaction that only changes a
+    // cursor's assoc or bidiLevel still produces the new selection in the new state.
+    @Test
+    fun selectionUpdateChangingOnlyAssocOrBidiLevelIsApplied() {
+        val start = EditorState.create(
+            EditorStateConfig(
+                doc = "hello world".asDoc(),
+                selection = EditorSelection.create(
+                    listOf(EditorSelection.cursor(DocPos(5), assoc = -1))
+                ).asSpec()
+            )
+        )
+        val assocTr = start.update(
+            TransactionSpec(
+                selection = EditorSelection.create(
+                    listOf(EditorSelection.cursor(DocPos(5), assoc = 1))
+                ).asSpec()
+            )
+        )
+        assertEquals(1, assocTr.state.selection.main.assoc)
+        assertNotSame(start, assocTr.state)
+
+        val bidiTr = start.update(
+            TransactionSpec(
+                selection = EditorSelection.create(
+                    listOf(EditorSelection.cursor(DocPos(5), assoc = -1, bidiLevel = 1))
+                ).asSpec()
+            )
+        )
+        assertEquals(1, bidiTr.state.selection.main.bidiLevel)
+        assertNotSame(start, bidiTr.state)
+
+        // Control: an identical selection still reuses the start state.
+        val sameTr = start.update(
+            TransactionSpec(
+                selection = EditorSelection.create(
+                    listOf(EditorSelection.cursor(DocPos(5), assoc = -1))
+                ).asSpec()
+            )
+        )
+        assertSame(start, sameTr.state)
+    }
 }

@@ -141,7 +141,11 @@ class SelectionRange private constructor(
     fun eq(other: SelectionRange, includeAssoc: Boolean): Boolean = anchor == other.anchor &&
         head == other.head &&
         goalColumn == other.goalColumn &&
-        (!includeAssoc || empty || assoc == other.assoc)
+        (!includeAssoc || !empty || assoc == other.assoc)
+
+    /** True when every field, including assoc and bidiLevel, matches [other]. */
+    internal fun identical(other: SelectionRange): Boolean =
+        from == other.from && to == other.to && flags == other.flags
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -239,6 +243,11 @@ class EditorSelection private constructor(
         }
         return true
     }
+
+    /** True when every range is [identical][SelectionRange.identical] to its counterpart. */
+    internal fun identical(other: EditorSelection): Boolean = mainIndex == other.mainIndex &&
+        ranges.size == other.ranges.size &&
+        ranges.indices.all { ranges[it].identical(other.ranges[it]) }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

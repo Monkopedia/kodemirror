@@ -203,11 +203,12 @@ class EditorState private constructor(
             InitMode.Update(tr),
             tr
         )
-        // If nothing actually changed (same doc, same selection, no slot
-        // reported Changed), reuse the old state object. This prevents
+        // If nothing actually changed (same doc, a selection identical
+        // down to assoc and bidiLevel, no slot reported Changed), reuse
+        // the old state object; upstream never does. This prevents
         // unnecessary mutableStateOf updates that trigger recomposition
         // in Compose when the state is observed via property delegation.
-        if (isNormalUpdate && !tr.docChanged && sel == selection) {
+        if (isNormalUpdate && !tr.docChanged && sel.identical(selection)) {
             val newState = tr._state!!
             if (newState.status.none { it.isChanged }) {
                 tr._state = this
