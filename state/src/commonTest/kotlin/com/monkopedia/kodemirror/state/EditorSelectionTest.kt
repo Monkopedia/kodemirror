@@ -20,6 +20,8 @@ package com.monkopedia.kodemirror.state
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class EditorSelectionTest {
 
@@ -92,5 +94,21 @@ class EditorSelectionTest {
             "10/0",
             sel.ranges.joinToString(",") { "${it.anchor.value}/${it.head.value}" }
         )
+    }
+
+    // Expected values from @codemirror/state 6.5.4 (#384): assoc only matters for cursors.
+    @Test
+    fun eqWithAssocComparesAssocOnlyForCursors() {
+        val before = EditorSelection.cursor(DocPos(5), assoc = -1)
+        val after = EditorSelection.cursor(DocPos(5), assoc = 1)
+        assertFalse(before.eq(after, includeAssoc = true))
+        assertTrue(before.eq(after, includeAssoc = false))
+
+        // Range 2-5 with assoc -1 vs +1: flags = assoc bit | unset bidi | no goal column.
+        val rangeBefore = SelectionRange.create(DocPos(2), DocPos(5), 8 or 7 or (0xffffff shl 6))
+        val rangeAfter = SelectionRange.create(DocPos(2), DocPos(5), 16 or 7 or (0xffffff shl 6))
+        assertEquals(-1, rangeBefore.assoc)
+        assertEquals(1, rangeAfter.assoc)
+        assertTrue(rangeBefore.eq(rangeAfter, includeAssoc = true))
     }
 }
