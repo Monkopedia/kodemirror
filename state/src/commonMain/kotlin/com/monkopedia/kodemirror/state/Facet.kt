@@ -439,8 +439,7 @@ class StateField<Value> private constructor(
         val init = state.facet(initField).find {
             it.field === this
         }
-        return (init?.create?.let { it(state) as Value })
-            ?: createF(state)
+        return if (init != null) init.create(state) as Value else createF(state)
     }
 
     @Suppress("UNCHECKED_CAST")
