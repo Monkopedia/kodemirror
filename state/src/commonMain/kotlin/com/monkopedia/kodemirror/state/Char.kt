@@ -150,21 +150,17 @@ private fun nextClusterBreak(str: String, pos: Int, includeExtending: Boolean): 
 }
 
 private fun prevClusterBreak(str: String, pos: Int, includeExtending: Boolean): Int {
-    if (pos == 0) return 0
-    // Grapheme clusters are bounded in length. Use a fixed lookback window of 16 code
-    // points (32 chars, since surrogate pairs occupy 2 chars each) and then scan forward
-    // with nextClusterBreak from the window start to find the last cluster break < pos.
-    val windowStart = maxOf(pos - 32, 0)
-    var clusterStart = windowStart
-    var result = windowStart
-    while (clusterStart < pos) {
-        val clusterEnd = nextClusterBreak(str, clusterStart, includeExtending)
-        if (clusterEnd >= pos) break
-        result = clusterEnd
-        if (clusterEnd == clusterStart) break // safety: avoid infinite loop
-        clusterStart = clusterEnd
+    // Port of upstream: each probe scans forward only to the first break after pos - 2, so
+    // this costs O(1) for ordinary text and grows only with the length of the cluster at pos.
+    // A fixed lookback window (#10) returned a mid-cluster position for clusters longer than
+    // the window (#384).
+    var p = pos
+    while (p > 1) {
+        val found = nextClusterBreak(str, p - 2, includeExtending)
+        if (found < p) return found
+        p--
     }
-    return result
+    return 0
 }
 
 internal fun isSurrogateLow(ch: Int): Boolean = ch in 0xDC00..0xDFFF
