@@ -21,6 +21,7 @@ package com.monkopedia.kodemirror.state
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNull
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
@@ -319,5 +320,27 @@ class FacetTest {
             TransactionSpec(effects = listOf(StateEffect.appendConfig.of(bool.of(true))))
         ).state
         assertSame(st1.facet(f), st2.facet(f))
+    }
+
+    // Expected values from @codemirror/state 6.5.4 (#384): an init that returns null is
+    // honoured instead of falling back to the field's create.
+    @Test
+    fun fieldInitReturningNullIsHonoured() {
+        val field = StateField.define(
+            StateFieldSpec<String?>(create = { "default" }, update = { value, _ -> value })
+        )
+        assertNull(
+            EditorState.create(
+                EditorStateConfig(
+                    extensions = field.init {
+                        null
+                    }
+                )
+            ).field(field)
+        )
+        assertEquals(
+            "custom",
+            EditorState.create(EditorStateConfig(extensions = field.init { "custom" })).field(field)
+        )
     }
 }
