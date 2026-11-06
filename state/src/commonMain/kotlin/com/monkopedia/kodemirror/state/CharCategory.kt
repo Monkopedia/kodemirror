@@ -33,38 +33,29 @@ enum class CharCategory {
     Other
 }
 
-private val nonASCIISingleCaseWordChar = Regex(
-    "[\\u00df\\u0587\\u0590-\\u05f4\\u0600-\\u06ff\\u3040-\\u309f\\u30a0-\\u30ff" +
-        "\\u3400-\\u4db5\\u4e00-\\u9fcc\\uac00-\\ud7af]"
-)
+// JavaScript's `\s`, spelled out rather than as a Regex: Java's `\s` is ASCII-only, and the
+// Kotlin/Wasm regex engine classifies astral code points by their low 16 bits.
+private fun isSpace(ch: Char): Boolean = ch in '\t'..'\r' ||
+    ch == ' ' ||
+    ch == '\u00a0' ||
+    ch == '\u1680' ||
+    ch in '\u2000'..'\u200a' ||
+    ch == '\u2028' ||
+    ch == '\u2029' ||
+    ch == '\u202f' ||
+    ch == '\u205f' ||
+    ch == '\u3000' ||
+    ch == '\ufeff'
 
-private val wordChar: Regex? = try {
-    Regex("[\\p{Alphabetic}\\p{Number}_]")
-} catch (_: Exception) {
-    null
-}
-
-internal fun hasWordChar(str: String): Boolean {
-    wordChar?.let { return it.containsMatchIn(str) }
-    for (element in str) {
-        val ch = element
-        if (
-            Regex("\\w").matches(ch.toString()) ||
-            ch > '\u0080' &&
-            (
-                ch.uppercaseChar() != ch.lowercaseChar() ||
-                    nonASCIISingleCaseWordChar.matches(ch.toString())
-                )
-        ) {
-            return true
-        }
-    }
-    return false
-}
+/**
+ * Whether [str] contains a character upstream's `[\p{Alphabetic}\p{Number}_]` matches. Per
+ * platform, since no target's Kotlin Regex supports that pattern.
+ */
+internal expect fun hasWordChar(str: String): Boolean
 
 fun makeCategorizer(wordChars: String): (String) -> CharCategory = { char: String ->
     when {
-        !Regex("\\S").containsMatchIn(char) -> CharCategory.Space
+        char.all(::isSpace) -> CharCategory.Space
         hasWordChar(char) -> CharCategory.Word
         wordChars.any { char.contains(it) } -> CharCategory.Word
         else -> CharCategory.Other
