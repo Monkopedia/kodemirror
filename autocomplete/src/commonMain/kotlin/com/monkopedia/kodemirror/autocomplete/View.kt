@@ -55,9 +55,11 @@ import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.LanguageDataKey
-import com.monkopedia.kodemirror.state.LineNumber
 import com.monkopedia.kodemirror.state.Slot
 import com.monkopedia.kodemirror.state.TransactionSpec
+import com.monkopedia.kodemirror.state.codePointAt
+import com.monkopedia.kodemirror.state.codePointSize
+import com.monkopedia.kodemirror.state.fromCodePoint
 import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.KeyBinding
 import com.monkopedia.kodemirror.view.LocalContentTextStyle
@@ -519,7 +521,7 @@ private fun typeIcon(type: String): String = when (type) {
 private val wordLabel = Regex("\\w+")
 
 /** Characters that must be escaped inside a regex character class on every platform. */
-private const val CLASS_SPECIAL = "\\]-[^"
+private const val CLASS_SPECIAL = "\\]-[^&"
 
 private fun escapeForClass(c: Char): String = if (c in CLASS_SPECIAL) "\\$c" else "$c"
 
@@ -563,36 +565,68 @@ fun completeFromList(list: List<Completion>): CompletionSource {
 private const val MAX_WORD_LIST = 2000
 
 /**
- * A completion source that provides the words in the document (letters,
- * combining marks, digits, `_` and the language's `wordChars`), except the one being typed at
- * the cursor.
+ * The runs of upstream's `[\p{Alphabetic}\p{Number}_<wordChars>]+` in [text]. Per platform, since
+ * no target's Kotlin Regex supports that pattern, and Kotlin/Wasm's classifies astral code points
+ * by their low 16 bits (U+1F914 would match `\p{L}` as U+F914).
+ */
+internal expect fun findWords(text: String, wordChars: String): List<IntRange>
+
+/** [findWords] for a platform that classifies by code point with [isWordChar]. */
+internal inline fun wordRuns(
+    text: String,
+    wordChars: String,
+    isWordChar: (codePoint: Int) -> Boolean
+): List<IntRange> {
+    val runs = mutableListOf<IntRange>()
+    var runStart = -1
+    var i = 0
+    while (i < text.length) {
+        val cp = codePointAt(text, i)
+        if (cp == '_'.code || isWordChar(cp) || fromCodePoint(cp) in wordChars) {
+            if (runStart < 0) runStart = i
+        } else if (runStart >= 0) {
+            runs += runStart until i
+            runStart = -1
+        }
+        i += codePointSize(cp)
+    }
+    if (runStart >= 0) runs += runStart until text.length
+    return runs
+}
+
+/**
+ * A completion source that provides the words in the document (letters, digits, `_` and the
+ * language's `wordChars`), except the one being typed at the cursor.
  */
 val completeAnyWord: CompletionSource = { ctx ->
-    val wordChars =
+    // Scanning the whole document at once, so leave out `\n`: upstream scans line by line.
+    val wordChars = (
         ctx.state.languageDataAt(LanguageDataKey.WORD_CHARS, ctx.pos).firstOrNull() ?: ""
-    // Upstream uses \p{Alphabetic}, which has no spelling common to every target
-    // (`\p{IsAlphabetic}` on the JVM, `\p{Alphabetic}` in JS). Letters plus combining
-    // marks plus numbers is a slight superset of it that all of them accept, and keeps
-    // marks such as Devanagari vowel signs inside the word.
-    val word = Regex("[\\p{L}\\p{M}\\p{N}_${wordChars.map(::escapeForClass).joinToString("")}]+")
-    val token = ctx.matchBefore(word)
+        ).replace("\n", "")
+    val doc = ctx.state.doc
+    val start = maxOf(doc.lineAt(ctx.pos).from, ctx.pos - MATCH_BEFORE_RANGE)
+    val before = doc.sliceString(start, ctx.pos)
+    val token = findWords(before, wordChars).lastOrNull()?.takeIf { it.last == before.length - 1 }
     if (token == null && !ctx.explicit) {
         null
     } else {
-        val from = token?.from ?: ctx.pos
-        val doc = ctx.state.doc
+        val from = token?.let { start + it.first } ?: ctx.pos
+        val text = doc.toString()
         val seen = mutableSetOf<String>()
         val options = mutableListOf<Completion>()
-        lines@ for (n in 1..doc.lines) {
-            val line = doc.line(LineNumber(n))
-            for (m in word.findAll(line.text)) {
-                if (line.from + m.range.first != from && seen.add(m.value)) {
-                    options += Completion(label = m.value, type = "text")
-                    if (options.size >= MAX_WORD_LIST) break@lines
-                }
+        for (range in findWords(text, wordChars)) {
+            val word = text.substring(range)
+            if (range.first != from.value && seen.add(word)) {
+                options += Completion(label = word, type = "text")
+                if (options.size >= MAX_WORD_LIST) break
             }
         }
-        CompletionResult(from = from, options = options, validFor = word)
+        // validFor must be a Regex, so restrict it to the BMP, where every engine classifies
+        // correctly, and to letters and numbers, a subset of upstream's class. Text it rejects
+        // only re-runs this source, which then gets the word right.
+        val escaped = wordChars.map(::escapeForClass).joinToString("")
+        val validFor = Regex("[\\p{L}\\p{N}_$escaped&&[\\u0000-\\uffff]]+")
+        CompletionResult(from = from, options = options, validFor = validFor)
     }
 }
 

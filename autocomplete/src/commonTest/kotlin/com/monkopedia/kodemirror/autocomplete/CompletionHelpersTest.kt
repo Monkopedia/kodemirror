@@ -24,10 +24,13 @@ import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.asDoc
+import com.monkopedia.kodemirror.state.languageData
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /**
  * [completeFromList], [completeAnyWord] and [insertCompletionText] against the
@@ -121,5 +124,74 @@ class CompletionHelpersTest {
         assertNotNull(result)
         assertEquals(DocPos(6), result.from)
         assertEquals(listOf("हिंदी"), result.options.map { it.label })
+    }
+
+    // Expected values from @codemirror/autocomplete 6.20.1 (#407). Kotlin/Wasm's Regex engine
+    // classifies astral code points by their low 16 bits, so U+1F914 read as a letter there.
+    @Test
+    fun completeAnyWordDoesNotTreatEmojiAsAWord() {
+        val doc = "\ud83e\udd14\ud83e\udd14 bar \ud83e\udd14"
+        assertNull(completeAnyWord(context(doc)))
+        val result = completeAnyWord(context(doc, explicit = true))
+        assertNotNull(result)
+        assertEquals(DocPos(11), result.from)
+        assertEquals(listOf("bar"), result.options.map { it.label })
+        val validFor = assertNotNull(result.validFor)
+        assertFalse(validFor.matches("\ud83e\udd14"))
+        assertFalse(validFor.matches("ab\ud83e\udd14"))
+    }
+
+    @Test
+    fun completeAnyWordSplitsWordsAtAnEmoji() {
+        val result = completeAnyWord(context("a\ud83e\udd14b c"))
+        assertNotNull(result)
+        assertEquals(DocPos(5), result.from)
+        assertEquals(listOf("a", "b"), result.options.map { it.label })
+    }
+
+    @Test
+    fun completeAnyWordTreatsAstralLettersAsWordCharacters() {
+        // U+20000 U+20001, CJK Extension B.
+        val result = completeAnyWord(context("\ud840\udc00\ud840\udc01 x \ud840\udc00"))
+        assertNotNull(result)
+        assertEquals(DocPos(7), result.from)
+        assertEquals(listOf("\ud840\udc00\ud840\udc01", "x"), result.options.map { it.label })
+    }
+
+    @Test
+    fun completeAnyWordKeepsThaiVowelsInsideAWord() {
+        val result =
+            completeAnyWord(context("\u0e20\u0e32\u0e29\u0e32\u0e44\u0e17\u0e22 \u0e20\u0e32"))
+        assertNotNull(result)
+        assertEquals(DocPos(8), result.from)
+        assertEquals(
+            listOf("\u0e20\u0e32\u0e29\u0e32\u0e44\u0e17\u0e22"),
+            result.options.map { it.label }
+        )
+    }
+
+    @Test
+    fun completeAnyWordScansEveryLineWithTheLanguageWordChars() {
+        val doc = "foo-bar a&&b\n\$x baz\n\ud83e\udd14\ud840\udc00y fo-"
+        val s = EditorState.create(
+            EditorStateConfig(
+                doc = doc.asDoc(),
+                selection = SelectionSpec.EditorSelectionSpec(
+                    EditorSelection.single(DocPos(doc.length))
+                ),
+                extensions = languageData.of { _, _, _ -> listOf(mapOf("wordChars" to "-&\$")) }
+            )
+        )
+        val result = completeAnyWord(CompletionContext(s, DocPos(doc.length), false))
+        assertNotNull(result)
+        assertEquals(DocPos(26), result.from)
+        assertEquals(
+            listOf("foo-bar", "a&&b", "\$x", "baz", "\ud840\udc00y"),
+            result.options.map { it.label }
+        )
+        val validFor = assertNotNull(result.validFor)
+        assertTrue(validFor.matches("fo-x"))
+        assertTrue(validFor.matches("a&b"))
+        assertFalse(validFor.matches("a b"))
     }
 }

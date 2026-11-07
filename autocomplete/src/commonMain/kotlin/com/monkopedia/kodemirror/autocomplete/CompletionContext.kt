@@ -24,7 +24,7 @@ import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 
 /** How far back [CompletionContext.matchBefore] looks, as upstream. */
-private const val MATCH_BEFORE_RANGE = 250
+internal const val MATCH_BEFORE_RANGE = 250
 
 /** Result of [CompletionContext.matchBefore]. */
 data class MatchBeforeResult(val from: DocPos, val to: DocPos, val text: String)
