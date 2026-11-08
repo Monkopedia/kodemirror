@@ -47,7 +47,11 @@ class AutocompletionCommandsTest {
         )
     }
 
-    private fun createView(doc: String, cursor: Int = doc.length): EditorSession {
+    private fun createView(
+        doc: String,
+        cursor: Int = doc.length,
+        readOnly: Boolean = false
+    ): EditorSession {
         val config = CompletionConfig(override = listOf(testSource))
         val state = EditorState.create(
             EditorStateConfig(
@@ -56,7 +60,8 @@ class AutocompletionCommandsTest {
                 extensions = ExtensionList(
                     listOf(
                         completionConfig.of(config),
-                        completionStateField
+                        completionStateField,
+                        EditorState.readOnly.of(readOnly)
                     )
                 )
             )
@@ -86,6 +91,18 @@ class AutocompletionCommandsTest {
         startCompletion(view)
         assertTrue(acceptCompletion(view))
         assertEquals("apple", view.state.doc.toString())
+    }
+
+    // Upstream 6.20.1 acceptCompletion returns false on a read-only state and
+    // dispatches nothing, leaving the list open (#394).
+    @Test
+    fun acceptCompletionRefusesReadOnlyState() {
+        val view = createView("", readOnly = true)
+        startCompletion(view)
+        assertEquals("active", completionStatus(view.state))
+        assertFalse(acceptCompletion(view))
+        assertEquals("", view.state.doc.toString())
+        assertEquals("active", completionStatus(view.state))
     }
 
     @Test

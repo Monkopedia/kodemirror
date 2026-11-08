@@ -113,7 +113,7 @@ val closeCompletion: (EditorSession) -> Boolean = { view ->
 /** Accept the currently selected completion. */
 val acceptCompletion: (EditorSession) -> Boolean = { view ->
     val cs = view.state.field(completionStateField, require = false)
-    if (cs != null && cs.open && cs.filtered.isNotEmpty()) {
+    if (!view.state.readOnly && cs != null && cs.open && cs.filtered.isNotEmpty()) {
         val item = cs.filtered[cs.selected]
         // Apply over the option's OWN source result range — sources can return
         // different from..to, so we must not assume a single shared result (#137).
