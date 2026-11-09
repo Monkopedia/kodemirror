@@ -159,6 +159,24 @@ class CompletionHelpersTest {
     }
 
     @Test
+    fun completeAnyWordTreatsEnclosedLettersAsWordCharacters() {
+        // U+1F170 U+1F171, negative squared A and B: Alphabetic but category So (#408).
+        val result = completeAnyWord(context("\ud83c\udd70\ud83c\udd71 x \ud83c\udd70"))
+        assertNotNull(result)
+        assertEquals(DocPos(7), result.from)
+        assertEquals(listOf("\ud83c\udd70\ud83c\udd71", "x"), result.options.map { it.label })
+    }
+
+    @Test
+    fun completeAnyWordSplitsWordsAtANonAlphabeticSquaredSymbol() {
+        // U+1F14A squared HV sits inside the enclosed-letter block but is not Alphabetic.
+        val result = completeAnyWord(context("a\ud83c\udd4ab c"))
+        assertNotNull(result)
+        assertEquals(DocPos(5), result.from)
+        assertEquals(listOf("a", "b"), result.options.map { it.label })
+    }
+
+    @Test
     fun completeAnyWordKeepsThaiVowelsInsideAWord() {
         val result =
             completeAnyWord(context("\u0e20\u0e32\u0e29\u0e32\u0e44\u0e17\u0e22 \u0e20\u0e32"))

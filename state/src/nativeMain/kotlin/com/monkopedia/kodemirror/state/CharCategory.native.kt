@@ -26,14 +26,15 @@ private val alphanumeric = NSCharacterSet.alphanumericCharacterSet
 // measured on Wasm) classifies astral code points by their low 16 bits, so use Foundation's
 // L/M/N set by code point. Against upstream's `[\p{Alphabetic}\p{Number}_]` this
 // is a slight superset: it also counts non-Alphabetic combining marks such as U+0301 and
-// viramas. The circled letters (U+24B6-U+24E9) are Alphabetic but category So, so they are
-// added; the squared letters at U+1F130-U+1F189 are not.
+// viramas. The only Alphabetic code points outside L/M/N are the enclosed letters below
+// (category So), identical in Unicode 10, 15 and 17. :autocomplete's FindWords.native.kt keeps
+// the same list.
 internal actual fun hasWordChar(str: String): Boolean {
     var i = 0
     while (i < str.length) {
         val cp = codePointAt(str, i)
         if (cp == '_'.code ||
-            cp in 0x24b6..0x24e9 ||
+            isEnclosedLetter(cp) ||
             alphanumeric.longCharacterIsMember(cp.toUInt())
         ) {
             return true
@@ -42,3 +43,9 @@ internal actual fun hasWordChar(str: String): Boolean {
     }
     return false
 }
+
+// Circled, squared, negative circled and negative squared Latin letters.
+private fun isEnclosedLetter(cp: Int): Boolean = cp in 0x24b6..0x24e9 ||
+    cp in 0x1f130..0x1f149 ||
+    cp in 0x1f150..0x1f169 ||
+    cp in 0x1f170..0x1f189

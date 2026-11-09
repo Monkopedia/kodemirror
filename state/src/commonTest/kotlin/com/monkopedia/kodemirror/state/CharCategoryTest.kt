@@ -83,6 +83,28 @@ class CharCategoryTest {
         }
     }
 
+    // Expected values from @codemirror/state 6.5.4 (#408). These letters are Alphabetic but
+    // category So, so a general-category L/M/N table misses them.
+    @Test
+    fun categorisesEnclosedLettersAsWord() {
+        val cat = mk().charCategorizer(DocPos.ZERO)
+        for (ch in listOf(
+            "\ud83c\udd30", // U+1F130 squared Latin capital A
+            "\ud83c\udd49", // U+1F149 squared Latin capital Z
+            "\ud83c\udd50", // U+1F150 negative circled Latin capital A
+            "\ud83c\udd69", // U+1F169 negative circled Latin capital Z
+            "\ud83c\udd70", // U+1F170 negative squared Latin capital A
+            "\ud83c\udd89", // U+1F189 negative squared Latin capital Z
+            "\u24ea" // circled digit zero
+        )) {
+            assertEquals(CharCategory.Word, cat(ch), "category of $ch")
+        }
+        // U+1F14A squared HV and U+1F18A crossed negative squared P are not Alphabetic.
+        for (ch in listOf("\ud83c\udd4a", "\ud83c\udd8a")) {
+            assertEquals(CharCategory.Other, cat(ch), "category of $ch")
+        }
+    }
+
     @Test
     fun categorisesUnicodeSpacesAsSpace() {
         val cat = mk().charCategorizer(DocPos.ZERO)
@@ -107,5 +129,6 @@ class CharCategoryTest {
         assertEquals("0-5", wordAt("\u0ba4\u0bae\u0bbf\u0bb4\u0bcd \u0ba4", 2))
         assertEquals("0-2", wordAt("ab\u00a0cd", 1))
         assertEquals("3-5", wordAt("ab\u3000cd", 4))
+        assertEquals("2-6", wordAt("x \ud83c\udd30\ud83c\udd31 y", 4)) // #408
     }
 }
