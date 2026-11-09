@@ -24,8 +24,15 @@ private val alphanumeric = NSCharacterSet.alphanumericCharacterSet
 
 // Foundation's L/M/N set by code point, as :state's hasWordChar: a slight superset of
 // `\p{Alphabetic}\p{Number}` (it also counts non-Alphabetic marks such as viramas), plus the
-// circled letters, which are Alphabetic but category So.
+// enclosed letters, which are Alphabetic but category So. Keep the ranges in step with
+// :state's CharCategory.native.kt.
 internal actual fun findWords(text: String, wordChars: String): List<IntRange> =
     wordRuns(text, wordChars) { cp ->
-        cp in 0x24b6..0x24e9 || alphanumeric.longCharacterIsMember(cp.toUInt())
+        isEnclosedLetter(cp) || alphanumeric.longCharacterIsMember(cp.toUInt())
     }
+
+// Circled, squared, negative circled and negative squared Latin letters.
+private fun isEnclosedLetter(cp: Int): Boolean = cp in 0x24b6..0x24e9 ||
+    cp in 0x1f130..0x1f149 ||
+    cp in 0x1f150..0x1f169 ||
+    cp in 0x1f170..0x1f189
