@@ -36,6 +36,7 @@ import com.monkopedia.kodemirror.search.SearchQuery
 import com.monkopedia.kodemirror.search.setSearchQuery
 import com.monkopedia.kodemirror.state.ChangeDesc
 import com.monkopedia.kodemirror.state.ChangeSpec
+import com.monkopedia.kodemirror.state.CharCategory
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.LineNumber
@@ -46,6 +47,7 @@ import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asInsert
 import com.monkopedia.kodemirror.state.endPos
+import com.monkopedia.kodemirror.state.makeCategorizer
 import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.ViewUpdate
 import kotlin.math.max
@@ -84,9 +86,21 @@ internal class EventHandlers {
 // Word character test
 // ---------------------------------------------------------------------------
 
-private val wordCharRegex = Regex("[\\w\\p{L}\\p{N}_]")
+// Upstream's `[\w\p{Alphabetic}\p{Number}_]` (`u` flag) is the set :state's categorizer calls Word,
+// so reuse its per-platform test. Kotlin's own Regex has no `\p{Alphabetic}` and, on Wasm and
+// Native, reads astral code points by their low 16 bits. Word motions call this once per UTF-16
+// unit, so ASCII and lone surrogates (never word characters upstream) are answered here, keeping
+// the Wasm JS interop off the common path.
+private val wordCategorizer = makeCategorizer("")
 
-internal fun isWordChar(ch: String): Boolean = wordCharRegex.containsMatchIn(ch)
+internal fun isWordChar(ch: String): Boolean {
+    val c = ch.singleOrNull()
+    return when {
+        c != null && c < '\u0080' -> c in 'a'..'z' || c in 'A'..'Z' || c in '0'..'9' || c == '_'
+        c != null && c.isSurrogate() -> false
+        else -> wordCategorizer(ch) == CharCategory.Word
+    }
+}
 
 // ---------------------------------------------------------------------------
 // Operation tracking
