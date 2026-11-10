@@ -29,11 +29,6 @@ import kotlin.math.min
 internal val validMarks = listOf("<", ">")
 internal val validRegisters = mutableListOf("-", "\"", ".", ":", "_", "/", "+")
 internal val latinCharRegex = Regex("^\\w$")
-internal val upperCaseChars: Regex = try {
-    Regex("^[\\p{Lu}]$")
-} catch (_: Throwable) {
-    Regex("^[A-Z]$")
-}
 
 internal val numberRegex = Regex("[\\d]")
 
@@ -151,7 +146,17 @@ internal fun isLine(cm: VimEditor, line: Int): Boolean = line in cm.firstLine().
 
 internal fun isLowerCase(k: String): Boolean = Regex("^[a-z]$").matches(k)
 
-internal fun isUpperCase(k: String): Boolean = upperCaseChars.matches(k)
+// Upstream's `^[\p{Lu}]$` (`u` flag): exactly one code point, of category Lu. Kotlin's Char tables
+// are exact for the BMP; astral code points go to the platform, since Kotlin's Regex on Wasm and
+// Native reads them by their low 16 bits.
+internal fun isUpperCase(k: String): Boolean = when {
+    k.length == 1 -> k[0].category == CharCategory.UPPERCASE_LETTER
+    k.length == 2 && k[0].isHighSurrogate() && k[1].isLowSurrogate() -> isAstralUpperCase(k)
+    else -> false
+}
+
+/** Whether the single astral code point [k] (one surrogate pair) has general category Lu. */
+internal expect fun isAstralUpperCase(k: String): Boolean
 
 internal fun isNumber(k: String): Boolean = numberRegex.containsMatchIn(k)
 
