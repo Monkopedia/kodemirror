@@ -303,4 +303,27 @@ class CompletionHelpersTest {
             assertEquals((0 until 800).map { "b" + it.toString().padStart(5, '0') }, words(b))
         }
     }
+
+    @Test
+    fun completeAnyWordKeepsWordListsForDifferentWordCharsApart() {
+        // One state whose language data gives `-` as a word character only in the first half.
+        val doc = (0 until 100).joinToString("") { l ->
+            (0 until 6).joinToString(" ", postfix = "\n") { j ->
+                "k" + (l * 6 + j).toString().padStart(5, '0') + "-x"
+            }
+        }
+        val s = EditorState.create(
+            EditorStateConfig(
+                doc = doc.asDoc(),
+                extensions = languageData.of { _, pos, _ ->
+                    listOf(mapOf("wordChars" to if (pos.value < doc.length / 2) "-" else ""))
+                }
+            )
+        )
+        fun k(n: Int) = "k" + n.toString().padStart(5, '0')
+        val hyphenated = (1 until 600).map { k(it) + "-x" }
+        assertEquals(hyphenated, words(s, 0))
+        assertEquals(listOf(k(0), "x") + (1 until 600).map(::k), words(s))
+        assertEquals(hyphenated, words(s, 0))
+    }
 }
