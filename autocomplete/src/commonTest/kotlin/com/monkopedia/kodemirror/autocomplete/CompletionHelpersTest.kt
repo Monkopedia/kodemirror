@@ -18,11 +18,14 @@
  */
 package com.monkopedia.kodemirror.autocomplete
 
+import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
+import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.SelectionSpec
+import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.state.languageData
 import kotlin.test.Test
@@ -211,5 +214,116 @@ class CompletionHelpersTest {
         assertTrue(validFor.matches("fo-x"))
         assertTrue(validFor.matches("a&b"))
         assertFalse(validFor.matches("a b"))
+    }
+
+    // Upstream caps each chunk of 1000+ characters at 2000 words, and the merged list of a
+    // document that spans several chunks can exceed that. Counts from @codemirror/autocomplete
+    // 6.20.1 (#411).
+    private fun distinctWords(count: Int, perLine: Int) = (0 until count).chunked(perLine)
+        .joinToString("\n") { line -> line.joinToString(" ") { "w" + it.toString(36) } }
+
+    @Test
+    fun completeAnyWordStopsALongLineAt2000Words() {
+        val result = assertNotNull(completeAnyWord(context(distinctWords(5000, 5000) + " w")))
+        assertEquals(2000, result.options.size)
+        assertEquals("w1jj", result.options.last().label)
+    }
+
+    @Test
+    fun completeAnyWordCapsEachChunkRatherThanTheDocument() {
+        val result = assertNotNull(completeAnyWord(context(distinctWords(5000, 10) + " w")))
+        assertEquals(5000, result.options.size)
+        assertEquals("w3uv", result.options.last().label)
+    }
+
+    @Test
+    fun completeAnyWordStopsSmallChunksOnceTheListIsFull() {
+        // One word per line: 32-line leaves are under 1000 characters, so they share one list.
+        val result = assertNotNull(completeAnyWord(context(distinctWords(5000, 1) + "\nw")))
+        assertEquals(2023, result.options.size)
+        assertEquals("w3r4", result.options.last().label)
+    }
+
+    // Word-cache behaviour, expected values from @codemirror/autocomplete 6.20.1 (#411). Every
+    // line is 55 characters, so the 32-line leaves all have the same length (1791).
+    private fun fixedWidthDoc(prefix: Char, lines: Int) = (0 until lines).joinToString("") { l ->
+        (0 until 8).joinToString(" ", postfix = "\n") { j ->
+            prefix + (l * 8 + j).toString().padStart(5, '0')
+        }
+    }
+
+    private fun words(s: EditorState, pos: Int = s.doc.length): List<String> =
+        assertNotNull(completeAnyWord(CompletionContext(s, DocPos(pos), true))).options.map {
+            it.label
+        }
+
+    @Test
+    fun completeAnyWordRescansAChunkAfterAnEditThatKeepsItsLength() {
+        var s = state(fixedWidthDoc('x', 100))
+        assertEquals(800, words(s).size)
+        val at = s.doc.toString().indexOf("x00042")
+        s = s.update(
+            TransactionSpec(
+                changes = ChangeSpec.Single(
+                    DocPos(at),
+                    DocPos(at + 1),
+                    InsertContent.StringContent("y")
+                )
+            )
+        ).state
+        val after = words(s)
+        assertEquals(800, after.size)
+        assertEquals(42, after.indexOf("y00042"))
+        assertFalse("x00042" in after)
+    }
+
+    @Test
+    fun completeAnyWordKeepsTheCachedChunkOfAnEarlierCall() {
+        // Upstream caches a chunk's words with the word at that call's cursor left out, so a
+        // later call on the same document still lacks it; a fresh document has it.
+        val doc = fixedWidthDoc('q', 300)
+        val s = state(doc)
+        val first = words(s, doc.indexOf("q00803"))
+        assertEquals(2304, first.size)
+        assertFalse("q00803" in first)
+        val second = words(s)
+        assertEquals(first, second)
+        val fresh = words(state(doc))
+        assertEquals(2305, fresh.size)
+        assertEquals("q02304", fresh.last())
+        assertTrue("q00803" in fresh)
+    }
+
+    @Test
+    fun completeAnyWordKeepsDocumentsWithEqualLengthChunksApart() {
+        val a = state(fixedWidthDoc('a', 100))
+        val b = state(fixedWidthDoc('b', 100))
+        repeat(2) {
+            assertEquals((0 until 800).map { "a" + it.toString().padStart(5, '0') }, words(a))
+            assertEquals((0 until 800).map { "b" + it.toString().padStart(5, '0') }, words(b))
+        }
+    }
+
+    @Test
+    fun completeAnyWordKeepsWordListsForDifferentWordCharsApart() {
+        // One state whose language data gives `-` as a word character only in the first half.
+        val doc = (0 until 100).joinToString("") { l ->
+            (0 until 6).joinToString(" ", postfix = "\n") { j ->
+                "k" + (l * 6 + j).toString().padStart(5, '0') + "-x"
+            }
+        }
+        val s = EditorState.create(
+            EditorStateConfig(
+                doc = doc.asDoc(),
+                extensions = languageData.of { _, pos, _ ->
+                    listOf(mapOf("wordChars" to if (pos.value < doc.length / 2) "-" else ""))
+                }
+            )
+        )
+        fun k(n: Int) = "k" + n.toString().padStart(5, '0')
+        val hyphenated = (1 until 600).map { k(it) + "-x" }
+        assertEquals(hyphenated, words(s, 0))
+        assertEquals(listOf(k(0), "x") + (1 until 600).map(::k), words(s))
+        assertEquals(hyphenated, words(s, 0))
     }
 }
