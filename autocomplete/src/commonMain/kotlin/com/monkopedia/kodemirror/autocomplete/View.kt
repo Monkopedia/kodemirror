@@ -56,10 +56,10 @@ import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.LanguageDataKey
 import com.monkopedia.kodemirror.state.Slot
+import com.monkopedia.kodemirror.state.Text
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.codePointAt
 import com.monkopedia.kodemirror.state.codePointSize
-import com.monkopedia.kodemirror.state.fromCodePoint
 import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.KeyBinding
 import com.monkopedia.kodemirror.view.LocalContentTextStyle
@@ -72,6 +72,7 @@ import com.monkopedia.kodemirror.view.ViewPlugin
 import com.monkopedia.kodemirror.view.ViewUpdate
 import com.monkopedia.kodemirror.view.keymap
 import com.monkopedia.kodemirror.view.showTooltip
+import kotlin.concurrent.Volatile
 import kotlinx.coroutines.launch
 
 /** Background color for the completion popup. */
@@ -564,6 +565,9 @@ fun completeFromList(list: List<Completion>): CompletionSource {
 
 private const val MAX_WORD_LIST = 2000
 
+/** Chunks of the document at least this long get their own, cached, word list. */
+private const val MIN_CACHE_LEN = 1000
+
 /**
  * The runs of upstream's `[\p{Alphabetic}\p{Number}_<wordChars>]+` in [text]. Per platform, since
  * no target's Kotlin Regex supports that pattern, and Kotlin/Wasm's classifies astral code points
@@ -582,7 +586,7 @@ internal inline fun wordRuns(
     var i = 0
     while (i < text.length) {
         val cp = codePointAt(text, i)
-        if (cp == '_'.code || isWordChar(cp) || fromCodePoint(cp) in wordChars) {
+        if (cp == '_'.code || isWordChar(cp) || wordChars.hasCodePoint(cp)) {
             if (runStart < 0) runStart = i
         } else if (runStart >= 0) {
             runs += runStart until i
@@ -594,12 +598,106 @@ internal inline fun wordRuns(
     return runs
 }
 
+internal fun String.hasCodePoint(codePoint: Int): Boolean {
+    var i = 0
+    while (i < length) {
+        val cp = codePointAt(this, i)
+        if (cp == codePoint) return true
+        i += codePointSize(cp)
+    }
+    return false
+}
+
+/**
+ * Word lists of document chunks, by node identity ([Text.equals] compares content). Upstream keeps
+ * one WeakMap per `wordChars`; common Kotlin has no weak map, so this holds only the chunks of the
+ * last document scanned, which is what the next keystroke's document mostly shares.
+ */
+private class WordCache(val wordChars: String) {
+    private val byLength = HashMap<Int, MutableList<Pair<Text, List<Completion>>>>()
+
+    operator fun get(node: Text): List<Completion>? =
+        byLength[node.length]?.firstOrNull { it.first === node }?.second
+
+    operator fun set(node: Text, words: List<Completion>) {
+        byLength.getOrPut(node.length) { mutableListOf() } += node to words
+    }
+
+    /** Copy [node]'s entry and its chunks' entries from [from]. */
+    fun keep(node: Text, from: WordCache) {
+        val words = from[node] ?: return
+        set(node, words)
+        node.children?.forEach { if (it.length >= MIN_CACHE_LEN) keep(it, from) }
+    }
+}
+
+@Volatile
+private var lastWordCache: WordCache? = null
+
+/** Upstream's storeWords: the new words of [doc] into [result], up to [MAX_WORD_LIST]. */
+private fun storeWords(
+    doc: Text,
+    wordChars: String,
+    result: MutableList<Completion>,
+    seen: MutableSet<String>,
+    ignoreAt: Int
+) {
+    val text = doc.toString()
+    for (range in findWords(text, wordChars)) {
+        val word = text.substring(range)
+        if (range.first != ignoreAt && seen.add(word)) {
+            result += Completion(label = word, type = "text")
+            if (result.size >= MAX_WORD_LIST) return
+        }
+    }
+}
+
+/**
+ * Upstream's collectWords: each chunk of [MIN_CACHE_LEN] or more gets its own list, capped at
+ * [MAX_WORD_LIST] and cached when under it, and the lists are merged without a cap.
+ */
+private fun collectWords(
+    doc: Text,
+    wordChars: String,
+    ignoreAt: Int,
+    old: WordCache?,
+    cache: WordCache
+): List<Completion> {
+    val big = doc.length >= MIN_CACHE_LEN
+    if (big) {
+        old?.get(doc)?.let { cached ->
+            cache.keep(doc, old)
+            return cached
+        }
+    }
+    val result = mutableListOf<Completion>()
+    val seen = mutableSetOf<String>()
+    val children = doc.children
+    if (children == null) {
+        storeWords(doc, wordChars, result, seen, ignoreAt)
+    } else {
+        var pos = 0
+        for (ch in children) {
+            if (ch.length >= MIN_CACHE_LEN) {
+                for (c in collectWords(ch, wordChars, ignoreAt - pos, old, cache)) {
+                    if (seen.add(c.label)) result += c
+                }
+            } else {
+                storeWords(ch, wordChars, result, seen, ignoreAt - pos)
+            }
+            pos += ch.length + 1
+        }
+    }
+    if (big && result.size < MAX_WORD_LIST) cache[doc] = result
+    return result
+}
+
 /**
  * A completion source that provides the words in the document (letters, digits, `_` and the
  * language's `wordChars`), except the one being typed at the cursor.
  */
 val completeAnyWord: CompletionSource = { ctx ->
-    // Scanning the whole document at once, so leave out `\n`: upstream scans line by line.
+    // Chunks are scanned whole, so leave out `\n`: upstream scans line by line.
     val wordChars = (
         ctx.state.languageDataAt(LanguageDataKey.WORD_CHARS, ctx.pos).firstOrNull() ?: ""
         ).replace("\n", "")
@@ -611,16 +709,10 @@ val completeAnyWord: CompletionSource = { ctx ->
         null
     } else {
         val from = token?.let { start + it.first } ?: ctx.pos
-        val text = doc.toString()
-        val seen = mutableSetOf<String>()
-        val options = mutableListOf<Completion>()
-        for (range in findWords(text, wordChars)) {
-            val word = text.substring(range)
-            if (range.first != from.value && seen.add(word)) {
-                options += Completion(label = word, type = "text")
-                if (options.size >= MAX_WORD_LIST) break
-            }
-        }
+        val old = lastWordCache?.takeIf { it.wordChars == wordChars }
+        val cache = WordCache(wordChars)
+        val options = collectWords(doc, wordChars, from.value, old, cache)
+        lastWordCache = cache
         // validFor must be a Regex, so restrict it to the BMP, where every engine classifies
         // correctly, and to letters and numbers, a subset of upstream's class. Text it rejects
         // only re-runs this source, which then gets the word right.

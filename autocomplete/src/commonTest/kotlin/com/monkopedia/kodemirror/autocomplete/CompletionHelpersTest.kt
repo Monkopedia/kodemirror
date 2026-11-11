@@ -212,4 +212,32 @@ class CompletionHelpersTest {
         assertTrue(validFor.matches("a&b"))
         assertFalse(validFor.matches("a b"))
     }
+
+    // Upstream caps each chunk of 1000+ characters at 2000 words, and the merged list of a
+    // document that spans several chunks can exceed that. Counts from @codemirror/autocomplete
+    // 6.20.1 (#411).
+    private fun distinctWords(count: Int, perLine: Int) = (0 until count).chunked(perLine)
+        .joinToString("\n") { line -> line.joinToString(" ") { "w" + it.toString(36) } }
+
+    @Test
+    fun completeAnyWordStopsALongLineAt2000Words() {
+        val result = assertNotNull(completeAnyWord(context(distinctWords(5000, 5000) + " w")))
+        assertEquals(2000, result.options.size)
+        assertEquals("w1jj", result.options.last().label)
+    }
+
+    @Test
+    fun completeAnyWordCapsEachChunkRatherThanTheDocument() {
+        val result = assertNotNull(completeAnyWord(context(distinctWords(5000, 10) + " w")))
+        assertEquals(5000, result.options.size)
+        assertEquals("w3uv", result.options.last().label)
+    }
+
+    @Test
+    fun completeAnyWordStopsSmallChunksOnceTheListIsFull() {
+        // One word per line: 32-line leaves are under 1000 characters, so they share one list.
+        val result = assertNotNull(completeAnyWord(context(distinctWords(5000, 1) + "\nw")))
+        assertEquals(2023, result.options.size)
+        assertEquals("w3r4", result.options.last().label)
+    }
 }
