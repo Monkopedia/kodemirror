@@ -18,6 +18,7 @@
  */
 package com.monkopedia.kodemirror.view
 
+import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -43,15 +44,17 @@ internal sealed class ColumnItem {
         val to: DocPos,
         val content: AnnotatedString,
         val lineDecorations: List<LineDecoration> = emptyList(),
+        /**
+         * Inline widgets of this line in rendered order. Widget `i` is drawn
+         * at the placeholder `inlineWidgetId(i)` in [content].
+         */
         val inlineWidgets: List<WidgetDecoration> = emptyList(),
         /**
-         * Mapping from document offsets (relative to line start) to
-         * expanded text offsets. When tabs are expanded, the rendered
-         * text is longer than the document text. Index `i` gives the
-         * expanded offset for document-relative offset `i`.
-         * `null` when no expansion was needed (no tabs in the line).
+         * Mapping between document offsets (relative to line start) and
+         * offsets in [content]. `null` when the two coincide (no tabs and no
+         * inline widgets in the line).
          */
-        val tabOffsetMap: IntArray? = null
+        val offsetMap: LineOffsetMap? = null
     ) : ColumnItem() {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -62,7 +65,7 @@ internal sealed class ColumnItem {
                 content == other.content &&
                 lineDecorations == other.lineDecorations &&
                 inlineWidgets == other.inlineWidgets &&
-                tabOffsetMap.contentEquals(other.tabOffsetMap)
+                offsetMap == other.offsetMap
         }
 
         override fun hashCode(): Int {
@@ -72,7 +75,7 @@ internal sealed class ColumnItem {
             result = 31 * result + content.hashCode()
             result = 31 * result + lineDecorations.hashCode()
             result = 31 * result + inlineWidgets.hashCode()
-            result = 31 * result + (tabOffsetMap?.contentHashCode() ?: 0)
+            result = 31 * result + (offsetMap?.hashCode() ?: 0)
             return result
         }
     }
@@ -92,52 +95,56 @@ internal sealed class ColumnItem {
 }
 
 /**
- * Convert a document-relative offset into the expanded-text offset, using the
- * tab offset map. Returns [docOffset] unchanged when [tabOffsetMap] is `null`
- * (no tabs in the line). This is the inverse of [unmapTabOffset] and mirrors
- * the forward mapping used when drawing the cursor/selection.
+ * Maps between document offsets within a line and offsets in the line's
+ * rendered text, which differ when tabs are expanded to spaces or inline
+ * widgets are inserted as placeholder characters.
+ *
+ * @param toRendered Index `i` is the rendered offset of the caret at
+ *   document offset `i`. Widgets with `side <= 0` at `i` lie before it, those
+ *   with `side > 0` after it, as in upstream CodeMirror.
+ * @param toDoc Index `r` is the document offset for rendered offset `r`. An
+ *   offset inside a widget resolves to the widget's position; one inside an
+ *   expanded tab resolves to the tab.
  */
-internal fun mapTabOffset(docOffset: Int, tabOffsetMap: IntArray?): Int {
-    if (tabOffsetMap == null) return docOffset
-    val index = docOffset.coerceIn(0, tabOffsetMap.size - 1)
-    return tabOffsetMap[index]
+internal class LineOffsetMap(val toRendered: IntArray, val toDoc: IntArray) {
+    override fun equals(other: Any?): Boolean = other is LineOffsetMap &&
+        toRendered.contentEquals(other.toRendered) &&
+        toDoc.contentEquals(other.toDoc)
+
+    override fun hashCode(): Int = 31 * toRendered.contentHashCode() + toDoc.contentHashCode()
 }
 
 /**
- * Convert an expanded-text offset back to the original document-relative
- * offset, using the tab offset map. Returns [expandedOffset] unchanged
- * when [tabOffsetMap] is `null` (no tabs in the line).
+ * Convert a document-relative offset into the rendered-text offset. Returns
+ * [docOffset] unchanged when [offsetMap] is `null`. Mirrors the forward
+ * mapping used when drawing the cursor/selection.
  */
-internal fun unmapTabOffset(expandedOffset: Int, tabOffsetMap: IntArray?): Int {
-    if (tabOffsetMap == null) return expandedOffset
-    // Binary search: find the largest doc offset whose mapped value
-    // is <= expandedOffset.
-    var lo = 0
-    var hi = tabOffsetMap.size - 1
-    while (lo < hi) {
-        val mid = (lo + hi + 1) / 2
-        if (tabOffsetMap[mid] <= expandedOffset) lo = mid else hi = mid - 1
-    }
-    return lo
+internal fun toRenderedOffset(docOffset: Int, offsetMap: LineOffsetMap?): Int {
+    if (offsetMap == null) return docOffset
+    val map = offsetMap.toRendered
+    return map[docOffset.coerceIn(0, map.size - 1)]
 }
+
+/**
+ * Convert a rendered-text offset back to the document-relative offset.
+ * Returns [renderedOffset] unchanged when [offsetMap] is `null`.
+ */
+internal fun toDocOffset(renderedOffset: Int, offsetMap: LineOffsetMap?): Int {
+    if (offsetMap == null) return renderedOffset
+    val map = offsetMap.toDoc
+    return map[renderedOffset.coerceIn(0, map.size - 1)]
+}
+
+/** Placeholder id of the [index]th inline widget of a line. */
+internal fun inlineWidgetId(index: Int): String = "kodemirror-widget-$index"
+
+/** An inline widget anchored [offset] characters into its line. */
+internal class LineWidget(val offset: Int, val widget: WidgetDecoration)
 
 /**
  * Result of building line content with tab expansion info.
  */
-internal data class LineContentResult(val content: AnnotatedString, val offsetMap: IntArray?) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is LineContentResult) return false
-        return content == other.content &&
-            offsetMap.contentEquals(other.offsetMap)
-    }
-
-    override fun hashCode(): Int {
-        var result = content.hashCode()
-        result = 31 * result + (offsetMap?.contentHashCode() ?: 0)
-        return result
-    }
-}
+internal data class LineContentResult(val content: AnnotatedString, val offsetMap: LineOffsetMap?)
 
 /**
  * Build an [AnnotatedString] for one document line, applying [MarkDecoration]s
@@ -164,46 +171,63 @@ internal fun buildLineContent(
 ).content
 
 /**
- * Build line content with tab expansion, returning both the annotated
- * string and the offset mapping for selection/cursor positioning.
+ * Build line content with tab expansion and inline widget placeholders,
+ * returning both the annotated string and the offset mapping for
+ * selection/cursor positioning.
+ *
+ * @param widgets Inline widgets on this line, sorted by offset and then by
+ *   side (upstream order). Widget `i` becomes placeholder [inlineWidgetId]`(i)`.
  */
 internal fun buildLineContentWithTabs(
     lineFrom: DocPos,
     lineTo: DocPos,
     lineText: String,
     decorationSets: List<DecorationSet>,
-    tabSize: Int = 4
+    tabSize: Int = 4,
+    widgets: List<LineWidget> = emptyList()
 ): LineContentResult {
-    val hasTabs = '\t' in lineText
-
-    // Expand tabs to spaces and build a mapping from original offsets
-    // to expanded offsets.
-    val expandedText: String
-    val offsetMap: IntArray?
-    if (hasTabs) {
-        val expanded = StringBuilder()
-        val map = IntArray(lineText.length + 1)
+    val builder = AnnotatedString.Builder()
+    val offsetMap: LineOffsetMap?
+    if ('\t' !in lineText && widgets.isEmpty()) {
+        builder.append(lineText)
+        offsetMap = null
+    } else {
+        val toRendered = IntArray(lineText.length + 1)
+        val toDoc = ArrayList<Int>(lineText.length + widgets.size + 1)
+        var next = 0
+        fun appendWidgets(offset: Int, before: Boolean) {
+            while (next < widgets.size &&
+                widgets[next].offset == offset &&
+                (!before || widgets[next].widget.spec.side <= 0)
+            ) {
+                toDoc.add(offset)
+                builder.appendInlineContent(inlineWidgetId(next))
+                next++
+            }
+        }
         var col = 0
-        for (i in lineText.indices) {
-            map[i] = expanded.length
+        for (i in 0..lineText.length) {
+            appendWidgets(i, before = true)
+            toRendered[i] = builder.length
+            appendWidgets(i, before = false)
+            if (i == lineText.length) break
             if (lineText[i] == '\t') {
                 val spaces = tabSize - (col % tabSize)
-                repeat(spaces) { expanded.append(' ') }
+                repeat(spaces) {
+                    toDoc.add(i)
+                    builder.append(' ')
+                }
                 col += spaces
             } else {
-                expanded.append(lineText[i])
+                toDoc.add(i)
+                builder.append(lineText[i])
                 col++
             }
         }
-        map[lineText.length] = expanded.length
-        expandedText = expanded.toString()
-        offsetMap = map
-    } else {
-        expandedText = lineText
-        offsetMap = null
+        toDoc.add(lineText.length)
+        offsetMap = LineOffsetMap(toRendered, toDoc.toIntArray())
     }
 
-    val builder = AnnotatedString.Builder(expandedText)
     val lineFromVal = lineFrom.value
 
     // Collect all MarkDecorations that overlap this line.
@@ -217,16 +241,8 @@ internal fun buildLineContentWithTabs(
                 val endInLine =
                     (to - lineFromVal).coerceIn(0, lineText.length)
                 if (startInLine < endInLine) {
-                    val mappedStart = if (offsetMap != null && startInLine < offsetMap.size) {
-                        offsetMap[startInLine]
-                    } else {
-                        startInLine
-                    }
-                    val mappedEnd = if (offsetMap != null && endInLine < offsetMap.size) {
-                        offsetMap[endInLine]
-                    } else {
-                        endInLine
-                    }
+                    val mappedStart = toRenderedOffset(startInLine, offsetMap)
+                    val mappedEnd = toRenderedOffset(endInLine, offsetMap)
                     if (mappedStart < mappedEnd) {
                         builder.addStyle(
                             value.spec.style,
@@ -310,7 +326,7 @@ internal fun buildColumnItems(
     val lineDecsByLine = mutableMapOf<LineNumber, MutableList<LineDecoration>>()
     // Collect inline widget decorations
     val inlineWidgetsByLine =
-        mutableMapOf<LineNumber, MutableList<WidgetDecoration>>()
+        mutableMapOf<LineNumber, MutableList<LineWidget>>()
     for (set in decorationSets) {
         set.between(viewFrom, viewTo) { from, _, value ->
             if (value is LineDecoration) {
@@ -321,10 +337,15 @@ internal fun buildColumnItems(
             if (value is WidgetDecoration && !value.spec.block) {
                 val line = doc.lineAt(DocPos(from))
                 inlineWidgetsByLine.getOrPut(line.number) { mutableListOf() }
-                    .add(value)
+                    .add(LineWidget(from - line.from.value, value))
             }
             null
         }
+    }
+    // Widgets at one position render in side order, and for equal sides in
+    // decoration-set precedence order (stable sort), as upstream orders them.
+    for (widgets in inlineWidgetsByLine.values) {
+        widgets.sortWith(compareBy({ it.offset }, { it.widget.spec.side }))
     }
 
     // Walk visible lines
@@ -367,12 +388,17 @@ internal fun buildColumnItems(
                 0,
                 truncPos.coerceAtMost(line.text.length)
             )
+            // Widgets inside the folded range are hidden with it.
+            val inlineWidgets = inlineWidgetsByLine[lineNum]
+                ?.filter { it.offset <= truncText.length }
+                .orEmpty()
             val result = buildLineContentWithTabs(
                 line.from,
                 line.from + truncText.length,
                 truncText,
                 decorationSets,
-                tabSize
+                tabSize,
+                inlineWidgets
             )
             val content = if (replaceOnLine.widget != null) {
                 AnnotatedString.Builder().apply {
@@ -385,8 +411,6 @@ internal fun buildColumnItems(
                 result.content
             }
             val lineDecos = lineDecsByLine[lineNum] ?: emptyList()
-            val inlineWidgets =
-                inlineWidgetsByLine[lineNum] ?: emptyList()
             items.add(
                 ColumnItem.TextLine(
                     lineNum,
@@ -394,8 +418,8 @@ internal fun buildColumnItems(
                     line.from + truncText.length,
                     content,
                     lineDecos,
-                    inlineWidgets,
-                    tabOffsetMap = result.offsetMap
+                    inlineWidgets.map { it.widget },
+                    offsetMap = result.offsetMap
                 )
             )
 
@@ -407,16 +431,16 @@ internal fun buildColumnItems(
             lineNum = endLine.number
         } else {
             // Normal line
+            val inlineWidgets = inlineWidgetsByLine[lineNum].orEmpty()
             val result = buildLineContentWithTabs(
                 line.from,
                 line.to,
                 line.text,
                 decorationSets,
-                tabSize
+                tabSize,
+                inlineWidgets
             )
             val lineDecos = lineDecsByLine[lineNum] ?: emptyList()
-            val inlineWidgets =
-                inlineWidgetsByLine[lineNum] ?: emptyList()
             items.add(
                 ColumnItem.TextLine(
                     lineNum,
@@ -424,8 +448,8 @@ internal fun buildColumnItems(
                     line.to,
                     result.content,
                     lineDecos,
-                    inlineWidgets,
-                    tabOffsetMap = result.offsetMap
+                    inlineWidgets.map { it.widget },
+                    offsetMap = result.offsetMap
                 )
             )
             lineNum = lineNum + 1
