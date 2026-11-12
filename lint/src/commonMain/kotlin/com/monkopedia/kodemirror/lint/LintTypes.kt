@@ -21,6 +21,7 @@ package com.monkopedia.kodemirror.lint
 import androidx.compose.ui.graphics.Color
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.view.EditorSession
+import com.monkopedia.kodemirror.view.EditorTheme
 import com.monkopedia.kodemirror.view.ThemeKey
 
 /** Theme color for hint-level diagnostics. */
@@ -40,6 +41,14 @@ val lintSourceColor = ThemeKey(default = Color.Gray)
 
 /** Severity levels for diagnostics. */
 enum class Severity { HINT, INFO, WARNING, ERROR }
+
+/** This theme's color for diagnostics of [severity]. */
+internal fun EditorTheme.lintColor(severity: Severity): Color = when (severity) {
+    Severity.HINT -> this[lintHintColor]
+    Severity.INFO -> this[lintInfoColor]
+    Severity.WARNING -> this[lintWarningColor]
+    Severity.ERROR -> this[lintErrorColor]
+}
 
 /**
  * A diagnostic message attached to a range in the document.

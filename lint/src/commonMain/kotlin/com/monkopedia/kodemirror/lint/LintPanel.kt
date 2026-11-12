@@ -111,12 +111,7 @@ internal fun LintPanelContent(view: EditorSession) {
 @Composable
 private fun DiagnosticRow(diag: Diagnostic, view: EditorSession) {
     val theme = LocalEditorTheme.current
-    val severityColor = when (diag.severity) {
-        Severity.HINT -> theme[lintHintColor]
-        Severity.INFO -> theme[lintInfoColor]
-        Severity.WARNING -> theme[lintWarningColor]
-        Severity.ERROR -> theme[lintErrorColor]
-    }
+    val severityColor = theme.lintColor(diag.severity)
     val severityLabel = when (diag.severity) {
         Severity.HINT -> "hint"
         Severity.INFO -> "info"

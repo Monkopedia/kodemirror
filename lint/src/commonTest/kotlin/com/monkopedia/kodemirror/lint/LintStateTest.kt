@@ -25,8 +25,12 @@ import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asDoc
+import com.monkopedia.kodemirror.view.Decoration
+import com.monkopedia.kodemirror.view.MarkDecoration
+import com.monkopedia.kodemirror.view.WidgetDecoration
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class LintStateTest {
 
@@ -147,5 +151,61 @@ class LintStateTest {
         assertEquals(0, diagnosticCount(state))
         val collected = collectDiags(state)
         assertEquals(0, collected.size)
+    }
+
+    /** The decorations the lint state draws, as `from..to` to the decoration. */
+    private fun decorationsOf(state: EditorState): List<Pair<IntRange, Decoration>> {
+        val result = mutableListOf<Pair<IntRange, Decoration>>()
+        state.field(lintState).decorations.between(DocPos.ZERO, DocPos(state.doc.length)) {
+                from,
+                to,
+                d
+            ->
+            result.add(from..to to d)
+            null
+        }
+        return result
+    }
+
+    @Test
+    fun pointAndLineBreakDiagnosticsAreWidgetsAndRangesAreMarks() {
+        // As upstream LintState.init: a point, or a short range covering only line breaks, has
+        // nothing to underline and gets a DiagnosticWidget; anything else gets a mark (#397).
+        val state = setDiags(
+            createState("ab\n\ncd"),
+            listOf(
+                Diagnostic(DocPos(1), DocPos(1), Severity.WARNING, "point"),
+                Diagnostic(DocPos(2), DocPos(4), Severity.ERROR, "line breaks"),
+                Diagnostic(DocPos(4), DocPos(6), Severity.INFO, "text")
+            )
+        )
+        val decos = decorationsOf(state)
+        assertEquals(listOf(1..1, 2..2, 4..6), decos.map { it.first })
+        val (point, lineBreaks, text) = decos.map { it.second }
+        assertEquals(
+            Severity.WARNING,
+            ((point as WidgetDecoration).spec.widget as DiagnosticWidget).severity
+        )
+        assertEquals(
+            Severity.ERROR,
+            ((lineBreaks as WidgetDecoration).spec.widget as DiagnosticWidget).severity
+        )
+        assertTrue(text is MarkDecoration)
+    }
+
+    @Test
+    fun pointDiagnosticKeepsItsWidgetAcrossEdits() {
+        val state = setDiags(
+            createState("hello"),
+            listOf(Diagnostic(DocPos(3), DocPos(3), Severity.ERROR, "point"))
+        )
+        val edited = state.update(
+            TransactionSpec(
+                changes = ChangeSpec.Single(DocPos(0), DocPos(0), InsertContent.StringContent("> "))
+            )
+        ).state
+        val decos = decorationsOf(edited)
+        assertEquals(listOf(5..5), decos.map { it.first })
+        assertTrue(decos.single().second is WidgetDecoration)
     }
 }
