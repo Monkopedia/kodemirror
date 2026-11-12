@@ -18,7 +18,16 @@
  */
 package com.monkopedia.kodemirror.lint
 
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.state.ChangeSet
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
@@ -29,16 +38,21 @@ import com.monkopedia.kodemirror.state.StateEffect
 import com.monkopedia.kodemirror.state.StateEffectType
 import com.monkopedia.kodemirror.state.StateField
 import com.monkopedia.kodemirror.state.StateFieldSpec
+import com.monkopedia.kodemirror.state.Text
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.view.Decoration
 import com.monkopedia.kodemirror.view.DecorationSet
 import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.EditorTheme
+import com.monkopedia.kodemirror.view.LocalContentTextStyle
+import com.monkopedia.kodemirror.view.LocalEditorTheme
 import com.monkopedia.kodemirror.view.MarkDecorationSpec
 import com.monkopedia.kodemirror.view.PluginValue
 import com.monkopedia.kodemirror.view.ViewPlugin
 import com.monkopedia.kodemirror.view.ViewUpdate
+import com.monkopedia.kodemirror.view.WidgetDecorationSpec
+import com.monkopedia.kodemirror.view.WidgetType
 import com.monkopedia.kodemirror.view.decorations
 import com.monkopedia.kodemirror.view.editorTheme
 import com.monkopedia.kodemirror.view.logException
@@ -62,6 +76,7 @@ internal val forceLintEffect: StateEffectType<Unit> = StateEffect.define()
 /** Internal state holding diagnostics and their decorations. */
 internal class LintStateValue private constructor(
     private val entries: List<Entry>,
+    private val doc: Text?,
     private val theme: EditorTheme?
 ) {
     /**
@@ -92,42 +107,42 @@ internal class LintStateValue private constructor(
 
     val diagnostics: List<Diagnostic> = entries.map { it.diagnostic }
 
-    /** The underline marks, built on first use (the gutter's copy of the state never needs them). */
+    /**
+     * The diagnostic decorations, built on first use (the gutter's copy of the state never needs
+     * them): a mark over each diagnostic's range, or, as upstream `LintState.init` does, a
+     * [DiagnosticWidget] for one that is a point or covers only line breaks, which a mark could
+     * not show.
+     */
     val decorations: DecorationSet by lazy {
         val builder = RangeSetBuilder<Decoration>()
-        if (theme != null) {
+        if (doc != null && theme != null) {
             for (diag in diagnostics) {
                 val from = maxOf(DocPos.ZERO, diag.from)
                 val to = maxOf(from, diag.to)
-                if (from < to) {
-                    val color = when (diag.severity) {
-                        Severity.HINT -> theme[lintHintColor]
-                        Severity.INFO -> theme[lintInfoColor]
-                        Severity.WARNING -> theme[lintWarningColor]
-                        Severity.ERROR -> theme[lintErrorColor]
-                    }
+                if (to - from < 10 && doc.sliceString(from, to).all { it == '\n' }) {
                     builder.add(
                         from,
-                        to,
-                        Decoration.mark(
-                            MarkDecorationSpec(
-                                style = SpanStyle(
-                                    background = color.copy(alpha = 0.2f)
-                                )
-                            )
+                        from,
+                        Decoration.widget(WidgetDecorationSpec(DiagnosticWidget(diag.severity)))
+                    )
+                } else {
+                    val mark = MarkDecorationSpec(
+                        style = SpanStyle(
+                            background = theme.lintColor(diag.severity).copy(alpha = 0.2f)
                         )
                     )
+                    builder.add(from, to, Decoration.mark(mark))
                 }
             }
         }
         builder.finish()
     }
 
-    fun map(changes: ChangeSet, theme: EditorTheme): LintStateValue =
-        create(entries.mapNotNull { it.map(changes) }, theme)
+    fun map(changes: ChangeSet, doc: Text, theme: EditorTheme): LintStateValue =
+        create(entries.mapNotNull { it.map(changes) }, doc, theme)
 
     companion object {
-        val empty = LintStateValue(emptyList(), null)
+        val empty = LintStateValue(emptyList(), null, null)
 
         /**
          * Clamp [diagnostics] to the document, as upstream `LintState.init` does: a diagnostic
@@ -135,24 +150,51 @@ internal class LintStateValue private constructor(
          * an inclusive end). The clamped list is what gets stored, so later edits map positions
          * that are in range.
          */
-        fun build(
-            diagnostics: List<Diagnostic>,
-            docLength: Int,
-            theme: EditorTheme
-        ): LintStateValue {
-            val docEnd = DocPos(docLength)
+        fun build(diagnostics: List<Diagnostic>, doc: Text, theme: EditorTheme): LintStateValue {
+            val docEnd = DocPos(doc.length)
             val entries = diagnostics
                 .filter { it.from <= docEnd }
                 .map { if (it.to > docEnd) Entry(it.copy(to = docEnd), true) else Entry(it, false) }
-            return create(entries, theme)
+            return create(entries, doc, theme)
         }
 
-        private fun create(entries: List<Entry>, theme: EditorTheme): LintStateValue {
+        private fun create(entries: List<Entry>, doc: Text, theme: EditorTheme): LintStateValue {
             if (entries.isEmpty()) return empty
             val sorted = entries.sortedWith(compareBy({ it.diagnostic.from }, { it.diagnostic.to }))
-            return LintStateValue(sorted, theme)
+            return LintStateValue(sorted, doc, theme)
         }
     }
+}
+
+/**
+ * Marker for a diagnostic that has no text to underline, port of upstream's `DiagnosticWidget`
+ * (`cm-lintPoint`): a zero-width widget drawing a small triangle in the [severity]'s color under
+ * its position.
+ */
+internal class DiagnosticWidget(val severity: Severity) : WidgetType() {
+    @Composable
+    override fun Content() {
+        val color = LocalEditorTheme.current.lintColor(severity)
+        // As tall as the text, like upstream's empty inline span, so its bottom is the text's.
+        val height = with(LocalDensity.current) { LocalContentTextStyle.current.fontSize.toDp() }
+        Spacer(
+            Modifier.width(0.dp).height(height).drawBehind {
+                // Upstream's `:after` triangle: 6px wide and 4px tall, 2px left of the position.
+                val path = Path().apply {
+                    moveTo(-2.dp.toPx(), size.height)
+                    lineTo(4.dp.toPx(), size.height)
+                    lineTo(1.dp.toPx(), size.height - 4.dp.toPx())
+                    close()
+                }
+                drawPath(path, color)
+            }
+        )
+    }
+
+    override fun equals(other: Any?): Boolean =
+        other is DiagnosticWidget && other.severity == severity
+
+    override fun hashCode(): Int = severity.hashCode()
 }
 
 /**
@@ -170,10 +212,10 @@ private fun updateLintStateValue(
     for (effect in tr.effects) {
         val diagEffect = effect.asType(setDiagnosticsEffect) ?: continue
         val diagnostics = filter?.invoke(diagEffect.value) ?: diagEffect.value
-        result = LintStateValue.build(diagnostics, tr.newDoc.length, theme)
+        result = LintStateValue.build(diagnostics, tr.newDoc, theme)
     }
     if (result === value && tr.docChanged) {
-        result = result.map(tr.changes, theme)
+        result = result.map(tr.changes, tr.newDoc, theme)
     }
     return result
 }
