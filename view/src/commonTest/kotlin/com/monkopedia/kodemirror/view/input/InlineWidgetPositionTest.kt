@@ -64,20 +64,20 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalTestApi::class)
 class InlineWidgetPositionTest {
 
-    private class BoxWidget(val tag: String) : WidgetType() {
+    private class BoxWidget(val tag: String, val height: Int) : WidgetType() {
         @Composable
         override fun Content() {
-            Box(Modifier.size(20.dp, 10.dp).testTag(tag))
+            Box(Modifier.size(20.dp, height.dp).testTag(tag))
         }
     }
 
-    private fun widgets(vararg placed: Triple<Int, Int, String>): Extension {
+    private fun widgets(vararg placed: Triple<Int, Int, String>, height: Int = 10): Extension {
         val builder = RangeSetBuilder<Decoration>()
         for ((pos, side, tag) in placed) {
             builder.add(
                 DocPos(pos),
                 DocPos(pos),
-                Decoration.widget(WidgetDecorationSpec(BoxWidget(tag), side = side))
+                Decoration.widget(WidgetDecorationSpec(BoxWidget(tag, height), side = side))
             )
         }
         return decorations.of(builder.finish())
@@ -177,6 +177,27 @@ class InlineWidgetPositionTest {
     }
 
     @Test
+    fun aTallWidgetDoesNotMoveTheLinesText() = runEditorTest(
+        doc = "hello\nhello",
+        // Taller than the line: it must not grow the line or shift its text.
+        extensions = widgets(Triple(2, 0, "w"), height = 30)
+    ) { holder ->
+        val withWidget = assertNotNull(holder.session.coordsAtPos(4))
+        val plain = assertNotNull(holder.session.coordsAtPos(10))
+        // Line 2 has no widget, so its caret is where line 1's should be, one row (the default
+        // 15sp * 1.4 line height, at density 1) further down.
+        assertNear(DEFAULT_LINE_HEIGHT, plain.top - withWidget.top, "caret top, one row apart")
+        assertNear(
+            DEFAULT_LINE_HEIGHT,
+            plain.bottom - withWidget.bottom,
+            "caret bottom, one row apart"
+        )
+        // The widget is centred on the text, overflowing the line evenly.
+        val widget = widgetBounds("w")
+        assertNear((withWidget.top + withWidget.bottom) / 2, widget.center.y, "widget centre")
+    }
+
+    @Test
     fun hitTestingAroundAWidgetResolvesToDocumentPositions() = runEditorTest(
         doc = "hello world",
         extensions = widgets(Triple(5, 1, "w"))
@@ -193,5 +214,9 @@ class InlineWidgetPositionTest {
         onNodeWithTag("KodeMirror").performMouseInput { click(Offset(x, y)) }
         waitForIdle()
         holder.assertCursorAt(7)
+    }
+
+    private companion object {
+        const val DEFAULT_LINE_HEIGHT = 21f
     }
 }

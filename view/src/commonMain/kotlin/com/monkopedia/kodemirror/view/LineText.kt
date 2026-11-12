@@ -43,9 +43,10 @@ import kotlin.math.roundToInt
  * widget is measured first and its placeholder sized to match; the widget is
  * then placed at its placeholder's rectangle, so it is composed only once.
  *
- * A placeholder is never taller than the line, so a tall widget overflows the
- * line downward instead of growing it: lines keep the fixed height the editor's
- * scrolling relies on.
+ * A placeholder is never taller than the font size, so it fits inside the
+ * text's own line box and neither grows the line nor moves its text: lines keep
+ * the fixed height the editor's scrolling relies on. Widgets are centred
+ * vertically on their placeholder, so a taller one overflows the line evenly.
  */
 @Composable
 internal fun LineText(
@@ -68,7 +69,7 @@ internal fun LineText(
             }
         }.map { it.measure(widgetConstraints) }
 
-        val maxHeightPx = if (style.lineHeight.isSp) style.lineHeight.toPx() else Float.MAX_VALUE
+        val maxHeightPx = if (style.fontSize.isSp) style.fontSize.toPx() else Float.MAX_VALUE
         val sizes = widgets.map { IntSize(it.width, it.height) }
         if (sizes != cache.sizes) {
             cache.sizes = sizes
@@ -103,7 +104,10 @@ internal fun LineText(
             val rects = cache.layout?.placeholderRects.orEmpty()
             widgets.forEachIndexed { i, widget ->
                 val rect = rects.getOrNull(i) ?: return@forEachIndexed
-                widget.place(rect.left.roundToInt(), rect.top.roundToInt())
+                widget.place(
+                    rect.left.roundToInt(),
+                    (rect.center.y - widget.height / 2f).roundToInt()
+                )
             }
         }
     }
