@@ -47,7 +47,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -391,24 +390,24 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                                 coordsWidth != null
                             ) {
                                 // Map the document offset within the line to the
-                                // expanded-text offset (tab expansion), exactly
-                                // as the cursor is drawn, then read its x in
-                                // line-local pixels (0 = line start, before the
-                                // 6.dp padding).
+                                // rendered-text offset (tab expansion, inline
+                                // widgets), exactly as the cursor is drawn, then
+                                // read its x in line-local pixels (0 = line
+                                // start, before the 6.dp padding).
                                 val offsetInLine =
                                     (request.target - line.from.value)
                                         .coerceIn(
                                             0,
                                             line.to.value - line.from.value
                                         )
-                                val mappedOffset = mapTabOffset(
+                                val mappedOffset = toRenderedOffset(
                                     offsetInLine,
-                                    line.tabOffsetMap
+                                    line.offsetMap
                                 )
                                 // Clamp to the LAYOUT's text length, not the doc
                                 // line length: `layout` is a cached
                                 // TextLayoutResult that lags the doc by a frame
-                                // during typing and mapTabOffset can expand the
+                                // during typing and the offset map can expand the
                                 // offset, so mappedOffset can exceed the
                                 // layout's text — getCursorRect would throw
                                 // "offset out of bounds" (#152).
@@ -569,7 +568,8 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                                         p.lineFrom,
                                         pos.y,
                                         pos.x,
-                                        p.result
+                                        p.result,
+                                        p.offsetMap
                                     )
                                 }
                             }
@@ -1196,7 +1196,7 @@ private fun EditorContent(
                                         item.to.value,
                                         theme,
                                         textLayout,
-                                        item.tabOffsetMap
+                                        item.offsetMap?.toRendered
                                     )
                                     .onGloballyPositioned { contentCoords ->
                                         val layout = textLayout
@@ -1214,7 +1214,8 @@ private fun EditorContent(
                                                 capturedFrom.value,
                                                 pos.y,
                                                 pos.x,
-                                                layout
+                                                layout,
+                                                item.offsetMap
                                             )
                                             pendingLineLayouts
                                                 .remove(capturedLineNum.value)
@@ -1224,13 +1225,15 @@ private fun EditorContent(
                                                     capturedLineNum.value,
                                                     capturedFrom.value,
                                                     contentCoords,
-                                                    layout
+                                                    layout,
+                                                    item.offsetMap
                                                 )
                                         }
                                     }
                             ) {
-                                BasicText(
+                                LineText(
                                     text = item.content,
+                                    inlineWidgets = item.inlineWidgets,
                                     style = contentStyle,
                                     softWrap = wrapLines,
                                     onTextLayout = { result: TextLayoutResult ->
@@ -1244,9 +1247,6 @@ private fun EditorContent(
                                         }
                                     }
                                 )
-                                for (widget in item.inlineWidgets) {
-                                    widget.spec.widget.Content()
-                                }
                             }
                         }
                     }
@@ -1570,7 +1570,8 @@ private class PendingLineLayout(
     val lineNumber: Int,
     val lineFrom: Int,
     val coords: LayoutCoordinates,
-    val result: TextLayoutResult
+    val result: TextLayoutResult,
+    val offsetMap: LineOffsetMap?
 )
 
 /**
@@ -1659,7 +1660,7 @@ private fun posFromVisibleItems(
     val localX = (offset.x - contentStartPx + horizontalScrollPx)
         .coerceAtLeast(0f)
     val expandedOffset = layout.getOffsetForPosition(Offset(localX, localY))
-    val charOffset = unmapTabOffset(expandedOffset, item.tabOffsetMap)
+    val charOffset = toDocOffset(expandedOffset, item.offsetMap)
     // Clamp to the LAYOUT's char length, not the ColumnItem's [from, to) span.
     // `charOffset` was resolved against `layout`, so the layout's own text
     // length is its natural domain. The `columnItems` snapshot can lag the
@@ -1672,6 +1673,6 @@ private fun posFromVisibleItems(
     // source `charOffset` came from, is the consistent bound. When the snapshot
     // is fresh the two lengths agree, so this only changes behaviour in the
     // stale window.
-    val layoutCharLen = unmapTabOffset(layout.layoutInput.text.length, item.tabOffsetMap)
+    val layoutCharLen = toDocOffset(layout.layoutInput.text.length, item.offsetMap)
     return item.from.value + charOffset.coerceIn(0, layoutCharLen)
 }

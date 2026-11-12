@@ -45,6 +45,8 @@ val drawSelection: Extension =
  * @param lineTo  Document offset of the end of this line.
  * @param theme  Editor theme for colors.
  * @param textLayoutResult Layout result for accurate character positioning.
+ * @param tabOffsetMap Map from document offsets within the line to offsets in the rendered text,
+ *   which differ where tabs are expanded or inline widgets are inserted; `null` when they coincide.
  */
 @Composable
 fun Modifier.drawSelectionOverlay(
@@ -61,7 +63,7 @@ fun Modifier.drawSelectionOverlay(
         lineTo,
         theme,
         textLayoutResult,
-        tabOffsetMap
+        toRendered = tabOffsetMap
     )
     drawContent()
 }
@@ -70,14 +72,14 @@ fun Modifier.drawSelectionOverlay(
 private val BLOCK_CURSOR_COLOR = Color(0xFFFF9696)
 
 /**
- * Map a document-relative offset to the expanded text offset,
- * accounting for tab expansion. Returns the offset unchanged when
- * there is no tab offset map.
+ * Map a document-relative offset to the rendered text offset, accounting
+ * for tab expansion and inline widgets. Returns the offset unchanged when
+ * there is no offset map.
  */
-private fun mapOffset(docOffset: Int, lineLength: Int, tabOffsetMap: IntArray?): Int {
-    if (tabOffsetMap == null) return docOffset
-    val index = docOffset.coerceIn(0, minOf(lineLength, tabOffsetMap.size - 1))
-    return tabOffsetMap[index]
+private fun mapOffset(docOffset: Int, lineLength: Int, toRendered: IntArray?): Int {
+    if (toRendered == null) return docOffset
+    val index = docOffset.coerceIn(0, minOf(lineLength, toRendered.size - 1))
+    return toRendered[index]
 }
 
 private fun DrawScope.drawLineSelection(
@@ -86,7 +88,7 @@ private fun DrawScope.drawLineSelection(
     lineTo: Int,
     theme: EditorTheme,
     textLayoutResult: TextLayoutResult?,
-    tabOffsetMap: IntArray?
+    toRendered: IntArray?
 ) {
     val lineLength = lineTo - lineFrom
     // Check for block cursors (vim normal/visual mode)
@@ -106,23 +108,23 @@ private fun DrawScope.drawLineSelection(
             val selTo = minOf(rangeTo, lineTo)
             if (selFrom < selTo || (selFrom == selTo && selFrom > lineFrom)) {
                 val extendsToNextLine = rangeTo > lineTo
-                val expandedLineLen = mapOffset(
+                val renderedLineLen = mapOffset(
                     lineLength,
                     lineLength,
-                    tabOffsetMap
+                    toRendered
                 )
                 drawLineSelectionRange(
                     mapOffset(
                         selFrom - lineFrom,
                         lineLength,
-                        tabOffsetMap
+                        toRendered
                     ),
                     mapOffset(
                         selTo - lineFrom,
                         lineLength,
-                        tabOffsetMap
+                        toRendered
                     ),
-                    expandedLineLen,
+                    renderedLineLen,
                     theme.selection,
                     textLayoutResult,
                     extendsToNextLine
@@ -135,7 +137,7 @@ private fun DrawScope.drawLineSelection(
                 mapOffset(
                     rangeHead - lineFrom,
                     lineLength,
-                    tabOffsetMap
+                    toRendered
                 ),
                 theme.cursor,
                 textLayoutResult
@@ -149,7 +151,7 @@ private fun DrawScope.drawLineSelection(
             mapOffset(
                 cursor.offset - lineFrom,
                 lineLength,
-                tabOffsetMap
+                toRendered
             ),
             cursor.alpha,
             textLayoutResult

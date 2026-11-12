@@ -51,6 +51,9 @@ data class LineLayout(
 internal class LineLayoutCache {
     private val cache = mutableMapOf<Int, LineLayout>()
 
+    /** Offset maps of the cached lines whose rendered text differs from the doc. */
+    private val offsetMaps = mutableMapOf<Int, LineOffsetMap>()
+
     /**
      * Sorted-by-topPx view of [cache]. Null when the cache has been mutated
      * and the sorted list needs to be recomputed.
@@ -67,9 +70,11 @@ internal class LineLayoutCache {
         lineFrom: Int,
         topPx: Float,
         leftPx: Float,
-        result: TextLayoutResult
+        result: TextLayoutResult,
+        offsetMap: LineOffsetMap? = null
     ) {
         cache[lineNumber] = LineLayout(lineNumber, lineFrom, topPx, leftPx, result)
+        if (offsetMap != null) offsetMaps[lineNumber] = offsetMap else offsetMaps.remove(lineNumber)
         sortedCache = null
     }
 
@@ -80,7 +85,10 @@ internal class LineLayoutCache {
     fun evict(visibleLineNumbers: Set<Int>) {
         val toRemove = cache.keys.filter { it !in visibleLineNumbers }
         if (toRemove.isNotEmpty()) {
-            toRemove.forEach { cache.remove(it) }
+            toRemove.forEach {
+                cache.remove(it)
+                offsetMaps.remove(it)
+            }
             sortedCache = null
         }
     }
@@ -88,6 +96,7 @@ internal class LineLayoutCache {
     /** Clear all cached entries. */
     fun clear() {
         cache.clear()
+        offsetMaps.clear()
         sortedCache = null
     }
 
@@ -110,11 +119,12 @@ internal class LineLayoutCache {
         val line = state.doc.lineAt(DocPos(pos))
         val layout = cache[line.number.value] ?: return null
         val offsetInLine = pos - line.from.value
+        val renderedOffset = toRenderedOffset(offsetInLine, offsetMaps[line.number.value])
         // Clamp to the LAYOUT's text length, not the doc line length: the cached
         // layout lags the doc by a frame during typing, so offsetInLine can
         // exceed it and getCursorRect would throw "offset out of bounds" (#152).
         val layoutLen = layout.result.layoutInput.text.length
-        val clampedOffset = offsetInLine.coerceIn(0, layoutLen)
+        val clampedOffset = renderedOffset.coerceIn(0, layoutLen)
         val cursorRect = layout.result.getCursorRect(clampedOffset)
         val top = layout.topPx + cursorRect.top
         val bottom = layout.topPx + cursorRect.bottom
@@ -132,11 +142,7 @@ internal class LineLayoutCache {
         for (layout in sorted) {
             if (y >= layout.topPx && y <= layout.bottomPx) {
                 val localX = (x - layout.leftPx).coerceAtLeast(0f)
-                val offsetInLine = layout.result.getOffsetForPosition(
-                    Offset(localX, y - layout.topPx)
-                )
-                return layout.lineFrom +
-                    offsetInLine.coerceIn(0, layout.result.layoutInput.text.length)
+                return layout.docPosAt(Offset(localX, y - layout.topPx))
             }
         }
         // y is outside any line's exact range — find the best matching line
@@ -150,11 +156,15 @@ internal class LineLayoutCache {
             ?: sorted.first()
         val localX = (x - closest.leftPx).coerceAtLeast(0f)
         val localY = (y - closest.topPx).coerceIn(0f, closest.heightPx)
-        val offsetInLine = closest.result.getOffsetForPosition(
-            Offset(localX, localY)
-        )
-        return closest.lineFrom +
-            offsetInLine.coerceIn(0, closest.result.layoutInput.text.length)
+        return closest.docPosAt(Offset(localX, localY))
+    }
+
+    /** Document position of the line-local point [local] in this layout. */
+    private fun LineLayout.docPosAt(local: Offset): Int {
+        val offsetMap = offsetMaps[lineNumber]
+        val offsetInLine = toDocOffset(result.getOffsetForPosition(local), offsetMap)
+        val layoutCharLen = toDocOffset(result.layoutInput.text.length, offsetMap)
+        return lineFrom + offsetInLine.coerceIn(0, layoutCharLen)
     }
 
     /**
