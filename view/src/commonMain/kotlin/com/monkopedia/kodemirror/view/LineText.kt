@@ -23,7 +23,10 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.SubcomposeLayout
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
@@ -61,6 +64,9 @@ internal fun LineText(
         return
     }
     val cache = remember { InlineContentCache() }
+    // The placeholders are a layout device: semantics (screen readers, UI tests) get the text
+    // without them, as they did before widgets were placed inline.
+    val semanticText = remember(text) { AnnotatedString(text.withoutPlaceholders()) }
     SubcomposeLayout { constraints ->
         val widgetConstraints = Constraints(maxWidth = constraints.maxWidth)
         val widgets = subcompose(LineTextSlot.Widgets) {
@@ -91,6 +97,7 @@ internal fun LineText(
                 text = text,
                 style = style,
                 softWrap = softWrap,
+                modifier = Modifier.clearAndSetSemantics { this.text = semanticText },
                 inlineContent = inlineContent,
                 onTextLayout = {
                     cache.layout = it
@@ -114,6 +121,21 @@ internal fun LineText(
 }
 
 private enum class LineTextSlot { Widgets, Text }
+
+/** This line text with its inline widget placeholders removed. */
+private fun AnnotatedString.withoutPlaceholders(): String {
+    val placeholders = getStringAnnotations(0, length)
+        .filter { it.item.startsWith(INLINE_WIDGET_ID_PREFIX) }
+        .sortedBy { it.start }
+    return buildString {
+        var pos = 0
+        for (placeholder in placeholders) {
+            append(text, pos, placeholder.start)
+            pos = placeholder.end
+        }
+        append(text, pos, text.length)
+    }
+}
 
 @Suppress("UNUSED_PARAMETER")
 @Composable

@@ -25,8 +25,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onNodeWithTag
@@ -195,6 +197,21 @@ class InlineWidgetPositionTest {
         // The widget is centred on the text, overflowing the line evenly.
         val widget = widgetBounds("w")
         assertNear((withWidget.top + withWidget.bottom) / 2, widget.center.y, "widget centre")
+    }
+
+    @Test
+    fun widgetPlaceholdersStayOutOfTheLinesTextSemantics() = runEditorTest(
+        doc = "hello world\nsecond",
+        extensions = widgets(Triple(5, 1, "w"), Triple(11, -1, "e"))
+    ) { holder ->
+        // The placeholder characters are a layout device; accessibility and anything else
+        // reading semantics must see the document text.
+        val texts = onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.Text))
+            .fetchSemanticsNodes()
+            .flatMap { it.config[SemanticsProperties.Text] }
+            .map { it.text }
+        assertTrue("hello world" in texts, "line 1 text in $texts")
+        assertTrue(texts.none { '\uFFFD' in it }, "placeholder in $texts")
     }
 
     @Test

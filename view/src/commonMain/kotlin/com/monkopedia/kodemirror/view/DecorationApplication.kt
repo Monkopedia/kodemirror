@@ -135,8 +135,10 @@ internal fun toDocOffset(renderedOffset: Int, offsetMap: LineOffsetMap?): Int {
     return map[renderedOffset.coerceIn(0, map.size - 1)]
 }
 
+internal const val INLINE_WIDGET_ID_PREFIX = "kodemirror-widget-"
+
 /** Placeholder id of the [index]th inline widget of a line. */
-internal fun inlineWidgetId(index: Int): String = "kodemirror-widget-$index"
+internal fun inlineWidgetId(index: Int): String = "$INLINE_WIDGET_ID_PREFIX$index"
 
 /** An inline widget anchored [offset] characters into its line. */
 internal class LineWidget(val offset: Int, val widget: WidgetDecoration)
