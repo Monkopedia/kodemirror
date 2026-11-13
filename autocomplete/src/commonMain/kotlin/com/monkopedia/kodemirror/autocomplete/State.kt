@@ -42,11 +42,16 @@ val setSelectedCompletion: StateEffectType<Int> = StateEffect.define()
 /**
  * Payload for [startCompletionEffect]: the freshly-queried [results] (merged +
  * deduped into a single ordered list by [mergeCompletions]; a single-source query
- * passes a singleton list, #137) plus whether the session was opened explicitly
- * (Ctrl-Space / [startCompletion]) rather than implicitly by typing. The
- * [explicit][CompletionState.explicit] flag governs the session lifecycle.
+ * passes a singleton list, #137), whether the session was opened explicitly
+ * (Ctrl-Space / [startCompletion]) rather than implicitly by typing, and the cursor
+ * position [pos] the query ran at. The [explicit][CompletionState.explicit] flag
+ * and [pos] set each result's backspace [limit][ActiveResult.limit].
  */
-internal data class StartCompletion(val results: List<CompletionResult>, val explicit: Boolean)
+internal data class StartCompletion(
+    val results: List<CompletionResult>,
+    val explicit: Boolean,
+    val pos: DocPos
+)
 
 /**
  * Effect to open the completion list with one or more source results plus whether
@@ -58,25 +63,38 @@ internal val startCompletionEffect: StateEffectType<StartCompletion> = StateEffe
 internal val closeCompletionEffect: StateEffectType<Unit> = StateEffect.define()
 
 /**
+ * One source's [result] in the open session, with upstream `ActiveResult.limit`:
+ * backspacing the cursor below [limit] closes it. It is set when the result arrives
+ * to `min(pos, from + (explicit ? 0 : 1))`, where `pos` is the query's cursor, and
+ * mapped through every later change, so an implicit result opened at the cursor
+ * (right after a `.`) may be backspaced back to its `from`.
+ */
+internal data class ActiveResult(val result: CompletionResult, val limit: DocPos)
+
+/**
  * Internal state tracking the completion list.
  *
  * @param explicit Whether the active session was opened explicitly (Ctrl-Space /
- *   [startCompletion]) rather than implicitly by typing. An explicit session has a
- *   looser backspacing lifecycle: the user may delete back to (and including) the
- *   session's original [from] — an empty query re-shows all options and the session
- *   stays open — whereas an implicit session closes once the typed span is fully
- *   removed. Mirrors upstream `@codemirror/autocomplete`'s `ActiveResult`
- *   `explicit`/`limit` distinction (`limit = from + (explicit ? 0 : 1)`).
+ *   [startCompletion]) rather than implicitly by typing. It sets each result's
+ *   backspace [limit][ActiveResult.limit], and is kept for a re-query.
+ * @param requery Set, with the list closed, by a transaction after which an open
+ *   result no longer applies but its source should be asked again (upstream's
+ *   `Pending`): typing or backspacing left text its `validFor` rejects, or it has
+ *   none. The completion plugin then re-runs the query with [explicit]. Cleared
+ *   by the next transaction.
  */
 internal data class CompletionState(
-    val results: List<CompletionResult> = emptyList(),
+    val active: List<ActiveResult> = emptyList(),
     val filtered: List<FilterResult> = emptyList(),
     val selected: Int = 0,
     val open: Boolean = false,
-    val explicit: Boolean = false
+    val explicit: Boolean = false,
+    val requery: Boolean = false
 ) {
+    val results: List<CompletionResult> get() = active.map { it.result }
+
     /** The completion span start — the smallest `from` across active results. */
-    val from: DocPos? get() = results.minByOrNull { it.from.value }?.from
+    val from: DocPos? get() = active.minOfOrNull { it.result.from }
 
     companion object {
         val empty = CompletionState()
@@ -91,23 +109,26 @@ internal val completionStateField: StateField<CompletionState> = StateField.defi
             // The open session's lifecycle comes first, as upstream's
             // `ActiveSource.update` resets before it applies this transaction's
             // effects (so a start effect in the same transaction still opens).
-            var result = if (value.open && value.results.isNotEmpty()) {
-                updateOpenCompletion(value, tr)
-            } else {
-                value
+            var result = when {
+                value.open && value.active.isNotEmpty() -> updateOpenCompletion(value, tr)
+                value.requery -> CompletionState.empty
+                else -> value
             }
 
             for (effect in tr.effects) {
                 val startEffect = effect.asType(startCompletionEffect)
                 if (startEffect != null) {
-                    val results = startEffect.value.results
-                    val filtered = mergeCompletions(results, tr.state)
+                    val start = startEffect.value
+                    val slack = if (start.explicit) 0 else 1
+                    val filtered = mergeCompletions(start.results, tr.state)
                     result = CompletionState(
-                        results = results,
+                        active = start.results.map {
+                            ActiveResult(it, minOf(start.pos, it.from + slack))
+                        },
                         filtered = filtered,
                         selected = 0,
                         open = filtered.isNotEmpty(),
-                        explicit = startEffect.value.explicit
+                        explicit = start.explicit
                     )
                 }
                 if (effect.asType(closeCompletionEffect) != null) {
@@ -136,23 +157,22 @@ private fun CompletionResult.mapped(changes: ChangeDesc): CompletionResult =
  * Carry an open completion [value] through [tr], following upstream
  * `@codemirror/autocomplete`'s `getUpdateType` / `ActiveResult.updateFor`:
  *   * Typing (`input.type`) or backspacing (`delete.backward`) maps each result's
- *     range and re-filters it (see below).
+ *     range and re-checks it (see below).
  *   * Any other transaction that sets the selection — a cursor move, an applied
  *     completion, a paste — closes the completion.
  *   * Any other document change closes it if it touches a result's range, and
  *     otherwise maps the range.
  *
- * Re-filtering applies the explicit-session lifecycle:
- *   * Backspacing before the session's original `from` closes it. An EXPLICIT
- *     session may backspace back to `from` itself (empty query, re-shows
- *     everything) and stays open; an IMPLICIT session closes once the typed span is
- *     fully removed — upstream's `limit = from + (explicit ? 0 : 1)`.
- *   * Otherwise each result is kept only while the cursor is not past its explicit
- *     `to` and its validFor still FULLY matches (anchored, like upstream
- *     `checkValid`) the text between its `from` and `to` (the cursor when unset);
- *     results that fall out of validFor (e.g. a typed space) drop, and if none
- *     survive the list closes. Survivors are re-merged + deduped, and the selection
- *     resets to 0 (upstream builds a fresh `ActiveResult`).
+ * On typing or backspacing, each result is checked on its own:
+ *   * It drops when the cursor is past its explicit `to` (or before its `from`), or
+ *     on a backspace that started at its original `from` or left the cursor below
+ *     its [limit][ActiveResult.limit].
+ *   * Otherwise it stays while its validFor FULLY matches (anchored, like upstream
+ *     `checkValid`) the text between its `from` and `to` (the cursor when unset).
+ *     When it doesn't, or there is no validFor, upstream re-queries the source; if
+ *     no result survives, the state asks for that [re-query][CompletionState.requery].
+ * Survivors are re-merged + deduped, keeping the selected option selected when it
+ * is still listed (upstream `CompletionDialog.build`).
  */
 private fun updateOpenCompletion(value: CompletionState, tr: Transaction): CompletionState {
     val changes = tr.changes
@@ -169,35 +189,54 @@ private fun updateOpenCompletion(value: CompletionState, tr: Transaction): Compl
             else -> {
                 // Untouched, so every query is unchanged: re-merging only re-points
                 // the options at the mapped results that accepting reads.
-                val results = value.results.map { it.mapped(changes) }
-                value.copy(results = results, filtered = mergeCompletions(results, tr.state))
+                val active = value.active.map {
+                    ActiveResult(it.result.mapped(changes), changes.mapPos(it.limit))
+                }
+                value.copy(
+                    active = active,
+                    filtered = mergeCompletions(active.map { it.result }, tr.state)
+                )
             }
         }
     }
-    if (!tr.docChanged) return value
 
     val head = tr.state.selection.main.head
-    val oldFrom = value.results.minOf { it.from }
-    val results = value.results.map { it.mapped(changes) }
-    val sessionFrom = results.minOf { it.from }
-    val limit = if (value.explicit) sessionFrom else sessionFrom + 1
-    if (head < sessionFrom || (backspacing && (startHead == oldFrom || head < limit))) {
-        return CompletionState.empty
-    }
-    val surviving = results.filter { cr ->
-        val validFor = cr.validFor
+    var requery = false
+    val surviving = value.active.mapNotNull { (old, limit) ->
+        val cr = old.mapped(changes)
         val to = cr.to ?: head
-        head >= cr.from &&
-            head <= to &&
-            validFor != null &&
-            validFor.matches(tr.state.doc.sliceString(cr.from, to))
+        if (head < cr.from ||
+            head > to ||
+            (backspacing && (startHead == old.from || head < limit))
+        ) {
+            return@mapNotNull null
+        }
+        val validFor = cr.validFor
+        if (validFor == null || !validFor.matches(tr.state.doc.sliceString(cr.from, to))) {
+            requery = true
+            return@mapNotNull null
+        }
+        ActiveResult(cr, changes.mapPos(limit))
     }
-    if (surviving.isEmpty()) return CompletionState.empty
-    val filtered = mergeCompletions(surviving, tr.state)
+    if (surviving.isEmpty()) {
+        return if (requery) {
+            CompletionState(explicit = value.explicit, requery = true)
+        } else {
+            CompletionState.empty
+        }
+    }
+    val filtered = mergeCompletions(surviving.map { it.result }, tr.state)
+    // Upstream moves a selection other than the first option along with its option.
+    val selected = if (value.selected == 0) {
+        0
+    } else {
+        val option = value.filtered.getOrNull(value.selected)?.completion
+        filtered.indexOfFirst { it.completion === option }.coerceAtLeast(0)
+    }
     return value.copy(
-        results = surviving,
+        active = surviving,
         filtered = filtered,
-        selected = 0,
+        selected = selected,
         open = filtered.isNotEmpty()
     )
 }

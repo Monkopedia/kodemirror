@@ -52,7 +52,11 @@ class CompletionLifecycleTest {
         )
         s.dispatch(
             TransactionSpec(
-                effects = listOf(startCompletionEffect.of(StartCompletion(listOf(result), false)))
+                effects = listOf(
+                    startCompletionEffect.of(
+                        StartCompletion(listOf(result), false, s.state.selection.main.head)
+                    )
+                )
             )
         )
         assertEquals("active", completionStatus(s.state))

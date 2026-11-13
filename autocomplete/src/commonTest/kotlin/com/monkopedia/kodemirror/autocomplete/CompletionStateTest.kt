@@ -50,7 +50,9 @@ class CompletionStateTest {
         val tr = state.update(
             TransactionSpec(
                 effects = listOf(
-                    startCompletionEffect.of(StartCompletion(listOf(result), explicit))
+                    startCompletionEffect.of(
+                        StartCompletion(listOf(result), explicit, state.selection.main.head)
+                    )
                 )
             )
         )
