@@ -115,7 +115,11 @@ class ExplicitCompletionSessionTest {
     private fun openImplicit(view: EditorSession, result: CompletionResult) {
         view.dispatch(
             TransactionSpec(
-                effects = listOf(startCompletionEffect.of(StartCompletion(listOf(result), false)))
+                effects = listOf(
+                    startCompletionEffect.of(
+                        StartCompletion(listOf(result), false, view.state.selection.main.head)
+                    )
+                )
             )
         )
     }

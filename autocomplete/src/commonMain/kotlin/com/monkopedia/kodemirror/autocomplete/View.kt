@@ -177,7 +177,7 @@ private fun triggerCompletion(view: EditorSession, explicit: Boolean) {
     if (results.isNotEmpty()) {
         view.dispatch(
             TransactionSpec(
-                effects = listOf(startCompletionEffect.of(StartCompletion(results, explicit)))
+                effects = listOf(startCompletionEffect.of(StartCompletion(results, explicit, pos)))
             )
         )
         return
@@ -209,7 +209,9 @@ private fun triggerCompletion(view: EditorSession, explicit: Boolean) {
                     view.dispatch(
                         TransactionSpec(
                             effects = listOf(
-                                startCompletionEffect.of(StartCompletion(listOf(result), explicit))
+                                startCompletionEffect.of(
+                                    StartCompletion(listOf(result), explicit, triggerPos)
+                                )
                             )
                         )
                     )
@@ -340,6 +342,14 @@ fun insertCompletionText(
 
 private class CompletionPlugin(private val view: EditorSession) : PluginValue {
     override fun update(update: ViewUpdate) {
+        // A result the last edit invalidated asks its source again, with the
+        // session's explicit flag, as upstream's `Pending` source does — on
+        // backspace too, and regardless of activateOnTyping.
+        val cs = update.state.field(completionStateField, require = false)
+        if (cs != null && cs.requery && update.transactions.isNotEmpty()) {
+            triggerCompletion(view, explicit = cs.explicit)
+            return
+        }
         val config = update.state.facet(completionConfig)
         if (!config.activateOnTyping) return
 
@@ -355,7 +365,6 @@ private class CompletionPlugin(private val view: EditorSession) : PluginValue {
                     // "doesn't filter / inserts `.xplus`" bug (#114). Only (re-)trigger
                     // when completion is closed (or the edit closed it because the text
                     // no longer matched validFor) — that starts a fresh query.
-                    val cs = update.state.field(completionStateField, require = false)
                     if (cs == null || !cs.open) {
                         triggerCompletion(view, explicit = false)
                     }
