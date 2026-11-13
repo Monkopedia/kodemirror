@@ -365,7 +365,6 @@ private class CompletionPlugin(private val view: EditorSession) : PluginValue {
                     // "doesn't filter / inserts `.xplus`" bug (#114). Only (re-)trigger
                     // when completion is closed (or the edit closed it because the text
                     // no longer matched validFor) — that starts a fresh query.
-                    val cs = update.state.field(completionStateField, require = false)
                     if (cs == null || !cs.open) {
                         triggerCompletion(view, explicit = false)
                     }

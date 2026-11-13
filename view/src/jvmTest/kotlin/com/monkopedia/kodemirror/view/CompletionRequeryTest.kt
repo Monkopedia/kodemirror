@@ -26,6 +26,7 @@ import com.monkopedia.kodemirror.autocomplete.Completion
 import com.monkopedia.kodemirror.autocomplete.CompletionConfig
 import com.monkopedia.kodemirror.autocomplete.CompletionResult
 import com.monkopedia.kodemirror.autocomplete.CompletionSource
+import com.monkopedia.kodemirror.autocomplete.SuspendCompletionSource
 import com.monkopedia.kodemirror.autocomplete.autocompletion
 import com.monkopedia.kodemirror.autocomplete.completionStatus
 import com.monkopedia.kodemirror.autocomplete.currentCompletions
@@ -41,12 +42,14 @@ import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asDoc
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlinx.coroutines.CompletableDeferred
 
 /**
  * When an open completion's result stops being valid for the edited text, upstream
  * `@codemirror/autocomplete` 6.20.1 re-queries its source (the result goes
  * `Pending`, keeping the session's explicit flag) rather than closing, on
- * backspace as well as typing (#390). These run the real completion plugin.
+ * backspace as well as typing (#390). It also takes a result's backspace limit
+ * from the cursor the query ran at. These run the real completion plugin.
  */
 @OptIn(ExperimentalTestApi::class)
 class CompletionRequeryTest {
@@ -64,7 +67,10 @@ class CompletionRequeryTest {
         }
     }
 
-    private fun ComposeUiTest.editor(doc: String, source: CompletionSource): EditorSession {
+    private fun ComposeUiTest.editor(doc: String, source: CompletionSource): EditorSession =
+        editor(doc, CompletionConfig(override = listOf(source)))
+
+    private fun ComposeUiTest.editor(doc: String, config: CompletionConfig): EditorSession {
         lateinit var session: EditorSession
         setContent {
             val state = remember {
@@ -73,7 +79,7 @@ class CompletionRequeryTest {
                         doc = doc.asDoc(),
                         selection = SelectionSpec.CursorSpec(DocPos(doc.length)),
                         extensions = ExtensionList(
-                            listOf(autocompletion(CompletionConfig(override = listOf(source))))
+                            listOf(autocompletion(config))
                         )
                     )
                 )
@@ -141,4 +147,65 @@ class CompletionRequeryTest {
         assertEquals("active" to listOf("bar", "baz"), shown(session))
         assertEquals(1, queries)
     }
+
+    @Test
+    fun aTypedQueryTakesItsLimitFromTheCursor() = runDesktopComposeUiTest {
+        // Queried at 6 after typing "a" into "foo b": the limit is min(6, 4 + 1) == 5,
+        // so the second backspace (to 4) closes.
+        val session = editor("foo b", wordSource.withValidFor())
+        edit(session, "a", "input.type")
+        edit(session, null, "delete.backward")
+        assertEquals("active" to listOf("bar", "baz"), shown(session))
+        edit(session, null, "delete.backward")
+        assertEquals(null to emptyList<String>(), shown(session))
+    }
+
+    @Test
+    fun aMemberQueryMayBeBackspacedToItsStart() = runDesktopComposeUiTest {
+        val member: CompletionSource = { ctx ->
+            CompletionResult(
+                from = ctx.pos,
+                options = listOf(Completion("bar"), Completion("baz")),
+                validFor = Regex("\\w*")
+            ).takeIf { ctx.state.doc.sliceString(ctx.pos - 1, ctx.pos) == "." }
+        }
+        val session = editor("x", member)
+        edit(session, ".", "input.type")
+        edit(session, "b", "input.type")
+        edit(session, null, "delete.backward")
+        assertEquals("active" to listOf("bar", "baz"), shown(session))
+    }
+
+    @Test
+    fun aLateAsyncResultTakesItsLimitFromTheQueryCursor() = runDesktopComposeUiTest {
+        // The query runs at 2, right after "."; its result lands after "ba" is typed.
+        // Upstream's limit is min(2, 2 + 1) == 2, so two backspaces keep it open.
+        val gate = CompletableDeferred<Unit>()
+        var calls = 0
+        val source: SuspendCompletionSource = { ctx ->
+            if (calls++ == 0) {
+                gate.await()
+                CompletionResult(
+                    from = ctx.pos,
+                    options = listOf(Completion("bar"), Completion("baz")),
+                    validFor = Regex("\\w*")
+                )
+            } else {
+                null
+            }
+        }
+        val session = editor("x", CompletionConfig(asyncOverride = listOf(source)))
+        edit(session, ".", "input.type")
+        edit(session, "b", "input.type")
+        edit(session, "a", "input.type")
+        runOnIdle { gate.complete(Unit) }
+        waitForIdle()
+        assertEquals("active" to listOf("bar", "baz"), shown(session))
+        edit(session, null, "delete.backward")
+        edit(session, null, "delete.backward")
+        assertEquals("active" to listOf("bar", "baz"), shown(session))
+    }
+
+    private fun CompletionSource.withValidFor(): CompletionSource =
+        { ctx -> this(ctx)?.copy(validFor = Regex("\\w*")) }
 }

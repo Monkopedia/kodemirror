@@ -253,6 +253,27 @@ class ActiveResultUpdateTest {
     }
 
     @Test
+    fun eachSourceKeepsItsOwnLimitWhateverTheOrder() {
+        // The cursor source first: its limit (6) must not apply to the word source.
+        val s = open("foo ba", listOf(6), listOf(result(6, "rex", "rot"), result(4)))
+        type(s, "r")
+        backspace(s)
+        backspace(s)
+        assertEquals("active" to listOf("bar", "baz"), shown(s))
+    }
+
+    @Test
+    fun theLimitFollowsEditsAtOtherCursors() {
+        // Typing at the cursor at 0 shifts the limit from 5 to 6 with the word, so
+        // the backspace that leaves the main cursor at 5 closes.
+        val s = open("foo b", listOf(0, 5), listOf(result(4)))
+        type(s, "a")
+        assertEquals("active" to listOf("bar", "baz"), shown(s))
+        backspace(s)
+        assertEquals(closed, shown(s))
+    }
+
+    @Test
     fun backspacingAtOneSourcesStartKeepsTheOther() {
         val s = open("foo ba", listOf(6), listOf(result(4), result(6, "rex", "rot")))
         backspace(s)
