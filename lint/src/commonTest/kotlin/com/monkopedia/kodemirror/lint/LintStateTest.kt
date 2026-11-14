@@ -305,4 +305,27 @@ class LintStateTest {
             decorationDump("ab\ncd\n\nefgh", "h0-4 e1 w3-4 i6-7 e8-11 w9")
         )
     }
+
+    @Test
+    fun aRangeOfLineBreaksIsAWidgetOnlyWhereADiagnosticEnds() {
+        // The error spans 5-7, but its piece 5-7 is not a whole diagnostic's range, so the
+        // line breaks there get a widget only because the error ends at 7. Expected from
+        // @codemirror/lint 6.9.5, sorted.
+        assertEquals(
+            "4-5:mark:info 5-5:widget:error 7-8:mark:info",
+            decorationDump("a\n\nb\n\n\n\nc\nd", "i4-8 e5-7")
+        )
+    }
+
+    @Test
+    fun anInvertedDiagnosticIsAPointAtItsStart() {
+        // Upstream draws an inverted diagnostic alone as the point at its start, but loops
+        // forever splitting one that overlaps another. The port stores it as that point, which
+        // gives what upstream draws for e5-5 e2-6.
+        assertEquals("5-5:widget:error", decorationDump("abcdefghij", "e5-3"))
+        assertEquals(
+            "2-5:mark:error 5-5:widget:error 5-6:mark:error",
+            decorationDump("a\nbcdef", "e5-3 e2-6")
+        )
+    }
 }

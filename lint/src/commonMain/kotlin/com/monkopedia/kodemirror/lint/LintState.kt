@@ -155,11 +155,15 @@ internal class LintStateValue private constructor(
          * starting past the end is dropped, one ending past it is cut off at the end (and keeps
          * an inclusive end). The clamped list is what gets stored, so later edits map positions
          * that are in range.
+         *
+         * An inverted diagnostic (`to < from`) becomes a point at `from`. Upstream draws one
+         * alone that way, but loops forever splitting one that overlaps another (#424).
          */
         fun build(diagnostics: List<Diagnostic>, doc: Text, theme: EditorTheme): LintStateValue {
             val docEnd = DocPos(doc.length)
             val entries = diagnostics
                 .filter { it.from <= docEnd }
+                .map { if (it.to < it.from) it.copy(to = it.from) else it }
                 .map { if (it.to > docEnd) Entry(it.copy(to = docEnd), true) else Entry(it, false) }
             return create(entries, doc, theme)
         }
