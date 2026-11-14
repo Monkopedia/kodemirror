@@ -28,6 +28,7 @@ import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.view.Decoration
 import com.monkopedia.kodemirror.view.MarkDecoration
 import com.monkopedia.kodemirror.view.WidgetDecoration
+import com.monkopedia.kodemirror.view.editorTheme
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -207,5 +208,124 @@ class LintStateTest {
         val decos = decorationsOf(edited)
         assertEquals(listOf(5..5), decos.map { it.first })
         assertTrue(decos.single().second is WidgetDecoration)
+    }
+
+    /**
+     * Diagnostics from a compact spec: `e5` is an error at 5, `w2-4` a warning from 2 to 4
+     * (`h`int, `i`nfo, `w`arning, `e`rror).
+     */
+    private fun diags(spec: String): List<Diagnostic> = spec.split(" ").map { token ->
+        val severity = Severity.entries.first { it.name.lowercase()[0] == token[0] }
+        val (from, to) = token.drop(1).split("-").map { it.toInt() }.let { it[0] to it.last() }
+        Diagnostic(DocPos(from), DocPos(to), severity, token)
+    }
+
+    /**
+     * The decorations as `from-to:kind:severity`, the severity read back from a widget's
+     * [DiagnosticWidget] or a mark's background color. Sorted, since the order `between` visits
+     * them in follows the decoration sides, which differ from upstream's and change nothing drawn.
+     */
+    private fun decorationDump(doc: String, spec: String): String {
+        val state = setDiags(createState(doc), diags(spec))
+        val theme = state.facet(editorTheme)
+        return decorationsOf(state)
+            .sortedWith(compareBy({ it.first.first }, { it.first.last }))
+            .joinToString(" ") { (range, deco) ->
+                val kind = when (deco) {
+                    is WidgetDecoration ->
+                        "widget:" + (deco.spec.widget as DiagnosticWidget).severity
+                    is MarkDecoration -> "mark:" + Severity.entries.single {
+                        theme.lintColor(it).copy(alpha = 0.2f) == deco.spec.style?.background
+                    }
+                    else -> error("unexpected $deco")
+                }
+                "${range.first}-${range.last}:${kind.lowercase()}"
+            }
+    }
+
+    @Test
+    fun overlappingPointsAreOneMarkerOfTheHighestSeverity() {
+        // Upstream LintState.init builds one widget per piece, coloured by maxSeverity of every
+        // diagnostic covering it (#419). Expected from @codemirror/lint 6.9.5 (probe419.mjs), sorted.
+        assertEquals("5-5:widget:error", decorationDump("hello world", "e5 w5"))
+        assertEquals("5-5:widget:error", decorationDump("hello world", "w5 e5"))
+        assertEquals("5-5:widget:info", decorationDump("hello world", "h5 i5"))
+        assertEquals("5-5:widget:warning", decorationDump("hello world", "i5 w5 h5"))
+        assertEquals(
+            "5-5:widget:error 6-6:widget:warning",
+            decorationDump("hello world", "e5 w6")
+        )
+    }
+
+    @Test
+    fun pointsTouchingRangesTakeTheirSeverity() {
+        val alphabet = "abcdefghijklmnopqrstuvwxyz"
+        assertEquals("5-5:widget:error 5-8:mark:error", decorationDump(alphabet, "w5 e5-8"))
+        assertEquals(
+            "5-7:mark:warning 7-7:widget:error 7-10:mark:warning",
+            decorationDump(alphabet, "w5-10 e7")
+        )
+        assertEquals("5-10:mark:error 10-10:widget:warning", decorationDump(alphabet, "e5-10 w10"))
+        // Upstream splits these into two pieces at 2, so it draws two markers there too.
+        assertEquals("2-2:widget:error 2-2:widget:warning", decorationDump("ab\n\ncd", "w2-4 e2"))
+        // A point at the end, after a range reaching the end, gets no piece upstream.
+        assertEquals("3-6:mark:error", decorationDump("abcdef", "w6 e3-6"))
+    }
+
+    @Test
+    fun overlappingRangesAreSplitIntoMarksOfTheHighestSeverity() {
+        val alphabet = "abcdefghijklmnopqrstuvwxyz"
+        assertEquals("5-8:mark:error", decorationDump(alphabet, "w5-8 e5-8"))
+        assertEquals(
+            "0-5:mark:warning 5-10:mark:error 10-15:mark:error",
+            decorationDump(alphabet, "w0-10 e5-15")
+        )
+        assertEquals(
+            "0-5:mark:error 5-8:mark:error 8-20:mark:error",
+            decorationDump(alphabet, "e0-20 w5-8")
+        )
+        assertEquals(
+            "0-5:mark:hint 5-8:mark:info 8-20:mark:hint",
+            decorationDump(alphabet, "h0-20 i5-8")
+        )
+        assertEquals("0-5:mark:info 5-10:mark:warning", decorationDump(alphabet, "i0-5 w5-10"))
+        assertEquals(
+            "0-4:mark:hint 4-8:mark:info 8-12:mark:warning 12-16:mark:warning " +
+                "16-20:mark:warning",
+            decorationDump(alphabet, "h0-12 i4-16 w8-20")
+        )
+        assertEquals(
+            "2-3:mark:warning 3-4:mark:error 4-5:mark:warning",
+            decorationDump("hello", "w2-9 e3-4")
+        )
+        assertEquals("5-7:mark:error 7-12:mark:warning", decorationDump(alphabet, "w5-12 e5-7"))
+        assertEquals(
+            "0-1:mark:hint 1-1:widget:error 1-3:mark:hint 3-4:mark:warning 6-6:widget:info " +
+                "8-9:mark:error 9-9:widget:error 9-11:mark:error",
+            decorationDump("ab\ncd\n\nefgh", "h0-4 e1 w3-4 i6-7 e8-11 w9")
+        )
+    }
+
+    @Test
+    fun aRangeOfLineBreaksIsAWidgetOnlyWhereADiagnosticEnds() {
+        // The error spans 5-7, but its piece 5-7 is not a whole diagnostic's range, so the
+        // line breaks there get a widget only because the error ends at 7. Expected from
+        // @codemirror/lint 6.9.5, sorted.
+        assertEquals(
+            "4-5:mark:info 5-5:widget:error 7-8:mark:info",
+            decorationDump("a\n\nb\n\n\n\nc\nd", "i4-8 e5-7")
+        )
+    }
+
+    @Test
+    fun anInvertedDiagnosticIsAPointAtItsStart() {
+        // Upstream draws an inverted diagnostic alone as the point at its start, but loops
+        // forever splitting one that overlaps another. The port stores it as that point, which
+        // gives what upstream draws for e5-5 e2-6.
+        assertEquals("5-5:widget:error", decorationDump("abcdefghij", "e5-3"))
+        assertEquals(
+            "2-5:mark:error 5-5:widget:error 5-6:mark:error",
+            decorationDump("a\nbcdef", "e5-3 e2-6")
+        )
     }
 }

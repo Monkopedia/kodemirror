@@ -33,7 +33,9 @@ import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Facet
 import com.monkopedia.kodemirror.state.MapMode
+import com.monkopedia.kodemirror.state.RangeSet
 import com.monkopedia.kodemirror.state.RangeSetBuilder
+import com.monkopedia.kodemirror.state.RangeValue
 import com.monkopedia.kodemirror.state.StateEffect
 import com.monkopedia.kodemirror.state.StateEffectType
 import com.monkopedia.kodemirror.state.StateField
@@ -107,32 +109,36 @@ internal class LintStateValue private constructor(
 
     val diagnostics: List<Diagnostic> = entries.map { it.diagnostic }
 
+    /** The pieces upstream `LintState.init` splits the diagnostics into, see [lintPieces]. */
+    private val pieces: List<LintPiece> by lazy {
+        if (doc == null) emptyList() else lintPieces(diagnostics, doc)
+    }
+
+    /** [pieces] as a range set, which the lint commands navigate over as upstream's do. */
+    val pieceSet: RangeSet<LintPiece> by lazy {
+        val builder = RangeSetBuilder<LintPiece>()
+        for (piece in pieces) builder.add(piece.from, piece.end, piece)
+        builder.finish()
+    }
+
     /**
      * The diagnostic decorations, built on first use (the gutter's copy of the state never needs
-     * them): a mark over each diagnostic's range, or, as upstream `LintState.init` does, a
-     * [DiagnosticWidget] for one that is a point or covers only line breaks, which a mark could
-     * not show.
+     * them). As upstream `LintState.init` does, each piece gets one decoration in the color of
+     * the most severe diagnostic covering it: a [DiagnosticWidget] for a zero-width piece, which
+     * a mark could not show, otherwise a mark.
      */
     val decorations: DecorationSet by lazy {
         val builder = RangeSetBuilder<Decoration>()
-        if (doc != null && theme != null) {
-            for (diag in diagnostics) {
-                val from = maxOf(DocPos.ZERO, diag.from)
-                val to = maxOf(from, diag.to)
-                if (to - from < 10 && doc.sliceString(from, to).all { it == '\n' }) {
-                    builder.add(
-                        from,
-                        from,
-                        Decoration.widget(WidgetDecorationSpec(DiagnosticWidget(diag.severity)))
-                    )
+        if (theme != null) {
+            for (piece in pieces) {
+                val severity = piece.diagnostics.maxOf { it.severity }
+                val decoration = if (piece.widget) {
+                    Decoration.widget(WidgetDecorationSpec(DiagnosticWidget(severity)))
                 } else {
-                    val mark = MarkDecorationSpec(
-                        style = SpanStyle(
-                            background = theme.lintColor(diag.severity).copy(alpha = 0.2f)
-                        )
-                    )
-                    builder.add(from, to, Decoration.mark(mark))
+                    val background = theme.lintColor(severity).copy(alpha = 0.2f)
+                    Decoration.mark(MarkDecorationSpec(style = SpanStyle(background = background)))
                 }
+                builder.add(piece.from, piece.end, decoration)
             }
         }
         builder.finish()
@@ -149,11 +155,15 @@ internal class LintStateValue private constructor(
          * starting past the end is dropped, one ending past it is cut off at the end (and keeps
          * an inclusive end). The clamped list is what gets stored, so later edits map positions
          * that are in range.
+         *
+         * An inverted diagnostic (`to < from`) becomes a point at `from`. Upstream draws one
+         * alone that way, but loops forever splitting one that overlaps another (#424).
          */
         fun build(diagnostics: List<Diagnostic>, doc: Text, theme: EditorTheme): LintStateValue {
             val docEnd = DocPos(doc.length)
             val entries = diagnostics
                 .filter { it.from <= docEnd }
+                .map { if (it.to < it.from) it.copy(to = it.from) else it }
                 .map { if (it.to > docEnd) Entry(it.copy(to = docEnd), true) else Entry(it, false) }
             return create(entries, doc, theme)
         }
@@ -164,6 +174,90 @@ internal class LintStateValue private constructor(
             return LintStateValue(sorted, doc, theme)
         }
     }
+}
+
+/**
+ * One piece of the decoration set upstream `LintState.init` builds, covering [diagnostics] from
+ * [from] to [to], with the sides of the decoration upstream uses for it: a widget
+ * (`Side.InlineBefore`) for a zero-width piece, otherwise a mark that is inclusive at its end when
+ * a diagnostic continues past it. The sides decide which [RangeSet] layer a piece lands in, and so
+ * the order `between` visits pieces in, which the lint commands depend on exactly as upstream's do.
+ */
+internal class LintPiece(
+    val from: DocPos,
+    val to: DocPos,
+    val diagnostics: List<Diagnostic>,
+    val widget: Boolean,
+    inclusiveEnd: Boolean
+) : RangeValue() {
+    /** Where the piece's range ends: a widget sits at [from]. */
+    val end: DocPos get() = if (widget) from else to
+
+    override val startSide: Int = if (widget) -100_000_000 else 500_000_000
+    override val endSide: Int = if (widget) {
+        -100_000_000
+    } else if (inclusiveEnd) {
+        1
+    } else {
+        -600_000_000
+    }
+    override val point: Boolean = widget
+
+    fun carries(diagnostic: Diagnostic) = diagnostics.any { it === diagnostic }
+}
+
+/**
+ * Split [diagnostics] into non-overlapping pieces, as upstream `LintState.init` does: sorted by
+ * `from` then `to`, split wherever the set of covering diagnostics changes, cut off at the document
+ * end, and with a point or a short line-break-only range turned into a zero-width piece at its
+ * start.
+ */
+private fun lintPieces(diagnostics: List<Diagnostic>, doc: Text): List<LintPiece> {
+    val sorted = diagnostics.sortedWith(compareBy({ it.from }, { it.to }))
+    val docEnd = DocPos(doc.length)
+    val pieces = mutableListOf<LintPiece>()
+    val active = mutableListOf<Diagnostic>()
+    var pos = DocPos.ZERO
+    var i = 0
+    while (i < sorted.size || active.isNotEmpty()) {
+        val next = sorted.getOrNull(i)
+        val from: DocPos
+        var to: DocPos
+        if (active.isNotEmpty()) {
+            from = pos
+            to = active.minOf { it.to }
+            if (next != null && next.from > from) to = minOf(to, next.from)
+        } else {
+            from = next!!.from
+            if (from > docEnd) break
+            to = next.to
+            active += next
+            i++
+        }
+        while (i < sorted.size) {
+            val candidate = sorted[i]
+            if (candidate.from == from && (candidate.to > candidate.from || candidate.to == from)) {
+                active += candidate
+                i++
+                to = minOf(to, candidate.to)
+            } else {
+                to = minOf(to, candidate.from)
+                break
+            }
+        }
+        to = minOf(to, docEnd)
+        val widget = active.any { it.from == from && (it.to == to || to == docEnd) } &&
+            (
+                from == to ||
+                    (to.value - from.value < 10 && doc.sliceString(from, to).all { it == '\n' })
+                )
+        pieces +=
+            LintPiece(from, to, active.toList(), widget, inclusiveEnd = active.any { it.to > to })
+        pos = to
+        if (pos == docEnd) break
+        active.removeAll { it.to <= pos }
+    }
+    return pieces
 }
 
 /**
