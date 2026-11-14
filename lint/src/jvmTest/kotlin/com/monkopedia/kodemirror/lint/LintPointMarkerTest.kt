@@ -49,7 +49,10 @@ import kotlin.test.assertNotNull
 @OptIn(ExperimentalTestApi::class)
 class LintPointMarkerTest {
 
-    private fun DesktopComposeUiTest.render(doc: String, diagnostic: Diagnostic): EditorSession {
+    private fun DesktopComposeUiTest.render(
+        doc: String,
+        vararg diagnostics: Diagnostic
+    ): EditorSession {
         lateinit var session: EditorSession
         setContent {
             session = remember {
@@ -62,7 +65,7 @@ class LintPointMarkerTest {
             KodeMirror(session = session)
         }
         waitForIdle()
-        runOnIdle { setDiagnostics(session, listOf(diagnostic)) }
+        runOnIdle { setDiagnostics(session, diagnostics.toList()) }
         waitForIdle()
         return session
     }
@@ -116,5 +119,22 @@ class LintPointMarkerTest {
         val at = assertNotNull(session.coordsAtPos(5))
         val marker = editorPixels().count(warning, at.left + 1f, at.bottom - 2f, dx = 3, dy = 3)
         assert(marker > 0) { "no warning-colored marker at the end of line 1" }
+    }
+
+    @Test
+    fun overlappingPointsDrawOneMarkerOfTheHighestSeverity() = runDesktopComposeUiTest {
+        // The warning comes second, so a marker per diagnostic would draw it over the error.
+        // Upstream draws one marker for both, in the error's color (#419).
+        val session = render(
+            "hello world",
+            Diagnostic(DocPos(5), DocPos(5), Severity.ERROR, "e"),
+            Diagnostic(DocPos(5), DocPos(5), Severity.WARNING, "w")
+        )
+        val at = assertNotNull(session.coordsAtPos(5))
+        val pixels = editorPixels()
+        val errorPixels = pixels.count(error, at.left + 1f, at.bottom - 2f, dx = 3, dy = 3)
+        val warningPixels = pixels.count(warning, at.left + 1f, at.bottom - 2f, dx = 3, dy = 3)
+        assert(errorPixels > 0) { "no error-colored marker under position 5" }
+        assertEquals(0, warningPixels, "warning-colored marker drawn under position 5")
     }
 }
