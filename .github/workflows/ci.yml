@@ -9,7 +9,16 @@ on:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    # EXPERIMENT, revisit (#423): pinned to ubuntu-24.04 rather than ubuntu-latest, which began
+    # migrating to Ubuntu 26 on 2026-10-19. Since then `check` has lost its hosted runner after
+    # ~56-60 min with no log on 3 of 68 attempts; this pin tests the image hypothesis and changes
+    # nothing else. Reading rule: about 1 loss in 23 attempts, so one quiet week (~34 attempts) is
+    # weak evidence (P~0.22 by chance); wait for two quiet weeks, ~68 attempts, before concluding.
+    # Count attempts, not days. If losses continue on 24.04, unpin and measure the job's peak memory.
+    runs-on: ubuntu-24.04
+    # Slowest successful run of the last 58 was 21.8 min (median 19.5). The default is 360, so a
+    # real hang would otherwise hold a runner for six hours (#423).
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
         with:
@@ -61,7 +70,7 @@ jobs:
       # The wasmJsTest tasks below are exactly the modules that opt in via
       # `kodemirrorLibrary { wasmJsTests.set(true) }`; they are listed one by one so that a
       # module dropping out of the opt-in set shows up as a diff here rather than as a silent
-      # no-op. They run on Karma + headless Chrome (preinstalled on ubuntu-latest), not Node,
+      # no-op. They run on Karma + headless Chrome (preinstalled on the hosted Ubuntu image), not Node,
       # because skiko's `skiko.mjs` is a browser-only build (#202). The heap bump matches
       # docs.yml: linking ~29 wasm test binaries OOMs the Kotlin daemon at the 2g default.
       - name: Lint and test (JVM + wasmJs + Android)
@@ -117,7 +126,10 @@ jobs:
   # NOTE: this job is not in `main`'s branch protection (which requires `check`, `check-macos` and
   # `check-ios`). It shows red on the PR but does not block a merge until a maintainer adds it.
   lint:
-    runs-on: ubuntu-latest
+    # Same ubuntu-24.04 experiment as `check` (#423), so both Linux jobs run on one image.
+    runs-on: ubuntu-24.04
+    # Slowest successful run of the last 58 was 7.0 min (median 5.5) (#423).
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
