@@ -266,6 +266,13 @@ class LintStateTest {
         )
     }
 
+    @Test
+    fun aPieceCutOffAtTheEndGrowsWithTextTypedThere() {
+        // Upstream builds its pieces from the ends before clamping, so the mark cut off at 2 is
+        // inclusive there and takes in the "z". Expected value from @codemirror/lint 6.9.5.
+        assertEquals("0-3:mark:error", decorationDump("xy", "e0-5", insertAt(2, "z")))
+    }
+
     private fun insertAt(pos: Int, text: String) =
         ChangeSpec.Single(DocPos(pos), DocPos(pos), InsertContent.StringContent(text))
 
