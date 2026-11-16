@@ -225,8 +225,9 @@ class LintStateTest {
      * [DiagnosticWidget] or a mark's background color. Sorted, since the order `between` visits
      * them in follows the decoration sides, which differ from upstream's and change nothing drawn.
      */
-    private fun decorationDump(doc: String, spec: String): String {
-        val state = setDiags(createState(doc), diags(spec))
+    private fun decorationDump(doc: String, spec: String, edit: ChangeSpec? = null): String {
+        var state = setDiags(createState(doc), diags(spec))
+        if (edit != null) state = state.update(TransactionSpec(changes = edit)).state
         val theme = state.facet(editorTheme)
         return decorationsOf(state)
             .sortedWith(compareBy({ it.first.first }, { it.first.last }))
@@ -242,6 +243,38 @@ class LintStateTest {
                 "${range.first}-${range.last}:${kind.lowercase()}"
             }
     }
+
+    @Test
+    fun anEditMapsThePiecesInsteadOfSplittingTheDiagnosticsAgain() {
+        // Expected values from @codemirror/lint 6.9.5 on the same inputs, which maps
+        // its decorations through the edit. The "x" typed at 9 joins the mark 8-9, inclusive at
+        // its end since the error continues past it, and the point stays before the "x".
+        // Splitting the mapped diagnostics 8-15 and 9 again would give 8-9, 9 and 9-15.
+        assertEquals(
+            "8-10:mark:error 9-9:widget:error 10-15:mark:error",
+            decorationDump("0123456789abcdefghij", "e8-14 i9", insertAt(9, "x"))
+        )
+        // The mark shrinks to a single line break and stays a mark. Splitting again would turn
+        // the line-break-only range into a widget.
+        assertEquals(
+            "2-3:mark:warning",
+            decorationDump(
+                "a\n\nb\n\n\n\nc\nd",
+                "w2-6",
+                ChangeSpec.Single(DocPos(1), DocPos(5), InsertContent.StringContent("\n"))
+            )
+        )
+    }
+
+    @Test
+    fun aPieceCutOffAtTheEndGrowsWithTextTypedThere() {
+        // Upstream builds its pieces from the ends before clamping, so the mark cut off at 2 is
+        // inclusive there and takes in the "z". Expected value from @codemirror/lint 6.9.5.
+        assertEquals("0-3:mark:error", decorationDump("xy", "e0-5", insertAt(2, "z")))
+    }
+
+    private fun insertAt(pos: Int, text: String) =
+        ChangeSpec.Single(DocPos(pos), DocPos(pos), InsertContent.StringContent(text))
 
     @Test
     fun overlappingPointsAreOneMarkerOfTheHighestSeverity() {

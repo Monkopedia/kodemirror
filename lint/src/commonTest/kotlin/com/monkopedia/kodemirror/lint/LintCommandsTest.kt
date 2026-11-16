@@ -18,11 +18,13 @@
  */
 package com.monkopedia.kodemirror.lint
 
+import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.ExtensionList
+import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asDoc
@@ -329,6 +331,24 @@ class LintCommandsTest {
         assertEquals("next:true:15/18", steps(createView(alphabet, two, 16, 6), "N"))
         assertEquals("prev:true:5/8", steps(createView(alphabet, two, 6, 16), "P"))
         assertEquals("prev:true:15/18", steps(createView(alphabet, two, 8, 5), "P"))
+    }
+
+    @Test
+    fun navigationAfterAnEditFollowsTheMappedPieces() {
+        // Upstream maps its pieces through an edit: the "x" typed at 9 joins the piece 8-9, which
+        // the range continues past, so the pieces are 8-10, a point at 9 and 10-15. Splitting the
+        // mapped diagnostics 8-15 and 9 again would give 8-9, 9 and 9-15 instead.
+        // Expected values from @codemirror/lint 6.9.5 on the same inputs.
+        val view = createView("0123456789abcdefghij", ranges(8 to 14, 9 to 9), 8)
+        view.dispatch(
+            TransactionSpec(
+                changes = ChangeSpec.Single(DocPos(9), DocPos(9), InsertContent.StringContent("x"))
+            )
+        )
+        assertEquals(
+            "next:true:8/9 next:true:8/15 prev:true:9/9 prev:true:10/15",
+            steps(view, "NNPP")
+        )
     }
 
     @Test

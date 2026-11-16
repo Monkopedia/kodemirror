@@ -33,6 +33,7 @@ import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Facet
 import com.monkopedia.kodemirror.state.MapMode
+import com.monkopedia.kodemirror.state.Range
 import com.monkopedia.kodemirror.state.RangeSet
 import com.monkopedia.kodemirror.state.RangeSetBuilder
 import com.monkopedia.kodemirror.state.RangeValue
@@ -78,7 +79,13 @@ internal val forceLintEffect: StateEffectType<Unit> = StateEffect.define()
 /** Internal state holding diagnostics and their decorations. */
 internal class LintStateValue private constructor(
     private val entries: List<Entry>,
-    private val doc: Text?,
+    /**
+     * The pieces upstream `LintState.init` splits the diagnostics into (see [lintPieces]), which
+     * the decorations are drawn from and the lint commands navigate over as upstream's do. An edit
+     * maps this set, as upstream maps its decoration set, rather than splitting the mapped
+     * diagnostics again.
+     */
+    val pieceSet: RangeSet<LintPiece>,
     private val theme: EditorTheme?
 ) {
     /**
@@ -109,18 +116,6 @@ internal class LintStateValue private constructor(
 
     val diagnostics: List<Diagnostic> = entries.map { it.diagnostic }
 
-    /** The pieces upstream `LintState.init` splits the diagnostics into, see [lintPieces]. */
-    private val pieces: List<LintPiece> by lazy {
-        if (doc == null) emptyList() else lintPieces(diagnostics, doc)
-    }
-
-    /** [pieces] as a range set, which the lint commands navigate over as upstream's do. */
-    val pieceSet: RangeSet<LintPiece> by lazy {
-        val builder = RangeSetBuilder<LintPiece>()
-        for (piece in pieces) builder.add(piece.from, piece.end, piece)
-        builder.finish()
-    }
-
     /**
      * The diagnostic decorations, built on first use (the gutter's copy of the state never needs
      * them). As upstream `LintState.init` does, each piece gets one decoration in the color of
@@ -128,9 +123,11 @@ internal class LintStateValue private constructor(
      * a mark could not show, otherwise a mark.
      */
     val decorations: DecorationSet by lazy {
-        val builder = RangeSetBuilder<Decoration>()
+        val ranges = mutableListOf<Range<Decoration>>()
         if (theme != null) {
-            for (piece in pieces) {
+            val iter = pieceSet.iter()
+            while (true) {
+                val piece = iter.value ?: break
                 val severity = piece.diagnostics.maxOf { it.severity }
                 val decoration = if (piece.widget) {
                     Decoration.widget(WidgetDecorationSpec(DiagnosticWidget(severity)))
@@ -138,17 +135,29 @@ internal class LintStateValue private constructor(
                     val background = theme.lintColor(severity).copy(alpha = 0.2f)
                     Decoration.mark(MarkDecorationSpec(style = SpanStyle(background = background)))
                 }
-                builder.add(piece.from, piece.end, decoration)
+                ranges += decoration.range(DocPos(iter.from), DocPos(iter.to))
+                iter.next()
             }
         }
-        builder.finish()
+        // The decorations' sides differ from the pieces', so they may sort differently.
+        RangeSet.of(ranges, sort = true)
     }
 
-    fun map(changes: ChangeSet, doc: Text, theme: EditorTheme): LintStateValue =
-        create(entries.mapNotNull { it.map(changes) }, doc, theme)
+    fun map(changes: ChangeSet, theme: EditorTheme): LintStateValue {
+        val mappedEntries = entries.mapNotNull { it.map(changes) }.sortedWith(entryOrder)
+        val mappedPieces = pieceSet.map(changes)
+        return if (mappedEntries.isEmpty() && mappedPieces.isEmpty) {
+            empty
+        } else {
+            LintStateValue(mappedEntries, mappedPieces, theme)
+        }
+    }
 
     companion object {
-        val empty = LintStateValue(emptyList(), null, null)
+        val empty = LintStateValue(emptyList(), RangeSet.empty(), null)
+
+        private val entryOrder: Comparator<Entry> =
+            compareBy({ it.diagnostic.from }, { it.diagnostic.to })
 
         /**
          * Clamp [diagnostics] to the document, as upstream `LintState.init` does: a diagnostic
@@ -161,38 +170,34 @@ internal class LintStateValue private constructor(
          */
         fun build(diagnostics: List<Diagnostic>, doc: Text, theme: EditorTheme): LintStateValue {
             val docEnd = DocPos(doc.length)
-            val entries = diagnostics
+            val inDoc = diagnostics
                 .filter { it.from <= docEnd }
                 .map { if (it.to < it.from) it.copy(to = it.from) else it }
-                .map { if (it.to > docEnd) Entry(it.copy(to = docEnd), true) else Entry(it, false) }
-            return create(entries, doc, theme)
-        }
-
-        private fun create(entries: List<Entry>, doc: Text, theme: EditorTheme): LintStateValue {
-            if (entries.isEmpty()) return empty
-            val sorted = entries.sortedWith(compareBy({ it.diagnostic.from }, { it.diagnostic.to }))
-            return LintStateValue(sorted, doc, theme)
+                .sortedWith(compareBy({ it.from }, { it.to }))
+            if (inDoc.isEmpty()) return empty
+            val entries = inDoc.map {
+                if (it.to > docEnd) Entry(it.copy(to = docEnd), true) else Entry(it, false)
+            }
+            // The pieces see the ends before clamping, as upstream's do: a mark cut off at the
+            // end is inclusive there.
+            return LintStateValue(entries, lintPieces(inDoc, doc), theme)
         }
     }
 }
 
 /**
- * One piece of the decoration set upstream `LintState.init` builds, covering [diagnostics] from
- * [from] to [to], with the sides of the decoration upstream uses for it: a widget
+ * The value of one piece of the decoration set upstream `LintState.init` builds, covering
+ * [diagnostics], with the sides of the decoration upstream uses for it: a widget
  * (`Side.InlineBefore`) for a zero-width piece, otherwise a mark that is inclusive at its end when
- * a diagnostic continues past it. The sides decide which [RangeSet] layer a piece lands in, and so
- * the order `between` visits pieces in, which the lint commands depend on exactly as upstream's do.
+ * a diagnostic continues past it. The sides decide how an edit maps the piece and which
+ * [RangeSet] layer it lands in, and so the order `between` visits pieces in, which the lint
+ * commands depend on exactly as upstream's do.
  */
 internal class LintPiece(
-    val from: DocPos,
-    val to: DocPos,
     val diagnostics: List<Diagnostic>,
     val widget: Boolean,
     inclusiveEnd: Boolean
 ) : RangeValue() {
-    /** Where the piece's range ends: a widget sits at [from]. */
-    val end: DocPos get() = if (widget) from else to
-
     override val startSide: Int = if (widget) -100_000_000 else 500_000_000
     override val endSide: Int = if (widget) {
         -100_000_000
@@ -207,15 +212,14 @@ internal class LintPiece(
 }
 
 /**
- * Split [diagnostics] into non-overlapping pieces, as upstream `LintState.init` does: sorted by
- * `from` then `to`, split wherever the set of covering diagnostics changes, cut off at the document
- * end, and with a point or a short line-break-only range turned into a zero-width piece at its
- * start.
+ * Split [sorted], diagnostics sorted by `from` then `to`, into non-overlapping pieces, as upstream
+ * `LintState.init` does: split wherever the set of covering diagnostics changes, cut off at the
+ * document end, and with a point or a short line-break-only range turned into a zero-width piece
+ * at its start.
  */
-private fun lintPieces(diagnostics: List<Diagnostic>, doc: Text): List<LintPiece> {
-    val sorted = diagnostics.sortedWith(compareBy({ it.from }, { it.to }))
+private fun lintPieces(sorted: List<Diagnostic>, doc: Text): RangeSet<LintPiece> {
     val docEnd = DocPos(doc.length)
-    val pieces = mutableListOf<LintPiece>()
+    val pieces = RangeSetBuilder<LintPiece>()
     val active = mutableListOf<Diagnostic>()
     var pos = DocPos.ZERO
     var i = 0
@@ -251,13 +255,13 @@ private fun lintPieces(diagnostics: List<Diagnostic>, doc: Text): List<LintPiece
                 from == to ||
                     (to.value - from.value < 10 && doc.sliceString(from, to).all { it == '\n' })
                 )
-        pieces +=
-            LintPiece(from, to, active.toList(), widget, inclusiveEnd = active.any { it.to > to })
+        val piece = LintPiece(active.toList(), widget, inclusiveEnd = active.any { it.to > to })
+        pieces.add(from, if (widget) from else to, piece)
         pos = to
         if (pos == docEnd) break
         active.removeAll { it.to <= pos }
     }
-    return pieces
+    return pieces.finish()
 }
 
 /**
@@ -309,7 +313,7 @@ private fun updateLintStateValue(
         result = LintStateValue.build(diagnostics, tr.newDoc, theme)
     }
     if (result === value && tr.docChanged) {
-        result = result.map(tr.changes, tr.newDoc, theme)
+        result = result.map(tr.changes, theme)
     }
     return result
 }
