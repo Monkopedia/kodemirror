@@ -37,8 +37,9 @@ import kotlin.test.assertEquals
 /**
  * How an open completion follows typing, backspacing and other deletions, against
  * upstream `@codemirror/autocomplete` 6.20.1's `ActiveResult.updateFor` on the same
- * inputs (#390). Each expected value is upstream's output for the same doc, cursor,
- * result and edits.
+ * inputs (#390), and which text it filters by: upstream's `from..to`, where `to`
+ * defaults to the cursor when the result arrives and then maps through edits (#421).
+ * Each expected value is upstream's output for the same doc, cursor, result and edits.
  */
 class ActiveResultUpdateTest {
 
@@ -340,5 +341,122 @@ class ActiveResultUpdateTest {
         backspace(s)
         backspace(s)
         assertEquals(false to false, requery(s))
+    }
+
+    // ── Filter text: from..to (#421) ──
+
+    /** Each open result's stored `from..to`, as upstream's `ActiveResult` holds it. */
+    private fun ranges(s: EditorSession) = s.state.field(completionStateField).active
+        .map { it.result.from.value to it.result.to?.value }
+
+    private fun CompletionResult.to(to: Int) = copy(to = DocPos(to))
+
+    /** Insert [text] at [at] with `input.type` but leave the cursor where it was. */
+    private fun typeBehindCursor(s: EditorSession, at: Int, text: String) = s.dispatch(
+        TransactionSpec(
+            changes = ChangeSpec.Single(DocPos(at), DocPos(at), InsertContent.StringContent(text)),
+            selection = SelectionSpec.CursorSpec(s.state.selection.main.head),
+            userEvent = "input.type"
+        )
+    )
+
+    @Test
+    fun typingThatLeavesTheCursorBehindFiltersByTheResultsTo() {
+        // `to` maps with assoc 1 over text typed at it, the cursor does not move.
+        var s = open("foo ba)", 6, result(4).to(6))
+        typeBehindCursor(s, 6, "r")
+        assertEquals("active" to listOf("bar"), shown(s))
+        assertEquals(listOf(4 to 7), ranges(s))
+        // An unset `to` is the cursor when the result arrives, and maps the same way.
+        s = open("foo ba)", 6, result(4))
+        typeBehindCursor(s, 6, "r")
+        assertEquals("active" to listOf("bar"), shown(s))
+        assertEquals(listOf(4 to 7), ranges(s))
+        // Accepting replaces that same range.
+        acceptCompletion(s)
+        assertEquals("foo bar)", s.state.doc.toString())
+        assertEquals(7, s.state.selection.main.head.value)
+    }
+
+    @Test
+    fun aToPastTheCursorFiltersByTheWholeRange() {
+        // "foo b|ar" with a result over "bar", as an LSP textEdit range gives.
+        var s = open("foo bar", 5, result(4, "bar", "baz", "bat").to(7))
+        assertEquals("active" to listOf("bar"), shown(s))
+        type(s, "a")
+        assertEquals(closed, shown(s))
+        // "foo b|z", explicit: typing and backspacing inside the range.
+        s = open("foo bz", 5, result(4, "bz", "bzz", "bar").to(6), explicit = true)
+        assertEquals("active" to listOf("bz", "bzz"), shown(s))
+        type(s, "z")
+        assertEquals("active" to listOf("bzz"), shown(s))
+        assertEquals(listOf(4 to 7), ranges(s))
+        backspace(s)
+        assertEquals("active" to listOf("bz", "bzz"), shown(s))
+        assertEquals(listOf(4 to 6), ranges(s))
+    }
+
+    @Test
+    fun aToBeforeTheCursorFiltersUpToIt() {
+        val s = open("foo barx", 8, result(4, "bar", "baz", "bxx").to(6), explicit = true)
+        assertEquals("active" to listOf("bar", "baz"), shown(s))
+        // The cursor is still past `to` after a backspace, which closes it.
+        backspace(s)
+        assertEquals(closed, shown(s))
+    }
+
+    @Test
+    fun withoutAToTheFilterTextFollowsTypingAndBackspacing() {
+        val s = open("foo b", 5, result(4, "bar", "baz", "bat"))
+        assertEquals("active" to listOf("bar", "bat", "baz"), shown(s))
+        type(s, "a")
+        type(s, "r")
+        assertEquals("active" to listOf("bar"), shown(s))
+        backspace(s)
+        assertEquals("active" to listOf("bar", "bat", "baz"), shown(s))
+    }
+
+    @Test
+    fun withMultipleCursorsTheRangeMapsThroughEveryEdit() {
+        // Main cursor at 5 ("foo b|ar|"), a second cursor at the result's `to`.
+        var s = open("foo bar", listOf(7, 5), listOf(result(4, "bar", "baz", "bat", "baar").to(7)))
+        assertEquals("active" to listOf("bar", "baar"), shown(s))
+        type(s, "a")
+        assertEquals(closed, shown(s))
+        // No `to`, a second cursor before the result.
+        s = open("b foo b", listOf(1, 7), listOf(result(6)))
+        type(s, "a")
+        assertEquals("active" to listOf("bar", "baz"), shown(s))
+        type(s, "r")
+        assertEquals("active" to listOf("bar"), shown(s))
+        backspace(s)
+        assertEquals("active" to listOf("bar", "baz"), shown(s))
+    }
+
+    @Test
+    fun anUnfilteredResultIgnoresItsRange() {
+        val s = open("foo bar", 5, result(4, "abc", "bar", "xyz").copy(filter = false).to(7))
+        assertEquals("active" to listOf("abc", "bar", "xyz"), shown(s))
+        type(s, "q")
+        assertEquals("active" to listOf("abc", "bar", "xyz"), shown(s))
+    }
+
+    @Test
+    fun aResultThatArrivesAfterTypingFiltersByTheTypedText() {
+        // Queried at 2 right after ".", landing once "ba" is typed.
+        val s = open("x.ba", listOf(4), listOf(result(2, "bar", "baz", "qux")), queryPos = 2)
+        assertEquals("active" to listOf("bar", "baz"), shown(s))
+    }
+
+    @Test
+    fun eachSourceFiltersByItsOwnRange() {
+        val s =
+            open(
+                "foo bar",
+                listOf(5),
+                listOf(result(4, "bar", "bat").to(7), result(4, "baz", "bxx"))
+            )
+        assertEquals("active" to listOf("bar", "baz", "bxx"), shown(s))
+        assertEquals(listOf(4 to 7, 4 to 5), ranges(s))
     }
 }

@@ -43,9 +43,10 @@ internal data class FilterResult(
  * ordered list — the cross-source merge upstream `@codemirror/autocomplete`
  * performs in `sortOptions` (#137).
  *
- * Each result is filtered against the text between *its own* `from` and the
- * cursor, honouring its own [filter][CompletionResult.filter] flag (so a
- * `filter = false` source keeps all of its options alongside the filtered ones).
+ * Each result is filtered against the text between *its own* `from` and `to`
+ * (the cursor when `to` is unset), as upstream `sortOptions` does, honouring its
+ * own [filter][CompletionResult.filter] flag (so a `filter = false` source keeps
+ * all of its options alongside the filtered ones).
  * The combined options are then sorted by a SINGLE GLOBAL ordering
  * ([completionOrder] — score descending, then `sortText ?: label` ascending),
  * mirroring upstream `@codemirror/autocomplete`'s `sortOptions`, which globally
@@ -66,7 +67,7 @@ internal fun mergeCompletions(
 ): List<FilterResult> {
     val head = state.selection.main.head
     val combined = results.flatMap { result ->
-        val query = state.doc.sliceString(result.from, head)
+        val query = state.doc.sliceString(result.from, result.to ?: head)
         filterCompletions(result.options, query, result.filter)
             .map { it.copy(result = result) }
     }

@@ -67,7 +67,8 @@ internal val closeCompletionEffect: StateEffectType<Unit> = StateEffect.define()
  * backspacing the cursor below [limit] closes it. It is set when the result arrives
  * to `min(pos, from + (explicit ? 0 : 1))`, where `pos` is the query's cursor, and
  * mapped through every later change, so an implicit result opened at the cursor
- * (right after a `.`) may be backspaced back to its `from`.
+ * (right after a `.`) may be backspaced back to its `from`. The [result]'s `to` is
+ * always set: one left unset takes the cursor position when the result arrives.
  */
 internal data class ActiveResult(val result: CompletionResult, val limit: DocPos)
 
@@ -120,9 +121,14 @@ internal val completionStateField: StateField<CompletionState> = StateField.defi
                 if (startEffect != null) {
                     val start = startEffect.value
                     val slack = if (start.explicit) 0 else 1
-                    val filtered = mergeCompletions(start.results, tr.state)
+                    // Upstream's `ActiveResult.to` is `result.to ?? pos`, mapped through
+                    // the edits made while the query ran, which leaves it at the cursor
+                    // now. From here on it maps like an explicit `to` (#421).
+                    val head = tr.state.selection.main.head
+                    val results = start.results.map { it.copy(to = it.to ?: head) }
+                    val filtered = mergeCompletions(results, tr.state)
                     result = CompletionState(
-                        active = start.results.map {
+                        active = results.map {
                             ActiveResult(it, minOf(start.pos, it.from + slack))
                         },
                         filtered = filtered,

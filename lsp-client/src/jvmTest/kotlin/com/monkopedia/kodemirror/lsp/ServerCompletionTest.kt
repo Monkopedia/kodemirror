@@ -21,12 +21,18 @@ package com.monkopedia.kodemirror.lsp
 import com.monkopedia.kodemirror.autocomplete.Completion
 import com.monkopedia.kodemirror.autocomplete.CompletionApplyContext
 import com.monkopedia.kodemirror.autocomplete.CompletionContext
+import com.monkopedia.kodemirror.autocomplete.acceptCompletion
+import com.monkopedia.kodemirror.autocomplete.currentCompletions
+import com.monkopedia.kodemirror.autocomplete.startCompletion
 import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
+import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.InsertContent
+import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.Text
 import com.monkopedia.kodemirror.state.TransactionSpec
+import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.lsp.CompletionItem
 import com.monkopedia.lsp.CompletionItemKind
@@ -348,6 +354,37 @@ class ServerCompletionTest {
         assertNotNull(result.validFor)
         // A word prefix matches → the client narrows the list as the user types.
         assertTrue(result.validFor!!.matches("pl"))
+    }
+
+    @Test
+    fun textEditRangePastTheCursorFiltersByTheWholeRange() = runBlocking {
+        // #421: "foo b|ar" with the server's edit range over "bar". Upstream filters
+        // by the result's from..to ("bar"), not from..cursor ("b").
+        val range = Range(Position(0u, 4u), Position(0u, 7u))
+        val items = listOf("bar", "baz", "bat").map {
+            CompletionItem(label = it, textEdit = TextEdit(range = range, newText = it))
+        }
+        val fixture = TestLanguageServer(
+            capabilities = ServerCapabilities(completionProvider = CompletionOptions()),
+            responses = mapOf(
+                "textDocumentCompletion" to TextDocumentCompletionResult.CompletionItemArray(items)
+            )
+        )
+        val client = LSPClient(fixture.server)
+        client.initialize()
+        val session = DelegatingSession(
+            EditorState.create(
+                EditorStateConfig(
+                    doc = "foo bar".asDoc(),
+                    selection = SelectionSpec.CursorSpec(DocPos(5)),
+                    extensions = serverCompletion(client, "inmemory://t.kt")
+                )
+            )
+        )
+        startCompletion(session)
+        assertEquals(listOf("bar"), currentCompletions(session.state).map { it.label })
+        acceptCompletion(session)
+        assertEquals("foo bar", session.state.doc.toString())
     }
 
     // ── completion list result parsing ──
