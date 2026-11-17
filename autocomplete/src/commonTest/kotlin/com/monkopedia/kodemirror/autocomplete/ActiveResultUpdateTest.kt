@@ -459,4 +459,29 @@ class ActiveResultUpdateTest {
         assertEquals("active" to listOf("bar", "baz", "bxx"), shown(s))
         assertEquals(listOf(4 to 7, 4 to 5), ranges(s))
     }
+
+    @Test
+    fun typingPastTheResultsToAsksForAReQuery() {
+        // closeBrackets typing ")" over the one after the cursor in "f(b|)": the
+        // defaulted `to` (3) stays behind, so upstream re-queries.
+        var s = open("f(b)", 3, result(2))
+        s.dispatch(
+            TransactionSpec(
+                changes = ChangeSpec.Single(DocPos(3), DocPos(4), InsertContent.StringContent(")")),
+                selection = SelectionSpec.CursorSpec(DocPos(4)),
+                userEvent = "input.type"
+            )
+        )
+        assertEquals(closed, shown(s))
+        assertEquals(true to false, requery(s))
+        // An explicit `to` before the cursor, typed past.
+        s = open("foo barx", 8, result(4, "bar", "baz", "bxx").to(6), explicit = true)
+        type(s, "y")
+        assertEquals(closed, shown(s))
+        assertEquals(true to true, requery(s))
+        // Backspacing past it just closes.
+        s = open("foo barx", 8, result(4, "bar", "baz", "bxx").to(6), explicit = true)
+        backspace(s)
+        assertEquals(false to false, requery(s))
+    }
 }

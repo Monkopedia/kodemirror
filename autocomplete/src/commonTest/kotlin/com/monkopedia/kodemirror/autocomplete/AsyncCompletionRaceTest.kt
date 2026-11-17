@@ -123,6 +123,42 @@ class AsyncCompletionRaceTest {
         assertNull(completionStatus(view.state))
     }
 
+    @Test
+    fun aLateResultsRangeFollowsTheEditsMadeWhileItRan() {
+        // #421: queried at "x.ba|" with `to` 4 (an LSP edit range), landing after "r"
+        // is typed. Upstream replays the edit onto from..to (2..5): "bar" only.
+        val gate = CompletableDeferred<Unit>()
+        val source: SuspendCompletionSource = {
+            gate.await()
+            CompletionResult(
+                from = DocPos(2),
+                to = DocPos(4),
+                options = listOf(Completion(label = "bar"), Completion(label = "baz")),
+                validFor = Regex("\\w*")
+            )
+        }
+        val view = UnconfinedSession(
+            EditorState.create(
+                EditorStateConfig(
+                    doc = "x.ba".asDoc(),
+                    selection = SelectionSpec.CursorSpec(DocPos(4)),
+                    extensions = ExtensionList(
+                        listOf(
+                            completionConfig.of(CompletionConfig(asyncOverride = listOf(source))),
+                            completionStateField
+                        )
+                    )
+                )
+            )
+        )
+        startCompletion(view)
+        view.insertAt(DocPos(4), "r")
+        gate.complete(Unit)
+        assertEquals(listOf("bar"), currentCompletions(view.state).map { it.label })
+        acceptCompletion(view)
+        assertEquals("x.bar", view.state.doc.toString())
+    }
+
     /**
      * An [EditorSession] whose [coroutineScope] uses [Dispatchers.Unconfined] — the
      * real composition-tied scope errors outside a composable, and Unconfined lets

@@ -47,6 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.state.ChangeByRangeResult
+import com.monkopedia.kodemirror.state.ChangeSet
 import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorSelection
@@ -195,7 +196,7 @@ private fun triggerCompletion(view: EditorSession, explicit: Boolean) {
         val triggerPos = pos
         view.coroutineScope.launch {
             for (source in asyncSources) {
-                val result = source(ctx)
+                val result = source(ctx)?.mappedOnto(state.doc, view.state.doc)
                 if (result != null && result.options.isNotEmpty()) {
                     // The source may have suspended across doc/selection edits (the
                     // user kept typing, moved the cursor, or closed the popup). A
@@ -260,6 +261,32 @@ private fun asyncResultApplicable(
     val validFor = result.validFor
         ?: return head == triggerPos
     return validFor.matches(state.doc.sliceString(result.from, head))
+}
+
+/**
+ * This [CompletionResult], computed against [old], with its range mapped onto [new].
+ * Upstream replays the transactions made while the query ran. The port doesn't track
+ * them yet (#422), so this maps through the single span where the two docs differ,
+ * which is exact for typing or backspacing at one cursor.
+ */
+private fun CompletionResult.mappedOnto(old: Text, new: Text): CompletionResult {
+    if (old === new) return this
+    val a = old.toString()
+    val b = new.toString()
+    val max = minOf(a.length, b.length)
+    var start = 0
+    while (start < max && a[start] == b[start]) start++
+    var end = 0
+    while (end < max - start && a[a.length - 1 - end] == b[b.length - 1 - end]) end++
+    val changes = ChangeSet.of(
+        ChangeSpec.Single(
+            DocPos(start),
+            DocPos(a.length - end),
+            InsertContent.StringContent(b.substring(start, b.length - end))
+        ),
+        a.length
+    )
+    return copy(from = changes.mapPos(from), to = to?.let { changes.mapPos(it, 1) })
 }
 
 private fun applyCompletion(view: EditorSession, completion: Completion, result: CompletionResult) {

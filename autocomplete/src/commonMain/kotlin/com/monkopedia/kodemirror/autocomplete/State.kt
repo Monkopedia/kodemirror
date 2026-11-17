@@ -170,9 +170,10 @@ private fun CompletionResult.mapped(changes: ChangeDesc): CompletionResult =
  *     otherwise maps the range.
  *
  * On typing or backspacing, each result is checked on its own:
- *   * It drops when the cursor is past its explicit `to` (or before its `from`), or
- *     on a backspace that started at its original `from` or left the cursor below
- *     its [limit][ActiveResult.limit].
+ *   * It drops when the cursor is past its `to` (or before its `from`), or on a
+ *     backspace that started at its original `from` or left the cursor below its
+ *     [limit][ActiveResult.limit]. Typing past `to` re-queries the source when
+ *     `activateOnTyping` is set.
  *   * Otherwise it stays while its validFor FULLY matches (anchored, like upstream
  *     `checkValid`) the text between its `from` and `to` (the cursor when unset).
  *     When it doesn't, or there is no validFor, upstream re-queries the source; if
@@ -211,6 +212,11 @@ private fun updateOpenCompletion(value: CompletionState, tr: Transaction): Compl
     val surviving = value.active.mapNotNull { (old, limit) ->
         val cr = old.mapped(changes)
         val to = cr.to ?: head
+        if (head > to && typing && tr.state.facet(completionConfig).activateOnTyping) {
+            // Typing past `to` (e.g. over a closing bracket) asks the source again.
+            requery = true
+            return@mapNotNull null
+        }
         if (head < cr.from ||
             head > to ||
             (backspacing && (startHead == old.from || head < limit))
