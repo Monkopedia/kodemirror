@@ -21,6 +21,7 @@ package com.monkopedia.kodemirror.autocomplete
 import com.monkopedia.kodemirror.state.Annotation
 import com.monkopedia.kodemirror.state.AnnotationType
 import com.monkopedia.kodemirror.state.ChangeDesc
+import com.monkopedia.kodemirror.state.ChangeSet
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.StateEffect
@@ -102,10 +103,49 @@ internal data class CompletionState(
     }
 }
 
+/** Starts tracking the edits made while the async query with this id runs. */
+internal val asyncQueryStartEffect: StateEffectType<Int> = StateEffect.define()
+
+/** Stops tracking the async query with this id. */
+internal val asyncQueryEndEffect: StateEffectType<Int> = StateEffect.define()
+
+/**
+ * The changes made since each in-flight async query started, by query id. A result's
+ * range is mapped through its query's changes when it arrives, as upstream replays
+ * the transactions that happened while the query ran onto its `ActiveResult` (#421).
+ * Opening or closing the completion ends every query, and a query that is no longer
+ * tracked when its result arrives is dropped.
+ */
+internal val asyncQueryField: StateField<Map<Int, ChangeDesc>> = StateField.define(
+    StateFieldSpec(
+        create = { emptyMap() },
+        update = { value, tr ->
+            var queries = if (tr.docChanged) {
+                value.mapValues { it.value.composeDesc(tr.changes.desc) }
+            } else {
+                value
+            }
+            for (effect in tr.effects) {
+                effect.asType(asyncQueryStartEffect)?.let {
+                    queries = queries + (it.value to ChangeSet.empty(tr.state.doc.length).desc)
+                }
+                effect.asType(asyncQueryEndEffect)?.let { queries = queries - it.value }
+                if (effect.asType(startCompletionEffect) != null ||
+                    effect.asType(closeCompletionEffect) != null
+                ) {
+                    queries = emptyMap()
+                }
+            }
+            queries
+        }
+    )
+)
+
 /** State field that tracks the active completion state. */
 internal val completionStateField: StateField<CompletionState> = StateField.define(
     StateFieldSpec(
         create = { CompletionState.empty },
+        provide = { asyncQueryField },
         update = { value, tr ->
             // The open session's lifecycle comes first, as upstream's
             // `ActiveSource.update` resets before it applies this transaction's
@@ -156,7 +196,7 @@ internal val completionStateField: StateField<CompletionState> = StateField.defi
 )
 
 /** [result] with its range mapped through [changes]; `to` sticks to typing at its end. */
-private fun CompletionResult.mapped(changes: ChangeDesc): CompletionResult =
+internal fun CompletionResult.mapped(changes: ChangeDesc): CompletionResult =
     copy(from = changes.mapPos(from), to = to?.let { changes.mapPos(it, 1) })
 
 /**

@@ -18,12 +18,15 @@
  */
 package com.monkopedia.kodemirror.autocomplete
 
+import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.SelectionSpec
+import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asDoc
+import com.monkopedia.kodemirror.state.asInsert
 import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.insertAt
 import com.monkopedia.kodemirror.view.select
@@ -123,25 +126,25 @@ class AsyncCompletionRaceTest {
         assertNull(completionStatus(view.state))
     }
 
-    @Test
-    fun aLateResultsRangeFollowsTheEditsMadeWhileItRan() {
-        // #421: queried at "x.ba|" with `to` 4 (an LSP edit range), landing after "r"
-        // is typed. Upstream replays the edit onto from..to (2..5): "bar" only.
-        val gate = CompletableDeferred<Unit>()
+    /**
+     * A session at [doc] with the cursor at [cursor], whose async source suspends on
+     * [gate] before returning [result] (#421).
+     */
+    private fun lateView(
+        doc: String,
+        cursor: Int,
+        gate: CompletableDeferred<Unit>,
+        result: CompletionResult
+    ): EditorSession {
         val source: SuspendCompletionSource = {
             gate.await()
-            CompletionResult(
-                from = DocPos(2),
-                to = DocPos(4),
-                options = listOf(Completion(label = "bar"), Completion(label = "baz")),
-                validFor = Regex("\\w*")
-            )
+            result
         }
-        val view = UnconfinedSession(
+        return UnconfinedSession(
             EditorState.create(
                 EditorStateConfig(
-                    doc = "x.ba".asDoc(),
-                    selection = SelectionSpec.CursorSpec(DocPos(4)),
+                    doc = doc.asDoc(),
+                    selection = SelectionSpec.CursorSpec(DocPos(cursor)),
                     extensions = ExtensionList(
                         listOf(
                             completionConfig.of(CompletionConfig(asyncOverride = listOf(source))),
@@ -151,12 +154,57 @@ class AsyncCompletionRaceTest {
                 )
             )
         )
+    }
+
+    private fun lateResult(from: Int, to: Int, vararg labels: String) = CompletionResult(
+        from = DocPos(from),
+        to = DocPos(to),
+        options = labels.map { Completion(label = it) },
+        validFor = Regex("\\w*")
+    )
+
+    @Test
+    fun aLateResultsRangeFollowsTheEditsMadeWhileItRan() {
+        // Queried at "x.ba|" with `to` 4 (an LSP edit range), landing after "r" is
+        // typed. Upstream replays the edit onto from..to (2..5): "bar" only.
+        val gate = CompletableDeferred<Unit>()
+        val view = lateView("x.ba", 4, gate, lateResult(2, 4, "bar", "baz"))
         startCompletion(view)
         view.insertAt(DocPos(4), "r")
         gate.complete(Unit)
         assertEquals(listOf("bar"), currentCompletions(view.state).map { it.label })
         acceptCompletion(view)
         assertEquals("x.bar", view.state.doc.toString())
+    }
+
+    @Test
+    fun aLateResultFollowsTypingARepeatedCharacter() {
+        // "x.b|b" with `to` 3, then "b" typed: the edit is at the cursor even though
+        // the doc reads the same with it one character later.
+        val gate = CompletableDeferred<Unit>()
+        val view = lateView("x.bb", 3, gate, lateResult(2, 3, "bar", "baz", "bbb", "bb"))
+        startCompletion(view)
+        view.insertAt(DocPos(3), "b")
+        gate.complete(Unit)
+        assertEquals(listOf("bb", "bbb"), currentCompletions(view.state).map { it.label })
+        acceptCompletion(view)
+        assertEquals("x.bbb", view.state.doc.toString())
+    }
+
+    @Test
+    fun aLateResultFollowsEditsAtTwoPlaces() {
+        // "r" typed at the cursor, then "Q" inserted at the start by another edit.
+        val gate = CompletableDeferred<Unit>()
+        val view = lateView("x.ba", 4, gate, lateResult(2, 4, "bar", "baz"))
+        startCompletion(view)
+        view.insertAt(DocPos(4), "r")
+        view.dispatch(
+            TransactionSpec(changes = ChangeSpec.Single(DocPos.ZERO, insert = "Q".asInsert()))
+        )
+        gate.complete(Unit)
+        assertEquals(listOf("bar"), currentCompletions(view.state).map { it.label })
+        acceptCompletion(view)
+        assertEquals("Qx.bar", view.state.doc.toString())
     }
 
     /**

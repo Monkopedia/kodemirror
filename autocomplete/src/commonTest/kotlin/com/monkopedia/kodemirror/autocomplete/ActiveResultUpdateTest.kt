@@ -48,7 +48,8 @@ class ActiveResultUpdateTest {
         cursors: List<Int>,
         results: List<CompletionResult>,
         explicit: Boolean = false,
-        queryPos: Int = cursors.last()
+        queryPos: Int = cursors.last(),
+        config: CompletionConfig = CompletionConfig()
     ): EditorSession {
         val s = EditorSession(
             EditorState.create(
@@ -63,7 +64,7 @@ class ActiveResultUpdateTest {
                     extensions = ExtensionList(
                         listOf(
                             allowMultipleSelections.of(true),
-                            completionConfig.of(CompletionConfig()),
+                            completionConfig.of(config),
                             completionStateField
                         )
                     )
@@ -464,16 +465,25 @@ class ActiveResultUpdateTest {
     fun typingPastTheResultsToAsksForAReQuery() {
         // closeBrackets typing ")" over the one after the cursor in "f(b|)": the
         // defaulted `to` (3) stays behind, so upstream re-queries.
-        var s = open("f(b)", 3, result(2))
-        s.dispatch(
-            TransactionSpec(
-                changes = ChangeSpec.Single(DocPos(3), DocPos(4), InsertContent.StringContent(")")),
-                selection = SelectionSpec.CursorSpec(DocPos(4)),
-                userEvent = "input.type"
-            )
+        val skipParen = TransactionSpec(
+            changes = ChangeSpec.Single(DocPos(3), DocPos(4), InsertContent.StringContent(")")),
+            selection = SelectionSpec.CursorSpec(DocPos(4)),
+            userEvent = "input.type"
         )
+        var s = open("f(b)", 3, result(2))
+        s.dispatch(skipParen)
         assertEquals(closed, shown(s))
         assertEquals(true to false, requery(s))
+        // Without activateOnTyping it just closes.
+        s = open(
+            "f(b)",
+            listOf(3),
+            listOf(result(2)),
+            config = CompletionConfig(activateOnTyping = false)
+        )
+        s.dispatch(skipParen)
+        assertEquals(closed, shown(s))
+        assertEquals(false to false, requery(s))
         // An explicit `to` before the cursor, typed past.
         s = open("foo barx", 8, result(4, "bar", "baz", "bxx").to(6), explicit = true)
         type(s, "y")
