@@ -21,6 +21,7 @@ package com.monkopedia.kodemirror.autocomplete
 import com.monkopedia.kodemirror.state.Annotation
 import com.monkopedia.kodemirror.state.AnnotationType
 import com.monkopedia.kodemirror.state.ChangeDesc
+import com.monkopedia.kodemirror.state.ChangeSet
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.StateEffect
@@ -67,7 +68,8 @@ internal val closeCompletionEffect: StateEffectType<Unit> = StateEffect.define()
  * backspacing the cursor below [limit] closes it. It is set when the result arrives
  * to `min(pos, from + (explicit ? 0 : 1))`, where `pos` is the query's cursor, and
  * mapped through every later change, so an implicit result opened at the cursor
- * (right after a `.`) may be backspaced back to its `from`.
+ * (right after a `.`) may be backspaced back to its `from`. The [result]'s `to` is
+ * always set: one left unset takes the cursor position when the result arrives.
  */
 internal data class ActiveResult(val result: CompletionResult, val limit: DocPos)
 
@@ -101,10 +103,67 @@ internal data class CompletionState(
     }
 }
 
+/** How many async queries [asyncQueryField] tracks at once; the oldest is evicted. */
+internal const val MAX_ASYNC_QUERIES = 8
+
+/**
+ * The async queries in flight, with the changes made since each one started, by query
+ * id. Ids come from [nextId], so they are unique within one editor's states.
+ */
+internal data class AsyncQueries(
+    val nextId: Int = 0,
+    val changes: Map<Int, ChangeDesc> = emptyMap()
+)
+
+/** Starts tracking the edits made while a new async query, `nextId`, runs. */
+internal val asyncQueryStartEffect: StateEffectType<Unit> = StateEffect.define()
+
+/** Stops tracking the async query with this id. */
+internal val asyncQueryEndEffect: StateEffectType<Int> = StateEffect.define()
+
+/**
+ * The in-flight async queries. A result's range is mapped through its query's changes
+ * when it arrives, as upstream replays the transactions that happened while the query
+ * ran onto its `ActiveResult` (#421). Opening or closing the completion ends every
+ * query, and a query that is no longer tracked when its result arrives is dropped.
+ */
+internal val asyncQueryField: StateField<AsyncQueries> = StateField.define(
+    StateFieldSpec(
+        create = { AsyncQueries() },
+        update = { value, tr ->
+            var changes = if (tr.docChanged) {
+                value.changes.mapValues { it.value.composeDesc(tr.changes.desc) }
+            } else {
+                value.changes
+            }
+            var nextId = value.nextId
+            for (effect in tr.effects) {
+                if (effect.asType(asyncQueryStartEffect) != null) {
+                    // Insertion order is start order, so the first is the oldest.
+                    if (changes.size >= MAX_ASYNC_QUERIES) changes = changes - changes.keys.first()
+                    changes = changes + (nextId++ to ChangeSet.empty(tr.state.doc.length).desc)
+                }
+                effect.asType(asyncQueryEndEffect)?.let { changes = changes - it.value }
+                if (effect.asType(startCompletionEffect) != null ||
+                    effect.asType(closeCompletionEffect) != null
+                ) {
+                    changes = emptyMap()
+                }
+            }
+            if (changes === value.changes && nextId == value.nextId) {
+                value
+            } else {
+                AsyncQueries(nextId, changes)
+            }
+        }
+    )
+)
+
 /** State field that tracks the active completion state. */
 internal val completionStateField: StateField<CompletionState> = StateField.define(
     StateFieldSpec(
         create = { CompletionState.empty },
+        provide = { asyncQueryField },
         update = { value, tr ->
             // The open session's lifecycle comes first, as upstream's
             // `ActiveSource.update` resets before it applies this transaction's
@@ -120,9 +179,14 @@ internal val completionStateField: StateField<CompletionState> = StateField.defi
                 if (startEffect != null) {
                     val start = startEffect.value
                     val slack = if (start.explicit) 0 else 1
-                    val filtered = mergeCompletions(start.results, tr.state)
+                    // Upstream's `ActiveResult.to` is `result.to ?? pos`, mapped through
+                    // the edits made while the query ran, which leaves it at the cursor
+                    // now. From here on it maps like an explicit `to` (#421).
+                    val head = tr.state.selection.main.head
+                    val results = start.results.map { it.copy(to = it.to ?: head) }
+                    val filtered = mergeCompletions(results, tr.state)
                     result = CompletionState(
-                        active = start.results.map {
+                        active = results.map {
                             ActiveResult(it, minOf(start.pos, it.from + slack))
                         },
                         filtered = filtered,
@@ -150,7 +214,7 @@ internal val completionStateField: StateField<CompletionState> = StateField.defi
 )
 
 /** [result] with its range mapped through [changes]; `to` sticks to typing at its end. */
-private fun CompletionResult.mapped(changes: ChangeDesc): CompletionResult =
+internal fun CompletionResult.mapped(changes: ChangeDesc): CompletionResult =
     copy(from = changes.mapPos(from), to = to?.let { changes.mapPos(it, 1) })
 
 /**
@@ -164,9 +228,10 @@ private fun CompletionResult.mapped(changes: ChangeDesc): CompletionResult =
  *     otherwise maps the range.
  *
  * On typing or backspacing, each result is checked on its own:
- *   * It drops when the cursor is past its explicit `to` (or before its `from`), or
- *     on a backspace that started at its original `from` or left the cursor below
- *     its [limit][ActiveResult.limit].
+ *   * It drops when the cursor is past its `to` (or before its `from`), or on a
+ *     backspace that started at its original `from` or left the cursor below its
+ *     [limit][ActiveResult.limit]. Typing past `to` re-queries the source when
+ *     `activateOnTyping` is set.
  *   * Otherwise it stays while its validFor FULLY matches (anchored, like upstream
  *     `checkValid`) the text between its `from` and `to` (the cursor when unset).
  *     When it doesn't, or there is no validFor, upstream re-queries the source; if
@@ -205,6 +270,11 @@ private fun updateOpenCompletion(value: CompletionState, tr: Transaction): Compl
     val surviving = value.active.mapNotNull { (old, limit) ->
         val cr = old.mapped(changes)
         val to = cr.to ?: head
+        if (head > to && typing && tr.state.facet(completionConfig).activateOnTyping) {
+            // Typing past `to` (e.g. over a closing bracket) asks the source again.
+            requery = true
+            return@mapNotNull null
+        }
         if (head < cr.from ||
             head > to ||
             (backspacing && (startHead == old.from || head < limit))
