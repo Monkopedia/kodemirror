@@ -33,9 +33,12 @@ import com.monkopedia.kodemirror.view.select
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
 /**
  * Regression tests for the async LSP completion re-open race (#153): a suspend
@@ -135,26 +138,32 @@ class AsyncCompletionRaceTest {
         cursor: Int,
         gate: CompletableDeferred<Unit>,
         result: CompletionResult
-    ): EditorSession {
-        val source: SuspendCompletionSource = {
-            gate.await()
-            result
-        }
-        return UnconfinedSession(
-            EditorState.create(
-                EditorStateConfig(
-                    doc = doc.asDoc(),
-                    selection = SelectionSpec.CursorSpec(DocPos(cursor)),
-                    extensions = ExtensionList(
-                        listOf(
-                            completionConfig.of(CompletionConfig(asyncOverride = listOf(source))),
-                            completionStateField
-                        )
+    ): EditorSession = sourceView(doc, cursor) {
+        gate.await()
+        result
+    }
+
+    /** A session at [doc] with the cursor at [cursor] and the one async [source]. */
+    private fun sourceView(
+        doc: String,
+        cursor: Int,
+        scope: CoroutineScope = CoroutineScope(Dispatchers.Unconfined),
+        source: SuspendCompletionSource
+    ): EditorSession = UnconfinedSession(
+        EditorState.create(
+            EditorStateConfig(
+                doc = doc.asDoc(),
+                selection = SelectionSpec.CursorSpec(DocPos(cursor)),
+                extensions = ExtensionList(
+                    listOf(
+                        completionConfig.of(CompletionConfig(asyncOverride = listOf(source))),
+                        completionStateField
                     )
                 )
             )
-        )
-    }
+        ),
+        scope
+    )
 
     private fun lateResult(from: Int, to: Int, vararg labels: String) = CompletionResult(
         from = DocPos(from),
@@ -207,13 +216,79 @@ class AsyncCompletionRaceTest {
         assertEquals("Qx.bar", view.state.doc.toString())
     }
 
+    private fun tracked(view: EditorSession) = view.state.field(asyncQueryField).changes.keys
+
+    @Test
+    fun aThrowingSourceStopsTracking() {
+        // The failure goes to the scope's handler, and doesn't cancel the scope.
+        val scope = CoroutineScope(
+            SupervisorJob() + Dispatchers.Unconfined + CoroutineExceptionHandler { _, _ -> }
+        )
+        val view = sourceView("x.", 2, scope) { error("server failed") }
+        repeat(20) {
+            startCompletion(view)
+            assertEquals(emptySet(), tracked(view))
+        }
+    }
+
+    @Test
+    fun hangingSourcesTrackAtMostTheLatestQueries() {
+        val never = CompletableDeferred<CompletionResult?>()
+        val view = sourceView("x.", 2) { never.await() }
+        repeat(50) {
+            startCompletion(view)
+            assertTrue(tracked(view).size <= MAX_ASYNC_QUERIES)
+        }
+        assertEquals(MAX_ASYNC_QUERIES, tracked(view).size)
+    }
+
+    @Test
+    fun closingEndsTheQueriesInFlight() {
+        // The first query opens the list; a re-query is still running when Escape
+        // closes it, and its late result must not re-open it (#153).
+        val gate = CompletableDeferred<Unit>()
+        var calls = 0
+        val view = sourceView("x.", 2) {
+            if (calls++ > 0) gate.await()
+            lateResult(2, 2, "bar", "baz")
+        }
+        startCompletion(view)
+        assertEquals("active", completionStatus(view.state))
+        startCompletion(view)
+        assertEquals(1, tracked(view).size)
+        closeCompletion(view)
+        assertEquals(emptySet(), tracked(view))
+        gate.complete(Unit)
+        assertNull(completionStatus(view.state))
+    }
+
+    @Test
+    fun openingEndsTheOlderQueriesInFlight() {
+        // Two queries in flight; the newer one opens the list, so the older one's
+        // late result is dropped rather than replacing it.
+        val gates = listOf(CompletableDeferred<Unit>(), CompletableDeferred<Unit>())
+        var calls = 0
+        val view = sourceView("x.", 2) {
+            val n = calls++
+            gates[n].await()
+            lateResult(2, 2, if (n == 0) "old" else "new")
+        }
+        startCompletion(view)
+        startCompletion(view)
+        gates[1].complete(Unit)
+        assertEquals(listOf("new"), currentCompletions(view.state).map { it.label })
+        assertEquals(emptySet(), tracked(view))
+        gates[0].complete(Unit)
+        assertEquals(listOf("new"), currentCompletions(view.state).map { it.label })
+    }
+
     /**
      * An [EditorSession] whose [coroutineScope] uses [Dispatchers.Unconfined] — the
      * real composition-tied scope errors outside a composable, and Unconfined lets
      * the launched async source run/resume inline for deterministic assertions.
      */
-    private class UnconfinedSession(initial: EditorState) :
-        EditorSession by EditorSession(initial) {
+    private class UnconfinedSession(
+        initial: EditorState,
         override val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Unconfined)
-    }
+    ) : EditorSession by EditorSession(initial)
 }

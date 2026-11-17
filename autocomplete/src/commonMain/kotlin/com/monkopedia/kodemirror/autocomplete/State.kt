@@ -103,40 +103,58 @@ internal data class CompletionState(
     }
 }
 
-/** Starts tracking the edits made while the async query with this id runs. */
-internal val asyncQueryStartEffect: StateEffectType<Int> = StateEffect.define()
+/** How many async queries [asyncQueryField] tracks at once; the oldest is evicted. */
+internal const val MAX_ASYNC_QUERIES = 8
+
+/**
+ * The async queries in flight, with the changes made since each one started, by query
+ * id. Ids come from [nextId], so they are unique within one editor's states.
+ */
+internal data class AsyncQueries(
+    val nextId: Int = 0,
+    val changes: Map<Int, ChangeDesc> = emptyMap()
+)
+
+/** Starts tracking the edits made while a new async query, `nextId`, runs. */
+internal val asyncQueryStartEffect: StateEffectType<Unit> = StateEffect.define()
 
 /** Stops tracking the async query with this id. */
 internal val asyncQueryEndEffect: StateEffectType<Int> = StateEffect.define()
 
 /**
- * The changes made since each in-flight async query started, by query id. A result's
- * range is mapped through its query's changes when it arrives, as upstream replays
- * the transactions that happened while the query ran onto its `ActiveResult` (#421).
- * Opening or closing the completion ends every query, and a query that is no longer
- * tracked when its result arrives is dropped.
+ * The in-flight async queries. A result's range is mapped through its query's changes
+ * when it arrives, as upstream replays the transactions that happened while the query
+ * ran onto its `ActiveResult` (#421). Opening or closing the completion ends every
+ * query, and a query that is no longer tracked when its result arrives is dropped.
  */
-internal val asyncQueryField: StateField<Map<Int, ChangeDesc>> = StateField.define(
+internal val asyncQueryField: StateField<AsyncQueries> = StateField.define(
     StateFieldSpec(
-        create = { emptyMap() },
+        create = { AsyncQueries() },
         update = { value, tr ->
-            var queries = if (tr.docChanged) {
-                value.mapValues { it.value.composeDesc(tr.changes.desc) }
+            var changes = if (tr.docChanged) {
+                value.changes.mapValues { it.value.composeDesc(tr.changes.desc) }
             } else {
-                value
+                value.changes
             }
+            var nextId = value.nextId
             for (effect in tr.effects) {
-                effect.asType(asyncQueryStartEffect)?.let {
-                    queries = queries + (it.value to ChangeSet.empty(tr.state.doc.length).desc)
+                if (effect.asType(asyncQueryStartEffect) != null) {
+                    // Insertion order is start order, so the first is the oldest.
+                    if (changes.size >= MAX_ASYNC_QUERIES) changes = changes - changes.keys.first()
+                    changes = changes + (nextId++ to ChangeSet.empty(tr.state.doc.length).desc)
                 }
-                effect.asType(asyncQueryEndEffect)?.let { queries = queries - it.value }
+                effect.asType(asyncQueryEndEffect)?.let { changes = changes - it.value }
                 if (effect.asType(startCompletionEffect) != null ||
                     effect.asType(closeCompletionEffect) != null
                 ) {
-                    queries = emptyMap()
+                    changes = emptyMap()
                 }
             }
-            queries
+            if (changes === value.changes && nextId == value.nextId) {
+                value
+            } else {
+                AsyncQueries(nextId, changes)
+            }
         }
     )
 )

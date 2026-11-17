@@ -73,6 +73,7 @@ import com.monkopedia.kodemirror.view.ViewUpdate
 import com.monkopedia.kodemirror.view.keymap
 import com.monkopedia.kodemirror.view.showTooltip
 import kotlin.concurrent.Volatile
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 /** Background color for the completion popup. */
@@ -162,9 +163,6 @@ val completionKeymap: List<KeyBinding> = listOf(
 
 // ── Internal helpers ──
 
-/** The id of the last async query started, for [asyncQueryField]. */
-private var lastAsyncQuery = 0
-
 private fun triggerCompletion(view: EditorSession, explicit: Boolean) {
     val state = view.state
     val config = state.facet(completionConfig)
@@ -196,39 +194,54 @@ private fun triggerCompletion(view: EditorSession, explicit: Boolean) {
         // Capture the trigger position so we can detect, when the source resolves,
         // whether the doc/selection drifted while the coroutine was suspended (#153).
         val triggerPos = pos
-        val queryId = ++lastAsyncQuery
-        view.dispatch(TransactionSpec(effects = listOf(asyncQueryStartEffect.of(queryId))))
+        // A cancelled scope never runs the query, so it would never end it.
+        if (!view.coroutineScope.isActive) return
+        val queryId = state.field(asyncQueryField, require = false)?.nextId ?: 0
+        view.dispatch(TransactionSpec(effects = listOf(asyncQueryStartEffect.of(Unit))))
         view.coroutineScope.launch {
-            for (source in asyncSources) {
-                val raw = source(ctx)
-                if (raw == null || raw.options.isEmpty()) continue
-                // Dropped when the completion opened or closed meanwhile; otherwise
-                // map the range through the edits made while the query ran (#421).
-                val changes = view.state.field(asyncQueryField, require = false)?.get(queryId)
-                    ?: return@launch
-                val result = raw.mapped(changes)
-                // The source may have suspended across doc/selection edits (the
-                // user kept typing, moved the cursor, or closed the popup). A
-                // result that no longer applies to the LIVE state must be dropped
-                // rather than re-opening the popup — otherwise an in-flight LSP
-                // request resolving after an Escape re-opens it, demanding another
-                // Escape (#153). Survivors open the popup exactly as before.
-                val effect = if (asyncResultApplicable(view.state, result, triggerPos)) {
-                    startCompletionEffect.of(StartCompletion(listOf(result), explicit, triggerPos))
-                } else {
-                    asyncQueryEndEffect.of(queryId)
+            try {
+                for (source in asyncSources) {
+                    val raw = source(ctx)
+                    if (raw == null || raw.options.isEmpty()) continue
+                    // Dropped when the completion opened or closed meanwhile; otherwise
+                    // map the range through the edits made while the query ran (#421).
+                    val changes = view.state.field(asyncQueryField, require = false)
+                        ?.changes?.get(queryId) ?: return@launch
+                    val result = raw.mapped(changes)
+                    // The source may have suspended across doc/selection edits (the
+                    // user kept typing, moved the cursor, or closed the popup). A
+                    // result that no longer applies to the LIVE state must be dropped
+                    // rather than re-opening the popup — otherwise an in-flight LSP
+                    // request resolving after an Escape re-opens it, demanding another
+                    // Escape (#153). Survivors open the popup exactly as before.
+                    if (!asyncResultApplicable(view.state, result, triggerPos)) {
+                        return@launch
+                    }
+                    view.dispatch(
+                        TransactionSpec(
+                            effects = listOf(
+                                startCompletionEffect.of(
+                                    StartCompletion(listOf(result), explicit, triggerPos)
+                                )
+                            )
+                        )
+                    )
+                    return@launch
                 }
-                view.dispatch(TransactionSpec(effects = listOf(effect)))
-                return@launch
-            }
-            if (explicit) {
-                view.dispatch(
-                    TransactionSpec(effects = listOf(closeCompletionEffect.of(Unit)))
-                )
-            } else if (view.state.field(asyncQueryField, require = false)?.contains(queryId) ==
-                true
-            ) {
-                view.dispatch(TransactionSpec(effects = listOf(asyncQueryEndEffect.of(queryId))))
+                if (explicit) {
+                    view.dispatch(
+                        TransactionSpec(effects = listOf(closeCompletionEffect.of(Unit)))
+                    )
+                }
+            } finally {
+                // However the query ends (a result, none, a throw or cancellation),
+                // stop tracking its edits.
+                val queries = view.state.field(asyncQueryField, require = false)
+                if (queries != null && queryId in queries.changes) {
+                    view.dispatch(
+                        TransactionSpec(effects = listOf(asyncQueryEndEffect.of(queryId)))
+                    )
+                }
             }
         }
         return
