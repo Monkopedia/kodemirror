@@ -71,8 +71,10 @@ import com.monkopedia.kodemirror.view.Tooltip
 import com.monkopedia.kodemirror.view.ViewPlugin
 import com.monkopedia.kodemirror.view.ViewUpdate
 import com.monkopedia.kodemirror.view.keymap
+import com.monkopedia.kodemirror.view.logException
 import com.monkopedia.kodemirror.view.showTooltip
 import kotlin.concurrent.Volatile
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
@@ -173,7 +175,7 @@ private fun triggerCompletion(view: EditorSession, explicit: Boolean) {
     // Query ALL sync sources and MERGE their results, rather than stopping at the
     // first non-empty one. The merge (dedup by label, score-ordered, per-source
     // filter/validFor/from) happens in the state field via mergeCompletions (#137).
-    val results = sources.mapNotNull { source -> source(ctx) }
+    val results = sources.mapNotNull { source -> view.queryLogged { source(ctx) } }
         .filter { it.options.isNotEmpty() }
     if (results.isNotEmpty()) {
         view.dispatch(
@@ -201,7 +203,7 @@ private fun triggerCompletion(view: EditorSession, explicit: Boolean) {
         view.coroutineScope.launch {
             try {
                 for (source in asyncSources) {
-                    val raw = source(ctx)
+                    val raw = view.queryLogged { source(ctx) }
                     if (raw == null || raw.options.isEmpty()) continue
                     // Dropped when the completion opened or closed meanwhile; otherwise
                     // map the range through the edits made while the query ran (#421).
@@ -253,6 +255,21 @@ private fun triggerCompletion(view: EditorSession, explicit: Boolean) {
         )
     }
 }
+
+/**
+ * Run one source's [query], reporting a throw to the exception sink and treating it as
+ * no result, so one failing source neither hides the others' options nor fails the
+ * editor's coroutine scope, which would end every later async query (#430).
+ */
+private inline fun EditorSession.queryLogged(query: () -> CompletionResult?): CompletionResult? =
+    try {
+        query()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        logException(state, e)
+        null
+    }
 
 /**
  * Whether an async completion [result] that resolved after suspending is still
