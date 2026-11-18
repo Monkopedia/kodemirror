@@ -35,10 +35,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 
 /**
  * Regression tests for the async LSP completion re-open race (#153): a suspend
@@ -147,7 +145,6 @@ class AsyncCompletionRaceTest {
     private fun sourceView(
         doc: String,
         cursor: Int,
-        scope: CoroutineScope = CoroutineScope(Dispatchers.Unconfined),
         source: SuspendCompletionSource
     ): EditorSession = UnconfinedSession(
         EditorState.create(
@@ -161,8 +158,7 @@ class AsyncCompletionRaceTest {
                     )
                 )
             )
-        ),
-        scope
+        )
     )
 
     private fun lateResult(from: Int, to: Int, vararg labels: String) = CompletionResult(
@@ -220,11 +216,8 @@ class AsyncCompletionRaceTest {
 
     @Test
     fun aThrowingSourceStopsTracking() {
-        // The failure goes to the scope's handler, and doesn't cancel the scope.
-        val scope = CoroutineScope(
-            SupervisorJob() + Dispatchers.Unconfined + CoroutineExceptionHandler { _, _ -> }
-        )
-        val view = sourceView("x.", 2, scope) { error("server failed") }
+        // The failure is logged rather than failing the scope (#430).
+        val view = sourceView("x.", 2) { error("server failed") }
         repeat(20) {
             startCompletion(view)
             assertEquals(emptySet(), tracked(view))
