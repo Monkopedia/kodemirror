@@ -48,8 +48,9 @@ fun save(session: EditorSession): Boolean {
     val handlers = session.state.facet(onSave)
     if (handlers.isEmpty()) return false
     session.coroutineScope.launch {
+        // A failing handler is logged, so the others still run and the scope survives.
         for (handler in handlers) {
-            handler(session)
+            session.runLogged { handler(session) }
         }
     }
     return true

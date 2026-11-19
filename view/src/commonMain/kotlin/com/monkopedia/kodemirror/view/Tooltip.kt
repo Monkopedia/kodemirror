@@ -321,14 +321,18 @@ internal class HoverTooltipPlugin(
             if (docPos == null) return
             pending = scope.launch {
                 delay(hoverTime)
-                val result = async(session, docPos)
+                // A failing source shows nothing; upstream logs it as "hover tooltip".
+                val result = session.runLogged { async(session, docPos) }
                 // Only show if the pointer is still resting on this position.
                 if (lastPos == docPos) _currentTooltip.value = result
             }
         } else {
             val sync = syncSource
-            _currentTooltip.value =
-                if (docPos != null && sync != null) sync(session, docPos) else null
+            _currentTooltip.value = if (docPos == null || sync == null) {
+                null
+            } else {
+                session.runLogged { sync(session, docPos) }
+            }
         }
     }
 
