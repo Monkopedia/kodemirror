@@ -22,6 +22,7 @@ import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.Facet
 import com.monkopedia.kodemirror.state.RangeSet
+import kotlin.coroutines.cancellation.CancellationException
 
 /** Whether the editor content is editable. */
 val editable: Facet<Boolean, Boolean> = Facet.define(
@@ -128,4 +129,19 @@ fun logException(state: EditorState, exception: Throwable) {
             handler(exception)
         }
     }
+}
+
+/**
+ * Run a user-supplied callback, reporting any failure other than cancellation
+ * through [logException] and returning null in its place. A callback launched on
+ * the session's scope that throws would otherwise reach the uncaught-exception
+ * handler, which crashes the app on Android (#431).
+ */
+internal inline fun <T> EditorSession.runLogged(block: () -> T): T? = try {
+    block()
+} catch (e: CancellationException) {
+    throw e
+} catch (e: Exception) {
+    logException(state, e)
+    null
 }

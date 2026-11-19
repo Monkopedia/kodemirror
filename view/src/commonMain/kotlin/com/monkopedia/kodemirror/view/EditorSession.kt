@@ -271,7 +271,7 @@ fun <T> EditorSession.rememberFacet(facet: Facet<*, T>): State<T> =
     remember(this) { derivedStateOf { state.facet(facet) } }
 
 private class AsyncChangePlugin(
-    session: EditorSession,
+    private val session: EditorSession,
     private val callback: suspend CoroutineScope.(String) -> Unit
 ) : PluginValue {
     private val job = SupervisorJob(session.coroutineScope.coroutineContext[Job])
@@ -280,7 +280,7 @@ private class AsyncChangePlugin(
     override fun update(update: ViewUpdate) {
         if (update.docChanged) {
             val text = update.state.doc.toString()
-            scope.launch { callback(text) }
+            scope.launch { session.runLogged { callback(text) } }
         }
     }
 
@@ -290,7 +290,7 @@ private class AsyncChangePlugin(
 }
 
 private class AsyncSelectionPlugin(
-    session: EditorSession,
+    private val session: EditorSession,
     private val callback: suspend CoroutineScope.(EditorSelection) -> Unit
 ) : PluginValue {
     private val job = SupervisorJob(session.coroutineScope.coroutineContext[Job])
@@ -299,7 +299,7 @@ private class AsyncSelectionPlugin(
     override fun update(update: ViewUpdate) {
         if (update.selectionSet) {
             val selection = update.state.selection
-            scope.launch { callback(selection) }
+            scope.launch { session.runLogged { callback(selection) } }
         }
     }
 
