@@ -42,7 +42,9 @@ import com.monkopedia.lsp.Position
  * @param uri The URI of the file whose positions this mapping translates.
  */
 class WorkspaceMapping internal constructor(val uri: String) {
-    private var changes: ChangeDesc? = null
+    /** The edits recorded since this mapping was created, or null if none. */
+    internal var changes: ChangeDesc? = null
+        private set
 
     /**
      * Record that [change] was applied to the file after this mapping was

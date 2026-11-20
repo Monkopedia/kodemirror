@@ -35,6 +35,8 @@ import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.Text
 import com.monkopedia.kodemirror.state.TransactionSpec
+import com.monkopedia.kodemirror.view.EditorSession
+import com.monkopedia.kodemirror.view.logException
 import com.monkopedia.lsp.CompletionItem
 import com.monkopedia.lsp.CompletionItemKind
 import com.monkopedia.lsp.CompletionItemTextEdit
@@ -48,6 +50,7 @@ import com.monkopedia.lsp.StringOr
 import com.monkopedia.lsp.TextDocumentCompletionResult
 import com.monkopedia.lsp.TextDocumentIdentifier
 import com.monkopedia.lsp.TextEdit
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.launch
 
 /**
@@ -241,12 +244,16 @@ internal fun CompletionItem.insertionText(): String =
  *   for lazy items. When null no resolution is attempted.
  * @param resolveProvider Whether the server advertises completion-item resolve
  *   support (`completionProvider.resolveProvider`).
+ * @param uri The document URI, used to map the apply through the edits made
+ *   while a resolve is in flight. When null, such a resolve is dropped if the
+ *   document changed.
  */
 internal fun mapCompletionItem(
     item: CompletionItem,
     doc: Text,
     client: LSPClient? = null,
-    resolveProvider: Boolean = false
+    resolveProvider: Boolean = false,
+    uri: String? = null
 ): Completion {
     val text = item.insertionText()
     val isSnippet = item.insertTextFormat == InsertTextFormat.SNIPPET
@@ -262,15 +269,15 @@ internal fun mapCompletionItem(
         val baseApply = snippet(template)
         val applyFn: (CompletionApplyContext) -> Unit = when {
             resolvable -> { ctx ->
-                resolveThenApply(ctx, client, item) { resolved ->
-                    applyAdditionalTextEdits(ctx, doc, resolved.additionalTextEdits.orEmpty())
+                resolveThenApply(ctx, client, uri, item) { at, resolved, edits ->
+                    applyAdditionalTextEdits(at, edits)
                     // Re-expand from the resolved item in case resolve filled the snippet.
-                    snippet(lspSnippetToTemplate(resolved.insertionText()))(ctx)
+                    snippet(lspSnippetToTemplate(resolved.insertionText()))(at)
                 }
             }
             extraEdits.isEmpty() -> baseApply
             else -> { ctx ->
-                applyAdditionalTextEdits(ctx, doc, extraEdits)
+                applyAdditionalTextEdits(ctx, extraEdits.toOffsetEdits(doc))
                 baseApply(ctx)
             }
         }
@@ -289,21 +296,16 @@ internal fun mapCompletionItem(
     // both label and the implicit apply text to `text`).
     val applyFn: ((CompletionApplyContext) -> Unit)? = when {
         resolvable -> { ctx ->
-            resolveThenApply(ctx, client, item) { resolved ->
+            resolveThenApply(ctx, client, uri, item) { at, resolved, edits ->
                 // Insertion + auto-import additionalTextEdits in ONE transaction so
                 // the cursor-anchored insertion and the (typically earlier) import
                 // edit don't invalidate each other's positions (#112).
-                insertWithAdditionalTextEdits(
-                    ctx,
-                    doc,
-                    resolved.insertionText(),
-                    resolved.additionalTextEdits.orEmpty()
-                )
+                insertWithAdditionalTextEdits(at, resolved.insertionText(), edits)
             }
         }
         extraEdits.isEmpty() -> null
         else -> { ctx ->
-            applyAdditionalTextEdits(ctx, doc, extraEdits)
+            applyAdditionalTextEdits(ctx, extraEdits.toOffsetEdits(doc))
             insertPlainText(ctx, text)
         }
     }
@@ -351,26 +353,83 @@ internal fun CompletionItem.needsResolve(): Boolean {
  * [Completion.applyFn] is synchronous while
  * [completionItemResolve][com.monkopedia.lsp.LanguageServer.completionItemResolve]
  * is a suspend call, so the resolve-then-apply is launched on
- * [ctx.session.coroutineScope][com.monkopedia.kodemirror.view.EditorSession.coroutineScope]
- * (the cheap, correct hook the issue calls for). If resolve fails the apply
- * falls back to the unresolved [item] so a basic insertion still lands.
+ * [ctx.session.coroutineScope][com.monkopedia.kodemirror.view.EditorSession.coroutineScope].
+ * If resolve fails, the failure is logged and the apply falls back to the
+ * unresolved [item] so a basic insertion still lands.
+ *
+ * The user can keep editing during the round-trip (#434). Upstream has no
+ * resolve step, but where it applies server positions after a request
+ * (`applyEdits` for `additionalTextEdits`, `formatDocument`) it maps them through
+ * the edits made in the meantime and drops an edit whose range those edits
+ * touched. This does the same with a [WorkspaceMapping] for [uri]: [apply] gets
+ * the context's `from`/`to` mapped as `:autocomplete` maps a late result
+ * (`from` left, `to` right) and the resolved `additionalTextEdits`, read against
+ * the document at accept time and mapped. When [uri] isn't open in the workspace
+ * the edits can't be mapped, so a resolve that lands on a changed document is
+ * dropped.
+ *
+ * Disposing the editor cancels the resolve and nothing is applied. A failing
+ * [apply] is logged and can't cancel the session's scope.
  */
 private fun resolveThenApply(
     ctx: CompletionApplyContext,
     client: LSPClient,
+    uri: String?,
     item: CompletionItem,
-    apply: (resolved: CompletionItem) -> Unit
+    apply: (at: CompletionApplyContext, resolved: CompletionItem, edits: List<OffsetEdit>) -> Unit
 ) {
-    ctx.session.coroutineScope.launch {
-        val resolved = try {
-            client.server.completionItemResolve(item)
-        } catch (_: Throwable) {
-            // Resolve failed (e.g. transport error): fall back to the original
-            // item so the user still gets the basic insertion (#112).
-            item
+    val session = ctx.session
+    val startDoc = session.state.doc
+    val mapping = uri?.let { client.workspace.getMapping(it) }
+    session.coroutineScope.launch {
+        try {
+            val resolved = session.runLogged { client.server.completionItemResolve(item) } ?: item
+            session.runLogged {
+                val doc = session.state.doc
+                val changes = mapping?.changes
+                if (mapping == null && doc != startDoc) return@runLogged
+                fun map(pos: DocPos, assoc: Int): DocPos =
+                    DocPos((changes?.mapPos(pos, assoc) ?: pos).value.coerceIn(0, doc.length))
+                val from = map(ctx.from, -1)
+                val at = ctx.copy(from = from, to = maxOf(from, map(ctx.to, 1)))
+                val edits = resolved.additionalTextEdits.orEmpty().toOffsetEdits(startDoc)
+                    .mapNotNull { edit ->
+                        if (changes == null) return@mapNotNull edit
+                        if (changes.touchesRange(DocPos(edit.from), DocPos(edit.to)).toBoolean()) {
+                            return@mapNotNull null
+                        }
+                        val moved = changes.mapPos(DocPos(edit.from), 1).value
+                        edit.copy(from = moved, to = moved + (edit.to - edit.from))
+                    }
+                apply(at, resolved, edits)
+            }
+        } finally {
+            mapping?.let { client.workspace.releaseMapping(it) }
         }
-        apply(resolved)
     }
+}
+
+/**
+ * Run [block], logging any failure other than cancellation through
+ * [logException] and returning null in its place, so a failure on the session's
+ * scope can't cancel it. Mirrors `:view`'s internal `runLogged` (#431).
+ */
+private inline fun <T> EditorSession.runLogged(block: () -> T): T? = try {
+    block()
+} catch (e: CancellationException) {
+    throw e
+} catch (e: Exception) {
+    logException(state, e)
+    null
+}
+
+/** An LSP [TextEdit] resolved to `[from, to)` offsets in one document. */
+private data class OffsetEdit(val from: Int, val to: Int, val text: String)
+
+private fun List<TextEdit>.toOffsetEdits(doc: Text): List<OffsetEdit> = map { edit ->
+    val a = fromPosition(edit.range.start, doc)
+    val b = fromPosition(edit.range.end, doc)
+    OffsetEdit(minOf(a, b), maxOf(a, b), edit.newText)
 }
 
 /** Insert [text] over the completion's replace range (plain, non-snippet path). */
@@ -397,38 +456,21 @@ private fun insertPlainText(ctx: CompletionApplyContext, text: String) {
  */
 private fun insertWithAdditionalTextEdits(
     ctx: CompletionApplyContext,
-    doc: Text,
     text: String,
-    extraEdits: List<TextEdit>
+    extraEdits: List<OffsetEdit>
 ) {
     if (extraEdits.isEmpty()) {
         insertPlainText(ctx, text)
         return
     }
-    // Resolve every edit range up front so we can both build the change specs and
-    // compute how much earlier edits shift the post-insertion cursor.
-    data class ResolvedEdit(val from: Int, val to: Int, val newText: String)
-    val resolved = extraEdits.map { edit ->
-        val a = fromPosition(edit.range.start, doc)
-        val b = fromPosition(edit.range.end, doc)
-        ResolvedEdit(minOf(a, b), maxOf(a, b), edit.newText)
-    }
     // Specs sorted ascending by start so the change set builds in a single batch.
-    val primary = ResolvedEdit(ctx.from.value, ctx.to.value, text)
-    val specs = (resolved + primary)
-        .sortedBy { it.from }
-        .map {
-            ChangeSpec.Single(
-                DocPos(it.from),
-                DocPos(it.to),
-                InsertContent.StringContent(it.newText)
-            )
-        }
+    val primary = OffsetEdit(ctx.from.value, ctx.to.value, text)
+    val specs = (extraEdits + primary).sortedBy { it.from }.map { it.toChangeSpec() }
     // Net length change from edits ending at or before the primary insertion start
     // shifts the post-insertion cursor.
-    val shiftBefore = resolved
+    val shiftBefore = extraEdits
         .filter { it.to <= ctx.from.value }
-        .sumOf { it.newText.length - (it.to - it.from) }
+        .sumOf { it.text.length - (it.to - it.from) }
     ctx.session.dispatch(
         TransactionSpec(
             changes = ChangeSpec.Multi(specs),
@@ -439,32 +481,21 @@ private fun insertWithAdditionalTextEdits(
 }
 
 /**
- * Apply an LSP item's [additionalTextEdits] (e.g. an auto-import added at the
- * top of the file) as a single transaction against the editor session in
- * [ctx]. Edits are resolved against [doc] with [fromPosition].
+ * Apply an LSP item's additional [edits] (e.g. an auto-import added at the top
+ * of the file) as a single transaction against the editor session in [ctx].
  */
-private fun applyAdditionalTextEdits(
-    ctx: CompletionApplyContext,
-    doc: Text,
-    edits: List<TextEdit>
-) {
+private fun applyAdditionalTextEdits(ctx: CompletionApplyContext, edits: List<OffsetEdit>) {
     if (edits.isEmpty()) return
-    val specs = edits.map { edit ->
-        val from = fromPosition(edit.range.start, doc)
-        val to = fromPosition(edit.range.end, doc)
-        ChangeSpec.Single(
-            DocPos(minOf(from, to)),
-            DocPos(maxOf(from, to)),
-            InsertContent.StringContent(edit.newText)
-        )
-    }
     ctx.session.dispatch(
         TransactionSpec(
-            changes = ChangeSpec.Multi(specs),
+            changes = ChangeSpec.Multi(edits.map { it.toChangeSpec() }),
             userEvent = "input.complete"
         )
     )
 }
+
+private fun OffsetEdit.toChangeSpec(): ChangeSpec =
+    ChangeSpec.Single(DocPos(from), DocPos(to), InsertContent.StringContent(text))
 
 /**
  * Build a [Regex] that matches word characters optionally prefixed by any
@@ -613,7 +644,7 @@ fun serverCompletionSource(
     // `completionItem/resolve`; honour resolve on apply when the server advertises
     // it (#112).
     val resolveProvider = client.serverCapabilities?.completionProvider?.resolveProvider == true
-    val options = items.map { mapCompletionItem(it, doc, client, resolveProvider) }
+    val options = items.map { mapCompletionItem(it, doc, client, resolveProvider, uri) }
     // Always provide a validFor prefix regex, even for isIncomplete results, so the
     // client filters the already-returned items by the typed prefix as the user types
     // (#114). Many servers (e.g. kotlin-lsp) mark EVERY member list isIncomplete=true;
