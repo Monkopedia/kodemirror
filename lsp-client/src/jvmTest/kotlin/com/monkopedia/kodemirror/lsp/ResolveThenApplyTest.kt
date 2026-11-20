@@ -222,6 +222,27 @@ class ResolveThenApplyTest {
     }
 
     @Test
+    fun textTypedAtTheEndOfTheRangeDuringResolveIsReplaced() {
+        val gate = CompletableDeferred<Unit>()
+        val client = client {
+            gate.await()
+            resolvedItem
+        }
+        val session = session(client)
+        accept(session, client)
+        // Keep typing the word while the resolve is in flight: `to` maps right, so
+        // the replace range grows to cover "transf".
+        session.edit(34, 34, "f")
+        gate.complete(Unit)
+
+        assertScopeSurvived()
+        assertEquals(
+            "package p\nimport foo.transform\n\nval x = 1\nval y = transform",
+            session.state.doc.toString()
+        )
+    }
+
+    @Test
     fun disposingTheEditorDuringResolveAppliesNothingAndLogsNothing() {
         val client = client { awaitCancellation() }
         val session = session(client)
