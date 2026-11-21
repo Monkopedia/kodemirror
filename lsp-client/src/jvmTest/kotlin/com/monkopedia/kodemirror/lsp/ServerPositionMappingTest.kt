@@ -18,6 +18,9 @@
  */
 package com.monkopedia.kodemirror.lsp
 
+import com.monkopedia.kodemirror.autocomplete.Completion
+import com.monkopedia.kodemirror.autocomplete.CompletionApplyContext
+import com.monkopedia.kodemirror.autocomplete.CompletionContext
 import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
@@ -29,11 +32,16 @@ import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.lsp.BooleanOr
+import com.monkopedia.lsp.CompletionItem
+import com.monkopedia.lsp.CompletionList
+import com.monkopedia.lsp.CompletionOptions
+import com.monkopedia.lsp.CompletionParams
 import com.monkopedia.lsp.DocumentFormattingParams
 import com.monkopedia.lsp.LanguageServer
 import com.monkopedia.lsp.Position
 import com.monkopedia.lsp.Range
 import com.monkopedia.lsp.ServerCapabilities
+import com.monkopedia.lsp.TextDocumentCompletionResult
 import com.monkopedia.lsp.TextEdit
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -62,6 +70,7 @@ class ServerPositionMappingTest {
 
     private val gate = Gate()
     private var formatEdits: List<TextEdit> = emptyList()
+    private var completionItems: List<CompletionItem> = emptyList()
 
     private fun client(capabilities: ServerCapabilities): LSPClient {
         val fixture = TestLanguageServer(capabilities = capabilities)
@@ -72,6 +81,12 @@ class ServerPositionMappingTest {
                 gate.pass()
                 return formatEdits
             }
+
+            override suspend fun textDocumentCompletion(
+                params: CompletionParams
+            ): TextDocumentCompletionResult = TextDocumentCompletionResult.CompletionListValue(
+                CompletionList(isIncomplete = false, items = completionItems)
+            )
         }
         return LSPClient(server).also { runBlocking { it.initialize() } }
     }
@@ -154,6 +169,71 @@ class ServerPositionMappingTest {
         duringRequest(client, { formatDocument(session) }) {}
 
         assertEquals("val x = 1\nval y = 2", session.state.doc.toString())
+    }
+
+    // --- completion additionalTextEdits ---
+
+    // "trans" is 29..34, and the auto-import goes on the empty line at 10.
+    private val completionText = "package p\n\nval x = 1\nval y = trans"
+    private val autoImport = edit(1, 0, 0, "import foo.transform\n")
+
+    private fun completionClient() =
+        client(ServerCapabilities(completionProvider = CompletionOptions()))
+
+    /** Query the server source at the end of "trans" and return its one option. */
+    private fun query(client: LSPClient, session: EditorSession, pos: Int = 34): Completion =
+        runBlocking {
+            val context = CompletionContext(session.state, DocPos(pos), explicit = true)
+            serverCompletionSource(client, URI)(context)!!.options.single()
+        }
+
+    /** Accept [completion] over [from]..[to], the range `:autocomplete` has mapped to now. */
+    private fun EditorSession.accept(completion: Completion, from: Int, to: Int) =
+        completion.applyFn!!(CompletionApplyContext(this, completion, DocPos(from), DocPos(to)))
+
+    private val eagerItem = CompletionItem(
+        label = "transform",
+        insertText = "transform",
+        additionalTextEdits = listOf(autoImport)
+    )
+
+    @Test
+    fun eagerAutoImportAndInsertionLandTogether() {
+        val client = completionClient()
+        val session = session(client, completionText, ExtensionList(emptyList()))
+        completionItems = listOf(eagerItem)
+        session.accept(query(client, session), 29, 34)
+
+        val text = session.state.doc.toString()
+        assertEquals("package p\nimport foo.transform\n\nval x = 1\nval y = transform", text)
+        assertEquals(text.length, session.state.selection.main.head.value)
+    }
+
+    @Test
+    fun eagerAutoImportIsMappedThroughEditsBeforeAccept() {
+        val client = completionClient()
+        val session = session(client, completionText, ExtensionList(emptyList()))
+        completionItems = listOf(eagerItem)
+        val completion = query(client, session)
+        session.edit(0, 0, "// c\n")
+        session.accept(completion, 34, 39)
+
+        assertEquals(
+            "// c\npackage p\nimport foo.transform\n\nval x = 1\nval y = transform",
+            session.state.doc.toString()
+        )
+    }
+
+    @Test
+    fun eagerAutoImportWhoseRangeWasEditedBeforeAcceptIsDropped() {
+        val client = completionClient()
+        val session = session(client, completionText, ExtensionList(emptyList()))
+        completionItems = listOf(eagerItem)
+        val completion = query(client, session)
+        session.edit(10, 10, "// c")
+        session.accept(completion, 33, 38)
+
+        assertEquals("package p\n// c\nval x = 1\nval y = transform", session.state.doc.toString())
     }
 
     private companion object {

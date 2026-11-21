@@ -217,9 +217,9 @@ internal fun CompletionItem.insertionText(): String =
  * - When [insertTextFormat][CompletionItem.insertTextFormat] is
  *   [Snippet][InsertTextFormat.SNIPPET], an [applyFn][Completion.applyFn] is
  *   installed that expands the LSP snippet template (see [lspSnippetToTemplate]).
- * - [additionalTextEdits][CompletionItem.additionalTextEdits] are applied
- *   alongside the primary insertion via a custom [applyFn] (see the note on
- *   [serverCompletionSource] — upstream does not currently apply these).
+ * - [additionalTextEdits][CompletionItem.additionalTextEdits] are applied in
+ *   the same transaction as the primary insertion via a custom [applyFn], mapped
+ *   through the edits made since the query as upstream's `applyEdits` does.
  *
  * **Deviations:** `:autocomplete`'s [Completion] has no slot for
  * `commitCharacters`, so [commitCharacters][CompletionItem.commitCharacters] /
@@ -247,13 +247,18 @@ internal fun CompletionItem.insertionText(): String =
  * @param uri The document URI, used to map the apply through the edits made
  *   while a resolve is in flight. When null, such a resolve is dropped if the
  *   document changed.
+ * @param queryMapping A [WorkspaceMapping] captured when the completion was
+ *   requested. Eager `additionalTextEdits` are read against [doc] and mapped
+ *   through it on accept, as upstream's `resultMapper` does (see [mapThrough]).
+ *   When null they are dropped if the document changed.
  */
 internal fun mapCompletionItem(
     item: CompletionItem,
     doc: Text,
     client: LSPClient? = null,
     resolveProvider: Boolean = false,
-    uri: String? = null
+    uri: String? = null,
+    queryMapping: WorkspaceMapping? = null
 ): Completion {
     val text = item.insertionText()
     val isSnippet = item.insertTextFormat == InsertTextFormat.SNIPPET
@@ -262,6 +267,11 @@ internal fun mapCompletionItem(
 
     val type = kindToType(item.kind)
     val info = documentationText(item.documentation)
+    fun eagerEdits(ctx: CompletionApplyContext): List<OffsetEdit> = when {
+        queryMapping != null -> extraEdits.toOffsetEdits(doc).mapThrough(queryMapping.changes)
+        ctx.session.state.doc == doc -> extraEdits.toOffsetEdits(doc)
+        else -> emptyList()
+    }
 
     if (isSnippet) {
         // Snippet: display the item's own label, expand the template on apply.
@@ -304,10 +314,7 @@ internal fun mapCompletionItem(
             }
         }
         extraEdits.isEmpty() -> null
-        else -> { ctx ->
-            applyAdditionalTextEdits(ctx, extraEdits.toOffsetEdits(doc))
-            insertPlainText(ctx, text)
-        }
+        else -> { ctx -> insertWithAdditionalTextEdits(ctx, text, eagerEdits(ctx)) }
     }
     return Completion(
         // label is the insertion/filter text; displayLabel is what the popup
@@ -596,50 +603,69 @@ fun serverCompletionSource(
     client: LSPClient,
     uri: String,
     config: ServerCompletionConfig = ServerCompletionConfig()
-): SuspendCompletionSource = source@{ context ->
-    if (client.serverCapabilities?.completionProvider == null) return@source null
+): SuspendCompletionSource {
+    // The mapping behind the result on screen, kept while its items have eager
+    // additionalTextEdits to map on accept. The next result replaces it.
+    var shown: WorkspaceMapping? = null
+    return source@{ context ->
+        if (client.serverCapabilities?.completionProvider == null) return@source null
 
-    val doc = context.state.doc
-    if (!context.explicit) {
-        val pos = context.pos.value
-        val triggerChar = if (pos > 0) doc.sliceString(DocPos(pos - 1), DocPos(pos)) else ""
-        val triggers = client.serverCapabilities?.completionProvider?.triggerCharacters
-        val isIdentChar = triggerChar.length == 1 && isWordChar(triggerChar[0])
-        if (!isIdentChar && (triggers == null || triggerChar !in triggers)) return@source null
+        val doc = context.state.doc
+        if (!context.explicit) {
+            val pos = context.pos.value
+            val triggerChar = if (pos > 0) doc.sliceString(DocPos(pos - 1), DocPos(pos)) else ""
+            val triggers = client.serverCapabilities?.completionProvider?.triggerCharacters
+            val isIdentChar = triggerChar.length == 1 && isWordChar(triggerChar[0])
+            if (!isIdentChar && (triggers == null || triggerChar !in triggers)) return@source null
+        }
+
+        // Flush pending edits so the server completes against current text.
+        client.sync()
+
+        val params = CompletionParams(
+            textDocument = TextDocumentIdentifier(uri = uri),
+            position = toPosition(context.pos.value, doc)
+        )
+        val mapping = client.workspace.getMapping(uri)
+        val result = try {
+            parseCompletionResult(client.server.textDocumentCompletion(params))
+        } catch (e: Throwable) {
+            mapping?.let { client.workspace.releaseMapping(it) }
+            throw e
+        }
+        // This result replaces the one on screen. Keep its mapping only if an item needs it.
+        shown?.let { client.workspace.releaseMapping(it) }
+        shown = null
+        if (result?.items.orEmpty().any { !it.additionalTextEdits.isNullOrEmpty() }) {
+            shown = mapping
+        } else {
+            mapping?.let { client.workspace.releaseMapping(it) }
+        }
+        if (result == null) return@source null
+
+        val items = result.items
+        val (from, to) = completionResultRange(context, items)
+        // kotlin-lsp and friends ship lazy items (empty insertion + `data`) and deliver
+        // the real textEdit/insertText AND auto-import additionalTextEdits only via
+        // `completionItem/resolve`; honour resolve on apply when the server advertises
+        // it (#112).
+        val resolveProvider = client.serverCapabilities?.completionProvider?.resolveProvider == true
+        val options = items.map { mapCompletionItem(it, doc, client, resolveProvider, uri, shown) }
+        // Always provide a validFor prefix regex, even for isIncomplete results, so the
+        // client filters the already-returned items by the typed prefix as the user types
+        // (#114). Many servers (e.g. kotlin-lsp) mark EVERY member list isIncomplete=true;
+        // gating validFor on that left the list unfiltered (and the accept-range stale →
+        // "`.xplus`"). Servers that return a genuinely partial list still get client-side
+        // narrowing of what they sent, which is the right behaviour for a full member list.
+        val validFor = config.validFor ?: prefixRegexp(items)
+
+        CompletionResult(
+            from = from,
+            to = to,
+            options = options,
+            validFor = validFor
+        )
     }
-
-    // Flush pending edits so the server completes against current text.
-    client.sync()
-
-    val params = CompletionParams(
-        textDocument = TextDocumentIdentifier(uri = uri),
-        position = toPosition(context.pos.value, doc)
-    )
-    val raw = client.server.textDocumentCompletion(params)
-    val result = parseCompletionResult(raw) ?: return@source null
-
-    val items = result.items
-    val (from, to) = completionResultRange(context, items)
-    // kotlin-lsp and friends ship lazy items (empty insertion + `data`) and deliver
-    // the real textEdit/insertText AND auto-import additionalTextEdits only via
-    // `completionItem/resolve`; honour resolve on apply when the server advertises
-    // it (#112).
-    val resolveProvider = client.serverCapabilities?.completionProvider?.resolveProvider == true
-    val options = items.map { mapCompletionItem(it, doc, client, resolveProvider, uri) }
-    // Always provide a validFor prefix regex, even for isIncomplete results, so the
-    // client filters the already-returned items by the typed prefix as the user types
-    // (#114). Many servers (e.g. kotlin-lsp) mark EVERY member list isIncomplete=true;
-    // gating validFor on that left the list unfiltered (and the accept-range stale →
-    // "`.xplus`"). Servers that return a genuinely partial list still get client-side
-    // narrowing of what they sent, which is the right behaviour for a full member list.
-    val validFor = config.validFor ?: prefixRegexp(items)
-
-    CompletionResult(
-        from = from,
-        to = to,
-        options = options,
-        validFor = validFor
-    )
 }
 
 /**
