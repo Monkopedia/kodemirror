@@ -28,6 +28,7 @@ import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.InsertContent
+import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.view.EditorSession
@@ -36,13 +37,18 @@ import com.monkopedia.lsp.CompletionItem
 import com.monkopedia.lsp.CompletionList
 import com.monkopedia.lsp.CompletionOptions
 import com.monkopedia.lsp.CompletionParams
+import com.monkopedia.lsp.DefinitionParams
 import com.monkopedia.lsp.DocumentFormattingParams
 import com.monkopedia.lsp.InsertTextFormat
 import com.monkopedia.lsp.LanguageServer
+import com.monkopedia.lsp.Location
 import com.monkopedia.lsp.Position
 import com.monkopedia.lsp.Range
+import com.monkopedia.lsp.ReferenceParams
 import com.monkopedia.lsp.ServerCapabilities
+import com.monkopedia.lsp.SingleOrArray
 import com.monkopedia.lsp.TextDocumentCompletionResult
+import com.monkopedia.lsp.TextDocumentDefinitionResult
 import com.monkopedia.lsp.TextEdit
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -73,6 +79,9 @@ class ServerPositionMappingTest {
     private var formatEdits: List<TextEdit> = emptyList()
     private var completionItems: List<CompletionItem> = emptyList()
 
+    /** The `a` declared at 4 in [navigationText]. */
+    private val target = Location(uri = URI, range = Range(Position(0u, 4u), Position(0u, 5u)))
+
     private fun client(capabilities: ServerCapabilities): LSPClient {
         val fixture = TestLanguageServer(capabilities = capabilities)
         val server = object : LanguageServer by fixture.server {
@@ -81,6 +90,18 @@ class ServerPositionMappingTest {
             ): List<TextEdit> {
                 gate.pass()
                 return formatEdits
+            }
+
+            override suspend fun textDocumentDefinition(
+                params: DefinitionParams
+            ): TextDocumentDefinitionResult {
+                gate.pass()
+                return TextDocumentDefinitionResult.DefinitionValue(SingleOrArray.Single(target))
+            }
+
+            override suspend fun textDocumentReferences(params: ReferenceParams): List<Location> {
+                gate.pass()
+                return listOf(target)
             }
 
             override suspend fun textDocumentCompletion(
@@ -280,6 +301,67 @@ class ServerPositionMappingTest {
             "package p\n\nval x = 1\nval y = transform() // auto",
             session.state.doc.toString()
         )
+    }
+
+    // --- definition / references navigation ---
+
+    private val navigationText = "val a = 1\nval b = a"
+
+    private fun navigationClient() = client(
+        ServerCapabilities(
+            definitionProvider = BooleanOr.BooleanValue(true),
+            referencesProvider = BooleanOr.BooleanValue(true)
+        )
+    )
+
+    /** Type at the target (4) and above it, so the target moves to 9 or, past the "x", 10. */
+    private fun EditorSession.editAroundTarget() {
+        edit(4, 4, "x")
+        edit(0, 0, "// c\n")
+    }
+
+    private fun EditorSession.cursorOnUse() =
+        dispatch(TransactionSpec(selection = SelectionSpec.CursorSpec(DocPos(18))))
+
+    private fun EditorSession.showTheReference() {
+        val panel = state.field(referencePanel)!!
+        val entry = buildReferenceEntries(panel.locations) { null }.single()
+        showReference(state.facet(referenceServer)!!, entry, panel.sourceMapping)
+    }
+
+    @Test
+    fun definitionTargetIsMappedThroughEditsDuringTheRequest() {
+        val client = navigationClient()
+        val session = session(client, navigationText, definitionJumps(client, URI))
+        session.cursorOnUse()
+        duringRequest(client, { jumpToDefinition(session) }) { session.editAroundTarget() }
+
+        // Upstream maps with the default assoc -1, so the cursor stays before the "x".
+        assertEquals(9, session.state.selection.main.head.value)
+    }
+
+    @Test
+    fun referenceIsMappedThroughEditsDuringTheRequest() {
+        val client = navigationClient()
+        val session = session(client, navigationText, findReferencesExtension(client, URI))
+        session.cursorOnUse()
+        duringRequest(client, { findReferences(session) }) { session.editAroundTarget() }
+        session.showTheReference()
+
+        // Upstream's showReference maps with assoc 1, past the "x".
+        assertEquals(10, session.state.selection.main.head.value)
+    }
+
+    @Test
+    fun referenceIsMappedThroughEditsWhileThePanelIsOpen() {
+        val client = navigationClient()
+        val session = session(client, navigationText, findReferencesExtension(client, URI))
+        session.cursorOnUse()
+        duringRequest(client, { findReferences(session) }) {}
+        session.editAroundTarget()
+        session.showTheReference()
+
+        assertEquals(10, session.state.selection.main.head.value)
     }
 
     private companion object {

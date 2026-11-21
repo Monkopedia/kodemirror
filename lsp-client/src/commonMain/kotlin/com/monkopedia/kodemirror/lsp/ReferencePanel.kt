@@ -86,12 +86,12 @@ internal fun ReferencePanelContent(view: EditorSession, panel: ReferencePanelSta
 
     // Resolve previews against the workspace's open documents.
     val server = view.state.facet(referenceServer)
-    val entries = remember(panel) {
+    val entries = remember(panel.locations) {
         buildReferenceEntries(panel.locations) { uri ->
             server?.client?.workspace?.getFile(uri)?.session?.state?.doc
         }
     }
-    var selected by remember(panel) { mutableStateOf(0) }
+    var selected by remember(panel.locations) { mutableStateOf(0) }
 
     Column(modifier = Modifier.padding(4.dp)) {
         Row(modifier = Modifier.padding(bottom = 4.dp)) {
@@ -124,7 +124,10 @@ internal fun ReferencePanelContent(view: EditorSession, panel: ReferencePanelSta
                         theme = theme,
                         onClick = {
                             selected = index
-                            server?.let { showReference(it, entry) }
+                            // The panel's mapping as of now, not of the last composition.
+                            val mapping = view.state.field(referencePanel, require = false)
+                                ?.sourceMapping
+                            server?.let { showReference(it, entry, mapping) }
                         }
                     )
                 }

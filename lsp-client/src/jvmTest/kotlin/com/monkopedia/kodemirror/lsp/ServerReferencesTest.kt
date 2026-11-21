@@ -150,7 +150,7 @@ class ServerReferencesTest {
         ) { session.state.doc }.single()
 
         val binding = state.facet(referenceServer)!!
-        showReference(binding, entry)
+        showReference(binding, entry, sourceMapping = null)
         // "val foo = 1\n" = 12, +8 = 20
         assertEquals(20, session.state.selection.main.head.value)
     }
@@ -174,7 +174,7 @@ class ServerReferencesTest {
             ""
         )
         // Default single-file workspace cannot display an unopened file: no crash, no move.
-        showReference(binding, entry)
+        showReference(binding, entry, sourceMapping = null)
         assertEquals(0, session.state.selection.main.head.value)
     }
 

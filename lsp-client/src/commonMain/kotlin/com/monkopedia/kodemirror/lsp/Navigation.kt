@@ -31,16 +31,18 @@ import com.monkopedia.lsp.Position
  *
  * Ports the navigation step of upstream `@codemirror/lsp-client`'s
  * `jumpToOrigin` / reference-panel `showReference`:
- * - **Same file** ([targetUri] equals [sourceUri]): resolve the position against
- *   the source file's current document and move its selection.
+ * - **Same file** ([targetUri] equals [sourceUri]): resolve the position with
+ *   [mapSource] (the request's mapping, as upstream's `mapping.mapPosition`), or
+ *   against the source file's current document when there is none, and move its
+ *   selection.
  * - **Cross file:** ask the [Workspace] to surface the target file
  *   ([Workspace.displayFile]); if it returns a session, move that session's
  *   selection (resolved against *that* session's document).
  *
- * In both cases the move scrolls the target into view. Resolving the LSP
- * [position] against the *current* document (rather than the version the server
- * saw) keeps the jump correct under concurrent edits, matching the position
- * mapping upstream performs.
+ * In both cases the move scrolls the target into view. **Deviation:** upstream
+ * also maps a cross-file target when that file was open at request time. The
+ * port's mappings are per file, as for rename, so a cross-file target is resolved
+ * against that file's current document.
  *
  * **Workspace limitation:** the default [Workspace] is single-file — its
  * [displayFile][Workspace.displayFile] only returns a session for a file that is
@@ -55,13 +57,16 @@ import com.monkopedia.lsp.Position
  * @param targetUri The URI of the file to navigate to.
  * @param position The LSP position within [targetUri] to move the cursor to.
  * @param userEvent The `userEvent` annotation on the dispatched selection move.
+ * @param mapSource Maps a position in [sourceUri], as the server saw it, to an
+ *   offset in its current document, or returns null when the file wasn't tracked.
  */
 internal fun navigateToLocation(
     client: LSPClient,
     sourceUri: String,
     targetUri: String,
     position: Position,
-    userEvent: String
+    userEvent: String,
+    mapSource: (Position) -> Int? = { null }
 ) {
     val workspace = client.workspace
     val targetSession: EditorSession? = if (targetUri == sourceUri) {
@@ -70,7 +75,8 @@ internal fun navigateToLocation(
         workspace.displayFile(targetUri)
     }
     if (targetSession == null) return
-    val offset = fromPosition(position, targetSession.state.doc)
+    val offset = (if (targetUri == sourceUri) mapSource(position) else null)
+        ?: fromPosition(position, targetSession.state.doc)
     targetSession.dispatch(
         TransactionSpec(
             selection = SelectionSpec.CursorSpec(DocPos(offset)),
