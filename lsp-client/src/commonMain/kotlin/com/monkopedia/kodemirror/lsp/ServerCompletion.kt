@@ -25,6 +25,7 @@ import com.monkopedia.kodemirror.autocomplete.CompletionContext
 import com.monkopedia.kodemirror.autocomplete.CompletionResult
 import com.monkopedia.kodemirror.autocomplete.SuspendCompletionSource
 import com.monkopedia.kodemirror.autocomplete.autocompletion
+import com.monkopedia.kodemirror.autocomplete.currentCompletions
 import com.monkopedia.kodemirror.autocomplete.snippet
 import com.monkopedia.kodemirror.autocomplete.snippets
 import com.monkopedia.kodemirror.state.ChangeSet
@@ -617,9 +618,7 @@ fun serverCompletionSource(
     uri: String,
     config: ServerCompletionConfig = ServerCompletionConfig()
 ): SuspendCompletionSource {
-    // The mapping behind the result on screen, kept while its items have eager
-    // additionalTextEdits to map on accept. The next result replaces it.
-    var shown: WorkspaceMapping? = null
+    val queryMappings = QueryMappings(client.workspace, uri)
     return source@{ context ->
         if (client.serverCapabilities?.completionProvider == null) return@source null
 
@@ -632,6 +631,18 @@ fun serverCompletionSource(
             if (!isIdentChar && (triggers == null || triggerChar !in triggers)) return@source null
         }
 
+        // Track the edits made from here on. Upstream's source starts its mapping
+        // synchronously; this one runs after a launch, so an edit made since the
+        // trigger can't be mapped, and then there is no mapping.
+        val mapping = client.workspace.getMapping(uri)?.let {
+            if (client.workspace.getFile(uri)?.session?.state?.doc == doc) {
+                it
+            } else {
+                client.workspace.releaseMapping(it)
+                null
+            }
+        }
+
         // Flush pending edits so the server completes against current text.
         client.sync()
 
@@ -639,22 +650,16 @@ fun serverCompletionSource(
             textDocument = TextDocumentIdentifier(uri = uri),
             position = toPosition(context.pos.value, doc)
         )
-        val mapping = client.workspace.getMapping(uri)
         val result = try {
             parseCompletionResult(client.server.textDocumentCompletion(params))
         } catch (e: Throwable) {
             mapping?.let { client.workspace.releaseMapping(it) }
             throw e
         }
-        // This result replaces the one on screen. Keep its mapping only if an item needs it.
-        shown?.let { client.workspace.releaseMapping(it) }
-        shown = null
-        if (result?.items.orEmpty().any { !it.additionalTextEdits.isNullOrEmpty() }) {
-            shown = mapping
-        } else {
-            mapping?.let { client.workspace.releaseMapping(it) }
+        if (result == null) {
+            queryMappings.returned(mapping, emptyList(), needed = false)
+            return@source null
         }
-        if (result == null) return@source null
 
         val items = result.items
         val (from, to) = completionResultRange(context, items)
@@ -663,7 +668,11 @@ fun serverCompletionSource(
         // `completionItem/resolve`; honour resolve on apply when the server advertises
         // it (#112).
         val resolveProvider = client.serverCapabilities?.completionProvider?.resolveProvider == true
-        val options = items.map { mapCompletionItem(it, doc, client, resolveProvider, uri, shown) }
+        val options = items.map {
+            mapCompletionItem(it, doc, client, resolveProvider, uri, mapping)
+        }
+        val needed = items.any { !it.additionalTextEdits.isNullOrEmpty() }
+        queryMappings.returned(mapping, options, needed)
         // Always provide a validFor prefix regex, even for isIncomplete results, so the
         // client filters the already-returned items by the typed prefix as the user types
         // (#114). Many servers (e.g. kotlin-lsp) mark EVERY member list isIncomplete=true;
@@ -678,6 +687,33 @@ fun serverCompletionSource(
             options = options,
             validFor = validFor
         )
+    }
+}
+
+/**
+ * The query-time [WorkspaceMapping]s behind results whose items have eager
+ * `additionalTextEdits`, kept while the result may be on screen so the edits can
+ * be mapped on accept (upstream's `resultMapper`).
+ *
+ * `:autocomplete` runs async queries concurrently and drops a late result after
+ * the source has returned it, so the last result returned isn't necessarily the
+ * one on screen. Instead, each return releases the kept mappings none of whose
+ * options are shown now. By then every earlier result has been shown or dropped,
+ * so this holds at most the result on screen plus the new one.
+ */
+private class QueryMappings(private val workspace: Workspace, private val uri: String) {
+    private val kept = mutableListOf<Pair<WorkspaceMapping, List<Completion>>>()
+
+    /** A query returned [options]; keep its [mapping] if [needed]. */
+    fun returned(mapping: WorkspaceMapping?, options: List<Completion>, needed: Boolean) {
+        val shown = workspace.getFile(uri)?.session?.state?.let(::currentCompletions).orEmpty()
+        kept.removeAll { (keptMapping, keptOptions) ->
+            val gone = keptOptions.none { option -> shown.any { it === option } }
+            if (gone) workspace.releaseMapping(keptMapping)
+            gone
+        }
+        if (mapping == null) return
+        if (needed) kept += mapping to options else workspace.releaseMapping(mapping)
     }
 }
 

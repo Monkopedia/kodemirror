@@ -21,6 +21,9 @@ package com.monkopedia.kodemirror.lsp
 import com.monkopedia.kodemirror.autocomplete.Completion
 import com.monkopedia.kodemirror.autocomplete.CompletionApplyContext
 import com.monkopedia.kodemirror.autocomplete.CompletionContext
+import com.monkopedia.kodemirror.autocomplete.acceptCompletion
+import com.monkopedia.kodemirror.autocomplete.completionStatus
+import com.monkopedia.kodemirror.autocomplete.startCompletion
 import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
@@ -50,9 +53,14 @@ import com.monkopedia.lsp.SingleOrArray
 import com.monkopedia.lsp.TextDocumentCompletionResult
 import com.monkopedia.lsp.TextDocumentDefinitionResult
 import com.monkopedia.lsp.TextEdit
+import kotlin.coroutines.CoroutineContext
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.job
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -78,6 +86,9 @@ class ServerPositionMappingTest {
     private val gate = Gate()
     private var formatEdits: List<TextEdit> = emptyList()
     private var completionItems: List<CompletionItem> = emptyList()
+
+    /** Each completion request, in order, waits on the next of these, if any. */
+    private val completionGates = ArrayDeque<CompletableDeferred<Unit>>()
 
     /** The `a` declared at 4 in [navigationText]. */
     private val target = Location(uri = URI, range = Range(Position(0u, 4u), Position(0u, 5u)))
@@ -106,9 +117,12 @@ class ServerPositionMappingTest {
 
             override suspend fun textDocumentCompletion(
                 params: CompletionParams
-            ): TextDocumentCompletionResult = TextDocumentCompletionResult.CompletionListValue(
-                CompletionList(isIncomplete = false, items = completionItems)
-            )
+            ): TextDocumentCompletionResult {
+                completionGates.removeFirstOrNull()?.await()
+                return TextDocumentCompletionResult.CompletionListValue(
+                    CompletionList(isIncomplete = false, items = completionItems)
+                )
+            }
         }
         return LSPClient(server).also { runBlocking { it.initialize() } }
     }
@@ -128,7 +142,28 @@ class ServerPositionMappingTest {
                 )
             )
         )
-        return EditorSession(state).also { client.workspace.openFile(URI, "kotlin", it) }
+        return TestSession(state).also { client.workspace.openFile(URI, "kotlin", it) }
+    }
+
+    /** Runs `:autocomplete`'s queries on [dispatcher], inline by default. */
+    private class TestSession(
+        state: EditorState,
+        dispatcher: CoroutineDispatcher = Dispatchers.Unconfined
+    ) : EditorSession by EditorSession(state) {
+        override val coroutineScope = CoroutineScope(dispatcher)
+    }
+
+    /** Holds launched coroutines until [runAll]. */
+    private class QueuedDispatcher : CoroutineDispatcher() {
+        private val queue = ArrayDeque<Runnable>()
+
+        override fun dispatch(context: CoroutineContext, block: Runnable) {
+            queue += block
+        }
+
+        fun runAll() {
+            while (queue.isNotEmpty()) queue.removeFirst().run()
+        }
     }
 
     private fun EditorSession.edit(from: Int, to: Int, insert: String = "") = dispatch(
@@ -256,6 +291,66 @@ class ServerPositionMappingTest {
         session.accept(completion, 33, 38)
 
         assertEquals("package p\n// c\nval x = 1\nval y = transform", session.state.doc.toString())
+    }
+
+    @Test
+    fun aLateQueryDroppedByAutocompleteDoesNotStopTheShownResultMapping() {
+        val client = completionClient()
+        val session = session(client, completionText, serverCompletion(client, URI))
+        session.dispatch(TransactionSpec(selection = SelectionSpec.CursorSpec(DocPos(34))))
+        completionItems = listOf(eagerItem)
+        val first = CompletableDeferred<Unit>()
+        val second = CompletableDeferred<Unit>()
+        completionGates += listOf(first, second)
+        // Two queries in flight at once. (Typing would trigger them too, but the
+        // plugin that does that only runs under composition.)
+        assertTrue(startCompletion(session))
+        assertTrue(startCompletion(session))
+        second.complete(Unit)
+        assertEquals("active", completionStatus(session.state))
+        // The first query returns late, and :autocomplete drops it.
+        first.complete(Unit)
+        session.edit(0, 0, "// c\n")
+        assertTrue(acceptCompletion(session))
+
+        assertEquals(
+            "// c\npackage p\nimport foo.transform\n\nval x = 1\nval y = transform",
+            session.state.doc.toString()
+        )
+    }
+
+    @Test
+    fun anEditBetweenTheTriggerAndTheQueryDropsTheEagerImport() {
+        val client = completionClient()
+        val dispatcher = QueuedDispatcher()
+        val state = EditorState.create(
+            EditorStateConfig(
+                doc = completionText.asDoc(),
+                selection = SelectionSpec.CursorSpec(DocPos(34)),
+                extensions = ExtensionList(
+                    listOf(
+                        serverCompletion(client, URI),
+                        EditorSession.updateListener.of { update ->
+                            client.workspace.updateFile(URI, update.changes)
+                        }
+                    )
+                )
+            )
+        )
+        val session = TestSession(state, dispatcher)
+        client.workspace.openFile(URI, "kotlin", session)
+        completionItems = listOf(eagerItem)
+        assertTrue(startCompletion(session))
+        // Before the query's coroutine starts, so its mapping can't see this edit.
+        session.edit(0, 0, "// c\n")
+        dispatcher.runAll()
+        assertTrue(acceptCompletion(session))
+
+        // Dropped rather than misplaced: an unmapped import would split "package".
+        assertEquals(
+            "// c\npackage p\n\nval x = 1\nval y = transform",
+            session.state.doc.toString()
+        )
     }
 
     // --- snippets with additionalTextEdits ---
