@@ -18,6 +18,7 @@
  */
 package com.monkopedia.kodemirror.lsp
 
+import com.monkopedia.kodemirror.state.ChangeDesc
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList
@@ -34,6 +35,7 @@ import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.KeyBinding
 import com.monkopedia.kodemirror.view.keymap as keymapFacet
 import com.monkopedia.lsp.Location
+import com.monkopedia.lsp.Position
 import com.monkopedia.lsp.Range
 import com.monkopedia.lsp.ReferenceContext
 import com.monkopedia.lsp.ReferenceParams
@@ -76,14 +78,36 @@ internal val referenceServer: Facet<ReferenceServer?, ReferenceServer?> =
 data class ReferenceLocation(val uri: String, val range: Range)
 
 /**
+ * The editor's document as a request saw it ([startDoc]) and the [changes] made
+ * to it since, so a position the server returned for this file maps to now.
+ */
+internal data class DocMapping(val startDoc: Text, val changes: ChangeDesc?) {
+    fun mapped(more: ChangeDesc): DocMapping = copy(changes = changes?.composeDesc(more) ?: more)
+
+    fun mapPosition(pos: Position, assoc: Int): Int {
+        val offset = fromPosition(pos, startDoc)
+        return changes?.mapPos(DocPos(offset), assoc)?.value ?: offset
+    }
+}
+
+/**
  * The per-editor reference-panel state: the [locations] to show, or null when no
  * panel is open.
  *
  * Mirrors upstream's `referencePanel` `StateField`. The panel is open exactly
  * when this is non-null; [findReferences] sets it and [closeReferencePanel]
  * clears it via [setReferencePanel].
+ *
+ * Upstream keeps the request's `WorkspaceMapping` alive for as long as the panel
+ * and maps a reference through it when it is shown. Here [sourceMapping] plays
+ * that part for this editor's file: the [referencePanel] field maps it through
+ * each transaction, so there is nothing to release. It is null when the file
+ * wasn't open in the workspace.
  */
-internal data class ReferencePanelState(val locations: List<ReferenceLocation>)
+internal data class ReferencePanelState(
+    val locations: List<ReferenceLocation>,
+    val sourceMapping: DocMapping? = null
+)
 
 /** Effect that replaces the reference-panel state (null closes the panel). */
 internal val setReferencePanel: StateEffectType<ReferencePanelState?> = StateEffect.define()
@@ -93,7 +117,11 @@ internal val referencePanel: StateField<ReferencePanelState?> = StateField.defin
     StateFieldSpec(
         create = { null },
         update = { value, tr ->
-            var result = value
+            var result = if (tr.docChanged) {
+                value?.copy(sourceMapping = value.sourceMapping?.mapped(tr.changes.desc))
+            } else {
+                value
+            }
             for (effect in tr.effects) {
                 val asSet = effect.asType(setReferencePanel)
                 if (asSet != null) result = asSet.value
@@ -234,28 +262,32 @@ private fun ReferenceServer.supportsReferences(): Boolean {
 fun findReferences(session: EditorSession): Boolean {
     val binding = session.state.facet(referenceServer) ?: return false
     if (!binding.supportsReferences()) return false
-    val pos = session.state.selection.main.head.value
-    binding.client.scope.launch {
-        binding.client.sync()
-        val position = toPosition(pos, session.state.doc)
-        val response = try {
-            binding.client.server.textDocumentReferences(
-                ReferenceParams(
-                    textDocument = TextDocumentIdentifier(uri = binding.uri),
-                    position = position,
-                    context = ReferenceContext(includeDeclaration = true)
+    val client = binding.client
+    val startDoc = session.state.doc
+    val position = toPosition(session.state.selection.main.head.value, startDoc)
+    val mapping = client.workspace.getMapping(binding.uri)
+    client.scope.launch {
+        try {
+            client.sync()
+            val response = try {
+                client.server.textDocumentReferences(
+                    ReferenceParams(
+                        textDocument = TextDocumentIdentifier(uri = binding.uri),
+                        position = position,
+                        context = ReferenceContext(includeDeclaration = true)
+                    )
                 )
-            )
-        } catch (e: CancellationException) {
-            throw e
-        } ?: return@launch
-        val locations = toReferenceLocations(response)
-        if (locations.isEmpty()) return@launch
-        session.dispatch(
-            TransactionSpec(
-                effects = listOf(setReferencePanel.of(ReferencePanelState(locations)))
-            )
-        )
+            } catch (e: CancellationException) {
+                throw e
+            } ?: return@launch
+            val locations = toReferenceLocations(response)
+            if (locations.isEmpty()) return@launch
+            val sourceMapping = mapping?.let { DocMapping(startDoc, it.changes) }
+            val panel = ReferencePanelState(locations, sourceMapping)
+            session.dispatch(TransactionSpec(effects = listOf(setReferencePanel.of(panel))))
+        } finally {
+            mapping?.let { client.workspace.releaseMapping(it) }
+        }
     }
     return true
 }
@@ -281,15 +313,21 @@ fun closeReferencePanel(session: EditorSession): Boolean {
  * Navigate to the reference [entry], using the shared [navigateToLocation] helper
  * (same-file vs cross-file resolution, position mapping, scroll into view).
  *
- * Ports upstream's reference-panel `showReference`.
+ * Ports upstream's reference-panel `showReference`, which maps the position
+ * with assoc 1 through the panel's mapping ([sourceMapping]).
  */
-internal fun showReference(binding: ReferenceServer, entry: ReferenceEntry) {
+internal fun showReference(
+    binding: ReferenceServer,
+    entry: ReferenceEntry,
+    sourceMapping: DocMapping?
+) {
     navigateToLocation(
         client = binding.client,
         sourceUri = binding.uri,
         targetUri = entry.location.uri,
         position = entry.location.range.start,
-        userEvent = "select.reference"
+        userEvent = "select.reference",
+        mapSource = { sourceMapping?.mapPosition(it, assoc = 1) }
     )
 }
 

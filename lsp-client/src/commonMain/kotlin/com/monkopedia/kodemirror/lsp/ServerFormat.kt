@@ -18,11 +18,15 @@
  */
 package com.monkopedia.kodemirror.lsp
 
+import com.monkopedia.kodemirror.state.ChangeDesc
+import com.monkopedia.kodemirror.state.ChangeSpec
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.Facet
 import com.monkopedia.kodemirror.state.Prec
+import com.monkopedia.kodemirror.state.Text
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.define
 import com.monkopedia.kodemirror.view.EditorSession
@@ -32,6 +36,7 @@ import com.monkopedia.lsp.DocumentFormattingParams
 import com.monkopedia.lsp.FormattingOptions
 import com.monkopedia.lsp.ServerCapabilities
 import com.monkopedia.lsp.TextDocumentIdentifier
+import com.monkopedia.lsp.TextEdit
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
@@ -101,7 +106,13 @@ internal fun formattingOptions(state: EditorState): FormattingOptions = Formatti
  * - otherwise flushes pending edits ([LSPClient.sync]), issues
  *   `textDocument/formatting` with the derived [FormattingOptions]
  *   ([formattingOptions]), and applies the returned `TextEdit[]` as a single
- *   `format` [TransactionSpec] (via the shared [textEditsToChangeSpec]).
+ *   `format` [TransactionSpec].
+ *
+ * Like upstream's `withMapping`, a [WorkspaceMapping] captured with the request
+ * moves the edits through anything typed while it was in flight, and the format
+ * is dropped if that touched any edit (see [mapFormatEdits]). When the file isn't
+ * open in the workspace the edits can't be mapped, so a response that lands on a
+ * changed document is dropped.
  *
  * The suspending work runs on the [client scope][LSPClient.scope] (consistent
  * with the other LSP commands) so the request and its edit application outlive
@@ -121,23 +132,57 @@ fun formatDocument(session: EditorSession): Boolean {
     val client = binding.client
     val targetSession = client.workspace.getFile(binding.uri)?.session ?: session
     val options = formattingOptions(session.state)
+    val startDoc = targetSession.state.doc
+    val mapping = client.workspace.getMapping(binding.uri)
     client.scope.launch {
-        client.sync()
-        val edits = try {
-            client.server.textDocumentFormatting(
-                DocumentFormattingParams(
-                    textDocument = TextDocumentIdentifier(uri = binding.uri),
-                    options = options
+        try {
+            client.sync()
+            val edits = try {
+                client.server.textDocumentFormatting(
+                    DocumentFormattingParams(
+                        textDocument = TextDocumentIdentifier(uri = binding.uri),
+                        options = options
+                    )
                 )
-            )
-        } catch (e: CancellationException) {
-            throw e
-        } ?: return@launch
-        val spec = textEditsToChangeSpec(edits, targetSession.state.doc, mapping = null)
-            ?: return@launch
-        targetSession.dispatch(TransactionSpec(changes = spec, userEvent = "format"))
+            } catch (e: CancellationException) {
+                throw e
+            } ?: return@launch
+            if (mapping == null && targetSession.state.doc != startDoc) return@launch
+            val spec = mapFormatEdits(edits, startDoc, mapping?.changes) ?: return@launch
+            targetSession.dispatch(TransactionSpec(changes = spec, userEvent = "format"))
+        } finally {
+            mapping?.let { client.workspace.releaseMapping(it) }
+        }
     }
     return true
+}
+
+/**
+ * The format's [edits], read against [startDoc] (the document the request saw)
+ * and moved through the [changes] made since, as one [ChangeSpec]. Null when
+ * there is nothing to apply, or when [changes] touched any edit's range: the
+ * user has edited code the server was reformatting, so the whole format is
+ * dropped.
+ *
+ * Ports upstream's `formatDocument`, which maps `from` with assoc 1 and `to`
+ * with assoc -1 after the touched check. **Deviation:** upstream first converts
+ * each position with `mapping.mapPosition`, which already maps it through the
+ * same changes, and then maps it again, so an untouched edit after a user edit
+ * moves twice. This maps once.
+ */
+internal fun mapFormatEdits(
+    edits: List<TextEdit>,
+    startDoc: Text,
+    changes: ChangeDesc?
+): ChangeSpec? {
+    if (edits.isEmpty()) return null
+    val mapped = edits.toOffsetEdits(startDoc).map { edit ->
+        if (changes == null) return@map edit
+        if (changes.touches(edit)) return null
+        val from = changes.mapPos(DocPos(edit.from), 1).value
+        edit.copy(from = from, to = maxOf(from, changes.mapPos(DocPos(edit.to), -1).value))
+    }
+    return ChangeSpec.Multi(mapped.sortedByDescending { it.from }.map { it.toChangeSpec() })
 }
 
 /**

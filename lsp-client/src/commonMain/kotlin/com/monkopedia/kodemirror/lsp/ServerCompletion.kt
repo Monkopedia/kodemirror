@@ -25,8 +25,10 @@ import com.monkopedia.kodemirror.autocomplete.CompletionContext
 import com.monkopedia.kodemirror.autocomplete.CompletionResult
 import com.monkopedia.kodemirror.autocomplete.SuspendCompletionSource
 import com.monkopedia.kodemirror.autocomplete.autocompletion
+import com.monkopedia.kodemirror.autocomplete.currentCompletions
 import com.monkopedia.kodemirror.autocomplete.snippet
 import com.monkopedia.kodemirror.autocomplete.snippets
+import com.monkopedia.kodemirror.state.ChangeSet
 import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.Extension
@@ -217,9 +219,9 @@ internal fun CompletionItem.insertionText(): String =
  * - When [insertTextFormat][CompletionItem.insertTextFormat] is
  *   [Snippet][InsertTextFormat.SNIPPET], an [applyFn][Completion.applyFn] is
  *   installed that expands the LSP snippet template (see [lspSnippetToTemplate]).
- * - [additionalTextEdits][CompletionItem.additionalTextEdits] are applied
- *   alongside the primary insertion via a custom [applyFn] (see the note on
- *   [serverCompletionSource] — upstream does not currently apply these).
+ * - [additionalTextEdits][CompletionItem.additionalTextEdits] are applied in
+ *   the same transaction as the primary insertion via a custom [applyFn], mapped
+ *   through the edits made since the query as upstream's `applyEdits` does.
  *
  * **Deviations:** `:autocomplete`'s [Completion] has no slot for
  * `commitCharacters`, so [commitCharacters][CompletionItem.commitCharacters] /
@@ -247,13 +249,18 @@ internal fun CompletionItem.insertionText(): String =
  * @param uri The document URI, used to map the apply through the edits made
  *   while a resolve is in flight. When null, such a resolve is dropped if the
  *   document changed.
+ * @param queryMapping A [WorkspaceMapping] captured when the completion was
+ *   requested. Eager `additionalTextEdits` are read against [doc] and mapped
+ *   through it on accept, as upstream's `resultMapper` does (see [mapThrough]).
+ *   When null they are dropped if the document changed.
  */
 internal fun mapCompletionItem(
     item: CompletionItem,
     doc: Text,
     client: LSPClient? = null,
     resolveProvider: Boolean = false,
-    uri: String? = null
+    uri: String? = null,
+    queryMapping: WorkspaceMapping? = null
 ): Completion {
     val text = item.insertionText()
     val isSnippet = item.insertTextFormat == InsertTextFormat.SNIPPET
@@ -262,24 +269,25 @@ internal fun mapCompletionItem(
 
     val type = kindToType(item.kind)
     val info = documentationText(item.documentation)
+    fun eagerEdits(ctx: CompletionApplyContext): List<OffsetEdit> = when {
+        queryMapping != null -> extraEdits.toOffsetEdits(doc).mapThrough(queryMapping.changes)
+        ctx.session.state.doc == doc -> extraEdits.toOffsetEdits(doc)
+        else -> emptyList()
+    }
 
     if (isSnippet) {
         // Snippet: display the item's own label, expand the template on apply.
         val template = lspSnippetToTemplate(text)
-        val baseApply = snippet(template)
         val applyFn: (CompletionApplyContext) -> Unit = when {
             resolvable -> { ctx ->
                 resolveThenApply(ctx, client, uri, item) { at, resolved, edits ->
-                    applyAdditionalTextEdits(at, edits)
                     // Re-expand from the resolved item in case resolve filled the snippet.
-                    snippet(lspSnippetToTemplate(resolved.insertionText()))(at)
+                    val resolvedTemplate = lspSnippetToTemplate(resolved.insertionText())
+                    applyEditsThenSnippet(at, edits, resolvedTemplate)
                 }
             }
-            extraEdits.isEmpty() -> baseApply
-            else -> { ctx ->
-                applyAdditionalTextEdits(ctx, extraEdits.toOffsetEdits(doc))
-                baseApply(ctx)
-            }
+            extraEdits.isEmpty() -> snippet(template)
+            else -> { ctx -> applyEditsThenSnippet(ctx, eagerEdits(ctx), template) }
         }
         return Completion(
             label = item.label,
@@ -304,10 +312,7 @@ internal fun mapCompletionItem(
             }
         }
         extraEdits.isEmpty() -> null
-        else -> { ctx ->
-            applyAdditionalTextEdits(ctx, extraEdits.toOffsetEdits(doc))
-            insertPlainText(ctx, text)
-        }
+        else -> { ctx -> insertWithAdditionalTextEdits(ctx, text, eagerEdits(ctx)) }
     }
     return Completion(
         // label is the insertion/filter text; displayLabel is what the popup
@@ -393,14 +398,7 @@ private fun resolveThenApply(
                 val from = map(ctx.from, -1)
                 val at = ctx.copy(from = from, to = maxOf(from, map(ctx.to, 1)))
                 val edits = resolved.additionalTextEdits.orEmpty().toOffsetEdits(startDoc)
-                    .mapNotNull { edit ->
-                        if (changes == null) return@mapNotNull edit
-                        if (changes.touchesRange(DocPos(edit.from), DocPos(edit.to)).toBoolean()) {
-                            return@mapNotNull null
-                        }
-                        val moved = changes.mapPos(DocPos(edit.from), 1).value
-                        edit.copy(from = moved, to = moved + (edit.to - edit.from))
-                    }
+                    .mapThrough(changes)
                 apply(at, resolved, edits)
             }
         } finally {
@@ -421,15 +419,6 @@ private inline fun <T> EditorSession.runLogged(block: () -> T): T? = try {
 } catch (e: Exception) {
     logException(state, e)
     null
-}
-
-/** An LSP [TextEdit] resolved to `[from, to)` offsets in one document. */
-private data class OffsetEdit(val from: Int, val to: Int, val text: String)
-
-private fun List<TextEdit>.toOffsetEdits(doc: Text): List<OffsetEdit> = map { edit ->
-    val a = fromPosition(edit.range.start, doc)
-    val b = fromPosition(edit.range.end, doc)
-    OffsetEdit(minOf(a, b), maxOf(a, b), edit.newText)
 }
 
 /** Insert [text] over the completion's replace range (plain, non-snippet path). */
@@ -481,21 +470,34 @@ private fun insertWithAdditionalTextEdits(
 }
 
 /**
- * Apply an LSP item's additional [edits] (e.g. an auto-import added at the top
- * of the file) as a single transaction against the editor session in [ctx].
+ * Apply an item's additional [edits] (e.g. an auto-import), then expand
+ * [template] over the completion range in [ctx] moved through them.
+ *
+ * Upstream's snippet branch applies no `additionalTextEdits`. This port keeps
+ * the imports, and the snippet expands in a transaction of its own, so its range
+ * is mapped through the imports: `from` with assoc 1, so an edit inserted at it
+ * stays before the snippet, and `to` with assoc -1, so one inserted at it stays
+ * after.
  */
-private fun applyAdditionalTextEdits(ctx: CompletionApplyContext, edits: List<OffsetEdit>) {
-    if (edits.isEmpty()) return
-    ctx.session.dispatch(
-        TransactionSpec(
-            changes = ChangeSpec.Multi(edits.map { it.toChangeSpec() }),
-            userEvent = "input.complete"
+private fun applyEditsThenSnippet(
+    ctx: CompletionApplyContext,
+    edits: List<OffsetEdit>,
+    template: String
+) {
+    var at = ctx
+    if (edits.isNotEmpty()) {
+        val changes = ChangeSet.of(
+            ChangeSpec.Multi(edits.map { it.toChangeSpec() }),
+            ctx.session.state.doc.length
         )
-    )
+        ctx.session.dispatch(
+            TransactionSpec(changes = ChangeSpec.Set(changes), userEvent = "input.complete")
+        )
+        val from = changes.mapPos(ctx.from, 1)
+        at = ctx.copy(from = from, to = maxOf(from, changes.mapPos(ctx.to, -1)))
+    }
+    snippet(template)(at)
 }
-
-private fun OffsetEdit.toChangeSpec(): ChangeSpec =
-    ChangeSpec.Single(DocPos(from), DocPos(to), InsertContent.StringContent(text))
 
 /**
  * Build a [Regex] that matches word characters optionally prefixed by any
@@ -615,50 +617,104 @@ fun serverCompletionSource(
     client: LSPClient,
     uri: String,
     config: ServerCompletionConfig = ServerCompletionConfig()
-): SuspendCompletionSource = source@{ context ->
-    if (client.serverCapabilities?.completionProvider == null) return@source null
+): SuspendCompletionSource {
+    val queryMappings = QueryMappings(client.workspace, uri)
+    return source@{ context ->
+        if (client.serverCapabilities?.completionProvider == null) return@source null
 
-    val doc = context.state.doc
-    if (!context.explicit) {
-        val pos = context.pos.value
-        val triggerChar = if (pos > 0) doc.sliceString(DocPos(pos - 1), DocPos(pos)) else ""
-        val triggers = client.serverCapabilities?.completionProvider?.triggerCharacters
-        val isIdentChar = triggerChar.length == 1 && isWordChar(triggerChar[0])
-        if (!isIdentChar && (triggers == null || triggerChar !in triggers)) return@source null
+        val doc = context.state.doc
+        if (!context.explicit) {
+            val pos = context.pos.value
+            val triggerChar = if (pos > 0) doc.sliceString(DocPos(pos - 1), DocPos(pos)) else ""
+            val triggers = client.serverCapabilities?.completionProvider?.triggerCharacters
+            val isIdentChar = triggerChar.length == 1 && isWordChar(triggerChar[0])
+            if (!isIdentChar && (triggers == null || triggerChar !in triggers)) return@source null
+        }
+
+        // Track the edits made from here on. Upstream's source starts its mapping
+        // synchronously; this one runs after a launch, so an edit made since the
+        // trigger can't be mapped, and then there is no mapping.
+        val mapping = client.workspace.getMapping(uri)?.let {
+            if (client.workspace.getFile(uri)?.session?.state?.doc == doc) {
+                it
+            } else {
+                client.workspace.releaseMapping(it)
+                null
+            }
+        }
+
+        // Flush pending edits so the server completes against current text.
+        client.sync()
+
+        val params = CompletionParams(
+            textDocument = TextDocumentIdentifier(uri = uri),
+            position = toPosition(context.pos.value, doc)
+        )
+        val result = try {
+            parseCompletionResult(client.server.textDocumentCompletion(params))
+        } catch (e: Throwable) {
+            mapping?.let { client.workspace.releaseMapping(it) }
+            throw e
+        }
+        if (result == null) {
+            queryMappings.returned(mapping, emptyList(), needed = false)
+            return@source null
+        }
+
+        val items = result.items
+        val (from, to) = completionResultRange(context, items)
+        // kotlin-lsp and friends ship lazy items (empty insertion + `data`) and deliver
+        // the real textEdit/insertText AND auto-import additionalTextEdits only via
+        // `completionItem/resolve`; honour resolve on apply when the server advertises
+        // it (#112).
+        val resolveProvider = client.serverCapabilities?.completionProvider?.resolveProvider == true
+        val options = items.map {
+            mapCompletionItem(it, doc, client, resolveProvider, uri, mapping)
+        }
+        val needed = items.any { !it.additionalTextEdits.isNullOrEmpty() }
+        queryMappings.returned(mapping, options, needed)
+        // Always provide a validFor prefix regex, even for isIncomplete results, so the
+        // client filters the already-returned items by the typed prefix as the user types
+        // (#114). Many servers (e.g. kotlin-lsp) mark EVERY member list isIncomplete=true;
+        // gating validFor on that left the list unfiltered (and the accept-range stale →
+        // "`.xplus`"). Servers that return a genuinely partial list still get client-side
+        // narrowing of what they sent, which is the right behaviour for a full member list.
+        val validFor = config.validFor ?: prefixRegexp(items)
+
+        CompletionResult(
+            from = from,
+            to = to,
+            options = options,
+            validFor = validFor
+        )
     }
+}
 
-    // Flush pending edits so the server completes against current text.
-    client.sync()
+/**
+ * The query-time [WorkspaceMapping]s behind results whose items have eager
+ * `additionalTextEdits`, kept while the result may be on screen so the edits can
+ * be mapped on accept (upstream's `resultMapper`).
+ *
+ * `:autocomplete` runs async queries concurrently and drops a late result after
+ * the source has returned it, so the last result returned isn't necessarily the
+ * one on screen. Instead, each return releases the kept mappings none of whose
+ * options are shown now. By then every earlier result has been shown or dropped,
+ * so this holds at most the result on screen plus the new one.
+ */
+private class QueryMappings(private val workspace: Workspace, private val uri: String) {
+    private val kept = mutableListOf<Pair<WorkspaceMapping, List<Completion>>>()
 
-    val params = CompletionParams(
-        textDocument = TextDocumentIdentifier(uri = uri),
-        position = toPosition(context.pos.value, doc)
-    )
-    val raw = client.server.textDocumentCompletion(params)
-    val result = parseCompletionResult(raw) ?: return@source null
-
-    val items = result.items
-    val (from, to) = completionResultRange(context, items)
-    // kotlin-lsp and friends ship lazy items (empty insertion + `data`) and deliver
-    // the real textEdit/insertText AND auto-import additionalTextEdits only via
-    // `completionItem/resolve`; honour resolve on apply when the server advertises
-    // it (#112).
-    val resolveProvider = client.serverCapabilities?.completionProvider?.resolveProvider == true
-    val options = items.map { mapCompletionItem(it, doc, client, resolveProvider, uri) }
-    // Always provide a validFor prefix regex, even for isIncomplete results, so the
-    // client filters the already-returned items by the typed prefix as the user types
-    // (#114). Many servers (e.g. kotlin-lsp) mark EVERY member list isIncomplete=true;
-    // gating validFor on that left the list unfiltered (and the accept-range stale →
-    // "`.xplus`"). Servers that return a genuinely partial list still get client-side
-    // narrowing of what they sent, which is the right behaviour for a full member list.
-    val validFor = config.validFor ?: prefixRegexp(items)
-
-    CompletionResult(
-        from = from,
-        to = to,
-        options = options,
-        validFor = validFor
-    )
+    /** A query returned [options]; keep its [mapping] if [needed]. */
+    fun returned(mapping: WorkspaceMapping?, options: List<Completion>, needed: Boolean) {
+        val shown = workspace.getFile(uri)?.session?.state?.let(::currentCompletions).orEmpty()
+        kept.removeAll { (keptMapping, keptOptions) ->
+            val gone = keptOptions.none { option -> shown.any { it === option } }
+            if (gone) workspace.releaseMapping(keptMapping)
+            gone
+        }
+        if (mapping == null) return
+        if (needed) kept += mapping to options else workspace.releaseMapping(mapping)
+    }
 }
 
 /**

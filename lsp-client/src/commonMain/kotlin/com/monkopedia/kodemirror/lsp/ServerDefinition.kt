@@ -206,16 +206,23 @@ private inline fun jumpToOrigin(
 ): Boolean {
     val binding = session.state.facet(definitionServer) ?: return false
     if (!binding.serverSupports(capability)) return false
-    val pos = session.state.selection.main.head.value
-    binding.client.scope.launch {
-        binding.client.sync()
-        val position = toPosition(pos, session.state.doc)
-        val target = try {
-            request(binding, position)
-        } catch (e: CancellationException) {
-            throw e
-        } ?: return@launch
-        navigateToTarget(binding, target)
+    val client = binding.client
+    val startDoc = session.state.doc
+    val position = toPosition(session.state.selection.main.head.value, startDoc)
+    // Upstream's `withMapping`: map a same-file target through edits made meanwhile.
+    val mapping = client.workspace.getMapping(binding.uri)
+    client.scope.launch {
+        try {
+            client.sync()
+            val target = try {
+                request(binding, position)
+            } catch (e: CancellationException) {
+                throw e
+            } ?: return@launch
+            navigateToTarget(binding, target) { mapping?.mapPosition(it, startDoc, assoc = -1) }
+        } finally {
+            mapping?.let { client.workspace.releaseMapping(it) }
+        }
     }
     return true
 }
@@ -225,13 +232,18 @@ private inline fun jumpToOrigin(
  * helper (same-file vs cross-file resolution, position mapping, scroll into
  * view) that go-to-definition and find-references both use.
  */
-private fun navigateToTarget(binding: DefinitionServer, target: JumpTarget) {
+private fun navigateToTarget(
+    binding: DefinitionServer,
+    target: JumpTarget,
+    mapSource: (Position) -> Int?
+) {
     navigateToLocation(
         client = binding.client,
         sourceUri = binding.uri,
         targetUri = target.uri,
         position = target.range.start,
-        userEvent = "select.definition"
+        userEvent = "select.definition",
+        mapSource = mapSource
     )
 }
 

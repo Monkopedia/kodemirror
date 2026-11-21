@@ -32,6 +32,7 @@ import com.monkopedia.kodemirror.view.exceptionSink
 import com.monkopedia.lsp.CompletionItem
 import com.monkopedia.lsp.CompletionItemKind
 import com.monkopedia.lsp.CompletionOptions
+import com.monkopedia.lsp.InsertTextFormat
 import com.monkopedia.lsp.LanguageServer
 import com.monkopedia.lsp.Position
 import com.monkopedia.lsp.Range
@@ -238,6 +239,27 @@ class ResolveThenApplyTest {
         assertScopeSurvived()
         assertEquals(
             "package p\nimport foo.transform\n\nval x = 1\nval y = transform",
+            session.state.doc.toString()
+        )
+    }
+
+    @Test
+    fun aResolvedSnippetExpandsWhereItsAutoImportMovedTheText() {
+        val snippetItem = lazyItem.copy(insertTextFormat = InsertTextFormat.SNIPPET)
+        val client = client { resolvedItem.copy(insertText = "transform(\$1)") }
+        val session = session(client)
+        val completion = mapCompletionItem(
+            snippetItem,
+            session.state.doc,
+            client,
+            resolveProvider = true,
+            uri = URI
+        )
+        completion.applyFn!!(CompletionApplyContext(session, completion, DocPos(29), DocPos(34)))
+
+        assertScopeSurvived()
+        assertEquals(
+            "package p\nimport foo.transform\n\nval x = 1\nval y = transform()",
             session.state.doc.toString()
         )
     }

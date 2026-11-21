@@ -30,17 +30,15 @@ import com.monkopedia.lsp.TextEdit
  * Each edit's LSP range is resolved to `[from, to)` offsets. For the requesting
  * file a live [mapping] (the in-flight [WorkspaceMapping]) is applied so offsets
  * stay valid under concurrent edits, matching upstream's `mapping.mapPosition`;
- * other files (and callers with no in-flight request, e.g. document formatting)
- * resolve directly against the current document by passing `mapping = null`.
+ * other files resolve directly against the current document by passing
+ * `mapping = null`.
  *
  * The edits are emitted highest-offset-first (by resolved `from`) so that an
  * earlier edit's offsets are never invalidated by the application of a later one
  * — the same ordering discipline the incremental document sync uses (see
  * [buildContentChanges]). Returns null when there is nothing to change.
  *
- * Shared by [applyWorkspaceEdit] (rename) and [formatDocument] (whole-document
- * formatting): both consume an LSP `TextEdit[]` against a single document, so the
- * range→offset resolution and the highest-offset-first ordering live here once.
+ * Used by [applyWorkspaceEdit] (rename).
  */
 internal fun textEditsToChangeSpec(
     edits: List<TextEdit>,
