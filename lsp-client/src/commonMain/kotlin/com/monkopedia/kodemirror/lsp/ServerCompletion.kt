@@ -393,14 +393,7 @@ private fun resolveThenApply(
                 val from = map(ctx.from, -1)
                 val at = ctx.copy(from = from, to = maxOf(from, map(ctx.to, 1)))
                 val edits = resolved.additionalTextEdits.orEmpty().toOffsetEdits(startDoc)
-                    .mapNotNull { edit ->
-                        if (changes == null) return@mapNotNull edit
-                        if (changes.touchesRange(DocPos(edit.from), DocPos(edit.to)).toBoolean()) {
-                            return@mapNotNull null
-                        }
-                        val moved = changes.mapPos(DocPos(edit.from), 1).value
-                        edit.copy(from = moved, to = moved + (edit.to - edit.from))
-                    }
+                    .mapThrough(changes)
                 apply(at, resolved, edits)
             }
         } finally {
@@ -421,15 +414,6 @@ private inline fun <T> EditorSession.runLogged(block: () -> T): T? = try {
 } catch (e: Exception) {
     logException(state, e)
     null
-}
-
-/** An LSP [TextEdit] resolved to `[from, to)` offsets in one document. */
-private data class OffsetEdit(val from: Int, val to: Int, val text: String)
-
-private fun List<TextEdit>.toOffsetEdits(doc: Text): List<OffsetEdit> = map { edit ->
-    val a = fromPosition(edit.range.start, doc)
-    val b = fromPosition(edit.range.end, doc)
-    OffsetEdit(minOf(a, b), maxOf(a, b), edit.newText)
 }
 
 /** Insert [text] over the completion's replace range (plain, non-snippet path). */
@@ -493,9 +477,6 @@ private fun applyAdditionalTextEdits(ctx: CompletionApplyContext, edits: List<Of
         )
     )
 }
-
-private fun OffsetEdit.toChangeSpec(): ChangeSpec =
-    ChangeSpec.Single(DocPos(from), DocPos(to), InsertContent.StringContent(text))
 
 /**
  * Build a [Regex] that matches word characters optionally prefixed by any
