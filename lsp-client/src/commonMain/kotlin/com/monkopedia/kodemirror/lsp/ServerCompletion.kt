@@ -27,6 +27,7 @@ import com.monkopedia.kodemirror.autocomplete.SuspendCompletionSource
 import com.monkopedia.kodemirror.autocomplete.autocompletion
 import com.monkopedia.kodemirror.autocomplete.snippet
 import com.monkopedia.kodemirror.autocomplete.snippets
+import com.monkopedia.kodemirror.state.ChangeSet
 import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.Extension
@@ -276,20 +277,16 @@ internal fun mapCompletionItem(
     if (isSnippet) {
         // Snippet: display the item's own label, expand the template on apply.
         val template = lspSnippetToTemplate(text)
-        val baseApply = snippet(template)
         val applyFn: (CompletionApplyContext) -> Unit = when {
             resolvable -> { ctx ->
                 resolveThenApply(ctx, client, uri, item) { at, resolved, edits ->
-                    applyAdditionalTextEdits(at, edits)
                     // Re-expand from the resolved item in case resolve filled the snippet.
-                    snippet(lspSnippetToTemplate(resolved.insertionText()))(at)
+                    val resolvedTemplate = lspSnippetToTemplate(resolved.insertionText())
+                    applyEditsThenSnippet(at, edits, resolvedTemplate)
                 }
             }
-            extraEdits.isEmpty() -> baseApply
-            else -> { ctx ->
-                applyAdditionalTextEdits(ctx, extraEdits.toOffsetEdits(doc))
-                baseApply(ctx)
-            }
+            extraEdits.isEmpty() -> snippet(template)
+            else -> { ctx -> applyEditsThenSnippet(ctx, eagerEdits(ctx), template) }
         }
         return Completion(
             label = item.label,
@@ -472,17 +469,33 @@ private fun insertWithAdditionalTextEdits(
 }
 
 /**
- * Apply an LSP item's additional [edits] (e.g. an auto-import added at the top
- * of the file) as a single transaction against the editor session in [ctx].
+ * Apply an item's additional [edits] (e.g. an auto-import), then expand
+ * [template] over the completion range in [ctx] moved through them.
+ *
+ * Upstream's snippet branch applies no `additionalTextEdits`. This port keeps
+ * the imports, and the snippet expands in a transaction of its own, so its range
+ * is mapped through the imports: `from` with assoc 1, so an edit inserted at it
+ * stays before the snippet, and `to` with assoc -1, so one inserted at it stays
+ * after.
  */
-private fun applyAdditionalTextEdits(ctx: CompletionApplyContext, edits: List<OffsetEdit>) {
-    if (edits.isEmpty()) return
-    ctx.session.dispatch(
-        TransactionSpec(
-            changes = ChangeSpec.Multi(edits.map { it.toChangeSpec() }),
-            userEvent = "input.complete"
+private fun applyEditsThenSnippet(
+    ctx: CompletionApplyContext,
+    edits: List<OffsetEdit>,
+    template: String
+) {
+    var at = ctx
+    if (edits.isNotEmpty()) {
+        val changes = ChangeSet.of(
+            ChangeSpec.Multi(edits.map { it.toChangeSpec() }),
+            ctx.session.state.doc.length
         )
-    )
+        ctx.session.dispatch(
+            TransactionSpec(changes = ChangeSpec.Set(changes), userEvent = "input.complete")
+        )
+        val from = changes.mapPos(ctx.from, 1)
+        at = ctx.copy(from = from, to = maxOf(from, changes.mapPos(ctx.to, -1)))
+    }
+    snippet(template)(at)
 }
 
 /**

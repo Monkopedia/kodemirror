@@ -37,6 +37,7 @@ import com.monkopedia.lsp.CompletionList
 import com.monkopedia.lsp.CompletionOptions
 import com.monkopedia.lsp.CompletionParams
 import com.monkopedia.lsp.DocumentFormattingParams
+import com.monkopedia.lsp.InsertTextFormat
 import com.monkopedia.lsp.LanguageServer
 import com.monkopedia.lsp.Position
 import com.monkopedia.lsp.Range
@@ -234,6 +235,51 @@ class ServerPositionMappingTest {
         session.accept(completion, 33, 38)
 
         assertEquals("package p\n// c\nval x = 1\nval y = transform", session.state.doc.toString())
+    }
+
+    // --- snippets with additionalTextEdits ---
+
+    private fun snippetItem(vararg edits: TextEdit) = CompletionItem(
+        label = "transform",
+        insertText = "transform(\$1)",
+        insertTextFormat = InsertTextFormat.SNIPPET,
+        additionalTextEdits = edits.toList()
+    )
+
+    @Test
+    fun aSnippetExpandsWhereAnImportAboveMovedTheText() {
+        val client = completionClient()
+        val session = session(client, completionText, ExtensionList(emptyList()))
+        completionItems = listOf(snippetItem(autoImport))
+        session.accept(query(client, session), 29, 34)
+
+        val text = session.state.doc.toString()
+        assertEquals("package p\nimport foo.transform\n\nval x = 1\nval y = transform()", text)
+        assertEquals(text.length - 1, session.state.selection.main.head.value)
+    }
+
+    @Test
+    fun aSnippetExpandsAfterAnImportInsertedAtItsStart() {
+        val client = completionClient()
+        // "trans" is 11..16, at the start of the line the import goes on.
+        val session = session(client, "package p\n\ntrans", ExtensionList(emptyList()))
+        completionItems = listOf(snippetItem(edit(2, 0, 0, "import foo.transform\n")))
+        session.accept(query(client, session, pos = 16), 11, 16)
+
+        assertEquals("package p\n\nimport foo.transform\ntransform()", session.state.doc.toString())
+    }
+
+    @Test
+    fun aSnippetExpandsBeforeAnEditInsertedAtItsEnd() {
+        val client = completionClient()
+        val session = session(client, completionText, ExtensionList(emptyList()))
+        completionItems = listOf(snippetItem(edit(3, 13, 13, " // auto")))
+        session.accept(query(client, session), 29, 34)
+
+        assertEquals(
+            "package p\n\nval x = 1\nval y = transform() // auto",
+            session.state.doc.toString()
+        )
     }
 
     private companion object {
