@@ -21,6 +21,7 @@ package com.monkopedia.kodemirror.search
 import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorSelection
+import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.SelectionRange
 import com.monkopedia.kodemirror.state.SelectionSpec
@@ -118,6 +119,23 @@ private fun findMatch(view: EditorSession, forward: Boolean): Boolean {
     return false
 }
 
+/**
+ * The first match at or after [curTo], wrapping around to the start of the
+ * document (searching up to [curFrom]) when the tail of the document holds
+ * none. Mirrors upstream `QueryType.nextMatch`.
+ */
+private fun nextMatchFrom(
+    state: EditorState,
+    query: SearchQuery,
+    curFrom: DocPos,
+    curTo: DocPos
+): SearchMatch? {
+    val cursor = query.getCursor(state, curTo, state.doc.endPos)
+    if (cursor.hasNext()) return cursor.next()
+    val wrapped = query.getCursor(state, DocPos.ZERO, curFrom)
+    return if (wrapped.hasNext()) wrapped.next() else null
+}
+
 /** Replace the current match (if any) and move to the next one. */
 val replaceNext: (EditorSession) -> Boolean = { view ->
     val state = view.state
@@ -129,21 +147,18 @@ val replaceNext: (EditorSession) -> Boolean = { view ->
             false
         } else {
             val sel = state.selection.main
-            val replacement = query.replace
-            // Check if current selection matches the query
-            val selText = state.doc.sliceString(sel.from, sel.to)
-            val matches = if (query.caseSensitive) {
-                selText == query.search
-            } else {
-                selText.equals(query.search, ignoreCase = true)
-            }
-            if (matches && !sel.empty) {
+            // Upstream compares match *positions* (`next.from == from &&
+            // next.to == to`), not the selected text against the pattern --
+            // in regexp mode the pattern is essentially never equal to the
+            // text it matched, which made this branch dead.
+            val next = nextMatchFrom(state, query, sel.from, sel.from)
+            if (next != null && next.from == sel.from && next.to == sel.to && !sel.empty) {
                 view.dispatch(
                     TransactionSpec(
                         changes = ChangeSpec.Single(
                             sel.from,
                             sel.to,
-                            InsertContent.StringContent(replacement)
+                            InsertContent.StringContent(query.getReplacement(next))
                         ),
                         userEvent = "input.replace"
                     )
@@ -174,7 +189,7 @@ val replaceAll: (EditorSession) -> Boolean = { view ->
                     ChangeSpec.Single(
                         match.from,
                         match.to,
-                        InsertContent.StringContent(query.replace)
+                        InsertContent.StringContent(query.getReplacement(match))
                     )
                 )
             }
