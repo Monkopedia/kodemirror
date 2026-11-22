@@ -8,16 +8,33 @@ on:
   workflow_call:
 
 jobs:
+  # `check` is the job name `main`'s branch protection requires, so it stays, as an aggregate of
+  # the two jobs that do the work. Until #423 they were one job, and that job lost its hosted
+  # runner on about 1 attempt in 6: a passing run peaked at 14.5 of the runner's 16 GB, and losses
+  # continued after the wasm-link heap OOM was fixed. Split, each runner carries about half of it.
+  #
+  # `if: always()` is load-bearing. Without it a failed or cancelled half makes `check` *skipped*,
+  # and branch protection counts a skipped required check as passing.
   check:
-    # EXPERIMENT, revisit (#423): pinned to ubuntu-24.04 rather than ubuntu-latest, which began
-    # migrating to Ubuntu 26 on 2026-10-19. Since then `check` has lost its hosted runner after
-    # ~56-60 min with no log on 3 of 68 attempts; this pin tests the image hypothesis and changes
-    # nothing else. Reading rule: about 1 loss in 23 attempts, so one quiet week (~34 attempts) is
-    # weak evidence (P~0.22 by chance); wait for two quiet weeks, ~68 attempts, before concluding.
-    # Count attempts, not days. If losses continue on 24.04, unpin and measure the job's peak memory.
-    runs-on: ubuntu-24.04
-    # Slowest successful run of the last 58 was 21.8 min (median 19.5). The default is 360, so a
-    # real hang would otherwise hold a runner for six hours (#423).
+    needs: [check-jvm, check-wasm]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require both halves
+        env:
+          JVM: ${{ needs.check-jvm.result }}
+          WASM: ${{ needs.check-wasm.result }}
+        run: |
+          echo "check-jvm: $JVM, check-wasm: $WASM"
+          [ "$JVM" = success ] && [ "$WASM" = success ]
+
+  check-jvm:
+    # Back on ubuntu-latest (#423): the ubuntu-24.04 pin lost 3 of 17 attempts against 3 of 68
+    # before it, so the Ubuntu 26 image was not the cause.
+    runs-on: ubuntu-latest
+    # Slowest successful run of the last 58 was 21.8 min (median 19.5), before the split. The
+    # default is 360, so a real hang would otherwise hold a runner for six hours (#423).
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
@@ -50,13 +67,17 @@ jobs:
         run: |
           python3 .github/scripts/test-changelog.py
           python3 .github/scripts/changelog.py check ${BASE_SHA:+--base-ref "$BASE_SHA"}
+      # Memory samples for runs that finish (#423); a lost runner uploads nothing, not even its
+      # job log, so this cannot explain a loss, only how close a passing run came to one.
+      - name: Start memory sampler
+        run: .github/scripts/mem-sampler.sh 30 mem.log > /dev/null 2>&1 &
       # `:kodemirror-bom:verifyBomCoverage` checks the generated BOM POM against the set of
       # modules that publish, failing on drift in either direction (#244). It is named here
       # because this job does not run `check`.
       #
       # `ktlintCheck` and `spotlessCheck` are named for the same reason, and are named *here*
-      # rather than in a job of their own because this is the only Linux job in `main`'s branch
-      # protection (which requires `check`, `check-macos` and `check-ios`). Until #299 neither
+      # rather than in a job of their own because this job gates `check`, the only Linux job in
+      # `main`'s branch protection (which requires `check`, `check-macos` and `check-ios`). Until #299 neither
       # task appeared in any workflow file: both hang off `check`, which this job deliberately
       # does not run, so listing tasks explicitly had silently dropped them. `spotlessCheck` is
       # the consequential one -- it is what applies `spotless/license-header.kt` over
@@ -66,20 +87,49 @@ jobs:
       # gating task before this line existed. `ktlintCheck` is a separate tool with separate
       # rules (.editorconfig), so both names are needed; neither compiles anything, and together
       # they add ~25s to a job that already pays for configuration.
-      #
-      # The wasmJsTest tasks below are exactly the modules that opt in via
-      # `kodemirrorLibrary { wasmJsTests.set(true) }`; they are listed one by one so that a
-      # module dropping out of the opt-in set shows up as a diff here rather than as a silent
-      # no-op. They run on Karma + headless Chrome (preinstalled on the hosted Ubuntu image), not Node,
-      # because skiko's `skiko.mjs` is a browser-only build (#202). The heap bump matches
-      # docs.yml: linking ~29 wasm test binaries OOMs the Kotlin daemon at the 2g default.
-      - name: Lint and test (JVM + wasmJs + Android)
+      - name: Lint and test (JVM + Android)
         run: >-
           ./gradlew apiCheck ktlintCheck spotlessCheck jvmTest :kodemirror-bom:verifyBomCoverage
           -Dkotlin.daemon.jvmargs="-Xmx4g"
           -Dorg.gradle.jvmargs="-Xmx4g -Dfile.encoding=UTF-8"
           :view:verifyRoborazziJvm
           testDebugUnitTest
+      - name: Upload memory samples
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: check-jvm-mem-log
+          path: mem.log
+          if-no-files-found: warn
+
+  check-wasm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4.4.3
+      # Memory samples for runs that finish (#423); a lost runner uploads nothing, not even its
+      # job log, so this cannot explain a loss, only how close a passing run came to one.
+      - name: Start memory sampler
+        run: .github/scripts/mem-sampler.sh 30 mem.log > /dev/null 2>&1 &
+      # The wasmJsTest tasks in this job are exactly the modules that opt in via
+      # `kodemirrorLibrary { wasmJsTests.set(true) }`; they are listed one by one so that a
+      # module dropping out of the opt-in set shows up as a diff here rather than as a silent
+      # no-op. They run on Karma + headless Chrome (preinstalled on the hosted Ubuntu image), not Node,
+      # because skiko's `skiko.mjs` is a browser-only build (#202). Their wasm
+      # compiles are independent of the JVM half, so this job builds nothing `check-jvm` needs.
+      #
+      # One confirmed contributor to the #423 losses is these tasks' test-binary links exhausting
+      # the Kotlin daemon heap when they overlap; `WasmLinkLimiter` in convention-plugins caps it.
+      - name: Test (wasmJs)
+        run: >-
+          ./gradlew
+          -Dkotlin.daemon.jvmargs="-Xmx4g"
+          -Dorg.gradle.jvmargs="-Xmx4g -Dfile.encoding=UTF-8"
           :autocomplete:wasmJsTest
           :collab:wasmJsTest
           :commands:wasmJsTest
@@ -111,6 +161,13 @@ jobs:
           :state:wasmJsTest
           :view:wasmJsTest
           :vim:wasmJsTest
+      - name: Upload memory samples
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: check-wasm-mem-log
+          path: mem.log
+          if-no-files-found: warn
 
   # Android Lint, as its own job so it costs nothing serially against `check`.
   #
@@ -126,8 +183,7 @@ jobs:
   # NOTE: this job is not in `main`'s branch protection (which requires `check`, `check-macos` and
   # `check-ios`). It shows red on the PR but does not block a merge until a maintainer adds it.
   lint:
-    # Same ubuntu-24.04 experiment as `check` (#423), so both Linux jobs run on one image.
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     # Slowest successful run of the last 58 was 7.0 min (median 5.5) (#423).
     timeout-minutes: 15
     steps:
