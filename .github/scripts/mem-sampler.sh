@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Memory sampler for the `check` job (#423). Prints one compact line every <interval> seconds:
+# Memory sampler for the `check-*` jobs (#423). Appends one compact line every <interval> seconds
+# to <log-file>:
 #
 #   [mem] 05:18:30 used=14548M avail=1433M build=13204M gradle=5492M kotlin@2.4.10=4228M ...
 #
@@ -9,16 +10,16 @@
 # Kotlin daemon is seen it gets its own line with its compiler version and -Xmx, because more than
 # one daemon at a time is the thing to explain.
 #
-# Lines go to stdout so they interleave with the step's live log, which is the only channel that
-# survives a lost runner, and are also appended to <log-file> for the artifact on runs that end.
+# A lost runner uploads nothing, not even its job log, so this only shows how close a run that
+# finished came to the limit.
 #
-# usage: mem-sampler.sh <interval-seconds> [log-file]
+# usage: mem-sampler.sh <interval-seconds> <log-file>
 interval=${1:-30}
-log=${2:-/dev/null}
+log=${2:?usage: mem-sampler.sh <interval-seconds> <log-file>}
 since=$(date +%s)
 declare -A seen
 
-emit() { echo "$1" | tee -a "$log"; }
+emit() { echo "$1" >> "$log"; }
 
 while :; do
     now=$(date +%s)
