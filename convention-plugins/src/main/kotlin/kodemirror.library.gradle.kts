@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
+import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrLink
 
 plugins {
     id("com.android.library")
@@ -238,6 +239,22 @@ afterEvaluate {
             from(unpackSkiko)
         }
     }
+}
+
+// #423 — at most two Kotlin/Wasm links at a time, build-wide. Every link runs in the one shared
+// Kotlin daemon, and linking a wasm test binary is the heaviest thing that daemon does. CI's
+// `check` links 31 of them; unbounded, they overlap and exhaust the daemon's 4 GB heap. Locally
+// that fails with `OutOfMemoryError: GC overhead limit exceeded` in ten links; on a hosted runner
+// it shows up as a silent GC stall until the job hits its timeout. Raising the heap only moves
+// the cliff, since the overlap grows with the worker count; capping the overlap does not.
+val wasmLinkLimiter = gradle.sharedServices.registerIfAbsent(
+    "wasmLinkLimiter",
+    WasmLinkLimiter::class
+) {
+    maxParallelUsages.set(2)
+}
+tasks.withType<KotlinJsIrLink>().configureEach {
+    usesService(wasmLinkLimiter)
 }
 
 // Print the exception — message included — for every failed test. Gradle's default listener

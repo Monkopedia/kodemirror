@@ -9,13 +9,10 @@ on:
 
 jobs:
   check:
-    # EXPERIMENT, revisit (#423): pinned to ubuntu-24.04 rather than ubuntu-latest, which began
-    # migrating to Ubuntu 26 on 2026-10-19. Since then `check` has lost its hosted runner after
-    # ~56-60 min with no log on 3 of 68 attempts; this pin tests the image hypothesis and changes
-    # nothing else. Reading rule: about 1 loss in 23 attempts, so one quiet week (~34 attempts) is
-    # weak evidence (P~0.22 by chance); wait for two quiet weeks, ~68 attempts, before concluding.
-    # Count attempts, not days. If losses continue on 24.04, unpin and measure the job's peak memory.
-    runs-on: ubuntu-24.04
+    # Back on ubuntu-latest (#423): the ubuntu-24.04 pin lost 3 of 17 attempts against 3 of 68
+    # before it, so the Ubuntu 26 image was not the cause. The cause found instead was the wasm
+    # link tasks exhausting the Kotlin daemon heap; see `WasmLinkLimiter` in convention-plugins.
+    runs-on: ubuntu-latest
     # Slowest successful run of the last 58 was 21.8 min (median 19.5). The default is 360, so a
     # real hang would otherwise hold a runner for six hours (#423).
     timeout-minutes: 35
@@ -71,8 +68,20 @@ jobs:
       # `kodemirrorLibrary { wasmJsTests.set(true) }`; they are listed one by one so that a
       # module dropping out of the opt-in set shows up as a diff here rather than as a silent
       # no-op. They run on Karma + headless Chrome (preinstalled on the hosted Ubuntu image), not Node,
-      # because skiko's `skiko.mjs` is a browser-only build (#202). The heap bump matches
-      # docs.yml: linking ~29 wasm test binaries OOMs the Kotlin daemon at the 2g default.
+      # because skiko's `skiko.mjs` is a browser-only build (#202). Linking their test
+      # binaries in parallel used to exhaust the shared Kotlin daemon heap even at 4g (#423);
+      # `WasmLinkLimiter` in convention-plugins now runs at most two links at a time.
+      # A lost runner leaves no job log (#423), so sample memory into a file uploaded below. If
+      # the runner survives to the post steps, `mem.log` shows what was filling memory and when.
+      - name: Start memory sampler
+        run: |
+          # Every JVM's `comm` is just `java`, so print its main class (Gradle daemon, Kotlin
+          # daemon, test worker) instead; other processes keep their first word.
+          (while :; do
+            date -u +%T; free -m | sed -n 2p
+            ps -eo rss=,args= --sort=-rss | head -7 | awk '{c=$2; for (i=3; i<=NF; i++) if ($i ~ /^(org|com|worker)\./) { c=$i; break }; print "  " int($1/1024) "M " c}'
+            sleep 30
+          done) > mem.log 2>&1 &
       - name: Lint and test (JVM + wasmJs + Android)
         run: >-
           ./gradlew apiCheck ktlintCheck spotlessCheck jvmTest :kodemirror-bom:verifyBomCoverage
@@ -111,6 +120,13 @@ jobs:
           :state:wasmJsTest
           :view:wasmJsTest
           :vim:wasmJsTest
+      - name: Upload memory samples
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: check-mem-log
+          path: mem.log
+          if-no-files-found: warn
 
   # Android Lint, as its own job so it costs nothing serially against `check`.
   #
@@ -126,8 +142,7 @@ jobs:
   # NOTE: this job is not in `main`'s branch protection (which requires `check`, `check-macos` and
   # `check-ios`). It shows red on the PR but does not block a merge until a maintainer adds it.
   lint:
-    # Same ubuntu-24.04 experiment as `check` (#423), so both Linux jobs run on one image.
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     # Slowest successful run of the last 58 was 7.0 min (median 5.5) (#423).
     timeout-minutes: 15
     steps:
