@@ -243,10 +243,10 @@ afterEvaluate {
 
 // #423 — at most two Kotlin/Wasm links at a time, build-wide. Every link runs in the one shared
 // Kotlin daemon, and linking a wasm test binary is the heaviest thing that daemon does. CI's
-// `check` links 31 of them; unbounded, they overlap and exhaust the daemon's 4 GB heap. Locally
-// that fails with `OutOfMemoryError: GC overhead limit exceeded` in ten links; on a hosted runner
-// it shows up as a silent GC stall until the job hits its timeout. Raising the heap only moves
-// the cliff, since the overlap grows with the worker count; capping the overlap does not.
+// `check` links one per wasm-tested module; unbounded, they overlap and exhaust the daemon's 4 GB
+// heap. Locally that fails with `OutOfMemoryError: GC overhead limit exceeded`; on a hosted
+// runner it can show up as a silent GC stall until the job hits its timeout. Raising the heap
+// only moves the cliff, since the overlap grows with the worker count; capping it does not.
 val wasmLinkLimiter = gradle.sharedServices.registerIfAbsent(
     "wasmLinkLimiter",
     WasmLinkLimiter::class

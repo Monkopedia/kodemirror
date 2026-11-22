@@ -10,8 +10,10 @@ on:
 jobs:
   check:
     # Back on ubuntu-latest (#423): the ubuntu-24.04 pin lost 3 of 17 attempts against 3 of 68
-    # before it, so the Ubuntu 26 image was not the cause. The cause found instead was the wasm
-    # link tasks exhausting the Kotlin daemon heap; see `WasmLinkLimiter` in convention-plugins.
+    # before it, so the Ubuntu 26 image was not the cause. One confirmed contributor is the wasm
+    # link tasks exhausting the Kotlin daemon heap, now capped by `WasmLinkLimiter` in
+    # convention-plugins. Runners were still lost after that, so the loss itself is still under
+    # investigation; the memory samples in this job's log are there to find the rest.
     runs-on: ubuntu-latest
     # Slowest successful run of the last 58 was 21.8 min (median 19.5). The default is 360, so a
     # real hang would otherwise hold a runner for six hours (#423).
@@ -73,17 +75,13 @@ jobs:
       # `WasmLinkLimiter` in convention-plugins now runs at most two links at a time.
       # A lost runner leaves no job log (#423), so sample memory into a file uploaded below. If
       # the runner survives to the post steps, `mem.log` shows what was filling memory and when.
-      - name: Start memory sampler
-        run: |
-          # Every JVM's `comm` is just `java`, so print its main class (Gradle daemon, Kotlin
-          # daemon, test worker) instead; other processes keep their first word.
-          (while :; do
-            date -u +%T; free -m | sed -n 2p
-            ps -eo rss=,args= --sort=-rss | head -7 | awk '{c=$2; for (i=3; i<=NF; i++) if ($i ~ /^(org|com|worker)\./) { c=$i; break }; print "  " int($1/1024) "M " c}'
-            sleep 30
-          done) > mem.log 2>&1 &
+      #
+      # The memory sampler runs inside this step, not in a step of its own, so that its `[mem]`
+      # lines land in this step's live log. A lost runner never reaches the upload below, and
+      # that partial live log is the only thing that has survived one (#423).
       - name: Lint and test (JVM + wasmJs + Android)
         run: >-
+          .github/scripts/mem-sampler.sh 30 mem.log & sampler=$!;
           ./gradlew apiCheck ktlintCheck spotlessCheck jvmTest :kodemirror-bom:verifyBomCoverage
           -Dkotlin.daemon.jvmargs="-Xmx4g"
           -Dorg.gradle.jvmargs="-Xmx4g -Dfile.encoding=UTF-8"
@@ -120,6 +118,7 @@ jobs:
           :state:wasmJsTest
           :view:wasmJsTest
           :vim:wasmJsTest
+          || rc=$?; kill $sampler; exit ${rc:-0}
       - name: Upload memory samples
         if: always()
         uses: actions/upload-artifact@v4

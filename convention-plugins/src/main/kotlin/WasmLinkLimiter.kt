@@ -27,6 +27,6 @@ import org.gradle.api.services.BuildServiceParameters
  * The links run inside the one shared Kotlin daemon, so they share its heap with each other
  * and with every other Kotlin compile. Unbounded, a build that links many wasm test binaries
  * at once exhausts that heap (`OutOfMemoryError: GC overhead limit exceeded`), and on a CI
- * runner the GC thrashing shows up as a silent stall until the job times out (#423).
+ * runner the GC thrashing can show up as a silent stall until the job times out (#423).
  */
 abstract class WasmLinkLimiter : BuildService<BuildServiceParameters.None>
