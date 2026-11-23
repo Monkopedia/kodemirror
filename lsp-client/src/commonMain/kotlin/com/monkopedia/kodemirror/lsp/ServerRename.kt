@@ -51,6 +51,7 @@ import com.monkopedia.kodemirror.state.Prec
 import com.monkopedia.kodemirror.state.StateEffect
 import com.monkopedia.kodemirror.state.StateEffectType
 import com.monkopedia.kodemirror.state.StateField
+import com.monkopedia.kodemirror.state.Text
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.define
 import com.monkopedia.kodemirror.view.EditorSession
@@ -268,17 +269,25 @@ fun renameSymbol(session: EditorSession): Boolean {
 }
 
 /**
+ * An open file as a rename request saw it: the [doc] the server's positions refer
+ * to, and a [mapping] of the edits made to it since.
+ *
+ * Upstream's `WorkspaceMapping` holds this for every open file at once; the port's
+ * [WorkspaceMapping] covers one file, so a rename captures one of these per file.
+ */
+internal class RequestFile(val file: WorkspaceFile, val doc: Text, val mapping: WorkspaceMapping)
+
+/**
  * Issue `textDocument/rename` for the word described by [state] and apply the
  * server's [WorkspaceEdit].
  *
  * Ports upstream's `doRename`. The suspending work runs on the
  * [client scope][LSPClient.scope] (not the session's) because the edit may touch
- * files in other editor sessions that must outlive the requesting one. A live
- * [WorkspaceMapping][Workspace.getMapping] is captured for the requesting file so
- * the edit's offsets are mapped through any edits that happen while the request
- * is in flight (mirroring upstream's `withMapping`). Cross-file edits are routed
- * through [Workspace.displayFile]; offsets there are resolved against the target
- * session's current document.
+ * files in other editor sessions that must outlive the requesting one. Every open
+ * file's document and a live mapping of it are captured when the command runs, as
+ * upstream's `withMapping` does, so [applyWorkspaceEdit] can read the server's
+ * positions against the documents the request saw and map them through the edits
+ * made since.
  */
 private fun doRename(
     session: EditorSession,
@@ -287,25 +296,28 @@ private fun doRename(
     newName: String
 ) {
     val client = binding.client
-    val pos = state.from
+    val position = toPosition(state.from, session.state.doc)
+    val requestFiles = client.workspace.openFiles.mapNotNull { file ->
+        val doc = file.session?.state?.doc ?: return@mapNotNull null
+        file.uri to RequestFile(file, doc, file.createMapping())
+    }.toMap()
     client.scope.launch {
-        client.sync()
-        val mapping = client.workspace.getMapping(binding.uri)
         try {
+            client.sync()
             val response = try {
                 client.server.textDocumentRename(
                     RenameParams(
                         textDocument = TextDocumentIdentifier(uri = binding.uri),
-                        position = toPosition(pos, session.state.doc),
+                        position = position,
                         newName = newName
                     )
                 )
             } catch (e: CancellationException) {
                 throw e
             }
-            if (response != null) applyWorkspaceEdit(client, binding.uri, response, mapping)
+            if (response != null) applyWorkspaceEdit(client, response, requestFiles)
         } finally {
-            if (mapping != null) client.workspace.releaseMapping(mapping)
+            for (requested in requestFiles.values) requested.file.releaseMapping(requested.mapping)
         }
     }
 }
@@ -315,10 +327,19 @@ private fun doRename(
  *
  * Ports upstream's edit-application loop in `doRename`. For each touched file the
  * edits are converted to a single multi-change [TransactionSpec] and dispatched
- * into the file's editor session (the requesting file's session for [sourceUri],
- * otherwise the session [Workspace.displayFile] surfaces). Files the workspace
- * can't surface are skipped, degrading gracefully on the default single-file
- * [Workspace] exactly as cross-file navigation does (see [navigateToLocation]).
+ * into the file's editor session. A file that was open when the request was made
+ * (one of [requestFiles], and still the same open file) has its edits read against
+ * its request-time document and mapped through the edits made since, each end with
+ * assoc -1 as upstream's `mapping.mapPosition` does. Like upstream, an edit the
+ * user touched is still applied, not dropped.
+ *
+ * Any other file is surfaced through [Workspace.displayFile] and its edits are read
+ * against that session's current document, so such a file must not have been
+ * edited since the request (#444). Upstream skips files that were not open, and
+ * fails the rename for one opened since; files the workspace can't surface are
+ * skipped here too, degrading
+ * gracefully on the default single-file [Workspace] exactly as cross-file
+ * navigation does (see [navigateToLocation]).
  *
  * Both forms of the edit are handled: the `changes` map (preferred — it is what
  * the kodemirror client advertises support for) and, as a fallback, plain
@@ -326,28 +347,20 @@ private fun doRename(
  * (create/rename/delete file) in `documentChanges` are not applied — see the
  * deviation note on [collectFileEdits].
  *
- * @param sourceUri The requesting file's URI; its session receives the
- *   [requestMapping]-mapped edits so concurrent in-flight edits stay consistent.
- * @param requestMapping The live mapping captured when the request was issued, or
- *   null when no mapping is available. Used only for [sourceUri].
+ * @param requestFiles The open files as the request saw them, by URI.
  */
 internal fun applyWorkspaceEdit(
     client: LSPClient,
-    sourceUri: String,
     edit: WorkspaceEdit,
-    requestMapping: WorkspaceMapping?
+    requestFiles: Map<String, RequestFile>
 ) {
     for ((uri, edits) in collectFileEdits(edit)) {
         if (edits.isEmpty()) continue
-        val targetSession: EditorSession? = if (uri == sourceUri) {
-            client.workspace.getFile(sourceUri)?.session
-        } else {
-            client.workspace.displayFile(uri)
-        }
-        if (targetSession == null) continue
-        val mapping = if (uri == sourceUri) requestMapping else null
-        val spec = textEditsToChangeSpec(edits, targetSession.state.doc, mapping)
-            ?: continue
+        val requested = requestFiles[uri]?.takeIf { client.workspace.getFile(uri) === it.file }
+        val targetSession =
+            requested?.file?.session ?: client.workspace.displayFile(uri) ?: continue
+        val doc = requested?.doc ?: targetSession.state.doc
+        val spec = textEditsToChangeSpec(edits, doc, requested?.mapping) ?: continue
         targetSession.dispatch(
             TransactionSpec(changes = spec, userEvent = "rename")
         )

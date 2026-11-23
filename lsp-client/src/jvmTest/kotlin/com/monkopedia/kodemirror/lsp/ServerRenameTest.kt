@@ -156,7 +156,7 @@ class ServerRenameTest {
                 )
             )
         )
-        applyWorkspaceEdit(client, "file:///a.kt", workspaceEdit, requestMapping = null)
+        applyWorkspaceEdit(client, workspaceEdit, requestFiles = emptyMap())
         assertEquals("val bar = bar", session.state.doc.toString())
     }
 
@@ -177,7 +177,7 @@ class ServerRenameTest {
                 "file:///other.kt" to listOf(edit(0, 0, 0, 3, "bar"))
             )
         )
-        applyWorkspaceEdit(client, "file:///a.kt", workspaceEdit, requestMapping = null)
+        applyWorkspaceEdit(client, workspaceEdit, requestFiles = emptyMap())
         // Current file edited, no crash for the missing cross-file target.
         assertEquals("val bar = 1", session.state.doc.toString())
     }
