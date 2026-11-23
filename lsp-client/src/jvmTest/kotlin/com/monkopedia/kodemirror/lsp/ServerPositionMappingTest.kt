@@ -575,6 +575,21 @@ class ServerPositionMappingTest {
         assertEquals("bar()\n", other.state.doc.toString())
     }
 
+    @Test
+    fun aFileReopenedDuringTheRenameGetsItsEditsInTheNewEditor() {
+        val client = renameClient()
+        val session = renameSession(client)
+        lateinit var reopened: EditorSession
+        renameDuring(client, session) {
+            client.workspace.closeFile(URI)
+            reopened =
+                session(client, renameText, renameSymbolExtension(client, URI, keymap = false))
+        }
+
+        assertEquals("val bar = 1\nbar + bar", reopened.state.doc.toString())
+        assertEquals(renameText, session.state.doc.toString())
+    }
+
     private companion object {
         const val URI = "file:///a.kt"
         const val OTHER_URI = "file:///b.kt"

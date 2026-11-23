@@ -334,8 +334,10 @@ private fun doRename(
  * user touched is still applied, not dropped.
  *
  * Any other file is surfaced through [Workspace.displayFile] and its edits are read
- * against that session's current document. Upstream skips files that were not
- * open; files the workspace can't surface are skipped here too, degrading
+ * against that session's current document, so such a file must not have been
+ * edited since the request (#444). Upstream skips files that were not open, and
+ * fails the rename for one opened since; files the workspace can't surface are
+ * skipped here too, degrading
  * gracefully on the default single-file [Workspace] exactly as cross-file
  * navigation does (see [navigateToLocation]).
  *
