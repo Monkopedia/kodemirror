@@ -19,23 +19,19 @@
 package com.monkopedia.kodemirror.lsp
 
 import com.monkopedia.kodemirror.state.ChangeSpec
-import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.Text
-import com.monkopedia.kodemirror.state.asInsert
 import com.monkopedia.lsp.TextEdit
 
 /**
- * Convert a file's [edits] to a single multi-change [ChangeSpec] against [doc].
+ * Convert a file's [edits] to a single multi-change [ChangeSpec].
  *
- * Each edit's LSP range is resolved to `[from, to)` offsets. For the requesting
- * file a live [mapping] (the in-flight [WorkspaceMapping]) is applied so offsets
- * stay valid under concurrent edits, matching upstream's `mapping.mapPosition`;
- * other files resolve directly against the current document by passing
- * `mapping = null`.
+ * Each edit's LSP range is read against [doc], the document the server computed
+ * the edits for. When a [mapping] of the edits made since is given, both ends are
+ * then mapped through it once with assoc -1, matching upstream's
+ * `mapping.mapPosition`. Without one, [doc] must be the current document.
  *
- * The edits are emitted highest-offset-first (by resolved `from`) so that an
- * earlier edit's offsets are never invalidated by the application of a later one
- * — the same ordering discipline the incremental document sync uses (see
+ * The edits are emitted highest-offset-first (by resolved `from`), the same
+ * ordering discipline the incremental document sync uses (see
  * [buildContentChanges]). Returns null when there is nothing to change.
  *
  * Used by [applyWorkspaceEdit] (rename).
@@ -46,20 +42,12 @@ internal fun textEditsToChangeSpec(
     mapping: WorkspaceMapping?
 ): ChangeSpec? {
     if (edits.isEmpty()) return null
-    val resolved = edits.map { e ->
-        val from: Int
-        val to: Int
-        if (mapping != null) {
-            from = mapping.mapPosition(e.range.start, doc)
-            to = mapping.mapPosition(e.range.end, doc)
+    val resolved = edits.toOffsetEdits(doc).map { edit ->
+        if (mapping == null) {
+            edit
         } else {
-            from = fromPosition(e.range.start, doc)
-            to = fromPosition(e.range.end, doc)
+            edit.copy(from = mapping.mapPos(edit.from, -1), to = mapping.mapPos(edit.to, -1))
         }
-        Triple(minOf(from, to), maxOf(from, to), e.newText)
-    }.sortedByDescending { it.first }
-    val specs = resolved.map { (from, to, insert) ->
-        ChangeSpec.Single(from = DocPos(from), to = DocPos(to), insert = insert.asInsert())
     }
-    return ChangeSpec.Multi(specs)
+    return ChangeSpec.Multi(resolved.sortedByDescending { it.from }.map { it.toChangeSpec() })
 }

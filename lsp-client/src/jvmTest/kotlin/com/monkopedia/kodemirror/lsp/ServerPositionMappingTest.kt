@@ -48,11 +48,13 @@ import com.monkopedia.lsp.Location
 import com.monkopedia.lsp.Position
 import com.monkopedia.lsp.Range
 import com.monkopedia.lsp.ReferenceParams
+import com.monkopedia.lsp.RenameParams
 import com.monkopedia.lsp.ServerCapabilities
 import com.monkopedia.lsp.SingleOrArray
 import com.monkopedia.lsp.TextDocumentCompletionResult
 import com.monkopedia.lsp.TextDocumentDefinitionResult
 import com.monkopedia.lsp.TextEdit
+import com.monkopedia.lsp.WorkspaceEdit
 import kotlin.coroutines.CoroutineContext
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -86,6 +88,7 @@ class ServerPositionMappingTest {
     private val gate = Gate()
     private var formatEdits: List<TextEdit> = emptyList()
     private var completionItems: List<CompletionItem> = emptyList()
+    private var renameEdit = WorkspaceEdit()
 
     /** Each completion request, in order, waits on the next of these, if any. */
     private val completionGates = ArrayDeque<CompletableDeferred<Unit>>()
@@ -115,6 +118,11 @@ class ServerPositionMappingTest {
                 return listOf(target)
             }
 
+            override suspend fun textDocumentRename(params: RenameParams): WorkspaceEdit {
+                gate.pass()
+                return renameEdit
+            }
+
             override suspend fun textDocumentCompletion(
                 params: CompletionParams
             ): TextDocumentCompletionResult {
@@ -128,7 +136,12 @@ class ServerPositionMappingTest {
     }
 
     /** An editor on [text], opened in the workspace, whose edits reach it as [LSPPlugin] forwards them. */
-    private fun session(client: LSPClient, text: String, extension: Extension): EditorSession {
+    private fun session(
+        client: LSPClient,
+        text: String,
+        extension: Extension,
+        uri: String = URI
+    ): EditorSession {
         val state = EditorState.create(
             EditorStateConfig(
                 doc = text.asDoc(),
@@ -136,13 +149,13 @@ class ServerPositionMappingTest {
                     listOf(
                         extension,
                         EditorSession.updateListener.of { update ->
-                            client.workspace.updateFile(URI, update.changes)
+                            client.workspace.updateFile(uri, update.changes)
                         }
                     )
                 )
             )
         )
-        return TestSession(state).also { client.workspace.openFile(URI, "kotlin", it) }
+        return TestSession(state).also { client.workspace.openFile(uri, "kotlin", it) }
     }
 
     /** Runs `:autocomplete`'s queries on [dispatcher], inline by default. */
@@ -459,7 +472,111 @@ class ServerPositionMappingTest {
         assertEquals(10, session.state.selection.main.head.value)
     }
 
+    // --- rename ---
+
+    // "foo" is declared at 4..7 and used at 12..15 and 18..21.
+    private val renameText = "val foo = 1\nfoo + foo"
+    private val renameEdits =
+        listOf(edit(0, 4, 7, "bar"), edit(1, 0, 3, "bar"), edit(1, 6, 9, "bar"))
+
+    private fun renameClient() =
+        client(ServerCapabilities(renameProvider = BooleanOr.BooleanValue(true)))
+
+    /** Rename the "foo" declared at 4 to "bar", with the server answering [edits] by URI. */
+    private fun renameDuring(
+        client: LSPClient,
+        session: EditorSession,
+        edits: Map<String, List<TextEdit>> = mapOf(URI to renameEdits),
+        userEdits: () -> Unit
+    ) {
+        renameEdit = WorkspaceEdit(changes = edits)
+        duringRequest(client, {
+            confirmRename(session, RenameState(4, 7, "foo"), "bar")
+        }, userEdits)
+    }
+
+    private fun renameSession(client: LSPClient) =
+        session(client, renameText, renameSymbolExtension(client, URI, keymap = false))
+
+    @Test
+    fun renameEditsAreShiftedOnceByTextTypedBeforeThem() {
+        val client = renameClient()
+        val session = renameSession(client)
+        renameDuring(client, session) { session.edit(0, 0, "// c\n") }
+
+        assertEquals("// c\nval bar = 1\nbar + bar", session.state.doc.toString())
+    }
+
+    @Test
+    fun aRenameEditTheUserTypedInsideIsStillApplied() {
+        val client = renameClient()
+        val session = renameSession(client)
+        // Upstream drops no rename edit: "fxoo" is replaced whole.
+        renameDuring(client, session) { session.edit(5, 5, "x") }
+
+        assertEquals("val bar = 1\nbar + bar", session.state.doc.toString())
+    }
+
+    @Test
+    fun aRenamedSymbolTheUserDeletedGetsTheNewName() {
+        val client = renameClient()
+        val session = renameSession(client)
+        // Both ends map to 4, so upstream inserts the new name where "foo" was.
+        renameDuring(client, session) { session.edit(4, 7) }
+
+        assertEquals("val bar = 1\nbar + bar", session.state.doc.toString())
+    }
+
+    @Test
+    fun textTypedAtARenameEditsStartIsReplacedWithIt() {
+        val client = renameClient()
+        val session = renameSession(client)
+        // `from` maps with assoc -1, so it stays before the "x".
+        renameDuring(client, session) { session.edit(4, 4, "x") }
+
+        assertEquals("val bar = 1\nbar + bar", session.state.doc.toString())
+    }
+
+    @Test
+    fun textTypedAtARenameEditsEndIsKept() {
+        val client = renameClient()
+        val session = renameSession(client)
+        // `to` maps with assoc -1, so it stays before the "x".
+        renameDuring(client, session) { session.edit(7, 7, "x") }
+
+        assertEquals("val barx = 1\nbar + bar", session.state.doc.toString())
+    }
+
+    @Test
+    fun aRenameEditInAnotherOpenFileIsMappedThroughItsOwnEdits() {
+        val client = renameClient()
+        val session = renameSession(client)
+        val other = session(client, "val x = foo()\n", ExtensionList(emptyList()), uri = OTHER_URI)
+        val edits = mapOf(URI to renameEdits, OTHER_URI to listOf(edit(0, 8, 11, "bar")))
+        renameDuring(client, session, edits) {
+            other.edit(0, 0, "// c\n")
+            session.edit(0, 0, "// c\n")
+        }
+
+        assertEquals("// c\nval bar = 1\nbar + bar", session.state.doc.toString())
+        assertEquals("// c\nval x = bar()\n", other.state.doc.toString())
+    }
+
+    @Test
+    fun aFileOpenedDuringTheRenameTakesItsEditsAgainstItsCurrentText() {
+        val client = renameClient()
+        val session = renameSession(client)
+        val edits = mapOf(URI to renameEdits, OTHER_URI to listOf(edit(0, 0, 3, "bar")))
+        lateinit var other: EditorSession
+        renameDuring(client, session, edits) {
+            other = session(client, "foo()\n", ExtensionList(emptyList()), uri = OTHER_URI)
+        }
+
+        assertEquals("bar()\n", other.state.doc.toString())
+    }
+
     private companion object {
         const val URI = "file:///a.kt"
+        const val OTHER_URI = "file:///b.kt"
     }
 }
