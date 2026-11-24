@@ -829,7 +829,7 @@ internal val DefaultInline: Map<String, (InlineContext, Int, Int) -> Int> = link
                     if (part.side == Mark.NONE ||
                         (
                             cx.skipSpace(part.to) == start &&
-                                !Regex("[([)]").containsMatchIn(
+                                !Regex("[(\\[]").containsMatchIn(
                                     cx.slice(start + 1, minOf(start + 2, cx.end))
                                 )
                             )
