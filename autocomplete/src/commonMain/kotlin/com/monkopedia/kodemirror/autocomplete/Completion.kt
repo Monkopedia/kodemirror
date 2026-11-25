@@ -119,11 +119,27 @@ typealias CompletionSource = (CompletionContext) -> CompletionResult?
 typealias SuspendCompletionSource = suspend (CompletionContext) -> CompletionResult?
 
 /**
- * Wrap a [SuspendCompletionSource] into a [CompletionSource] that runs
- * the suspend function in a blocking context.
+ * Wrap a [SuspendCompletionSource] into a [CompletionSource], for APIs that take a plain
+ * source.
  *
- * **Note:** This blocks the calling thread. For truly non-blocking async
- * completions (e.g., LSP servers), consider using a [ViewPlugin] with its
- * own [CoroutineScope] instead.
+ * In the editor this works the same on every platform: the completion plugin recognizes
+ * the wrapped source and runs it as a suspend source on the editor's coroutine scope, as
+ * it does [CompletionConfig.asyncOverride] sources, so nothing blocks.
+ *
+ * Calling the returned function directly runs the source to completion. On JVM and
+ * native that blocks the calling thread until it finishes. On wasmJs, where nothing can
+ * block, it returns the result of a source that completes without suspending and throws
+ * [UnsupportedOperationException] if the source suspends.
  */
 expect fun asyncCompletionSource(source: SuspendCompletionSource): CompletionSource
+
+/**
+ * The [CompletionSource] [asyncCompletionSource] returns: it keeps its suspend [source]
+ * for the completion plugin, and answers a direct call with [direct].
+ */
+internal class SuspendingCompletionSource(
+    val source: SuspendCompletionSource,
+    private val direct: CompletionSource
+) : CompletionSource {
+    override fun invoke(context: CompletionContext): CompletionResult? = direct(context)
+}

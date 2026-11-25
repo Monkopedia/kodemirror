@@ -55,9 +55,15 @@ internal data class SyncSource(val query: CompletionSource) : QuerySource
 
 internal data class AsyncSource(val query: SuspendCompletionSource) : QuerySource
 
-/** The sources of [this] config, in the order they are queried. */
+/**
+ * The sources of [this] config, in the order they are queried. An [asyncCompletionSource]
+ * among the [override] sources is run as the suspend source it wraps.
+ */
 internal val CompletionConfig.sources: List<QuerySource>
-    get() = override.orEmpty().map(::SyncSource) +
+    get() = override.orEmpty().map {
+        (it as? SuspendingCompletionSource)?.let { s -> AsyncSource(s.source) }
+            ?: SyncSource(it)
+    } +
         asyncOverride.orEmpty().map(::AsyncSource)
 
 /** The position completion happens at: upstream's `cur`, the main selection's start. */

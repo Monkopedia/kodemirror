@@ -18,6 +18,7 @@
  */
 package com.monkopedia.kodemirror.autocomplete
 
-actual fun asyncCompletionSource(source: SuspendCompletionSource): CompletionSource = { ctx ->
-    kotlinx.coroutines.runBlocking { source(ctx) }
-}
+import kotlinx.coroutines.runBlocking
+
+actual fun asyncCompletionSource(source: SuspendCompletionSource): CompletionSource =
+    SuspendingCompletionSource(source) { context -> runBlocking { source(context) } }

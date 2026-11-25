@@ -18,9 +18,24 @@
  */
 package com.monkopedia.kodemirror.autocomplete
 
-actual fun asyncCompletionSource(source: SuspendCompletionSource): CompletionSource = { _ ->
-    throw UnsupportedOperationException(
-        "asyncCompletionSource is not supported on wasmJs. " +
-            "Use a ViewPlugin with a CoroutineScope for async completions."
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.coroutines.startCoroutine
+
+actual fun asyncCompletionSource(source: SuspendCompletionSource): CompletionSource =
+    SuspendingCompletionSource(source) { context -> runUntilSuspended(source, context) }
+
+// Nothing can block on wasmJs, so a direct call runs the source until it first suspends:
+// one that finishes without suspending answers, and one that suspends can't.
+private fun runUntilSuspended(
+    source: SuspendCompletionSource,
+    context: CompletionContext
+): CompletionResult? {
+    var outcome: Result<CompletionResult?>? = null
+    suspend { source(context) }.startCoroutine(Continuation(EmptyCoroutineContext) { outcome = it })
+    val done = outcome ?: throw UnsupportedOperationException(
+        "This asyncCompletionSource suspended, and wasmJs can't block to wait for it. " +
+            "Use it as an editor completion source, which runs it without blocking."
     )
+    return done.getOrThrow()
 }
