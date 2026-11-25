@@ -123,7 +123,10 @@ internal class TokenCache(parser: LRParser, val stream: InputStream) {
 
     fun updateCachedToken(token: CachedToken, tokenizer: Tokenizer, stack: Stack) {
         val parser = stack.p.parser
-        tokenizer.token(stream.reset(stack.pos, token), stack)
+        // On a multi-range parse a stack can sit in a gap between ranges;
+        // tokenizing starts at the next position inside a range.
+        val start = stream.clipPos(stack.pos)
+        tokenizer.token(stream.reset(start, token), stack)
         if (token.value > -1) {
             val spec = parser.specialized
             for (i in spec.indices) {
@@ -144,7 +147,7 @@ internal class TokenCache(parser: LRParser, val stream: InputStream) {
             }
         } else {
             token.value = Term.ERR
-            token.end = stack.pos + 1
+            token.end = stream.clipPos(start + 1)
         }
     }
 
@@ -427,6 +430,10 @@ internal class Parse(
         }
 
         val actions = tokens.getActions(stack)
+        // Actions apply at the main token's start, which `getActions` clipped
+        // into the parse's ranges; on a multi-range parse a stack sitting in
+        // a gap between ranges is not at that position itself.
+        val actionStart = tokens.mainToken?.start ?: start
         var i = 0
         while (i < actions.size) {
             val action = actions[i]
@@ -434,12 +441,12 @@ internal class Parse(
             val end = actions[i + 2]
             i += 3
             if (i == actions.size || split == null || newStacks == null) {
-                stack.apply(action, term, start, end)
+                stack.apply(action, term, actionStart, end)
                 return true
             }
             // An ambiguity: fork the stack and take this action on the copy.
             val localStack = stack.split()
-            localStack.apply(action, term, start, end)
+            localStack.apply(action, term, actionStart, end)
             if (localStack.pos > start) {
                 // Forked stacks that consumed input belong in the caller's
                 // output list; only the ones still at `start` are re-examined
