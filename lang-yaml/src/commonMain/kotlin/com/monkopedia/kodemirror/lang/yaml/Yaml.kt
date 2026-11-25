@@ -86,7 +86,10 @@ val yamlLanguage: LRLanguage = LRLanguage.define(
             )
         )
     ),
-    name = "yaml"
+    name = "yaml",
+    languageData = mapOf(
+        "indentOnInput" to Regex("""^\s*[\]\}]$""")
+    )
 )
 
 /**

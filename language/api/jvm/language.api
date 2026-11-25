@@ -143,19 +143,20 @@ public final class com/monkopedia/kodemirror/language/IndentKt {
 
 public final class com/monkopedia/kodemirror/language/LRLanguage : com/monkopedia/kodemirror/language/Language {
 	public static final field Companion Lcom/monkopedia/kodemirror/language/LRLanguage$Companion;
-	public fun <init> (Lcom/monkopedia/kodemirror/lezer/common/Parser;Ljava/lang/String;)V
-	public synthetic fun <init> (Lcom/monkopedia/kodemirror/lezer/common/Parser;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/monkopedia/kodemirror/lezer/common/Parser;Ljava/lang/String;Lcom/monkopedia/kodemirror/state/Facet;)V
+	public synthetic fun <init> (Lcom/monkopedia/kodemirror/lezer/common/Parser;Ljava/lang/String;Lcom/monkopedia/kodemirror/state/Facet;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 }
 
 public final class com/monkopedia/kodemirror/language/LRLanguage$Companion {
-	public final fun define (Lcom/monkopedia/kodemirror/lezer/common/Parser;Ljava/lang/String;)Lcom/monkopedia/kodemirror/language/LRLanguage;
-	public static synthetic fun define$default (Lcom/monkopedia/kodemirror/language/LRLanguage$Companion;Lcom/monkopedia/kodemirror/lezer/common/Parser;Ljava/lang/String;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/language/LRLanguage;
+	public final fun define (Lcom/monkopedia/kodemirror/lezer/lr/LRParser;Ljava/lang/String;Ljava/util/Map;)Lcom/monkopedia/kodemirror/language/LRLanguage;
+	public static synthetic fun define$default (Lcom/monkopedia/kodemirror/language/LRLanguage$Companion;Lcom/monkopedia/kodemirror/lezer/lr/LRParser;Ljava/lang/String;Ljava/util/Map;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/language/LRLanguage;
 }
 
 public class com/monkopedia/kodemirror/language/Language {
-	public fun <init> (Lcom/monkopedia/kodemirror/lezer/common/Parser;Ljava/lang/String;)V
-	public synthetic fun <init> (Lcom/monkopedia/kodemirror/lezer/common/Parser;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/monkopedia/kodemirror/lezer/common/Parser;Ljava/lang/String;Lcom/monkopedia/kodemirror/state/Facet;)V
+	public synthetic fun <init> (Lcom/monkopedia/kodemirror/lezer/common/Parser;Ljava/lang/String;Lcom/monkopedia/kodemirror/state/Facet;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun getAllowsNesting ()Z
+	public final fun getData ()Lcom/monkopedia/kodemirror/state/Facet;
 	public final fun getExtension ()Lcom/monkopedia/kodemirror/state/Extension;
 	public final fun getName ()Ljava/lang/String;
 	public final fun getParser ()Lcom/monkopedia/kodemirror/lezer/common/Parser;
@@ -193,8 +194,8 @@ public final class com/monkopedia/kodemirror/language/LanguageDescription$Compan
 }
 
 public final class com/monkopedia/kodemirror/language/LanguageKt {
-	public static final fun defineLanguageFacet (Ljava/util/List;)Lcom/monkopedia/kodemirror/state/Facet;
-	public static synthetic fun defineLanguageFacet$default (Ljava/util/List;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/Facet;
+	public static final fun defineLanguageFacet (Ljava/util/Map;)Lcom/monkopedia/kodemirror/state/Facet;
+	public static synthetic fun defineLanguageFacet$default (Ljava/util/Map;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/Facet;
 	public static final fun ensureSyntaxTree (Lcom/monkopedia/kodemirror/state/EditorState;II)Lcom/monkopedia/kodemirror/lezer/common/Tree;
 	public static synthetic fun ensureSyntaxTree$default (Lcom/monkopedia/kodemirror/state/EditorState;IIILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/common/Tree;
 	public static final fun forceParsing (Lcom/monkopedia/kodemirror/state/EditorState;)Lcom/monkopedia/kodemirror/lezer/common/Tree;
@@ -246,7 +247,7 @@ public final class com/monkopedia/kodemirror/language/StandardHighlightStylesKt 
 
 public final class com/monkopedia/kodemirror/language/StreamLanguage : com/monkopedia/kodemirror/language/Language {
 	public static final field Companion Lcom/monkopedia/kodemirror/language/StreamLanguage$Companion;
-	public synthetic fun <init> (Lcom/monkopedia/kodemirror/lezer/common/Parser;Ljava/lang/String;Lcom/monkopedia/kodemirror/language/StreamParser;Lcom/monkopedia/kodemirror/lezer/common/NodeProp;Lcom/monkopedia/kodemirror/language/TokenTable;Lcom/monkopedia/kodemirror/lezer/common/NodeType;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lcom/monkopedia/kodemirror/lezer/common/Parser;Ljava/lang/String;Lcom/monkopedia/kodemirror/language/StreamParser;Lcom/monkopedia/kodemirror/lezer/common/NodeProp;Lcom/monkopedia/kodemirror/language/TokenTable;Lcom/monkopedia/kodemirror/lezer/common/NodeType;Lcom/monkopedia/kodemirror/state/Facet;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun getAllowsNesting ()Z
 	public fun getTree (Lcom/monkopedia/kodemirror/state/EditorState;)Lcom/monkopedia/kodemirror/lezer/common/Tree;
 }

@@ -112,7 +112,11 @@ val htmlLanguage: LRLanguage = LRLanguage.define(
             }
         )
     ),
-    name = "html"
+    name = "html",
+    languageData = mapOf(
+        "indentOnInput" to Regex("""^\s*<\/\w+\W$"""),
+        "wordChars" to "-_"
+    )
 )
 
 /**

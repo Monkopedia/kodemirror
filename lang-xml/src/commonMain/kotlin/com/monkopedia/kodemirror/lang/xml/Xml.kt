@@ -66,7 +66,10 @@ val xmlLanguage: LRLanguage = LRLanguage.define(
             )
         )
     ),
-    name = "xml"
+    name = "xml",
+    languageData = mapOf(
+        "indentOnInput" to Regex("""^\s*<\/$""")
+    )
 )
 
 /**

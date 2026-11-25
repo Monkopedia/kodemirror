@@ -92,7 +92,10 @@ val jinjaTagLanguage: LRLanguage = LRLanguage.define(
             )
         )
     ),
-    name = "jinja"
+    name = "jinja",
+    languageData = mapOf(
+        "indentOnInput" to Regex("""^\s*\{%-?\s*(?:end|elif|else)$""")
+    )
 )
 
 private val baseHTML = html()

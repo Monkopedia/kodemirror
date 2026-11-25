@@ -26,7 +26,10 @@ import com.monkopedia.kodemirror.language.LanguageSupport
  */
 val lezerGrammarLanguage: LRLanguage = LRLanguage.define(
     parser = lezerParser,
-    name = "lezer"
+    name = "lezer",
+    languageData = mapOf(
+        "indentOnInput" to Regex("""^\s*\}$""")
+    )
 )
 
 /**

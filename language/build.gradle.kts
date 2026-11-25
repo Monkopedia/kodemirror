@@ -10,6 +10,7 @@ kotlin {
             implementation(project(":state"))
             implementation(project(":view"))
             implementation(project(":lezer-common"))
+            api(project(":lezer-lr"))
             implementation(project(":lezer-highlight"))
             implementation(libs.kotlinx.coroutines.core)
             implementation(compose.ui)

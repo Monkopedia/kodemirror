@@ -69,7 +69,11 @@ val rustLanguage: LRLanguage = LRLanguage.define(
             )
         )
     ),
-    name = "rust"
+    name = "rust",
+    languageData = mapOf(
+        "indentOnInput" to Regex("""^\s*(?:\{|\})$"""),
+        "closeBrackets" to mapOf("stringPrefixes" to listOf("b", "r", "br"))
+    )
 )
 
 /**

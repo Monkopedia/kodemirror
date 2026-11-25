@@ -90,7 +90,10 @@ val javaLanguage: LRLanguage = LRLanguage.define(
             )
         )
     ),
-    name = "java"
+    name = "java",
+    languageData = mapOf(
+        "indentOnInput" to Regex("""^\s*(?:case |default:|\{|\})$""")
+    )
 )
 
 /**

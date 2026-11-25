@@ -44,7 +44,11 @@ val lessLanguage: LRLanguage = LRLanguage.define(
             )
         )
     ),
-    name = "less"
+    name = "less",
+    languageData = mapOf(
+        "indentOnInput" to Regex("""^\s*\}$"""),
+        "wordChars" to "@-"
+    )
 )
 
 /**

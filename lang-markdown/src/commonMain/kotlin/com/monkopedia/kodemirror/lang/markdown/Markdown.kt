@@ -111,7 +111,7 @@ val headerIndent: Extension = foldService.of { state, start ->
     null
 }
 
-fun mkLang(parser: MarkdownParser): Language = Language(parser, "markdown")
+fun mkLang(parser: MarkdownParser): Language = Language(parser, "markdown", data)
 
 val commonmarkLanguage: Language = mkLang(commonmark)
 

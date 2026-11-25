@@ -53,7 +53,10 @@ val wastLanguage: LRLanguage = LRLanguage.define(
             )
         )
     ),
-    name = "wast"
+    name = "wast",
+    languageData = mapOf(
+        "closeBrackets" to mapOf("brackets" to listOf("(", "\""))
+    )
 )
 
 /**

@@ -20,11 +20,15 @@ package com.monkopedia.kodemirror.language
 
 import com.monkopedia.kodemirror.lezer.common.ChangedRange
 import com.monkopedia.kodemirror.lezer.common.Input
+import com.monkopedia.kodemirror.lezer.common.IterMode
 import com.monkopedia.kodemirror.lezer.common.NodeProp
 import com.monkopedia.kodemirror.lezer.common.Parser
 import com.monkopedia.kodemirror.lezer.common.PartialParse
+import com.monkopedia.kodemirror.lezer.common.SyntaxNode
 import com.monkopedia.kodemirror.lezer.common.Tree
 import com.monkopedia.kodemirror.lezer.common.TreeFragment
+import com.monkopedia.kodemirror.lezer.lr.LRParser
+import com.monkopedia.kodemirror.lezer.lr.ParserConfig
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
@@ -38,6 +42,7 @@ import com.monkopedia.kodemirror.state.Text
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.extensionListOf
+import com.monkopedia.kodemirror.state.languageData
 import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.PluginValue
 import com.monkopedia.kodemirror.view.ViewPlugin
@@ -98,12 +103,36 @@ val language: Facet<Language, Language?> = Facet.define(
 )
 
 /**
+ * The facet type that holds a language's data: maps of named fields (`indentOnInput`,
+ * `wordChars`, `closeBrackets`, ...) read through [EditorState.languageDataAt].
+ */
+typealias LanguageDataFacet = Facet<Map<String, Any?>, List<Map<String, Any?>>>
+
+/**
  * A language object manages parsing and per-language metadata.
  * Parse data is managed as a Lezer tree.
+ *
+ * [data] is the language data facet for this language. To have it take effect, attach it to
+ * the parser's top node type with [languageDataProp]; [LRLanguage.define] does that for you.
  */
-open class Language(val parser: Parser, val name: String = "") {
-    /** The extension value to install this as the document language. */
-    val extension: Extension = language.of(this)
+open class Language(
+    val parser: Parser,
+    val name: String = "",
+    val data: LanguageDataFacet = defineLanguageFacet()
+) {
+    /**
+     * The extension value to install this as the document language. It also provides the data
+     * attached to the syntax tree's top node to [EditorState.languageDataAt].
+     */
+    val extension: Extension = extensionListOf(
+        language.of(this),
+        languageData.of { state, pos, side ->
+            val top = topNodeAt(state, pos.value, side)
+            val data = top.type.prop(languageDataProp) ?: return@of emptyList()
+            @Suppress("UNCHECKED_CAST")
+            state.facet(data as LanguageDataFacet)
+        }
+    )
 
     /** Whether this language allows nesting other languages inside it. */
     open val allowsNesting: Boolean get() = true
@@ -143,15 +172,29 @@ class LanguageSupport(val language: Language, val support: Extension? = null) {
 val languageDataProp: NodeProp<Facet<*, *>> = NodeProp()
 
 /**
- * Create a new language-specific data facet.
- *
- * @param baseData Optional base values that are always present.
+ * Create a language data facet. Values provided for it (through `data.of(...)`) come first in
+ * [EditorState.languageDataAt] results, followed by [baseData] when given.
  */
-fun defineLanguageFacet(
-    baseData: List<Extension> = emptyList()
-): Facet<Extension, List<Extension>> = Facet.define(
-    combine = { values -> baseData + values }
+fun defineLanguageFacet(baseData: Map<String, Any?>? = null): LanguageDataFacet = Facet.define(
+    combine = { values -> if (baseData != null) values + baseData else values }
 )
+
+/**
+ * The top node of the innermost language at [pos], which carries that language's
+ * [languageDataProp]. Nested languages are only entered when the active language allows it.
+ */
+private fun topNodeAt(state: EditorState, pos: Int, side: Int): SyntaxNode {
+    val topLang = state.facet(language)
+    var tree = syntaxTree(state).topNode
+    if (topLang == null || topLang.allowsNesting) {
+        var node: SyntaxNode? = tree
+        while (node != null) {
+            if (node.type.isTop) tree = node
+            node = node.enter(pos, side, IterMode.EXCLUDE_BUFFERS)
+        }
+    }
+    return tree
+}
 
 /**
  * Query language-specific data at a given position by walking up the syntax
@@ -179,12 +222,33 @@ fun <T> languageDataAt(state: EditorState, facet: Facet<T, *>, pos: Int): T? {
  * Provides additional functionality for reconfiguring the parser
  * and integrating with [languageDataProp].
  */
-class LRLanguage(parser: Parser, name: String = "") : Language(parser, name) {
+class LRLanguage(
+    parser: Parser,
+    name: String = "",
+    data: LanguageDataFacet = defineLanguageFacet()
+) : Language(parser, name, data) {
     companion object {
         /**
-         * Define a new LR-parser-based language.
+         * Define a new LR-parser-based language. [languageData] becomes the base value of the
+         * language's [data] facet, attached to the parser's top node type.
          */
-        fun define(parser: Parser, name: String = ""): LRLanguage = LRLanguage(parser, name)
+        fun define(
+            parser: LRParser,
+            name: String = "",
+            languageData: Map<String, Any?>? = null
+        ): LRLanguage {
+            val data = defineLanguageFacet(languageData)
+            val withData = parser.configure(
+                ParserConfig(
+                    props = listOf(
+                        languageDataProp.add { type ->
+                            if (type.isTop) data else null
+                        }
+                    )
+                )
+            )
+            return LRLanguage(withData, name, data)
+        }
     }
 }
 

@@ -92,8 +92,9 @@ class StreamLanguage<State> private constructor(
     internal val streamParser: StreamParser<State>,
     internal val stateAfter: NodeProp<State>,
     internal val tokenTable: TokenTable,
-    internal val topNode: NodeType
-) : Language(parser, name) {
+    internal val topNode: NodeType,
+    data: LanguageDataFacet
+) : Language(parser, name, data) {
 
     override val allowsNesting: Boolean get() = false
 
@@ -157,7 +158,7 @@ class StreamLanguage<State> private constructor(
     companion object {
         /** Define a stream language. */
         fun <State> define(spec: StreamParser<State>): StreamLanguage<State> {
-            val data = defineLanguageFacet()
+            val data = defineLanguageFacet(spec.languageData)
             val stateAfter = NodeProp<State>(perNode = true)
             val tokenTable = TokenTable(spec.tokenTable)
             // Will be set after construction
@@ -176,7 +177,8 @@ class StreamLanguage<State> private constructor(
                 streamParser = spec,
                 stateAfter = stateAfter,
                 tokenTable = tokenTable,
-                topNode = topNode
+                topNode = topNode,
+                data = data
             )
             return lang
         }

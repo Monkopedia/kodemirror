@@ -74,7 +74,12 @@ val cppLanguage: LRLanguage = LRLanguage.define(
             )
         )
     ),
-    name = "cpp"
+    name = "cpp",
+    languageData = mapOf(
+        "indentOnInput" to Regex("""^\s*(?:case |default:|\{|\})$"""),
+        "closeBrackets" to
+            mapOf("stringPrefixes" to listOf("L", "u", "U", "u8", "LR", "UR", "uR", "u8R", "R"))
+    )
 )
 
 /**

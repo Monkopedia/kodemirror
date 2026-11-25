@@ -84,7 +84,10 @@ val liquidTagLanguage: LRLanguage = LRLanguage.define(
             )
         )
     ),
-    name = "liquid"
+    name = "liquid",
+    languageData = mapOf(
+        "indentOnInput" to Regex("""^\s*\{%-?\s*(?:end|elsif|else|when|)$""")
+    )
 )
 
 private val baseHTML = html()
