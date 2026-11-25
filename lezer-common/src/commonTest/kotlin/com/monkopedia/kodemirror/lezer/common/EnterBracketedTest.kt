@@ -234,4 +234,10 @@ class EnterBracketedTest {
         assertNull(top.enter(4, 0, IterMode.ENTER_BRACKETED))
         assertNull(top.enter(24, 0, IterMode.ENTER_BRACKETED))
     }
+
+    /** Mounts are not bracketed unless the nest says so, as upstream's `bracketed = false`. */
+    @Test
+    fun mountedTreeIsNotBracketedByDefault() {
+        assertFalse(MountedTree(leaf(ident, 1), null, dummyParser).bracketed)
+    }
 }

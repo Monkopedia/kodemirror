@@ -18,6 +18,8 @@
  */
 package com.monkopedia.kodemirror.lezer.common
 
+import kotlin.jvm.JvmOverloads
+
 private var nextPropID = 0
 
 /**
@@ -96,7 +98,7 @@ class NodeProp<T>(
  * is wrapped in delimiters of the host language, so [IterMode.ENTER_BRACKETED] may enter it at
  * its edges.
  */
-data class MountedTree(
+data class MountedTree @JvmOverloads constructor(
     val tree: Tree,
     val overlay: List<TextRange>?,
     val parser: Parser,

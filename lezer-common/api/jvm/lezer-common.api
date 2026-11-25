@@ -84,6 +84,7 @@ public final class com/monkopedia/kodemirror/lezer/common/MixKt {
 
 public final class com/monkopedia/kodemirror/lezer/common/MountedTree {
 	public static final field Companion Lcom/monkopedia/kodemirror/lezer/common/MountedTree$Companion;
+	public fun <init> (Lcom/monkopedia/kodemirror/lezer/common/Tree;Ljava/util/List;Lcom/monkopedia/kodemirror/lezer/common/Parser;)V
 	public fun <init> (Lcom/monkopedia/kodemirror/lezer/common/Tree;Ljava/util/List;Lcom/monkopedia/kodemirror/lezer/common/Parser;Z)V
 	public synthetic fun <init> (Lcom/monkopedia/kodemirror/lezer/common/Tree;Ljava/util/List;Lcom/monkopedia/kodemirror/lezer/common/Parser;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/monkopedia/kodemirror/lezer/common/Tree;
