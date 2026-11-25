@@ -153,8 +153,8 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
     impl.backingCoroutineScope = compositionScope
 
     // The view plugins are built during composition, so the first frame already
-    // has their decorations. PluginHostOwner destroys them however this
-    // composition ends, including when it is abandoned (#288).
+    // has their decorations. A composition can be abandoned, though, and then no
+    // effect runs, so PluginHostOwner destroys them in that case (#288).
     val pluginHost = remember(session) { PluginHostOwner(impl) }.host
     val lineLayoutCache = remember(session) { LineLayoutCache() }
     // Deferred layouts: onGloballyPositioned fires bottom-up (children before
@@ -173,15 +173,21 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
 
     // Wire up session internals eagerly (during composition, not in a side
     // effect) so that TooltipLayer and the hover pointerInput block can access
-    // pluginHost on the very first frame.  DisposableEffect (and PluginHostOwner,
-    // for the plugin host) still handles cleanup; the repeated assignments on
-    // recomposition are harmless because remember() always returns the same instances.
+    // pluginHost on the very first frame.  DisposableEffect still handles
+    // cleanup on dispose; the repeated assignments on recomposition are
+    // harmless because remember() always returns the same instances.
     impl.pluginHost = pluginHost
     impl.lineLayoutCache = lineLayoutCache
     impl.clipboardManager = clipboardManager
 
     DisposableEffect(session) {
         onDispose {
+            // Plugins go first, while the session is still attached: a plugin's
+            // destroy() may use session.coroutineScope, and upstream's
+            // EditorView.destroy() likewise destroys plugins before anything else.
+            // PluginHostOwner covers the abandoned composition, where this never runs.
+            pluginHost.destroy()
+            if (impl.pluginHost === pluginHost) impl.pluginHost = null
             lineLayoutCache.clear()
             impl.lineLayoutCache = null
             impl.backingCoroutineScope = null
@@ -877,9 +883,10 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
 }
 
 /**
- * Builds the view plugins of one [KodeMirror] composition and destroys them when that
- * composition forgets them or is abandoned (#288). An abandoned composition runs no effects,
- * so a `DisposableEffect` alone would leak the plugins built while composing it.
+ * Builds the view plugins of one [KodeMirror] composition, and destroys them if that composition
+ * is abandoned (#288). An abandoned composition runs no effects, so the `DisposableEffect` that
+ * destroys them on an ordinary dispose never does. [onForgotten] is only a backstop: by then the
+ * effect has already destroyed them, and destroying twice is a no-op.
  */
 private class PluginHostOwner(private val session: EditorSessionImpl) : RememberObserver {
     // Publish the host on the session before its plugins are built. Bringing a plugin up can

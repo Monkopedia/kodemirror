@@ -18,6 +18,9 @@
  */
 package com.monkopedia.kodemirror.view
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.runComposeUiTest
 import com.monkopedia.kodemirror.state.EditorState
@@ -29,17 +32,21 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
 /**
- * A composition can be abandoned: it fails before it is applied, so no effect it registered
- * ever runs, and in particular no `DisposableEffect`'s `onDispose`. The view plugins
- * `KodeMirror` builds while composing must still be destroyed then (#288), or their parse
- * workers, linter scopes and open LSP files outlive an editor that never appeared.
+ * The view plugins `KodeMirror` builds while composing are destroyed however that composition
+ * ends.
  *
- * In `jvmTest` because the test needs `runComposeUiTest` to rethrow the composition's failure
- * synchronously; on wasmJs it returns a promise instead. What it exercises is shared
- * `commonMain` code.
+ * A composition can be abandoned: it fails before it is applied, so no effect it registered ever
+ * runs, and in particular no `DisposableEffect`'s `onDispose`. The plugins must still be
+ * destroyed then (#288), or their parse workers, linter scopes and open LSP files outlive an
+ * editor that never appeared. On an ordinary dispose they must be destroyed first, while the
+ * session is still attached, as upstream's `EditorView.destroy()` does.
+ *
+ * In `jvmTest` because the abandonment test needs `runComposeUiTest` to rethrow the
+ * composition's failure synchronously; on wasmJs it returns a promise instead. What it exercises
+ * is shared `commonMain` code.
  */
 @OptIn(ExperimentalTestApi::class)
-class AbandonedCompositionTest {
+class PluginHostLifecycleTest {
 
     private class Abandon : RuntimeException("abandon this composition")
 
@@ -79,5 +86,40 @@ class AbandonedCompositionTest {
             (session as EditorSessionImpl).pluginHost,
             "the session still points at the abandoned composition's plugin host"
         )
+    }
+
+    @Test
+    fun disposedEditor_destroysPluginsOnceWhileStillAttached() {
+        var destroyed = 0
+        val plugin = ViewPlugin.define(
+            PluginSpec<PluginValue>(
+                create = { session ->
+                    object : PluginValue {
+                        override fun destroy() {
+                            // Throws when the session has already been detached.
+                            session.coroutineScope
+                            destroyed++
+                        }
+                    }
+                }
+            )
+        )
+        val session = EditorSession(
+            EditorState.create(
+                EditorStateConfig(doc = "hello".asDoc(), extensions = plugin.asExtension())
+            )
+        )
+        var show by mutableStateOf(true)
+        runComposeUiTest {
+            setContent {
+                if (show) KodeMirror(session = session)
+            }
+            waitForIdle()
+            show = false
+            waitForIdle()
+        }
+        // Upstream's EditorView.destroy() destroys plugins before it detaches anything.
+        assertEquals(1, destroyed, "the plugin was not destroyed exactly once")
+        assertNull((session as EditorSessionImpl).pluginHost)
     }
 }
