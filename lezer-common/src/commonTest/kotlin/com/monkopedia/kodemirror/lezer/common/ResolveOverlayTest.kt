@@ -20,6 +20,7 @@ package com.monkopedia.kodemirror.lezer.common
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
 /**
  * Resolution behaviour around overlay-mounted trees, matching `resolveNode` in
@@ -197,6 +198,21 @@ class ResolveOverlayTest {
             firstIdent.resolveInner(23, 1).describe(),
             "resolveInner must climb out of the mount entirely for a position past it"
         )
+    }
+
+    /**
+     * `resolve` (no overlays) started from an overlay root stops climbing at that root, so a
+     * position outside the overlay resolves to the root itself rather than to a host node
+     * (#332). `resolveInner` from the same root climbs on into the host tree. Expected values are
+     * from npm `@lezer/common` 1.5.1.
+     */
+    @Test
+    fun resolveFromOverlayRootStopsAtTheRoot() {
+        val root = assertNotNull(mixedTree().resolveInner(12, 1).parent)
+        assertEquals("Expr(10-22)", root.describe())
+        assertEquals("Expr(10-22)", root.resolve(26, 1).describe())
+        assertEquals("Expr(10-22)", root.resolve(2, 1).describe())
+        assertEquals("Text(24-30)", root.resolveInner(26, 1).describe())
     }
 
     /** The parent chain of an inner-language node runs through the host tree. */
