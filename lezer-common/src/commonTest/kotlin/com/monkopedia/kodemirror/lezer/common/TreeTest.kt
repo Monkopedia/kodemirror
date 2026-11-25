@@ -692,6 +692,48 @@ class TreeTest {
         assertEquals("Br(0-6)", describe(tree.topNode.enterUnfinishedNodesBefore(6)))
     }
 
+    @Test
+    fun enterUnfinishedNodesBeforeIgnoresNonEmptyErrorNode() {
+        // T(0-6) { Pa(0-6) { b(0-3), err(3-6) } }
+        // An error node only marks an unfinished node when it is empty, so a non-empty one on
+        // the right edge leaves the start node in place (#340; npm @lezer/common 1.5.1).
+        val tree = Tree(
+            types[0],
+            listOf(
+                Tree(
+                    types[4],
+                    listOf(leaf(types[2], 3), leaf(errorType, 3)),
+                    listOf(0, 3),
+                    6
+                )
+            ),
+            listOf(0),
+            6
+        )
+        assertEquals("T(0-6)", describe(tree.topNode.enterUnfinishedNodesBefore(6)))
+    }
+
+    @Test
+    fun enterUnfinishedNodesBeforeIgnoresEmptyNonErrorNode() {
+        // T(0-3) { Pa(0-3) { b(0-3), c(3-3) } }
+        // An empty node that is not an error does not mark Pa unfinished (#340; npm
+        // @lezer/common 1.5.1).
+        val tree = Tree(
+            types[0],
+            listOf(
+                Tree(
+                    types[4],
+                    listOf(leaf(types[2], 3), leaf(types[3], 0)),
+                    listOf(0, 3),
+                    3
+                )
+            ),
+            listOf(0),
+            3
+        )
+        assertEquals("T(0-3)", describe(tree.topNode.enterUnfinishedNodesBefore(3)))
+    }
+
     // ---- NodeType.match tests ----
 
     @Test
