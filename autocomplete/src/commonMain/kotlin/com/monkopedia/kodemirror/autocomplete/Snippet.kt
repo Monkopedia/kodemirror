@@ -24,6 +24,7 @@ import com.monkopedia.kodemirror.language.indentUnit
 import com.monkopedia.kodemirror.state.ChangeDesc
 import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
+import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList
@@ -53,8 +54,25 @@ import com.monkopedia.kodemirror.view.keymap
 
 // ── Snippet field representation ──
 
-/** A named field within an active snippet, spanning [from] to [to] in the document. */
-data class SnippetField(val name: String, val from: DocPos, val to: DocPos)
+/** One place a [SnippetField] occupies in the document, from [from] to [to]. */
+data class SnippetRange(val from: DocPos, val to: DocPos)
+
+/**
+ * A named field within an active snippet, at each of its [ranges] in template order. A
+ * field the template names more than once is linked, as upstream's: all its ranges are
+ * selected together, so typing edits every copy.
+ */
+data class SnippetField(val name: String, val ranges: List<SnippetRange>) {
+    /** Whether every range of [selection] is inside one of the field's ranges. */
+    internal fun contains(selection: EditorSelection): Boolean =
+        selection.ranges.all { sel -> ranges.any { it.from <= sel.from && it.to >= sel.to } }
+
+    /** The field's ranges as a selection, the first one main (upstream `fieldSelection`). */
+    internal val selection: SelectionSpec
+        get() = SelectionSpec.EditorSelectionSpec(
+            EditorSelection.create(ranges.map { EditorSelection.range(it.from, it.to) })
+        )
+}
 
 /**
  * Tracks the currently active snippet insertion — the list of tab-stop
@@ -71,12 +89,15 @@ private val setActiveSnippet: StateEffectType<ActiveSnippet?> = StateEffect.defi
 
 // ── State field ──
 
-/** [field] mapped through [changes], or `null` when its text was deleted. */
-private fun SnippetField.mapped(changes: ChangeDesc): SnippetField? {
-    val from = changes.mapPos(from, -1, MapMode.TrackDel) ?: return null
-    val to = changes.mapPos(to, 1, MapMode.TrackDel) ?: return null
-    return SnippetField(name, from, to)
-}
+/** [field] mapped through [changes], or `null` when the text of any of its ranges was deleted. */
+private fun SnippetField.mapped(changes: ChangeDesc): SnippetField? = SnippetField(
+    name,
+    ranges.map {
+        val from = changes.mapPos(it.from, -1, MapMode.TrackDel) ?: return null
+        val to = changes.mapPos(it.to, 1, MapMode.TrackDel) ?: return null
+        SnippetRange(from, to)
+    }
+)
 
 /**
  * State field that holds the currently active snippet, or `null` when no snippet is active.
@@ -84,7 +105,7 @@ private fun SnippetField.mapped(changes: ChangeDesc): SnippetField? {
  * As upstream: a snippet set by a transaction is taken as is (its positions
  * already refer to that transaction's document), an active one is mapped through
  * later changes and ends when a field's text is deleted, and it also ends when
- * the selection moves outside the current field.
+ * the selection moves outside the current field's ranges.
  */
 val snippetState: StateField<ActiveSnippet?> = StateField.define(
     StateFieldSpec(
@@ -100,12 +121,7 @@ val snippetState: StateField<ActiveSnippet?> = StateField.define(
             }
             val selection = tr.selection
             val field = result?.currentField
-            if (selection != null &&
-                field != null &&
-                !selection.ranges.all { it.from >= field.from && it.to <= field.to }
-            ) {
-                result = null
-            }
+            if (selection != null && field != null && !field.contains(selection)) result = null
             result
         }
     )
@@ -194,8 +210,8 @@ private fun parseTemplate(template: String): ParsedSnippet {
  * snippet is active; moving onto the last field, or the cursor out of the current
  * field, ends it.
  *
- * A field that appears more than once is a tab stop at its first occurrence
- * only; its other occurrences are inserted as plain text.
+ * A field that appears more than once is linked: every occurrence is selected when
+ * the field is, so typing edits them all.
  */
 fun snippet(template: String): (CompletionApplyContext) -> Unit {
     val parsed = parseTemplate(template)
@@ -223,20 +239,17 @@ fun snippet(template: String): (CompletionApplyContext) -> Unit {
             text += line
             pos += line.length + 1
         }
-        val fields = parsed.fieldNames.indices.mapNotNull { field ->
-            parsed.positions.firstOrNull { it.field == field }?.let {
+        val fields = parsed.fieldNames.mapIndexed { field, name ->
+            val ranges = parsed.positions.filter { it.field == field }.map {
                 val start = lineStart[it.line]
-                SnippetField(
-                    parsed.fieldNames[field],
-                    DocPos(start + it.from),
-                    DocPos(start + it.to)
-                )
+                SnippetRange(DocPos(start + it.from), DocPos(start + it.to))
             }
+            SnippetField(name, ranges)
         }
 
         val inserted = Text.of(text)
         // The first field is selected; without fields the cursor goes after the text.
-        val selection = fields.firstOrNull()?.let { SelectionSpec.CursorSpec(it.from, it.to) }
+        val selection = fields.firstOrNull()?.selection
             ?: SelectionSpec.CursorSpec(from + inserted.length)
         view.dispatch(
             TransactionSpec(
@@ -295,7 +308,7 @@ private fun moveField(dir: Int): (EditorSession) -> Boolean = command@{ view ->
     val last = dir > 0 && next + dir !in active.fields.indices
     view.dispatch(
         TransactionSpec(
-            selection = SelectionSpec.CursorSpec(field.from, field.to),
+            selection = field.selection,
             effects = listOf(
                 setActiveSnippet.of(if (last) null else active.copy(fieldIndex = next))
             ),
@@ -376,12 +389,12 @@ private class SnippetDecorationPlugin(private val view: EditorSession) :
         )
         val builder = RangeSetBuilder<Decoration>()
         val sorted = active.fields
-            .mapIndexed { i, f -> i to f }
+            .flatMapIndexed { i, f -> f.ranges.map { i to it } }
             .sortedWith(compareBy({ it.second.from }, { it.second.to }))
-        for ((i, field) in sorted) {
-            if (field.from == field.to) continue
+        for ((i, range) in sorted) {
+            if (range.from == range.to) continue
             val deco = if (i == active.fieldIndex) activeDeco else fieldDeco
-            builder.add(field.from, field.to, deco)
+            builder.add(range.from, range.to, deco)
         }
         return builder.finish()
     }

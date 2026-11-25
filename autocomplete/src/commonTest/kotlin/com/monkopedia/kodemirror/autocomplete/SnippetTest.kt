@@ -18,11 +18,14 @@
  */
 package com.monkopedia.kodemirror.autocomplete
 
+import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
+import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.TransactionSpec
+import com.monkopedia.kodemirror.state.allowMultipleSelections
 import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.view.EditorSession
 import kotlin.test.Test
@@ -62,7 +65,7 @@ class SnippetTest {
     }
 
     private fun EditorSession.fields() = state.field(snippetState, require = false)
-        ?.fields?.map { listOf(it.from.value, it.to.value) }
+        ?.fields?.map { f -> f.ranges.flatMap { listOf(it.from.value, it.to.value) } }
 
     @Test
     fun fieldsAreNotMappedTwiceIntoANonEmptyDocument() {
@@ -197,5 +200,77 @@ class SnippetTest {
         s = apply("\${99999999999:b} \${99999999998:a}")
         assertEquals("b a", s.state.doc.toString())
         assertEquals("2-3", s.selString())
+    }
+
+    // ── #393: linked same-name fields, against 6.20.1 (probe rows L1-L4 in the PR) ──
+
+    private fun linked(
+        template: String,
+        doc: String = "",
+        from: Int = 0,
+        to: Int = from
+    ): EditorSession {
+        val session = EditorSession(
+            EditorState.create(
+                EditorStateConfig(
+                    doc = doc.asDoc(),
+                    selection = SelectionSpec.CursorSpec(DocPos(to)),
+                    extensions = ExtensionList(listOf(allowMultipleSelections.of(true), snippets()))
+                )
+            )
+        )
+        snippet(
+            template
+        )(CompletionApplyContext(session, Completion("x"), DocPos(from), DocPos(to)))
+        return session
+    }
+
+    private val forLoop = "for (let \${index} = 0; \${index} < \${end}; \${index}++) {\n\t\${}\n}"
+
+    @Test
+    fun everyCopyOfAFieldIsSelectedAndEditedTogether() {
+        // L1: the JS `for` snippet over "fo".
+        val s = linked(forLoop, "fo", 0, 2)
+        assertEquals("for (let index = 0; index < end; index++) {\n  \n}", s.state.doc.toString())
+        assertEquals("9-14,20-25,33-38", s.selString())
+        assertEquals(0, s.state.selection.mainIndex)
+        assertEquals(
+            listOf(listOf(9, 14, 20, 25, 33, 38), listOf(28, 31), listOf(46, 46)),
+            s.fields()
+        )
+        s.dispatch(s.state.replaceSelection("i").copy(userEvent = "input.type"))
+        assertEquals("for (let i = 0; i < end; i++) {\n  \n}", s.state.doc.toString())
+        assertEquals("10,17,26", s.selString())
+        assertEquals(
+            listOf(listOf(9, 10, 16, 17, 25, 26), listOf(20, 23), listOf(34, 34)),
+            s.fields()
+        )
+        nextSnippetField(s)
+        assertEquals("20-23", s.selString())
+        prevSnippetField(s)
+        assertEquals("9-10,16-17,25-26", s.selString())
+        nextSnippetField(s)
+        nextSnippetField(s)
+        assertEquals("34", s.selString())
+        assertNull(s.state.field(snippetState, require = false))
+    }
+
+    @Test
+    fun theCursorInAnyCopyStaysInTheField() {
+        // L2: moving into the second copy of the active field keeps the snippet.
+        val s = linked("\${a} \${b} \${a}")
+        assertEquals("0-1,4-5", s.selString())
+        s.dispatch(TransactionSpec(selection = SelectionSpec.CursorSpec(DocPos(4))))
+        assertEquals(0, s.state.field(snippetState, require = false)?.fieldIndex)
+        // L3: numbered fields link the same way.
+        assertEquals("0-1,4-5", linked("\${1:x} \${2:y} \${1:x}").selString())
+    }
+
+    @Test
+    fun deletingALinkedCopysTextKeepsAnEmptyRange() {
+        // L4
+        val s = linked("\${a} \${b} \${a}")
+        s.dispatch(TransactionSpec(changes = ChangeSpec.Single(DocPos(4), DocPos(5))))
+        assertEquals(listOf(listOf(0, 1, 4, 4), listOf(2, 3)), s.fields())
     }
 }
