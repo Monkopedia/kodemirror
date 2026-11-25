@@ -93,6 +93,9 @@ internal fun sqlLanguageFor(dialectSpec: DialectSpec): LRLanguage {
                 tokenizers = listOf(TokenizerReplacement(from = tokens, to = dialectTokenizer))
             )
         ),
-        name = "sql"
+        name = "sql",
+        languageData = mapOf(
+            "closeBrackets" to mapOf("brackets" to listOf("(", "[", "{", "'", "\"", "`"))
+        )
     )
 }

@@ -119,13 +119,20 @@ private val jsFoldProp: NodePropSource<*> = foldNodeProp.add { type ->
 
 private val jsProps = listOf(jsIndentProp, jsFoldProp)
 
+private val jsLanguageData: Map<String, Any?> = mapOf(
+    "closeBrackets" to mapOf("brackets" to listOf("(", "[", "{", "'", "\"", "`")),
+    "indentOnInput" to Regex("""^\s*(?:case |default:|\{|\}|<\/)$"""),
+    "wordChars" to "\$"
+)
+
 /**
  * A language provider based on the Lezer JavaScript parser, extended with
  * highlighting and indentation information.
  */
 val javascriptLanguage: LRLanguage = LRLanguage.define(
     parser = jsParser.configure(ParserConfig(props = jsProps)),
-    name = "javascript"
+    name = "javascript",
+    languageData = jsLanguageData
 )
 
 /**
@@ -133,7 +140,8 @@ val javascriptLanguage: LRLanguage = LRLanguage.define(
  */
 val typescriptLanguage: LRLanguage = LRLanguage.define(
     parser = jsParser.configure(ParserConfig(props = jsProps, dialect = "ts")),
-    name = "typescript"
+    name = "typescript",
+    languageData = jsLanguageData
 )
 
 /**
@@ -141,7 +149,8 @@ val typescriptLanguage: LRLanguage = LRLanguage.define(
  */
 val jsxLanguage: LRLanguage = LRLanguage.define(
     parser = jsParser.configure(ParserConfig(props = jsProps, dialect = "jsx")),
-    name = "jsx"
+    name = "jsx",
+    languageData = jsLanguageData
 )
 
 /**
@@ -149,7 +158,8 @@ val jsxLanguage: LRLanguage = LRLanguage.define(
  */
 val tsxLanguage: LRLanguage = LRLanguage.define(
     parser = jsParser.configure(ParserConfig(props = jsProps, dialect = "jsx ts")),
-    name = "tsx"
+    name = "tsx",
+    languageData = jsLanguageData
 )
 
 /**

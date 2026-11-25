@@ -31,6 +31,7 @@ import com.monkopedia.kodemirror.lezer.common.TreeCursor
 import com.monkopedia.kodemirror.lezer.common.parseMixed
 import com.monkopedia.kodemirror.lezer.lr.LRParser
 import com.monkopedia.kodemirror.lezer.lr.ParserConfig
+import com.monkopedia.kodemirror.state.extensionListOf
 
 private val exprParser = (javascriptLanguage.parser as LRParser).configure(
     ParserConfig(top = "SingleExpression")
@@ -81,12 +82,8 @@ private fun mixAngular(node: SyntaxNodeRef, input: Input): NestedParse? = when (
     else -> null
 }
 
-private fun mkAngular(base: LRLanguage): LRLanguage = LRLanguage.define(
-    parser = (base.parser as LRParser).configure(
-        ParserConfig(wrap = parseMixed(::mixAngular))
-    ),
-    name = "angular"
-)
+private fun mkAngular(base: LRLanguage): LRLanguage =
+    base.configure(ParserConfig(wrap = parseMixed(::mixAngular)), "angular")
 
 /**
  * A language provider for Angular Templates.
@@ -98,9 +95,17 @@ val angularLanguage: LRLanguage = mkAngular(htmlLanguage)
  */
 fun angular(): LanguageSupport = LanguageSupport(
     angularLanguage,
-    support = commentTokens.of(
-        CommentTokens(
-            block = CommentTokens.BlockComment("<!--", "-->")
+    support = extensionListOf(
+        commentTokens.of(
+            CommentTokens(
+                block = CommentTokens.BlockComment("<!--", "-->")
+            )
+        ),
+        htmlLanguage.data.of(
+            mapOf(
+                "closeBrackets" to mapOf("brackets" to listOf("[", "{", "\"")),
+                "indentOnInput" to Regex("""^\s*[\}\]]$""")
+            )
         )
     )
 )

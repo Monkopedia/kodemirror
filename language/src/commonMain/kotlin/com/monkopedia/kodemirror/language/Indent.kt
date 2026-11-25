@@ -29,9 +29,9 @@ import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.LanguageDataKey
 import com.monkopedia.kodemirror.state.Line
 import com.monkopedia.kodemirror.state.LineNumber
-import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.TransactionFilterResult
 import com.monkopedia.kodemirror.state.TransactionSpec
+import com.monkopedia.kodemirror.state.asSpec
 import com.monkopedia.kodemirror.state.countColumn
 import com.monkopedia.kodemirror.state.transactionFilter
 
@@ -405,74 +405,64 @@ internal fun currentIndentLength(text: String): Int {
     return i
 }
 
+// Lines whose cursor sits further right than this are not reindented on input.
+private const val DONT_INDENT_BEYOND = 200
+
 /**
- * Extension that automatically re-indents the current line when the
- * user types a character that triggers indentation changes (e.g. a
- * closing brace).
- *
- * Language data providers register `"indentOnInput"` [Regex] entries
- * that are tested against the text from the start of the line to the
- * cursor. When a match is found and the computed indentation differs
- * from the current one, the line is re-indented.
+ * Extension that automatically re-indents the current line when the user types something
+ * that matches one of the language's `"indentOnInput"` [Regex]es (for example a closing
+ * brace). The regexes are tested against the main cursor's line, from its start to the
+ * cursor, after the input; when one matches, every cursor line whose indentation differs from
+ * the computed one is reindented in a follow-up change.
  */
 val indentOnInput: Extension = transactionFilter.of { tr ->
-    if (!tr.docChanged || !tr.isUserEvent("input.type")) {
+    if (!tr.docChanged || !tr.isUserEvent("input.type") && !tr.isUserEvent("input.complete")) {
         return@of TransactionFilterResult.Filtered(tr)
     }
+    val rules = tr.startState.languageDataAt(
+        LanguageDataKey.INDENT_ON_INPUT,
+        tr.startState.selection.main.head
+    )
+    if (rules.isEmpty()) return@of TransactionFilterResult.Filtered(tr)
+    val doc = tr.newDoc
+    val head = tr.newSelection.main.head
+    val headLine = doc.lineAt(head)
+    if (head > headLine.from + DONT_INDENT_BEYOND) return@of TransactionFilterResult.Filtered(tr)
+    val lineStart = doc.sliceString(headLine.from, head)
+    if (rules.none { it.containsMatchIn(lineStart) }) return@of TransactionFilterResult.Filtered(tr)
 
     val state = tr.state
+    var last = DocPos(-1)
     val changes = mutableListOf<ChangeSpec>()
-    val selRanges = mutableListOf<SelectionSpec>()
-    var changed = false
-
     for (range in state.selection.ranges) {
-        val pos: DocPos = range.head
-        val line = state.doc.lineAt(pos)
-        val col: Int = pos - line.from
-        val lineText = line.text
-        val upToCursor = lineText.substring(0, minOf(col, lineText.length))
-
-        val triggers = state.languageDataAt(LanguageDataKey.INDENT_ON_INPUT, pos)
-        val matches = triggers.any { it.containsMatchIn(upToCursor) }
-        if (!matches) continue
-
-        val desired = getIndentation(state, line.from) ?: continue
-        val current = countIndent(lineText, state.tabSize)
-        if (current == desired) continue
-
-        val currentLen = currentIndentLength(lineText)
-        val newIndent = indentString(state, desired)
-        changes.add(
-            ChangeSpec.Single(
-                line.from,
-                line.from + currentLen,
-                InsertContent.StringContent(newIndent)
-            )
-        )
-        val cursorShift = newIndent.length - currentLen
-        selRanges.add(SelectionSpec.CursorSpec(pos + cursorShift))
-        changed = true
-    }
-
-    if (changed) {
-        TransactionFilterResult.Specs(
-            listOf(
-                TransactionSpec(
-                    changes = if (changes.size == 1) {
-                        changes[0]
-                    } else {
-                        ChangeSpec.Multi(changes)
-                    },
-                    selection = if (selRanges.size == 1) {
-                        selRanges[0]
-                    } else {
-                        null
-                    },
-                    userEvent = "input.type"
+        val line = state.doc.lineAt(range.head)
+        if (line.from == last) continue
+        last = line.from
+        val indent = getIndentation(state, line.from) ?: continue
+        val cur = line.text.substring(0, currentIndentLength(line.text))
+        val norm = indentString(state, indent)
+        if (cur != norm) {
+            changes.add(
+                ChangeSpec.Single(
+                    line.from,
+                    line.from + cur.length,
+                    InsertContent.StringContent(norm)
                 )
             )
-        )
-    } else {
-        TransactionFilterResult.Filtered(tr)
+        }
     }
+    if (changes.isEmpty()) return@of TransactionFilterResult.Filtered(tr)
+    // Keep the input as typed and apply the reindent on top of it.
+    TransactionFilterResult.Specs(
+        listOf(
+            TransactionSpec(
+                changes = ChangeSpec.Set(tr.changes),
+                selection = tr.selection?.asSpec(),
+                effects = tr.effects,
+                annotations = tr.annotations,
+                scrollIntoView = tr.scrollIntoView
+            ),
+            TransactionSpec(changes = ChangeSpec.Multi(changes), sequential = true)
+        )
+    )
 }

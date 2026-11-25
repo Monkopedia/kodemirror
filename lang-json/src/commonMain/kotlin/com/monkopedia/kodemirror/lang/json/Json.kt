@@ -48,7 +48,11 @@ val jsonLanguage: LRLanguage = LRLanguage.define(
             )
         )
     ),
-    name = "json"
+    name = "json",
+    languageData = mapOf(
+        "closeBrackets" to mapOf("brackets" to listOf("[", "{", "\"")),
+        "indentOnInput" to Regex("""^\s*[\}\]]$""")
+    )
 )
 
 /**

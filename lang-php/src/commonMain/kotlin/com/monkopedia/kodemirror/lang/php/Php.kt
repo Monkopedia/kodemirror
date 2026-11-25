@@ -100,7 +100,15 @@ val phpLanguage: LRLanguage = LRLanguage.define(
             )
         )
     ),
-    name = "php"
+    name = "php",
+    languageData = mapOf(
+        "indentOnInput" to
+            Regex(
+                """^\s*(?:case |default:|end(?:if|for(?:each)?|switch|while)|else(?:if)?|\{|\})$"""
+            ),
+        "wordChars" to "\$",
+        "closeBrackets" to mapOf("stringPrefixes" to listOf("b", "B"))
+    )
 )
 
 /**

@@ -78,7 +78,11 @@ val goLanguage: LRLanguage = LRLanguage.define(
             )
         )
     ),
-    name = "go"
+    name = "go",
+    languageData = mapOf(
+        "closeBrackets" to mapOf("brackets" to listOf("(", "[", "{", "'", "\"", "`")),
+        "indentOnInput" to Regex("""^\s*(?:case\b|default\b|\})$""")
+    )
 )
 
 /**

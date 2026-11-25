@@ -184,7 +184,17 @@ val pythonLanguage: LRLanguage = LRLanguage.define(
             )
         )
     ),
-    name = "python"
+    name = "python",
+    languageData = mapOf(
+        "closeBrackets" to mapOf(
+            "brackets" to listOf("(", "[", "{", "'", "\"", "'''", "\"\"\""),
+            "stringPrefixes" to listOf(
+                "f", "fr", "rf", "r", "u", "b", "br", "rb",
+                "F", "FR", "RF", "R", "U", "B", "BR", "RB"
+            )
+        ),
+        "indentOnInput" to Regex("""^\s*([\}\]\)]|else:|elif |except |finally:|case\s+[^:]*:?)$""")
+    )
 )
 
 /**

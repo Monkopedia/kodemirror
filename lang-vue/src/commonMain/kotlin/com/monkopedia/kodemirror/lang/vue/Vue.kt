@@ -30,6 +30,7 @@ import com.monkopedia.kodemirror.lezer.common.SyntaxNodeRef
 import com.monkopedia.kodemirror.lezer.common.parseMixed
 import com.monkopedia.kodemirror.lezer.lr.LRParser
 import com.monkopedia.kodemirror.lezer.lr.ParserConfig
+import com.monkopedia.kodemirror.state.extensionListOf
 
 private val exprParser = (javascriptLanguage.parser as LRParser).configure(
     ParserConfig(top = "SingleExpression")
@@ -72,15 +73,8 @@ private fun mixVue(node: SyntaxNodeRef, input: Input): NestedParse? = when (node
     else -> null
 }
 
-private fun makeVue(base: LRLanguage): LRLanguage = LRLanguage.define(
-    parser = (base.parser as LRParser).configure(
-        ParserConfig(
-            dialect = "selfClosing",
-            wrap = parseMixed(::mixVue)
-        )
-    ),
-    name = "vue"
-)
+private fun makeVue(base: LRLanguage): LRLanguage =
+    base.configure(ParserConfig(dialect = "selfClosing", wrap = parseMixed(::mixVue)), "vue")
 
 /**
  * A language provider for Vue templates.
@@ -92,9 +86,12 @@ val vueLanguage: LRLanguage = makeVue(htmlLanguage)
  */
 fun vue(): LanguageSupport = LanguageSupport(
     vueLanguage,
-    support = commentTokens.of(
-        CommentTokens(
-            block = CommentTokens.BlockComment("<!--", "-->")
-        )
+    support = extensionListOf(
+        commentTokens.of(
+            CommentTokens(
+                block = CommentTokens.BlockComment("<!--", "-->")
+            )
+        ),
+        htmlLanguage.data.of(mapOf("closeBrackets" to mapOf("brackets" to listOf("{", "\""))))
     )
 )

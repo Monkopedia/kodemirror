@@ -34,7 +34,6 @@ import com.monkopedia.kodemirror.lezer.common.ParseOverlay
 import com.monkopedia.kodemirror.lezer.common.ParseOverlayMatch
 import com.monkopedia.kodemirror.lezer.common.SyntaxNodeRef
 import com.monkopedia.kodemirror.lezer.common.parseMixed
-import com.monkopedia.kodemirror.lezer.lr.LRParser
 import com.monkopedia.kodemirror.lezer.lr.ParserConfig
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.Extension
@@ -92,7 +91,10 @@ val jinjaTagLanguage: LRLanguage = LRLanguage.define(
             )
         )
     ),
-    name = "jinja"
+    name = "jinja",
+    languageData = mapOf(
+        "indentOnInput" to Regex("""^\s*\{%-?\s*(?:end|elif|else)$""")
+    )
 )
 
 private val baseHTML = html()
@@ -117,12 +119,7 @@ fun makeJinja(baseLanguage: Language): LRLanguage {
             null
         }
     }
-    return LRLanguage.define(
-        parser = (jinjaTagLanguage.parser as LRParser).configure(
-            ParserConfig(wrap = wrap)
-        ),
-        name = "jinja"
-    )
+    return jinjaTagLanguage.configure(ParserConfig(wrap = wrap), "jinja")
 }
 
 /**
@@ -143,6 +140,9 @@ fun jinja(
     val lang = if (base.language == baseHTML.language) jinjaLanguage else makeJinja(base.language)
     val extensions = mutableListOf<Extension>()
     base.support?.let { extensions.add(it) }
+    extensions.add(
+        base.language.data.of(mapOf("closeBrackets" to mapOf("brackets" to listOf("{"))))
+    )
     extensions.add(
         autocompletion(
             CompletionConfig(override = listOf(jinjaCompletionSource(config)))

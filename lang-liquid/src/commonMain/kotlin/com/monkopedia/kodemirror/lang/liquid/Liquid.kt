@@ -34,7 +34,6 @@ import com.monkopedia.kodemirror.lezer.common.ParseOverlay
 import com.monkopedia.kodemirror.lezer.common.ParseOverlayMatch
 import com.monkopedia.kodemirror.lezer.common.SyntaxNodeRef
 import com.monkopedia.kodemirror.lezer.common.parseMixed
-import com.monkopedia.kodemirror.lezer.lr.LRParser
 import com.monkopedia.kodemirror.lezer.lr.ParserConfig
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.Extension
@@ -84,7 +83,10 @@ val liquidTagLanguage: LRLanguage = LRLanguage.define(
             )
         )
     ),
-    name = "liquid"
+    name = "liquid",
+    languageData = mapOf(
+        "indentOnInput" to Regex("""^\s*\{%-?\s*(?:end|elsif|else|when|)$""")
+    )
 )
 
 private val baseHTML = html()
@@ -109,12 +111,7 @@ fun makeLiquid(baseLanguage: Language): LRLanguage {
             null
         }
     }
-    return LRLanguage.define(
-        parser = (liquidTagLanguage.parser as LRParser).configure(
-            ParserConfig(wrap = wrap)
-        ),
-        name = "liquid"
-    )
+    return liquidTagLanguage.configure(ParserConfig(wrap = wrap), "liquid")
 }
 
 /**
@@ -135,6 +132,9 @@ fun liquid(
     val lang = if (base.language == baseHTML.language) liquidLanguage else makeLiquid(base.language)
     val extensions = mutableListOf<Extension>()
     base.support?.let { extensions.add(it) }
+    extensions.add(
+        base.language.data.of(mapOf("closeBrackets" to mapOf("brackets" to listOf("{"))))
+    )
     extensions.add(
         autocompletion(
             CompletionConfig(override = listOf(liquidCompletionSource(config)))

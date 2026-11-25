@@ -57,7 +57,11 @@ val sassLanguage: LRLanguage = LRLanguage.define(
             )
         )
     ),
-    name = "sass"
+    name = "sass",
+    languageData = mapOf(
+        "indentOnInput" to Regex("""^\s*\}$"""),
+        "wordChars" to "\$-"
+    )
 )
 
 /**

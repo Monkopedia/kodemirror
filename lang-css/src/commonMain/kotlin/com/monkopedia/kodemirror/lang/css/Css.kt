@@ -48,7 +48,11 @@ val cssLanguage: LRLanguage = LRLanguage.define(
             )
         )
     ),
-    name = "css"
+    name = "css",
+    languageData = mapOf(
+        "indentOnInput" to Regex("""^\s*\}$"""),
+        "wordChars" to "-"
+    )
 )
 
 /**
