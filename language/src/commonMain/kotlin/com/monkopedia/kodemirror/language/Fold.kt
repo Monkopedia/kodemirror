@@ -27,16 +27,15 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.monkopedia.kodemirror.lezer.common.NodeIterator
 import com.monkopedia.kodemirror.lezer.common.NodeProp
 import com.monkopedia.kodemirror.lezer.common.SyntaxNode
-import com.monkopedia.kodemirror.lezer.common.Tree
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.Facet
-import com.monkopedia.kodemirror.state.LineNumber
 import com.monkopedia.kodemirror.state.RangeSet
-import com.monkopedia.kodemirror.state.RangeSetBuilder
+import com.monkopedia.kodemirror.state.RangeSetUpdate
 import com.monkopedia.kodemirror.state.StateEffect
 import com.monkopedia.kodemirror.state.StateEffectType
 import com.monkopedia.kodemirror.state.StateField
@@ -88,7 +87,7 @@ fun foldInside(node: SyntaxNode): FoldRange? {
     val first = node.firstChild ?: return null
     val last = node.lastChild ?: return null
     if (first.to >= last.from) return null
-    return FoldRange(DocPos(first.to), DocPos(last.from))
+    return FoldRange(DocPos(first.to), DocPos(if (last.type.isError) node.to else last.from))
 }
 
 /** Effect to fold a range. */
@@ -136,50 +135,137 @@ private class FoldWidget : WidgetType() {
     override fun hashCode(): Int = this::class.hashCode()
 }
 
+private val foldWidget: Decoration = Decoration.replace(
+    ReplaceDecorationSpec(widget = FoldWidget())
+)
+
 /**
  * State field that tracks the set of currently folded ranges.
  * Folded ranges are represented as [ReplaceDecoration]s.
+ *
+ * Mirrors upstream: a fold that already exists is not added again, an unfold removes only
+ * the exactly matching range, and folds touched by a deletion or by the new main selection
+ * head are cleared.
  */
 val foldState: StateField<DecorationSet> = StateField.define(
     StateFieldSpec(
         create = { RangeSet.empty() },
         update = { decos, tr ->
-            var result = decos.map(tr.changes)
+            var folded = decos
+            if (tr.isUserEvent("delete")) {
+                tr.changes.iterChangedRanges({ fromA, toA, _, _ ->
+                    folded = clearTouchedFolds(folded, fromA.value, toA.value)
+                })
+            }
+            folded = folded.map(tr.changes)
             for (effect in tr.effects) {
-                val fold = effect.asType(foldEffect)
-                if (fold != null) {
-                    val range = fold.value
-                    val widget = FoldWidget()
-                    val deco = Decoration.replace(
-                        ReplaceDecorationSpec(widget = widget)
+                val fold = effect.asType(foldEffect)?.value
+                val unfold = effect.asType(unfoldEffect)?.value
+                if (fold != null && !foldExists(folded, fold.from, fold.to)) {
+                    folded = folded.update(
+                        RangeSetUpdate(add = listOf(foldWidget.range(fold.from, fold.to)))
                     )
-                    val builder = RangeSetBuilder<Decoration>()
-                    result.between(DocPos.ZERO, tr.newDoc.endPos) { from, to, value ->
-                        builder.add(DocPos(from), DocPos(to), value)
-                        true
-                    }
-                    builder.add(range.from, range.to, deco)
-                    result = builder.finish()
-                }
-                val unfold = effect.asType(unfoldEffect)
-                if (unfold != null) {
-                    val range = unfold.value
-                    val builder = RangeSetBuilder<Decoration>()
-                    result.between(DocPos.ZERO, tr.newDoc.endPos) { from, to, value ->
-                        // Keep all ranges except those overlapping with the unfold range
-                        if (DocPos(from) < range.from || DocPos(to) > range.to) {
-                            builder.add(DocPos(from), DocPos(to), value)
-                        }
-                        true
-                    }
-                    result = builder.finish()
+                } else if (unfold != null) {
+                    folded = folded.update(
+                        RangeSetUpdate(
+                            filter = { from, to, _ ->
+                                from != unfold.from.value || to != unfold.to.value
+                            },
+                            filterFrom = unfold.from.value,
+                            filterTo = unfold.to.value
+                        )
+                    )
                 }
             }
-            result
+            // Clear folded ranges that cover the selection head
+            val selection = tr.selection
+            if (selection != null) {
+                val head = selection.main.head.value
+                folded = clearTouchedFolds(folded, head, head)
+            }
+            folded
         },
         provide = { field -> decorations.from(field) }
     )
 )
+
+private fun clearTouchedFolds(folded: DecorationSet, from: Int, to: Int): DecorationSet {
+    var touched = false
+    folded.between(DocPos(from), DocPos(to)) { a, b, _ ->
+        if (a < to && b > from) touched = true
+        null
+    }
+    if (!touched) return folded
+    return folded.update(
+        RangeSetUpdate(filterFrom = from, filterTo = to, filter = { a, b, _ ->
+            a >= to || b <= from
+        })
+    )
+}
+
+private fun foldExists(folded: DecorationSet, from: DocPos, to: DocPos): Boolean {
+    var found = false
+    folded.between(from, from) { a, b, _ ->
+        if (a == from.value && b == to.value) found = true
+        null
+    }
+    return found
+}
+
+/** The first (lowest-starting) folded range touching [from]..[to], if any. */
+private fun findFold(state: EditorState, from: DocPos, to: DocPos): FoldRange? {
+    var found: FoldRange? = null
+    state.field(foldState, require = false)?.between(from, to) { a, b, _ ->
+        val prev = found
+        if (prev == null || prev.from.value > a) found = FoldRange(DocPos(a), DocPos(b))
+        null
+    }
+    return found
+}
+
+/** Add [codeFolding] to the state alongside [effects] when it isn't installed yet. */
+private fun maybeEnable(state: EditorState, effects: List<StateEffect<*>>): List<StateEffect<*>> =
+    if (state.field(foldState, require = false) != null) {
+        effects
+    } else {
+        effects + StateEffect.appendConfig.of(codeFolding())
+    }
+
+/**
+ * The line block at [pos]: the document line, widened to whole lines across any folded range
+ * that touches it, since a fold merges the lines it spans into one visual block.
+ */
+private fun lineBlockAt(state: EditorState, pos: DocPos): FoldRange {
+    var from = state.doc.lineAt(pos).from
+    var to = state.doc.lineAt(pos).to
+    var widened = true
+    while (widened) {
+        widened = false
+        foldedRanges(state).between(from, to) { a, b, _ ->
+            if (a < from.value) {
+                from = state.doc.lineAt(DocPos(a)).from
+                widened = true
+            }
+            if (b > to.value) {
+                to = state.doc.lineAt(DocPos(b)).to
+                widened = true
+            }
+            null
+        }
+    }
+    return FoldRange(from, to)
+}
+
+/** The line blocks holding a selection head, each listed once. */
+private fun selectedLines(state: EditorState): List<FoldRange> {
+    val lines = mutableListOf<FoldRange>()
+    for (range in state.selection.ranges) {
+        val head = range.head
+        if (lines.any { it.from <= head && it.to >= head }) continue
+        lines.add(lineBlockAt(state, head))
+    }
+    return lines
+}
 
 /**
  * Core code folding extension that wires the fold state.
@@ -193,141 +279,147 @@ fun foldedRanges(state: EditorState): DecorationSet =
     state.field(foldState, require = false) ?: RangeSet.empty()
 
 /**
- * Find a foldable range at the given line position, using registered
- * fold services and tree-based fold props.
+ * Find a foldable range for the line starting at [lineStart] and ending at [lineEnd],
+ * using registered fold services and tree-based fold props.
  */
-fun foldable(state: EditorState, lineStart: DocPos): FoldRange? {
-    // Try fold services first
+fun foldable(
+    state: EditorState,
+    lineStart: DocPos,
+    lineEnd: DocPos = state.doc.lineAt(lineStart).to
+): FoldRange? {
     for (service in state.facet(foldService)) {
         val range = service(state, lineStart)
         if (range != null) return range
     }
-
-    // Try tree-based folding
-    val tree = syntaxTree(state)
-    val line = state.doc.lineAt(lineStart)
-    val lineEnd = line.to
-    if (tree.length < lineEnd.value) return null
-
-    return syntaxFolding(tree, state, lineStart, lineEnd)
+    return syntaxFolding(state, lineStart.value, lineEnd.value)
 }
 
-private fun syntaxFolding(
-    tree: Tree,
-    state: EditorState,
-    lineStart: DocPos,
-    lineEnd: DocPos
-): FoldRange? {
-    var onlyInner = false
-    var cur: SyntaxNode? = tree.resolveInner(lineEnd.value, 1)
-    while (cur != null) {
-        if (cur.to <= lineEnd.value || cur.from > lineEnd.value) {
-            cur = cur.parent
-            continue
-        }
-        if (cur.from < lineStart.value) onlyInner = true
-        val strategy = cur.type.prop(foldNodeProp)
-        if (strategy != null &&
-            (cur.to < tree.length - 50 || tree.length == state.doc.length || !onlyInner)
+/**
+ * Walk the nodes covering [end] from innermost to outermost, keeping the outermost foldable
+ * range that starts on the line, and stopping at the first node starting before the line once
+ * one is found.
+ */
+private fun syntaxFolding(state: EditorState, start: Int, end: Int): FoldRange? {
+    val tree = syntaxTree(state)
+    if (tree.length < end) return null
+    var found: FoldRange? = null
+    var iter: NodeIterator? = tree.resolveStack(end, 1)
+    while (iter != null) {
+        val cur = iter.node
+        iter = iter.next
+        if (cur.to <= end || cur.from > end) continue
+        if (found != null && cur.from < start) break
+        val prop = cur.type.prop(foldNodeProp)
+        if (prop != null &&
+            (cur.to < tree.length - 50 || tree.length == state.doc.length || !isUnfinished(cur))
         ) {
-            val range = strategy(cur, state)
-            if (range != null &&
-                range.from <= lineEnd &&
-                range.from >= lineStart &&
-                range.to > lineEnd
+            val value = prop(cur, state)
+            if (value != null &&
+                value.from.value <= end &&
+                value.from.value >= start &&
+                value.to.value > end
             ) {
-                return range
+                found = value
             }
         }
-        cur = cur.parent
     }
-    return null
+    return found
+}
+
+private fun isUnfinished(node: SyntaxNode): Boolean {
+    val ch = node.lastChild ?: return false
+    return ch.to == node.to && ch.type.isError
 }
 
 // --- Fold commands ---
 
-/** Fold the code at the current cursor line. */
-val foldCode: (EditorSession) -> Boolean = { view ->
-    val state = view.state
-    val line = state.doc.lineAt(state.selection.main.head)
-    val range = foldable(state, line.from)
-    if (range != null) {
+/** Fold the lines that are selected, if possible. */
+val foldCode: (EditorSession) -> Boolean = fold@{ view ->
+    for (line in selectedLines(view.state)) {
+        val range = foldable(view.state, line.from, line.to) ?: continue
         view.dispatch(
-            TransactionSpec(
-                effects = listOf(foldEffect.of(range))
-            )
+            TransactionSpec(effects = maybeEnable(view.state, listOf(foldEffect.of(range))))
         )
-        true
-    } else {
-        false
+        return@fold true
+    }
+    false
+}
+
+/** Unfold folded ranges on selected lines. */
+val unfoldCode: (EditorSession) -> Boolean = unfold@{ view ->
+    if (view.state.field(foldState, require = false) == null) return@unfold false
+    val effects = selectedLines(view.state).mapNotNull { line ->
+        findFold(view.state, line.from, line.to)?.let { unfoldEffect.of(it) }
+    }
+    if (effects.isNotEmpty()) view.dispatch(TransactionSpec(effects = effects))
+    effects.isNotEmpty()
+}
+
+/**
+ * Find the foldable region containing the given line block, looking backwards through the
+ * preceding lines for one that reaches into it.
+ */
+private fun foldableContainer(state: EditorState, lineBlock: FoldRange): FoldRange? {
+    var line = lineBlock
+    while (true) {
+        val foldableRegion = foldable(state, line.from, line.to)
+        if (foldableRegion != null && foldableRegion.to > lineBlock.from) return foldableRegion
+        if (line.from == DocPos.ZERO) return null
+        line = lineBlockAt(state, line.from - 1)
     }
 }
 
-/** Unfold the code at the current cursor position. */
-val unfoldCode: (EditorSession) -> Boolean = { view ->
-    val state = view.state
-    val pos = state.selection.main.head
-    val folded = foldedRanges(state)
-    var found = false
-    folded.between(pos, pos) { from, to, _ ->
-        view.dispatch(
-            TransactionSpec(
-                effects = listOf(unfoldEffect.of(FoldRange(DocPos(from), DocPos(to))))
-            )
-        )
-        found = true
-        false
-    }
-    found
-}
-
-/** Toggle fold at the current cursor line. */
+/**
+ * Toggle folding at cursors. Unfolds if there is an existing fold starting in that line, tries
+ * to find a foldable range around it otherwise.
+ */
 val toggleFold: (EditorSession) -> Boolean = { view ->
-    val state = view.state
-    val pos = state.selection.main.head
-    val folded = foldedRanges(state)
-    var isFolded = false
-    folded.between(pos, pos) { _, _, _ ->
-        isFolded = true
-        false
-    }
-    if (isFolded) unfoldCode(view) else foldCode(view)
-}
-
-/** Fold all foldable ranges in the document. */
-val foldAll: (EditorSession) -> Boolean = { view ->
-    val state = view.state
     val effects = mutableListOf<StateEffect<*>>()
-    for (lineNum in 1..state.doc.lines) {
-        val line = state.doc.line(LineNumber(lineNum))
-        val range = foldable(state, line.from)
-        if (range != null) {
-            effects.add(foldEffect.of(range))
+    for (line in selectedLines(view.state)) {
+        val folded = findFold(view.state, line.from, line.to)
+        if (folded != null) {
+            effects.add(unfoldEffect.of(folded))
+        } else {
+            foldableContainer(view.state, line)?.let { effects.add(foldEffect.of(it)) }
         }
     }
     if (effects.isNotEmpty()) {
-        view.dispatch(TransactionSpec(effects = effects))
-        true
-    } else {
-        false
+        view.dispatch(TransactionSpec(effects = maybeEnable(view.state, effects)))
     }
+    effects.isNotEmpty()
+}
+
+/**
+ * Fold all top-level foldable ranges. Ranges nested inside a range that gets folded are
+ * skipped.
+ */
+val foldAll: (EditorSession) -> Boolean = { view ->
+    val state = view.state
+    val effects = mutableListOf<StateEffect<*>>()
+    var pos = DocPos.ZERO
+    while (pos < state.doc.endPos) {
+        val line = lineBlockAt(state, pos)
+        val range = foldable(state, line.from, line.to)
+        if (range != null) effects.add(foldEffect.of(range))
+        pos = (if (range != null) lineBlockAt(state, range.to) else line).to + 1
+    }
+    if (effects.isNotEmpty()) {
+        view.dispatch(TransactionSpec(effects = maybeEnable(state, effects)))
+    }
+    effects.isNotEmpty()
 }
 
 /** Unfold all folded ranges. */
-val unfoldAll: (EditorSession) -> Boolean = { view ->
-    val state = view.state
-    val folded = foldedRanges(state)
+val unfoldAll: (EditorSession) -> Boolean = unfold@{ view ->
+    val field = view.state.field(foldState, require = false)
+    if (field == null || field.size == 0) return@unfold false
     val effects = mutableListOf<StateEffect<*>>()
-    folded.between(DocPos.ZERO, state.doc.endPos) { from, to, _ ->
+    field.between(DocPos.ZERO, view.state.doc.endPos) { from, to, _ ->
         effects.add(unfoldEffect.of(FoldRange(DocPos(from), DocPos(to))))
-        true
+        null
     }
-    if (effects.isNotEmpty()) {
-        view.dispatch(TransactionSpec(effects = effects))
-        true
-    } else {
-        false
-    }
+    view.dispatch(TransactionSpec(effects = effects))
+    true
 }
 
 /** Default fold key bindings. */

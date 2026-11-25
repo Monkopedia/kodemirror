@@ -49,7 +49,8 @@ public final class com/monkopedia/kodemirror/language/FoldKt {
 	public static final fun codeFolding ()Lcom/monkopedia/kodemirror/state/Extension;
 	public static final fun foldGutter ()Lcom/monkopedia/kodemirror/state/Extension;
 	public static final fun foldInside (Lcom/monkopedia/kodemirror/lezer/common/SyntaxNode;)Lcom/monkopedia/kodemirror/language/FoldRange;
-	public static final fun foldable-FCwYIAs (Lcom/monkopedia/kodemirror/state/EditorState;I)Lcom/monkopedia/kodemirror/language/FoldRange;
+	public static final fun foldable-sX5c8NE (Lcom/monkopedia/kodemirror/state/EditorState;II)Lcom/monkopedia/kodemirror/language/FoldRange;
+	public static synthetic fun foldable-sX5c8NE$default (Lcom/monkopedia/kodemirror/state/EditorState;IIILjava/lang/Object;)Lcom/monkopedia/kodemirror/language/FoldRange;
 	public static final fun foldedRanges (Lcom/monkopedia/kodemirror/state/EditorState;)Lcom/monkopedia/kodemirror/state/RangeSet;
 	public static final fun getFoldAll ()Lkotlin/jvm/functions/Function1;
 	public static final fun getFoldCode ()Lkotlin/jvm/functions/Function1;

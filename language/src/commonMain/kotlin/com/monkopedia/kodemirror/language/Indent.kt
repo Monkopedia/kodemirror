@@ -218,15 +218,13 @@ fun getIndentation(
         if (result != null) return result
     }
 
-    // Try tree-based indentation
+    // Try tree-based indentation, when the tree reaches [pos]
     val tree = syntaxTree(state)
-    if (tree.length > 0) {
-        return getTreeIndent(
-            TreeIndentContext(state, pos, simulateBreak, simulateDoubleBreak)
-        )
+    return if (tree.length >= pos.value) {
+        getTreeIndent(TreeIndentContext(state, pos, simulateBreak, simulateDoubleBreak))
+    } else {
+        null
     }
-
-    return null
 }
 
 private fun getTreeIndent(cx: TreeIndentContext): Int? = indentFrom(cx.node, cx.pos, cx)
@@ -330,12 +328,12 @@ fun indentRange(state: EditorState, from: DocPos, to: DocPos): ChangeSpec? {
 
     for (lineNum in startLine.number.value..endLine.number.value) {
         val line = state.doc.line(LineNumber(lineNum))
-        val desired = getIndentation(state, line.from) ?: continue
-        val current = countIndent(line.text, state.tabSize)
-        if (current == desired) continue
-
+        var desired = getIndentation(state, line.from) ?: continue
+        // Whitespace-only lines are emptied rather than indented.
+        if (line.text.all(::isJsSpace)) desired = 0
         val currentLen = currentIndentLength(line.text)
         val newIndent = indentString(state, desired)
+        if (line.text.substring(0, currentLen) == newIndent) continue
         changes.add(
             ChangeSpec.Single(
                 line.from,
@@ -381,19 +379,16 @@ fun continuedIndent(units: Int = 1, except: Regex? = null): (TreeIndentContext) 
 }
 
 /**
- * Standard indent strategy: don't indent (return 0 columns).
+ * Standard indent strategy: align a node's content to its base indentation.
  */
-val flatIndent: (TreeIndentContext) -> Int? = { 0 }
+val flatIndent: (TreeIndentContext) -> Int? = { it.baseIndent }
 
 /** Count the number of columns in the leading whitespace of a string. */
 internal fun countIndent(text: String, tabSize: Int = 4): Int {
     var cols = 0
     for (ch in text) {
-        when (ch) {
-            ' ' -> cols++
-            '\t' -> cols += tabSize - (cols % tabSize)
-            else -> break
-        }
+        if (!isJsSpace(ch)) break
+        cols += if (ch == '\t') tabSize - (cols % tabSize) else 1
     }
     return cols
 }
@@ -401,7 +396,7 @@ internal fun countIndent(text: String, tabSize: Int = 4): Int {
 /** Get the length (in characters) of the leading whitespace. */
 internal fun currentIndentLength(text: String): Int {
     var i = 0
-    while (i < text.length && (text[i] == ' ' || text[i] == '\t')) i++
+    while (i < text.length && isJsSpace(text[i])) i++
     return i
 }
 

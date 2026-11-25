@@ -80,10 +80,12 @@ class IndentTest {
     }
 
     @Test
-    fun getIndentationReturnsNullWithoutServiceOrTree() {
+    fun getIndentationWithoutServiceOrLanguageOnlyAnswersWithinTheTree() {
+        // Upstream: the empty tree (length 0) still reaches pos 0, which indents to 0;
+        // positions past the tree get null.
         val state = createState("hello")
-        val result = getIndentation(state, DocPos.ZERO)
-        assertNull(result)
+        assertEquals(0, getIndentation(state, DocPos.ZERO))
+        assertNull(getIndentation(state, DocPos(3)))
     }
 
     @Test

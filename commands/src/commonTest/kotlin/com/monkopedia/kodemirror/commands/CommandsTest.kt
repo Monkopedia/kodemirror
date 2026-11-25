@@ -202,4 +202,14 @@ class CommandsTest {
         assertEquals(DocPos(4), view.state.selection.main.from)
         assertEquals(DocPos(8), view.state.selection.main.to)
     }
+
+    // Expected heads from @codemirror/commands run on the same input (#450).
+    @Test
+    fun cursorMatchingBracketJumpsAcrossTheBracketPair() {
+        for ((cursor, expected) in listOf(0 to 3, 3 to 0, 1 to 2, 2 to 1)) {
+            val view = createView("(a)", cursor)
+            cursorMatchingBracket(view)
+            assertEquals(DocPos(expected), view.state.selection.main.head, "from $cursor")
+        }
+    }
 }

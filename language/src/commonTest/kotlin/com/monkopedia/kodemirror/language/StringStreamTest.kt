@@ -263,4 +263,16 @@ class StringStreamTest {
         val stream = StringStream("hi", 4, 2)
         assertFalse(stream.match("hello"))
     }
+
+    @Test
+    fun eatSpaceAndIndentationUseJavaScriptWhitespace() {
+        // Upstream tests `/[\s\u00a0]/`: ideographic space, em space and form feed are whitespace.
+        for (text in listOf("\u3000x", "\u2003x", "\u000cx")) {
+            val stream = StringStream(text, 4, 2)
+            assertTrue(stream.eatSpace(), text)
+            assertEquals(1, stream.pos, text)
+            assertEquals(1, StringStream(text, 4, 2).indentation(), text)
+        }
+        assertFalse(StringStream("\u200bx", 4, 2).eatSpace())
+    }
 }

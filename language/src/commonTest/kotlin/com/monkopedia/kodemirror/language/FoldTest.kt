@@ -18,12 +18,15 @@
  */
 package com.monkopedia.kodemirror.language
 
+import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.ExtensionList
+import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asDoc
+import com.monkopedia.kodemirror.state.asInsert
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -153,5 +156,86 @@ class FoldTest {
             true
         }
         assertEquals(0, count)
+    }
+
+    // Expected values below come from @codemirror/language 6.12.2 run on the same input (#450).
+    private val grid = "0123456789\n0123456789\n0123456789\n0123456789"
+
+    private fun ranges(state: EditorState): List<Pair<Int, Int>> {
+        val r = mutableListOf<Pair<Int, Int>>()
+        foldedRanges(state).between(DocPos.ZERO, DocPos(state.doc.length)) { a, b, _ ->
+            r += a to b
+            null
+        }
+        return r
+    }
+
+    private fun fold(a: Int, b: Int) = foldEffect.of(FoldRange(DocPos(a), DocPos(b)))
+
+    private fun EditorState.apply(spec: TransactionSpec) = update(spec).state
+
+    @Test
+    fun foldBeforeAnExistingFoldIsInsertedInOrder() {
+        val state = createState(grid, codeFolding())
+            .apply(TransactionSpec(effects = listOf(fold(25, 30))))
+            .apply(TransactionSpec(effects = listOf(fold(2, 8))))
+        assertEquals(listOf(2 to 8, 25 to 30), ranges(state))
+    }
+
+    @Test
+    fun foldingAnExistingRangeAgainIsIgnored() {
+        val state = createState(grid, codeFolding())
+            .apply(TransactionSpec(effects = listOf(fold(2, 8))))
+            .apply(TransactionSpec(effects = listOf(fold(25, 30))))
+            .apply(TransactionSpec(effects = listOf(fold(2, 8))))
+        assertEquals(listOf(2 to 8, 25 to 30), ranges(state))
+    }
+
+    @Test
+    fun unfoldingAnOuterFoldKeepsNestedFolds() {
+        val state = createState(grid, codeFolding())
+            .apply(TransactionSpec(effects = listOf(fold(1, 40), fold(13, 20))))
+            .apply(
+                TransactionSpec(effects = listOf(unfoldEffect.of(FoldRange(DocPos(1), DocPos(40)))))
+            )
+        assertEquals(listOf(13 to 20), ranges(state))
+    }
+
+    @Test
+    fun deletingInsideAFoldClearsIt() {
+        val folded = createState(grid, codeFolding())
+            .apply(TransactionSpec(effects = listOf(fold(13, 20))))
+        val deleteInside = ChangeSpec.Single(DocPos(15), DocPos(16), "".asInsert())
+        val deleted = folded.apply(
+            TransactionSpec(changes = deleteInside, userEvent = "delete.backward")
+        )
+        assertEquals(emptyList(), ranges(deleted))
+        // A non-delete change in the same place only maps the fold.
+        val typed = folded.apply(TransactionSpec(changes = deleteInside, userEvent = "input.type"))
+        assertEquals(listOf(13 to 19), ranges(typed))
+    }
+
+    @Test
+    fun deletionKeepsFoldsThatOnlyAbutIt() {
+        val state = createState(grid, codeFolding())
+            .apply(TransactionSpec(effects = listOf(fold(2, 15), fold(16, 18), fold(20, 25))))
+            .apply(
+                TransactionSpec(
+                    changes = ChangeSpec.Single(DocPos(15), DocPos(20), "".asInsert()),
+                    userEvent = "delete.forward"
+                )
+            )
+        assertEquals(listOf(2 to 15, 15 to 20), ranges(state))
+    }
+
+    @Test
+    fun selectionHeadInsideAFoldClearsIt() {
+        val folded = createState(grid, codeFolding())
+            .apply(TransactionSpec(effects = listOf(fold(13, 20))))
+        val inside = folded.apply(TransactionSpec(selection = SelectionSpec.CursorSpec(DocPos(16))))
+        assertEquals(emptyList(), ranges(inside))
+        // A head on the fold's boundary leaves it in place.
+        val atEdge = folded.apply(TransactionSpec(selection = SelectionSpec.CursorSpec(DocPos(20))))
+        assertEquals(listOf(13 to 20), ranges(atEdge))
     }
 }

@@ -73,7 +73,8 @@ class MatchBracketsTest {
     @Test
     fun matchBackward() {
         val state = createState("(hello)")
-        val result = matchBrackets(state, DocPos(6), -1)
+        // dir < 0 looks at the bracket ending at pos
+        val result = matchBrackets(state, DocPos(7), -1)
         assertNotNull(result)
         assertTrue(result.matched)
         assertEquals(DocPos(6), result.start.from)
@@ -125,8 +126,8 @@ class MatchBracketsTest {
     @Test
     fun nestedBracketsBackwardOuter() {
         val state = createState("((a))")
-        // Match outer closing paren at position 4
-        val result = matchBrackets(state, DocPos(4), -1)
+        // Match outer closing paren at position 4 (ending at 5)
+        val result = matchBrackets(state, DocPos(5), -1)
         assertNotNull(result)
         assertTrue(result.matched)
         val end = result.end
@@ -137,8 +138,8 @@ class MatchBracketsTest {
     @Test
     fun nestedBracketsBackwardInner() {
         val state = createState("((a))")
-        // Match inner closing paren at position 3
-        val result = matchBrackets(state, DocPos(3), -1)
+        // Match inner closing paren at position 3 (ending at 4)
+        val result = matchBrackets(state, DocPos(4), -1)
         assertNotNull(result)
         assertTrue(result.matched)
         val end = result.end
@@ -151,5 +152,49 @@ class MatchBracketsTest {
         val state = createState("()")
         assertNull(matchBrackets(state, DocPos(-1), 1))
         assertNull(matchBrackets(state, DocPos(2), 1))
+    }
+
+    // Expected values below come from @codemirror/language 6.12.2 run on the same input (#450).
+    private fun describe(
+        doc: String,
+        pos: Int,
+        dir: Int,
+        config: BracketMatchingConfig = BracketMatchingConfig()
+    ) = matchBrackets(createState(doc), DocPos(pos), dir, config)?.let {
+        "${it.start.from.value}-${it.start.to.value}>" +
+            (it.end?.let { e -> "${e.from.value}-${e.to.value}" } ?: "none") + ":${it.matched}"
+    }
+
+    @Test
+    fun dirSelectsTheBracketBeforeOrAfterPos() {
+        assertNull(describe("()", 0, -1))
+        assertEquals("0-1>1-2:true", describe("()", 0, 1))
+        assertNull(describe("()", 1, -1))
+        assertNull(describe("()", 1, 1))
+        assertEquals("1-2>0-1:true", describe("()", 2, -1))
+        assertEquals("1-2>3-4:true", describe("a(b)c", 1, 1))
+        assertEquals("3-4>1-2:true", describe("a(b)c", 4, -1))
+    }
+
+    @Test
+    fun mismatchedBracketsReportTheFirstClosingBracketAsUnmatched() {
+        assertEquals("0-1>3-4:false", describe("([)]", 0, 1))
+        assertEquals("1-2>2-3:false", describe("([)]", 1, 1))
+        assertEquals("2-3>1-2:false", describe("([)]", 3, -1))
+        assertEquals("0-1>2-3:false", describe("(a]", 0, 1))
+    }
+
+    @Test
+    fun configBracketsReplaceTheDefaultSet() {
+        val angle = BracketMatchingConfig(brackets = "<>")
+        assertEquals("0-1>2-3:true", describe("<a>", 0, 1, angle))
+        assertNull(describe("<a>", 0, 1))
+        assertNull(describe("(a)", 0, 1, angle))
+    }
+
+    @Test
+    fun noPhantomBracketAtDocumentEnd() {
+        // Upstream reports an unmatched bracket at [len, len + 1] here; there is no character.
+        assertNull(describe("()", 2, 1))
     }
 }
