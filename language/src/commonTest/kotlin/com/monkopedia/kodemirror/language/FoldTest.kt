@@ -102,7 +102,7 @@ class FoldTest {
 
     @Test
     fun foldableWithFoldServiceReturnsFoldRange() {
-        val service: (EditorState, DocPos) -> FoldRange? = { _, lineStart ->
+        val service: (EditorState, DocPos, DocPos) -> FoldRange? = { _, lineStart, _ ->
             if (lineStart == DocPos.ZERO) FoldRange(DocPos(5), DocPos(18)) else null
         }
         val state = createState(
@@ -237,5 +237,21 @@ class FoldTest {
         // A head on the fold's boundary leaves it in place.
         val atEdge = folded.apply(TransactionSpec(selection = SelectionSpec.CursorSpec(DocPos(20))))
         assertEquals(listOf(13 to 20), ranges(atEdge))
+    }
+
+    @Test
+    fun foldServiceReceivesTheLineBlockEnd() {
+        // Upstream calls services with (state, lineStart, lineEnd): [0, 1] and [3, 5] here.
+        val seen = mutableListOf<Pair<Int, Int>>()
+        val state = createState(
+            "ab\ncd",
+            foldService.of { _, start, end ->
+                seen += start.value to end.value
+                null
+            }
+        )
+        foldable(state, DocPos.ZERO, DocPos(1))
+        foldable(state, DocPos(3))
+        assertEquals(listOf(0 to 1, 3 to 5), seen)
     }
 }

@@ -64,11 +64,18 @@ data class FoldRange(val from: DocPos, val to: DocPos)
 /**
  * Facet for registering fold range providers.
  *
- * A fold service receives the state and a line-start position,
- * and returns a [FoldRange] if that line can be folded.
+ * A fold service receives the state and the start and end of a line block, and returns a
+ * [FoldRange] if that line can be folded.
  */
 val foldService:
-    Facet<(EditorState, DocPos) -> FoldRange?, List<(EditorState, DocPos) -> FoldRange?>> =
+    Facet<
+        (
+            EditorState,
+            DocPos,
+            DocPos
+        ) -> FoldRange?,
+        List<(EditorState, DocPos, DocPos) -> FoldRange?>
+        > =
     Facet.define()
 
 /**
@@ -288,7 +295,7 @@ fun foldable(
     lineEnd: DocPos = state.doc.lineAt(lineStart).to
 ): FoldRange? {
     for (service in state.facet(foldService)) {
-        val range = service(state, lineStart)
+        val range = service(state, lineStart, lineEnd)
         if (range != null) return range
     }
     return syntaxFolding(state, lineStart.value, lineEnd.value)

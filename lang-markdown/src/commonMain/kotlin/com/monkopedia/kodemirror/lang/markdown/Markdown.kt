@@ -97,14 +97,14 @@ private fun findSectionEnd(headerNode: SyntaxNode, level: Int): Int {
     return last.to
 }
 
-val headerIndent: Extension = foldService.of { state, start ->
-    var node: SyntaxNode? = syntaxTree(state).resolveInner(start.value, -1)
+val headerIndent: Extension = foldService.of { state, start, end ->
+    var node: SyntaxNode? = syntaxTree(state).resolveInner(end.value, -1)
     while (node != null) {
         if (DocPos(node.from) < start) break
         val heading = node.type.prop(headingProp)
         if (heading != null) {
             val upto = findSectionEnd(node, heading)
-            if (DocPos(upto) > start) return@of FoldRange(start, DocPos(upto))
+            if (DocPos(upto) > end) return@of FoldRange(end, DocPos(upto))
         }
         node = node.parent
     }
