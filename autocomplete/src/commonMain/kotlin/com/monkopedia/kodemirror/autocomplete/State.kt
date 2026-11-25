@@ -254,7 +254,7 @@ internal class CompletionDialog(
         ): CompletionDialog? {
             val pending = active.any { it.isPending }
             if (prev != null && !didSetActive && pending) return prev.setDisabled()
-            val options = mergeCompletions(active, state)
+            val options = sortOptions(active, state)
             if (options.isEmpty()) return if (prev != null && pending) prev.setDisabled() else null
             var selected = if (conf.selectOnOpen) 0 else -1
             if (prev != null && prev.selected != selected && prev.selected != -1) {

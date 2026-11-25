@@ -199,16 +199,19 @@ final class com.monkopedia.kodemirror.autocomplete/CompletionResult { // com.mon
 }
 
 final class com.monkopedia.kodemirror.autocomplete/CompletionSection { // com.monkopedia.kodemirror.autocomplete/CompletionSection|null[0]
-    constructor <init>(kotlin/String, kotlin/Int = ...) // com.monkopedia.kodemirror.autocomplete/CompletionSection.<init>|<init>(kotlin.String;kotlin.Int){}[0]
+    constructor <init>(kotlin/String, kotlin/Int? = ..., kotlin/Boolean = ...) // com.monkopedia.kodemirror.autocomplete/CompletionSection.<init>|<init>(kotlin.String;kotlin.Int?;kotlin.Boolean){}[0]
 
+    final val dynamicRank // com.monkopedia.kodemirror.autocomplete/CompletionSection.dynamicRank|{}dynamicRank[0]
+        final fun <get-dynamicRank>(): kotlin/Boolean // com.monkopedia.kodemirror.autocomplete/CompletionSection.dynamicRank.<get-dynamicRank>|<get-dynamicRank>(){}[0]
     final val name // com.monkopedia.kodemirror.autocomplete/CompletionSection.name|{}name[0]
         final fun <get-name>(): kotlin/String // com.monkopedia.kodemirror.autocomplete/CompletionSection.name.<get-name>|<get-name>(){}[0]
     final val rank // com.monkopedia.kodemirror.autocomplete/CompletionSection.rank|{}rank[0]
-        final fun <get-rank>(): kotlin/Int // com.monkopedia.kodemirror.autocomplete/CompletionSection.rank.<get-rank>|<get-rank>(){}[0]
+        final fun <get-rank>(): kotlin/Int? // com.monkopedia.kodemirror.autocomplete/CompletionSection.rank.<get-rank>|<get-rank>(){}[0]
 
     final fun component1(): kotlin/String // com.monkopedia.kodemirror.autocomplete/CompletionSection.component1|component1(){}[0]
-    final fun component2(): kotlin/Int // com.monkopedia.kodemirror.autocomplete/CompletionSection.component2|component2(){}[0]
-    final fun copy(kotlin/String = ..., kotlin/Int = ...): com.monkopedia.kodemirror.autocomplete/CompletionSection // com.monkopedia.kodemirror.autocomplete/CompletionSection.copy|copy(kotlin.String;kotlin.Int){}[0]
+    final fun component2(): kotlin/Int? // com.monkopedia.kodemirror.autocomplete/CompletionSection.component2|component2(){}[0]
+    final fun component3(): kotlin/Boolean // com.monkopedia.kodemirror.autocomplete/CompletionSection.component3|component3(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/Int? = ..., kotlin/Boolean = ...): com.monkopedia.kodemirror.autocomplete/CompletionSection // com.monkopedia.kodemirror.autocomplete/CompletionSection.copy|copy(kotlin.String;kotlin.Int?;kotlin.Boolean){}[0]
     final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.autocomplete/CompletionSection.equals|equals(kotlin.Any?){}[0]
     final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.autocomplete/CompletionSection.hashCode|hashCode(){}[0]
     final fun toString(): kotlin/String // com.monkopedia.kodemirror.autocomplete/CompletionSection.toString|toString(){}[0]

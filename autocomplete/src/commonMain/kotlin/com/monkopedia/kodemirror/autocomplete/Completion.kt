@@ -70,8 +70,21 @@ data class Completion(
     val sortText: String? = null
 )
 
-/** A named section for grouping completions. */
-data class CompletionSection(val name: String, val rank: Int = 0)
+/**
+ * A named section for grouping completions, as upstream's `CompletionSection`.
+ *
+ * @param name The section's name, which identifies it: options whose sections share a
+ *   name are in the same section, and the first one seen supplies its rank.
+ * @param rank Where the section sorts: lower ranks first. Sections without a rank come
+ *   after every ranked one, ordered by name.
+ * @param dynamicRank Rank the section by its best-matching option instead (upstream's
+ *   `rank: "dynamic"`), among other dynamically ranked sections. Overrides [rank].
+ */
+data class CompletionSection(
+    val name: String,
+    val rank: Int? = null,
+    val dynamicRank: Boolean = false
+)
 
 /**
  * The result of a completion source query.

@@ -146,7 +146,7 @@ class ExplicitCompletionSessionTest {
         val view = createView(fromSource("one two"))
         startCompletion(view)
         typeChar(view, "o")
-        assertEquals("active", completionStatus(view.state))
+        assertEquals(listOf("one"), currentCompletions(view.state).map { it.label })
         // A space does not span the word `validFor`, so the source is asked again,
         // still explicitly, and completes at the bare cursor (upstream 6.20.1, probe
         // row X1 in the #422 PR).
