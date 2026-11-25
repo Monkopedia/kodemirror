@@ -411,10 +411,9 @@ internal class Parse(
         // Try to use a cached tree fragment. Upstream gates this on nothing but
         // the presence of a fragment cursor -- it has not tokenised yet at this
         // point, which is why reuse is still attempted at a position where no
-        // tokenizer produces a token.
-        if (!parser.hasWrappers()) {
-            if (useCachedResult(stack)) return true
-        }
+        // tokenizer produces a token. A parse wrapper sits around this parse
+        // and does not stop it reusing fragments.
+        if (useCachedResult(stack)) return true
 
         // Default reduce (no token needed). Upstream returns here without ever
         // calling `getActions`, so a default-reduce state does not tokenise --
