@@ -317,19 +317,73 @@ class CursorMotionTest {
     }
 
     @Test
-    fun moveVerticallyFallsBackToLogicalLineWithoutGeometry() {
-        // No layout geometry (coordsAtPos returns null) — must fall back to
-        // whole-logical-line motion rather than failing. This mirrors the
-        // headless path vim's moveByDisplayLines relies on.
+    fun moveVerticallyReturnsInputUnchangedWithoutGeometry() {
+        // No layout geometry at all (coordsAtPos returns null, as headless): moveVertically
+        // does not move, and returns the input unchanged to signal that no visual move was
+        // possible, so callers can fall back themselves. It does NOT step by logical line;
+        // that fallback needs coordsAtPos to succeed (see below). A headless test driving
+        // ArrowUp/ArrowDown therefore proves nothing (#236).
         val session = object : FakeEditorSession(state(wrappedDoc)) {
             override fun coordsAtPos(pos: Int, side: Int): Rect? = null
             override fun posAtCoords(x: Float, y: Float): Int? = null
         }
         val sel = EditorSelection.cursor(DocPos(3))
         val moved = moveVertically(session, sel, forward = true)
-        // coordsAtPos == null -> moveVertically returns the input unchanged,
-        // signalling "no visual move possible" so callers can fall back.
-        assertEquals(DocPos(3), moved.head)
+        assertEquals(sel, moved)
+    }
+
+    /** Geometry for the cursor's own row, but no position for the row it moves to. */
+    private fun noTargetSession(doc: String): EditorSession =
+        object : FakeEditorSession(state(doc)) {
+            override fun coordsAtPos(pos: Int, side: Int): Rect? = Rect(0f, 0f, 10f, 20f)
+            override fun posAtCoords(x: Float, y: Float): Int? = null
+        }
+
+    @Test
+    fun moveVerticallyFallsBackToLogicalLineWhenTargetRowHasNoPosition() {
+        // coordsAtPos succeeds and posAtCoords fails: step a whole logical line, keeping the
+        // column (#236).
+        val doc = "abcdef\nxy\nuvwxyz"
+        val down = moveVertically(noTargetSession(doc), EditorSelection.cursor(DocPos(4)), true)
+        // Line 2 is only 2 long: clamped, with the goal column remembered.
+        assertEquals(DocPos(9), down.head)
+        assertEquals(4, down.goalColumn)
+        val again = moveVertically(noTargetSession(doc), down, forward = true)
+        assertEquals(DocPos(14), again.head)
+        val up = moveVertically(noTargetSession(doc), EditorSelection.cursor(DocPos(9)), false)
+        assertEquals(DocPos(2), up.head)
+    }
+
+    @Test
+    fun moveVerticallyFallbackExtendsAndStopsAtTheDocumentEdges() {
+        val doc = "abcdef\nuvwxyz"
+        val extended = moveVertically(
+            noTargetSession(doc),
+            EditorSelection.cursor(DocPos(2)),
+            forward = true,
+            extend = true
+        )
+        assertEquals(DocPos(2), extended.anchor)
+        assertEquals(DocPos(9), extended.head)
+        val atLast = EditorSelection.cursor(DocPos(9))
+        assertEquals(atLast, moveVertically(noTargetSession(doc), atLast, forward = true))
+        val atFirst = EditorSelection.cursor(DocPos(2))
+        assertEquals(atFirst, moveVertically(noTargetSession(doc), atFirst, forward = false))
+    }
+
+    @Test
+    fun moveVerticallyFallsBackWhenTargetRowSnapsBackToTheHead() {
+        // posAtCoords resolving the adjacent row to the head itself (an inter-line gap) is the
+        // other way into the logical-line fallback.
+        val doc = "abcdef\nuvwxyz"
+        val session = object : FakeEditorSession(state(doc)) {
+            override fun coordsAtPos(pos: Int, side: Int): Rect? = Rect(0f, 0f, 10f, 20f)
+            override fun posAtCoords(x: Float, y: Float): Int? = 3
+        }
+        assertEquals(
+            DocPos(10),
+            moveVertically(session, EditorSelection.cursor(DocPos(3)), true).head
+        )
     }
 }
 
