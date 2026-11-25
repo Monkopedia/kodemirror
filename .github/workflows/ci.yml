@@ -67,6 +67,13 @@ jobs:
         run: |
           python3 .github/scripts/test-changelog.py
           python3 .github/scripts/changelog.py check ${BASE_SHA:+--base-ref "$BASE_SHA"}
+      # A test calling runComposeUiTest / runTest (or a helper returning one) from a block body
+      # passes on wasmJs without evaluating anything: the framework awaits the function's value,
+      # which is then Unit. JVM still fails such a test, so only a source check catches it (#361).
+      - name: Check async test shape
+        run: |
+          python3 .github/scripts/test-check-async-test-shape.py
+          python3 .github/scripts/check-async-test-shape.py
       # Memory samples for runs that finish (#423); a lost runner uploads nothing, not even its
       # job log, so this cannot explain a loss, only how close a passing run came to one.
       - name: Start memory sampler
