@@ -376,6 +376,11 @@ class Tree(
         propValues[propId] = value
     }
 
+    // Upstream's `CachedNode`/`CachedInnerNode`: the last node resolved in this tree, so that a
+    // nearby query climbs a short way from it instead of descending from the top (#330).
+    private var cachedNode: SyntaxNode? = null
+    private var cachedInnerNode: SyntaxNode? = null
+
     /** The top node of this tree (wraps the tree as a SyntaxNode). */
     val topNode: SyntaxNode get() = TreeNode(this, 0, null, 0)
 
@@ -395,7 +400,8 @@ class Tree(
      * This does not enter [overlays][MountedTree.overlay]; use
      * [resolveInner] when you want the innermost overlaid node.
      */
-    fun resolve(pos: Int, side: Int = 0): SyntaxNode = resolveNode(topNode, pos, side, false)
+    fun resolve(pos: Int, side: Int = 0): SyntaxNode =
+        resolveNode(cachedNode ?: topNode, pos, side, false).also { cachedNode = it }
 
     /**
      * Like [resolve], but enters [overlaid][MountedTree.overlay] nodes,
@@ -403,7 +409,8 @@ class Tree(
      * [pos], with parent links going through all parent structure, including
      * the host trees.
      */
-    fun resolveInner(pos: Int, side: Int = 0): SyntaxNode = resolveNode(topNode, pos, side, true)
+    fun resolveInner(pos: Int, side: Int = 0): SyntaxNode =
+        resolveNode(cachedInnerNode ?: topNode, pos, side, true).also { cachedInnerNode = it }
 
     /**
      * Returns a [NodeIterator] over all nodes around [pos], from small to big, including those
