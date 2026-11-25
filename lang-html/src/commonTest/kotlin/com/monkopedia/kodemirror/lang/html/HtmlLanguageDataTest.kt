@@ -24,6 +24,7 @@ import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.ExtensionList
+import com.monkopedia.kodemirror.state.LanguageDataKey
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asDoc
@@ -78,5 +79,27 @@ class HtmlLanguageDataTest {
         assertEquals("my-element", word("<my-elem|ent>"))
         // Inside a nested language, that language's data applies.
         assertEquals("\$foo", word("<script>let \$fo|o = 1</script>"))
+    }
+
+    @Test
+    fun scriptContentUsesTheScriptsData() {
+        // Inside the script body, on the side facing into it. npm also gives "$" at the outer
+        // sides of both edges (8/-1 and 13/+1) by entering the mount with
+        // IterMode.EnterBracketed; that needs html's script mount marked bracketed (#474), so
+        // those two positions are left until it lands.
+        val st = EditorState.create(
+            EditorStateConfig(doc = "<script>let a</script>".asDoc(), extensions = html().extension)
+        )
+        val wordChars = listOf(8 to 1, 10 to -1, 13 to -1).map { (pos, side) ->
+            st.languageDataAt(LanguageDataKey.WORD_CHARS, DocPos(pos), side)
+        }
+        assertEquals(List(3) { listOf("\$") }, wordChars)
+    }
+
+    @Test
+    fun wordCharsReachPastTheTreeBuffers() {
+        // Large enough that the tag sits in a subtree, not a flat buffer, below the top node.
+        val filler = "<p>filler text here</p>\n".repeat(200)
+        assertEquals("my-element", word(filler + "<my-ele|ment>" + filler))
     }
 }

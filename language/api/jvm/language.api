@@ -143,8 +143,10 @@ public final class com/monkopedia/kodemirror/language/IndentKt {
 
 public final class com/monkopedia/kodemirror/language/LRLanguage : com/monkopedia/kodemirror/language/Language {
 	public static final field Companion Lcom/monkopedia/kodemirror/language/LRLanguage$Companion;
-	public fun <init> (Lcom/monkopedia/kodemirror/lezer/common/Parser;Ljava/lang/String;Lcom/monkopedia/kodemirror/state/Facet;)V
-	public synthetic fun <init> (Lcom/monkopedia/kodemirror/lezer/common/Parser;Ljava/lang/String;Lcom/monkopedia/kodemirror/state/Facet;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/monkopedia/kodemirror/lezer/lr/LRParser;Ljava/lang/String;Lcom/monkopedia/kodemirror/state/Facet;)V
+	public synthetic fun <init> (Lcom/monkopedia/kodemirror/lezer/lr/LRParser;Ljava/lang/String;Lcom/monkopedia/kodemirror/state/Facet;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun configure (Lcom/monkopedia/kodemirror/lezer/lr/ParserConfig;Ljava/lang/String;)Lcom/monkopedia/kodemirror/language/LRLanguage;
+	public static synthetic fun configure$default (Lcom/monkopedia/kodemirror/language/LRLanguage;Lcom/monkopedia/kodemirror/lezer/lr/ParserConfig;Ljava/lang/String;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/language/LRLanguage;
 }
 
 public final class com/monkopedia/kodemirror/language/LRLanguage$Companion {

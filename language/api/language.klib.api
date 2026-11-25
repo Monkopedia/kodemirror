@@ -133,7 +133,9 @@ final class com.monkopedia.kodemirror.language/HighlightStyleBuilder { // com.mo
 }
 
 final class com.monkopedia.kodemirror.language/LRLanguage : com.monkopedia.kodemirror.language/Language { // com.monkopedia.kodemirror.language/LRLanguage|null[0]
-    constructor <init>(com.monkopedia.kodemirror.lezer.common/Parser, kotlin/String = ..., com.monkopedia.kodemirror.state/Facet<kotlin.collections/Map<kotlin/String, kotlin/Any?>, kotlin.collections/List<kotlin.collections/Map<kotlin/String, kotlin/Any?>>> = ...) // com.monkopedia.kodemirror.language/LRLanguage.<init>|<init>(com.monkopedia.kodemirror.lezer.common.Parser;kotlin.String;com.monkopedia.kodemirror.state.Facet<kotlin.collections.Map<kotlin.String,kotlin.Any?>,kotlin.collections.List<kotlin.collections.Map<kotlin.String,kotlin.Any?>>>){}[0]
+    constructor <init>(com.monkopedia.kodemirror.lezer.lr/LRParser, kotlin/String = ..., com.monkopedia.kodemirror.state/Facet<kotlin.collections/Map<kotlin/String, kotlin/Any?>, kotlin.collections/List<kotlin.collections/Map<kotlin/String, kotlin/Any?>>> = ...) // com.monkopedia.kodemirror.language/LRLanguage.<init>|<init>(com.monkopedia.kodemirror.lezer.lr.LRParser;kotlin.String;com.monkopedia.kodemirror.state.Facet<kotlin.collections.Map<kotlin.String,kotlin.Any?>,kotlin.collections.List<kotlin.collections.Map<kotlin.String,kotlin.Any?>>>){}[0]
+
+    final fun configure(com.monkopedia.kodemirror.lezer.lr/ParserConfig, kotlin/String? = ...): com.monkopedia.kodemirror.language/LRLanguage // com.monkopedia.kodemirror.language/LRLanguage.configure|configure(com.monkopedia.kodemirror.lezer.lr.ParserConfig;kotlin.String?){}[0]
 
     final object Companion { // com.monkopedia.kodemirror.language/LRLanguage.Companion|null[0]
         final fun define(com.monkopedia.kodemirror.lezer.lr/LRParser, kotlin/String = ..., kotlin.collections/Map<kotlin/String, kotlin/Any?>? = ...): com.monkopedia.kodemirror.language/LRLanguage // com.monkopedia.kodemirror.language/LRLanguage.Companion.define|define(com.monkopedia.kodemirror.lezer.lr.LRParser;kotlin.String;kotlin.collections.Map<kotlin.String,kotlin.Any?>?){}[0]

@@ -28,6 +28,7 @@ import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.LanguageDataKey
 import com.monkopedia.kodemirror.state.SelectionSpec
+import com.monkopedia.kodemirror.state.StateEffect
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.allowMultipleSelections
 import com.monkopedia.kodemirror.state.asDoc
@@ -35,6 +36,7 @@ import com.monkopedia.kodemirror.state.asInsert
 import com.monkopedia.kodemirror.state.languageData
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * Language data publication and the `indentOnInput` filter (#449). Expected values come from
@@ -146,6 +148,12 @@ class LanguageDataTest {
     }
 
     @Test
+    fun reindentUpToColumn200() {
+        val spaces = " ".repeat(199)
+        assertEquals("a {\n}" to 5, type("a {\n$spaces", 203, "}"))
+    }
+
+    @Test
     fun noReindentBeyondColumn200() {
         val spaces = " ".repeat(201)
         assertEquals("a {\n$spaces}" to 206, type("a {\n$spaces", 205, "}"))
@@ -198,5 +206,55 @@ class LanguageDataTest {
         ).state
         assertEquals("a {\n}\n}", next.doc.toString())
         assertEquals(listOf(5, 7), next.selection.ranges.map { it.head.value })
+    }
+
+    @Test
+    fun reindentKeepsTheInputsEffectsAnnotationsAndScroll() {
+        val marker = StateEffect.define<Int>()
+        val rules = languageData.of { _, _, _ ->
+            listOf(mapOf("indentOnInput" to Regex("^\\s*\\}")))
+        }
+        val state = EditorState.create(
+            EditorStateConfig(
+                doc = "a {\n  ".asDoc(),
+                extensions = ExtensionList(listOf(indentOnInput, service, rules))
+            )
+        )
+        val tr = state.update(
+            TransactionSpec(
+                changes = ChangeSpec.Single(DocPos(6), DocPos(6), "}".asInsert()),
+                selection = SelectionSpec.CursorSpec(DocPos(7)),
+                effects = listOf(marker.of(7)),
+                userEvent = "input.type",
+                scrollIntoView = true
+            )
+        )
+        assertEquals("a {\n}", tr.state.doc.toString())
+        assertTrue(tr.isUserEvent("input.type"))
+        assertTrue(tr.effects.any { it.asType(marker) != null })
+        assertTrue(tr.scrollIntoView)
+    }
+
+    @Test
+    fun rulesAreReadAtTheHeadBeforeTheInput() {
+        // This provider only answers up to position 6, where the cursor was before typing.
+        val rules = languageData.of { _, pos, _ ->
+            if (pos.value <= 6) listOf(mapOf("indentOnInput" to Regex("^\\s*\\}"))) else emptyList()
+        }
+        val state = EditorState.create(
+            EditorStateConfig(
+                doc = "a {\n  ".asDoc(),
+                selection = SelectionSpec.CursorSpec(DocPos(6)),
+                extensions = ExtensionList(listOf(indentOnInput, service, rules))
+            )
+        )
+        val next = state.update(
+            TransactionSpec(
+                changes = ChangeSpec.Single(DocPos(6), DocPos(6), "}".asInsert()),
+                selection = SelectionSpec.CursorSpec(DocPos(7)),
+                userEvent = "input.type"
+            )
+        ).state
+        assertEquals("a {\n}", next.doc.toString())
     }
 }

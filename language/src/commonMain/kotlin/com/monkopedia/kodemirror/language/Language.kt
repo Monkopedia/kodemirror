@@ -190,7 +190,7 @@ private fun topNodeAt(state: EditorState, pos: Int, side: Int): SyntaxNode {
         var node: SyntaxNode? = tree
         while (node != null) {
             if (node.type.isTop) tree = node
-            node = node.enter(pos, side, IterMode.EXCLUDE_BUFFERS)
+            node = node.enter(pos, side, IterMode.EXCLUDE_BUFFERS or IterMode.ENTER_BRACKETED)
         }
     }
     return tree
@@ -223,10 +223,17 @@ fun <T> languageDataAt(state: EditorState, facet: Facet<T, *>, pos: Int): T? {
  * and integrating with [languageDataProp].
  */
 class LRLanguage(
-    parser: Parser,
+    private val lrParser: LRParser,
     name: String = "",
     data: LanguageDataFacet = defineLanguageFacet()
-) : Language(parser, name, data) {
+) : Language(lrParser, name, data) {
+    /**
+     * Create a new instance of this language with a reconfigured version of its parser and
+     * optionally a new name. The new language shares this one's [data].
+     */
+    fun configure(config: ParserConfig, name: String? = null): LRLanguage =
+        LRLanguage(lrParser.configure(config), name ?: this.name, data)
+
     companion object {
         /**
          * Define a new LR-parser-based language. [languageData] becomes the base value of the
