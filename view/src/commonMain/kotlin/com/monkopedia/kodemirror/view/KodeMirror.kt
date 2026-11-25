@@ -52,6 +52,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.RememberObserver
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -151,21 +152,10 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
     val compositionScope = rememberCoroutineScope()
     impl.backingCoroutineScope = compositionScope
 
-    // Publish the host on the session before its plugins are built. Bringing a
-    // plugin up can dispatch a transaction — the parse worker resuming a parse
-    // that was parked while the view was detached does exactly that, and the
-    // linter dispatches its first diagnostics from its constructor — and
-    // EditorSessionImpl.dispatchTransaction reaches plugins through
-    // session.pluginHost. Assigning that field only further down, after the
-    // plugins had already been built, meant such a transaction updated no
-    // plugins at all: the tree got re-parsed and the highlighter was never
-    // told (#284).
-    val pluginHost = remember(session) {
-        ViewPluginHost(session).also {
-            impl.pluginHost = it
-            it.syncToState(state, null)
-        }
-    }
+    // The view plugins are built during composition, so the first frame already
+    // has their decorations. PluginHostOwner destroys them however this
+    // composition ends, including when it is abandoned (#288).
+    val pluginHost = remember(session) { PluginHostOwner(impl) }.host
     val lineLayoutCache = remember(session) { LineLayoutCache() }
     // Deferred layouts: onGloballyPositioned fires bottom-up (children before
     // parent), so editorCoordinates is null on the first layout pass. We store
@@ -183,18 +173,16 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
 
     // Wire up session internals eagerly (during composition, not in a side
     // effect) so that TooltipLayer and the hover pointerInput block can access
-    // pluginHost on the very first frame.  DisposableEffect still handles
-    // cleanup on dispose; the repeated assignments on recomposition are
-    // harmless because remember() always returns the same instances.
+    // pluginHost on the very first frame.  DisposableEffect (and PluginHostOwner,
+    // for the plugin host) still handles cleanup; the repeated assignments on
+    // recomposition are harmless because remember() always returns the same instances.
     impl.pluginHost = pluginHost
     impl.lineLayoutCache = lineLayoutCache
     impl.clipboardManager = clipboardManager
 
     DisposableEffect(session) {
         onDispose {
-            pluginHost.destroy()
             lineLayoutCache.clear()
-            impl.pluginHost = null
             impl.lineLayoutCache = null
             impl.backingCoroutineScope = null
             impl.clipboardManager = null
@@ -885,6 +873,35 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                 }
             }
         }
+    }
+}
+
+/**
+ * Builds the view plugins of one [KodeMirror] composition and destroys them when that
+ * composition forgets them or is abandoned (#288). An abandoned composition runs no effects,
+ * so a `DisposableEffect` alone would leak the plugins built while composing it.
+ */
+private class PluginHostOwner(private val session: EditorSessionImpl) : RememberObserver {
+    // Publish the host on the session before its plugins are built. Bringing a plugin up can
+    // dispatch a transaction (the parse worker resuming a parse parked while the view was
+    // detached does, and the linter dispatches its first diagnostics from its constructor), and
+    // EditorSessionImpl.dispatchTransaction reaches plugins through session.pluginHost.
+    // Assigning it only after the plugins were built meant such a transaction updated no plugins
+    // at all: the tree got re-parsed and the highlighter was never told (#284).
+    val host = ViewPluginHost(session).also {
+        session.pluginHost = it
+        it.syncToState(session.state, null)
+    }
+
+    override fun onRemembered() {}
+
+    override fun onForgotten() = release()
+
+    override fun onAbandoned() = release()
+
+    private fun release() {
+        host.destroy()
+        if (session.pluginHost === host) session.pluginHost = null
     }
 }
 
