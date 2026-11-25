@@ -35,6 +35,7 @@ import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.Prec
+import com.monkopedia.kodemirror.state.Range
 import com.monkopedia.kodemirror.state.RangeSetBuilder
 import com.monkopedia.kodemirror.state.StateEffect
 import com.monkopedia.kodemirror.state.StateEffectType
@@ -217,17 +218,14 @@ private val inlineChangedLine = Decoration.line(
     LineDecorationSpec(cssClass = "cm-inlineChangedLine")
 )
 
-private fun chunkCanDisplayInline(
-    state: EditorState,
-    chunk: Chunk
-): List<Pair<DocPos, Decoration>>? {
+private fun chunkCanDisplayInline(state: EditorState, chunk: Chunk): List<Range<Decoration>>? {
     val a = state.field(originalDoc)
     val b = state.doc
     val linesA = a.lineAt(chunk.endA).number - a.lineAt(chunk.fromA).number + 1
     val linesB = b.lineAt(chunk.endB).number - b.lineAt(chunk.fromB).number + 1
     if (linesA != linesB || linesA >= 10) return null
 
-    val deco = mutableListOf<Pair<DocPos, Decoration>>()
+    val deco = mutableListOf<Range<Decoration>>()
     var deleteCount = 0
     val bA = chunk.fromA
     val bB = chunk.fromB
@@ -238,19 +236,16 @@ private fun chunkCanDisplayInline(
             val deleted = a.sliceString(bA + ch.fromA, bA + ch.toA)
             if (deleted.contains('\n')) return null
             deco.add(
-                Pair(
-                    bB + ch.fromB,
-                    Decoration.widget(
-                        WidgetDecorationSpec(
-                            widget = InlineDeletionWidget(deleted),
-                            side = -1
-                        )
+                Decoration.widget(
+                    WidgetDecorationSpec(
+                        widget = InlineDeletionWidget(deleted),
+                        side = -1
                     )
-                )
+                ).range(bB + ch.fromB)
             )
         }
         if (ch.fromB < ch.toB) {
-            deco.add(Pair(bB + ch.fromB, changedText))
+            deco.add(changedText.range(bB + ch.fromB, bB + ch.toB))
         }
     }
 
@@ -269,10 +264,9 @@ private fun overrideChunkInline(
     while (true) {
         gutterBuilder?.add(line.from, line.from, inlineChangedLineGutterMarker)
         builder.add(line.from, line.from, inlineChangedLine)
-        while (i < inline.size && inline[i].first <= line.to) {
-            val (pos, dec) = inline[i]
-            builder.add(pos, pos, dec)
-            i++
+        while (i < inline.size && inline[i].to <= line.to) {
+            val r = inline[i++]
+            builder.add(r.from, r.to, r.value)
         }
         if (line.to >= chunk.endB) break
         line = state.doc.lineAt(line.to + 1)

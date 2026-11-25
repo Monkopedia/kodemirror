@@ -61,6 +61,14 @@ class EditorState private constructor(
     internal val status: Array<SlotStatus> =
         config.statusTemplate.toTypedArray()
 
+    /**
+     * The scope resolving this state's slots while it is being initialized (upstream's
+     * `computeSlot`), so slots read through [field]/[facet] during init are computed on
+     * demand. Cleared once initialization has finished, so the state does not keep the
+     * transaction or old state it was built from reachable.
+     */
+    internal var initScope: SlotInitScope? = null
+
     init {
         if (tr != null) tr._state = this
         val scope = when (initMode) {
@@ -74,9 +82,11 @@ class EditorState private constructor(
                     initMode.oldState
                 )
         }
+        initScope = scope
         for (i in config.dynamicSlots.indices) {
             scope.ensureAddr(i shl 1)
         }
+        initScope = null
     }
 
     /**

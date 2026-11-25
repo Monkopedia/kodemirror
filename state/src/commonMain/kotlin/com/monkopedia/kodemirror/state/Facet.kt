@@ -762,9 +762,9 @@ internal sealed interface InitMode {
  * methods that resolve dependencies using the correct [DynamicSlot] method
  * (create / update / reconfigure) for the current initialization mode.
  *
- * After initialization completes, the scope is discarded — post-init access
- * to facets and fields goes through [EditorState.facet] / [EditorState.field],
- * which use a simplified [ensureAddr] that only asserts slots are computed.
+ * While initialization runs, [EditorState.initScope] points at this scope so that
+ * [EditorState.facet] / [EditorState.field] calls made from slot code also
+ * compute slots on demand. It is cleared once initialization completes.
  */
 internal sealed class SlotInitScope(val state: EditorState) {
     fun ensureAddr(addr: Int): SlotStatus {
@@ -1035,19 +1035,17 @@ private fun flatten(
 }
 
 /**
- * Post-initialization slot address check. All dynamic slots must have been
- * computed during [EditorState] init via [SlotInitScope]. This function
- * only verifies that the slot is already computed; it cannot compute new slots.
+ * Ensure the slot at [addr] is computed. While [state] is initializing, an uncomputed slot is
+ * computed on demand through its [EditorState.initScope] (which also detects cycles); after
+ * initialization every slot is already computed.
  */
 internal fun ensureAddr(state: EditorState, addr: Int): SlotStatus {
     if (addr and 1 != 0) return SlotStatus.Computed
-    val idx = addr shr 1
-    val status = state.status[idx]
+    val status = state.status[addr shr 1]
     if (status.isComputed) return status
-    error(
-        "Dynamic slot $idx was not computed " +
-            "during initialization"
-    )
+    val scope = state.initScope
+        ?: error("Dynamic slot ${addr shr 1} was not computed during initialization")
+    return scope.ensureAddr(addr)
 }
 
 internal fun getAddr(state: EditorState, addr: Int): Any? = if (addr and 1 != 0) {

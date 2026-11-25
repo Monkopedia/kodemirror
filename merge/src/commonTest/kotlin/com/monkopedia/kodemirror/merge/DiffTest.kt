@@ -238,4 +238,57 @@ class PresentableDiffTest {
     @Test
     fun alignsDeletionsToLineBoundaries() =
         test("aligns deletions to line boundaries", " x,\n[ y,/]\n z,\n")
+
+    // Expected values below come from @codemirror/merge 6.12.0 (#451).
+    private fun fmt(d: List<Change>): String =
+        d.joinToString(";") { "${it.fromA},${it.toA},${it.fromB},${it.toB}" }
+
+    @Test
+    fun loneSurrogatesDoNotThrow() {
+        // Trimming leaves an inverted range starting past the end of b, then of a.
+        assertEquals("0,0,0,1;1,2,2,2", fmt(diff("\ud83do\ude00", "\r\ud83d\ude00")))
+        assertEquals("0,2,0,2", fmt(presentableDiff("\ud83do\ude00", "\r\ud83d\ude00")))
+        assertEquals("0,1,0,0;2,2,1,2;3,3,3,4", fmt(diff("9\ud83d\udc00", "\ud83da\udc00x")))
+        assertEquals("0,3,0,4", fmt(presentableDiff("9\ud83d\udc00", "\ud83da\udc00x")))
+        val a = "-ba9\ud835\udc00\udc00"
+        val b = "9-\ud835\udc00baba\udc00\ud835y"
+        assertEquals("0,3,0,0;4,4,1,2;6,6,4,8;7,7,9,11", fmt(diff(a, b)))
+        assertEquals("0,7,0,11", fmt(presentableDiff(a, b)))
+    }
+
+    @Test
+    fun wordAlignmentUsesAlphabeticAndNumberCodePoints() {
+        // Astral letters (Mathematical Bold, CJK Extension B).
+        assertEquals(
+            "0,6,0,6",
+            fmt(
+                presentableDiff(
+                    "\ud835\udc00\ud835\udc01\ud835\udc02 x",
+                    "\ud835\udc00\ud835\udc17\ud835\udc02 x"
+                )
+            )
+        )
+        assertEquals(
+            "0,6,0,6",
+            fmt(
+                presentableDiff(
+                    "\ud840\udc00\ud840\udc01\ud840\udc02 x",
+                    "\ud840\udc00\ud840\udc03\ud840\udc02 x"
+                )
+            )
+        )
+        // Devanagari vowel signs and Roman numerals are Alphabetic / Number but not letters.
+        assertEquals(
+            "0,3,0,3",
+            fmt(presentableDiff("\u0915\u093e\u092e x", "\u0915\u094b\u092e x"))
+        )
+        assertEquals("0,3,0,3", fmt(presentableDiff("a\u216bb c", "a\u216ab c")))
+        // `_` is not a word character, even beside a lone surrogate.
+        assertEquals("0,2,0,1", fmt(presentableDiff("_\udc00b", "bb")))
+        // Control: plain CJK letters were already words.
+        assertEquals(
+            "2,5,2,5",
+            fmt(presentableDiff("a \u4e2d\u6587\u5b57 b", "a \u4e2d\u6587\u5b50 b"))
+        )
+    }
 }
