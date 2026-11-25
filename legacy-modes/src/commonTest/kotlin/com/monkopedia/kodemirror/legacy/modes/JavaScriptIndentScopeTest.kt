@@ -264,4 +264,53 @@ class JavaScriptIndentScopeTest {
     fun issueDocumentWhitespaceOnlyLine() {
         assertEquals(listOf(0, 0, 0, 0), js("foo();\n   \nbar()\n"))
     }
+
+    // Fixtures pinning indent() conditions no other test reached (#356). Expected columns come
+    // from upstream run as described above (the harness is in the PR's evidence).
+
+    /** A `}` line closes over a pending `stat`/`form` scope (here an `if` with no body). */
+    @Test
+    fun closingBraceClosesOverAnOpenStatement() {
+        assertEquals(listOf(0, 2, 0, 0), js("function f() {\n  if (x)\n}\n"))
+        assertEquals(listOf(0, 2, 0, 2, 0, 0, 0), js("if (a) {\n  b\n} else {\n  c\n}\nd\n"))
+    }
+
+    /** Fluent chaining and leading operators keep the statement open instead of popping it. */
+    @Test
+    fun leadingOperatorContinuesTheStatement() {
+        assertEquals(listOf(0, 2, 2, 0), js("foo()\n  .bar()\n  .baz()\n"))
+        assertEquals(listOf(0, 2, 0), js("x = a\n  + b\n"))
+        assertEquals(listOf(0, 0, 0, 0), js("var x = 1\n, y = 2\n, z = 3\n"))
+    }
+
+    /** A pending `popcontext` (from the `for`) doesn't stop the `if`'s scopes from popping. */
+    @Test
+    fun pendingPopContextDoesNotBlockScopePops() {
+        assertEquals(listOf(0, 0, 0), js("for (;;) if (a) b;\nx\n"))
+        assertEquals(listOf(0, 2, 0, 0), js("for (;;)\n  if (a) b;\nc;\n"))
+    }
+
+    /** Allman braces: the block's `{` lines up with the statement that opened it. */
+    @Test
+    fun allmanBraceAlignsWithItsStatement() {
+        assertEquals(listOf(0, 0, 2, 0, 0), js("if (x)\n{\n  y()\n}\n"))
+        assertEquals(listOf(0, 0, 2, 0, 0), js("for (;;)\n{\n  a()\n}\n"))
+        assertEquals(listOf(0, 0, 0, 0), js("while (x)\n{\n}\n"))
+    }
+
+    /** A trailing comma continues the statement onto the next line. */
+    @Test
+    fun trailingCommaContinuesTheStatement() {
+        assertEquals(listOf(0, 2, 0), js("a = 1,\nb = 2\n"))
+        assertEquals(listOf(0, 2, 0), js("foo(),\nbar()\n"))
+    }
+
+    /** `doubleIndentSwitch = false` indents `case` bodies one level instead of two. */
+    @Test
+    fun singleIndentSwitch() {
+        val switchDoc = "switch (x) {\ncase 1:\na()\nbreak\ndefault:\nb()\n}\n"
+        assertEquals(listOf(0, 2, 4, 4, 2, 4, 0, 0), js(switchDoc))
+        val single = mkJavaScript(JavaScriptConfig(name = "javascript", doubleIndentSwitch = false))
+        assertEquals(listOf(0, 2, 2, 2, 2, 2, 0, 0), indents(single, switchDoc))
+    }
 }
