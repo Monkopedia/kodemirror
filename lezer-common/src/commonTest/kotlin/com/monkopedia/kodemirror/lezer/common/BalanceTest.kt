@@ -22,6 +22,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeSource
 
 /**
  * Tests for [Tree.balance].
@@ -241,5 +243,38 @@ class BalanceTest {
                 ",_(" + List(9) { "a" }.joinToString(",") + "))",
             shape(balanced)
         )
+    }
+
+    /**
+     * `nodeSize` is memoised (#280). Reused subtrees can be shared, and without the memo its walk
+     * over this DAG is exponential in [SHARED_DEPTH]: 2^26 nodes behind each child, about 17 s on
+     * the JVM. With the memo each shared node is sized once and the call is immediate, so the
+     * bound below has a wide margin either way. The result matches npm `@lezer/common` 1.5.1,
+     * which balances this instantly and keeps the nine children as they are.
+     */
+    @Test
+    fun balanceSizesSharedSubtreesOnce() {
+        var shared = Tree(NodeType.none, emptyList(), emptyList(), 1)
+        repeat(SHARED_DEPTH) {
+            shared =
+                Tree(
+                    NodeType.none,
+                    listOf(shared, shared),
+                    listOf(0, shared.length),
+                    shared.length * 2
+                )
+        }
+        val top = Tree(t, List(9) { shared }, List(9) { it * shared.length }, 9 * shared.length)
+        val start = TimeSource.Monotonic.markNow()
+        val balanced = top.balance()
+        val elapsed = start.elapsedNow()
+        assertTrue(elapsed < 2.seconds, "balance took $elapsed")
+        assertEquals(9, balanced.children.size)
+        assertTrue(balanced.children.all { it === shared })
+        assertEquals(List(9) { it * shared.length }, balanced.positions)
+    }
+
+    private companion object {
+        const val SHARED_DEPTH = 25
     }
 }
