@@ -68,7 +68,10 @@ private external fun detectOsFromBrowser(): String
         // Only consume the event (preventDefault) when the editor's keymap
         // actually handled it. Keys with no editor binding propagate to the
         // browser so reserved shortcuts (Ctrl+Tab, Ctrl+W, ...) still work.
-        if (globalThis.__kodeKeyCallback) {
+        // A key an input method is composing with (keyCode 229, isComposing)
+        // belongs to the composition, not the keymap; CodeMirror skips these
+        // too (#294).
+        if (globalThis.__kodeKeyCallback && !e.isComposing && e.keyCode !== 229) {
             var handled = globalThis.__kodeKeyCallback(
                 e.key, e.ctrlKey, e.altKey, e.metaKey, e.shiftKey
             );
