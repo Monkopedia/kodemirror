@@ -426,6 +426,14 @@ internal class Parse(
             return true
         }
 
+        // Fold an over-deep stack back before reading actions, so pathological
+        // nesting cannot grow it without bound.
+        if (stack.stack.size >= Rec.CUT_DEPTH) {
+            while (stack.stack.size > Rec.CUT_TO && stack.forceReduce()) {
+                // forceReduce does the work
+            }
+        }
+
         val actions = tokens.getActions(stack)
         var i = 0
         while (i < actions.size) {
