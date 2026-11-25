@@ -22,12 +22,17 @@ import com.monkopedia.kodemirror.language.FoldRange
 import com.monkopedia.kodemirror.language.codeFolding
 import com.monkopedia.kodemirror.language.foldAll
 import com.monkopedia.kodemirror.language.foldCode
+import com.monkopedia.kodemirror.language.foldEffect
 import com.monkopedia.kodemirror.language.foldable
 import com.monkopedia.kodemirror.language.foldedRanges
 import com.monkopedia.kodemirror.language.indentRange
 import com.monkopedia.kodemirror.language.indentUnit
+import com.monkopedia.kodemirror.language.matchBrackets
+import com.monkopedia.kodemirror.language.syntaxTree
 import com.monkopedia.kodemirror.language.toggleFold
+import com.monkopedia.kodemirror.language.unfoldAll
 import com.monkopedia.kodemirror.language.unfoldCode
+import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.EditorState
@@ -38,9 +43,12 @@ import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.allowMultipleSelections
 import com.monkopedia.kodemirror.state.asDoc
+import com.monkopedia.kodemirror.state.asInsert
 import com.monkopedia.kodemirror.view.EditorSession
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -132,5 +140,93 @@ class JsFoldTest {
             "if (a) {\n  foo\n\n  bar\n}",
             s.update(TransactionSpec(changes = changes)).state.doc.toString()
         )
+    }
+
+    private val twoBlocks =
+        "function f() {\n  if (x) {\n    y()\n  }\n}\n" + "const o = {\n  p: {\n    q: 1\n  }\n}\n"
+
+    @Test
+    fun foldCodeOnAFoldedLineSeesTheWholeFoldedBlock() {
+        val view = EditorSession(state(twoBlocks, codeFolding()))
+        view.dispatch(TransactionSpec(selection = SelectionSpec.CursorSpec(DocPos(3))))
+        assertTrue(foldCode(view))
+        // The folded block runs to the end of line 5, where nothing new is foldable.
+        assertFalse(foldCode(view))
+        assertEquals(listOf(14 to 38), ranges(view.state))
+    }
+
+    @Test
+    fun foldAllKeepsAnExistingInnerFold() {
+        val view = EditorSession(state(twoBlocks, codeFolding()))
+        view.dispatch(
+            TransactionSpec(effects = listOf(foldEffect.of(FoldRange(DocPos(24), DocPos(34)))))
+        )
+        assertTrue(foldAll(view))
+        assertEquals(listOf(14 to 38, 24 to 34, 51 to 72), ranges(view.state).sortedBy { it.first })
+    }
+
+    @Test
+    fun unfoldAllReportsWhetherAnythingWasFolded() {
+        val view = EditorSession(state(nested, codeFolding()))
+        foldAll(view)
+        assertTrue(unfoldAll(view))
+        assertFalse(unfoldAll(view))
+    }
+
+    @Test
+    fun foldInsideRunsToTheNodeEndWhenTheLastChildIsAnError() {
+        assertEquals(
+            FoldRange(DocPos(14), DocPos(22)),
+            foldable(state("function f() {\n  x\n  )"), DocPos.ZERO)
+        )
+    }
+
+    @Test
+    fun unfinishedNodesAtTheEndOfAPartialTreeAreNotFolded() {
+        // Appending without a view leaves the syntax tree covering only the old document, as
+        // during an incremental parse. Upstream's isUnfinished check then skips the block whose
+        // last child is an error; this can't be set up through the npm API, so the expectation
+        // follows upstream's code.
+        val s = state("function f() {\n  x\n  )")
+        val partial = s.update(
+            TransactionSpec(
+                changes = ChangeSpec.Single(
+                    DocPos(s.doc.length),
+                    DocPos(s.doc.length),
+                    "\n".asInsert()
+                )
+            )
+        ).state
+        assertEquals(22, syntaxTree(partial).length)
+        assertNull(foldable(partial, DocPos.ZERO))
+    }
+
+    @Test
+    fun indentRangeLeavesCorrectIndentationAlone() {
+        val s = state("if (a) {\n  foo\n}")
+        assertNull(indentRange(s, DocPos.ZERO, DocPos(s.doc.length)))
+    }
+
+    private fun match(doc: String, pos: Int, dir: Int): String? =
+        matchBrackets(state(doc), DocPos(pos), dir)?.let {
+            "${it.start.from.value}-${it.start.to.value}>" +
+                (it.end?.let { e -> "${e.from.value}-${e.to.value}" } ?: "none") + ":${it.matched}"
+        }
+
+    @Test
+    fun markedBracketsCountNestedPairs() {
+        assertEquals("1-2>16-17:true", match("f(a, [1, {b: 2}])", 1, 1))
+        assertEquals("15-16>5-6:true", match("f(a, [1, {b: 2}])", 16, -1))
+        assertEquals("4-5>none:false", match("a = (b]", 4, 1))
+    }
+
+    @Test
+    fun plainBracketScanOnlyMatchesTheSameTokenType() {
+        assertEquals("10-11>12-13:true", match("x = '(' + (y)", 10, 1))
+        assertEquals("5-6>none:false", match("x = '(' + (y)", 5, 1))
+        assertEquals("1-2>5-6:true", match("f(')')", 1, 1))
+        // A bracket inside a string or comment skips brackets in other kinds of token.
+        assertEquals("1-2>none:false", match("'(' + x)", 1, 1))
+        assertEquals("3-4>none:false", match("/* ( */ x)", 3, 1))
     }
 }

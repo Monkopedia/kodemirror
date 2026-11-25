@@ -178,24 +178,16 @@ private fun matchPlainBrackets(
     maxScanDistance: Int,
     brackets: String
 ): MatchResult? {
-    val startCh = if (dir <
-        0
-    ) {
-        state.sliceDoc(DocPos(pos - 1), DocPos(pos))
-    } else {
-        state.sliceDoc(
-            DocPos(pos),
-            DocPos(
-                pos + 1
-            )
-        )
-    }
+    // The bracket ends at pos when scanning backward and starts there when scanning forward.
+    val startFrom = if (dir < 0) pos - 1 else pos
+    val startCh = state.sliceDoc(DocPos(startFrom), DocPos(startFrom + 1))
     // Upstream's `brackets.indexOf("")` is 0 at the document end, so it reports a phantom
-    // opening bracket past the last character; there is no character there to match.
+    // bracket at [length, length + 1]. That range can't be mapped through a change (upstream's
+    // bracketMatcher throws when it maps it while composing), so there is no match here.
     if (startCh.isEmpty()) return null
     val bracket = brackets.indexOf(startCh)
     if (bracket < 0 || (bracket % 2 == 0) != (dir > 0)) return null
-    val startToken = range(if (dir < 0) pos - 1 else pos, if (dir > 0) pos + 1 else pos)
+    val startToken = range(startFrom, startFrom + 1)
     val iter = state.doc.iterRange(DocPos(pos), if (dir > 0) state.doc.endPos else DocPos.ZERO)
     var depth = 0
     var distance = 0
@@ -250,48 +242,45 @@ fun bracketMatching(config: BracketMatchingConfig = BracketMatchingConfig()): Ex
 
 private class BracketMatchingPlugin(state: EditorState, private val config: BracketMatchingConfig) :
     PluginValue {
-    var decos: DecorationSet = buildDecos(state)
+    var decos: DecorationSet = bracketDeco(state, config)
 
     override fun update(update: ViewUpdate) {
         if (update.docChanged || update.selectionSet) {
-            decos = buildDecos(update.state)
+            decos = bracketDeco(update.state, config)
         }
     }
+}
 
-    private fun buildDecos(state: EditorState): DecorationSet {
-        val theme = state.facet(editorTheme)
-        val matchedDeco = Decoration.mark(
-            MarkDecorationSpec(
-                style = SpanStyle(background = theme.matchingBracketBackground),
-                cssClass = "cm-matchingBracket"
-            )
+/** The bracket highlights for every empty selection range in [state]. */
+internal fun bracketDeco(state: EditorState, config: BracketMatchingConfig): DecorationSet {
+    val theme = state.facet(editorTheme)
+    val matchedDeco = Decoration.mark(
+        MarkDecorationSpec(
+            style = SpanStyle(background = theme.matchingBracketBackground),
+            cssClass = "cm-matchingBracket"
         )
-        val unmatchedDeco = Decoration.mark(
-            MarkDecorationSpec(
-                style = SpanStyle(background = theme.nonMatchingBracketBackground),
-                cssClass = "cm-nonmatchingBracket"
-            )
+    )
+    val unmatchedDeco = Decoration.mark(
+        MarkDecorationSpec(
+            style = SpanStyle(background = theme.nonMatchingBracketBackground),
+            cssClass = "cm-nonmatchingBracket"
         )
+    )
 
-        val decorations = mutableListOf<Range<Decoration>>()
-        for (range in state.selection.ranges) {
-            if (!range.empty) continue
-            val head = range.head
-            val match = matchBrackets(state, head, -1, config)
-                ?: (if (head > DocPos.ZERO) matchBrackets(state, head - 1, 1, config) else null)
-                ?: (if (config.afterCursor) matchBrackets(state, head, 1, config) else null)
-                ?: (
-                    if (config.afterCursor && head < state.doc.endPos) {
-                        matchBrackets(state, head + 1, -1, config)
-                    } else {
-                        null
-                    }
-                    )
-                ?: continue
-            val mark = if (match.matched) matchedDeco else unmatchedDeco
-            decorations.add(mark.range(match.start.from, match.start.to))
-            match.end?.let { decorations.add(mark.range(it.from, it.to)) }
-        }
-        return RangeSet.of(decorations, sort = true)
+    val decorations = mutableListOf<Range<Decoration>>()
+    val end = state.doc.endPos
+    for (range in state.selection.ranges) {
+        if (!range.empty) continue
+        val head = range.head
+        val after = config.afterCursor
+        val match = matchBrackets(state, head, -1, config)
+            ?: (if (head > DocPos.ZERO) matchBrackets(state, head - 1, 1, config) else null)
+            ?: (if (after) matchBrackets(state, head, 1, config) else null)
+            ?: (if (after && head < end) matchBrackets(state, head + 1, -1, config) else null)
+            ?: continue
+        val mark = if (match.matched) matchedDeco else unmatchedDeco
+        decorations.add(mark.range(match.start.from, match.start.to))
+        match.end?.let { decorations.add(mark.range(it.from, it.to)) }
     }
+    return RangeSet.of(decorations, sort = true)
 }

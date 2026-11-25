@@ -18,9 +18,18 @@
  */
 package com.monkopedia.kodemirror.language
 
+import com.monkopedia.kodemirror.lezer.common.Input
+import com.monkopedia.kodemirror.lezer.common.NodeType
+import com.monkopedia.kodemirror.lezer.common.NodeTypeSpec
+import com.monkopedia.kodemirror.lezer.common.Parser
+import com.monkopedia.kodemirror.lezer.common.PartialParse
+import com.monkopedia.kodemirror.lezer.common.TextRange
+import com.monkopedia.kodemirror.lezer.common.Tree
+import com.monkopedia.kodemirror.lezer.common.TreeFragment
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
+import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.asDoc
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -196,5 +205,71 @@ class MatchBracketsTest {
     fun noPhantomBracketAtDocumentEnd() {
         // Upstream reports an unmatched bracket at [len, len + 1] here; there is no character.
         assertNull(describe("()", 2, 1))
+    }
+
+    @Test
+    fun highlightsOnlyAroundEmptySelections() {
+        fun decoCount(anchor: Int, head: Int): Int {
+            val state = EditorState.create(
+                EditorStateConfig(
+                    doc = "(a)".asDoc(),
+                    selection = SelectionSpec.CursorSpec(DocPos(anchor), DocPos(head))
+                )
+            )
+            return bracketDeco(state, BracketMatchingConfig()).size
+        }
+        assertEquals(2, decoCount(0, 0))
+        assertEquals(0, decoCount(0, 1))
+    }
+
+    // A language whose tree has every character as a flat token under the top node, so
+    // brackets are siblings rather than nested (as in grammars without bracket nesting).
+    private val flatTypes = listOf("Top", "(", ")", "[", "]", "x").mapIndexed { i, name ->
+        NodeType.define(NodeTypeSpec(name = name, id = i, top = i == 0))
+    }
+
+    private fun flatType(ch: Char) = flatTypes.find { it.name == ch.toString() } ?: flatTypes.last()
+
+    private val flatLanguage = Language(
+        object : Parser() {
+            override fun createParse(
+                input: Input,
+                fragments: List<TreeFragment>,
+                ranges: List<TextRange>
+            ) = object : PartialParse {
+                override val parsedPos: Int get() = input.length
+                override val stoppedAt: Int? get() = null
+                override fun stopAt(pos: Int) {}
+                override fun advance(): Tree {
+                    val doc = input.read(0, input.length)
+                    val children = doc.map { ch -> Tree(flatType(ch), emptyList(), emptyList(), 1) }
+                    return Tree(flatTypes[0], children, doc.indices.toList(), doc.length)
+                }
+            }
+        }
+    )
+
+    private fun describeFlat(doc: String, pos: Int, dir: Int) = matchBrackets(
+        EditorState.create(
+            EditorStateConfig(doc = doc.asDoc(), extensions = flatLanguage.extension)
+        ),
+        DocPos(pos),
+        dir
+    )?.let {
+        "${it.start.from.value}-${it.start.to.value}>" +
+            (it.end?.let { e -> "${e.from.value}-${e.to.value}" } ?: "none") + ":${it.matched}"
+    }
+
+    @Test
+    fun siblingBracketTokensAreMatchedByDepth() {
+        assertEquals("0-1>3-4:true", describeFlat("(())", 0, 1))
+        assertEquals("3-4>0-1:true", describeFlat("(())", 4, -1))
+        assertEquals("0-1>6-7:true", describeFlat("(x(x)x)", 0, 1))
+    }
+
+    @Test
+    fun siblingBracketOfTheWrongKindIsAMismatch() {
+        assertEquals("0-1>1-2:false", describeFlat("(]", 0, 1))
+        assertEquals("1-2>0-1:false", describeFlat("[)", 2, -1))
     }
 }

@@ -212,4 +212,11 @@ class CommandsTest {
             assertEquals(DocPos(expected), view.state.selection.main.head, "from $cursor")
         }
     }
+
+    @Test
+    fun cursorMatchingBracketPrefersTheBracketEndingAtTheCursor() {
+        val view = createView("(a)(b)", 3)
+        cursorMatchingBracket(view)
+        assertEquals(DocPos(0), view.state.selection.main.head)
+    }
 }
