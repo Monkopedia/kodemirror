@@ -192,8 +192,7 @@ fun EditorSession.press(capturedKey: String, times: Int = 1) {
             name = spec.name,
             nameWithoutShift = spec.nameWithoutShift,
             physicalKeyName = null,
-            isShift = spec.isShift,
-            event = null
+            isShift = spec.isShift
         )
     }
 }
@@ -299,5 +298,5 @@ fun <T> withOs(os: String, body: () -> T): T {
  */
 fun EditorSession.pressResolved(name: String) {
     val spec = pressSpec(normalizeKeyName(name))
-    runKeyBindings(this, spec.name, spec.nameWithoutShift, null, spec.isShift, null)
+    runKeyBindings(this, spec.name, spec.nameWithoutShift, null, spec.isShift)
 }
