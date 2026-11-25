@@ -18,21 +18,13 @@
  */
 package com.monkopedia.kodemirror.autocomplete
 
-import platform.Foundation.NSCharacterSet
+import com.monkopedia.kodemirror.state.CharCategory
+import com.monkopedia.kodemirror.state.fromCodePoint
+import com.monkopedia.kodemirror.state.makeCategorizer
 
-private val alphanumeric = NSCharacterSet.alphanumericCharacterSet
+private val categorize = makeCategorizer("")
 
-// Foundation's L/M/N set by code point, as :state's hasWordChar: a slight superset of
-// `\p{Alphabetic}\p{Number}` (it also counts non-Alphabetic marks such as viramas), plus the
-// enclosed letters, which are Alphabetic but category So. Keep the ranges in step with
-// :state's CharCategory.native.kt.
+// :state's native word predicate (Foundation's L/M/N set adjusted to upstream's
+// `[\p{Alphabetic}\p{Number}_]`), one code point at a time.
 internal actual fun findWords(text: String, wordChars: String): List<IntRange> =
-    wordRuns(text, wordChars) { cp ->
-        isEnclosedLetter(cp) || alphanumeric.longCharacterIsMember(cp.toUInt())
-    }
-
-// Circled, squared, negative circled and negative squared Latin letters.
-private fun isEnclosedLetter(cp: Int): Boolean = cp in 0x24b6..0x24e9 ||
-    cp in 0x1f130..0x1f149 ||
-    cp in 0x1f150..0x1f169 ||
-    cp in 0x1f170..0x1f189
+    wordRuns(text, wordChars) { cp -> categorize(fromCodePoint(cp)) == CharCategory.Word }

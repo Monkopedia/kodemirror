@@ -105,6 +105,20 @@ class CharCategoryTest {
         }
     }
 
+    // Expected values from @codemirror/state 6.5.4 (#415): a combining mark that isn't
+    // Alphabetic is not a word character on its own; Alphabetic marks and a mark after a
+    // letter are.
+    @Test
+    fun categorisesNonAlphabeticMarksAsOther() {
+        val cat = mk().charCategorizer(DocPos.ZERO)
+        for (ch in listOf("\u0301", "\u094d", "\u0bcd")) {
+            assertEquals(CharCategory.Other, cat(ch), "category of U+${ch[0].code.toString(16)}")
+        }
+        for (ch in listOf("\u093f", "\u0bbf", "e\u0301", "x\u20dd")) {
+            assertEquals(CharCategory.Word, cat(ch), "category of $ch")
+        }
+    }
+
     @Test
     fun categorisesUnicodeSpacesAsSpace() {
         val cat = mk().charCategorizer(DocPos.ZERO)

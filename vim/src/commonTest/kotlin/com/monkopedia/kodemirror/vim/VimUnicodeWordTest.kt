@@ -48,7 +48,7 @@ class VimUnicodeWordTest {
         for (word in listOf("𝐀", "𠀀", "ि", "ं", "क", "a", "_", "²", "Ⓐ")) {
             assertEquals(true, isWordChar(word), "isWordChar($word)")
         }
-        for (other in listOf("😀", "🤔", "\uD835", "\uD83D", "-", " ")) {
+        for (other in listOf("😀", "🤔", "\uD835", "\uD83D", "-", " ", "\u094D", "\u0301")) {
             assertEquals(false, isWordChar(other), "isWordChar($other)")
         }
     }
@@ -92,6 +92,15 @@ class VimUnicodeWordTest {
     @Test fun bOverHindi() = motion("हिंदी ह", 6, "b", expected = 0)
 
     @Test fun diwOnHindi() = edit("हिंदी ह", 0, "d", "i", "w", expected = " ह")
+
+    // Viramas and U+0301 are not Alphabetic, so they split a word (#415).
+    @Test fun wStopsAtAVirama() = motion("हिन्दी x", 0, "w", expected = 3)
+
+    @Test fun wAfterAVirama() = motion("हिन्दी x", 0, "w", "w", "w", expected = 7)
+
+    @Test fun wStopsAtACombiningAccent() = motion("cafe\u0301 x", 0, "w", expected = 4)
+
+    @Test fun eStopsBeforeAVirama() = motion("தமிழ் x", 0, "e", "e", expected = 4)
 
     // `*` expands to the next keyword character, skipping the non-word astral units.
     @Test fun starSkipsCjkExtB() = motion("𠀀𠀁 x 𠀀𠀁", 0, "*", expected = 5)
