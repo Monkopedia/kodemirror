@@ -23,8 +23,9 @@ import kotlin.test.assertEquals
 
 /**
  * The cursor `MixedParse.startInner` walks the base tree with is seeded at `ranges[0].from` with
- * `INCLUDE_ANONYMOUS or IGNORE_MOUNTS` (#353). Each test pins one part of that seed; expected
- * values are from npm `@lezer/common` 1.5.1 running the same synthetic parsers.
+ * `INCLUDE_ANONYMOUS or IGNORE_MOUNTS`, and only offers `nest` the nodes upstream does (#353). Each
+ * test pins one of those conditions; expected values are from npm `@lezer/common` 1.5.1 running
+ * the same synthetic parsers.
  */
 class MixCursorSeedTest {
 
@@ -190,5 +191,88 @@ class MixCursorSeedTest {
         }
         parser.parse("aa--bb")
         assertEquals(listOf(listOf(TextRange(0, 2), TextRange(4, 6))), innerRanges)
+    }
+
+    // ---- `startInner` guards on calling `nest` ----
+
+    /** A node inside a range an overlay nest already covers is never offered to `nest`. */
+    @Test
+    fun coveredNodesAreNotOfferedToNest() {
+        val doc = type("Doc", 0, top = true)
+        val block = type("Block", 1)
+        val kid = type("Kid", 2)
+        val innerTop = type("In", 3, top = true)
+        val innerParser = parserOf { _, ranges ->
+            leaf(
+                innerTop,
+                ranges.last().to - ranges.first().from
+            )
+        }
+        val base = parserOf { _, _ ->
+            Tree(doc, listOf(Tree(block, listOf(leaf(kid, 2)), listOf(2), 6)), listOf(0), 6)
+        }
+        val calls = mutableListOf<String>()
+        val parser = mixedOf(base) { node, _ ->
+            calls.add(node.name)
+            if (node.name == "Block") {
+                NestedParse(
+                    parser = innerParser,
+                    overlay = ParseOverlay.Ranges(listOf(TextRange(1, 5)))
+                )
+            } else {
+                null
+            }
+        }
+        parser.parse("abcdef")
+        assertEquals(listOf("Doc", "Block"), calls)
+    }
+
+    /** Anonymous nodes are never offered to `nest`, so nothing mounts on them. */
+    @Test
+    fun anonymousNodesAreNotOfferedToNest() {
+        val doc = type("Doc", 0, top = true)
+        val anon = NodeType.define(NodeTypeSpec(id = 1))
+        val innerTop = type("In", 2, top = true)
+        val started = mutableListOf<List<TextRange>>()
+        val recording = parserOf { _, ranges ->
+            started.add(ranges)
+            leaf(innerTop, ranges.last().to - ranges.first().from)
+        }
+        val base = parserOf { _, _ -> Tree(doc, listOf(leaf(anon, 4)), listOf(0), 4) }
+        val calls = mutableListOf<Int>()
+        val parser = mixedOf(base) { node, _ ->
+            calls.add(node.type.id)
+            if (node.type.id == 1) NestedParse(parser = recording) else null
+        }
+        val tree = parser.parse("abcd")
+        assertEquals(listOf(0), calls)
+        assertEquals(emptyList(), started)
+        assertEquals("Doc", tree.resolveInner(2, 0).name)
+    }
+
+    /** An empty node whose nest has an overlay is skipped rather than parsed. */
+    @Test
+    fun emptyNodeWithOverlayNestIsSkipped() {
+        val doc = type("Doc", 0, top = true)
+        val empty = type("Empty", 1)
+        val innerTop = type("In", 2, top = true)
+        val started = mutableListOf<List<TextRange>>()
+        val recording = parserOf { _, ranges ->
+            started.add(ranges)
+            leaf(innerTop, ranges.last().to - ranges.first().from)
+        }
+        val base = parserOf { _, _ -> Tree(doc, listOf(leaf(empty, 0)), listOf(2), 4) }
+        val parser = mixedOf(base) { node, _ ->
+            if (node.name == "Empty") {
+                NestedParse(
+                    parser = recording,
+                    overlay = ParseOverlay.Ranges(listOf(TextRange(0, 2)))
+                )
+            } else {
+                null
+            }
+        }
+        parser.parse("abcd")
+        assertEquals(emptyList(), started)
     }
 }
