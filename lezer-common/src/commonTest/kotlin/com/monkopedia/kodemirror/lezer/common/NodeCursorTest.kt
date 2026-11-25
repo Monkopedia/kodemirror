@@ -90,7 +90,7 @@ class NodeCursorTest {
         val cursor = c.cursor()
         assertEquals("c[8,9]", cursor.describe())
         assertSame(c, cursor.node)
-        assertTrue(cursor.matchContext(listOf("Pa", "Br", "Br")))
+        assertTrue(cursor.matchContext(listOf("T", "Pa", "Br", "Br")))
         assertTrue(cursor.parent())
         assertEquals("Br[7,11]", cursor.describe())
         assertTrue(cursor.parent())
@@ -99,6 +99,10 @@ class NodeCursorTest {
         assertEquals("a[12,13]", cursor.describe())
         assertTrue(cursor.nextSibling())
         assertEquals("c[14,15]", cursor.describe())
+
+        val climb = c.cursor()
+        val ancestors = generateSequence { if (climb.parent()) climb.describe() else null }.toList()
+        assertEquals(listOf("Br[7,11]", "Br[4,12]", "Pa[2,20]", "T[0,20]"), ancestors)
     }
 
     @Test
