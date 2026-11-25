@@ -110,7 +110,7 @@ class JavaScriptState(
 }
 
 @Suppress("CyclomaticComplexMethod", "LongMethod", "ReturnCount", "NestedBlockDepth")
-private fun mkJavaScript(config: JavaScriptConfig): StreamParser<JavaScriptState> {
+internal fun mkJavaScript(config: JavaScriptConfig): StreamParser<JavaScriptState> {
     val jsonMode = config.json || config.jsonld
     val jsonldMode = config.jsonld
     val isTS = config.typescript
