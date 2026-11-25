@@ -872,7 +872,11 @@ internal class BufferNode(val context: BufferContext, val _parent: BufferNode?, 
  * Mutable tree walker. Walks a [Tree] depth-first, handling both
  * [Tree] and [TreeBuffer] children.
  */
-class TreeCursor internal constructor(root: TreeNode, internal val mode: Int = 0) : SyntaxNodeRef {
+class TreeCursor internal constructor(root: TreeNode, mode: Int = 0) : SyntaxNodeRef {
+    // As upstream, ENTER_BRACKETED only applies to an explicit `enter` call, so a cursor never
+    // carries it into its own navigation (#352).
+    internal val mode: Int = mode and IterMode.ENTER_BRACKETED.inv()
+
     /**
      * Cursor over a whole tree, in that tree's own coordinates. A tree parsed over ranges is
      * built relative to `ranges[0].from` (see `MixedParse.startInner`), so a caller that needs
