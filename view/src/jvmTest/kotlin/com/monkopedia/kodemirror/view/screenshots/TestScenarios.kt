@@ -84,17 +84,16 @@ object TestScenarios {
     )
 
     /**
-     * Roborazzi compare options shared by every screenshot test.
+     * Roborazzi compare options shared by every screenshot test: an exact match.
      *
-     * With [pinnedFont] the render is intended to be byte-stable across machines,
-     * but we allow a tiny non-zero [changeThreshold][RoborazziOptions.CompareOptions]
-     * (0.1% of pixels) as a safety margin against incidental antialiasing drift
-     * between the local dev machine and the CI runner. This is small enough that a
-     * real visual regression (e.g. a missing highlight fill or a shifted line) still
-     * trips the gate, while sub-pixel noise does not turn the gate flaky.
+     * With [pinnedFont] the render is byte-stable across machines, measured for #301
+     * on the dev machine and the CI runner alike. The 0.1%-of-pixels allowance used
+     * before was 480 pixels on an 800x600 baseline, enough to hide a caret or glyph
+     * drawn in the wrong place, which is the defect this gate exists for: a 2x17 px
+     * change passed it. See `docs/roborazzi-screenshots.md` before adding tolerance.
      */
     val screenshotOptions: RoborazziOptions = RoborazziOptions(
-        compareOptions = RoborazziOptions.CompareOptions(changeThreshold = 0.001f)
+        compareOptions = RoborazziOptions.CompareOptions(changeThreshold = 0f)
     )
 
     /** Capture [path] using the shared [screenshotOptions] tolerance. */

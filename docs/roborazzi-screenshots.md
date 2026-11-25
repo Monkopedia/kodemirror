@@ -29,10 +29,18 @@ and baselines are recorded on Linux x86_64, which share that Skiko native build.
 
 ## Tolerance
 
-Even with a pinned font the comparison allows a small **0.1% pixel-change threshold**
-(`TestScenarios.screenshotOptions`, `changeThreshold = 0.001f`) as a safety margin against
-incidental antialiasing noise. It is small enough that a real regression still trips the
-gate (verified by corrupting a baseline) while sub-pixel noise does not make the gate flaky.
+The comparison is **exact** (`TestScenarios.screenshotOptions`, `changeThreshold = 0f`, which is
+also Roborazzi's own default). It used to allow 0.1% of pixels as a margin for antialiasing
+drift between machines. On these 800x600 baselines that is a 480-pixel allowance, larger than
+the defects the gate is meant to catch: a solid 20x20 block painted into a golden was reported
+`unchanged`, and so was a caret-sized (2x17 px) change (#301). The drift it allowed for was never
+measured. Measured for #301, it is zero: every baseline matches byte for byte both here and on
+the `ubuntu-latest` CI runner. A caret-sized change now fails the gate.
+
+If a future Skiko or font update makes the render differ between machines, measure the drift
+before adding tolerance back, and prefer a per-pixel colour tolerance (`maxDistance`) to a pixel
+count: antialiasing drift changes many pixels a little, a misplaced caret changes a few pixels a
+lot.
 
 ## Commands
 
