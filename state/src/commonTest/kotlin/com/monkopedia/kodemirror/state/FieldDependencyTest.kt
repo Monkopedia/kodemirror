@@ -21,6 +21,7 @@ package com.monkopedia.kodemirror.state
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -120,5 +121,20 @@ class FieldDependencyTest {
             StateField.define(StateFieldSpec(create = { it.field(self) }, update = { v, _ -> v }))
         val err = assertFailsWith<IllegalStateException> { mk(self) }
         assertTrue(err.message!!.startsWith("Cyclic dependency"), err.message)
+    }
+
+    @Test
+    fun initScopeIsClearedOnceInitializationFinishes() {
+        val later = later()
+        val early = reading(later)
+        val created = mk(early, later)
+        assertNull(created.initScope)
+        assertNull(created.update(TransactionSpec()).state.initScope)
+        val reconfigured = mk().update(
+            TransactionSpec(
+                effects = listOf(StateEffect.appendConfig.of(ExtensionList(listOf(early, later))))
+            )
+        ).state
+        assertNull(reconfigured.initScope)
     }
 }

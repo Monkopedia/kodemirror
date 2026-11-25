@@ -283,6 +283,11 @@ class PresentableDiffTest {
             fmt(presentableDiff("\u0915\u093e\u092e x", "\u0915\u094b\u092e x"))
         )
         assertEquals("0,3,0,3", fmt(presentableDiff("a\u216bb c", "a\u216ab c")))
+        // A lone surrogate at either end of the string is tested on its own.
+        assertEquals("1,2,1,2", fmt(diff("ab\ud83d", "ac\ud83d")))
+        assertEquals("0,2,0,2", fmt(presentableDiff("ab\ud83d", "ac\ud83d")))
+        assertEquals("1,2,1,2", fmt(diff("\udc00ba", "\udc00ca")))
+        assertEquals("1,3,1,3", fmt(presentableDiff("\udc00ba", "\udc00ca")))
         // `_` is not a word character, even beside a lone surrogate.
         assertEquals("0,2,0,1", fmt(presentableDiff("_\udc00b", "bb")))
         // Control: plain CJK letters were already words.

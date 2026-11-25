@@ -119,13 +119,8 @@ private class Frontier {
 
 // Like JS `slice`: an inverted range is empty. Prefix/suffix trimming can produce one when a lone
 // surrogate stops it from splitting a pair, and upstream lets that flow through.
-private fun String.sliceOrEmpty(from: Int, to: Int): String = if (from >=
-    to
-) {
-    ""
-} else {
-    substring(from, to)
-}
+private fun String.sliceOrEmpty(from: Int, to: Int): String =
+    if (from >= to) "" else substring(from, to)
 
 private fun findDiff(
     ctx: DiffContext,
