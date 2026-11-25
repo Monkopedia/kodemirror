@@ -20,12 +20,10 @@ package com.monkopedia.kodemirror.autocomplete
 
 import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
-import com.monkopedia.kodemirror.state.EditorState
-import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.TransactionSpec
-import com.monkopedia.kodemirror.state.asDoc
+import com.monkopedia.kodemirror.view.EditorSession
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -33,72 +31,41 @@ import kotlin.test.assertTrue
 
 class CompletionStateTest {
 
-    private fun createState(doc: String, cursor: Int = doc.length): EditorState =
-        EditorState.create(
-            EditorStateConfig(
-                doc = doc.asDoc(),
-                selection = SelectionSpec.CursorSpec(DocPos(cursor)),
-                extensions = completionStateField
-            )
-        )
-
-    private fun openCompletions(
-        state: EditorState,
-        result: CompletionResult,
-        explicit: Boolean = false
-    ): EditorState {
-        val tr = state.update(
-            TransactionSpec(
-                effects = listOf(
-                    startCompletionEffect.of(
-                        StartCompletion(listOf(result), explicit, state.selection.main.head)
-                    )
-                )
-            )
-        )
-        return tr.state
-    }
+    /** A session at [doc] whose one source returns [result], opened implicitly. */
+    private fun opened(doc: String, cursor: Int, result: CompletionResult): EditorSession =
+        completionSession(doc, cursor, CompletionConfig(override = listOf(fixed(result))))
+            .also { it.startImplicit() }
 
     @Test
     fun initialStateIsClosed() {
-        val state = createState("hello")
-        assertNull(completionStatus(state))
+        assertNull(completionStatus(completionState("hello")))
     }
 
     @Test
     fun startCompletionEffectOpensCompletion() {
-        val state = createState("he", cursor = 2)
         val result = CompletionResult(
             from = DocPos.ZERO,
             options = listOf(Completion(label = "hello"), Completion(label = "help")),
             validFor = Regex("\\w*")
         )
-        val updated = openCompletions(state, result)
-        assertEquals("active", completionStatus(updated))
+        assertEquals("active", completionStatus(opened("he", 2, result).state))
     }
 
     @Test
     fun closeCompletionEffectCloses() {
-        val state = createState("he", cursor = 2)
         val result = CompletionResult(
             from = DocPos.ZERO,
             options = listOf(Completion(label = "hello")),
             validFor = Regex("\\w*")
         )
-        val opened = openCompletions(state, result)
-        assertEquals("active", completionStatus(opened))
-
-        val tr = opened.update(
-            TransactionSpec(
-                effects = listOf(closeCompletionEffect.of(Unit))
-            )
-        )
-        assertNull(completionStatus(tr.state))
+        val s = opened("he", 2, result)
+        assertEquals("active", completionStatus(s.state))
+        s.dispatch(TransactionSpec(effects = listOf(closeCompletionEffect.of(Unit))))
+        assertNull(completionStatus(s.state))
     }
 
     @Test
     fun setSelectedCompletionChangesIndex() {
-        val state = createState("", cursor = 0)
         val result = CompletionResult(
             from = DocPos.ZERO,
             options = listOf(
@@ -107,20 +74,14 @@ class CompletionStateTest {
                 Completion(label = "gamma")
             )
         )
-        val opened = openCompletions(state, result)
-        assertEquals(0, selectedCompletionIndex(opened))
-
-        val tr = opened.update(
-            TransactionSpec(
-                effects = listOf(setSelectedCompletion.of(2))
-            )
-        )
-        assertEquals(2, selectedCompletionIndex(tr.state))
+        val s = opened("", 0, result)
+        assertEquals(0, selectedCompletionIndex(s.state))
+        s.dispatch(TransactionSpec(effects = listOf(setSelectedCompletion.of(2))))
+        assertEquals(2, selectedCompletionIndex(s.state))
     }
 
     @Test
     fun docChangeReFiltersWithValidFor() {
-        val state = createState("h", cursor = 1)
         val result = CompletionResult(
             from = DocPos.ZERO,
             options = listOf(
@@ -130,11 +91,9 @@ class CompletionStateTest {
             ),
             validFor = Regex("\\w*")
         )
-        val opened = openCompletions(state, result)
-        val initial = currentCompletions(opened)
-        assertEquals(2, initial.size)
-
-        val tr = opened.update(
+        val s = opened("h", 1, result)
+        assertEquals(2, currentCompletions(s.state).size)
+        s.dispatch(
             TransactionSpec(
                 changes = ChangeSpec.Single(
                     DocPos(1),
@@ -145,31 +104,26 @@ class CompletionStateTest {
                 userEvent = "input.type"
             )
         )
-        val filtered = currentCompletions(tr.state)
+        val filtered = currentCompletions(s.state)
         assertEquals(2, filtered.size)
         assertTrue(filtered.all { it.label.startsWith("hel") })
     }
 
     @Test
     fun docChangeWithoutValidForCloses() {
-        val state = createState("h", cursor = 1)
         val result = CompletionResult(
             from = DocPos.ZERO,
             options = listOf(Completion(label = "hello"))
         )
-        val opened = openCompletions(state, result)
-        assertEquals("active", completionStatus(opened))
-
-        val tr = opened.update(
+        val s = opened("h", 1, result)
+        assertEquals("active", completionStatus(s.state))
+        // Not typing: an edit that moves the cursor resets the session.
+        s.dispatch(
             TransactionSpec(
-                changes = ChangeSpec.Single(
-                    DocPos(1),
-                    DocPos(1),
-                    InsertContent.StringContent("e")
-                ),
+                changes = ChangeSpec.Single(DocPos(1), DocPos(1), InsertContent.StringContent("e")),
                 selection = SelectionSpec.CursorSpec(DocPos(2))
             )
         )
-        assertNull(completionStatus(tr.state))
+        assertNull(completionStatus(s.state))
     }
 }

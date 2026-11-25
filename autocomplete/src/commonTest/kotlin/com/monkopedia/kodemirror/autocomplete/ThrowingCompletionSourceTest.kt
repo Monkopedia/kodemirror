@@ -83,9 +83,7 @@ class ThrowingCompletionSourceTest {
                 )
             )
         )
-        return object : EditorSession by EditorSession(state) {
-            override val coroutineScope = scope
-        }
+        return PluginSession(state, scope)
     }
 
     private fun options(vararg labels: String) =
@@ -134,7 +132,7 @@ class ThrowingCompletionSourceTest {
         assertEquals(listOf("boom-async"), logged)
         startCompletion(view)
         assertEquals(listOf("alpha", "beta"), labels(view))
-        assertEquals(emptySet(), view.state.field(asyncQueryField).changes.keys)
+        assertEquals("active", completionStatus(view.state))
     }
 
     @Test
@@ -153,5 +151,7 @@ class ThrowingCompletionSourceTest {
         assertEquals(emptyList(), logged)
         assertTrue(scope.isActive)
         assertEquals(emptyList(), unhandled)
+        // It counts as no result, so the source isn't left pending.
+        assertEquals(null, completionStatus(view.state))
     }
 }

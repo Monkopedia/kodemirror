@@ -20,6 +20,7 @@ package com.monkopedia.kodemirror.autocomplete
 
 import com.monkopedia.kodemirror.state.ChangeByRangeResult
 import com.monkopedia.kodemirror.state.ChangeSpec
+import com.monkopedia.kodemirror.state.Compartment
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.EditorState
@@ -27,6 +28,7 @@ import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.SelectionSpec
+import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.allowMultipleSelections
 import com.monkopedia.kodemirror.state.asDoc
@@ -43,14 +45,21 @@ import kotlin.test.assertEquals
  */
 class ActiveResultUpdateTest {
 
+    /**
+     * A session at [doc] whose sources' [results] arrive as upstream's plugin `accept`
+     * builds them for a query that ran with the cursor at [queryPos], after the edits
+     * [replay] made while it ran (each a transaction spec, applied in turn).
+     */
     private fun open(
         doc: String,
         cursors: List<Int>,
         results: List<CompletionResult>,
         explicit: Boolean = false,
         queryPos: Int = cursors.last(),
-        config: CompletionConfig = CompletionConfig()
+        config: CompletionConfig = CompletionConfig(),
+        replay: List<(EditorSession) -> Unit> = emptyList()
     ): EditorSession {
+        val sources = results.map { r -> { _: CompletionContext -> r } }
         val s = EditorSession(
             EditorState.create(
                 EditorStateConfig(
@@ -64,22 +73,30 @@ class ActiveResultUpdateTest {
                     extensions = ExtensionList(
                         listOf(
                             allowMultipleSelections.of(true),
-                            completionConfig.of(config),
+                            completionConfig.of(config.copy(override = sources)),
                             completionStateField
                         )
                     )
                 )
             )
         )
-        s.dispatch(
-            TransactionSpec(
-                effects = listOf(
-                    startCompletionEffect.of(
-                        StartCompletion(results, explicit, DocPos(queryPos))
-                    )
-                )
-            )
-        )
+        val trs = mutableListOf<Transaction>()
+        val recorder = object : EditorSession by s {
+            override fun dispatch(vararg specs: TransactionSpec) {
+                val tr = s.state.update(*specs)
+                trs += tr
+                s.dispatchTransaction(tr)
+            }
+        }
+        replay.forEach { it(recorder) }
+        val conf = s.state.facet(completionConfig)
+        val active = results.mapIndexed { i, r ->
+            trs.fold(
+                ActiveResult.arrived(SyncSource(sources[i]), explicit, DocPos(queryPos), r)
+                    as ActiveSource
+            ) { a, tr -> a.update(tr, conf) }
+        }
+        s.dispatch(TransactionSpec(effects = listOf(setActiveEffect.of(active))))
         return s
     }
 
@@ -90,10 +107,10 @@ class ActiveResultUpdateTest {
         explicit: Boolean = false
     ) = open(doc, listOf(cursor), listOf(result), explicit)
 
-    /** Whether the last transaction asked to re-query, and with which explicit flag. */
+    /** Whether a source is pending a re-query, and with which explicit flag. */
     private fun requery(s: EditorSession): Pair<Boolean, Boolean> {
-        val cs = s.state.field(completionStateField)
-        return cs.requery to cs.explicit
+        val pending = s.state.field(completionStateField).active.find { it.isPending }
+        return (pending != null) to (pending?.explicit ?: false)
     }
 
     private fun result(from: Int, vararg labels: String = arrayOf("bar", "baz")) = CompletionResult(
@@ -127,6 +144,8 @@ class ActiveResultUpdateTest {
         completionStatus(s.state) to currentCompletions(s.state).map { it.label }
 
     private val closed = null to emptyList<String>()
+
+    private val pending = "pending" to emptyList<String>()
 
     @Test
     fun implicitResultAtTheCursorStaysOpenWhenBackspacedToItsStart() {
@@ -306,7 +325,7 @@ class ActiveResultUpdateTest {
     fun aResultThatArrivesAfterTypingTakesItsLimitFromTheQueryPosition() {
         // Queried at 2 right after ".", the result lands once "b" is typed. Upstream
         // takes the limit from the query's cursor, so backspacing to 2 keeps it.
-        val s = open("x.b", listOf(3), listOf(result(2)), queryPos = 2)
+        val s = open("x.", listOf(2), listOf(result(2)), replay = listOf { type(it, "b") })
         backspace(s)
         assertEquals("active" to listOf("bar", "baz"), shown(s))
     }
@@ -318,7 +337,7 @@ class ActiveResultUpdateTest {
         var s = open("foo ba", 6, strict, explicit = true)
         backspace(s)
         backspace(s)
-        assertEquals(closed, shown(s))
+        assertEquals(pending, shown(s))
         assertEquals(true to true, requery(s))
         // No validFor: every edit re-queries, on backspace too.
         s = open("foo ba", 6, result(4).copy(validFor = null))
@@ -331,9 +350,70 @@ class ActiveResultUpdateTest {
         s = open("foo ba", 6, result(4), explicit = true)
         type(s, " ")
         assertEquals(true to true, requery(s))
-        // The request lasts one transaction.
+        // Moving the cursor ends the pending query.
         s.dispatch(TransactionSpec(selection = SelectionSpec.CursorSpec(DocPos(0))))
         assertEquals(false to false, requery(s))
+    }
+
+    @Test
+    fun theListIsDisabledWhileASourceReQueries() {
+        // Upstream S2: the second result fails its validFor on "ba"; until it is asked
+        // again, the list stays up but disabled, so nothing is listed or accepted.
+        val s = open(
+            "foo ",
+            listOf(4),
+            listOf(result(4), result(4, "b1", "b2").copy(validFor = Regex("b?")))
+        )
+        type(s, "b")
+        assertEquals("active" to listOf("b1", "b2", "bar", "baz"), shown(s))
+        type(s, "a")
+        assertEquals(pending, shown(s))
+        assertEquals(true, s.state.field(completionStateField).open?.disabled)
+        assertEquals(false, acceptCompletion(s))
+    }
+
+    @Test
+    fun aSourceAddedDuringASessionIsPending() {
+        // Upstream S3: a source configured while completion is active starts pending.
+        val compartment = Compartment()
+        val a = fixed(result(4))
+        val s = EditorSession(
+            EditorState.create(
+                EditorStateConfig(
+                    doc = "foo b".asDoc(),
+                    selection = SelectionSpec.CursorSpec(DocPos(5)),
+                    extensions = ExtensionList(
+                        listOf(
+                            compartment.of(
+                                completionConfig.of(CompletionConfig(override = listOf(a)))
+                            ),
+                            completionStateField
+                        )
+                    )
+                )
+            )
+        )
+        val reconfigure = compartment.reconfigure(
+            completionConfig.of(CompletionConfig(override = listOf(a, fixed(result(4)))))
+        )
+        val active = ActiveResult.arrived(SyncSource(a), false, DocPos(5), result(4))
+        s.dispatch(TransactionSpec(effects = listOf(setActiveEffect.of(listOf(active)))))
+        assertEquals("active" to listOf("bar", "baz"), shown(s))
+        s.dispatch(TransactionSpec(effects = listOf(reconfigure)))
+        assertEquals("pending", completionStatus(s.state))
+        // Control (S3b): with nothing active, it starts inactive.
+        s.dispatch(TransactionSpec(effects = listOf(closeCompletionEffect.of(Unit))))
+        s.dispatch(
+            TransactionSpec(
+                effects = listOf(
+                    compartment.reconfigure(
+                        completionConfig.of(CompletionConfig(override = listOf(a)))
+                    )
+                )
+            )
+        )
+        s.dispatch(TransactionSpec(effects = listOf(reconfigure)))
+        assertEquals(null, completionStatus(s.state))
     }
 
     @Test
@@ -348,7 +428,7 @@ class ActiveResultUpdateTest {
 
     /** Each open result's stored `from..to`, as upstream's `ActiveResult` holds it. */
     private fun ranges(s: EditorSession) = s.state.field(completionStateField).active
-        .map { it.result.from.value to it.result.to?.value }
+        .filterIsInstance<ActiveResult>().map { it.from.value to it.to.value }
 
     private fun CompletionResult.to(to: Int) = copy(to = DocPos(to))
 
@@ -445,7 +525,12 @@ class ActiveResultUpdateTest {
     @Test
     fun aResultThatArrivesAfterTypingFiltersByTheTypedText() {
         // Queried at 2 right after ".", landing once "ba" is typed.
-        val s = open("x.ba", listOf(4), listOf(result(2, "bar", "baz", "qux")), queryPos = 2)
+        val s = open(
+            "x.",
+            listOf(2),
+            listOf(result(2, "bar", "baz", "qux")),
+            replay = listOf({ type(it, "b") }, { type(it, "a") })
+        )
         assertEquals("active" to listOf("bar", "baz"), shown(s))
     }
 
@@ -472,7 +557,7 @@ class ActiveResultUpdateTest {
         )
         var s = open("f(b)", 3, result(2))
         s.dispatch(skipParen)
-        assertEquals(closed, shown(s))
+        assertEquals(pending, shown(s))
         assertEquals(true to false, requery(s))
         // Without activateOnTyping it just closes.
         s = open(
@@ -487,8 +572,9 @@ class ActiveResultUpdateTest {
         // An explicit `to` before the cursor, typed past.
         s = open("foo barx", 8, result(4, "bar", "baz", "bxx").to(6), explicit = true)
         type(s, "y")
-        assertEquals(closed, shown(s))
-        assertEquals(true to true, requery(s))
+        assertEquals(pending, shown(s))
+        // A new query, so implicit (upstream's `Pending` without the session's flag).
+        assertEquals(true to false, requery(s))
         // Backspacing past it just closes.
         s = open("foo barx", 8, result(4, "bar", "baz", "bxx").to(6), explicit = true)
         backspace(s)

@@ -22,6 +22,11 @@ kotlin {
             implementation(project(":view"))
             implementation(project(":autocomplete"))
         }
+        jvmTest.dependencies {
+            // Mounts an editor so `:autocomplete`'s view plugin runs its queries.
+            implementation(compose.desktop.uiTestJUnit4)
+            implementation(compose.desktop.currentOs)
+        }
     }
 }
 

@@ -67,7 +67,7 @@ class AutocompletionInputTest {
                 )
             )
         )
-        return EditorSession(state)
+        return PluginSession(state)
     }
 
     /** Simulate typing a character at the current cursor position. */
@@ -218,7 +218,7 @@ class AutocompletionInputTest {
                 )
             )
         )
-        return EditorSession(state)
+        return PluginSession(state)
     }
 
     @Test

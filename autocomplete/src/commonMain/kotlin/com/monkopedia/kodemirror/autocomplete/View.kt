@@ -57,6 +57,7 @@ import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.LanguageDataKey
 import com.monkopedia.kodemirror.state.Slot
 import com.monkopedia.kodemirror.state.Text
+import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.codePointAt
 import com.monkopedia.kodemirror.state.codePointSize
@@ -75,6 +76,10 @@ import com.monkopedia.kodemirror.view.logException
 import com.monkopedia.kodemirror.view.showTooltip
 import kotlin.concurrent.Volatile
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeSource
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
@@ -97,56 +102,60 @@ val completionIconColor = ThemeKey(default = Color(0xFF61AFEF))
 
 /** Explicitly start completion (Ctrl-Space). */
 val startCompletion: (EditorSession) -> Boolean = { view ->
-    triggerCompletion(view, explicit = true)
-    true
+    if (view.state.field(completionStateField, require = false) == null) {
+        false
+    } else {
+        view.dispatch(TransactionSpec(effects = listOf(startCompletionEffect.of(true))))
+        true
+    }
 }
 
-/** Close the completion list. */
+/** Close the completion list, and stop any query in flight. */
 val closeCompletion: (EditorSession) -> Boolean = { view ->
     val cs = view.state.field(completionStateField, require = false)
-    if (cs != null && cs.open) {
-        view.dispatch(
-            TransactionSpec(effects = listOf(closeCompletionEffect.of(Unit)))
-        )
-        true
-    } else {
+    if (cs == null || cs.active.none { it.state != SourceState.Inactive }) {
         false
+    } else {
+        view.dispatch(TransactionSpec(effects = listOf(closeCompletionEffect.of(Unit))))
+        true
     }
 }
 
 /** Accept the currently selected completion. */
 val acceptCompletion: (EditorSession) -> Boolean = { view ->
-    val cs = view.state.field(completionStateField, require = false)
-    if (!view.state.readOnly && cs != null && cs.open && cs.filtered.isNotEmpty()) {
-        val item = cs.filtered[cs.selected]
-        // Apply over the option's OWN source result range — sources can return
-        // different from..to, so we must not assume a single shared result (#137).
-        val result = item.result ?: cs.results.first()
-        applyCompletion(view, item.completion, result)
-        true
-    } else {
+    val open = view.state.field(completionStateField, require = false)?.open
+    if (view.state.readOnly || open == null || open.selected < 0 || open.disabled) {
         false
+    } else {
+        applyCompletion(view, open.options[open.selected])
     }
 }
+
+/** How far a "page" move goes; upstream measures the rendered list. */
+private const val PAGE_STEP = 10
 
 /** Move the completion selection. */
 fun moveCompletionSelection(forward: Boolean, by: String = "option"): (EditorSession) -> Boolean =
     { view ->
-        val cs = view.state.field(completionStateField, require = false)
-        if (cs != null && cs.open && cs.filtered.isNotEmpty()) {
-            val delta = when (by) {
-                "page" -> if (forward) 10 else -10
-                else -> if (forward) 1 else -1
-            }
-            val newIndex = (cs.selected + delta).mod(cs.filtered.size)
-            view.dispatch(
-                TransactionSpec(
-                    effects = listOf(setSelectedCompletion.of(newIndex))
-                )
-            )
-            true
-        } else {
+        val open = view.state.field(completionStateField, require = false)?.open
+        if (open == null || open.disabled) {
             false
+        } else {
+            val page = by == "page"
+            val step = (if (page) PAGE_STEP else 1) * (if (forward) 1 else -1)
+            val length = open.options.size
+            var selected = when {
+                open.selected > -1 -> open.selected + step
+                forward -> 0
+                else -> length - 1
+            }
+            if (selected < 0) {
+                selected = if (page) 0 else length - 1
+            } else if (selected >= length) {
+                selected = if (page) length - 1 else 0
+            }
+            view.dispatch(TransactionSpec(effects = listOf(setSelectedCompletion.of(selected))))
+            true
         }
     }
 
@@ -165,101 +174,11 @@ val completionKeymap: List<KeyBinding> = listOf(
 
 // ── Internal helpers ──
 
-private fun triggerCompletion(view: EditorSession, explicit: Boolean) {
-    val state = view.state
-    val config = state.facet(completionConfig)
-    val pos = state.selection.main.head
-    val ctx = CompletionContext(state, pos, explicit)
-    val sources = config.override ?: emptyList()
-    val asyncSources = config.asyncOverride ?: emptyList()
-    // Query ALL sync sources and MERGE their results, rather than stopping at the
-    // first non-empty one. The merge (dedup by label, score-ordered, per-source
-    // filter/validFor/from) happens in the state field via mergeCompletions (#137).
-    val results = sources.mapNotNull { source -> view.queryLogged { source(ctx) } }
-        .filter { it.options.isNotEmpty() }
-    if (results.isNotEmpty()) {
-        view.dispatch(
-            TransactionSpec(
-                effects = listOf(startCompletionEffect.of(StartCompletion(results, explicit, pos)))
-            )
-        )
-        return
-    }
-    // Async (suspend) sources — e.g. a language server. Launched on the editor's
-    // coroutine scope; the result is dispatched when it resolves. This is the
-    // wasmJs-safe path (no blocking bridge). See CompletionConfig.asyncOverride.
-    // The async path stays first-non-empty-wins (not merged): async sources are
-    // typically a single language server, and merging would force awaiting every
-    // source serially before showing anything. A single result still flows through
-    // the same merge machinery as a singleton list.
-    if (asyncSources.isNotEmpty()) {
-        // Capture the trigger position so we can detect, when the source resolves,
-        // whether the doc/selection drifted while the coroutine was suspended (#153).
-        val triggerPos = pos
-        // A cancelled scope never runs the query, so it would never end it.
-        if (!view.coroutineScope.isActive) return
-        val queryId = state.field(asyncQueryField, require = false)?.nextId ?: 0
-        view.dispatch(TransactionSpec(effects = listOf(asyncQueryStartEffect.of(Unit))))
-        view.coroutineScope.launch {
-            try {
-                for (source in asyncSources) {
-                    val raw = view.queryLogged { source(ctx) }
-                    if (raw == null || raw.options.isEmpty()) continue
-                    // Dropped when the completion opened or closed meanwhile; otherwise
-                    // map the range through the edits made while the query ran (#421).
-                    val changes = view.state.field(asyncQueryField, require = false)
-                        ?.changes?.get(queryId) ?: return@launch
-                    val result = raw.mapped(changes)
-                    // The source may have suspended across doc/selection edits (the
-                    // user kept typing, moved the cursor, or closed the popup). A
-                    // result that no longer applies to the LIVE state must be dropped
-                    // rather than re-opening the popup — otherwise an in-flight LSP
-                    // request resolving after an Escape re-opens it, demanding another
-                    // Escape (#153). Survivors open the popup exactly as before.
-                    if (!asyncResultApplicable(view.state, result, triggerPos)) {
-                        return@launch
-                    }
-                    view.dispatch(
-                        TransactionSpec(
-                            effects = listOf(
-                                startCompletionEffect.of(
-                                    StartCompletion(listOf(result), explicit, triggerPos)
-                                )
-                            )
-                        )
-                    )
-                    return@launch
-                }
-                if (explicit) {
-                    view.dispatch(
-                        TransactionSpec(effects = listOf(closeCompletionEffect.of(Unit)))
-                    )
-                }
-            } finally {
-                // However the query ends (a result, none, a throw or cancellation),
-                // stop tracking its edits.
-                val queries = view.state.field(asyncQueryField, require = false)
-                if (queries != null && queryId in queries.changes) {
-                    view.dispatch(
-                        TransactionSpec(effects = listOf(asyncQueryEndEffect.of(queryId)))
-                    )
-                }
-            }
-        }
-        return
-    }
-    // No results, close if open
-    if (explicit) {
-        view.dispatch(
-            TransactionSpec(effects = listOf(closeCompletionEffect.of(Unit)))
-        )
-    }
-}
-
 /**
  * Run one source's [query], reporting a throw to the exception sink and treating it as
  * no result, so one failing source neither hides the others' options nor fails the
- * editor's coroutine scope, which would end every later async query (#430).
+ * editor's coroutine scope, which would end every later async query (#430). Upstream
+ * closes the whole list on a rejected query instead.
  */
 private inline fun EditorSession.queryLogged(query: () -> CompletionResult?): CompletionResult? =
     try {
@@ -272,61 +191,24 @@ private inline fun EditorSession.queryLogged(query: () -> CompletionResult?): Co
     }
 
 /**
- * Whether an async completion [result] that resolved after suspending is still
- * applicable to the current [state]. The coroutine may have suspended across
- * doc/selection changes since launch, so this re-checks against live state before
- * the popup opens — mirroring the in-place re-filter in [completionStateField]
- * (anchored `validFor.matches` over the `from`..head span, #139). A result is
- * dropped (returns `false`) when:
- *   * the primary selection is no longer an empty cursor (a range was selected, or
- *     the context otherwise moved), or
- *   * the cursor moved before the result's [CompletionResult.from] (`head < from`), or
- *   * the text from `from` to the cursor no longer matches [CompletionResult.validFor]
- *     (the typed token changed or cleared). When `validFor` is absent there is no
- *     reuse rule, so the result is valid only at the unchanged [triggerPos].
+ * Apply [option] over its source's current range, as upstream's `applyCompletion`.
+ * False when that source no longer has a result.
  */
-private fun asyncResultApplicable(
-    state: EditorState,
-    result: CompletionResult,
-    triggerPos: DocPos
-): Boolean {
-    val main = state.selection.main
-    if (!main.empty) return false
-    val head = main.head
-    if (head < result.from) return false
-    val validFor = result.validFor
-        ?: return head == triggerPos
-    return validFor.matches(state.doc.sliceString(result.from, head))
-}
-
-private fun applyCompletion(view: EditorSession, completion: Completion, result: CompletionResult) {
-    // Clamp the stored result range to the CURRENT document. result.from/to are
-    // captured when the completion is requested; if the doc shrank since (the user
-    // backspaced while the popup was open, or a shorter re-sync landed) they can
-    // point past the doc end and crash dispatch with "Invalid position" (#124).
-    val docLen = DocPos(view.state.doc.length)
-    val from = result.from.coerceIn(DocPos.ZERO, docLen)
-    val to = (result.to ?: view.state.selection.main.head).coerceIn(from, docLen)
+private fun applyCompletion(view: EditorSession, option: FilterResult): Boolean {
+    val result = view.state.field(completionStateField).active
+        .find { it.source == option.source } as? ActiveResult ?: return false
+    val completion = option.completion
     val fn = completion.applyFn
     if (fn != null) {
-        fn(
-            CompletionApplyContext(
-                view,
-                completion,
-                from,
-                to
-            )
+        fn(CompletionApplyContext(view, completion, result.from, result.to))
+    } else {
+        val text = completion.apply ?: completion.label
+        view.dispatch(
+            insertCompletionText(view.state, text, result.from, result.to)
+                .copy(annotations = listOf(pickedCompletion.of(completion)))
         )
-        return
     }
-    val text = completion.apply ?: completion.label
-    val base = insertCompletionText(view.state, text, from, to)
-    view.dispatch(
-        base.copy(
-            effects = base.effects.orEmpty() + closeCompletionEffect.of(Unit),
-            annotations = listOf(pickedCompletion.of(completion))
-        )
-    )
+    return true
 }
 
 /**
@@ -377,40 +259,196 @@ fun insertCompletionText(
 
 // ── ViewPlugin ──
 
-private class CompletionPlugin(private val view: EditorSession) : PluginValue {
+/**
+ * A source's query in flight, as upstream's `RunningQuery`. [updates] are the
+ * transactions since it started, replayed onto its result when it arrives.
+ */
+private class RunningQuery(val active: ActiveSource) {
+    val time = TimeSource.Monotonic.markNow()
+    val updates = mutableListOf<Transaction>()
+    var done = false
+    var result: CompletionResult? = null
+    var aborted = false
+    var job: Job? = null
+
+    fun finish(result: CompletionResult?) {
+        this.result = result
+        done = true
+    }
+
+    fun abort() {
+        aborted = true
+        job?.cancel()
+    }
+}
+
+/** A query older than [MIN_ABORT_TIME] that has seen this many updates is given up. */
+private const val MAX_UPDATE_COUNT = 50
+private val MIN_ABORT_TIME = 1.seconds
+
+/**
+ * Runs the queries of pending sources and feeds their results back, as upstream's
+ * `completionPlugin`. Each source has at most one query in flight: edits made while it
+ * runs are recorded and replayed onto its result, which may then still apply, ask for
+ * a new query, or close.
+ *
+ * Unlike upstream, which waits `activateOnTypingDelay` before querying and up to
+ * `updateSyncTime` for slower sources before showing a result, queries start when a
+ * source goes pending and each result is shown as soon as it arrives. So a sync source
+ * is queried, and its result shown, within the transaction that activated it.
+ */
+internal class CompletionPlugin(private val view: EditorSession) : PluginValue {
+    private val running = mutableListOf<RunningQuery>()
+
+    /** Set while queries start or results are taken, so a query finishing inline waits. */
+    private var busy = false
+
+    init {
+        val cState = view.state.field(completionStateField, require = false)
+        if (cState != null && cState.active.any { it.isPending }) startUpdate()
+    }
+
     override fun update(update: ViewUpdate) {
-        // A result the last edit invalidated asks its source again, with the
-        // session's explicit flag, as upstream's `Pending` source does — on
-        // backspace too, and regardless of activateOnTyping.
-        val cs = update.state.field(completionStateField, require = false)
-        if (cs != null && cs.requery && update.transactions.isNotEmpty()) {
-            triggerCompletion(view, explicit = cs.explicit)
+        val cState = update.state.field(completionStateField, require = false) ?: return
+        val conf = update.state.facet(completionConfig)
+        if (!update.selectionSet &&
+            !update.docChanged &&
+            update.startState.field(completionStateField, require = false) === cState
+        ) {
             return
         }
-        val config = update.state.facet(completionConfig)
-        if (!config.activateOnTyping) return
+        val doesReset = update.transactions.any { tr ->
+            val type = getUpdateType(tr, conf)
+            type has UPDATE_RESET ||
+                (tr.selection != null || tr.docChanged) &&
+                !(type has UPDATE_SIMPLE_INTERACTION)
+        }
+        for (query in running.toList()) {
+            if (doesReset ||
+                query.updates.size + update.transactions.size > MAX_UPDATE_COUNT &&
+                query.time.elapsedNow() > MIN_ABORT_TIME
+            ) {
+                query.abort()
+                running.remove(query)
+            } else {
+                query.updates += update.transactions
+            }
+        }
+        if (cState.active.any { it.isPending && !isRunning(it.source) }) startUpdate()
+    }
 
-        // Trigger completion on text input
-        if (update.docChanged) {
-            for (tr in update.transactions) {
-                if (tr.isUserEvent("input") && !tr.isUserEvent("input.complete")) {
-                    // If completion is STILL open after this edit, the state field
-                    // already re-filtered the existing result against the typed text
-                    // (the input matched its validFor) — narrowing happened in-place.
-                    // Re-querying here would replace that narrowed list with a fresh
-                    // full result and reset the apply range, which is exactly the
-                    // "doesn't filter / inserts `.xplus`" bug (#114). Only (re-)trigger
-                    // when completion is closed (or the edit closed it because the text
-                    // no longer matched validFor) — that starts a fresh query.
-                    if (cs == null || !cs.open) {
-                        triggerCompletion(view, explicit = false)
-                    }
+    override fun destroy() {
+        running.forEach { it.abort() }
+        running.clear()
+    }
+
+    private fun startUpdate() {
+        val cState = view.state.field(completionStateField)
+        busy = true
+        try {
+            for (active in cState.active) {
+                if (active.isPending && !isRunning(active.source)) startQuery(active)
+            }
+        } finally {
+            busy = false
+        }
+        val disabled = cState.open?.disabled == true
+        if (running.any { it.done } || running.isNotEmpty() && disabled) accept()
+    }
+
+    private fun isRunning(source: QuerySource) = running.any { it.active.source == source }
+
+    private fun startQuery(active: ActiveSource) {
+        val state = view.state
+        val context = CompletionContext(state, cur(state), active.explicit)
+        val query = RunningQuery(active)
+        running += query
+        when (val source = active.source) {
+            is SyncSource -> query.finish(view.queryLogged { source.query(context) })
+            is AsyncSource -> {
+                val scope = view.coroutineScope
+                // A cancelled scope would never run the query, so count it as no result.
+                if (!scope.isActive) {
+                    query.finish(null)
                     return
+                }
+                query.job = scope.launch {
+                    val result = try {
+                        view.queryLogged { source.query(context) }
+                    } catch (e: CancellationException) {
+                        // The source's own cancellation, not this query's, is no result.
+                        ensureActive()
+                        null
+                    }
+                    if (!query.aborted) {
+                        query.finish(result)
+                        if (!busy) accept()
+                    }
                 }
             }
         }
     }
+
+    /** For each finished query, make a result or, if appropriate, restart the query. */
+    private fun accept() {
+        val conf = view.state.facet(completionConfig)
+        val cState = view.state.field(completionStateField)
+        val updated = mutableListOf<ActiveSource>()
+        busy = true
+        try {
+            // A restarted query that finishes inline is taken in this same pass.
+            while (true) {
+                val query = running.firstOrNull { it.done } ?: break
+                running.remove(query)
+                take(query, conf, cState)?.let { updated += it }
+            }
+        } finally {
+            busy = false
+        }
+        if (updated.isNotEmpty() || cState.open?.disabled == true) {
+            view.dispatch(TransactionSpec(effects = listOf(setActiveEffect.of(updated))))
+        }
+    }
+
+    /**
+     * The source state finished [query] leaves, after replaying the transactions since
+     * it started, or null for no change. A result those edits invalidated asks again.
+     */
+    private fun take(
+        query: RunningQuery,
+        conf: CompletionConfig,
+        cState: CompletionState
+    ): ActiveSource? {
+        val source = query.active.source
+        val result = query.result
+        if (result != null) {
+            val pos = cur(query.updates.firstOrNull()?.startState ?: view.state)
+            val arrived: ActiveSource = ActiveResult.arrived(
+                source,
+                query.active.explicit,
+                pos,
+                result
+            )
+            val active = query.updates.fold(arrived) { a, tr -> a.update(tr, conf) }
+            if (active.hasResult) return active
+        }
+        val current = cState.active.find { it.source == source }
+        if (current == null || !current.isPending) return null
+        if (result != null) {
+            startQuery(current)
+            return null
+        }
+        // No result: clear the pending state unless it was set again since.
+        val inactive = ActiveSource(source, SourceState.Inactive)
+        return query.updates.fold(inactive) { a, tr ->
+            a.update(tr, conf)
+        }.takeUnless { it.isPending }
+    }
 }
+
+/** The plugin that runs completion queries; one per editor, however many configs. */
+internal val completionPlugin: ViewPlugin<CompletionPlugin> =
+    ViewPlugin.define(create = { view -> CompletionPlugin(view) })
 
 // ── Composable UI ──
 
@@ -419,11 +457,10 @@ private class CompletionPlugin(private val view: EditorSession) : PluginValue {
 @Composable
 private fun CompletionList(
     view: EditorSession,
-    completionState: CompletionState,
+    dialog: CompletionDialog,
     config: CompletionConfig
 ) {
-    val items = completionState.filtered.take(config.maxRenderedOptions)
-    if (completionState.results.isEmpty()) return
+    val items = dialog.options.take(config.maxRenderedOptions)
     val theme = LocalEditorTheme.current
     // Render the popup in the editor's content font, like every other piece of
     // editor UI chrome (gutter, panels, placeholder all read LocalContentTextStyle).
@@ -437,7 +474,7 @@ private fun CompletionList(
     // The requester is attached to whichever row is currently selected, so
     // bringIntoView() on selection change scrolls that row into the viewport.
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
-    LaunchedEffect(completionState.selected) {
+    LaunchedEffect(dialog.selected) {
         bringIntoViewRequester.bringIntoView()
     }
 
@@ -462,7 +499,7 @@ private fun CompletionList(
             .padding(2.dp)
     ) {
         items.forEachIndexed { index, item ->
-            val isSelected = index == completionState.selected
+            val isSelected = index == dialog.selected
             Row(
                 modifier = Modifier
                     .then(
@@ -480,13 +517,7 @@ private fun CompletionList(
                             Color.Transparent
                         }
                     )
-                    .clickable {
-                        applyCompletion(
-                            view,
-                            item.completion,
-                            item.result ?: completionState.results.first()
-                        )
-                    }
+                    .clickable { applyCompletion(view, item) }
                     .padding(horizontal = 4.dp, vertical = 2.dp)
             ) {
                 val textColor = theme[completionTextColor]
@@ -794,23 +825,18 @@ fun ifNotIn(types: List<String>, source: CompletionSource): CompletionSource = {
  * @param config Optional configuration.
  */
 fun autocompletion(config: CompletionConfig = CompletionConfig()): Extension {
-    val plugin = ViewPlugin.define(
-        create = { view -> CompletionPlugin(view) }
-    )
-
     val tooltipProvider = showTooltip.compute(
         listOf(Slot.FieldSlot(completionStateField))
     ) { state ->
-        val cs = state.field(completionStateField, require = false)
-        val csFrom = cs?.from
-        if (cs != null && cs.open && cs.filtered.isNotEmpty() && csFrom != null) {
+        val open = state.field(completionStateField, require = false)?.open
+        if (open != null) {
             // Anchor the popup at the smallest from across the merged sources.
-            Tooltip(pos = csFrom.value) {
+            Tooltip(pos = open.pos.value) {
                 val editorView = LocalEditorSession.current
                 val currentConfig = editorView.state.facet(completionConfig)
-                val currentCs = editorView.state.field(completionStateField, require = false)
-                    ?: cs
-                CompletionList(editorView, currentCs, currentConfig)
+                val current = editorView.state.field(completionStateField, require = false)?.open
+                    ?: open
+                CompletionList(editorView, current, currentConfig)
             }
         } else {
             null
@@ -821,7 +847,7 @@ fun autocompletion(config: CompletionConfig = CompletionConfig()): Extension {
         buildList {
             add(completionConfig.of(config))
             add(completionStateField)
-            add(plugin.asExtension())
+            add(completionPlugin.asExtension())
             add(tooltipProvider)
             if (config.defaultKeymap) {
                 add(keymap.of(completionKeymap))

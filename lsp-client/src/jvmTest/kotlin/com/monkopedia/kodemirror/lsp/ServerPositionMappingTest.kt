@@ -18,6 +18,9 @@
  */
 package com.monkopedia.kodemirror.lsp
 
+import androidx.compose.ui.test.ComposeUiTest
+import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.runDesktopComposeUiTest
 import com.monkopedia.kodemirror.autocomplete.Completion
 import com.monkopedia.kodemirror.autocomplete.CompletionApplyContext
 import com.monkopedia.kodemirror.autocomplete.CompletionContext
@@ -35,6 +38,7 @@ import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.view.EditorSession
+import com.monkopedia.kodemirror.view.KodeMirror
 import com.monkopedia.lsp.BooleanOr
 import com.monkopedia.lsp.CompletionItem
 import com.monkopedia.lsp.CompletionList
@@ -55,12 +59,10 @@ import com.monkopedia.lsp.TextDocumentCompletionResult
 import com.monkopedia.lsp.TextDocumentDefinitionResult
 import com.monkopedia.lsp.TextEdit
 import com.monkopedia.lsp.WorkspaceEdit
-import kotlin.coroutines.CoroutineContext
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.job
@@ -72,6 +74,7 @@ import kotlinx.coroutines.withTimeout
  * user made in the meantime, as upstream `@codemirror/lsp-client` 6.3.1 maps
  * them (#435).
  */
+@OptIn(ExperimentalTestApi::class)
 class ServerPositionMappingTest {
 
     /** Holds a request until the test has made its edits. */
@@ -158,25 +161,9 @@ class ServerPositionMappingTest {
         return TestSession(state).also { client.workspace.openFile(uri, "kotlin", it) }
     }
 
-    /** Runs `:autocomplete`'s queries on [dispatcher], inline by default. */
-    private class TestSession(
-        state: EditorState,
-        dispatcher: CoroutineDispatcher = Dispatchers.Unconfined
-    ) : EditorSession by EditorSession(state) {
-        override val coroutineScope = CoroutineScope(dispatcher)
-    }
-
-    /** Holds launched coroutines until [runAll]. */
-    private class QueuedDispatcher : CoroutineDispatcher() {
-        private val queue = ArrayDeque<Runnable>()
-
-        override fun dispatch(context: CoroutineContext, block: Runnable) {
-            queue += block
-        }
-
-        fun runAll() {
-            while (queue.isNotEmpty()) queue.removeFirst().run()
-        }
+    /** Runs launched coroutines inline (the real scope needs a composable). */
+    private class TestSession(state: EditorState) : EditorSession by EditorSession(state) {
+        override val coroutineScope = CoroutineScope(Dispatchers.Unconfined)
     }
 
     private fun EditorSession.edit(from: Int, to: Int, insert: String = "") = dispatch(
@@ -306,25 +293,60 @@ class ServerPositionMappingTest {
         assertEquals("package p\n// c\nval x = 1\nval y = transform", session.state.doc.toString())
     }
 
+    /**
+     * An editor on [completionText] with the cursor at [cursor], mounted in a
+     * [KodeMirror] so `:autocomplete`'s plugin runs its queries.
+     */
+    private fun ComposeUiTest.mountedCompletion(
+        client: LSPClient,
+        cursor: Int = 34
+    ): EditorSession {
+        val session = EditorSession(
+            EditorState.create(
+                EditorStateConfig(
+                    doc = completionText.asDoc(),
+                    selection = SelectionSpec.CursorSpec(DocPos(cursor)),
+                    extensions = ExtensionList(
+                        listOf(
+                            serverCompletion(client, URI),
+                            EditorSession.updateListener.of { update ->
+                                client.workspace.updateFile(URI, update.changes)
+                            }
+                        )
+                    )
+                )
+            )
+        )
+        client.workspace.openFile(URI, "kotlin", session)
+        setContent { KodeMirror(session = session) }
+        waitForIdle()
+        return session
+    }
+
     @Test
-    fun aLateQueryDroppedByAutocompleteDoesNotStopTheShownResultMapping() {
+    fun oneQueryRunsWhenStartedTwiceAndItsImportMapsThroughALaterEdit() = runDesktopComposeUiTest {
         val client = completionClient()
-        val session = session(client, completionText, serverCompletion(client, URI))
-        session.dispatch(TransactionSpec(selection = SelectionSpec.CursorSpec(DocPos(34))))
+        val session = mountedCompletion(client)
         completionItems = listOf(eagerItem)
         val first = CompletableDeferred<Unit>()
         val second = CompletableDeferred<Unit>()
         completionGates += listOf(first, second)
-        // Two queries in flight at once. (Typing would trigger them too, but the
-        // plugin that does that only runs under composition.)
-        assertTrue(startCompletion(session))
-        assertTrue(startCompletion(session))
-        second.complete(Unit)
-        assertEquals("active", completionStatus(session.state))
-        // The first query returns late, and :autocomplete drops it.
+        // `:autocomplete` keeps one query per source in flight (#422): the second
+        // start doesn't send a request while the first is out. Replaying it onto the
+        // first result asks again, once that result is in.
+        runOnIdle {
+            assertTrue(startCompletion(session))
+            assertTrue(startCompletion(session))
+        }
+        waitForIdle()
+        assertEquals(listOf(second), completionGates.toList())
         first.complete(Unit)
-        session.edit(0, 0, "// c\n")
-        assertTrue(acceptCompletion(session))
+        second.complete(Unit)
+        waitUntil(timeoutMillis = 5000) { completionStatus(session.state) == "active" }
+        runOnIdle {
+            session.edit(0, 0, "// c\n")
+            assertTrue(acceptCompletion(session))
+        }
 
         assertEquals(
             "// c\npackage p\nimport foo.transform\n\nval x = 1\nval y = transform",
@@ -335,29 +357,14 @@ class ServerPositionMappingTest {
     @Test
     fun anEditBetweenTheTriggerAndTheQueryDropsTheEagerImport() {
         val client = completionClient()
-        val dispatcher = QueuedDispatcher()
-        val state = EditorState.create(
-            EditorStateConfig(
-                doc = completionText.asDoc(),
-                selection = SelectionSpec.CursorSpec(DocPos(34)),
-                extensions = ExtensionList(
-                    listOf(
-                        serverCompletion(client, URI),
-                        EditorSession.updateListener.of { update ->
-                            client.workspace.updateFile(URI, update.changes)
-                        }
-                    )
-                )
-            )
-        )
-        val session = TestSession(state, dispatcher)
-        client.workspace.openFile(URI, "kotlin", session)
+        val session = session(client, completionText, ExtensionList(emptyList()))
         completionItems = listOf(eagerItem)
-        assertTrue(startCompletion(session))
-        // Before the query's coroutine starts, so its mapping can't see this edit.
+        // The query's state is from before this edit, so its mapping can't see it.
+        val context = CompletionContext(session.state, DocPos(34), explicit = true)
         session.edit(0, 0, "// c\n")
-        dispatcher.runAll()
-        assertTrue(acceptCompletion(session))
+        val completion =
+            runBlocking { serverCompletionSource(client, URI)(context)!!.options.single() }
+        session.accept(completion, 34, 39)
 
         // Dropped rather than misplaced: an unmapped import would split "package".
         assertEquals(
