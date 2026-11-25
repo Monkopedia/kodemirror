@@ -207,79 +207,81 @@ private class MixedParse(
                 } else {
                     Cover.None
                 }
-                if (cov != null && isCovered != Cover.None) {
+                // Upstream chains these as `else if`s, so an active overlay's predicate sees every
+                // node that did not start a nest, named nodes included (#457).
+                val nestResult = if (isCovered == Cover.None && !cursor.type.isAnonymous) {
+                    nest(cursor, input)?.takeIf { cursor.from < cursor.to || it.overlay == null }
+                } else {
+                    null
+                }
+                if (isCovered != Cover.None) {
                     enter = isCovered != Cover.Full
-                } else if (!cursor.type.isAnonymous) {
-                    val nestResult = nest(cursor, input)
-                    if (nestResult != null &&
-                        (cursor.from < cursor.to || nestResult.overlay == null)
-                    ) {
-                        if (cursor.tree == null) {
-                            materialize(cursor)
-                            overlay?.let { it.depth++ }
-                            covered?.let { it.depth++ }
-                        }
-                        val oldMounts = fragmentCursor.findMounts(
+                } else if (nestResult != null) {
+                    if (cursor.tree == null) {
+                        materialize(cursor)
+                        overlay?.let { it.depth++ }
+                        covered?.let { it.depth++ }
+                    }
+                    val oldMounts = fragmentCursor.findMounts(
+                        cursor.from,
+                        nestResult.parser
+                    )
+                    val ov = nestResult.overlay
+                    if (ov is ParseOverlay.Predicate) {
+                        overlay = ActiveOverlay(
+                            nestResult.parser,
+                            ov.match,
+                            oldMounts,
+                            inner.size,
                             cursor.from,
-                            nestResult.parser
+                            nestResult.bracketed,
+                            cursor.tree!!,
+                            overlay
                         )
-                        val ov = nestResult.overlay
-                        if (ov is ParseOverlay.Predicate) {
-                            overlay = ActiveOverlay(
-                                nestResult.parser,
-                                ov.match,
-                                oldMounts,
-                                inner.size,
-                                cursor.from,
-                                nestResult.bracketed,
-                                cursor.tree!!,
-                                overlay
-                            )
-                        } else {
-                            val overlayRanges =
-                                (ov as? ParseOverlay.Ranges)?.ranges
-                            val parseRanges = punchRanges(
-                                ranges,
-                                overlayRanges ?: if (cursor.from < cursor.to) {
-                                    listOf(TextRange(cursor.from, cursor.to))
-                                } else {
-                                    emptyList()
-                                }
-                            )
-                            if (parseRanges.isNotEmpty() || overlayRanges == null) {
-                                inner.add(
-                                    InnerParse(
-                                        nestResult.parser,
-                                        if (parseRanges.isNotEmpty()) {
-                                            nestResult.parser.startParse(
-                                                input,
-                                                enterFragments(oldMounts, parseRanges),
-                                                parseRanges
-                                            )
-                                        } else {
-                                            nestResult.parser.startParse("")
-                                        },
-                                        overlayRanges?.map {
-                                            TextRange(
-                                                it.from - cursor.from,
-                                                it.to - cursor.from
-                                            )
-                                        },
-                                        nestResult.bracketed,
-                                        cursor.tree!!,
-                                        if (parseRanges.isNotEmpty()) {
-                                            parseRanges[0].from
-                                        } else {
-                                            cursor.from
-                                        }
-                                    )
+                    } else {
+                        val overlayRanges =
+                            (ov as? ParseOverlay.Ranges)?.ranges
+                        val parseRanges = punchRanges(
+                            ranges,
+                            overlayRanges ?: if (cursor.from < cursor.to) {
+                                listOf(TextRange(cursor.from, cursor.to))
+                            } else {
+                                emptyList()
+                            }
+                        )
+                        if (parseRanges.isNotEmpty() || overlayRanges == null) {
+                            inner.add(
+                                InnerParse(
+                                    nestResult.parser,
+                                    if (parseRanges.isNotEmpty()) {
+                                        nestResult.parser.startParse(
+                                            input,
+                                            enterFragments(oldMounts, parseRanges),
+                                            parseRanges
+                                        )
+                                    } else {
+                                        nestResult.parser.startParse("")
+                                    },
+                                    overlayRanges?.map {
+                                        TextRange(
+                                            it.from - cursor.from,
+                                            it.to - cursor.from
+                                        )
+                                    },
+                                    nestResult.bracketed,
+                                    cursor.tree!!,
+                                    if (parseRanges.isNotEmpty()) {
+                                        parseRanges[0].from
+                                    } else {
+                                        cursor.from
+                                    }
                                 )
-                            }
-                            if (overlayRanges == null) {
-                                enter = false
-                            } else if (parseRanges.isNotEmpty()) {
-                                covered = CoverInfo(parseRanges, 0, covered)
-                            }
+                            )
+                        }
+                        if (overlayRanges == null) {
+                            enter = false
+                        } else if (parseRanges.isNotEmpty()) {
+                            covered = CoverInfo(parseRanges, 0, covered)
                         }
                     }
                 } else {
