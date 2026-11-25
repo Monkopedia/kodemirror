@@ -229,4 +229,28 @@ class JsFoldTest {
         assertEquals("1-2>none:false", match("'(' + x)", 1, 1))
         assertEquals("3-4>none:false", match("/* ( */ x)", 3, 1))
     }
+
+    private fun reindent(doc: String): String {
+        val s = state(doc)
+        val changes = indentRange(s, DocPos.ZERO, DocPos(s.doc.length))
+        return s.update(TransactionSpec(changes = changes)).state.doc.toString()
+    }
+
+    @Test
+    fun indentRangeIndentsRelativeToLinesItAlreadyMoved() {
+        // Upstream feeds each re-indented line back in through overrideIndentation (#468).
+        assertEquals(
+            "if (a) {\n  if (b) {\n    foo\n  }\n}",
+            reindent("if (a) {\nif (b) {\nfoo\n}\n}")
+        )
+        assertEquals(
+            "x = [1,\n     2].map(a => {\n       foo\n     })",
+            reindent("x = [1,\n2].map(a => {\nfoo\n})")
+        )
+        // Alignment columns on a moved line shift with it.
+        assertEquals(
+            "function f() {\n  return g(a,\n           b)\n}",
+            reindent("function f() {\nreturn g(a,\nb)\n}")
+        )
+    }
 }

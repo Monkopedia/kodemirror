@@ -83,12 +83,15 @@ fun indentString(state: EditorState, cols: Int): String {
  * context computes indentation as if a line break had been inserted at that
  * position (used to answer "what indentation would this position get after
  * pressing Enter"). [simulateDoubleBreak] additionally treats the break
- * position as an empty line (Enter pressed twice).
+ * position as an empty line (Enter pressed twice). [overrideIndentation], given a line start,
+ * returns the indentation to report for that line, or -1 to use the document's (used by
+ * [indentRange] so lines indent relative to lines it already re-indented).
  */
 open class IndentContext(
     val state: EditorState,
     val simulateBreak: DocPos? = null,
-    val simulateDoubleBreak: Boolean = false
+    val simulateDoubleBreak: Boolean = false,
+    val overrideIndentation: ((DocPos) -> Int)? = null
 ) {
     /**
      * Get the document line at [pos].
@@ -142,8 +145,9 @@ open class IndentContext(
 
     /** Get the indentation column at the start of the line at [pos]. */
     fun lineIndent(pos: DocPos, bias: Int = 1): Int {
-        val (text, _) = lineContentAt(pos, bias)
-        return countIndent(text, state.tabSize)
+        val (text, from) = lineContentAt(pos, bias)
+        val overridden = overrideIndentation?.invoke(DocPos(from)) ?: -1
+        return if (overridden > -1) overridden else countIndent(text, state.tabSize)
     }
 
     /** The indent unit size for this state. */
@@ -158,8 +162,9 @@ class TreeIndentContext(
     state: EditorState,
     val pos: DocPos,
     simulateBreak: DocPos? = null,
-    simulateDoubleBreak: Boolean = false
-) : IndentContext(state, simulateBreak, simulateDoubleBreak) {
+    simulateDoubleBreak: Boolean = false,
+    overrideIndentation: ((DocPos) -> Int)? = null
+) : IndentContext(state, simulateBreak, simulateDoubleBreak, overrideIndentation) {
     /**
      * The current context node. Initially the innermost node at the indent
      * position, but updated by [indentFrom] to the node bearing the indent
@@ -174,7 +179,10 @@ class TreeIndentContext(
      */
     fun column(pos: Int, bias: Int = 1): Int {
         val (text, from) = lineContentAt(DocPos(pos), bias)
-        return countColumn(text, state.tabSize, pos - from)
+        val result = countColumn(text, state.tabSize, pos - from)
+        val override = overrideIndentation?.invoke(DocPos(from)) ?: -1
+        // An overridden line is shifted by the difference to its own indentation.
+        return if (override > -1) result + override - countIndent(text, state.tabSize) else result
     }
 
     /** The text on the line after the indent position. */
@@ -203,15 +211,17 @@ class TreeIndentContext(
  * and tree-based indentation strategies.
  *
  * Returns the desired indentation in columns, or null if no service
- * or strategy provides an answer.
+ * or strategy provides an answer. [overrideIndentation] is passed to the
+ * [IndentContext]s used.
  */
 fun getIndentation(
     state: EditorState,
     pos: DocPos,
     simulateBreak: DocPos? = null,
-    simulateDoubleBreak: Boolean = false
+    simulateDoubleBreak: Boolean = false,
+    overrideIndentation: ((DocPos) -> Int)? = null
 ): Int? {
-    val context = IndentContext(state, simulateBreak, simulateDoubleBreak)
+    val context = IndentContext(state, simulateBreak, simulateDoubleBreak, overrideIndentation)
     // Try indent services first
     for (service in state.facet(indentService)) {
         val result = service(context, pos)
@@ -221,7 +231,9 @@ fun getIndentation(
     // Try tree-based indentation, when the tree reaches [pos]
     val tree = syntaxTree(state)
     return if (tree.length >= pos.value) {
-        getTreeIndent(TreeIndentContext(state, pos, simulateBreak, simulateDoubleBreak))
+        getTreeIndent(
+            TreeIndentContext(state, pos, simulateBreak, simulateDoubleBreak, overrideIndentation)
+        )
     } else {
         null
     }
@@ -325,15 +337,19 @@ fun indentRange(state: EditorState, from: DocPos, to: DocPos): ChangeSpec? {
     val changes = mutableListOf<ChangeSpec>()
     val startLine = state.doc.lineAt(from)
     val endLine = state.doc.lineAt(to)
+    // New indentation of lines already re-indented, so later lines indent relative to them.
+    val updated = mutableMapOf<DocPos, Int>()
+    val override: (DocPos) -> Int = { lineStart -> updated[lineStart] ?: -1 }
 
     for (lineNum in startLine.number.value..endLine.number.value) {
         val line = state.doc.line(LineNumber(lineNum))
-        var desired = getIndentation(state, line.from) ?: continue
+        var desired = getIndentation(state, line.from, overrideIndentation = override) ?: continue
         // Whitespace-only lines are emptied rather than indented.
         if (line.text.all(::isJsSpace)) desired = 0
         val currentLen = currentIndentLength(line.text)
         val newIndent = indentString(state, desired)
         if (line.text.substring(0, currentLen) == newIndent) continue
+        updated[line.from] = desired
         changes.add(
             ChangeSpec.Single(
                 line.from,

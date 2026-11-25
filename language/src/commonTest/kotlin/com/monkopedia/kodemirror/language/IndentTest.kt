@@ -226,4 +226,36 @@ class IndentTest {
         )
         assertEquals(6, getIndentation(state, DocPos.ZERO))
     }
+
+    @Test
+    fun overrideIndentationReplacesALinesIndentation() {
+        // npm: getIndentation(new IndentContext(s, {overrideIndentation}), 4) is 8, and 4 without.
+        val state = EditorState.create(
+            EditorStateConfig(
+                doc = "  a\nb".asDoc(),
+                extensions = indentService.of { cx, pos ->
+                    if (pos.value ==
+                        4
+                    ) {
+                        cx.lineIndent(DocPos.ZERO) + 2
+                    } else {
+                        null
+                    }
+                }
+            )
+        )
+        assertEquals(
+            8,
+            getIndentation(state, DocPos(4), overrideIndentation = {
+                if (it.value ==
+                    0
+                ) {
+                    6
+                } else {
+                    -1
+                }
+            })
+        )
+        assertEquals(4, getIndentation(state, DocPos(4)))
+    }
 }

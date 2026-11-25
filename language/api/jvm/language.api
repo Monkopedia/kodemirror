@@ -110,8 +110,9 @@ public final class com/monkopedia/kodemirror/language/HighlightStyleKt {
 }
 
 public class com/monkopedia/kodemirror/language/IndentContext {
-	public synthetic fun <init> (Lcom/monkopedia/kodemirror/state/EditorState;Lcom/monkopedia/kodemirror/state/DocPos;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public synthetic fun <init> (Lcom/monkopedia/kodemirror/state/EditorState;Lcom/monkopedia/kodemirror/state/DocPos;ZLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lcom/monkopedia/kodemirror/state/EditorState;Lcom/monkopedia/kodemirror/state/DocPos;ZLkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lcom/monkopedia/kodemirror/state/EditorState;Lcom/monkopedia/kodemirror/state/DocPos;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getOverrideIndentation ()Lkotlin/jvm/functions/Function1;
 	public final fun getSimulateBreak-aIaQTD8 ()Lcom/monkopedia/kodemirror/state/DocPos;
 	public final fun getSimulateDoubleBreak ()Z
 	public final fun getState ()Lcom/monkopedia/kodemirror/state/EditorState;
@@ -136,8 +137,8 @@ public final class com/monkopedia/kodemirror/language/IndentKt {
 	public static final fun getIndentService ()Lcom/monkopedia/kodemirror/state/Facet;
 	public static final fun getIndentUnit ()Lcom/monkopedia/kodemirror/state/Facet;
 	public static final fun getIndentUnit (Lcom/monkopedia/kodemirror/state/EditorState;)I
-	public static final fun getIndentation-8CNtWGo (Lcom/monkopedia/kodemirror/state/EditorState;ILcom/monkopedia/kodemirror/state/DocPos;Z)Ljava/lang/Integer;
-	public static synthetic fun getIndentation-8CNtWGo$default (Lcom/monkopedia/kodemirror/state/EditorState;ILcom/monkopedia/kodemirror/state/DocPos;ZILjava/lang/Object;)Ljava/lang/Integer;
+	public static final fun getIndentation-v3USGWA (Lcom/monkopedia/kodemirror/state/EditorState;ILcom/monkopedia/kodemirror/state/DocPos;ZLkotlin/jvm/functions/Function1;)Ljava/lang/Integer;
+	public static synthetic fun getIndentation-v3USGWA$default (Lcom/monkopedia/kodemirror/state/EditorState;ILcom/monkopedia/kodemirror/state/DocPos;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ljava/lang/Integer;
 	public static final fun indentRange-sX5c8NE (Lcom/monkopedia/kodemirror/state/EditorState;II)Lcom/monkopedia/kodemirror/state/ChangeSpec;
 	public static final fun indentString (Lcom/monkopedia/kodemirror/state/EditorState;I)Ljava/lang/String;
 }
@@ -328,8 +329,8 @@ public final class com/monkopedia/kodemirror/language/TagStyleSpec {
 }
 
 public final class com/monkopedia/kodemirror/language/TreeIndentContext : com/monkopedia/kodemirror/language/IndentContext {
-	public synthetic fun <init> (Lcom/monkopedia/kodemirror/state/EditorState;ILcom/monkopedia/kodemirror/state/DocPos;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public synthetic fun <init> (Lcom/monkopedia/kodemirror/state/EditorState;ILcom/monkopedia/kodemirror/state/DocPos;ZLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lcom/monkopedia/kodemirror/state/EditorState;ILcom/monkopedia/kodemirror/state/DocPos;ZLkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lcom/monkopedia/kodemirror/state/EditorState;ILcom/monkopedia/kodemirror/state/DocPos;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun column (II)I
 	public static synthetic fun column$default (Lcom/monkopedia/kodemirror/language/TreeIndentContext;IIILjava/lang/Object;)I
 	public final fun continueAt ()Ljava/lang/Integer;
