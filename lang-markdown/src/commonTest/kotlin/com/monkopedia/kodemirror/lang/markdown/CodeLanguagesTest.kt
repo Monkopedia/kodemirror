@@ -19,6 +19,7 @@
 package com.monkopedia.kodemirror.lang.markdown
 
 import com.monkopedia.kodemirror.lang.html.htmlLanguage
+import com.monkopedia.kodemirror.lezer.common.MountedTree
 import com.monkopedia.kodemirror.lezer.common.Tree
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -106,5 +107,18 @@ class CodeLanguagesTest {
                 "x\n\n    <i>y</i>\n    <b>z</b>\n"
             )
         )
+    }
+
+    /**
+     * A fenced block's mount is bracketed (its fences delimit it) and an indented block's is not,
+     * as `NestedParse.bracketed` declares (#462; npm `@codemirror/lang-markdown` 6.5.0).
+     */
+    @Test
+    fun fencedCodeMountIsBracketed() {
+        val tree = markdown(MarkdownSupportConfig(defaultCodeLanguage = htmlLanguage))
+            .language.parser.parse("```\n<b>x</b>\n```\n\n    <i>y</i>\n")
+        fun mount(name: String) = tree.topNode.getChild(name)?.tree?.let { MountedTree.get(it) }
+        assertEquals(true, mount("FencedCode")?.bracketed)
+        assertEquals(false, mount("CodeBlock")?.bracketed)
     }
 }

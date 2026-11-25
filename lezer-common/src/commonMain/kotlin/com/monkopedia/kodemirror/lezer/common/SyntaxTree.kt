@@ -574,7 +574,9 @@ internal class TreeNode(
             while (idx != e) {
                 val next = children[idx]
                 val start = positions[idx] + parent.treeFrom
-                if (!checkSide(side, pos, start, start + childLength(next))) {
+                if (!checkSide(side, pos, start, start + childLength(next)) &&
+                    !enterBracketedMount(next, mode, pos, start)
+                ) {
                     idx += dir
                     continue
                 }
@@ -642,12 +644,25 @@ internal class TreeNode(
         }
     }
 
+    /**
+     * With [IterMode.ENTER_BRACKETED], a child holding a bracketed non-overlay mount is entered
+     * whenever [pos] is inside it or on its edge, whatever the side.
+     */
+    private fun enterBracketedMount(next: Any, mode: Int, pos: Int, start: Int): Boolean {
+        if (mode and IterMode.ENTER_BRACKETED == 0 || next !is Tree) return false
+        val mounted = MountedTree.get(next) ?: return false
+        return mounted.overlay == null &&
+            mounted.bracketed &&
+            pos >= start &&
+            pos <= start + next.length
+    }
+
     override fun enter(pos: Int, side: Int, mode: Int): SyntaxNode? {
         if (mode and IterMode.IGNORE_OVERLAYS == 0) {
             val mounted = MountedTree.get(_tree)
             if (mounted != null && mounted.overlay != null) {
                 val rPos = pos - treeFrom
-                val enterBracketed = mode and IterMode.ENTER_BRACKETED != 0
+                val enterBracketed = mode and IterMode.ENTER_BRACKETED != 0 && mounted.bracketed
                 for (r in mounted.overlay) {
                     val fromOk = if (side > 0 || enterBracketed) r.from <= rPos else r.from < rPos
                     val toOk = if (side < 0 || enterBracketed) r.to >= rPos else r.to > rPos

@@ -129,7 +129,7 @@ private class MixedParse(
             innerDone++
             innerP.target.setProp(
                 NodeProp.mounted.id,
-                MountedTree(done, innerP.overlay, innerP.parser)
+                MountedTree(done, innerP.overlay, innerP.parser, innerP.bracketed)
             )
         }
         return null

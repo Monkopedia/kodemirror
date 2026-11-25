@@ -91,8 +91,17 @@ class NodeProp<T>(
 
 /**
  * Info about a mounted tree inside another tree.
+ *
+ * [bracketed] is set when the mounting [NestedParse.bracketed] was, meaning the mounted language
+ * is wrapped in delimiters of the host language, so [IterMode.ENTER_BRACKETED] may enter it at
+ * its edges.
  */
-data class MountedTree(val tree: Tree, val overlay: List<TextRange>?, val parser: Parser) {
+data class MountedTree(
+    val tree: Tree,
+    val overlay: List<TextRange>?,
+    val parser: Parser,
+    val bracketed: Boolean = false
+) {
     companion object {
         /** Retrieve the [MountedTree] from a [Tree], if any. */
         fun get(tree: Tree): MountedTree? = tree.prop(NodeProp.mounted)
