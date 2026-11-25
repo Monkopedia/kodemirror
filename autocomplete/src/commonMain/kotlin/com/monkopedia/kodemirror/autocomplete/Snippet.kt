@@ -128,7 +128,8 @@ private val lineBreak = Regex("\r\n?|\n")
 
 /** Upstream's `Snippet.parse`. */
 private fun parseTemplate(template: String): ParsedSnippet {
-    data class Field(val seq: Int?, val name: String)
+    // A double, as upstream reads a field number with `+`, so `${99999999999}` parses.
+    data class Field(val seq: Double?, val name: String)
     val fields = mutableListOf<Field>()
     val lines = mutableListOf<String>()
     val positions = mutableListOf<FieldPos>()
@@ -136,7 +137,7 @@ private fun parseTemplate(template: String): ParsedSnippet {
         var line = rawLine
         while (true) {
             val m = placeholder.find(line) ?: break
-            val seq = m.groupValues[1].takeIf { it.isNotEmpty() }?.toInt()
+            val seq = m.groupValues[1].takeIf { it.isNotEmpty() }?.toDouble()
             val rawName = m.groupValues[2].ifEmpty { m.groupValues[3] }
             val name = escapedBrace.replace(rawName) { it.groupValues[1] }
             val index = m.range.first
@@ -188,6 +189,10 @@ private fun parseTemplate(template: String): ParsedSnippet {
  * `${1:default}`. `\{` and `\}` are literal braces. Each new line takes the
  * indentation of the line the snippet starts on, plus one indent unit per
  * leading tab.
+ *
+ * The first field is selected. Tab and Shift-Tab move between fields while the
+ * snippet is active; moving onto the last field, or the cursor out of the current
+ * field, ends it.
  *
  * A field that appears more than once is a tab stop at its first occurrence
  * only; its other occurrences are inserted as plain text.
@@ -245,7 +250,8 @@ fun snippet(template: String): (CompletionApplyContext) -> Unit {
                     null
                 },
                 annotations = listOf(pickedCompletion.of(ctx.completion)),
-                userEvent = "input.complete"
+                userEvent = "input.complete",
+                scrollIntoView = true
             )
         )
     }
@@ -277,48 +283,33 @@ fun hasPrevSnippetField(state: EditorState): Boolean {
 
 // ── Commands ──
 
-/** Move to the next snippet field, or clear the snippet if at the last field. */
-val nextSnippetField: (EditorSession) -> Boolean = { view ->
+/**
+ * Upstream's `moveField`: select the field [dir] away. Moving onto the last field ends
+ * the snippet, as upstream does.
+ */
+private fun moveField(dir: Int): (EditorSession) -> Boolean = command@{ view ->
     val active = view.state.field(snippetState, require = false)
-    if (active != null && active.fieldIndex < active.fields.size - 1) {
-        val next = active.fieldIndex + 1
-        val field = active.fields[next]
-        view.dispatch(
-            TransactionSpec(
-                selection = SelectionSpec.CursorSpec(field.from, field.to),
-                effects = listOf(setActiveSnippet.of(active.copy(fieldIndex = next)))
-            )
+    if (active == null || dir < 0 && active.fieldIndex == 0) return@command false
+    val next = active.fieldIndex + dir
+    val field = active.fields.getOrNull(next) ?: return@command false
+    val last = dir > 0 && next + dir !in active.fields.indices
+    view.dispatch(
+        TransactionSpec(
+            selection = SelectionSpec.CursorSpec(field.from, field.to),
+            effects = listOf(
+                setActiveSnippet.of(if (last) null else active.copy(fieldIndex = next))
+            ),
+            scrollIntoView = true
         )
-        true
-    } else if (active != null) {
-        view.dispatch(
-            TransactionSpec(
-                effects = listOf(setActiveSnippet.of(null))
-            )
-        )
-        true
-    } else {
-        false
-    }
+    )
+    true
 }
 
+/** Move to the next snippet field. Moving onto the last field ends the snippet. */
+val nextSnippetField: (EditorSession) -> Boolean = moveField(1)
+
 /** Move to the previous snippet field. */
-val prevSnippetField: (EditorSession) -> Boolean = { view ->
-    val active = view.state.field(snippetState, require = false)
-    if (active != null && active.fieldIndex > 0) {
-        val prev = active.fieldIndex - 1
-        val field = active.fields[prev]
-        view.dispatch(
-            TransactionSpec(
-                selection = SelectionSpec.CursorSpec(field.from, field.to),
-                effects = listOf(setActiveSnippet.of(active.copy(fieldIndex = prev)))
-            )
-        )
-        true
-    } else {
-        false
-    }
-}
+val prevSnippetField: (EditorSession) -> Boolean = moveField(-1)
 
 /** Clear the active snippet. */
 val clearSnippet: (EditorSession) -> Boolean = { view ->
