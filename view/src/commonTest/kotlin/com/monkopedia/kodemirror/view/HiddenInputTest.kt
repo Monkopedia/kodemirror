@@ -32,6 +32,7 @@ import com.monkopedia.kodemirror.state.asInsert
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -220,5 +221,77 @@ class HiddenInputTest {
         assertEquals("Hello", d.doc)
         val tab = applyHiddenInput(d.state, HiddenInput.Empty, TextFieldValue("\t"))
         assertNull(tab.transaction)
+    }
+
+    @Test
+    fun editToAStaleBuffer_isRestatedAgainstTheEmptiedValue() {
+        // The field still holds the "f" the editor already entered and emptied (#480).
+        val buffer = FieldBuffer(TextFieldValue("f", TextRange(1)), windowStart = 1)
+        val rebased = rebaseFieldEdit(
+            TextFieldValue("fi", TextRange(2)),
+            buffer,
+            TextFieldValue("")
+        )
+        assertEquals(TextFieldValue("i", TextRange(1)), rebased.value)
+        assertEquals(1, rebased.windowStart)
+    }
+
+    @Test
+    fun compositionStartedOnAStaleBuffer_keepsOnlyItsOwnText() {
+        val buffer = FieldBuffer(TextFieldValue("é", TextRange(1)), windowStart = 1)
+        val rebased = rebaseFieldEdit(
+            TextFieldValue("éni", TextRange(3), composition = TextRange(1, 3)),
+            buffer,
+            TextFieldValue("")
+        )
+        assertEquals(TextFieldValue("ni", TextRange(2), TextRange(0, 2)), rebased.value)
+        // The editor now holds "ni", which sits at 1 in what the field reported.
+        val next = FieldBuffer.after(
+            TextFieldValue("éni", TextRange(3), TextRange(1, 3)),
+            rebased.value,
+            rebased.windowStart
+        )
+        assertNotNull(next)
+        assertEquals(1, next.windowStart)
+        // The next update, still against the stale buffer, replaces the composing text.
+        val second = rebaseFieldEdit(
+            TextFieldValue("é你", TextRange(2)),
+            next,
+            rebased.value
+        )
+        assertEquals(TextFieldValue("你", TextRange(1)), second.value)
+    }
+
+    @Test
+    fun staleTextDeletedByTheField_isIgnored() {
+        val buffer = FieldBuffer(TextFieldValue("ab", TextRange(2)), windowStart = 2)
+        val rebased = rebaseFieldEdit(TextFieldValue("a", TextRange(1)), buffer, TextFieldValue(""))
+        assertEquals(TextFieldValue("", TextRange(0)), rebased.value)
+    }
+
+    @Test
+    fun fieldBufferAfter() {
+        val reported = TextFieldValue("fi", TextRange(2))
+        assertNull(FieldBuffer.after(reported, reported, 0))
+        assertEquals(2, FieldBuffer.after(reported, TextFieldValue(""), 0)?.windowStart)
+        // A value that is not inside what the field holds cannot be tracked.
+        assertNull(FieldBuffer.after(reported, TextFieldValue("zz"), 0))
+    }
+
+    @Test
+    fun compositionReplacingStaleText_isTrackedFromWhereItStarts() {
+        // The input method replaces the stale "é" with a composing "n", before the stale "x".
+        val buffer = FieldBuffer(TextFieldValue("éx", TextRange(2)), windowStart = 2)
+        val reported = TextFieldValue("nx", TextRange(1), composition = TextRange(0, 1))
+        val rebased = rebaseFieldEdit(reported, buffer, TextFieldValue(""))
+        assertEquals(TextFieldValue("n", TextRange(1), TextRange(0, 1)), rebased.value)
+        val next = FieldBuffer.after(reported, rebased.value, rebased.windowStart)
+        assertNotNull(next)
+        val second = rebaseFieldEdit(
+            TextFieldValue("nix", TextRange(2), composition = TextRange(0, 2)),
+            next,
+            rebased.value
+        )
+        assertEquals(TextFieldValue("ni", TextRange(2), TextRange(0, 2)), second.value)
     }
 }

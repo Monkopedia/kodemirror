@@ -18,6 +18,7 @@
  */
 package com.monkopedia.kodemirror.view
 
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
@@ -133,6 +134,80 @@ internal fun applyHiddenInput(
         )
     }
     return HiddenInputEdit(transaction, HiddenInput.Empty)
+}
+
+/**
+ * The hidden field's own buffer, while it still differs from the value the editor gave it.
+ *
+ * The field adopts a new value only when it next recomposes, so after the editor empties it (a
+ * commit, a dropped echo) a second edit in the same frame is applied to the field's previous
+ * buffer: typing `fi` within one frame reported `"fi"` for the `i` (#480). [value] is that
+ * buffer, the value the field last reported, and the editor's own value sits inside it at
+ * [windowStart].
+ */
+internal class FieldBuffer(val value: TextFieldValue, val windowStart: Int) {
+    companion object {
+        /**
+         * The field's buffer after it reported [reported] and the editor answered with [next], or
+         * null when they agree. [windowStart] is where [next] sits in [reported] when it is not
+         * empty; an emptied value sits at the field's cursor.
+         */
+        fun after(reported: TextFieldValue, next: TextFieldValue, windowStart: Int): FieldBuffer? {
+            if (next == reported) return null
+            val start = if (next.text.isEmpty()) reported.selection.min else windowStart
+            val fits = start + next.text.length <= reported.text.length &&
+                reported.text.regionMatches(start, next.text, 0, next.text.length)
+            return if (fits) FieldBuffer(reported, start) else null
+        }
+    }
+}
+
+/** A field edit restated against the editor's value, and where that value sits in the field. */
+internal class RebasedEdit(val value: TextFieldValue, val windowStart: Int)
+
+/**
+ * Restate [reported], an edit the field made to its stale [buffer], as the same edit made to
+ * [current], the value the editor gave it, which sits in the buffer at
+ * [FieldBuffer.windowStart]. Changes to buffer text outside that window are text the editor has
+ * already dealt with, so they are dropped.
+ */
+internal fun rebaseFieldEdit(
+    reported: TextFieldValue,
+    buffer: FieldBuffer,
+    current: TextFieldValue
+): RebasedEdit {
+    val old = buffer.value.text
+    val new = reported.text
+    val prefix = commonPrefix(old, new)
+    val suffix = commonSuffix(old, new, prefix)
+    val inserted = new.substring(prefix, new.length - suffix)
+    val winFrom = buffer.windowStart
+    val winTo = winFrom + current.text.length
+    val from = prefix.coerceIn(winFrom, winTo)
+    val to = (old.length - suffix).coerceIn(from, winTo)
+    val text = current.text.substring(0, from - winFrom) + inserted +
+        current.text.substring(to - winFrom)
+
+    // Where an offset in the reported value lands in the restated one.
+    fun map(offset: Int): Int = when {
+        offset <= prefix -> offset.coerceIn(winFrom, from) - winFrom
+        offset >= new.length - suffix -> {
+            val inOld = offset - (new.length - suffix) + (old.length - suffix)
+            from - winFrom + inserted.length + (inOld.coerceIn(to, winTo) - to)
+        }
+        else -> from - winFrom + (offset - prefix)
+    }
+    val composition = reported.composition
+        ?.let { TextRange(map(it.start), map(it.end)) }
+        ?.takeUnless { it.collapsed }
+    return RebasedEdit(
+        TextFieldValue(
+            text,
+            TextRange(map(reported.selection.start), map(reported.selection.end)),
+            composition
+        ),
+        windowStart = if (prefix >= winFrom) winFrom else prefix
+    )
 }
 
 /** Length of the common prefix of [a] and [b], never ending inside a surrogate pair. */
