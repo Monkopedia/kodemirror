@@ -86,7 +86,7 @@ class CompletionPipelineTest {
                 )
             )
         )
-        return EditorSession(state)
+        return PluginSession(state)
     }
 
     private fun typeChar(view: EditorSession, ch: String) {

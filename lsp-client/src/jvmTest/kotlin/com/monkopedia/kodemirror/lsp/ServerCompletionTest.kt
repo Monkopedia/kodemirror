@@ -18,6 +18,8 @@
  */
 package com.monkopedia.kodemirror.lsp
 
+import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.runDesktopComposeUiTest
 import com.monkopedia.kodemirror.autocomplete.Completion
 import com.monkopedia.kodemirror.autocomplete.CompletionApplyContext
 import com.monkopedia.kodemirror.autocomplete.CompletionContext
@@ -34,6 +36,7 @@ import com.monkopedia.kodemirror.state.Text
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.view.EditorSession
+import com.monkopedia.kodemirror.view.KodeMirror
 import com.monkopedia.lsp.CompletionItem
 import com.monkopedia.lsp.CompletionItemKind
 import com.monkopedia.lsp.CompletionItemLabelDetails
@@ -61,6 +64,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
+@OptIn(ExperimentalTestApi::class)
 class ServerCompletionTest {
     private fun doc(vararg lines: String): Text = Text.of(lines.toList())
 
@@ -357,7 +361,7 @@ class ServerCompletionTest {
     }
 
     @Test
-    fun textEditRangePastTheCursorFiltersByTheWholeRange() = runBlocking {
+    fun textEditRangePastTheCursorFiltersByTheWholeRange() = runDesktopComposeUiTest {
         // #421: "foo b|ar" with the server's edit range over "bar". Upstream filters
         // by the result's from..to ("bar"), not from..cursor ("b").
         val range = Range(Position(0u, 4u), Position(0u, 7u))
@@ -371,8 +375,8 @@ class ServerCompletionTest {
             )
         )
         val client = LSPClient(fixture.server)
-        client.initialize()
-        val session = DelegatingSession(
+        runBlocking { client.initialize() }
+        val session = EditorSession(
             EditorState.create(
                 EditorStateConfig(
                     doc = "foo bar".asDoc(),
@@ -381,9 +385,12 @@ class ServerCompletionTest {
                 )
             )
         )
-        startCompletion(session)
+        // Mounted, so `:autocomplete`'s plugin runs the query.
+        setContent { KodeMirror(session = session) }
+        runOnIdle { startCompletion(session) }
+        waitUntil(timeoutMillis = 5000) { currentCompletions(session.state).isNotEmpty() }
         assertEquals(listOf("bar"), currentCompletions(session.state).map { it.label })
-        acceptCompletion(session)
+        runOnIdle { acceptCompletion(session) }
         assertEquals("foo bar", session.state.doc.toString())
     }
 

@@ -66,7 +66,7 @@ class AutocompletionCommandsTest {
                 )
             )
         )
-        return EditorSession(state)
+        return PluginSession(state)
     }
 
     @Test
@@ -135,7 +135,7 @@ class AutocompletionCommandsTest {
                 )
             )
         )
-        val view = EditorSession(state)
+        val view = PluginSession(state)
         startCompletion(view)
         val completions = currentCompletions(view.state)
         assertEquals(2, completions.size)
@@ -145,5 +145,22 @@ class AutocompletionCommandsTest {
     fun acceptCompletionReturnsFalseWhenClosed() {
         val view = createView("")
         assertFalse(acceptCompletion(view))
+    }
+
+    @Test
+    fun withoutSelectOnOpenNothingIsSelectedUntilTheUserMoves() {
+        // Upstream `CompletionDialog.build`: selected is -1 unless `selectOnOpen`.
+        val view = completionSession(
+            "",
+            config = CompletionConfig(selectOnOpen = false, override = listOf(testSource))
+        )
+        startCompletion(view)
+        assertEquals(-1, selectedCompletionIndex(view.state))
+        assertNull(selectedCompletion(view.state))
+        assertFalse(acceptCompletion(view))
+        moveCompletionSelection(forward = false)(view)
+        assertEquals(2, selectedCompletionIndex(view.state))
+        moveCompletionSelection(forward = true)(view)
+        assertEquals(0, selectedCompletionIndex(view.state))
     }
 }

@@ -20,30 +20,22 @@ package com.monkopedia.kodemirror.autocomplete
 
 import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
-import com.monkopedia.kodemirror.state.EditorState
-import com.monkopedia.kodemirror.state.EditorStateConfig
-import com.monkopedia.kodemirror.state.ExtensionList
-import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.TransactionSpec
-import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.state.asInsert
 import com.monkopedia.kodemirror.view.EditorSession
-import com.monkopedia.kodemirror.view.insertAt
 import com.monkopedia.kodemirror.view.select
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
-import kotlin.test.assertTrue
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 
 /**
- * Regression tests for the async LSP completion re-open race (#153): a suspend
- * source still in flight when the user moves the cursor, changes the typed token,
- * or closes the popup used to dispatch its result unconditionally and re-open the
- * popup, demanding an extra Escape. The result must now be dropped when it no
- * longer applies to the live state.
+ * An async source still in flight while the user edits (#153, #421, #422). As upstream
+ * `@codemirror/autocomplete` 6.20.1's plugin, edits made while the query runs are
+ * replayed onto its result when it arrives: typing keeps it (mapping its range),
+ * anything else that moves the cursor or changes the doc ends the query, and Escape
+ * closes the session so the late result is dropped. Expected values are upstream's on
+ * the same inputs (probe rows R1–R6 in the #422 PR).
  */
 class AsyncCompletionRaceTest {
 
@@ -52,36 +44,10 @@ class AsyncCompletionRaceTest {
         Completion(label = "banana")
     )
 
-    /**
-     * Build a session whose single async source suspends on [gate] before
-     * returning a result anchored at [DocPos(1)] with a lowercase-word validFor.
-     * [Dispatchers.Unconfined] runs the launched coroutine synchronously up to the
-     * `gate.await()` suspension, then resumes it inline when the test completes the
-     * gate — so the staleness check is observed deterministically.
-     */
-    private fun raceView(gate: CompletableDeferred<Unit>): EditorSession {
-        val source: SuspendCompletionSource = {
-            gate.await()
-            CompletionResult(
-                from = DocPos(1),
-                options = testOptions,
-                validFor = Regex("[a-z]*")
-            )
-        }
-        val config = CompletionConfig(asyncOverride = listOf(source))
-        val state = EditorState.create(
-            EditorStateConfig(
-                doc = "ab".asDoc(),
-                selection = SelectionSpec.CursorSpec(DocPos(2)),
-                extensions = ExtensionList(
-                    listOf(
-                        completionConfig.of(config),
-                        completionStateField
-                    )
-                )
-            )
-        )
-        return UnconfinedSession(state)
+    /** A session at "ab|" whose async source waits on [gate], then returns a lowercase-word result. */
+    private fun raceView(gate: CompletableDeferred<Unit>): EditorSession = sourceView("ab", 2) {
+        gate.await()
+        CompletionResult(from = DocPos(1), options = testOptions, validFor = Regex("[a-z]*"))
     }
 
     @Test
@@ -99,7 +65,6 @@ class AsyncCompletionRaceTest {
         val gate = CompletableDeferred<Unit>()
         val view = raceView(gate)
         startCompletion(view)
-        // Cursor moved before the result's `from` (1) while the request was pending.
         view.select(DocPos.ZERO)
         gate.complete(Unit)
         assertNull(completionStatus(view.state))
@@ -110,8 +75,9 @@ class AsyncCompletionRaceTest {
         val gate = CompletableDeferred<Unit>()
         val view = raceView(gate)
         startCompletion(view)
-        // Typing a digit breaks the lowercase-word validFor over from..head.
-        view.insertAt(DocPos(2), "1")
+        // Typing a digit breaks the lowercase-word validFor once replayed, so the
+        // source is asked again; its answer for "ab1" matches nothing.
+        view.typeText("1")
         gate.complete(Unit)
         assertNull(completionStatus(view.state))
     }
@@ -121,63 +87,42 @@ class AsyncCompletionRaceTest {
         val gate = CompletableDeferred<Unit>()
         val view = raceView(gate)
         startCompletion(view)
-        // A range selection means the cursor context no longer applies.
         view.select(anchor = DocPos.ZERO, head = DocPos(2))
         gate.complete(Unit)
         assertNull(completionStatus(view.state))
     }
 
-    /**
-     * A session at [doc] with the cursor at [cursor], whose async source suspends on
-     * [gate] before returning [result] (#421).
-     */
-    private fun lateView(
-        doc: String,
-        cursor: Int,
-        gate: CompletableDeferred<Unit>,
-        result: CompletionResult
-    ): EditorSession = sourceView(doc, cursor) {
-        gate.await()
-        result
-    }
-
     /** A session at [doc] with the cursor at [cursor] and the one async [source]. */
-    private fun sourceView(
-        doc: String,
-        cursor: Int,
-        source: SuspendCompletionSource
-    ): EditorSession = UnconfinedSession(
-        EditorState.create(
-            EditorStateConfig(
-                doc = doc.asDoc(),
-                selection = SelectionSpec.CursorSpec(DocPos(cursor)),
-                extensions = ExtensionList(
-                    listOf(
-                        completionConfig.of(CompletionConfig(asyncOverride = listOf(source))),
-                        completionStateField
-                    )
-                )
-            )
-        )
-    )
+    private fun sourceView(doc: String, cursor: Int, source: SuspendCompletionSource) =
+        completionSession(doc, cursor, CompletionConfig(asyncOverride = listOf(source)))
 
-    private fun lateResult(from: Int, to: Int, vararg labels: String) = CompletionResult(
-        from = DocPos(from),
-        to = DocPos(to),
-        options = labels.map { Completion(label = it) },
-        validFor = Regex("\\w*")
-    )
+    /**
+     * A source that waits on [gate], then completes the word before the query's cursor
+     * with a range ending at that cursor, as an LSP edit range does.
+     */
+    private fun wordUpToCursor(
+        gate: CompletableDeferred<Unit>,
+        vararg labels: String
+    ): SuspendCompletionSource = { ctx ->
+        gate.await()
+        CompletionResult(
+            from = ctx.matchBefore(Regex("\\w+"))?.from ?: ctx.pos,
+            to = ctx.pos,
+            options = labels.map { Completion(label = it) },
+            validFor = Regex("\\w*")
+        )
+    }
 
     @Test
     fun aLateResultsRangeFollowsTheEditsMadeWhileItRan() {
-        // Queried at "x.ba|" with `to` 4 (an LSP edit range), landing after "r" is
-        // typed. Upstream replays the edit onto from..to (2..5): "bar" only.
+        // Queried at "x.ba|" with `to` 4, landing after "r" is typed. Upstream replays
+        // the edit onto from..to (2..5): "bar" only.
         val gate = CompletableDeferred<Unit>()
-        val view = lateView("x.ba", 4, gate, lateResult(2, 4, "bar", "baz"))
+        val view = sourceView("x.ba", 4, wordUpToCursor(gate, "bar", "baz"))
         startCompletion(view)
-        view.insertAt(DocPos(4), "r")
+        view.typeText("r")
         gate.complete(Unit)
-        assertEquals(listOf("bar"), currentCompletions(view.state).map { it.label })
+        assertEquals("active" to listOf("bar"), shown(view))
         acceptCompletion(view)
         assertEquals("x.bar", view.state.doc.toString())
     }
@@ -187,101 +132,108 @@ class AsyncCompletionRaceTest {
         // "x.b|b" with `to` 3, then "b" typed: the edit is at the cursor even though
         // the doc reads the same with it one character later.
         val gate = CompletableDeferred<Unit>()
-        val view = lateView("x.bb", 3, gate, lateResult(2, 3, "bar", "baz", "bbb", "bb"))
+        val view = sourceView("x.bb", 3, wordUpToCursor(gate, "bar", "baz", "bbb", "bb"))
         startCompletion(view)
-        view.insertAt(DocPos(3), "b")
+        view.typeText("b")
         gate.complete(Unit)
-        assertEquals(listOf("bb", "bbb"), currentCompletions(view.state).map { it.label })
+        assertEquals("active" to listOf("bb", "bbb"), shown(view))
         acceptCompletion(view)
         assertEquals("x.bbb", view.state.doc.toString())
     }
 
     @Test
-    fun aLateResultFollowsEditsAtTwoPlaces() {
-        // "r" typed at the cursor, then "Q" inserted at the start by another edit.
+    fun anEditElsewhereRestartsTheQuery() {
+        // "r" typed at the cursor, then "Q" inserted at the start by another edit,
+        // which ends the query in flight. The source is still pending, so upstream
+        // asks it again, at "Qx.bar|" (R5).
         val gate = CompletableDeferred<Unit>()
-        val view = lateView("x.ba", 4, gate, lateResult(2, 4, "bar", "baz"))
+        val calls = mutableListOf<Int>()
+        val source = wordUpToCursor(gate, "bar", "baz")
+        val view = sourceView("x.ba", 4) { ctx ->
+            calls += ctx.pos.value
+            source(ctx)
+        }
         startCompletion(view)
-        view.insertAt(DocPos(4), "r")
+        view.typeText("r")
         view.dispatch(
             TransactionSpec(changes = ChangeSpec.Single(DocPos.ZERO, insert = "Q".asInsert()))
         )
+        assertEquals(listOf(4, 6), calls)
         gate.complete(Unit)
-        assertEquals(listOf("bar"), currentCompletions(view.state).map { it.label })
+        assertEquals("active" to listOf("bar"), shown(view))
         acceptCompletion(view)
         assertEquals("Qx.bar", view.state.doc.toString())
     }
 
-    private fun tracked(view: EditorSession) = view.state.field(asyncQueryField).changes.keys
-
     @Test
-    fun aThrowingSourceStopsTracking() {
-        // The failure is logged rather than failing the scope (#430).
-        val view = sourceView("x.", 2) { error("server failed") }
-        repeat(20) {
-            startCompletion(view)
-            assertEquals(emptySet(), tracked(view))
-        }
-    }
-
-    @Test
-    fun hangingSourcesTrackAtMostTheLatestQueries() {
-        val never = CompletableDeferred<CompletionResult?>()
-        val view = sourceView("x.", 2) { never.await() }
-        repeat(50) {
-            startCompletion(view)
-            assertTrue(tracked(view).size <= MAX_ASYNC_QUERIES)
-        }
-        assertEquals(MAX_ASYNC_QUERIES, tracked(view).size)
-    }
-
-    @Test
-    fun closingEndsTheQueriesInFlight() {
-        // The first query opens the list; a re-query is still running when Escape
-        // closes it, and its late result must not re-open it (#153).
+    fun anEditAtTheCursorEndsThePendingQuery() {
+        // A non-typing insert at the cursor (R6): the pending source goes inactive.
         val gate = CompletableDeferred<Unit>()
-        var calls = 0
-        val view = sourceView("x.", 2) {
-            if (calls++ > 0) gate.await()
-            lateResult(2, 2, "bar", "baz")
-        }
+        val view = sourceView("x.ba", 4, wordUpToCursor(gate, "bar", "baz"))
         startCompletion(view)
-        assertEquals("active", completionStatus(view.state))
-        startCompletion(view)
-        assertEquals(1, tracked(view).size)
-        closeCompletion(view)
-        assertEquals(emptySet(), tracked(view))
+        view.dispatch(
+            TransactionSpec(changes = ChangeSpec.Single(DocPos(4), insert = "Q".asInsert()))
+        )
+        assertNull(completionStatus(view.state))
         gate.complete(Unit)
         assertNull(completionStatus(view.state))
     }
 
     @Test
-    fun openingEndsTheOlderQueriesInFlight() {
-        // Two queries in flight; the newer one opens the list, so the older one's
-        // late result is dropped rather than replacing it.
-        val gates = listOf(CompletableDeferred<Unit>(), CompletableDeferred<Unit>())
+    fun aThrowingSourceIsNotLeftPending() {
+        // The failure is logged rather than failing the scope (#430), and each trigger
+        // asks the source again.
         var calls = 0
         val view = sourceView("x.", 2) {
-            val n = calls++
-            gates[n].await()
-            lateResult(2, 2, if (n == 0) "old" else "new")
+            calls++
+            error("server failed")
         }
-        startCompletion(view)
-        startCompletion(view)
-        gates[1].complete(Unit)
-        assertEquals(listOf("new"), currentCompletions(view.state).map { it.label })
-        assertEquals(emptySet(), tracked(view))
-        gates[0].complete(Unit)
-        assertEquals(listOf("new"), currentCompletions(view.state).map { it.label })
+        repeat(20) {
+            startCompletion(view)
+            assertNull(completionStatus(view.state))
+        }
+        assertEquals(20, calls)
     }
 
-    /**
-     * An [EditorSession] whose [coroutineScope] uses [Dispatchers.Unconfined] — the
-     * real composition-tied scope errors outside a composable, and Unconfined lets
-     * the launched async source run/resume inline for deterministic assertions.
-     */
-    private class UnconfinedSession(
-        initial: EditorState,
-        override val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Unconfined)
-    ) : EditorSession by EditorSession(initial)
+    @Test
+    fun aSourceHasOneQueryInFlight() {
+        // Upstream keeps a source pending while its query runs: starting again doesn't
+        // query again (#422).
+        val gate = CompletableDeferred<Unit>()
+        var calls = 0
+        val view = sourceView("x.", 2) {
+            calls++
+            gate.await()
+            CompletionResult(from = DocPos(2), options = listOf(Completion("new")))
+        }
+        repeat(50) { startCompletion(view) }
+        assertEquals(1, calls)
+        assertEquals("pending", completionStatus(view.state))
+        gate.complete(Unit)
+        assertEquals("active" to listOf("new"), shown(view))
+    }
+
+    @Test
+    fun closingDropsTheQueryInFlight() {
+        // The first query opens the list; a re-query is still running when Escape
+        // closes it, and its late result must not re-open it (#153, R4).
+        val gate = CompletableDeferred<Unit>()
+        var calls = 0
+        val view = sourceView("x.", 2) {
+            if (calls++ > 0) gate.await()
+            CompletionResult(
+                from = DocPos(2),
+                options = listOf(Completion("bar"), Completion("baz"))
+            )
+        }
+        startCompletion(view)
+        assertEquals("active", completionStatus(view.state))
+        startCompletion(view)
+        assertEquals(2, calls)
+        assertEquals("pending", completionStatus(view.state))
+        closeCompletion(view)
+        assertNull(completionStatus(view.state))
+        gate.complete(Unit)
+        assertNull(completionStatus(view.state))
+    }
 }

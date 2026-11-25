@@ -35,7 +35,7 @@ import kotlin.test.assertNull
 /**
  * Ports the upstream `@codemirror/autocomplete` explicit-session lifecycle cases
  * (#139). An explicit session (Ctrl-Space / [startCompletion]) tracks the
- * [CompletionState.explicit] flag and follows distinct backspacing rules from an
+ * explicit flag and follows distinct backspacing rules from an
  * implicit (typed) session — these assert the open/close transitions and the
  * selection reset across the lifecycle.
  *
@@ -82,7 +82,7 @@ class ExplicitCompletionSessionTest {
                 )
             )
         )
-        return EditorSession(state)
+        return PluginSession(state)
     }
 
     /** Simulate typing a character at the current cursor position. */
@@ -109,19 +109,6 @@ class ExplicitCompletionSessionTest {
                 )
             )
         }
-    }
-
-    /** Open an implicit (typed) session directly, bypassing the headless ViewPlugin. */
-    private fun openImplicit(view: EditorSession, result: CompletionResult) {
-        view.dispatch(
-            TransactionSpec(
-                effects = listOf(
-                    startCompletionEffect.of(
-                        StartCompletion(listOf(result), false, view.state.selection.main.head)
-                    )
-                )
-            )
-        )
     }
 
     @Test
@@ -155,14 +142,17 @@ class ExplicitCompletionSessionTest {
     }
 
     @Test
-    fun stopsExplicitCompletionOnNonSpanningInput() {
+    fun reQueriesExplicitlyOnNonSpanningInput() {
         val view = createView(fromSource("one two"))
         startCompletion(view)
         typeChar(view, "o")
         assertEquals("active", completionStatus(view.state))
-        // A space does not span the word `validFor` — the session closes.
+        // A space does not span the word `validFor`, so the source is asked again,
+        // still explicitly, and completes at the bare cursor (upstream 6.20.1, probe
+        // row X1 in the #422 PR).
         typeChar(view, " ")
-        assertNull(completionStatus(view.state))
+        assertEquals("active", completionStatus(view.state))
+        assertEquals(listOf("one", "two"), currentCompletions(view.state).map { it.label })
     }
 
     @Test
@@ -197,12 +187,7 @@ class ExplicitCompletionSessionTest {
         // typed span is fully removed (cursor back AT `from`), rather than re-showing
         // everything. Mirrors upstream's `limit = from + (explicit ? 0 : 1)`.
         val view = createView(fromSource("one two"), doc = "o", cursor = 1)
-        val result = CompletionResult(
-            from = DocPos.ZERO,
-            options = listOf(Completion(label = "one"), Completion(label = "two")),
-            validFor = Regex("[\\w]*")
-        )
-        openImplicit(view, result)
+        view.startImplicit()
         assertEquals("active", completionStatus(view.state))
         deleteBack(view) // cursor back to offset 0 == from
         assertNull(completionStatus(view.state))

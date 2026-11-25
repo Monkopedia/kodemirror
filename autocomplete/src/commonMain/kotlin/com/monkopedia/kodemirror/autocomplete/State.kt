@@ -21,7 +21,6 @@ package com.monkopedia.kodemirror.autocomplete
 import com.monkopedia.kodemirror.state.Annotation
 import com.monkopedia.kodemirror.state.AnnotationType
 import com.monkopedia.kodemirror.state.ChangeDesc
-import com.monkopedia.kodemirror.state.ChangeSet
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.StateEffect
@@ -40,298 +39,335 @@ val pickedCompletion: AnnotationType<Completion> = Annotation.define()
 /** Effect to set the selected completion index. */
 val setSelectedCompletion: StateEffectType<Int> = StateEffect.define()
 
-/**
- * Payload for [startCompletionEffect]: the freshly-queried [results] (merged +
- * deduped into a single ordered list by [mergeCompletions]; a single-source query
- * passes a singleton list, #137), whether the session was opened explicitly
- * (Ctrl-Space / [startCompletion]) rather than implicitly by typing, and the cursor
- * position [pos] the query ran at. The [explicit][CompletionState.explicit] flag
- * and [pos] set each result's backspace [limit][ActiveResult.limit].
- */
-internal data class StartCompletion(
-    val results: List<CompletionResult>,
-    val explicit: Boolean,
-    val pos: DocPos
-)
-
-/**
- * Effect to open the completion list with one or more source results plus whether
- * the trigger was explicit. See [StartCompletion].
- */
-internal val startCompletionEffect: StateEffectType<StartCompletion> = StateEffect.define()
+/** Starts a query of every source; the value says whether it was explicit. */
+internal val startCompletionEffect: StateEffectType<Boolean> = StateEffect.define()
 
 /** Effect to close the completion list. */
 internal val closeCompletionEffect: StateEffectType<Unit> = StateEffect.define()
 
 /**
- * One source's [result] in the open session, with upstream `ActiveResult.limit`:
- * backspacing the cursor below [limit] closes it. It is set when the result arrives
- * to `min(pos, from + (explicit ? 0 : 1))`, where `pos` is the query's cursor, and
- * mapped through every later change, so an implicit result opened at the cursor
- * (right after a `.`) may be backspaced back to its `from`. The [result]'s `to` is
- * always set: one left unset takes the cursor position when the result arrives.
+ * A completion source as the state tracks it. Two are equal when they wrap the same
+ * function, as upstream compares sources by identity.
  */
-internal data class ActiveResult(val result: CompletionResult, val limit: DocPos)
+internal sealed interface QuerySource
+
+internal data class SyncSource(val query: CompletionSource) : QuerySource
+
+internal data class AsyncSource(val query: SuspendCompletionSource) : QuerySource
+
+/** The sources of [this] config, in the order they are queried. */
+internal val CompletionConfig.sources: List<QuerySource>
+    get() = override.orEmpty().map(::SyncSource) +
+        asyncOverride.orEmpty().map(::AsyncSource)
+
+/** The position completion happens at: upstream's `cur`, the main selection's start. */
+internal fun cur(state: EditorState): DocPos = state.selection.main.from
+
+/** Upstream's `State`: what a source is doing in the current session. */
+internal enum class SourceState { Inactive, Pending, Result }
+
+// Upstream's `UpdateType` flags: how a transaction affects the sources.
+internal const val UPDATE_NONE = 0
+internal const val UPDATE_TYPING = 1
+internal const val UPDATE_BACKSPACING = 2
+internal const val UPDATE_SIMPLE_INTERACTION = UPDATE_TYPING or UPDATE_BACKSPACING
+internal const val UPDATE_ACTIVATE = 4
+internal const val UPDATE_RESET = 8
+internal const val UPDATE_RESET_IF_TOUCHING = 16
+
+/** Whether this update type has [flag] set. */
+internal infix fun Int.has(flag: Int): Boolean = this and flag != 0
 
 /**
- * Internal state tracking the completion list.
- *
- * @param explicit Whether the active session was opened explicitly (Ctrl-Space /
- *   [startCompletion]) rather than implicitly by typing. It sets each result's
- *   backspace [limit][ActiveResult.limit], and is kept for a re-query.
- * @param requery Set, with the list closed, by a transaction after which an open
- *   result no longer applies but its source should be asked again (upstream's
- *   `Pending`): typing or backspacing left text its `validFor` rejects, or it has
- *   none. The completion plugin then re-runs the query with [explicit]. Cleared
- *   by the next transaction.
+ * Upstream's `getUpdateType`. Only `input.type` activates completion; a paste, drop or
+ * other input does not. (The port has no `activateOnCompletion` option, so an accepted
+ * completion never activates it.)
  */
-internal data class CompletionState(
-    val active: List<ActiveResult> = emptyList(),
-    val filtered: List<FilterResult> = emptyList(),
-    val selected: Int = 0,
-    val open: Boolean = false,
-    val explicit: Boolean = false,
-    val requery: Boolean = false
-) {
-    val results: List<CompletionResult> get() = active.map { it.result }
-
-    /** The completion span start — the smallest `from` across active results. */
-    val from: DocPos? get() = active.minOfOrNull { it.result.from }
-
-    companion object {
-        val empty = CompletionState()
+internal fun getUpdateType(tr: Transaction, conf: CompletionConfig): Int {
+    val typing = tr.isUserEvent("input.type")
+    return when {
+        typing && conf.activateOnTyping -> UPDATE_ACTIVATE or UPDATE_TYPING
+        typing -> UPDATE_TYPING
+        tr.isUserEvent("delete.backward") -> UPDATE_BACKSPACING
+        tr.selection != null -> UPDATE_RESET
+        tr.docChanged -> UPDATE_RESET_IF_TOUCHING
+        else -> UPDATE_NONE
     }
 }
 
-/** How many async queries [asyncQueryField] tracks at once; the oldest is evicted. */
-internal const val MAX_ASYNC_QUERIES = 8
-
 /**
- * The async queries in flight, with the changes made since each one started, by query
- * id. Ids come from [nextId], so they are unique within one editor's states.
+ * One source's part in the completion session, as upstream's `ActiveSource`: inactive,
+ * or pending a query (with whether it was started explicitly). [ActiveResult] holds a
+ * source's result.
  */
-internal data class AsyncQueries(
-    val nextId: Int = 0,
-    val changes: Map<Int, ChangeDesc> = emptyMap()
-)
+internal open class ActiveSource(
+    val source: QuerySource,
+    val state: SourceState,
+    val explicit: Boolean = false
+) {
+    open val hasResult: Boolean get() = false
 
-/** Starts tracking the edits made while a new async query, `nextId`, runs. */
-internal val asyncQueryStartEffect: StateEffectType<Unit> = StateEffect.define()
+    val isPending: Boolean get() = state == SourceState.Pending
 
-/** Stops tracking the async query with this id. */
-internal val asyncQueryEndEffect: StateEffectType<Int> = StateEffect.define()
-
-/**
- * The in-flight async queries. A result's range is mapped through its query's changes
- * when it arrives, as upstream replays the transactions that happened while the query
- * ran onto its `ActiveResult` (#421). Opening or closing the completion ends every
- * query, and a query that is no longer tracked when its result arrives is dropped.
- */
-internal val asyncQueryField: StateField<AsyncQueries> = StateField.define(
-    StateFieldSpec(
-        create = { AsyncQueries() },
-        update = { value, tr ->
-            var changes = if (tr.docChanged) {
-                value.changes.mapValues { it.value.composeDesc(tr.changes.desc) }
-            } else {
-                value.changes
-            }
-            var nextId = value.nextId
-            for (effect in tr.effects) {
-                if (effect.asType(asyncQueryStartEffect) != null) {
-                    // Insertion order is start order, so the first is the oldest.
-                    if (changes.size >= MAX_ASYNC_QUERIES) changes = changes - changes.keys.first()
-                    changes = changes + (nextId++ to ChangeSet.empty(tr.state.doc.length).desc)
+    fun update(tr: Transaction, conf: CompletionConfig): ActiveSource {
+        val type = getUpdateType(tr, conf)
+        var value = this
+        if (type has UPDATE_RESET || type has UPDATE_RESET_IF_TOUCHING && touches(tr)) {
+            value = ActiveSource(source, SourceState.Inactive)
+        }
+        if (type has UPDATE_ACTIVATE && value.state == SourceState.Inactive) {
+            value = ActiveSource(source, SourceState.Pending)
+        }
+        value = value.updateFor(tr, type)
+        for (effect in tr.effects) {
+            val start = effect.asType(startCompletionEffect)
+            val setActive = effect.asType(setActiveEffect)
+            when {
+                start != null -> value = ActiveSource(source, SourceState.Pending, start.value)
+                effect.asType(closeCompletionEffect) != null ->
+                    value = ActiveSource(source, SourceState.Inactive)
+                setActive != null -> for (active in setActive.value) {
+                    if (active.source == source) value = active
                 }
-                effect.asType(asyncQueryEndEffect)?.let { changes = changes - it.value }
-                if (effect.asType(startCompletionEffect) != null ||
-                    effect.asType(closeCompletionEffect) != null
-                ) {
-                    changes = emptyMap()
-                }
-            }
-            if (changes === value.changes && nextId == value.nextId) {
-                value
-            } else {
-                AsyncQueries(nextId, changes)
             }
         }
-    )
-)
+        return value
+    }
+
+    open fun updateFor(tr: Transaction, type: Int): ActiveSource = map(tr.changes)
+
+    open fun map(changes: ChangeDesc): ActiveSource = this
+
+    open fun touches(tr: Transaction): Boolean =
+        tr.changes.touchesRange(cur(tr.state)) != TouchesResult.No
+}
+
+/**
+ * A source's [result] in the open session, as upstream's `ActiveResult`: [from] and
+ * [to] are the range it completes, mapped through every edit since the query ran, and
+ * backspacing the cursor below [limit] drops it.
+ */
+internal class ActiveResult(
+    source: QuerySource,
+    explicit: Boolean,
+    val limit: DocPos,
+    val result: CompletionResult,
+    val from: DocPos,
+    val to: DocPos
+) : ActiveSource(source, SourceState.Result, explicit) {
+    override val hasResult: Boolean get() = true
+
+    override fun updateFor(tr: Transaction, type: Int): ActiveSource {
+        if (!(type has UPDATE_SIMPLE_INTERACTION)) return map(tr.changes)
+        val from = tr.changes.mapPos(from)
+        val to = tr.changes.mapPos(to, 1)
+        val pos = cur(tr.state)
+        if (pos > to ||
+            type has UPDATE_BACKSPACING &&
+            (cur(tr.startState) == this.from || pos < limit)
+        ) {
+            return ActiveSource(
+                source,
+                if (type has UPDATE_ACTIVATE) SourceState.Pending else SourceState.Inactive
+            )
+        }
+        val limit = tr.changes.mapPos(limit)
+        if (checkValid(result.validFor, tr.state, from, to)) {
+            return ActiveResult(source, explicit, limit, result, from, to)
+        }
+        return ActiveSource(source, SourceState.Pending, explicit)
+    }
+
+    override fun map(changes: ChangeDesc): ActiveSource = if (changes.empty) {
+        this
+    } else {
+        ActiveResult(
+            source,
+            explicit,
+            changes.mapPos(limit),
+            result,
+            changes.mapPos(from),
+            changes.mapPos(to, 1)
+        )
+    }
+
+    override fun touches(tr: Transaction): Boolean =
+        tr.changes.touchesRange(from, to) != TouchesResult.No
+
+    companion object {
+        /**
+         * The [result] of a query that ran with the cursor at [pos], as upstream's plugin
+         * `accept` builds it: an implicit result may be backspaced back to its `from`
+         * when it starts at the cursor, and an unset `to` is the cursor.
+         */
+        fun arrived(source: QuerySource, explicit: Boolean, pos: DocPos, result: CompletionResult) =
+            ActiveResult(
+                source,
+                explicit,
+                minOf(pos, result.from + if (explicit) 0 else 1),
+                result,
+                result.from,
+                result.to ?: pos
+            )
+    }
+}
+
+/** Whether [validFor] fully matches the text between [from] and [to] (upstream `checkValid`). */
+private fun checkValid(validFor: Regex?, state: EditorState, from: DocPos, to: DocPos): Boolean =
+    validFor != null && validFor.matches(state.sliceDoc(from, to))
+
+/** Replaces the active sources it lists, as a finished query does. */
+internal val setActiveEffect: StateEffectType<List<ActiveSource>> =
+    StateEffect.define { sources, mapping -> sources.map { it.map(mapping) } }
+
+/**
+ * The completion list on screen, as upstream's `CompletionDialog`: the merged
+ * [options], the [selected] index (-1 for none) and the popup's anchor [pos]. A
+ * [disabled] dialog still shows its options while a source re-queries, but they can't
+ * be selected or accepted.
+ */
+internal class CompletionDialog(
+    val options: List<FilterResult>,
+    val pos: DocPos,
+    val selected: Int,
+    val disabled: Boolean
+) {
+    fun setSelected(selected: Int): CompletionDialog =
+        if (selected == this.selected || selected >= options.size) {
+            this
+        } else {
+            CompletionDialog(options, pos, selected, disabled)
+        }
+
+    fun map(changes: ChangeDesc) =
+        CompletionDialog(options, changes.mapPos(pos), selected, disabled)
+
+    fun setDisabled() = CompletionDialog(options, pos, selected, true)
+
+    companion object {
+        fun build(
+            active: List<ActiveSource>,
+            state: EditorState,
+            prev: CompletionDialog?,
+            conf: CompletionConfig,
+            didSetActive: Boolean
+        ): CompletionDialog? {
+            val pending = active.any { it.isPending }
+            if (prev != null && !didSetActive && pending) return prev.setDisabled()
+            val options = mergeCompletions(active, state)
+            if (options.isEmpty()) return if (prev != null && pending) prev.setDisabled() else null
+            var selected = if (conf.selectOnOpen) 0 else -1
+            if (prev != null && prev.selected != selected && prev.selected != -1) {
+                val selectedValue = prev.options[prev.selected].completion
+                val index = options.indexOfFirst { it.completion === selectedValue }
+                if (index >= 0) selected = index
+            }
+            val pos = active.filterIsInstance<ActiveResult>().minOf { it.from }
+            return CompletionDialog(options, pos, selected, false)
+        }
+    }
+}
+
+/**
+ * The completion session, as upstream's `CompletionState`: one [ActiveSource] per
+ * configured source, and the [open] dialog, if any.
+ */
+internal class CompletionState(val active: List<ActiveSource>, val open: CompletionDialog?) {
+    fun update(tr: Transaction): CompletionState {
+        val state = tr.state
+        val conf = state.facet(completionConfig)
+        // A source added while completion is active starts pending.
+        val initial = if (this.active.any { it.state != SourceState.Inactive }) {
+            SourceState.Pending
+        } else {
+            SourceState.Inactive
+        }
+        var active = conf.sources.map { source ->
+            (
+                this.active.find {
+                    it.source == source
+                } ?: ActiveSource(source, initial)
+                ).update(tr, conf)
+        }
+        if (active.size == this.active.size &&
+            active.indices.all { active[it] === this.active[it] }
+        ) {
+            active = this.active
+        }
+
+        var open = open
+        val didSet = tr.effects.any { it.asType(setActiveEffect) != null }
+        if (open != null && tr.docChanged) open = open.map(tr.changes)
+        if (tr.selection != null ||
+            active.any { it is ActiveResult && it.touches(tr) } ||
+            !sameResults(active, this.active) ||
+            didSet
+        ) {
+            open = CompletionDialog.build(active, state, open, conf, didSet)
+        } else if (open != null && open.disabled && active.none { it.isPending }) {
+            open = null
+        }
+        if (open == null && active.none { it.isPending } && active.any { it.hasResult }) {
+            active =
+                active.map {
+                    if (it.hasResult) ActiveSource(it.source, SourceState.Inactive) else it
+                }
+        }
+        for (effect in tr.effects) {
+            effect.asType(setSelectedCompletion)?.let { open = open?.setSelected(it.value) }
+        }
+        if (active === this.active && open === this.open) return this
+        return CompletionState(active, open)
+    }
+
+    companion object {
+        val start = CompletionState(emptyList(), null)
+    }
+}
+
+/** Whether [a] and [b] hold the same results, in order (upstream `sameResults`). */
+private fun sameResults(a: List<ActiveSource>, b: List<ActiveSource>): Boolean {
+    if (a === b) return true
+    val resultsA = a.filterIsInstance<ActiveResult>()
+    val resultsB = b.filterIsInstance<ActiveResult>()
+    return resultsA.size == resultsB.size &&
+        resultsA.indices.all { resultsA[it].result === resultsB[it].result }
+}
 
 /** State field that tracks the active completion state. */
 internal val completionStateField: StateField<CompletionState> = StateField.define(
     StateFieldSpec(
-        create = { CompletionState.empty },
-        provide = { asyncQueryField },
-        update = { value, tr ->
-            // The open session's lifecycle comes first, as upstream's
-            // `ActiveSource.update` resets before it applies this transaction's
-            // effects (so a start effect in the same transaction still opens).
-            var result = when {
-                value.open && value.active.isNotEmpty() -> updateOpenCompletion(value, tr)
-                value.requery -> CompletionState.empty
-                else -> value
-            }
-
-            for (effect in tr.effects) {
-                val startEffect = effect.asType(startCompletionEffect)
-                if (startEffect != null) {
-                    val start = startEffect.value
-                    val slack = if (start.explicit) 0 else 1
-                    // Upstream's `ActiveResult.to` is `result.to ?? pos`, mapped through
-                    // the edits made while the query ran, which leaves it at the cursor
-                    // now. From here on it maps like an explicit `to` (#421).
-                    val head = tr.state.selection.main.head
-                    val results = start.results.map { it.copy(to = it.to ?: head) }
-                    val filtered = mergeCompletions(results, tr.state)
-                    result = CompletionState(
-                        active = results.map {
-                            ActiveResult(it, minOf(start.pos, it.from + slack))
-                        },
-                        filtered = filtered,
-                        selected = 0,
-                        open = filtered.isNotEmpty(),
-                        explicit = start.explicit
-                    )
-                }
-                if (effect.asType(closeCompletionEffect) != null) {
-                    result = CompletionState.empty
-                }
-                val selectEffect = effect.asType(setSelectedCompletion)
-                if (selectEffect != null) {
-                    result = result.copy(
-                        selected = selectEffect.value.coerceIn(
-                            0,
-                            (result.filtered.size - 1).coerceAtLeast(0)
-                        )
-                    )
-                }
-            }
-            result
-        }
+        create = { CompletionState.start },
+        update = { value, tr -> value.update(tr) }
     )
 )
 
-/** [result] with its range mapped through [changes]; `to` sticks to typing at its end. */
-internal fun CompletionResult.mapped(changes: ChangeDesc): CompletionResult =
-    copy(from = changes.mapPos(from), to = to?.let { changes.mapPos(it, 1) })
-
 /**
- * Carry an open completion [value] through [tr], following upstream
- * `@codemirror/autocomplete`'s `getUpdateType` / `ActiveResult.updateFor`:
- *   * Typing (`input.type`) or backspacing (`delete.backward`) maps each result's
- *     range and re-checks it (see below).
- *   * Any other transaction that sets the selection — a cursor move, an applied
- *     completion, a paste — closes the completion.
- *   * Any other document change closes it if it touches a result's range, and
- *     otherwise maps the range.
- *
- * On typing or backspacing, each result is checked on its own:
- *   * It drops when the cursor is past its `to` (or before its `from`), or on a
- *     backspace that started at its original `from` or left the cursor below its
- *     [limit][ActiveResult.limit]. Typing past `to` re-queries the source when
- *     `activateOnTyping` is set.
- *   * Otherwise it stays while its validFor FULLY matches (anchored, like upstream
- *     `checkValid`) the text between its `from` and `to` (the cursor when unset).
- *     When it doesn't, or there is no validFor, upstream re-queries the source; if
- *     no result survives, the state asks for that [re-query][CompletionState.requery].
- * Survivors are re-merged + deduped, keeping the selected option selected when it
- * is still listed (upstream `CompletionDialog.build`).
+ * Get the completion status: "pending" while a source is being queried, "active" when
+ * completions are shown, null otherwise.
  */
-private fun updateOpenCompletion(value: CompletionState, tr: Transaction): CompletionState {
-    val changes = tr.changes
-    val startHead = tr.startState.selection.main.head
-    val typing = tr.isUserEvent("input.type")
-    val backspacing = tr.isUserEvent("delete.backward")
-    if (!typing && !backspacing) {
-        return when {
-            tr.selection != null -> CompletionState.empty
-            !tr.docChanged -> value
-            value.results.any {
-                changes.touchesRange(it.from, it.to ?: startHead) != TouchesResult.No
-            } -> CompletionState.empty
-            else -> {
-                // Untouched, so every query is unchanged: re-merging only re-points
-                // the options at the mapped results that accepting reads.
-                val active = value.active.map {
-                    ActiveResult(it.result.mapped(changes), changes.mapPos(it.limit))
-                }
-                value.copy(
-                    active = active,
-                    filtered = mergeCompletions(active.map { it.result }, tr.state)
-                )
-            }
-        }
-    }
-
-    val head = tr.state.selection.main.head
-    var requery = false
-    val surviving = value.active.mapNotNull { (old, limit) ->
-        val cr = old.mapped(changes)
-        val to = cr.to ?: head
-        if (head > to && typing && tr.state.facet(completionConfig).activateOnTyping) {
-            // Typing past `to` (e.g. over a closing bracket) asks the source again.
-            requery = true
-            return@mapNotNull null
-        }
-        if (head < cr.from ||
-            head > to ||
-            (backspacing && (startHead == old.from || head < limit))
-        ) {
-            return@mapNotNull null
-        }
-        val validFor = cr.validFor
-        if (validFor == null || !validFor.matches(tr.state.doc.sliceString(cr.from, to))) {
-            requery = true
-            return@mapNotNull null
-        }
-        ActiveResult(cr, changes.mapPos(limit))
-    }
-    if (surviving.isEmpty()) {
-        return if (requery) {
-            CompletionState(explicit = value.explicit, requery = true)
-        } else {
-            CompletionState.empty
-        }
-    }
-    val filtered = mergeCompletions(surviving.map { it.result }, tr.state)
-    // Upstream moves a selection other than the first option along with its option.
-    val selected = if (value.selected == 0) {
-        0
-    } else {
-        val option = value.filtered.getOrNull(value.selected)?.completion
-        filtered.indexOfFirst { it.completion === option }.coerceAtLeast(0)
-    }
-    return value.copy(
-        active = surviving,
-        filtered = filtered,
-        selected = selected,
-        open = filtered.isNotEmpty()
-    )
-}
-
-/** Get the completion status: "active" if completions are shown, null otherwise. */
 fun completionStatus(state: EditorState): String? {
     val cs = state.field(completionStateField, require = false) ?: return null
-    return if (cs.open) "active" else null
+    return when {
+        cs.active.any { it.isPending } -> "pending"
+        cs.active.any { it.state != SourceState.Inactive } -> "active"
+        else -> null
+    }
 }
 
+/** The open dialog, unless it is disabled while a source re-queries. */
+private fun enabledDialog(state: EditorState): CompletionDialog? =
+    state.field(completionStateField, require = false)?.open?.takeUnless { it.disabled }
+
 /** Get the current list of filtered completions. */
-fun currentCompletions(state: EditorState): List<Completion> {
-    val cs = state.field(completionStateField, require = false) ?: return emptyList()
-    return cs.filtered.map { it.completion }
-}
+fun currentCompletions(state: EditorState): List<Completion> =
+    enabledDialog(state)?.options?.map { it.completion }.orEmpty()
 
 /** Get the currently selected completion. */
 fun selectedCompletion(state: EditorState): Completion? {
-    val cs = state.field(completionStateField, require = false) ?: return null
-    if (!cs.open || cs.filtered.isEmpty()) return null
-    return cs.filtered[cs.selected].completion
+    val open = enabledDialog(state) ?: return null
+    return if (open.selected >= 0) open.options[open.selected].completion else null
 }
 
-/** Get the index of the currently selected completion. */
-fun selectedCompletionIndex(state: EditorState): Int {
-    val cs = state.field(completionStateField, require = false) ?: return -1
-    return if (cs.open) cs.selected else -1
-}
+/** Get the index of the currently selected completion, or -1 when there is none. */
+fun selectedCompletionIndex(state: EditorState): Int = enabledDialog(state)?.selected ?: -1

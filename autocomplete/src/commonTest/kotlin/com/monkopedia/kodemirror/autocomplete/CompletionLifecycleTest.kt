@@ -20,13 +20,9 @@ package com.monkopedia.kodemirror.autocomplete
 
 import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
-import com.monkopedia.kodemirror.state.EditorState
-import com.monkopedia.kodemirror.state.EditorStateConfig
-import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.TransactionSpec
-import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.view.EditorSession
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -39,26 +35,8 @@ import kotlin.test.assertNull
 class CompletionLifecycleTest {
 
     private fun session(doc: String, cursor: Int, result: CompletionResult): EditorSession {
-        val s = EditorSession(
-            EditorState.create(
-                EditorStateConfig(
-                    doc = doc.asDoc(),
-                    selection = SelectionSpec.CursorSpec(DocPos(cursor)),
-                    extensions = ExtensionList(
-                        listOf(completionConfig.of(CompletionConfig()), completionStateField)
-                    )
-                )
-            )
-        )
-        s.dispatch(
-            TransactionSpec(
-                effects = listOf(
-                    startCompletionEffect.of(
-                        StartCompletion(listOf(result), false, s.state.selection.main.head)
-                    )
-                )
-            )
-        )
+        val s = completionSession(doc, cursor, CompletionConfig(override = listOf(fixed(result))))
+        s.startImplicit()
         assertEquals("active", completionStatus(s.state))
         return s
     }

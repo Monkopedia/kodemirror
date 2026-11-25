@@ -206,6 +206,97 @@ class CompletionRequeryTest {
         assertEquals("active" to listOf("bar", "baz"), shown(session))
     }
 
+    // ── When the plugin queries (#422), against upstream 6.20.1's real plugin on the
+    // same inputs (probe rows in the #422 PR). ──
+
+    @Test
+    fun aPasteDoesNotActivateCompletion() = runDesktopComposeUiTest {
+        // I1: only `input.type` activates.
+        var queries = 0
+        val session = editor(
+            "foo ",
+            { ctx ->
+                queries++
+                wordSource(ctx)
+            }
+        )
+        edit(session, "b", "input.paste")
+        assertEquals(null to emptyList<String>(), shown(session))
+        assertEquals(0, queries)
+        // Control: typing does.
+        edit(session, "a", "input.type")
+        assertEquals("active" to listOf("bar", "baz"), shown(session))
+        assertEquals(1, queries)
+    }
+
+    @Test
+    fun aSlowSourceGetsOneQueryWhileTheUserTypes() = runDesktopComposeUiTest {
+        // Q1: the typing is replayed onto the one result when it lands.
+        val gate = CompletableDeferred<Unit>()
+        val calls = mutableListOf<Int>()
+        val source: SuspendCompletionSource = { ctx ->
+            calls += ctx.pos.value
+            val result = wordSource(ctx)?.copy(validFor = Regex("\\w*"))
+            gate.await()
+            result
+        }
+        val session = editor("foo ", CompletionConfig(asyncOverride = listOf(source)))
+        edit(session, "b", "input.type")
+        edit(session, "a", "input.type")
+        edit(session, "r", "input.type")
+        assertEquals(listOf(5), calls)
+        runOnIdle { gate.complete(Unit) }
+        waitForIdle()
+        assertEquals("active" to listOf("bar"), shown(session))
+    }
+
+    @Test
+    fun onlyTheSourceAnEditInvalidatedIsAskedAgain() = runDesktopComposeUiTest {
+        // M1: "d" fails its validFor on "b1"; "w" keeps its result.
+        val calls = mutableListOf<String>()
+        fun source(name: String, labels: List<String>, validFor: Regex): CompletionSource = { ctx ->
+            calls += "$name${ctx.pos.value}"
+            wordSource(ctx)?.copy(options = labels.map { Completion(it) }, validFor = validFor)
+        }
+        val session = editor(
+            "foo ",
+            CompletionConfig(
+                override = listOf(
+                    source("w", listOf("bar", "baz"), Regex("\\w*")),
+                    source("d", listOf("b1", "b2"), Regex("[a-z]*"))
+                )
+            )
+        )
+        edit(session, "b", "input.type")
+        assertEquals("active" to listOf("b1", "b2", "bar", "baz"), shown(session))
+        edit(session, "1", "input.type")
+        assertEquals("active" to listOf("b1"), shown(session))
+        assertEquals(listOf("w5", "d5", "d6"), calls)
+    }
+
+    @Test
+    fun aLateResultTheTypingInvalidatedIsAskedForAgainExplicitly() = runDesktopComposeUiTest {
+        // A5: no validFor, so the replayed typing asks again, keeping the explicit flag.
+        val gates = mutableListOf<CompletableDeferred<Unit>>()
+        val calls = mutableListOf<Pair<Int, Boolean>>()
+        val source: SuspendCompletionSource = { ctx ->
+            calls += ctx.pos.value to ctx.explicit
+            val gate = CompletableDeferred<Unit>().also { gates += it }
+            val result = wordSource(ctx)
+            gate.await()
+            result
+        }
+        val session = editor("foo b", CompletionConfig(asyncOverride = listOf(source)))
+        runOnIdle { startCompletion(session) }
+        edit(session, "a", "input.type")
+        runOnIdle { gates[0].complete(Unit) }
+        waitForIdle()
+        assertEquals(listOf(5 to true, 6 to true), calls)
+        runOnIdle { gates[1].complete(Unit) }
+        waitForIdle()
+        assertEquals("active" to listOf("bar", "baz"), shown(session))
+    }
+
     private fun CompletionSource.withValidFor(): CompletionSource =
         { ctx -> this(ctx)?.copy(validFor = Regex("\\w*")) }
 }

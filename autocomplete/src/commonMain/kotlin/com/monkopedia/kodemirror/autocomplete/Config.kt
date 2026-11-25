@@ -31,9 +31,10 @@ import com.monkopedia.kodemirror.state.Facet
  * @param override Optional override completion sources that replace the defaults.
  * @param asyncOverride Optional suspend completion sources. Unlike [override]
  *   (which must return synchronously), these are launched on the editor's
- *   coroutine scope and their result dispatched when it resolves — the only way
+ *   coroutine scope and their result shown when it resolves — the only way
  *   to drive an async source (e.g. a language server) on wasmJs, where a
- *   blocking bridge is impossible. Tried after [override] yields nothing.
+ *   blocking bridge is impossible. They are queried alongside [override], and
+ *   their options merged with its, as upstream queries every source.
  */
 data class CompletionConfig(
     val activateOnTyping: Boolean = true,
