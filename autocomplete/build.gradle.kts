@@ -20,6 +20,8 @@ kotlin {
             implementation(kotlin("test"))
             implementation(project(":state"))
             implementation(project(":view"))
+            // A grammar with string nodes, for closeBrackets' triple quotes and prefixes.
+            implementation(project(":lang-python"))
         }
     }
 }

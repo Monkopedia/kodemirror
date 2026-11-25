@@ -28,6 +28,7 @@ import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.Facet
 import com.monkopedia.kodemirror.state.InsertContent
+import com.monkopedia.kodemirror.state.LanguageDataKey
 import com.monkopedia.kodemirror.state.MapMode
 import com.monkopedia.kodemirror.state.SelectionRange
 import com.monkopedia.kodemirror.state.StateEffect
@@ -38,7 +39,9 @@ import com.monkopedia.kodemirror.state.Text
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionFilterResult
 import com.monkopedia.kodemirror.state.TransactionSpec
+import com.monkopedia.kodemirror.state.codePointAt
 import com.monkopedia.kodemirror.state.extensionListOf
+import com.monkopedia.kodemirror.state.fromCodePoint
 import com.monkopedia.kodemirror.state.transactionFilter
 import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.KeyBinding
@@ -46,6 +49,13 @@ import com.monkopedia.kodemirror.view.keymap
 
 /**
  * Configuration for close-brackets behavior.
+ *
+ * Like upstream, the `closeBrackets` [language data][EditorState.languageDataAt] at the
+ * cursor takes precedence: a map with `brackets` (the opening tokens, as a list of
+ * strings; each one's closing token is derived as upstream's `closing` does, and a
+ * quote listed three times over, such as `"""`, enables triple quotes), `before` and
+ * `stringPrefixes` (prefixes such as Python's `f` that may precede a string's opening
+ * quote). This config is used where the language provides none.
  *
  * @param brackets The bracket/quote pairs to auto-close.
  * @param before Characters before which a closing bracket may be inserted.
@@ -56,8 +66,50 @@ data class CloseBracketsConfig(val brackets: String = "()[]{}''\"\"", val before
 private val closeBracketsConfig: Facet<CloseBracketsConfig, CloseBracketsConfig> =
     Facet.define(combine = { it.firstOrNull() ?: CloseBracketsConfig() })
 
-private fun CloseBracketsConfig.pairs(): List<Pair<Char, Char>> =
-    brackets.chunked(2).filter { it.length == 2 }.map { it[0] to it[1] }
+/** The `closeBrackets` language data, read loosely as upstream's `CloseBracketConfig`. */
+private val closeBracketsData: LanguageDataKey<Map<String, Any?>> = LanguageDataKey("closeBrackets")
+
+/**
+ * The close-brackets settings at a position: the [brackets] as opening and closing
+ * tokens, [before] and [stringPrefixes].
+ */
+private class BracketConfig(
+    val brackets: List<Pair<String, String>>,
+    val before: String,
+    val stringPrefixes: List<String>
+) {
+    /** Whether [token] tripled is one of the brackets, so triple quotes are handled. */
+    fun allowsTriple(token: String) = brackets.any { it.first == token + token + token }
+}
+
+private val defaultBrackets = CloseBracketsConfig()
+
+/** Upstream's `config`: the language's settings at [pos], else [closeBracketsConfig]. */
+private fun config(state: EditorState, pos: DocPos): BracketConfig {
+    val data = state.languageDataAt(closeBracketsData, pos).firstOrNull()
+    if (data == null) {
+        val config = state.facet(closeBracketsConfig)
+        return BracketConfig(config.pairs(), config.before, emptyList())
+    }
+    val brackets = (data["brackets"] as? List<*>)?.filterIsInstance<String>()
+        ?.map { it to closing(codePointAt(it, 0)) }
+        ?: defaultBrackets.pairs()
+    val prefixes = (data["stringPrefixes"] as? List<*>)?.filterIsInstance<String>().orEmpty()
+    return BracketConfig(brackets, data["before"] as? String ?: defaultBrackets.before, prefixes)
+}
+
+private fun CloseBracketsConfig.pairs(): List<Pair<String, String>> =
+    brackets.chunked(2).filter { it.length == 2 }.map { "${it[0]}" to "${it[1]}" }
+
+private const val DEFINED_CLOSING = "()[]{}<>«»»«［］｛｝"
+
+/** Upstream's `closing`: the closing token for an opening code point. */
+private fun closing(ch: Int): String {
+    for (i in DEFINED_CLOSING.indices step 2) {
+        if (DEFINED_CLOSING[i].code == ch) return DEFINED_CLOSING[i + 1].toString()
+    }
+    return fromCodePoint(if (ch < 128) ch else ch + 1)
+}
 
 /** Records a closing bracket the extension inserted, at its (new-document) position. */
 private val closeBracketEffect: StateEffectType<DocPos> =
@@ -141,15 +193,14 @@ private fun typedAt(tr: Transaction, main: SelectionRange): String? {
 val deleteBracketPair: (EditorSession) -> Boolean = command@{ view ->
     val state = view.state
     if (state.readOnly) return@command false
-    val pairs = state.facet(closeBracketsConfig).pairs()
+    val brackets = config(state, state.selection.main.head).brackets
     var dont = false
     val spec = state.changeByRange { range ->
         val before = prevChar(state.doc, range.head)
         val next = nextChar(state.doc, range.head)
         val pair = if (range.empty) {
-            pairs.find { (open, close) ->
-                "$open" == before &&
-                    "$close" == next
+            brackets.find { (open, close) ->
+                open == before && close == next
             }
         } else {
             null
@@ -158,9 +209,10 @@ val deleteBracketPair: (EditorSession) -> Boolean = command@{ view ->
             dont = true
             ChangeByRangeResult(range = range)
         } else {
+            val len = pair.first.length
             ChangeByRangeResult(
-                changes = ChangeSpec.Single(range.head - 1, range.head + 1),
-                range = EditorSelection.cursor(range.head - 1)
+                changes = ChangeSpec.Single(range.head - len, range.head + len),
+                range = EditorSelection.cursor(range.head - len)
             )
         }
     }
@@ -184,17 +236,17 @@ fun insertBracket(state: EditorState, bracket: String): TransactionSpec =
 
 /** Upstream's `insertBracket`: `null` when [bracket] needs no special handling. */
 private fun bracketTransaction(state: EditorState, bracket: String): TransactionSpec? {
-    val config = state.facet(closeBracketsConfig)
-    for ((open, close) in config.pairs()) {
-        if (bracket == "$open") {
+    val config = config(state, state.selection.main.head)
+    for ((open, close) in config.brackets) {
+        if (bracket == open) {
             return if (open == close) {
-                handleSame(state, "$open")
+                handleSame(state, open, config.allowsTriple(open), config.stringPrefixes)
             } else {
-                handleOpen(state, "$open", "$close", config.before)
+                handleOpen(state, open, close, config.before)
             }
         }
-        if (bracket == "$close" && closedBracketAt(state, state.selection.main.from)) {
-            return handleClose(state, "$close")
+        if (bracket == close && closedBracketAt(state, state.selection.main.from)) {
+            return handleClose(state, close)
         }
     }
     return null
@@ -271,27 +323,61 @@ private fun handleClose(state: EditorState, close: String) = allRanges(state) { 
     }
 }
 
-/** Opening and closing token are the same (quotes). Triple quotes are not configurable here. */
-private fun handleSame(state: EditorState, token: String) = allRanges(state) { range ->
+/**
+ * Opening and closing token are the same (quotes), possibly with triple quotes (as in
+ * `"""abc"""`-style quoting) when [allowTriple].
+ */
+private fun handleSame(
+    state: EditorState,
+    token: String,
+    allowTriple: Boolean,
+    prefixes: List<String>
+) = allRanges(state) { range ->
     if (!range.empty) return@allRanges wrap(range, token, token)
     val pos = range.head
     val next = nextChar(state.doc, pos)
-    when {
-        next == token && nodeStart(state, pos) -> pairAt(pos, token, token)
-        next == token && closedBracketAt(state, pos) -> ChangeByRangeResult(
-            changes = ChangeSpec.Single(
-                pos,
-                pos + token.length,
-                InsertContent.StringContent(token)
-            ),
-            range = EditorSelection.cursor(pos + token.length)
-        )
-        next != token &&
-            state.charCategorizer(pos)(next) != CharCategory.Word &&
-            canStartStringAt(state, pos) &&
-            !probablyInString(state, pos, token) -> pairAt(pos, token, token)
-        else -> null
+    val triple = token + token + token
+    if (next == token) {
+        when {
+            nodeStart(state, pos) -> pairAt(pos, token, token)
+            closedBracketAt(state, pos) -> {
+                val end = minOf(pos + triple.length, DocPos(state.doc.length))
+                val isTriple = allowTriple && state.sliceDoc(pos, end) == triple
+                val content = if (isTriple) triple else token
+                ChangeByRangeResult(
+                    changes = ChangeSpec.Single(
+                        pos,
+                        pos + content.length,
+                        InsertContent.StringContent(content)
+                    ),
+                    range = EditorSelection.cursor(pos + content.length)
+                )
+            }
+            else -> null
+        }
+    } else if (allowTriple && opensTriple(state, pos, token, prefixes)) {
+        pairAt(pos, token, triple)
+    } else if (state.charCategorizer(pos)(next) != CharCategory.Word &&
+        canStartStringAt(state, pos, prefixes) != null &&
+        !probablyInString(state, pos, token, prefixes)
+    ) {
+        pairAt(pos, token, token)
+    } else {
+        null
     }
+}
+
+/** Whether a [token] typed at [pos] is the third of a triple quote that starts a string. */
+private fun opensTriple(
+    state: EditorState,
+    pos: DocPos,
+    token: String,
+    prefixes: List<String>
+): Boolean {
+    if (pos.value < 2 * token.length) return false
+    val start = pos - 2 * token.length
+    if (state.sliceDoc(start, pos) != token + token) return false
+    return canStartStringAt(state, start, prefixes)?.let { nodeStart(state, it) } == true
 }
 
 private fun nodeStart(state: EditorState, pos: DocPos): Boolean {
@@ -299,23 +385,32 @@ private fun nodeStart(state: EditorState, pos: DocPos): Boolean {
     return node.parent != null && node.from == pos.value
 }
 
-/** Whether [pos] is inside a string already, judged from the syntax tree around it. */
-private fun probablyInString(state: EditorState, pos: DocPos, quote: String): Boolean {
+/**
+ * Whether [pos] is inside a string already, judged from the syntax tree around it.
+ * A node counts as a string when it starts with [quote], possibly after one of
+ * [prefixes].
+ */
+private fun probablyInString(
+    state: EditorState,
+    pos: DocPos,
+    quote: String,
+    prefixes: List<String>
+): Boolean {
     var node = syntaxTree(state).resolveInner(pos.value, -1)
+    val maxPrefix = prefixes.maxOfOrNull { it.length } ?: 0
     repeat(5) {
         val start = state.sliceDoc(
             DocPos(node.from),
-            DocPos(minOf(node.to, node.from + quote.length))
+            DocPos(minOf(node.to, node.from + quote.length + maxPrefix))
         )
-        if (start.indexOf(quote) == 0) {
+        val quotePos = start.indexOf(quote)
+        if (quotePos == 0 || quotePos > 0 && start.substring(0, quotePos) in prefixes) {
             var first = node.firstChild
             while (first != null &&
                 first.from == node.from &&
-                first.to - first.from > quote.length
+                first.to - first.from > quote.length + quotePos
             ) {
-                if (state.sliceDoc(DocPos(first.to - quote.length), DocPos(first.to)) ==
-                    quote
-                ) {
+                if (state.sliceDoc(DocPos(first.to - quote.length), DocPos(first.to)) == quote) {
                     return false
                 }
                 first = first.firstChild
@@ -327,7 +422,22 @@ private fun probablyInString(state: EditorState, pos: DocPos, quote: String): Bo
     return false
 }
 
-/** A string can start at [pos] unless a word character precedes it. */
-private fun canStartStringAt(state: EditorState, pos: DocPos): Boolean =
-    state.charCategorizer(pos)(state.sliceDoc(maxOf(pos - 1, DocPos.ZERO), pos)) !=
-        CharCategory.Word
+/**
+ * Where a string starting at [pos] would begin: [pos] unless a word character
+ * precedes it, else the start of one of [prefixes] that ends there and has no word
+ * character before it, else `null`.
+ */
+private fun canStartStringAt(state: EditorState, pos: DocPos, prefixes: List<String>): DocPos? {
+    val charCat = state.charCategorizer(pos)
+    if (charCat(state.sliceDoc(maxOf(pos - 1, DocPos.ZERO), pos)) != CharCategory.Word) return pos
+    for (prefix in prefixes) {
+        val start = pos - prefix.length
+        if (start >= DocPos.ZERO &&
+            state.sliceDoc(start, pos) == prefix &&
+            charCat(state.sliceDoc(maxOf(start - 1, DocPos.ZERO), start)) != CharCategory.Word
+        ) {
+            return start
+        }
+    }
+    return null
+}

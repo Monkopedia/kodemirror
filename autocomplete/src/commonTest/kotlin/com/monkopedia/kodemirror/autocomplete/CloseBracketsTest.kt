@@ -18,16 +18,19 @@
  */
 package com.monkopedia.kodemirror.autocomplete
 
+import com.monkopedia.kodemirror.lang.python.python
 import com.monkopedia.kodemirror.state.ChangeByRangeResult
 import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
+import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.asDoc
+import com.monkopedia.kodemirror.state.languageData
 import com.monkopedia.kodemirror.view.EditorSession
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -241,5 +244,108 @@ class CloseBracketsTest {
     fun typedBracketPassesThroughInAReadOnlyState() {
         val s = type(readOnlyBracketState("", 0), "(")
         assertEquals("(", s.doc.toString())
+    }
+
+    // ── #395: triple quotes, string prefixes and the `closeBrackets` language data,
+    // against 6.20.1 (probe rows T1-T9, D1-D2 in the PR) ──
+
+    /** Upstream `@codemirror/lang-python`'s `closeBrackets` language data. */
+    private val pythonBrackets = mapOf(
+        "brackets" to listOf("(", "[", "{", "'", "\"", "'''", "\"\"\""),
+        "stringPrefixes" to listOf("f", "fr", "rf", "r", "u", "b", "br", "rb")
+            .let { lower -> lower + lower.map { it.uppercase() } }
+    )
+
+    private fun data(config: Map<String, Any?>): Extension =
+        languageData.of { _, _, _ -> listOf(mapOf("closeBrackets" to config)) }
+
+    private fun pythonState(doc: String, cursor: Int = doc.length) =
+        dataState(doc, cursor, pythonBrackets, python().extension)
+
+    private fun dataState(
+        doc: String,
+        cursor: Int,
+        config: Map<String, Any?>,
+        vararg extra: Extension
+    ) = EditorState.create(
+        EditorStateConfig(
+            doc = doc.asDoc(),
+            selection = SelectionSpec.CursorSpec(DocPos(cursor)),
+            extensions = ExtensionList(listOf(closeBrackets(), data(config)) + extra)
+        )
+    )
+
+    /** Type each of [chars] through [insertBracket], as upstream's input handler does. */
+    private fun typeAll(state: EditorState, vararg chars: String) =
+        chars.fold(state) { s, ch -> type(s, ch) }.let { it.doc.toString() to it.selString() }
+
+    // Each case starts from a fresh state at the quote that matters: the syntax tree
+    // doesn't advance on `state.update` without a view (#488), and these read it.
+
+    @Test
+    fun aThirdQuoteOpensATripleQuotedString() {
+        // T1/T1e
+        assertEquals("\"\"\"\"\"\"" to "3", typeAll(pythonState("\"\""), "\""))
+        assertEquals("\"\"\"x\"\"\"" to "4", typeAll(pythonState("\"\""), "\"", "x")) // T1b
+        assertEquals("''''''" to "3", typeAll(pythonState("''"), "'")) // T1c
+    }
+
+    @Test
+    fun aQuoteBeforeAClosingTripleQuoteSkipsIt() {
+        // T2/T2b
+        val typed = typeAll(pythonState("\"\""), "\"", "a", "\"")
+        assertEquals("\"\"\"a\"\"\"" to "7", typed)
+    }
+
+    @Test
+    fun aStringPrefixMayPrecedeTheQuote() {
+        assertEquals("f\"\"" to "2", typeAll(pythonState("f"), "\"")) // T3
+        assertEquals("rb\"\"" to "3", typeAll(pythonState("rb"), "\"")) // T3b
+        assertEquals("x = f\"\"" to "6", typeAll(pythonState("x = f"), "\"")) // T3d
+        assertEquals("f\"\"\"\"\"\"" to "4", typeAll(pythonState("f\"\""), "\"")) // T3e/T3f
+        // A word that only ends in a prefix doesn't count (T3c), nor does a prefix
+        // without the language data (T4).
+        assertEquals("if\"" to "3", typeAll(pythonState("if"), "\""))
+        assertEquals("f\"" to "2", typeAll(bracketState("f", multi(1 to 1)), "\""))
+    }
+
+    @Test
+    fun aQuoteInsideAPrefixedStringIsNotPaired() {
+        // T10: the string's prefix doesn't hide that the cursor is inside it.
+        assertEquals("f\"a \" \"" to "5", typeAll(pythonState("f\"a  \"", 4), "\""))
+        assertEquals("\"a \" \"" to "4", typeAll(pythonState("\"a  \"", 3), "\"")) // T10b
+    }
+
+    @Test
+    fun theLanguageDataChoosesTheBrackets() {
+        assertEquals("`" to "1", typeAll(pythonState(""), "`")) // T5
+        val parens = mapOf("brackets" to listOf("("))
+        assertEquals("[" to "1", typeAll(dataState("", 0, parens), "[")) // T6
+        assertEquals("()" to "1", typeAll(dataState("", 0, parens), "(")) // T6b
+        // The closing token is derived from the opening one.
+        val guillemet = mapOf("brackets" to listOf("«"))
+        assertEquals("«»" to "1", typeAll(dataState("", 0, guillemet), "«")) // T8
+        val angle = mapOf("brackets" to listOf("<"))
+        assertEquals("<>" to "1", typeAll(dataState("", 0, angle), "<")) // T8b
+    }
+
+    @Test
+    fun theLanguageDataSetsBeforeAndPrefixes() {
+        val beforeX = mapOf("brackets" to listOf("("), "before" to "x")
+        assertEquals("()x" to "1", typeAll(dataState("x", 0, beforeX), "(")) // T7
+        assertEquals("()" to "1", typeAll(dataState(")", 0, beforeX), "(")) // T7b
+        val prefixX = mapOf("brackets" to listOf("\""), "stringPrefixes" to listOf("x"))
+        assertEquals("x\"\"" to "2", typeAll(dataState("x", 1, prefixX), "\"")) // T9
+    }
+
+    @Test
+    fun deleteBracketPairUsesTheLanguageDataBrackets() {
+        val angle = mapOf("brackets" to listOf("<"))
+        var view = EditorSession(dataState("<>", 1, angle))
+        assertTrue(deleteBracketPair(view)) // D1
+        assertEquals("", view.state.doc.toString())
+        view = EditorSession(dataState("()", 1, angle))
+        assertFalse(deleteBracketPair(view)) // D2
+        assertEquals("()", view.state.doc.toString())
     }
 }

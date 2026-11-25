@@ -134,4 +134,68 @@ class SnippetTest {
         assertEquals("xabc", s.state.doc.toString())
         assertEquals("4", s.selString())
     }
+
+    // ── #395, against 6.20.1 (probe rows S1-S4 in the PR) ──
+
+    private fun EditorSession.active() = state.field(snippetState, require = false)?.fieldIndex
+
+    @Test
+    fun tabbingOntoTheLastFieldEndsTheSnippet() {
+        // S1: upstream ends the snippet as the last field is selected.
+        val s = apply("a\${1:x} b\${2:y} c\${3:z}")
+        assertEquals(0, s.active())
+        assertEquals(true, nextSnippetField(s))
+        assertEquals("4-5", s.selString())
+        assertEquals(1, s.active())
+        assertEquals(true, hasNextSnippetField(s.state))
+        assertEquals(true, nextSnippetField(s))
+        assertEquals("7-8", s.selString())
+        assertNull(s.active())
+        assertEquals(false, hasPrevSnippetField(s.state))
+        assertEquals(false, nextSnippetField(s))
+    }
+
+    @Test
+    fun shiftTabFromTheSecondFieldReturnsToTheFirst() {
+        // S3
+        val s = apply("a\${1:x} b\${2:y} c\${3:z}")
+        nextSnippetField(s)
+        assertEquals(true, prevSnippetField(s))
+        assertEquals("1-2", s.selString())
+        assertEquals(0, s.active())
+        assertEquals(false, prevSnippetField(s))
+    }
+
+    @Test
+    fun insertingAndMovingScrollIntoView() {
+        // S1: the insertion and each move scroll the selection into view.
+        val base = EditorSession(
+            EditorState.create(EditorStateConfig(doc = "".asDoc(), extensions = snippets()))
+        )
+        val scrolls = mutableListOf<Boolean>()
+        val s = object : EditorSession by base {
+            override fun dispatch(vararg specs: TransactionSpec) {
+                val tr = state.update(*specs)
+                scrolls += tr.scrollIntoView
+                base.dispatchTransaction(tr)
+            }
+        }
+        snippet(
+            "a\${1:x} b\${2:y} c\${3:z}"
+        )(CompletionApplyContext(s, Completion("x"), DocPos(0), DocPos(0)))
+        nextSnippetField(s)
+        prevSnippetField(s)
+        assertEquals(listOf(true, true, true), scrolls)
+    }
+
+    @Test
+    fun aHugeFieldNumberIsAccepted() {
+        // S4/S4b: upstream reads field numbers as JS numbers.
+        var s = apply("x \${99999999999} y \${1:a}")
+        assertEquals("x  y a", s.state.doc.toString())
+        assertEquals("5-6", s.selString())
+        s = apply("\${99999999999:b} \${99999999998:a}")
+        assertEquals("b a", s.state.doc.toString())
+        assertEquals("2-3", s.selString())
+    }
 }
