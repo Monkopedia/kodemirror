@@ -119,6 +119,55 @@ class SearchCommandsTest {
     }
 
     @Test
+    fun replaceNextReplacesTheCurrentRegexMatch() {
+        // Upstream `replaceNext` decides "is the selection the match" by
+        // comparing positions. Comparing the selected text to the *pattern*
+        // made this branch dead for every regexp query.
+        val view = createView(
+            "john@a jane@b",
+            SearchQuery(
+                search = "(\\w+)@(\\w+)",
+                replace = "X",
+                regexp = true,
+                caseSensitive = true
+            ),
+            cursor = 0
+        )
+        assertTrue(findNext(view))
+        assertEquals(DocPos(0), view.state.selection.main.from)
+        assertEquals(DocPos(6), view.state.selection.main.to)
+        assertTrue(replaceNext(view))
+        assertEquals("X jane@b", view.state.doc.toString())
+    }
+
+    @Test
+    fun replaceNextExpandsRegexGroupsIntoTheDocument() {
+        // The position-comparison test above uses `replace = "X"`, which
+        // carries no `$n` and so cannot see whether `replaceNext` expands the
+        // template or writes it verbatim: reverting its insert to
+        // `query.replace` leaves that test green. This drives the same command
+        // with a capturing pattern and a group reference, which is the
+        // assertion that distinguishes them.
+        val view = createView(
+            "john@a jane@b",
+            SearchQuery(
+                search = "(\\w+)@(\\w+)",
+                replace = "\$2:\$1",
+                regexp = true,
+                caseSensitive = true
+            ),
+            cursor = 0
+        )
+        assertTrue(findNext(view))
+        assertEquals(DocPos(0), view.state.selection.main.from)
+        assertEquals(DocPos(6), view.state.selection.main.to)
+        assertTrue(replaceNext(view))
+        // Only the current match is replaced; the second is left for the next
+        // invocation, which is what separates `replaceNext` from `replaceAll`.
+        assertEquals("a:john jane@b", view.state.doc.toString())
+    }
+
+    @Test
     fun replaceAllReplacesAllMatches() {
         val view = createView(
             "one two one two one",
@@ -130,6 +179,64 @@ class SearchCommandsTest {
         )
         assertTrue(replaceAll(view))
         assertEquals("ONE two ONE two ONE", view.state.doc.toString())
+    }
+
+    @Test
+    fun replaceAllExpandsRegexGroupsIntoTheDocument() {
+        // Upstream (@codemirror/search 6.7.1) replaceAll inserts
+        // `query.getReplacement(match)`, which expands `$1`/`$2`. Before this
+        // fix the raw template was written into the document.
+        val view = createView(
+            "john@a jane@b",
+            SearchQuery(
+                search = "(\\w+)@(\\w+)",
+                replace = "$2:$1",
+                regexp = true,
+                caseSensitive = true
+            )
+        )
+        assertTrue(replaceAll(view))
+        assertEquals("a:john b:jane", view.state.doc.toString())
+    }
+
+    @Test
+    fun replaceAllDoesNotExpandGroupsForPlainStringQueries() {
+        // Upstream StringQuery.getReplacement inserts the replace text
+        // verbatim; only RegExpQuery expands `$` references
+        // (`@codemirror/search` 6.7.1 `dist/index.js:581,662,727`).
+        //
+        // `$1` alone cannot see the difference: a plain match carries no
+        // groups, and against an empty group list the expander leaves `$1`
+        // alone anyway, so it reads the same whether or not the plain-string
+        // branch is taken. `$&` and `$$` are the two references that *do*
+        // resolve against an empty group list -- to "" and to "$" -- so they
+        // are what actually pins `getReplacement` to the verbatim branch.
+        // Both expectations are upstream's own output for these queries.
+        for ((replace, expected) in listOf(
+            "\$1" to "\$1 b \$1",
+            "\$&" to "\$& b \$&",
+            "\$\$" to "\$\$ b \$\$"
+        )) {
+            val view = createView(
+                "a b a",
+                SearchQuery(search = "a", replace = replace, caseSensitive = true)
+            )
+            assertTrue(replaceAll(view))
+            assertEquals(expected, view.state.doc.toString())
+        }
+    }
+
+    @Test
+    fun replaceAllUnquotesEscapesInTheReplacement() {
+        // Upstream's `getReplacement` runs the replace text through
+        // `unquote`, so a "\\n" typed into the replace field inserts a real
+        // newline rather than a backslash followed by an "n".
+        val view = createView(
+            "a b a",
+            SearchQuery(search = "a", replace = "x\\ny", caseSensitive = true)
+        )
+        assertTrue(replaceAll(view))
+        assertEquals("x\ny b x\ny", view.state.doc.toString())
     }
 
     @Test

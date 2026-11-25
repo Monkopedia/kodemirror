@@ -55,11 +55,15 @@ final class com.monkopedia.kodemirror.search/SearchCursor : kotlin.collections/I
 
 final class com.monkopedia.kodemirror.search/SearchMatch { // com.monkopedia.kodemirror.search/SearchMatch|null[0]
     constructor <init>(com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos) // com.monkopedia.kodemirror.search/SearchMatch.<init>|<init>(com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos){}[0]
+    constructor <init>(com.monkopedia.kodemirror.state/DocPos, com.monkopedia.kodemirror.state/DocPos, kotlin.collections/List<kotlin/String?>) // com.monkopedia.kodemirror.search/SearchMatch.<init>|<init>(com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos;kotlin.collections.List<kotlin.String?>){}[0]
 
     final val from // com.monkopedia.kodemirror.search/SearchMatch.from|{}from[0]
         final fun <get-from>(): com.monkopedia.kodemirror.state/DocPos // com.monkopedia.kodemirror.search/SearchMatch.from.<get-from>|<get-from>(){}[0]
     final val to // com.monkopedia.kodemirror.search/SearchMatch.to|{}to[0]
         final fun <get-to>(): com.monkopedia.kodemirror.state/DocPos // com.monkopedia.kodemirror.search/SearchMatch.to.<get-to>|<get-to>(){}[0]
+
+    final var groups // com.monkopedia.kodemirror.search/SearchMatch.groups|{}groups[0]
+        final fun <get-groups>(): kotlin.collections/List<kotlin/String?> // com.monkopedia.kodemirror.search/SearchMatch.groups.<get-groups>|<get-groups>(){}[0]
 
     final fun component1(): com.monkopedia.kodemirror.state/DocPos // com.monkopedia.kodemirror.search/SearchMatch.component1|component1(){}[0]
     final fun component2(): com.monkopedia.kodemirror.state/DocPos // com.monkopedia.kodemirror.search/SearchMatch.component2|component2(){}[0]
@@ -100,6 +104,7 @@ final class com.monkopedia.kodemirror.search/SearchQuery { // com.monkopedia.kod
     final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.search/SearchQuery.equals|equals(kotlin.Any?){}[0]
     final fun expandReplace(): kotlin/String // com.monkopedia.kodemirror.search/SearchQuery.expandReplace|expandReplace(){}[0]
     final fun expandReplace(com.monkopedia.kodemirror.search/RegExpCursor): kotlin/String // com.monkopedia.kodemirror.search/SearchQuery.expandReplace|expandReplace(com.monkopedia.kodemirror.search.RegExpCursor){}[0]
+    final fun expandReplace(com.monkopedia.kodemirror.search/SearchMatch): kotlin/String // com.monkopedia.kodemirror.search/SearchQuery.expandReplace|expandReplace(com.monkopedia.kodemirror.search.SearchMatch){}[0]
     final fun getCursor(com.monkopedia.kodemirror.state/EditorState, com.monkopedia.kodemirror.state/DocPos = ..., com.monkopedia.kodemirror.state/DocPos = ...): kotlin.collections/Iterator<com.monkopedia.kodemirror.search/SearchMatch> // com.monkopedia.kodemirror.search/SearchQuery.getCursor|getCursor(com.monkopedia.kodemirror.state.EditorState;com.monkopedia.kodemirror.state.DocPos;com.monkopedia.kodemirror.state.DocPos){}[0]
     final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.search/SearchQuery.hashCode|hashCode(){}[0]
     final fun toString(): kotlin/String // com.monkopedia.kodemirror.search/SearchQuery.toString|toString(){}[0]
