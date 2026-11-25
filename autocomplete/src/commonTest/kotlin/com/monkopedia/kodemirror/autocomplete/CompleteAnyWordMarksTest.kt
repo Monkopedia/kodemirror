@@ -29,11 +29,11 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
 /**
- * Word boundaries that follow upstream's `\p{Alphabetic}` rather than "any mark". JVM only: Apple
- * native counts every mark as a word character. Expected values from @codemirror/autocomplete
- * 6.20.1.
+ * Word boundaries that follow upstream's `\p{Alphabetic}` rather than "any mark", on every
+ * platform (#415; Apple native used to count every mark as a word character). Expected values from
+ * @codemirror/autocomplete 6.20.1.
  */
-class CompleteAnyWordJvmTest {
+class CompleteAnyWordMarksTest {
 
     private fun complete(doc: String): CompletionResult {
         val state = EditorState.create(
