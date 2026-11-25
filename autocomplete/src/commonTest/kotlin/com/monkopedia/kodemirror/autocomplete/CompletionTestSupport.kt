@@ -33,6 +33,7 @@ import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.ViewUpdate
+import kotlin.time.TimeSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 
@@ -44,9 +45,10 @@ import kotlinx.coroutines.Dispatchers
 internal class PluginSession(
     initial: EditorState,
     override val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Unconfined),
+    timeSource: TimeSource = TimeSource.Monotonic,
     private val base: EditorSession = EditorSession(initial)
 ) : EditorSession by base {
-    private val plugin = CompletionPlugin(this)
+    private val plugin = CompletionPlugin(this, timeSource)
 
     override fun dispatch(vararg specs: TransactionSpec) = dispatchTransaction(state.update(*specs))
 
@@ -78,8 +80,10 @@ internal fun completionSession(
     cursor: Int = doc.length,
     config: CompletionConfig = CompletionConfig(),
     scope: CoroutineScope = CoroutineScope(Dispatchers.Unconfined),
-    extensions: List<Extension> = emptyList()
-): EditorSession = PluginSession(completionState(doc, cursor, config, extensions), scope)
+    extensions: List<Extension> = emptyList(),
+    timeSource: TimeSource = TimeSource.Monotonic
+): EditorSession =
+    PluginSession(completionState(doc, cursor, config, extensions), scope, timeSource)
 
 /** A source that always returns [result]. */
 internal fun fixed(result: CompletionResult): CompletionSource = { result }

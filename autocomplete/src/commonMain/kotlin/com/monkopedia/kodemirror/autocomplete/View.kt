@@ -263,8 +263,8 @@ fun insertCompletionText(
  * A source's query in flight, as upstream's `RunningQuery`. [updates] are the
  * transactions since it started, replayed onto its result when it arrives.
  */
-private class RunningQuery(val active: ActiveSource) {
-    val time = TimeSource.Monotonic.markNow()
+private class RunningQuery(val active: ActiveSource, timeSource: TimeSource) {
+    val time = timeSource.markNow()
     val updates = mutableListOf<Transaction>()
     var done = false
     var result: CompletionResult? = null
@@ -297,7 +297,10 @@ private val MIN_ABORT_TIME = 1.seconds
  * source goes pending and each result is shown as soon as it arrives. So a sync source
  * is queried, and its result shown, within the transaction that activated it.
  */
-internal class CompletionPlugin(private val view: EditorSession) : PluginValue {
+internal class CompletionPlugin(
+    private val view: EditorSession,
+    private val timeSource: TimeSource = TimeSource.Monotonic
+) : PluginValue {
     private val running = mutableListOf<RunningQuery>()
 
     /** Set while queries start or results are taken, so a query finishing inline waits. */
@@ -361,7 +364,7 @@ internal class CompletionPlugin(private val view: EditorSession) : PluginValue {
     private fun startQuery(active: ActiveSource) {
         val state = view.state
         val context = CompletionContext(state, cur(state), active.explicit)
-        val query = RunningQuery(active)
+        val query = RunningQuery(active, timeSource)
         running += query
         when (val source = active.source) {
             is SyncSource -> query.finish(view.queryLogged { source.query(context) })

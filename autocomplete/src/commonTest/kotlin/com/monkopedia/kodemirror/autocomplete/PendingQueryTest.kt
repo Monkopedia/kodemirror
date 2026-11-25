@@ -21,6 +21,8 @@ package com.monkopedia.kodemirror.autocomplete
 import com.monkopedia.kodemirror.state.DocPos
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.TestTimeSource
 import kotlinx.coroutines.CompletableDeferred
 
 /**
@@ -274,5 +276,90 @@ class PendingQueryTest {
         s.backspace()
         assertEquals("active" to listOf("bat"), shown(s))
         assertEquals(listOf("a(7,false)", "b(7,false)", "a(6,false)"), calls)
+    }
+
+    // ── Review of #486: one test per condition the suite didn't pin ──
+
+    @Test
+    fun aQueryOutlivingManyEditsIsAbandonedAndAskedAgain() {
+        // Upstream MaxUpdateCount/MinAbortTime: a query that has seen more than 50
+        // updates and is over a second old is aborted, and its source asked again.
+        val gated = Gated()
+        val time = TestTimeSource()
+        val s = completionSession(
+            "foo ",
+            config = CompletionConfig(asyncOverride = listOf(gatedSource(gated, "a", "bar"))),
+            timeSource = time
+        )
+        s.typeText("x")
+        repeat(50) { s.typeText("y") }
+        assertEquals(listOf("a(5,false)"), calls)
+        time += 1100.milliseconds
+        s.typeText("z")
+        assertEquals(listOf("a(5,false)", "a(56,false)"), calls)
+    }
+
+    @Test
+    fun aQueryAbandonedOnlyWhenBothOldAndBusy() {
+        // Control for the above: fifty-one updates in under a second keep the query.
+        val gated = Gated()
+        val s = completionSession(
+            "foo ",
+            config = CompletionConfig(asyncOverride = listOf(gatedSource(gated, "a", "bar"))),
+            timeSource = TestTimeSource()
+        )
+        s.typeText("x")
+        repeat(51) { s.typeText("y") }
+        assertEquals(listOf("a(5,false)"), calls)
+    }
+
+    @Test
+    fun aNullResultLeavesTheSourcePendingWhenTypingActivatedItAgain() {
+        // Upstream: no result at 5, but "a" typed meanwhile set the source pending
+        // again, so it stays pending without a new query until the next keystroke.
+        val gated = Gated()
+        val source = gatedSource(gated, "a", "bar", "baz")
+        val s =
+            session("foo ", async = listOf({ ctx -> source(ctx).takeIf { ctx.pos != DocPos(5) } }))
+        s.typeText("b")
+        s.typeText("a")
+        gated.open()
+        assertEquals("pending" to emptyList<String>(), shown(s))
+        assertEquals(listOf("a(5,false)"), calls)
+        s.typeText("r")
+        gated.open()
+        assertEquals(listOf("a(5,false)", "a(7,false)"), calls)
+        assertEquals("active" to listOf("bar"), shown(s))
+    }
+
+    @Test
+    fun closingWhileASourceReQueriesRemovesTheDisabledList() {
+        // Upstream: the disabled list goes away once nothing is pending.
+        val gated = Gated()
+        val s =
+            session("foo ", async = listOf(gatedSource(gated, "a", "bar", "baz", validFor = null)))
+        s.typeText("b")
+        gated.open()
+        s.typeText("a")
+        assertEquals(true, s.state.field(completionStateField).open?.disabled)
+        closeCompletion(s)
+        assertEquals(null, s.state.field(completionStateField).open)
+    }
+
+    @Test
+    fun theOtherSourcesShowWhileOneReQueries() {
+        // Upstream K1: with a slow source re-querying, the list re-enables with the
+        // other sources' results (upstream after updateSyncTime, the port at once).
+        val gated = Gated()
+        val s = session(
+            "foo ",
+            wordSource("s", "bar", "baz"),
+            async = listOf(gatedSource(gated, "a", "bat", validFor = null))
+        )
+        s.typeText("b")
+        gated.open()
+        assertEquals("active" to listOf("bar", "bat", "baz"), shown(s))
+        s.typeText("a")
+        assertEquals("pending" to listOf("bar", "baz"), shown(s))
     }
 }
