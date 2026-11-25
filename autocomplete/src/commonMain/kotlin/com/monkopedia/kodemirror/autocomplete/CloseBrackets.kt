@@ -105,7 +105,17 @@ fun closeBrackets(config: CloseBracketsConfig = CloseBracketsConfig()): Extensio
     val filter = transactionFilter.of { tr ->
         val state = tr.startState
         val main = state.selection.main
-        val typed = if (tr.isUserEvent("input.type") && !state.readOnly) typedAt(tr, main) else null
+        // Text an input method is composing is not typed yet; upstream's input handler
+        // likewise stands aside while a composition is in progress.
+        val typed = if (
+            tr.isUserEvent("input.type") &&
+            !tr.isUserEvent("input.type.compose") &&
+            !state.readOnly
+        ) {
+            typedAt(tr, main)
+        } else {
+            null
+        }
         val spec = typed?.let { bracketTransaction(state, it) }
         if (spec == null) {
             TransactionFilterResult.Filtered(tr)

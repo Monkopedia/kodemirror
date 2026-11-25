@@ -45,6 +45,7 @@ import com.monkopedia.kodemirror.view.keymapOf
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlinx.coroutines.awaitCancellation
 
 /**
  * Soft-keyboard input through the hidden field's real [InputConnection] (#294).
@@ -52,7 +53,8 @@ import kotlin.test.assertNotNull
  * Android keyboards compose far more than CJK text: Gboard keeps an underlined composing region
  * for every Latin word it may autocorrect, so `setComposingText` / `commitText` is the ordinary
  * typing path here, not a niche one. The connection is the one Compose creates for the field,
- * obtained from the text input request with [InterceptPlatformTextInput].
+ * obtained from the text input request with [InterceptPlatformTextInput], which keeps the
+ * request from the platform so the test's connection is the only input method editing it.
  */
 @OptIn(ExperimentalTestApi::class, ExperimentalComposeUiApi::class)
 class ImeCompositionAndroidTest {
@@ -75,9 +77,12 @@ class ImeCompositionAndroidTest {
         setContent {
             CompositionLocalProvider(LocalDensity provides Density(1f, 1f)) {
                 InterceptPlatformTextInput(
-                    interceptor = { request, nextHandler ->
+                    // The session is not handed on to the platform: a real keyboard bound
+                    // to the same field (the emulator image ships one) sees composing
+                    // regions it did not make and finishes them, racing the scripted edits.
+                    interceptor = { request, _ ->
                         connection = request.createInputConnection(EditorInfo())
-                        nextHandler.startInputMethod(request)
+                        awaitCancellation()
                     }
                 ) {
                     Box(Modifier.requiredSize(400.dp, 300.dp)) {
@@ -118,6 +123,33 @@ class ImeCompositionAndroidTest {
         ime(ic) { setComposingText("teh", 1) }
         ime(ic) { commitText("the", 1) }
         assertEquals("the", session.state.doc.toString())
+    }
+
+    @Test
+    fun backspaceInsideAComposingWord_shrinksIt() = runImeTest("", 0) { session, ic ->
+        // Gboard deletes inside the word it is composing by shrinking the composition, not
+        // with a key event.
+        for (prefix in listOf("h", "he", "hel", "hell", "hello", "hell", "hel")) {
+            ime(ic) { setComposingText(prefix, 1) }
+        }
+        assertEquals("hel", session.state.doc.toString())
+        ime(ic) { commitText("help", 1) }
+        assertEquals("help", session.state.doc.toString())
+        assertEquals(4, session.state.selection.main.head.value)
+    }
+
+    @Test
+    fun deleteKeyEventDuringComposition_editsTheComposition() = runImeTest("ab", 1) { session, ic ->
+        ime(ic) { setComposingText("wor", 1) }
+        // A Backspace key the keyboard lets through mid-composition is the field's to handle,
+        // not the keymap's: it deletes inside the composing text, and the field's own key
+        // handling ends the composition, leaving the text as it stands.
+        ime(ic) { sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DEL)) }
+        ime(ic) { sendKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DEL)) }
+        assertEquals("awob", session.state.doc.toString())
+        assertEquals(3, session.state.selection.main.head.value)
+        ime(ic) { commitText("!", 1) }
+        assertEquals("awo!b", session.state.doc.toString())
     }
 
     @Test

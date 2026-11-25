@@ -264,9 +264,16 @@ internal class HistoryState(
                 userEvent == null ||
                     joinableUserEvent.containsMatchIn(userEvent)
                 ) &&
-            lastEvent.selectionsAfter.isEmpty() &&
-            time - prevTime < groupDelay &&
-            isAdjacent(lastEvent.changes, event.changes)
+            (
+                (
+                    lastEvent.selectionsAfter.isEmpty() &&
+                        time - prevTime < groupDelay &&
+                        isAdjacent(lastEvent.changes, event.changes)
+                    ) ||
+                    // For compose (but not compose.start) events, always join with
+                    // the previous event, so a composed word is one undo step.
+                    userEvent == "input.type.compose"
+                )
         ) {
             newDone = updateBranch(
                 done,

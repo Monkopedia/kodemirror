@@ -27,6 +27,7 @@ import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.SelectionSpec
+import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.view.EditorSession
 import kotlin.test.Test
@@ -132,14 +133,35 @@ class CloseBracketsTest {
     )
 
     /** Type [ch] the way the editor does: replace each selection range, as `input.type`. */
-    private fun type(state: EditorState, ch: String): EditorState = state.update(
+    private fun type(
+        state: EditorState,
+        ch: String,
+        userEvent: String = "input.type"
+    ): EditorState = state.update(
         state.changeByRange { r ->
             ChangeByRangeResult(
                 changes = ChangeSpec.Single(r.from, r.to, InsertContent.StringContent(ch)),
                 range = EditorSelection.cursor(r.from + ch.length)
             )
-        }.copy(userEvent = "input.type")
+        }.copy(userEvent = userEvent)
     ).state
+
+    @Test
+    fun composedBracketIsNotClosed() {
+        // An input method composing "(" has not typed it yet (#294); upstream's handler stands
+        // aside while composing, so withdrawing the composition leaves nothing behind.
+        val composed = type(bracketState("", multi(0 to 0)), "(", "input.type.compose.start")
+        assertEquals("(", composed.doc.toString())
+        val withdrawn = composed.update(
+            TransactionSpec(
+                changes = ChangeSpec.Single(DocPos(0), DocPos(1), InsertContent.StringContent("")),
+                userEvent = "input.type.compose"
+            )
+        ).state
+        assertEquals("", withdrawn.doc.toString())
+        val update = type(bracketState("x", multi(1 to 1)), "[", "input.type.compose")
+        assertEquals("x[", update.doc.toString())
+    }
 
     private fun EditorState.selString() = selection.ranges.joinToString(",") {
         if (it.empty) "${it.head.value}" else "${it.anchor.value}-${it.head.value}"

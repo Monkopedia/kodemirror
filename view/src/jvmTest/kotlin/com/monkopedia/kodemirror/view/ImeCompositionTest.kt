@@ -213,6 +213,12 @@ class ImeCompositionTest {
             // The typing bridge's insert is plain `input.type`; the field's own edits of a
             // composition are `input.type.compose`.
             assertEquals(emptyList(), userEvents.filter { it == "input.type" })
+            // ...and the composition's own transactions carry CodeMirror's compose events, which
+            // history and closeBrackets key on.
+            assertEquals(
+                listOf("input.type.compose.start"),
+                userEvents.filter { it == "input.type.compose.start" }.distinct()
+            )
             // Outside a composition the same keys do reach the keymap.
             ime.send(CommitTextCommand("你", 1))
             waitForIdle()

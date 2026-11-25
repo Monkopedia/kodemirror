@@ -179,6 +179,15 @@ class HiddenInputTest {
     }
 
     @Test
+    fun compositionUpdatedWithCursorInside_replacesTheWholeComposingRange() {
+        val d = Driver("xy", 1)
+        d.input("abc", cursor = 1, composition = TextRange(0, 3))
+        d.input("abcd", cursor = 1, composition = TextRange(0, 4))
+        assertEquals("xabcdy", d.doc)
+        assertEquals(2, d.cursor)
+    }
+
+    @Test
     fun documentChangedUnderComposition_startsAfresh() {
         val d = Driver("ab", 1)
         d.compose("ni")
@@ -187,6 +196,11 @@ class HiddenInputTest {
             TransactionSpec(changes = ChangeSpec.Single(DocPos(0), DocPos(0), "Z".asInsert()))
         ).state
         assertFalse(d.buffer.mirrors(d.state))
+        // The input method's next update cannot be placed through the stale range, so it is
+        // taken as a fresh composition at the selection, leaving the stale text alone.
+        d.compose("nih")
+        assertEquals("input.type.compose.start", d.userEvents.last())
+        assertEquals("Zaninihb", d.doc)
     }
 
     @Test

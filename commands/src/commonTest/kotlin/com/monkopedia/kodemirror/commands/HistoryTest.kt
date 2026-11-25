@@ -143,6 +143,38 @@ class HistoryTest {
         assertEquals("a", view.state.doc.toString())
     }
 
+    private fun EditorSession.edit(from: Int, to: Int, insert: String, time: Long, event: String) =
+        dispatch(
+            TransactionSpec(
+                changes = ChangeSpec.Single(
+                    DocPos(from),
+                    DocPos(to),
+                    InsertContent.StringContent(insert)
+                ),
+                userEvent = event,
+                annotations = listOf(Transaction.time.of(time))
+            )
+        )
+
+    @Test
+    fun composedWordIsOneUndoStep() {
+        // Upstream always joins `input.type.compose` (but not `.start`) with the previous
+        // event, however long the input method took: a composed word is one undo step (#294).
+        val view = createView("ab x", cursor = 1)
+        view.edit(4, 4, "y", time = 0, event = "input.type")
+        view.edit(1, 1, "n", time = 2_000, event = "input.type.compose.start")
+        view.edit(2, 2, "i", time = 4_000, event = "input.type.compose")
+        view.edit(3, 3, "h", time = 6_000, event = "input.type.compose")
+        view.edit(1, 4, "你好", time = 8_000, event = "input.type.compose")
+        assertEquals("a你好b xy", view.state.doc.toString())
+        // The composition starts its own group rather than joining the typing before it.
+        assertEquals(2, undoDepth(view.state))
+        undo(view)
+        assertEquals("ab xy", view.state.doc.toString())
+        undo(view)
+        assertEquals("ab x", view.state.doc.toString())
+    }
+
     @Test
     fun testUndoDepthAndRedoDepth() {
         val view = createView("test")
