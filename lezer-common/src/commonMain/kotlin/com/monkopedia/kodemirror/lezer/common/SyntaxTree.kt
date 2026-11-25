@@ -406,8 +406,8 @@ class Tree(
     fun resolveInner(pos: Int, side: Int = 0): SyntaxNode = resolveNode(topNode, pos, side, true)
 
     /**
-     * Returns a [NodeIterator] pointing at the innermost node at [pos],
-     * with its [NodeIterator.next] linking to enclosing nodes up to the top.
+     * Returns a [NodeIterator] over all nodes around [pos], from small to big, including those
+     * in overlays that don't directly cover the position.
      */
     fun resolveStack(pos: Int, side: Int = 0): NodeIterator = stackIterator(this, pos, side)
 
@@ -1300,20 +1300,51 @@ private fun resolveNode(startNode: SyntaxNode, pos: Int, side: Int, overlays: Bo
 // ---- stackIterator helper (resolveStack) ----
 
 private fun stackIterator(tree: Tree, pos: Int, side: Int): NodeIterator {
-    val cursor = tree.cursorAt(pos, side)
-    // Build list from innermost to outermost
+    val inner = tree.resolveInner(pos, side)
+    val layers = mutableListOf(inner)
+    var scan: TreeNode? = inner as? TreeNode ?: (inner as BufferNode).context.parent
+    while (scan != null) {
+        if (scan.index < 0) {
+            // An overlay root: the host language around it is a layer of its own.
+            val parent = scan.parent as TreeNode
+            layers.add(parent.resolve(pos, side))
+            scan = parent
+        } else {
+            val mount = MountedTree.get(scan._tree)
+            val overlay = mount?.overlay
+            // Upstream compares the node-relative overlay ranges against the absolute `pos`
+            // here; kept as is for parity.
+            if (overlay != null && overlay[0].from <= pos && overlay.last().to >= pos) {
+                val root = TreeNode(mount.tree, overlay[0].from + scan.from, -1, scan)
+                layers.add(resolveNode(root, pos, side, false))
+            }
+        }
+        scan = scan.parent as TreeNode?
+    }
+    return iterStack(layers)
+}
+
+/**
+ * Interleaves the parent chains of [layers], innermost first: each step yields the head that
+ * starts latest or ends earliest. A chain stops at its overlay root, where the host layer takes
+ * over.
+ */
+private fun iterStack(layers: List<SyntaxNode>): NodeIterator {
+    val heads = layers.toMutableList()
     val nodes = mutableListOf<SyntaxNode>()
-    nodes.add(cursor.node)
-    while (cursor.parent()) {
-        nodes.add(cursor.node)
+    while (heads.isNotEmpty()) {
+        var pick = 0
+        for (i in 1 until heads.size) {
+            if (heads[i].from > heads[pick].from || heads[i].to < heads[pick].to) pick = i
+        }
+        val picked = heads[pick]
+        nodes.add(picked)
+        val next = if (picked is TreeNode && picked.index < 0) null else picked.parent
+        if (next != null) heads[pick] = next else heads.removeAt(pick)
     }
-    // Build linked list: innermost first, outermost last (via .next)
-    // nodes[0] = innermost, nodes[last] = outermost
-    var result: NodeIterator? = null
-    for (i in nodes.indices.reversed()) {
-        result = NodeIterator(nodes[i], result)
-    }
-    return result ?: NodeIterator(tree.topNode, null)
+    var result = NodeIterator(nodes.last(), null)
+    for (i in nodes.size - 2 downTo 0) result = NodeIterator(nodes[i], result)
+    return result
 }
 
 // ---- enterUnfinishedNodesBefore helper ----
