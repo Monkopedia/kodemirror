@@ -294,7 +294,7 @@ interface SyntaxNode : SyntaxNodeRef {
      */
     fun enterUnfinishedNodesBefore(pos: Int): SyntaxNode
 
-    /** Create a cursor from this node. */
+    /** Create a cursor positioned on this node. */
     fun cursor(): TreeCursor
 }
 
@@ -681,7 +681,7 @@ internal class TreeNode(
     override fun enterUnfinishedNodesBefore(pos: Int): SyntaxNode =
         enterUnfinishedNodesBefore(this, pos)
 
-    override fun cursor(): TreeCursor = _tree.cursor()
+    override fun cursor(): TreeCursor = TreeCursor(this)
 
     override fun toTree(): Tree = _tree
 
@@ -845,7 +845,7 @@ internal class BufferNode(val context: BufferContext, val _parent: BufferNode?, 
     override fun enterUnfinishedNodesBefore(pos: Int): SyntaxNode =
         enterUnfinishedNodesBefore(this, pos)
 
-    override fun cursor(): TreeCursor = context.parent._tree.cursor()
+    override fun cursor(): TreeCursor = TreeCursor(this)
 
     override fun toTree(): Tree {
         val children = mutableListOf<Any>()
@@ -879,6 +879,18 @@ class TreeCursor internal constructor(root: TreeNode, internal val mode: Int = 0
      * document coordinates must use the primary constructor with an offset [TreeNode] instead.
      */
     internal constructor(root: Tree, mode: Int = 0) : this(TreeNode(root, 0, null, 0), mode)
+
+    /** Cursor positioned on [node] inside its buffer, with the buffer ancestors on the stack. */
+    internal constructor(node: BufferNode, mode: Int = 0) : this(node.context.parent, mode) {
+        buffer = node.context
+        var n = node._parent
+        while (n != null) {
+            stack.add(0, n.index)
+            n = n._parent
+        }
+        bufferNode = node
+        yieldBuf(node.index)
+    }
 
     @Suppress("ktlint:standard:property-naming", "ktlint:standard:backing-property-naming")
     internal var _tree: TreeNode = root
