@@ -24,7 +24,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * The JavaScript mode's language data, matching `@codemirror/legacy-modes` 6.5.0
+ * The JavaScript mode's language data, matching `@codemirror/legacy-modes` 6.5.2
  * `mode/javascript.js` (#348).
  */
 class JavaScriptLanguageDataTest {
@@ -53,7 +53,10 @@ class JavaScriptLanguageDataTest {
             "default:" to true,
             "  case \"a\": " to false,
             "  x }" to false,
-            "  case 1" to false
+            "  case 1" to false,
+            "  cases:" to false,
+            "\t}" to true,
+            "  case :" to true
         )
         assertEquals(expected, expected.keys.associateWith { rule.containsMatchIn(it) })
     }
