@@ -286,17 +286,19 @@ internal fun handleKeyEvent(view: EditorSession, event: KeyEvent): Boolean {
         null
     }
 
-    return runKeyBindings(view, name, nameWithoutShift, physicalKeyName, isShift, event)
+    return runKeyBindings(view, name, nameWithoutShift, physicalKeyName, isShift) { binding ->
+        binding.any?.invoke(view, event) ?: false
+    }
 }
 
 /**
  * Run the view's key bindings against an already-resolved key *name*.
  *
- * This is the whole of [handleKeyEvent]'s binding-resolution order, split out
- * so a caller that has a key name but no Compose [KeyEvent] — a keymap parity
- * test, say — can exercise the production path instead of re-implementing it.
- * A parallel copy of this loop would drift from the real one silently, and the
- * drift would show up as a test that agrees with itself.
+ * This is the whole binding-resolution order, shared by [handleKeyEvent] and
+ * [handleRawKeyEvent] and usable by a caller that has a key name but no Compose
+ * [KeyEvent] (a keymap parity test, say), so none of them re-implements it. A
+ * parallel copy of this loop drifts from the real one silently, and the drift
+ * shows up as a platform-only bug or a test that agrees with itself (#234).
  *
  * @param name The full key name, modifiers first in `Alt-Ctrl-Meta-Shift`
  *   order, e.g. `"Ctrl-Shift-ArrowRight"`.
@@ -305,8 +307,10 @@ internal fun handleKeyEvent(view: EditorSession, event: KeyEvent): Boolean {
  * @param physicalKeyName Optional fallback name built from the *unshifted*
  *   base character (e.g. `"Ctrl-Shift-\"` for a `Ctrl-Shift-|` event).
  * @param isShift Whether Shift is held.
- * @param event The originating event, or null when there is none. [KeyBinding.any]
- *   handlers need it and are skipped when it is absent.
+ * @param runAny Runs a binding's catch-all handler for this key: [KeyBinding.any]
+ *   with the Compose event, or [KeyBinding.anyRaw] with the raw key. Called for
+ *   bindings with no key, and for keyed bindings whose key matches [name].
+ *   Returns false when there is nothing to call, which is the default.
  */
 internal fun runKeyBindings(
     view: EditorSession,
@@ -314,7 +318,7 @@ internal fun runKeyBindings(
     nameWithoutShift: String?,
     physicalKeyName: String?,
     isShift: Boolean,
-    event: KeyEvent?
+    runAny: (KeyBinding) -> Boolean = { false }
 ): Boolean {
     // Reverse so later extensions (higher precedence) are checked first,
     // matching CM6's behavior where later keymap extensions override earlier ones.
@@ -323,12 +327,9 @@ internal fun runKeyBindings(
     for (binding in bindings) {
         val bindingKey = resolveBindingKey(binding)
 
-        // Catch-all: when `any` is set but no key is specified, call for every event
+        // Catch-all: a binding with no key sees every key
         if (bindingKey == null) {
-            if (binding.any != null && event != null) {
-                val result = binding.any.invoke(view, event)
-                if (result) return true
-            }
+            if (runAny(binding)) return true
             continue
         }
 
@@ -356,10 +357,7 @@ internal fun runKeyBindings(
         }
 
         // Any handler: called for every key event matching the base key
-        if (binding.any != null && event != null && bindingKey == name) {
-            val result = binding.any.invoke(view, event)
-            if (result) return true
-        }
+        if (bindingKey == name && runAny(binding)) return true
     }
     return false
 }
@@ -439,13 +437,15 @@ internal fun handleRawKeyEvent(
         key
     }
 
-    // Build the full key name with modifiers (e.g., "Ctrl-Shift-\")
+    // Build the full key name with modifiers (e.g., "Ctrl-Shift-\"). A letter
+    // is named in lower case after Shift-, as handleKeyEvent names it and as
+    // CodeMirror's bindings spell it ("Shift-a"); "Shift-A" matched nothing (#234).
     val fullName = buildString {
         if (alt) append("Alt-")
         if (ctrl) append("Ctrl-")
         if (meta) append("Meta-")
         if (shift) append("Shift-")
-        append(normalizedKey)
+        append(if (normalizedKey.length == 1) normalizedKey.lowercase() else normalizedKey)
     }
 
     // Also build a physical-key fallback name for shifted symbols with
@@ -485,42 +485,10 @@ internal fun handleRawKeyEvent(
         null
     }
 
-    val bindings = view.state.facet(keymap).asReversed()
-    for (binding in bindings) {
-        val bindingKey = resolveBindingKey(binding)
-
-        // Catch-all `any` handlers (like vim's)
-        if (bindingKey == null) {
-            if (binding.any != null) {
-                val result =
-                    binding.anyRaw?.invoke(view, normalizedKey, ctrl, alt, meta, shift)
-                if (result == true) return true
-            }
-            continue
-        }
-
-        // Direct match
-        if (bindingKey == fullName) {
-            val result = binding.run?.invoke(view) ?: false
-            if (result) return true
-        }
-
-        // Physical key fallback
-        if (physicalName != null && bindingKey == physicalName) {
-            val result = binding.run?.invoke(view) ?: false
-            if (result) return true
-        }
-
-        // Shift variant: key matches without Shift, call binding.shift
-        if (shift &&
-            nameWithoutShift != null &&
-            binding.shift != null &&
-            bindingKey == nameWithoutShift
-        ) {
-            val result = binding.shift.invoke(view)
-            if (result) return true
-        }
+    val handled = runKeyBindings(view, fullName, nameWithoutShift, physicalName, shift) {
+        it.anyRaw?.invoke(view, normalizedKey, ctrl, alt, meta, shift) ?: false
     }
+    if (handled) return true
 
     // Not consumed by keymap -- check if it should be inserted as text
     if (!view.state.facet(editable)) return false

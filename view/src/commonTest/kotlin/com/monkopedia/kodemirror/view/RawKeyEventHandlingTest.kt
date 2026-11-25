@@ -65,6 +65,25 @@ class RawKeyEventHandlingTest {
     }
 
     @Test
+    fun shiftedLetterReachesItsShiftBinding() {
+        // Named "Shift-a", as the Compose key path and CodeMirror name it; the raw path used to
+        // build "Shift-A", which no binding spells, and typed an "A" instead (#234). A browser
+        // reports e.key "A" for Shift+a, Playwright reports "a".
+        for (key in listOf("A", "a")) {
+            var ran = false
+            val session = sessionWith(
+                KeyBinding(key = "Shift-a", run = {
+                    ran = true
+                    true
+                })
+            )
+            assertTrue(handleRawKeyEvent(session, key, false, false, false, shift = true))
+            assertTrue(ran, "Shift+$key should run the Shift-a binding")
+            assertTrue(session.state.doc.toString() == "hello", "and insert nothing")
+        }
+    }
+
+    @Test
     fun unboundCtrlTabFallsThroughToBrowser() {
         // Ctrl+Tab is a browser-reserved shortcut with no editor binding.
         val session = sessionWith(
