@@ -538,18 +538,22 @@ private fun mkJavaScript(config: JavaScriptConfig): StreamParser<JavaScriptState
             }
         }
 
-        override val languageData: Map<String, Any>
-            get() {
-                val commentTokens = if (jsonMode) {
-                    emptyMap()
-                } else {
+        // Upstream sets `commentTokens: undefined` in JSON mode; a Kotlin map can't hold that, so
+        // the key is left out instead.
+        override val languageData: Map<String, Any> = buildMap {
+            put("indentOnInput", Regex("""^\s*(?:case .*?:|default:|\{|\})$"""))
+            if (!jsonMode) {
+                put(
+                    "commentTokens",
                     mapOf(
                         "line" to "//",
                         "block" to mapOf("open" to "/*", "close" to "*/")
                     )
-                }
-                return mapOf("commentTokens" to commentTokens)
+                )
             }
+            put("closeBrackets", mapOf("brackets" to listOf("(", "[", "{", "'", "\"", "`")))
+            put("wordChars", "$")
+        }
     }
 }
 
