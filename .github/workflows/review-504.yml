@@ -1,0 +1,38 @@
+name: review-504-control
+on:
+  pull_request:
+    branches: [main]
+jobs:
+  exact-gate:
+    strategy:
+      fail-fast: false
+      matrix:
+        run: [1, 2, 3, 4, 5]
+        planted: [false]
+        include:
+          - run: 6
+            planted: true
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4.4.3
+      - name: Plant a 1-px change in active-line.png
+        if: matrix.planted
+        run: |
+          python3 -m pip install --quiet pillow
+          python3 -c "
+          from PIL import Image
+          p='view/screenshots/compose/active-line.png'; im=Image.open(p); px=im.load()
+          o=px[400,300]; px[400,300]=tuple(255-c for c in o[:3])+o[3:]; im.save(p); print('planted', o, '->', px[400,300])"
+      - name: Screenshot gate (exact)
+        run: >-
+          ./gradlew -Dorg.gradle.jvmargs="-Xmx4g -Dfile.encoding=UTF-8"
+          :view:jvmTest --tests '*screenshots*' :view:verifyRoborazziJvm
+      - name: Summary
+        if: always()
+        run: head -c 200 view/build/test-results/roborazzi/jvm/results-summary.json; echo
