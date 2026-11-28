@@ -81,10 +81,11 @@ kotlin {
     // the two blocks read alike and neither drifts, but it does nothing on the android one.
     //
     // `jvmToolchain(11)` would set the target and restrict the JDK API surface in one line, and
-    // was the stated default on #237, but it also pins the JVM that *tests* run on, and
-    // `:lsp-client`'s own dependency `com.monkopedia.lsp:lsp-jvm:1.2.1` is 1450/1450 class 65 —
-    // measured — so every test in that module dies at class-load time under a JDK 11 test JVM.
-    // This pair reaches the same published bytecode with build and tests still on JDK 21.
+    // was the stated default on #237, but it also pins the JVM that *tests* run on. When this was
+    // written `:lsp-client`'s dependency `com.monkopedia.lsp:lsp-jvm:1.2.1` was 1450/1450 class
+    // 65, so every test in that module died at class-load time under a JDK 11 test JVM; 1.3.0 is
+    // class 55 and passes there (#308). This pair reaches the same published bytecode with build
+    // and tests still on JDK 21.
     jvm {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
