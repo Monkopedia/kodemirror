@@ -53,7 +53,9 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.RememberObserver
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -968,72 +970,70 @@ private fun EditorContent(
     val viewportWidthPx = remember { mutableStateOf(0) }
     val density = LocalDensity.current
 
-    // Hidden text field for receiving IME/text input and key events
-    var hiddenTextValue by remember {
-        mutableStateOf(TextFieldValue(""))
+    // Hidden text field for receiving IME/text input and key events. It is empty between edits
+    // and holds the input method's text while a composition is in progress (#294).
+    var hiddenInput by remember { mutableStateOf(HiddenInput.Empty) }
+    // The field's own buffer while it has not yet adopted hiddenInput (it does when it next
+    // recomposes), so that edits it reports in the meantime can be restated against
+    // hiddenInput (#480). Null when the two agree.
+    val fieldBuffer = remember { arrayOfNulls<FieldBuffer>(1) }
+    // Bumped on every field edit and read here, so that this scope recomposes, and the
+    // SideEffect runs, in the frame in which the field adopts the value it was given.
+    var fieldEdits by remember { mutableIntStateOf(0) }
+    fieldEdits.let { SideEffect { fieldBuffer[0] = null } }
+    // Something other than the input method (a click, a command, a remote change) moved the
+    // selection or edited the document under a composition: the buffer no longer describes the
+    // document, so drop it. What was mirrored stays as typed, and emptying the field tells the
+    // input method its composition is over.
+    LaunchedEffect(session) {
+        snapshotFlow { session.state }.collect { current ->
+            if (hiddenInput.composing && !hiddenInput.mirrors(current)) {
+                hiddenInput = HiddenInput.Empty
+            }
+        }
     }
-    // pendingEcho (hoisted to the caller) holds the text a key path already
-    // entered for the keystroke in flight. On wasmJs, returning true from
-    // onPreviewKeyEvent does NOT call preventDefault() on the DOM event, so the
-    // browser still generates an input event that triggers onValueChange with
-    // that same text; dropping it is what keeps the character from doubling.
+
+    /** Turn the field's (restated) [newValue] into document changes; returns its next value. */
+    fun acceptInput(newValue: TextFieldValue): HiddenInput {
+        // pendingEcho (hoisted to the caller) holds the text a key path already entered for the
+        // keystroke in flight. On wasmJs, returning true from onPreviewKeyEvent does NOT call
+        // preventDefault() on the DOM event, so the browser still generates an input event
+        // that triggers onValueChange with that same text, and on desktop AWT follows the key
+        // with a typed event; dropping it is what keeps the character from doubling.
+        if (newValue.composition == null && newValue.text == pendingEcho[0]) {
+            // Matching echoes stay suppressed for as long as they keep
+            // arriving: one keystroke can produce more than one on wasmJs —
+            // the browser input event, plus a re-fire when a completion popup
+            // recomposes — and both must be dropped, otherwise the trigger
+            // character is re-inserted (doubled) and the spurious doc-change
+            // closes the just-opened completion popup (#109).
+            return HiddenInput.Empty
+        }
+        // Any other text is genuine input, so the keystroke's echo is over.
+        // An empty value inserts nothing either way, and disarming on one
+        // would let a second echo of the same keystroke through (#109).
+        if (newValue.text.isNotEmpty()) {
+            pendingEcho[0] = null
+        }
+        // Block text input when editor is read-only, or when a vim-like
+        // extension wants to suppress text input.
+        if (!session.editable || session.state.facet(inputSuppressor).any { it.invoke() }) {
+            return HiddenInput.Empty
+        }
+        val edit = applyHiddenInput(session.state, hiddenInput, newValue)
+        edit.transaction?.let { session.dispatch(it) }
+        return edit.next
+    }
+
     BasicTextField(
-        value = hiddenTextValue,
+        value = hiddenInput.value,
         cursorBrush = SolidColor(Color.Transparent),
-        onValueChange = { newValue ->
-            if (newValue.text == pendingEcho[0]) {
-                // Matching echoes stay suppressed for as long as they keep
-                // arriving: one keystroke can produce more than one on wasmJs —
-                // the browser input event, plus a re-fire when a completion popup
-                // recomposes — and both must be dropped, otherwise the trigger
-                // character is re-inserted (doubled) and the spurious doc-change
-                // closes the just-opened completion popup (#109).
-                hiddenTextValue = TextFieldValue("")
-                return@BasicTextField
-            }
-            // Any other text is genuine input, so the keystroke's echo is over.
-            // An empty value inserts nothing either way, and disarming on one
-            // would let a second echo of the same keystroke through (#109).
-            if (newValue.text.isNotEmpty()) {
-                pendingEcho[0] = null
-            }
-            // Block text input when editor is read-only
-            if (!session.editable) {
-                hiddenTextValue = TextFieldValue("")
-                return@BasicTextField
-            }
-            // Check if a vim-like extension wants to suppress text input.
-            val shouldSuppress = session.state.facet(inputSuppressor)
-                .any { it.invoke() }
-            if (shouldSuppress) {
-                hiddenTextValue = TextFieldValue("")
-                return@BasicTextField
-            }
-            // Filter control characters (Tab, etc.) that leak through
-            // when their key events aren't consumed by the keymap.
-            // Preserve newlines — they are valid input (e.g. paste).
-            val inserted = newValue.text.filter {
-                it == '\n' || !it.isISOControl()
-            }
-            if (inserted.isNotEmpty()) {
-                val sel = session.state.selection.main
-                val from = sel.from
-                val to = sel.to
-                val newCursor = DocPos(from.value + inserted.length)
-                session.dispatch(
-                    TransactionSpec(
-                        changes = ChangeSpec.Single(
-                            from = from,
-                            to = to,
-                            insert = inserted.asInsert()
-                        ),
-                        selection = SelectionSpec.CursorSpec(newCursor),
-                        userEvent = "input.type"
-                    )
-                )
-            }
-            // Reset to empty for next input
-            hiddenTextValue = TextFieldValue("")
+        onValueChange = { reported ->
+            val rebased = fieldBuffer[0]?.let { rebaseFieldEdit(reported, it, hiddenInput.value) }
+            val next = acceptInput(rebased?.value ?: reported)
+            hiddenInput = next
+            fieldBuffer[0] = FieldBuffer.after(reported, next.value, rebased?.windowStart ?: 0)
+            fieldEdits++
         },
         modifier = Modifier
             .testTag("KodeMirror_input")
@@ -1044,6 +1044,11 @@ private fun EditorContent(
                 impl.hasFocus = focusState.isFocused
             }
             .onPreviewKeyEvent { event ->
+                // While an input method is composing, keys belong to it: running the keymap
+                // or inserting a printable character here would edit the document underneath
+                // the composition instead of letting the input method update it. CodeMirror
+                // likewise leaves keydown alone during composition.
+                if (hiddenInput.composing) return@onPreviewKeyEvent false
                 // If the document-level callback already handled this
                 // keydown, skip to avoid double-handling.
                 if (event.type == KeyEventType.KeyDown &&
