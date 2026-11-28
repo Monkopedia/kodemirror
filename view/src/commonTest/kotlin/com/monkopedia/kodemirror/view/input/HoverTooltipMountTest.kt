@@ -51,5 +51,6 @@ class HoverTooltipMountTest {
             // editor actually mounted with the expected document.
             holder.assertDoc("hello world")
         }
+        println("trailing statement")
     }
 }
