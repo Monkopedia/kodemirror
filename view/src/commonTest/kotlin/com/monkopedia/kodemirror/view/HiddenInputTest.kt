@@ -294,4 +294,24 @@ class HiddenInputTest {
         )
         assertEquals(TextFieldValue("ni", TextRange(2), TextRange(0, 2)), second.value)
     }
+
+    @Test
+    fun compositionWhollyInStaleText_isDropped() {
+        // The input method re-composes the stale "f" (Gboard's setComposingRegion over the
+        // previous word) before the field has caught up with the editor's empty value. None of
+        // that composition is in the editor's text, so it must not survive as an empty one: a
+        // composing buffer routes hardware keys to the field instead of the keymap, and a
+        // Backspace or Enter would be lost until the next input-method update.
+        val buffer = FieldBuffer(TextFieldValue("f", TextRange(1)), windowStart = 1)
+        val rebased = rebaseFieldEdit(
+            TextFieldValue("f", TextRange(1), composition = TextRange(0, 1)),
+            buffer,
+            TextFieldValue("")
+        )
+        assertNull(rebased.value.composition)
+        val d = Driver("ab", 2)
+        val edit = applyHiddenInput(d.state, HiddenInput.Empty, rebased.value)
+        assertFalse(edit.next.composing)
+        assertNull(edit.transaction)
+    }
 }
