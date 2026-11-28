@@ -27,11 +27,12 @@ fun runEditorTest(doc: String = "", block: ComposeUiTest.(SessionHolder) -> Unit
 
 
 class Shape(unittest.TestCase):
-    def problems(self, *sources, source_set="commonTest"):
+    def problems(self, *sources, source_set="commonTest", modules=None):
         root = Path(tempfile.mkdtemp())
         files = []
         for i, src in enumerate(sources):
-            path = root / "m" / "src" / source_set / "kotlin" / f"F{i}.kt"
+            module = modules[i] if modules else "m"
+            path = root / module / "src" / source_set / "kotlin" / f"F{i}.kt"
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(src, encoding="utf-8")
             files.append(path)
@@ -121,6 +122,104 @@ class Shape(unittest.TestCase):
                 runEditorTest { }
             }
         """, source_set="jvmTest"))
+
+    # An expression body counts only when the runner call is its *value* (#503 review).
+
+    def test_statement_after_runner_in_run_is_reported(self):
+        # The reviewer confirmed this exact shape green on wasm with a false assertion.
+        found = self.problems(HELPER, """
+            class HoverTooltipMountTest {
+                @Test
+                fun mounts() = run {
+                    runEditorTest(doc = "a") { holder -> holder.assertDoc("PLANTED-WRONG") }
+                    println("trailing statement")
+                }
+            }
+        """)
+        self.assertEqual(1, len(found))
+        self.assertIn("`mounts` calls `runEditorTest` but its expression body's value", found[0])
+
+    def test_runner_as_let_receiver_is_reported(self):
+        found = self.problems(HELPER, """
+            @Test
+            fun t() = runEditorTest { }.let { }
+        """)
+        self.assertEqual(1, len(found))
+        self.assertIn("`t`", found[0])
+
+    def test_runner_inside_non_scope_lambda_is_reported(self):
+        found = self.problems(HELPER, """
+            @Test
+            fun t() = listOf(1, 2).forEach { runEditorTest { } }
+        """)
+        self.assertEqual(1, len(found))
+
+    def test_runner_last_in_run_passes(self):
+        # Used by 7 tests (HighlightingTest, TextInputTest, HoverTooltipMountTest).
+        self.assertEqual([], self.problems(HELPER, """
+            class HighlightingTest {
+                @Test
+                fun highlights() = run {
+                    val lang = javascript()
+                    runEditorTest(
+                        doc = "let x = 1",
+                        extensions = lang
+                    ) { holder ->
+                        holder.assertDoc("let x = 1")
+                    }
+                }
+
+                @Test
+                fun second() = run { val x = 1; runEditorTest { } }
+            }
+        """))
+
+    def test_nested_scope_lambdas_pass(self):
+        self.assertEqual([], self.problems(HELPER, """
+            @Test
+            fun t() = Pair(SessionHolder(), SessionHolder()).let { (a, b) ->
+                with(a) {
+                    run { runComposeUiTest { setContent { } } }
+                }
+            }
+        """))
+
+    def test_runner_receiver_of_apply_passes(self):
+        self.assertEqual([], self.problems(HELPER, """
+            @Test
+            fun t() = runEditorTest { }.also { println(it) }
+        """))
+
+    def test_non_runner_value_is_not_promoted_to_runner(self):
+        # Only the helper is reported; it is not a runner, so its caller is not misjudged.
+        found = self.problems(HELPER, """
+            fun runSwallowed() = run {
+                runEditorTest { }
+                Unit
+            }
+            @Test
+            fun t() = runSwallowed()
+        """)
+        self.assertEqual(1, len(found))
+        self.assertIn("`runSwallowed`", found[0])
+
+    def test_runner_names_are_scoped_to_their_module(self):
+        a = """
+            class A {
+                @Test
+                fun build() = runTest { }
+            }
+        """
+        b = """
+            class B {
+                private fun build(): Int = 1
+                @Test
+                fun t() { build() }
+            }
+        """
+        self.assertEqual([], self.problems(a, b, modules=["a", "b"]))
+        # Within one module the name is ambiguous to a text scan, so it still fails closed.
+        self.assertEqual(1, len(self.problems(a, b, modules=["a", "a"])))
 
 
 if __name__ == "__main__":

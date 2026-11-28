@@ -11,8 +11,16 @@ and awaited.
 
 This checks every Kotlin file in a test source set that compiles for wasmJs (`commonTest`,
 `wasmJsTest`). A *runner* is `runComposeUiTest`, `runTest`, or any function whose expression
-body calls a runner (such as `runEditorTest`), found transitively. A function with a block body
-that calls a runner, other than as the operand of `return`, is reported.
+body's *value* is a runner call (such as `runEditorTest`), found transitively within the same
+Gradle module. Reported:
+
+- a block body that calls a runner, other than as the operand of `return`;
+- an expression body that calls a runner but whose value is not that call, such as
+  `= run { runEditorTest { ... }; println() }` or `= runEditorTest { ... }.let { }`.
+
+An expression's value is a runner call when it is the call itself, the receiver of a trailing
+`apply`/`also` (which return their receiver), or, recursively, the last statement of the
+lambda of a trailing `run`/`let`/`with` (which return their lambda's value).
 
 Usage: check-async-test-shape.py [ROOT]     (exit 1 when anything is reported)
 """
@@ -104,7 +112,7 @@ def expression_end(text, fun_offset, body_start):
     """End of an expression body: the first later line indented no deeper than the `fun`.
 
     A line at that depth that starts by closing a bracket still belongs to the expression,
-    as in `fun t() = runEditorTest {` ... `}`.
+    as in `fun t() = runEditorTest {` ... `}`; one shallower (the enclosing class's `}`) does not.
     """
     line_start = text.rfind("\n", 0, fun_offset) + 1
     indent = len(text[line_start:fun_offset]) - len(text[line_start:fun_offset].lstrip())
@@ -113,7 +121,8 @@ def expression_end(text, fun_offset, body_start):
         nxt = text.find("\n", pos + 1)
         line = text[pos + 1:nxt if nxt >= 0 else len(text)]
         stripped = line.lstrip()
-        if stripped and len(line) - len(stripped) <= indent and stripped[0] not in ")]}":
+        depth = len(line) - len(stripped)
+        if stripped and (depth < indent or (depth == indent and stripped[0] not in ")]}")):
             return pos
         pos = nxt
     return len(text)
@@ -123,28 +132,136 @@ def calls(body, names):
     return any(re.search(r"\b" + re.escape(name) + r"\s*[({<]", body) for name in names)
 
 
+# Scope functions whose value is their lambda's last expression, and those returning the receiver.
+LAMBDA_VALUE = {"run", "let", "with"}
+RECEIVER_VALUE = {"apply", "also"}
+OPENERS, CLOSERS = "([{", ")]}"
+# A line ending in one of these, or the next starting with one, continues the same statement.
+CONTINUES_AFTER = ("=", ",", "(", "[", "{", "->", "+", "-", "*", "/", "&&", "||", "?:", ".", "?")
+CONTINUES_BEFORE = (".", "?.", "?:", "&&", "||", ")", "]", "}")
+
+
+def top_level(text):
+    """Yield (index, char) for characters at bracket depth 0."""
+    depth = 0
+    for k, c in enumerate(text):
+        if c in OPENERS:
+            depth += 1
+        elif c in CLOSERS:
+            depth -= 1
+        elif depth == 0:
+            yield k, c
+
+
+def last_statement(block):
+    """The last statement of a lambda or block's text (without its braces)."""
+    arrow = None
+    for k, c in top_level(block):
+        if block.startswith("->", k):
+            arrow = k
+            break
+    if arrow is not None and re.fullmatch(r"[\w\s,:()<>?.]*", block[:arrow]):
+        block = block[arrow + 2:]
+    breaks = [-1]
+    for k, c in top_level(block):
+        if c == ";":
+            breaks.append(k)
+        elif c == "\n":
+            before = block[:k].rstrip()
+            after = block[k + 1:].lstrip()
+            if before.endswith(CONTINUES_AFTER) or after.startswith(CONTINUES_BEFORE):
+                continue
+            breaks.append(k)
+    statements = [block[a + 1:b] for a, b in zip(breaks, breaks[1:] + [len(block)])]
+    statements = [st.strip() for st in statements if st.strip()]
+    return statements[-1] if statements else ""
+
+
+def segments(expr):
+    """Split a postfix chain `a.b(x) { }?.c` at its top-level `.`/`?.` into segment texts."""
+    cuts = [k for k, c in top_level(expr) if c == "." and not expr[k + 1:k + 2] == "."
+            and not expr[k - 1:k] == "."]
+    parts, start = [], 0
+    for k in cuts:
+        parts.append(expr[start:k].rstrip("?").strip())
+        start = k + 1
+    parts.append(expr[start:].strip())
+    return parts
+
+
+def value_is_runner(expr, names):
+    """Whether the value of Kotlin expression `expr` is a call to one of `names`."""
+    expr = expr.strip()
+    while expr.startswith("(") and matching(expr, 0, "(", ")") == len(expr):
+        expr = expr[1:-1].strip()
+    if not expr:
+        return False
+    parts = segments(expr)
+    head = re.match(r"(`[^`]+`|\w+)\s*(<[^>]*>)?\s*", parts[-1])
+    if head is None:
+        return False
+    name, rest = head.group(1), parts[-1][head.end():]
+    if name in names:
+        return True
+    if name in RECEIVER_VALUE:
+        return len(parts) > 1 and value_is_runner(".".join(parts[:-1]), names)
+    if name in LAMBDA_VALUE:
+        rest = rest.rstrip()
+        if rest.startswith("("):
+            rest = rest[matching(rest, 0, "(", ")"):].lstrip()
+        if not (rest.startswith("{") and matching(rest, 0, "{", "}") == len(rest)):
+            return False
+        return value_is_runner(last_statement(rest[1:-1]), names)
+    return False
+
+
+def module_of(path):
+    """The Gradle module directory of a source file: everything before `/src/`."""
+    posix = path.as_posix()
+    return posix[:posix.rfind("/src/")]
+
+
 def scan(files):
     texts = {f: strip_comments_and_strings(f.read_text(encoding="utf-8")) for f in files}
-    runners = set(SEED_RUNNERS)
-    while True:
-        found = {name for text in texts.values() for name, kind, body, _ in functions(text)
-                 if kind == "=" and calls(body, runners)} - runners
-        if not found:
-            break
-        runners |= found
+    funs = {f: list(functions(text)) for f, text in texts.items()}
+    modules = {}
+    for f in files:
+        modules.setdefault(module_of(f), []).append(f)
+    # Runner names are scoped to a Gradle module: test sources are not visible across modules,
+    # so a same-named sync helper elsewhere must not make a call here look async.
+    runners_by_module = {}
+    for module, members in modules.items():
+        runners = set(SEED_RUNNERS)
+        while True:
+            found = {name for f in members for name, kind, body, _ in funs[f]
+                     if kind == "=" and value_is_runner(body[1:], runners)} - runners
+            if not found:
+                break
+            runners |= found
+        runners_by_module[module] = runners
     problems = []
     for f, text in texts.items():
-        for name, kind, body, offset in functions(text):
-            if kind != "{" or name in SEED_RUNNERS:
+        runners = runners_by_module[module_of(f)]
+        for name, kind, body, offset in funs[f]:
+            if name in SEED_RUNNERS:
                 continue
-            for runner in runners:
+            line = text.count("\n", 0, offset) + 1
+            if kind == "=":
+                if calls(body, runners) and not value_is_runner(body[1:], runners):
+                    called = sorted(r for r in runners if calls(body, [r]))
+                    problems.append(
+                        f"{f}:{line}: `{name}` calls `{called[0]}` but its expression body's "
+                        "value is not that call"
+                    )
+                continue
+            for runner in sorted(runners):
                 for call in re.finditer(r"\b" + re.escape(runner) + r"\s*[({<]", body):
                     before = body[:call.start()].rstrip()
                     if before.endswith("return"):
                         continue
-                    line = text.count("\n", 0, offset) + 1
                     problems.append(f"{f}:{line}: `{name}` calls `{runner}` in a block body")
-    return runners, problems
+    all_runners = set().union(*runners_by_module.values()) if runners_by_module else set()
+    return all_runners, problems
 
 
 def test_files(root):
@@ -166,8 +283,9 @@ def main(argv):
     if problems:
         print(
             "\nOn wasmJs these run without awaiting the test body, so they pass without "
-            "evaluating anything. Write the test as an expression body, "
-            "`fun name() = runEditorTest { ... }` (#361)."
+            "evaluating anything. Write the test as an expression body whose value is the "
+            "runner call, `fun name() = runEditorTest { ... }`, with any setup before it "
+            "inside `= run { setup; runEditorTest { ... } }` (#361)."
         )
         return 1
     return 0
