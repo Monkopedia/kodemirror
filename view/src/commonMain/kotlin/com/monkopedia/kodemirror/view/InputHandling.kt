@@ -40,6 +40,8 @@ import com.monkopedia.kodemirror.state.SelectionRange
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asInsert
+import com.monkopedia.kodemirror.state.countColumn
+import com.monkopedia.kodemirror.state.findColumn
 
 /**
  * Build a string key identifier from a Compose [KeyEvent].
@@ -634,8 +636,16 @@ internal fun handleRectangularDrag(
     val startLine = doc.lineAt(startDocPos)
     val currentLine = doc.lineAt(currentDocPos)
 
-    val startCol = startDocPos - startLine.from
-    val currentCol = currentDocPos - currentLine.from
+    // Upstream (`rectangular-selection.ts`, `getPos`/`rectangleFor`) works in
+    // visual columns, not character offsets, so a tab counts as up to
+    // `tabSize` columns (#509). Upstream also falls back to raw offsets past
+    // `MaxOff` (2000); that branch is broken in the pinned 6.39.16 (it emits
+    // no range at all, which throws, or ranges ending at `line.to + endOff`,
+    // past the line), so it is deliberately not ported. `absoluteColumn` (the
+    // virtual column for a drag past a line's end) is #512.
+    val tabSize = view.state.tabSize
+    val startCol = countColumn(startLine.text, tabSize, startDocPos - startLine.from)
+    val currentCol = countColumn(currentLine.text, tabSize, currentDocPos - currentLine.from)
 
     val minLineNum = minOf(startLine.number, currentLine.number)
     val maxLineNum = maxOf(startLine.number, currentLine.number)
@@ -645,10 +655,14 @@ internal fun handleRectangularDrag(
     val ranges = mutableListOf<SelectionRange>()
     for (lineNum in minLineNum.value..maxLineNum.value) {
         val line = doc.line(LineNumber(lineNum))
-        val lineLen = line.text.length
-        val from = line.from + minOf(minCol, lineLen)
-        val to = line.from + minOf(maxCol, lineLen)
-        ranges.add(EditorSelection.range(from, to))
+        val from = findColumn(line.text, minCol, tabSize, strict = true)
+        if (from < 0) {
+            // The line ends before the rectangle starts.
+            ranges.add(EditorSelection.cursor(line.to))
+        } else {
+            val to = findColumn(line.text, maxCol, tabSize)
+            ranges.add(EditorSelection.range(line.from + from, line.from + to))
+        }
     }
 
     if (ranges.isEmpty()) return
