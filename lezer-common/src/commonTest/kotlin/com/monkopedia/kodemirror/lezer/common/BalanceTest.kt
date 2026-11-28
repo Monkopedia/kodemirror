@@ -274,6 +274,24 @@ class BalanceTest {
         assertEquals(List(9) { it * shared.length }, balanced.positions)
     }
 
+    @Test
+    fun balanceSizesMixedChildNodeAsOne() {
+        // An anonymous node with a named child counts as size 1 in `nodeSize`, however many
+        // anonymous children it has before or after the named one. Keeping the sum before the
+        // named child (7), or resetting but summing on through it (8), regroups the top. npm
+        // `@lezer/common` 1.5.1 keeps all nine children as they are, with `m` itself as the first.
+        val mixed = List(6) { leaf(NodeType.none) } + leaf(a) + List(6) { leaf(NodeType.none) }
+        val m = Tree(NodeType.none, mixed, mixed.indices.toList(), 13)
+        val kids = listOf(m) + List(8) { leaf(a) }
+        val top = Tree(t, kids, kids.indices.map { if (it == 0) 0 else 12 + it }, 21)
+        val balanced = top.balance()
+        assertEquals("T(_(_,_,_,_,_,_,a,_,_,_,_,_,_),a,a,a,a,a,a,a,a)", shape(balanced))
+        assertEquals(listOf(0) + (13..20), balanced.positions)
+        assertSame(m, balanced.children[0])
+    }
+
+    private fun leaf(type: NodeType) = Tree(type, emptyList(), emptyList(), 1)
+
     private companion object {
         const val SHARED_DEPTH = 25
     }
