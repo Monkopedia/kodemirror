@@ -52,6 +52,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.RememberObserver
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -151,21 +152,10 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
     val compositionScope = rememberCoroutineScope()
     impl.backingCoroutineScope = compositionScope
 
-    // Publish the host on the session before its plugins are built. Bringing a
-    // plugin up can dispatch a transaction — the parse worker resuming a parse
-    // that was parked while the view was detached does exactly that, and the
-    // linter dispatches its first diagnostics from its constructor — and
-    // EditorSessionImpl.dispatchTransaction reaches plugins through
-    // session.pluginHost. Assigning that field only further down, after the
-    // plugins had already been built, meant such a transaction updated no
-    // plugins at all: the tree got re-parsed and the highlighter was never
-    // told (#284).
-    val pluginHost = remember(session) {
-        ViewPluginHost(session).also {
-            impl.pluginHost = it
-            it.syncToState(state, null)
-        }
-    }
+    // The view plugins are built during composition, so the first frame already
+    // has their decorations. A composition can be abandoned, though, and then no
+    // effect runs, so PluginHostOwner destroys them in that case (#288).
+    val pluginHost = remember(session) { PluginHostOwner(impl) }.host
     val lineLayoutCache = remember(session) { LineLayoutCache() }
     // Deferred layouts: onGloballyPositioned fires bottom-up (children before
     // parent), so editorCoordinates is null on the first layout pass. We store
@@ -192,9 +182,13 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
 
     DisposableEffect(session) {
         onDispose {
+            // Plugins go first, while the session is still attached: a plugin's
+            // destroy() may use session.coroutineScope, and upstream's
+            // EditorView.destroy() likewise destroys plugins before anything else.
+            // PluginHostOwner covers the abandoned composition, where this never runs.
             pluginHost.destroy()
+            if (impl.pluginHost === pluginHost) impl.pluginHost = null
             lineLayoutCache.clear()
-            impl.pluginHost = null
             impl.lineLayoutCache = null
             impl.backingCoroutineScope = null
             impl.clipboardManager = null
@@ -885,6 +879,36 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                 }
             }
         }
+    }
+}
+
+/**
+ * Builds the view plugins of one [KodeMirror] composition, and destroys them if that composition
+ * is abandoned (#288). An abandoned composition runs no effects, so the `DisposableEffect` that
+ * destroys them on an ordinary dispose never does. [onForgotten] is only a backstop: by then the
+ * effect has already destroyed them, and destroying twice is a no-op.
+ */
+private class PluginHostOwner(private val session: EditorSessionImpl) : RememberObserver {
+    // Publish the host on the session before its plugins are built. Bringing a plugin up can
+    // dispatch a transaction (the parse worker resuming a parse parked while the view was
+    // detached does, and the linter dispatches its first diagnostics from its constructor), and
+    // EditorSessionImpl.dispatchTransaction reaches plugins through session.pluginHost.
+    // Assigning it only after the plugins were built meant such a transaction updated no plugins
+    // at all: the tree got re-parsed and the highlighter was never told (#284).
+    val host = ViewPluginHost(session).also {
+        session.pluginHost = it
+        it.syncToState(session.state, null)
+    }
+
+    override fun onRemembered() {}
+
+    override fun onForgotten() = release()
+
+    override fun onAbandoned() = release()
+
+    private fun release() {
+        host.destroy()
+        if (session.pluginHost === host) session.pluginHost = null
     }
 }
 
