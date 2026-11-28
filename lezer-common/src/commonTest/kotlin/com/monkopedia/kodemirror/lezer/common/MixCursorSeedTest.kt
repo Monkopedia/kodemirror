@@ -275,4 +275,68 @@ class MixCursorSeedTest {
         parser.parse("abcd")
         assertEquals(emptyList(), started)
     }
+
+    // ---- `StructureCursor.moveTo`, behind `FragmentCursor.hasNode` (#505) ----
+
+    private class MoveToTypes {
+        val doc = NodeType.define(NodeTypeSpec(name = "Doc", id = 0, top = true))
+        val wrap = NodeType.define(NodeTypeSpec(name = "Wrap", id = 1))
+        val x = NodeType.define(NodeTypeSpec(name = "X", id = 2))
+        val a = NodeType.define(NodeTypeSpec(name = "A", id = 3))
+        val b = NodeType.define(NodeTypeSpec(name = "B", id = 4))
+    }
+
+    private fun recordingMixed(base: Parser, calls: MutableList<String>): Parser =
+        mixedOf(base) { node, _ ->
+            calls.add("${node.name}@${node.from}")
+            null
+        }
+
+    /**
+     * After a successful `enter`, `moveTo` re-checks the loop condition rather than also stepping
+     * with `next`. A reused `A` inside a fresh `Wrap` at the same position is then found in the old
+     * tree, so `nest` is not offered it. Stepping on as well skips past it, and `A@2` is offered.
+     */
+    @Test
+    fun moveToDoesNotStepPastAnEnteredNode() {
+        val t = MoveToTypes()
+        val a = leaf(t.a, 4)
+        fun tree() = Tree(
+            t.doc,
+            listOf(Tree(t.wrap, listOf(leaf(t.x, 2), a), listOf(0, 2), 10)),
+            listOf(0),
+            10
+        )
+        val old = tree()
+        val calls = mutableListOf<String>()
+        recordingMixed(parserOf { _, _ -> tree() }, calls)
+            .parse("0123456789", TreeFragment.addTree(old))
+        assertEquals(listOf("Doc@0", "Wrap@0", "X@0"), calls)
+    }
+
+    /**
+     * `moveTo` only enters a node that reaches `pos` (in document coordinates). With the fragment
+     * shifted by 3, the old `Wrap` ends before `A`'s new position; entering it anyway matches the
+     * shifted `A` against the old one, and `A@5` is never offered. The fragment is what npm's
+     * `TreeFragment.applyChanges(addTree(old), [{fromA: 0, toA: 0, fromB: 0, toB: 3}])` returns.
+     */
+    @Test
+    fun moveToOnlyEntersNodesReachingPos() {
+        val t = MoveToTypes()
+        val a = leaf(t.a, 2)
+        val wrap = Tree(t.wrap, listOf(leaf(t.x, 2), a), listOf(0, 2), 4)
+        val old = Tree(t.doc, listOf(wrap, leaf(t.b, 6)), listOf(0, 4), 10)
+        val fresh = Tree(
+            t.doc,
+            listOf(Tree(t.wrap, listOf(leaf(t.x, 2), a), listOf(0, 2), 4), leaf(t.b, 6)),
+            listOf(3, 7),
+            13
+        )
+        val calls = mutableListOf<String>()
+        recordingMixed(parserOf { _, _ -> fresh }, calls).parse(
+            "xyz0123456789",
+            listOf(TreeFragment(3, 13, old, -3, openStart = true, openEnd = false))
+        )
+        assertEquals(listOf("Doc@0", "Wrap@3", "X@3", "A@5", "B@7"), calls)
+    }
 }

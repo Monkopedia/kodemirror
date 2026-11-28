@@ -384,15 +384,12 @@ private class StructureCursor(root: Tree, private val offset: Int) {
     fun moveTo(pos: Int) {
         val p = pos - offset
         while (!done && cursor.from < p) {
-            if (cursor.to >= pos) {
-                cursor.enter(
-                    p,
-                    1,
-                    IterMode.IGNORE_OVERLAYS or IterMode.EXCLUDE_BUFFERS
-                )
-            } else if (!cursor.next(false)) {
-                done = true
+            if (cursor.to >= pos &&
+                cursor.enter(p, 1, IterMode.IGNORE_OVERLAYS or IterMode.EXCLUDE_BUFFERS)
+            ) {
+                continue
             }
+            if (!cursor.next(false)) done = true
         }
     }
 
