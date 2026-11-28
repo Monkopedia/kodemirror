@@ -20,7 +20,9 @@ package com.monkopedia.kodemirror.lezer.lr
 
 import com.monkopedia.kodemirror.lezer.common.TreeFragment
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 class FragmentCursorTest {
@@ -77,17 +79,20 @@ class FragmentCursorTest {
 
     @Test
     fun fragmentCursorUsedDuringIncrementalParse() {
+        // `bufferLength` 1 puts the 30-character document over upstream's
+        // `bufferLength * 4` threshold for building a `FragmentCursor`; at
+        // the default it would be a fresh parse. `@lezer/lr` 1.4.10 then
+        // reuses the whole `Object` node of the unchanged document.
+        val parser = jsonParser.configure(ParserConfig(bufferLength = 1))
         val input1 = "{\"a\": 1, \"b\": [1, 2, 3, 4, 5]}"
-        val tree1 = jsonParser.parse(input1)
+        val tree1 = parser.parse(input1)
         val fragments = TreeFragment.addTree(tree1)
 
         // Verify fragments were created
         assertTrue(fragments.isNotEmpty())
 
-        // Parse with fragments — the FragmentCursor will be used internally
-        val tree2 = jsonParser.parse(input1, fragments)
-        val result = treeToString(tree2)
-        assertTrue(result.contains("Object"))
-        assertTrue(result.contains("Array"))
+        val tree2 = parser.parse(input1, fragments)
+        assertEquals(treeToString(tree1), treeToString(tree2))
+        assertSame(tree1.children.single(), tree2.children.single())
     }
 }

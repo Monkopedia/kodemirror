@@ -236,9 +236,7 @@ internal class Parse(
         stacks = mutableListOf(Stack.start(this, startState, startPos))
         minStackPos = startPos
         this.fragments =
-            if (fragments.isNotEmpty() &&
-                parser.nodeSet.types.isNotEmpty()
-            ) {
+            if (fragments.isNotEmpty() && stream.end - startPos > parser.bufferLength * 4) {
                 FragmentCursor(fragments, parser.nodeSet)
             } else {
                 null
