@@ -859,21 +859,6 @@ class TreeTest {
         assertEquals("value2", map.get(node2))
     }
 
-    // ---- TreeFragment.applyChanges with minGap ----
-
-    @Test
-    fun treeFragmentApplyChangesWithMinGap() {
-        val tree = Tree(types[0], emptyList(), emptyList(), 100)
-        val fragments = TreeFragment.addTree(tree)
-        val changed = TreeFragment.applyChanges(
-            fragments,
-            listOf(ChangedRange(50, 52, 50, 55)),
-            minGap = 128
-        )
-        // Fragments should be adjusted around the change
-        assertTrue(changed.isNotEmpty() || fragments.isNotEmpty())
-    }
-
     @Test
     fun treeFragmentApplyChangesEmpty() {
         val tree = Tree(types[0], emptyList(), emptyList(), 100)

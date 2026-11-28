@@ -19,6 +19,8 @@
 package com.monkopedia.kodemirror.lezer.common
 
 import kotlin.math.ceil
+import kotlin.math.max
+import kotlin.math.min
 
 /**
  * A range with from/to positions.
@@ -125,20 +127,30 @@ class TreeFragment(
     val openEnd: Boolean = false
 ) {
     companion object {
+        /**
+         * Create a set of fragments from a freshly parsed tree, or update an
+         * existing set by replacing the ones that overlap with [tree]. When
+         * [partial] is true the parse is treated as incomplete, and the
+         * resulting fragment has [openEnd] set.
+         */
         fun addTree(
             tree: Tree,
             fragments: List<TreeFragment> = emptyList(),
             partial: Boolean = false
         ): List<TreeFragment> {
-            val result = mutableListOf<TreeFragment>()
-            result.add(TreeFragment(0, tree.length, tree, 0))
+            val result = mutableListOf(TreeFragment(0, tree.length, tree, 0, false, partial))
             for (f in fragments) {
-                if (f.to <= tree.length && !partial) continue
-                result.add(f)
+                if (f.to > tree.length) result.add(f)
             }
             return result
         }
 
+        /**
+         * Apply a set of edits to an array of fragments, removing or splitting
+         * fragments as necessary to remove edited ranges, and adjusting offsets
+         * for fragments that moved. Unchanged stretches shorter than [minGap]
+         * between changes are dropped rather than kept as fragments.
+         */
         fun applyChanges(
             fragments: List<TreeFragment>,
             changes: List<ChangedRange>,
@@ -151,59 +163,37 @@ class TreeFragment(
             var cI = 0
             var pos = 0
             var off = 0
-
             while (true) {
                 val nextC = if (cI < changes.size) changes[cI] else null
-
-                if (nextF != null && (nextC == null || nextF.from <= nextC.fromA)) {
-                    val cut = if (nextC != null) nextC.fromA - off else Int.MAX_VALUE
-                    val from = nextF.from + off
-                    val to = minOf(nextF.to + off, cut)
-                    if (to > from && result.isNotEmpty()) {
-                        val prev = result.last()
-                        if (to - from < minGap && prev.to + minGap > from) {
-                            // Too close to previous fragment, merge
-                            result[result.lastIndex] = TreeFragment(
-                                prev.from,
-                                to,
-                                prev.tree,
-                                prev.offset,
-                                prev.openStart,
-                                to < nextF.to + off
-                            )
-                            nextF = if (fI < fragments.size) fragments[fI++] else null
-                            continue
+                val nextPos = nextC?.fromA ?: 1_000_000_000
+                if (nextPos - pos >= minGap) {
+                    while (nextF != null && nextF.from < nextPos) {
+                        var cut: TreeFragment? = nextF
+                        if (pos >= nextF.from || nextPos <= nextF.to || off != 0) {
+                            val fFrom = max(nextF.from, pos) - off
+                            val fTo = min(nextF.to, nextPos) - off
+                            cut = if (fFrom >= fTo) {
+                                null
+                            } else {
+                                TreeFragment(
+                                    fFrom,
+                                    fTo,
+                                    nextF.tree,
+                                    nextF.offset + off,
+                                    cI > 0,
+                                    nextC != null
+                                )
+                            }
                         }
-                    }
-                    if (to > from) {
-                        result.add(
-                            TreeFragment(
-                                from,
-                                to,
-                                nextF.tree,
-                                nextF.offset + off,
-                                nextF.openStart || from > nextF.from + off,
-                                to < nextF.to + off
-                            )
-                        )
-                    }
-                    if (nextC != null && nextC.fromA <= nextF.to + off) {
-                        // Change falls within/after fragment
-                        nextF = if (fI < fragments.size) fragments[fI++] else null
-                    } else {
+                        if (cut != null) result.add(cut)
+                        if (nextF.to > nextPos) break
                         nextF = if (fI < fragments.size) fragments[fI++] else null
                     }
-                } else if (nextC != null) {
-                    pos = nextC.toA
-                    off = nextC.toB - nextC.toA
-                    cI++
-                    // Skip past fragments wholly before this change
-                    while (nextF != null && nextF.to + off <= nextC.fromB) {
-                        nextF = if (fI < fragments.size) fragments[fI++] else null
-                    }
-                } else {
-                    break
                 }
+                if (nextC == null) break
+                pos = nextC.toA
+                off = nextC.toA - nextC.toB
+                cI++
             }
             return result
         }
