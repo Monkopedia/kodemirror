@@ -18,6 +18,8 @@
  */
 package com.monkopedia.kodemirror.merge
 
+import com.monkopedia.kodemirror.state.CharCategory
+import com.monkopedia.kodemirror.state.makeCategorizer
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.max
@@ -115,6 +117,11 @@ private class Frontier {
     }
 }
 
+// Like JS `slice`: an inverted range is empty. Prefix/suffix trimming can produce one when a lone
+// surrogate stops it from splitting a pair, and upstream lets that flow through.
+private fun String.sliceOrEmpty(from: Int, to: Int): String =
+    if (from >= to) "" else substring(from, to)
+
 private fun findDiff(
     ctx: DiffContext,
     a: String,
@@ -124,7 +131,7 @@ private fun findDiff(
     fromB: Int,
     toB: Int
 ): MutableList<Change> {
-    if (a.substring(fromA, toA) == b.substring(fromB, toB)) return mutableListOf()
+    if (a.sliceOrEmpty(fromA, toA) == b.sliceOrEmpty(fromB, toB)) return mutableListOf()
 
     val prefix = commonPrefix(a, fromA, toA, b, fromB, toB)
     val suffix = commonSuffix(a, fromA + prefix, toA, b, fromB + prefix, toB)
@@ -139,7 +146,7 @@ private fun findDiff(
 
     // Try to find one string in the other
     if (lenA > lenB) {
-        val found = a.substring(fA, tA).indexOf(b.substring(fB, tB))
+        val found = a.sliceOrEmpty(fA, tA).indexOf(b.sliceOrEmpty(fB, tB))
         if (found > -1) {
             return mutableListOf(
                 Change(fA, fA + found, fB, fB),
@@ -147,7 +154,7 @@ private fun findDiff(
             )
         }
     } else if (lenB > lenA) {
-        val found = b.substring(fB, tB).indexOf(a.substring(fA, tA))
+        val found = b.sliceOrEmpty(fB, tB).indexOf(a.sliceOrEmpty(fA, tA))
         if (found > -1) {
             return mutableListOf(
                 Change(fA, fA, fB, fB + found),
@@ -245,7 +252,15 @@ private fun chunkSize(lenA: Int, lenB: Int): Int {
 }
 
 private fun commonPrefix(a: String, fromA: Int, toA: Int, b: String, fromB: Int, toB: Int): Int {
-    if (fromA == toA || fromB == toB || a[fromA] != b[fromB]) return 0
+    // An inverted range can start past the end; JS `charCodeAt` then reads NaN, which never matches.
+    if (fromA == toA ||
+        fromB == toB ||
+        fromA >= a.length ||
+        fromB >= b.length ||
+        a[fromA] != b[fromB]
+    ) {
+        return 0
+    }
     var chunk = chunkSize(toA - fromA, toB - fromB)
     var pA = fromA
     var pB = fromB
@@ -448,26 +463,28 @@ private const val MAX_SCAN = 8
 private fun asciiWordChar(code: Int): Boolean =
     (code in 48..57) || (code in 65..90) || (code in 97..122)
 
+// Upstream tests `[\p{Alphabetic}\p{Number}]` (unanchored) against one or two UTF-16 units. Kotlin's
+// Regex has no such class on any target, but :state's categorizer implements
+// `[\p{Alphabetic}\p{Number}_]` per platform. Only a malformed pair can put `_` in [s], and its
+// partner is then a lone surrogate, so excluding `_` gives upstream's answer.
+private val wordCategorizer = makeCategorizer("")
+
+private fun isWordChar(s: String): Boolean = '_' !in s && wordCategorizer(s) == CharCategory.Word
+
 private fun wordCharAfter(s: String, pos: Int): Int {
     if (pos == s.length) return 0
     val ch = s[pos]
-    val code = ch.code
-    if (code < 192) return if (asciiWordChar(code)) 1 else 0
-    if (ch.isHighSurrogate() && pos < s.length - 1) {
-        return if (ch.isLetter() || s[pos + 1].isLetter()) 2 else 0
-    }
-    return if (ch.isLetterOrDigit()) 1 else 0
+    if (ch.code < 192) return if (asciiWordChar(ch.code)) 1 else 0
+    if (!ch.isHighSurrogate() || pos == s.length - 1) return if (isWordChar(ch.toString())) 1 else 0
+    return if (isWordChar(s.substring(pos, pos + 2))) 2 else 0
 }
 
 private fun wordCharBefore(s: String, pos: Int): Int {
     if (pos == 0) return 0
     val ch = s[pos - 1]
-    val code = ch.code
-    if (code < 192) return if (asciiWordChar(code)) 1 else 0
-    if (ch.isLowSurrogate() && pos >= 2) {
-        return if (ch.isLetter() || s[pos - 2].isLetter()) 2 else 0
-    }
-    return if (ch.isLetterOrDigit()) 1 else 0
+    if (ch.code < 192) return if (asciiWordChar(ch.code)) 1 else 0
+    if (!ch.isLowSurrogate() || pos == 1) return if (isWordChar(ch.toString())) 1 else 0
+    return if (isWordChar(s.substring(pos - 2, pos))) 2 else 0
 }
 
 private fun findWordBoundaryAfter(s: String, pos: Int, max: Int): Int {
