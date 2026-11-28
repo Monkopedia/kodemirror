@@ -284,8 +284,10 @@ final class com.monkopedia.kodemirror.lezer.common/IterateSpec { // com.monkoped
 }
 
 final class com.monkopedia.kodemirror.lezer.common/MountedTree { // com.monkopedia.kodemirror.lezer.common/MountedTree|null[0]
-    constructor <init>(com.monkopedia.kodemirror.lezer.common/Tree, kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/TextRange>?, com.monkopedia.kodemirror.lezer.common/Parser) // com.monkopedia.kodemirror.lezer.common/MountedTree.<init>|<init>(com.monkopedia.kodemirror.lezer.common.Tree;kotlin.collections.List<com.monkopedia.kodemirror.lezer.common.TextRange>?;com.monkopedia.kodemirror.lezer.common.Parser){}[0]
+    constructor <init>(com.monkopedia.kodemirror.lezer.common/Tree, kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/TextRange>?, com.monkopedia.kodemirror.lezer.common/Parser, kotlin/Boolean = ...) // com.monkopedia.kodemirror.lezer.common/MountedTree.<init>|<init>(com.monkopedia.kodemirror.lezer.common.Tree;kotlin.collections.List<com.monkopedia.kodemirror.lezer.common.TextRange>?;com.monkopedia.kodemirror.lezer.common.Parser;kotlin.Boolean){}[0]
 
+    final val bracketed // com.monkopedia.kodemirror.lezer.common/MountedTree.bracketed|{}bracketed[0]
+        final fun <get-bracketed>(): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/MountedTree.bracketed.<get-bracketed>|<get-bracketed>(){}[0]
     final val overlay // com.monkopedia.kodemirror.lezer.common/MountedTree.overlay|{}overlay[0]
         final fun <get-overlay>(): kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/TextRange>? // com.monkopedia.kodemirror.lezer.common/MountedTree.overlay.<get-overlay>|<get-overlay>(){}[0]
     final val parser // com.monkopedia.kodemirror.lezer.common/MountedTree.parser|{}parser[0]
@@ -296,7 +298,8 @@ final class com.monkopedia.kodemirror.lezer.common/MountedTree { // com.monkoped
     final fun component1(): com.monkopedia.kodemirror.lezer.common/Tree // com.monkopedia.kodemirror.lezer.common/MountedTree.component1|component1(){}[0]
     final fun component2(): kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/TextRange>? // com.monkopedia.kodemirror.lezer.common/MountedTree.component2|component2(){}[0]
     final fun component3(): com.monkopedia.kodemirror.lezer.common/Parser // com.monkopedia.kodemirror.lezer.common/MountedTree.component3|component3(){}[0]
-    final fun copy(com.monkopedia.kodemirror.lezer.common/Tree = ..., kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/TextRange>? = ..., com.monkopedia.kodemirror.lezer.common/Parser = ...): com.monkopedia.kodemirror.lezer.common/MountedTree // com.monkopedia.kodemirror.lezer.common/MountedTree.copy|copy(com.monkopedia.kodemirror.lezer.common.Tree;kotlin.collections.List<com.monkopedia.kodemirror.lezer.common.TextRange>?;com.monkopedia.kodemirror.lezer.common.Parser){}[0]
+    final fun component4(): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/MountedTree.component4|component4(){}[0]
+    final fun copy(com.monkopedia.kodemirror.lezer.common/Tree = ..., kotlin.collections/List<com.monkopedia.kodemirror.lezer.common/TextRange>? = ..., com.monkopedia.kodemirror.lezer.common/Parser = ..., kotlin/Boolean = ...): com.monkopedia.kodemirror.lezer.common/MountedTree // com.monkopedia.kodemirror.lezer.common/MountedTree.copy|copy(com.monkopedia.kodemirror.lezer.common.Tree;kotlin.collections.List<com.monkopedia.kodemirror.lezer.common.TextRange>?;com.monkopedia.kodemirror.lezer.common.Parser;kotlin.Boolean){}[0]
     final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.kodemirror.lezer.common/MountedTree.equals|equals(kotlin.Any?){}[0]
     final fun hashCode(): kotlin/Int // com.monkopedia.kodemirror.lezer.common/MountedTree.hashCode|hashCode(){}[0]
     final fun toString(): kotlin/String // com.monkopedia.kodemirror.lezer.common/MountedTree.toString|toString(){}[0]
