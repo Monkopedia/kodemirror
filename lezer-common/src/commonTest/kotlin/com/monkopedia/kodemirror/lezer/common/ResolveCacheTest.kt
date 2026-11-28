@@ -25,7 +25,11 @@ import kotlin.test.assertSame
 
 /**
  * `Tree.resolve` / `resolveInner` remember their last result and start the next query from it
- * (#330, upstream `CachedNode` / `CachedInnerNode`). The answer must not depend on that start.
+ * (#330, upstream `CachedNode` / `CachedInnerNode`). On [fixture] upstream's cached answer
+ * happens to equal a cold one, which [cachedResolutionMatchesAColdOne] pins. In general it does
+ * not: a cached node that already covers the position is answered without climbing, so an
+ * overlay mounted on one of its ancestors is never entered. Upstream returns that different
+ * answer and so must the port ([cacheChangesTheAnswerLikeUpstream]).
  *
  * ```
  * Doc(0-30)
@@ -41,8 +45,10 @@ import kotlin.test.assertSame
  */
 class ResolveCacheTest {
 
-    private val types = listOf("Doc", "Text", "Script", "Attr", "Expr", "Ident", "Word")
-        .mapIndexed { id, name -> NodeType.define(NodeTypeSpec(name = name, id = id)) }
+    private val types = listOf(
+        "Doc", "Text", "Script", "Attr", "Expr", "Ident", "Word",
+        "Name", "Value", "Q", "Code", "Stmt"
+    ).mapIndexed { id, name -> NodeType.define(NodeTypeSpec(name = name, id = id)) }
 
     private val dummyParser = object : Parser() {
         override fun createParse(
@@ -95,6 +101,77 @@ class ResolveCacheTest {
                     chain(tree.resolveInner(pos, side))
                 )
             }
+        }
+    }
+
+    private fun tree(
+        type: Int,
+        children: List<Tree>,
+        positions: List<Int>,
+        length: Int,
+        mount: MountedTree
+    ) = Tree(types[type], children, positions, length, mapOf(NodeProp.mounted.id to mount))
+
+    /**
+     * An overlay strictly inside a host child, like an attribute value:
+     * `Doc(0-30){Text(0-4), Attr(4-24){Name(4-8), Value(8-24){Q(8-9), Q(23-24)}}, Text(24-30)}`,
+     * with Attr mounting `Expr{Ident(11-14), Ident(17-21)}` over doc 11-14 and 17-21.
+     */
+    private fun overlayInsideHostChild(): Tree {
+        val inner = Tree(types[4], listOf(leaf(5, 3), leaf(5, 4)), listOf(0, 6), 10)
+        val mount = MountedTree(inner, listOf(TextRange(7, 10), TextRange(13, 17)), dummyParser)
+        val value = Tree(types[8], listOf(leaf(9, 1), leaf(9, 1)), listOf(0, 15), 16)
+        val attr = tree(3, listOf(leaf(7, 4), value), listOf(0, 4), 20, mount)
+        return Tree(types[0], listOf(leaf(1, 4), attr, leaf(1, 6)), listOf(0, 4, 24), 30)
+    }
+
+    /**
+     * A full mount `Code(8-22){Word(8-12), Stmt(12-18){Word(12-18)}, Word(18-22)}` replacing a
+     * Script node, with Stmt mounting `Expr{Ident(14-16)}` over doc 14-16.
+     */
+    private fun overlayInsideFullMount(): Tree {
+        val overlay = MountedTree(
+            Tree(types[4], listOf(leaf(5, 2)), listOf(0), 2),
+            listOf(TextRange(2, 4)),
+            dummyParser
+        )
+        val stmt = tree(11, listOf(leaf(6, 6)), listOf(0), 6, overlay)
+        val code = Tree(types[10], listOf(leaf(6, 4), stmt, leaf(6, 4)), listOf(0, 4, 10), 14)
+        val script =
+            tree(2, listOf(leaf(1, 14)), listOf(0), 14, MountedTree(code, null, dummyParser))
+        return Tree(
+            types[0],
+            listOf(leaf(1, 4), leaf(3, 4), script, leaf(1, 8)),
+            listOf(0, 4, 8, 22),
+            30
+        )
+    }
+
+    @Test
+    fun cacheChangesTheAnswerLikeUpstream() {
+        // Expected values are from @lezer/common 1.5.1. The cached node already covers the next
+        // position, so upstream answers from it without climbing to the overlay's mount point.
+        overlayInsideHostChild().let { tree ->
+            assertEquals(
+                "Ident(11-14) < Expr(11-21) < Attr(4-24) < Doc(0-30)",
+                chain(tree.topNode.resolveInner(12, 1))
+            )
+            assertEquals("Value(8-24) < Attr(4-24) < Doc(0-30)", chain(tree.resolveInner(9, 1)))
+            assertEquals("Value(8-24) < Attr(4-24) < Doc(0-30)", chain(tree.resolveInner(12, 1)))
+        }
+        overlayInsideFullMount().let { tree ->
+            assertEquals(
+                "Ident(14-16) < Expr(14-16) < Stmt(12-18) < Code(8-22) < Doc(0-30)",
+                chain(tree.topNode.resolveInner(15, 1))
+            )
+            assertEquals(
+                "Word(12-18) < Stmt(12-18) < Code(8-22) < Doc(0-30)",
+                chain(tree.resolveInner(13, 1))
+            )
+            assertEquals(
+                "Word(12-18) < Stmt(12-18) < Code(8-22) < Doc(0-30)",
+                chain(tree.resolveInner(15, 1))
+            )
         }
     }
 }

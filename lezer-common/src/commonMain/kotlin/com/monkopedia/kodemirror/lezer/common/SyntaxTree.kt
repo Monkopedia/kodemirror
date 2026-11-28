@@ -377,7 +377,11 @@ class Tree(
     }
 
     // Upstream's `CachedNode`/`CachedInnerNode`: the last node resolved in this tree, so that a
-    // nearby query climbs a short way from it instead of descending from the top (#330).
+    // nearby query climbs a short way from it instead of descending from the top (#330). Like
+    // upstream, this can change the answer (see ResolveCacheTest). Upstream assumes one thread; a
+    // racing caller here may start from another thread's node. Nodes are immutable and reference
+    // writes atomic, so that is never a crash or a foreign-tree node, only the answer of some
+    // serial order of the racing calls, which in overlay-heavy trees may differ between orders.
     private var cachedNode: SyntaxNode? = null
     private var cachedInnerNode: SyntaxNode? = null
 
@@ -389,6 +393,8 @@ class Tree(
 
     /** Create a cursor positioned at a given position. */
     fun cursorAt(pos: Int, side: Int = 0, mode: Int = 0): TreeCursor {
+        // Upstream starts from and updates `CachedNode` here. Deliberately not done: the cursor
+        // never enters overlays, so the result is the same either way, and skipping it is cheaper.
         val cursor = TreeCursor(this, mode)
         cursor.moveTo(pos, side)
         return cursor
