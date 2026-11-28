@@ -804,10 +804,13 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                                 }
                             }
                         } finally {
-                            // Only reached when this node detaches, where the
-                            // focus target's own detach forcibly clears the
-                            // capture anyway; freeing through a requester whose
-                            // node has already gone throws, so it is guarded.
+                            // Only reached when this node detaches. Compose
+                            // cancels the press first, as a pressed=false event,
+                            // so the loop above has normally released the
+                            // capture already (#359 measured this on JVM and
+                            // Android); this is a guard against that changing.
+                            // Freeing through a requester whose node has gone
+                            // throws, hence runCatching.
                             if (focusCaptured) {
                                 runCatching { focusRequester.freeFocus() }
                             }
