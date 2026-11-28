@@ -72,6 +72,11 @@ class SessionHolder {
  * `Offset(...)` in the tests below would silently mean something different.
  * At `Density(1f, 1f)` dp == px, so the raw-pixel offsets carry over unchanged.
  * `fontScale = 1f` keeps accessibility text scaling from perturbing line heights.
+ *
+ * Call it as a test's expression body, `fun name() = runEditorTest { ... }`. On wasmJs the
+ * framework awaits the value a test returns; called from a block body the result is discarded
+ * and the test passes without evaluating anything. `.github/scripts/check-async-test-shape.py`
+ * enforces this in CI (#361).
  */
 @OptIn(ExperimentalTestApi::class)
 fun runEditorTest(
