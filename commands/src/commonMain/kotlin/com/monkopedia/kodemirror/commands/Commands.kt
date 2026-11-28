@@ -18,6 +18,7 @@
  */
 package com.monkopedia.kodemirror.commands
 
+import com.monkopedia.kodemirror.language.MatchResult
 import com.monkopedia.kodemirror.language.getIndentation
 import com.monkopedia.kodemirror.language.indentString
 import com.monkopedia.kodemirror.language.matchBrackets
@@ -1214,41 +1215,35 @@ val selectSubwordBackward: (EditorSession) -> Boolean = { view ->
 
 // --- Bracket matching commands ---
 
+/**
+ * The bracket match around [pos]: a bracket ending or starting at [pos], then one just
+ * before or after it, in upstream's `toMatchingBracket` order.
+ */
+private fun bracketMatchNear(state: EditorState, pos: DocPos): MatchResult? =
+    matchBrackets(state, pos, -1)
+        ?: matchBrackets(state, pos, 1)
+        ?: (if (pos > DocPos.ZERO) matchBrackets(state, pos - 1, 1) else null)
+        ?: (if (pos < state.doc.endPos) matchBrackets(state, pos + 1, -1) else null)
+
+private fun toMatchingBracket(
+    state: EditorState,
+    sel: SelectionRange,
+    extend: Boolean
+): SelectionRange {
+    val matching = bracketMatchNear(state, sel.head) ?: return sel
+    val end = matching.end ?: return sel
+    val head = if (matching.start.from == sel.head) end.to else end.from
+    return if (extend) EditorSelection.range(sel.anchor, head) else EditorSelection.cursor(head)
+}
+
 /** Move cursor to the matching bracket. */
 val cursorMatchingBracket: (EditorSession) -> Boolean = { view ->
-    updateSel(view) { sel, _ ->
-        val pos = sel.head
-        val state = view.state
-        // Try character at cursor first (forward), then before cursor.
-        // This matches CM6's priority where the bracket at the cursor
-        // position is preferred over the one before it.
-        val after = if (pos < state.doc.endPos) matchBrackets(state, pos, 1) else null
-        val before = if (pos > DocPos.ZERO) matchBrackets(state, pos - 1, -1) else null
-        val match = after ?: before
-        val end = match?.end
-        if (end != null) {
-            EditorSelection.cursor(end.to)
-        } else {
-            sel
-        }
-    }
+    updateSel(view) { sel, _ -> toMatchingBracket(view.state, sel, extend = false) }
 }
 
 /** Extend selection to the matching bracket. */
 val selectMatchingBracket: (EditorSession) -> Boolean = { view ->
-    updateSel(view) { sel, _ ->
-        val pos = sel.head
-        val state = view.state
-        val after = if (pos < state.doc.endPos) matchBrackets(state, pos, 1) else null
-        val before = if (pos > DocPos.ZERO) matchBrackets(state, pos - 1, -1) else null
-        val match = after ?: before
-        val end = match?.end
-        if (end != null) {
-            EditorSelection.range(sel.anchor, end.to)
-        } else {
-            sel
-        }
-    }
+    updateSel(view) { sel, _ -> toMatchingBracket(view.state, sel, extend = true) }
 }
 
 /**
@@ -1470,8 +1465,10 @@ private fun moveBySyntax(
     val pos = sel.head
 
     // Try bracket matching first
-    val before = if (pos > DocPos.ZERO) matchBrackets(state, pos - 1, -1) else null
-    val after = if (pos < state.doc.endPos) matchBrackets(state, pos, 1) else null
+    val before = matchBrackets(state, pos, -1)
+        ?: if (pos > DocPos.ZERO) matchBrackets(state, pos - 1, 1) else null
+    val after = matchBrackets(state, pos, 1)
+        ?: if (pos < state.doc.endPos) matchBrackets(state, pos + 1, -1) else null
     val bracketMatch = before ?: after
     if (bracketMatch?.end != null) {
         val target = bracketMatch.end!!.to

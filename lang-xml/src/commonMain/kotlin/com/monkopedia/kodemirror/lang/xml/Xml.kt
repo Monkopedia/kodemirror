@@ -22,6 +22,7 @@ import com.monkopedia.kodemirror.language.CommentTokens
 import com.monkopedia.kodemirror.language.FoldRange
 import com.monkopedia.kodemirror.language.LRLanguage
 import com.monkopedia.kodemirror.language.LanguageSupport
+import com.monkopedia.kodemirror.language.bracketMatchingHandle
 import com.monkopedia.kodemirror.language.commentTokens
 import com.monkopedia.kodemirror.language.foldNodeProp
 import com.monkopedia.kodemirror.language.indentNodeProp
@@ -36,6 +37,13 @@ val xmlLanguage: LRLanguage = LRLanguage.define(
     parser = xmlParser.configure(
         ParserConfig(
             props = listOf(
+                bracketMatchingHandle.add { type ->
+                    if (type.name == "OpenTag" || type.name == "CloseTag") {
+                        { node -> node.getChild("TagName") }
+                    } else {
+                        null
+                    }
+                },
                 indentNodeProp.add { type ->
                     when (type.name) {
                         "Element" -> { cx ->

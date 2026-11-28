@@ -200,4 +200,15 @@ let y = <body>
 </body>""",
         jsx = true
     )
+
+    // flatIndent aligns to the node's base indentation (upstream; #450).
+    @Test
+    fun indentsLabeledStatementsFlat() = check(
+        """
+function f() {
+  foo:
+  bar()
+}
+"""
+    )
 }

@@ -112,7 +112,7 @@ Built-in strategies:
 
 - `delimitedIndent()` — indent between matching delimiters
 - `continuedIndent()` — indent continuation lines
-- `flatIndent` — no indentation change
+- `flatIndent` — align to the base indentation of the node (no extra unit)
 
 ## Adding code folding
 

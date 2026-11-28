@@ -20,15 +20,17 @@ package com.monkopedia.kodemirror.language
 
 import androidx.compose.ui.text.SpanStyle
 import com.monkopedia.kodemirror.lezer.common.NodeProp
+import com.monkopedia.kodemirror.lezer.common.NodeType
 import com.monkopedia.kodemirror.lezer.common.SyntaxNode
 import com.monkopedia.kodemirror.lezer.common.Tree
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
+import com.monkopedia.kodemirror.state.Range
 import com.monkopedia.kodemirror.state.RangeSet
-import com.monkopedia.kodemirror.state.RangeSetBuilder
 import com.monkopedia.kodemirror.state.SelectionRange
+import com.monkopedia.kodemirror.state.endPos
 import com.monkopedia.kodemirror.view.Decoration
 import com.monkopedia.kodemirror.view.DecorationSet
 import com.monkopedia.kodemirror.view.MarkDecorationSpec
@@ -38,17 +40,12 @@ import com.monkopedia.kodemirror.view.ViewUpdate
 import com.monkopedia.kodemirror.view.editorTheme
 
 /**
- * A [NodeProp] that language parsers can attach to node types to
- * provide custom bracket-matching behavior. The function receives
- * the syntax node and the document state, and returns a
- * [MatchResult] if this node represents a bracket, or `null`
- * otherwise.
- *
- * This allows languages with non-standard bracket syntax to
- * participate in bracket matching and highlighting.
+ * When larger syntax nodes, such as HTML tags, are marked as opening/closing, it can be a bit
+ * messy to treat the whole node as a matchable bracket. This node prop allows you to define,
+ * for such a node, a "handle": the part of the node that is highlighted, and that the cursor
+ * must be on to activate highlighting in the first place.
  */
-val bracketMatchingHandle: NodeProp<(SyntaxNode, EditorState) -> MatchResult?> =
-    NodeProp()
+val bracketMatchingHandle: NodeProp<(SyntaxNode) -> SyntaxNode?> = NodeProp()
 
 /** Configuration for bracket matching. */
 data class BracketMatchingConfig(
@@ -61,22 +58,36 @@ data class BracketMatchingConfig(
 /** Result of a bracket-matching query. */
 data class MatchResult(val start: SelectionRange, val end: SelectionRange?, val matched: Boolean)
 
-private val defaultBracketPairs = mapOf(
-    '(' to ')',
-    '[' to ']',
-    '{' to '}',
-    ')' to '(',
-    ']' to '[',
-    '}' to '{'
-)
+private fun matchingNodes(node: NodeType, dir: Int, brackets: String): List<String>? {
+    val byProp = node.prop(if (dir < 0) NodeProp.openedBy else NodeProp.closedBy)
+    if (byProp != null) return byProp
+    if (node.name.length == 1) {
+        val index = brackets.indexOf(node.name)
+        if (index > -1 && index % 2 == (if (dir < 0) 1 else 0)) {
+            return listOf(brackets[index + dir].toString())
+        }
+    }
+    return null
+}
 
-private val openingBrackets = setOf('(', '[', '{')
+private fun findHandle(node: SyntaxNode): SyntaxNode? {
+    val hasHandle = node.type.prop(bracketMatchingHandle)
+    return if (hasHandle != null) hasHandle(node) else node
+}
+
+private fun range(from: Int, to: Int): SelectionRange =
+    EditorSelection.range(DocPos(from), DocPos(to))
 
 /**
- * Match brackets at a given position in the document.
+ * Find the matching bracket for the token at [pos], scanning direction [dir]: for `dir < 0`
+ * the bracket is the one ending at [pos], otherwise the one starting there. Only the
+ * [BracketMatchingConfig.brackets] and [BracketMatchingConfig.maxScanDistance] properties are
+ * used from [config]. Returns null if no bracket was found at [pos], or a match result
+ * otherwise.
  *
- * Uses the syntax tree's [NodeProp.closedBy]/[NodeProp.openedBy] props
- * when available, and falls back to character scanning for basic brackets.
+ * Bracket tokens are matched through the syntax tree's [NodeProp.closedBy]/[NodeProp.openedBy]
+ * props (or single-character node names in [BracketMatchingConfig.brackets]); other brackets
+ * are matched by scanning the document for characters in the same kind of token.
  */
 fun matchBrackets(
     state: EditorState,
@@ -84,129 +95,128 @@ fun matchBrackets(
     dir: Int = -1,
     config: BracketMatchingConfig = BracketMatchingConfig()
 ): MatchResult? {
+    val brackets = config.brackets
     val tree = syntaxTree(state)
-
-    // Try custom bracket matching handle first
     val node = tree.resolveInner(pos.value, dir)
-    val handle = node.type.prop(bracketMatchingHandle)
-    if (handle != null) {
-        val result = handle(node, state)
-        if (result != null) return result
+    var cur: SyntaxNode? = node
+    while (cur != null) {
+        val matches = matchingNodes(cur.type, dir, brackets)
+        if (matches != null && cur.from < cur.to) {
+            val handle = findHandle(cur)
+            if (handle != null &&
+                if (dir > 0) {
+                    pos.value >= handle.from && pos.value < handle.to
+                } else {
+                    pos.value > handle.from && pos.value <= handle.to
+                }
+            ) {
+                return matchMarkedBrackets(dir, cur, handle, matches, brackets)
+            }
+        }
+        cur = cur.parent
     }
-
-    // Try tree-based matching
-    val treeResult = tryTreeMatch(state, tree, pos, dir, config)
-    if (treeResult != null) return treeResult
-
-    // Fall back to character scanning
-    return tryScanMatch(state, pos, dir, config)
-}
-
-private fun tryTreeMatch(
-    state: EditorState,
-    tree: Tree,
-    pos: DocPos,
-    dir: Int,
-    config: BracketMatchingConfig
-): MatchResult? {
-    val node = tree.resolveInner(pos.value, dir)
-    val closedBy = node.type.prop(NodeProp.closedBy)
-    val openedBy = node.type.prop(NodeProp.openedBy)
-
-    if (closedBy != null) {
-        return buildTreeMatchResult(node, closedBy, 1, config.maxScanDistance)
-    }
-
-    if (openedBy != null) {
-        return buildTreeMatchResult(node, openedBy, -1, config.maxScanDistance)
-    }
-
-    return null
-}
-
-private fun buildTreeMatchResult(
-    node: SyntaxNode,
-    matchingNames: List<String>,
-    dir: Int,
-    maxScanDistance: Int
-): MatchResult {
-    val matchNode = findMatchingNode(node, matchingNames, dir, maxScanDistance)
-    return MatchResult(
-        start = EditorSelection.range(DocPos(node.from), DocPos(node.to)),
-        end = matchNode?.let {
-            EditorSelection.range(DocPos(it.from), DocPos(it.to))
-        },
-        matched = matchNode != null
+    return matchPlainBrackets(
+        state,
+        pos.value,
+        dir,
+        tree,
+        node.type,
+        config.maxScanDistance,
+        brackets
     )
 }
 
-private fun findMatchingNode(
-    node: SyntaxNode,
-    targetNames: List<String>,
+private fun matchMarkedBrackets(
     dir: Int,
-    maxDist: Int
-): SyntaxNode? {
-    val parent = node.parent ?: return null
-    var sibling: SyntaxNode? = if (dir > 0) node.nextSibling else node.prevSibling
-    var distance = 0
-    while (sibling != null) {
-        distance += kotlin.math.abs(sibling.to - sibling.from)
-        if (distance > maxDist) return null
-        if (targetNames.contains(sibling.name)) return sibling
-        sibling = if (dir > 0) sibling.nextSibling else sibling.prevSibling
-    }
-    return null
-}
-
-private fun tryScanMatch(
-    state: EditorState,
-    pos: DocPos,
-    dir: Int,
-    config: BracketMatchingConfig
-): MatchResult? {
-    if (pos.value < 0 || pos.value >= state.doc.length) return null
-    val doc = state.doc
-    val charStr = doc.sliceString(pos, pos + 1)
-    if (charStr.isEmpty()) return null
-    val ch = charStr[0]
-
-    val matchCh = defaultBracketPairs[ch] ?: return null
-    val isOpen = openingBrackets.contains(ch)
-    val scanDir = if (isOpen) 1 else -1
-
-    val start = EditorSelection.range(pos, pos + 1)
-
-    // Scan for the matching bracket
-    var depth = 1
-    var scanPos = pos.value + scanDir
-    val limit = config.maxScanDistance
-    var scanned = 0
-
-    while (scanned < limit && scanPos >= 0 && scanPos < doc.length) {
-        val scanStr = doc.sliceString(DocPos(scanPos), DocPos(scanPos + 1))
-        if (scanStr.isNotEmpty()) {
-            val scanCh = scanStr[0]
-            if (scanCh == ch) {
-                depth++
-            } else if (scanCh == matchCh) {
-                depth--
-                if (depth == 0) {
+    token: SyntaxNode,
+    handle: SyntaxNode,
+    matching: List<String>,
+    brackets: String
+): MatchResult {
+    val firstToken = range(handle.from, handle.to)
+    var depth = 0
+    val cursor = token.parent?.cursor()
+    if (cursor != null &&
+        (if (dir < 0) cursor.childBefore(token.from) else cursor.childAfter(token.to))
+    ) {
+        do {
+            if (if (dir < 0) cursor.to <= token.from else cursor.from >= token.to) {
+                if (depth == 0 && cursor.type.name in matching && cursor.from < cursor.to) {
+                    val endHandle = findHandle(cursor.node)
                     return MatchResult(
-                        start = start,
-                        end = EditorSelection.range(
-                            DocPos(scanPos),
-                            DocPos(scanPos + 1)
-                        ),
+                        firstToken,
+                        endHandle?.let {
+                            range(it.from, it.to)
+                        },
                         matched = true
                     )
+                } else if (matchingNodes(cursor.type, dir, brackets) != null) {
+                    depth++
+                } else if (matchingNodes(cursor.type, -dir, brackets) != null) {
+                    if (depth == 0) {
+                        val endHandle = findHandle(cursor.node)
+                        return MatchResult(
+                            firstToken,
+                            endHandle?.takeIf { it.from < it.to }?.let { range(it.from, it.to) },
+                            matched = false
+                        )
+                    }
+                    depth--
                 }
             }
-        }
-        scanPos += scanDir
-        scanned++
+        } while (if (dir < 0) cursor.prevSibling() else cursor.nextSibling())
     }
+    return MatchResult(firstToken, null, matched = false)
+}
 
-    return MatchResult(start = start, end = null, matched = false)
+private fun matchPlainBrackets(
+    state: EditorState,
+    pos: Int,
+    dir: Int,
+    tree: Tree,
+    tokenType: NodeType,
+    maxScanDistance: Int,
+    brackets: String
+): MatchResult? {
+    // The bracket ends at pos when scanning backward and starts there when scanning forward.
+    val startFrom = if (dir < 0) pos - 1 else pos
+    val startCh = state.sliceDoc(DocPos(startFrom), DocPos(startFrom + 1))
+    // Upstream's `brackets.indexOf("")` is 0 at the document end, so it reports a phantom
+    // bracket at [length, length + 1]. That range can't be mapped through a change (upstream's
+    // bracketMatcher throws when it maps it while composing), so there is no match here.
+    if (startCh.isEmpty()) return null
+    val bracket = brackets.indexOf(startCh)
+    if (bracket < 0 || (bracket % 2 == 0) != (dir > 0)) return null
+    val startToken = range(startFrom, startFrom + 1)
+    val iter = state.doc.iterRange(DocPos(pos), if (dir > 0) state.doc.endPos else DocPos.ZERO)
+    var depth = 0
+    var distance = 0
+    while (!iter.next().done && distance <= maxScanDistance) {
+        val text = iter.value
+        if (dir < 0) distance += text.length
+        val basePos = pos + distance * dir
+        var i = if (dir > 0) 0 else text.length - 1
+        val end = if (dir > 0) text.length else -1
+        while (i != end) {
+            val found = brackets.indexOf(text[i])
+            if (found >= 0 && tree.resolveInner(basePos + i, 1).type == tokenType) {
+                if ((found % 2 == 0) == (dir > 0)) {
+                    depth++
+                } else if (depth == 1) { // Closing
+                    return MatchResult(
+                        startToken,
+                        range(basePos + i, basePos + i + 1),
+                        matched = (found shr 1) == (bracket shr 1)
+                    )
+                } else {
+                    depth--
+                }
+            }
+            i += dir
+        }
+        if (dir > 0) distance += text.length
+    }
+    return if (iter.done) MatchResult(startToken, null, matched = false) else null
 }
 
 /**
@@ -232,73 +242,45 @@ fun bracketMatching(config: BracketMatchingConfig = BracketMatchingConfig()): Ex
 
 private class BracketMatchingPlugin(state: EditorState, private val config: BracketMatchingConfig) :
     PluginValue {
-    var decos: DecorationSet = buildDecos(state)
+    var decos: DecorationSet = bracketDeco(state, config)
 
     override fun update(update: ViewUpdate) {
         if (update.docChanged || update.selectionSet) {
-            decos = buildDecos(update.state)
+            decos = bracketDeco(update.state, config)
         }
     }
+}
 
-    private fun buildDecos(state: EditorState): DecorationSet {
-        val theme = state.facet(editorTheme)
-        val matchedDeco = Decoration.mark(
-            MarkDecorationSpec(
-                style = SpanStyle(background = theme.matchingBracketBackground),
-                cssClass = "cm-matchingBracket"
-            )
+/** The bracket highlights for every empty selection range in [state]. */
+internal fun bracketDeco(state: EditorState, config: BracketMatchingConfig): DecorationSet {
+    val theme = state.facet(editorTheme)
+    val matchedDeco = Decoration.mark(
+        MarkDecorationSpec(
+            style = SpanStyle(background = theme.matchingBracketBackground),
+            cssClass = "cm-matchingBracket"
         )
-        val unmatchedDeco = Decoration.mark(
-            MarkDecorationSpec(
-                style = SpanStyle(background = theme.nonMatchingBracketBackground),
-                cssClass = "cm-nonmatchingBracket"
-            )
+    )
+    val unmatchedDeco = Decoration.mark(
+        MarkDecorationSpec(
+            style = SpanStyle(background = theme.nonMatchingBracketBackground),
+            cssClass = "cm-nonmatchingBracket"
         )
+    )
 
-        val builder = RangeSetBuilder<Decoration>()
-        val ranges = mutableListOf<Triple<DocPos, DocPos, Decoration>>()
-
-        for (sel in state.selection.ranges) {
-            val pos = sel.head
-            // Check character before cursor
-            if (pos > DocPos.ZERO) {
-                val match = matchBrackets(state, pos - 1, -1, config)
-                if (match != null) {
-                    addMatchRanges(match, matchedDeco, unmatchedDeco, ranges)
-                }
-            }
-            // Check character after cursor (if configured)
-            if (config.afterCursor && pos.value < state.doc.length) {
-                val match = matchBrackets(state, pos, 1, config)
-                if (match != null) {
-                    addMatchRanges(match, matchedDeco, unmatchedDeco, ranges)
-                }
-            }
-        }
-
-        // Sort and deduplicate ranges, then add to builder
-        ranges.sortBy { it.first }
-        var lastTo = DocPos(-1)
-        for ((from, to, deco) in ranges) {
-            if (from >= lastTo) {
-                builder.add(from, to, deco)
-                lastTo = to
-            }
-        }
-
-        return builder.finish()
+    val decorations = mutableListOf<Range<Decoration>>()
+    val end = state.doc.endPos
+    for (range in state.selection.ranges) {
+        if (!range.empty) continue
+        val head = range.head
+        val after = config.afterCursor
+        val match = matchBrackets(state, head, -1, config)
+            ?: (if (head > DocPos.ZERO) matchBrackets(state, head - 1, 1, config) else null)
+            ?: (if (after) matchBrackets(state, head, 1, config) else null)
+            ?: (if (after && head < end) matchBrackets(state, head + 1, -1, config) else null)
+            ?: continue
+        val mark = if (match.matched) matchedDeco else unmatchedDeco
+        decorations.add(mark.range(match.start.from, match.start.to))
+        match.end?.let { decorations.add(mark.range(it.from, it.to)) }
     }
-
-    private fun addMatchRanges(
-        match: MatchResult,
-        matchedDeco: Decoration,
-        unmatchedDeco: Decoration,
-        ranges: MutableList<Triple<DocPos, DocPos, Decoration>>
-    ) {
-        val deco = if (match.matched) matchedDeco else unmatchedDeco
-        ranges.add(Triple(match.start.from, match.start.to, deco))
-        if (match.end != null && match.matched) {
-            ranges.add(Triple(match.end.from, match.end.to, matchedDeco))
-        }
-    }
+    return RangeSet.of(decorations, sort = true)
 }

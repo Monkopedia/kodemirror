@@ -19,6 +19,23 @@
 package com.monkopedia.kodemirror.language
 
 /**
+ * Whether [ch] is whitespace by JavaScript's `\s`, which upstream's stream and indentation
+ * helpers test against. Spelled out rather than as a Regex, as in `:state`'s CharCategory:
+ * Java's `\s` is ASCII-only and [Char.isWhitespace] differs from it per platform.
+ */
+internal fun isJsSpace(ch: Char): Boolean = ch in '\t'..'\r' ||
+    ch == ' ' ||
+    ch == '\u00a0' ||
+    ch == '\u1680' ||
+    ch in '\u2000'..'\u200a' ||
+    ch == '\u2028' ||
+    ch == '\u2029' ||
+    ch == '\u202f' ||
+    ch == '\u205f' ||
+    ch == '\u3000' ||
+    ch == '\ufeff'
+
+/**
  * Counts the column offset in a string, taking tabs into account.
  */
 internal fun countCol(
@@ -29,7 +46,7 @@ internal fun countCol(
     startValue: Int = 0
 ): Int {
     val effectiveEnd = end ?: run {
-        val idx = string.indexOfFirst { it != ' ' && it != '\t' && it != '\u00a0' }
+        val idx = string.indexOfFirst { !isJsSpace(it) }
         if (idx == -1) string.length else idx
     }
     var n = startValue
@@ -153,14 +170,7 @@ class StringStream(
     /** Consume whitespace ahead of [pos]. Return true if any was found. */
     fun eatSpace(): Boolean {
         val s = pos
-        while (pos < string.length) {
-            val ch = string[pos]
-            if (ch == ' ' || ch == '\t' || ch == '\u00a0') {
-                pos++
-            } else {
-                break
-            }
-        }
+        while (pos < string.length && isJsSpace(string[pos])) pos++
         return pos > s
     }
 
