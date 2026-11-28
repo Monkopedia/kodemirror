@@ -138,4 +138,22 @@ class TreeFragmentTest {
         val old = listOf(TreeFragment(400, 500, tree(500), 0, openStart = true, openEnd = false))
         assertEquals("0-500@0", show(TreeFragment.addTree(tree(500), old)))
     }
+
+    /**
+     * `addTree` keeps an old fragment that runs past the new tree, so fragment lists overlap.
+     * The second one must still be cut at the change, not skipped because it ends past it.
+     * Expected values are `@lezer/common` 1.5.1 output.
+     */
+    @Test
+    fun anOverlappingFragmentEndingPastTheChangeIsStillCut() {
+        val fragments = TreeFragment.addTree(
+            tree(300),
+            listOf(TreeFragment(100, 600, tree(600), 0, openStart = true, openEnd = false))
+        )
+        assertEquals("0-300@0 100-600@0<", show(fragments))
+        assertEquals(
+            "0-300@0> 100-300@0> 305-605@-5<",
+            show(TreeFragment.applyChanges(fragments, listOf(ChangedRange(300, 300, 300, 305))))
+        )
+    }
 }
