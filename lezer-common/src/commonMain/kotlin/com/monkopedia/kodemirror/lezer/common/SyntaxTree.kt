@@ -1712,17 +1712,25 @@ private fun buildTree(spec: TreeBuildSpec): Tree {
 
 private class BufferSizeResult(var size: Int, var start: Int, var skip: Int)
 
-private fun nodeSize(balanceType: NodeType, node: Any): Int {
+/**
+ * Upstream memoises this in a module-level `WeakMap`. Without weak maps on every target, [sizes]
+ * is scoped to one top-level [balanceRange] call instead, which already covers the re-walks of
+ * its nested groups (#280).
+ */
+private fun nodeSize(balanceType: NodeType, node: Any, sizes: MutableMap<Tree, Int>): Int {
     if (!balanceType.isAnonymous || node is TreeBuffer) return 1
     if (node !is Tree || node.type != balanceType) return 1
-    var size = 1
-    for (child in node.children) {
-        if (child !is Tree || child.type != balanceType) {
-            return 1
+    return sizes.getOrPut(node) {
+        var size = 1
+        for (child in node.children) {
+            if (child !is Tree || child.type != balanceType) {
+                size = 1
+                break
+            }
+            size += nodeSize(balanceType, child, sizes)
         }
-        size += nodeSize(balanceType, child)
+        size
     }
-    return size
 }
 
 private fun balanceRange(
@@ -1734,10 +1742,11 @@ private fun balanceRange(
     start: Int,
     length: Int,
     mkTop: ((List<Any>, List<Int>, Int) -> Tree)?,
-    mkTree: (List<Any>, List<Int>, Int) -> Tree
+    mkTree: (List<Any>, List<Int>, Int) -> Tree,
+    sizes: MutableMap<Tree, Int> = HashMap()
 ): Tree {
     var total = 0
-    for (i in from until to) total += nodeSize(balanceType, children[i])
+    for (i in from until to) total += nodeSize(balanceType, children[i], sizes)
 
     val maxChild = ceil((total * 1.5) / BALANCE_BRANCH_FACTOR).toInt()
     val localChildren = mutableListOf<Any>()
@@ -1748,10 +1757,10 @@ private fun balanceRange(
         while (i < divTo) {
             val groupFrom = i
             val groupStart = pos[i]
-            var groupSize = nodeSize(balanceType, ch[i])
+            var groupSize = nodeSize(balanceType, ch[i], sizes)
             i++
             while (i < divTo) {
-                val nextSize = nodeSize(balanceType, ch[i])
+                val nextSize = nodeSize(balanceType, ch[i], sizes)
                 if (groupSize + nextSize >= maxChild) break
                 groupSize += nextSize
                 i++
@@ -1774,7 +1783,7 @@ private fun balanceRange(
                 localChildren.add(
                     balanceRange(
                         balanceType, ch, pos, groupFrom, i,
-                        groupStart, len, null, mkTree
+                        groupStart, len, null, mkTree, sizes
                     )
                 )
             }
