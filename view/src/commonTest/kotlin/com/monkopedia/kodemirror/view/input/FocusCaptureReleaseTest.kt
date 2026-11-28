@@ -203,4 +203,25 @@ class FocusCaptureReleaseTest {
         assertCaptureReleased(f, "After the editor left the composition mid-press")
         assertFalse(f.editorFocused)
     }
+
+    @Test
+    fun secondPress_capturesAgain() = runFocusCaptureTest { f ->
+        onNodeWithTag("KodeMirror").performMouseInput {
+            moveTo(capturePressPoint)
+            press()
+        }
+        waitForIdle()
+        onNodeWithTag("KodeMirror").performMouseInput { release() }
+        waitForIdle()
+        assertCaptureReleased(f, "After the first press was released")
+        onNodeWithTag("KodeMirror").performMouseInput {
+            moveTo(capturePressPoint)
+            press()
+        }
+        waitForIdle()
+        assertCaptureHeld(f, "During a second press")
+        onNodeWithTag("KodeMirror").performMouseInput { release() }
+        waitForIdle()
+        assertCaptureReleased(f, "After the second press was released")
+    }
 }
